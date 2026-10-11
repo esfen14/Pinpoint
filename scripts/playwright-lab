@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+# Run live role smokes in a no-network container. A mounted Unix socket is the
+# only bridge to Pinpoint's documented loopback origin.
+set -euo pipefail
+
+root="$(cd "$(dirname "$0")/.." && pwd)"
+state_dir="${VMLAB_STATE_DIR:-$HOME/.local/share/pinpoint-vmlab}"
+for name in admin-email admin-password restricted-email restricted-password restricted-new-password; do
+  [ -s "$state_dir/$name" ] || { echo "missing private lab state: $name" >&2; exit 1; }
+done
+command -v docker >/dev/null || { echo "docker is required" >&2; exit 1; }
+command -v socat >/dev/null || { echo "socat is required" >&2; exit 1; }
+
+private_dir="$(mktemp -d /tmp/pinpoint-playwright.XXXXXX)"
+socket="$private_dir/web.sock"
+proxy_pid=""
+cleanup() {
+  if [ -n "$proxy_pid" ]; then kill "$proxy_pid" 2>/dev/null || true; fi
+  rm -f "$socket"
+  rmdir "$private_dir" 2>/dev/null || true
+}
+trap cleanup EXIT
+
+socat "UNIX-LISTEN:$socket,mode=600,fork" TCP:127.0.0.1:18080 &
+proxy_pid=$!
+for _ in $(seq 1 50); do [ -S "$socket" ] && break; sleep 0.1; done
+[ -S "$socket" ] || { echo "could not create the private lab-origin tunnel" >&2; exit 1; }
+
+set +e
+docker run --rm --network none --shm-size=1g \
+  --user "$(id -u):$(id -g)" \
+  --mount "type=bind,src=$root,dst=/work" \
+  --mount "type=bind,src=$state_dir,dst=/state,readonly" \
+  --mount "type=bind,src=$socket,dst=/tmp/pinpoint-web.sock,readonly" \
+  --mount "type=bind,src=$HOME/.cache/ms-playwright,dst=/ms-playwright,readonly" \
+  --mount "type=bind,src=/lib/x86_64-linux-gnu,dst=/host-libs,readonly" \
+  --env HOME=/tmp --env PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
+  --env LD_LIBRARY_PATH=/host-libs \
+  nikolaik/python-nodejs:python3.14-nodejs22 \
+  bash -c 'set -euo pipefail
+    node /work/lab/unix_web_proxy.mjs /tmp/pinpoint-web.sock &
+    tunnel_pid=$!
+    trap "kill $tunnel_pid 2>/dev/null || true" EXIT
+    export PINPOINT_ADMIN_USER="$(cat /state/admin-email)"
+    export PINPOINT_ADMIN_PASSWORD="$(cat /state/admin-password)"
+    export PINPOINT_RESTRICTED_USER="$(cat /state/restricted-email)"
+    export PINPOINT_RESTRICTED_PASSWORD="$(cat /state/restricted-password)"
+    export PINPOINT_RESTRICTED_NEW_PASSWORD="$(cat /state/restricted-new-password)"
+    cd /work/client
+    ./node_modules/.bin/playwright test
+  '
+test_status=$?
+set -e
+
+if [ -f "$root/client/test-results/playwright-results.json" ]; then
+  node -e '
+    const report = require(process.argv[1]);
+    const stats = report.stats;
+    console.log(`Playwright: ${stats.expected} passed, ${stats.unexpected} failed, ${stats.skipped} skipped`);
+  ' "$root/client/test-results/playwright-results.json"
+fi
+exit "$test_status"

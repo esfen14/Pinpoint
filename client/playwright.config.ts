@@ -6,7 +6,7 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: 1,
-  reporter: 'json',
+  reporter: [['json', { outputFile: 'test-results/playwright-results.json' }]],
   use: {
     baseURL: 'http://127.0.0.1:18080',
     // Login artifacts can expose passwords; opt-in capture must never cover setup.
@@ -17,15 +17,29 @@ export default defineConfig({
   projects: [
     {
       name: 'setup-admin',
-      testMatch: /.*\.setup\.ts/,
+      testMatch: /auth\.setup\.ts/,
     },
     {
-      name: 'chromium',
-      use: { 
+      name: 'setup-restricted',
+      testMatch: /auth\.restricted\.setup\.ts/,
+    },
+    {
+      name: 'admin',
+      testMatch: /smoke\.admin\.spec\.ts/,
+      use: {
         ...devices['Desktop Chrome'],
         storageState: '.auth/admin.json',
       },
       dependencies: ['setup-admin'],
+    },
+    {
+      name: 'restricted',
+      testMatch: /smoke\.restricted\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: '.auth/restricted.json',
+      },
+      dependencies: ['setup-restricted'],
     },
   ],
 });

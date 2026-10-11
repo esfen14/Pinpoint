@@ -19,6 +19,7 @@
 #   scripts/vmlab health               installer healthcheck on the running appliance
 #   scripts/vmlab smoke                log in, add the lab network, run discovery, wait for hosts up
 #   scripts/vmlab setup-admin          complete first-run setup (real email, new password); kept in the state folder, never printed
+#   scripts/vmlab setup-restricted     create/reset a Staff QA account; credentials stay in the state folder
 #   scripts/vmlab ncpa [ip,ip,...]     deploy NCPA to targets through Pinpoint's deployment API (default: web01 and legacy01)
 #   scripts/vmlab alerts [target]     take a target down, check the alert, acknowledge it, bring it back (default: web01)
 #   scripts/vmlab creds                print the installer's one-time credentials (shows the password; lab only)
@@ -422,6 +423,29 @@ print("setup-email=" + (os.environ["SETUP_NEW_EMAIL"] if needs_setup else os.env
     printf '%s' "$email" > "$state_dir/admin-email"; printf '%s' "$new" > "$state_dir/admin-password"; chmod 600 "$state_dir/admin-email" "$state_dir/admin-password"
     vm_ssh 'sudo rm -f /root/pinpoint-install-credentials.txt /var/lib/pinpoint/web-credentials-pending' 2>/dev/null || true
     echo "administrator $email: new password stored in $state_dir/admin-password"
+    ;;
+
+  setup-restricted)
+    # Resetting an existing account is deliberate: each live run starts from the
+    # same forced-password-change state, and appliance reset removes the account.
+    need_config
+    mkdir -p "$state_dir"; chmod 700 "$state_dir"
+    [ -n "$VMLAB_ADMIN_EMAIL" ] || { [ -f "$state_dir/admin-email" ] && VMLAB_ADMIN_EMAIL="$(cat "$state_dir/admin-email")"; }
+    [ -n "$VMLAB_ADMIN_PASSWORD" ] || { [ -f "$state_dir/admin-password" ] && VMLAB_ADMIN_PASSWORD="$(cat "$state_dir/admin-password")"; }
+    [ -n "$VMLAB_ADMIN_EMAIL" ] && [ -n "$VMLAB_ADMIN_PASSWORD" ] || die "no administrator login: run scripts/vmlab setup-admin"
+    restricted_email="${VMLAB_RESTRICTED_EMAIL:-qa-restricted@example.com}"
+    temporary="Lab-$(head -c 24 /dev/urandom | base64 | tr -d '/+=' | head -c 18)8!"
+    new_password="Lab-$(head -c 24 /dev/urandom | base64 | tr -d '/+=' | head -c 18)9!"
+    PINPOINT_ADMIN_USER="$VMLAB_ADMIN_EMAIL" \
+    PINPOINT_ADMIN_PASSWORD="$VMLAB_ADMIN_PASSWORD" \
+    PINPOINT_RESTRICTED_PASSWORD="$temporary" \
+      python3 -I "$root/lab/setup_restricted.py" --base-url "$(web_url)" --email "$restricted_email" \
+      || die "could not provision the restricted QA account"
+    printf '%s' "$restricted_email" > "$state_dir/restricted-email"
+    printf '%s' "$temporary" > "$state_dir/restricted-password"
+    printf '%s' "$new_password" > "$state_dir/restricted-new-password"
+    chmod 600 "$state_dir/restricted-email" "$state_dir/restricted-password" "$state_dir/restricted-new-password"
+    echo "restricted QA account ready; credentials stored in $state_dir/restricted-*"
     ;;
 
   ncpa)

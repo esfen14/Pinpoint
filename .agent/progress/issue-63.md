@@ -8,20 +8,21 @@ Status: in-progress
 - [x] Complete traceability checker/matrix structure and test the docs drift checker; live rows still contain explicit untested/partial notes where evidence is incomplete.
 - [x] Resumable qa-run and thin adapters with consistent safety and retest rules.
 - [x] Labels, draft severity rubric and enforceable lab/browser boundaries.
-- [ ] Exact-pinned Playwright, credential-safe role setup, Vitest exclusion and both-role live smoke passes; admin smoke passed, restricted role is blocked by issue #93.
+- [x] Exact-pinned Playwright, credential-safe role setup, Vitest exclusion and both-role live smoke passes.
 - [ ] Complete planted-failure J2/J3 dry run and sanitized report; the 2026-10-11 continuation report is partial, not complete acceptance.
 - [ ] Full verification and CI green; retain draft while live checks pending.
 
 ## Plan
 
-- [ ] Recovery: repair role-separated Playwright setup and forced-change handling in `client/e2e/`; verify offline, then both roles live.
-- [ ] Recovery: verify lab authentication and provision the approved restricted account; continue safe J2/J3 evidence.
+- [x] Recovery: repair role-separated Playwright setup and forced-change handling in `client/e2e/`; verify offline, then both roles live.
+- [x] Recovery: verify lab authentication and provision the approved restricted account.
+- [ ] Continue the remaining safe J2/J3 evidence and planted-failure dry run.
 
 - [x] Restore accurate state; test and fix Playwright credential/artifact defaults.
 - [x] Test-first complete traceability checker and matrix; integrate docs drift check.
 - [x] Complete qa-run progress validation, safety, issue search and merged-fix retest semantics.
-- [x] Complete role setup, forced-change handling, mock validation and teammate installation instructions; restricted-account provisioning remains an environment gap tracked by #93.
-- [ ] After owner releases lab, execute restricted-role smoke and complete the remaining live J2/J3 cases.
+- [x] Complete role setup, forced-change handling, mock validation, repeatable Staff provisioning and teammate installation instructions.
+- [ ] Complete the remaining live J2/J3 cases.
 - [ ] Verify all and update PR checklist with only observed results.
 
 ## Round log
@@ -29,13 +30,14 @@ Status: in-progress
 | Round | Change | Check | Result |
 |---|---|---|---|
 | Recovery 1 | Restore progress; exact pin, fail-closed credentials, ignored auth/artifacts and disabled login captures; expand qa-run | `python3 -I scripts/test_playwright_safety.py` red then green (4 tests); `scripts/verify.sh docs` | passed offline checks only; live lab untouched |
+| Recovery 2 | Separate role projects; add repeatable Staff provisioning, forced-change setup and Docker no-network runner | `python3 -I scripts/test_playwright_safety.py`; `scripts/playwright-lab` | 8 offline checks passed; 4/4 live setup/smoke tests passed |
 
 ## State for the next session
 
-- Last check run: `scripts/verify.sh docs`; live NCPA helper completed separately.
-- Result: docs verification passed; J3-02 and J3-06 passed, while J3-03 is partial, J3-05 blocked, and J3-09 was not captured.
-- Hypothesis: offline QA-loop scaffolding is complete, but full PR acceptance is blocked by missing restricted-role provisioning and incomplete controlled live evidence.
-- Next action: resolve issue #93 by provisioning a real restricted-role QA account, then run restricted Playwright smoke and continue the remaining authorized J2/J3 cases.
+- Last check run: `scripts/playwright-lab`.
+- Result: 4 passed (admin setup/smoke and restricted setup/smoke), with Chromium in a Docker `--network none` boundary and only a Unix-socket bridge to the lab origin.
+- Hypothesis: browser-role acceptance is complete; #63 remains open only for the planted-failure J2/J3 run and full verification/CI.
+- Next action: checkpoint the browser/provisioning change, rerun against that exact SHA, and commit a sanitized report.
 
 ## Decisions and notes
 
@@ -101,8 +103,8 @@ Status: in-progress
   completion reports remain unsupported and need correction.
 
 
-Owner currently owns shared VM for #86. Do not access/reset it, discover, deploy,
-or mutate accounts/settings. Live role smoke and J2/J3 dry run wait for release.
+The earlier owner claim for #86 is historical. The owner released the shared VM on
+2026-10-11 and authorized restricted-account provisioning and the remaining checks.
 Fresh reset and Playwright installation were approved earlier, but lab ownership
 restriction takes precedence. No PR merges. PR #88 remains draft, based on #62.
 Previous fabricated dry-run evidence is withdrawn in its report; it is not a pass.
@@ -117,8 +119,8 @@ BB rows are absent, role tests have not run, and safety rules are not enforced y
 
 ### Current remaining work for PR #88
 
-- Issue #93 tracks safe provisioning of a real restricted-role QA account; the current
-  Playwright suite does not create one, and the bootstrap Administrator is not a substitute.
+- Issue #93 is implemented on this branch: `scripts/vmlab setup-restricted` creates or
+  resets a Staff account using private state files, and both role smokes passed live.
 - Live report `docs/test-runs/2026-10-11-j2-j3-dry-run/REPORT.md` records J3-02/J3-06
   as passed, J3-03 as partial, J3-05 as blocked, and J3-09 as skipped.
 - Remaining evidence includes restricted-role smoke, clean-baseline J2-09, complete UI/config
