@@ -87,6 +87,55 @@ Counts per characteristic are generated from the case headers (see §9 for the c
 
 ## 4. Environment and commands
 
+### 4.0 QA-run entry gate, order, and records
+
+Do not start a live case merely because its row is `untested`.  Before claiming a
+case, follow [the QA finding workflow](../../.agent/workflows/qa-run.md) and
+complete this entry gate:
+
+1. Use a dedicated worktree and tracking issue/progress file; confirm that no
+   other tester has claimed the lab.
+2. Run `scripts/verify.sh all` on the commit to be tested.  Record the commit
+   and result in the run report.  A sandbox that blocks local sockets or DNS is
+   not a product failure; re-run the affected isolated check in the normal
+   development environment and record that constraint.
+3. For VM cases, run `scripts/vmlab status`.  It must report the configured
+   appliance VM and its `os-nagios-ready` snapshot; the base-step stamp must
+   not be stale.  Then confirm the five targets can be started with
+   `scripts/vmlab targets up`.  If the VM or snapshot is absent, do **not**
+   substitute a partial Docker result for VM acceptance: rebuild the faithful
+   lane using [VM Lab Plan §4](../plans/VM_Lab_Plan.md#4-steps-to-get-running),
+   with the lab owner's approval.
+4. For a Docker-only/fast-lane check, run `scripts/lab up` then
+   `scripts/lab smoke`.  Docker evidence cannot pass installer, systemd, NCPA
+   installation, performance, or VM-labelled cases.
+5. For a live browser-role smoke, also run `scripts/vmlab setup-restricted` and
+   use `scripts/playwright-lab`; its prerequisites are in
+   [Playwright Setup](Playwright_Setup.md).
+
+Unless a retest is ready, use this default order.  It minimizes resets and
+ensures later cases have their required discovered hosts and services:
+
+1. J1-01, J1-02, J1-03, J1-07 — installer/application baseline.
+2. J2-01, J2-02, J2-03 — discovery and UI baseline.
+3. J3-01 through J3-06, then J4-01 through J4-05 — NCPA and service-plugin
+   prerequisites.
+4. J5, J6, J7, J8, then J9 — alerts/history, views/reports, permissions.
+5. X1-X5, BB-01 through BB-07, PT-01 through PT-06 — cross-cutting and final
+   acceptance, with PT-05 (four-hour soak) last.
+
+After every executed case, update only the records that the result affects:
+
+| Artifact | Required update |
+|---|---|
+| `docs/test-runs/<date>-<slug>/REPORT.md` and `docs/test-runs/README.md` | Create a new sanitized report with the tested commit and actual per-case result; add it to the index. |
+| `docs/qa/Requirements_Traceability.md` | Set the case to `pass`, `fail-filed`, `retest`, `needs-decision`, or leave it `untested` with a reason for partial/blocked work. Link real evidence and issues. |
+| `docs/qa/QA_Paper_Test_Case_Tables.md` | Never edit directly. Run `python3 -I scripts/render_qa_case_tables.py --write` after changing the plan or traceability matrix. |
+| QA plan, specifications, or `Implementation_Status.md` | Change only when a requirement/status fact has genuinely changed; never alter an expected result to turn a failure into a pass. |
+
+Finish the documentation update with `scripts/verify.sh docs` before
+checkpointing the QA round.
+
 ### 4.1 Baseline B0 (VM lab)
 
 ```bash
