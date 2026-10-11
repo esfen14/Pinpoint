@@ -596,7 +596,7 @@ in `server/tests/plans/` are referenced as **Detail:** and are not copied (§8).
 `[SE]` · MOCK · agent
 - **Pre:** none.
 - **Steps:** Read `server/app/api/commands/seed.py`; on the lab, `GET /api/user/roles` and `/api/user/roles/<id>` for each seeded role.
-- **Expect:** Administrator holds all 34 seeded permissions; Manager and Staff hold none (journeys D-8). A new Manager or Staff user can open only Settings (General).
+- **Expect:** Administrator holds all 36 seeded permissions; Manager and Staff hold none (journeys D-8). A new Manager or Staff user can open only Settings (General).
 
 #### J9-04 Enforcement in the UI and the API
 `[SE]` · VM · agent
