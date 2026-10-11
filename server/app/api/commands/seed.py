@@ -6,7 +6,8 @@ from email_validator import validate_email, EmailNotValidError
 
 from flask.cli import with_appcontext
 from app import db
-from app.api.helper.validation import STRONG_MIN_PASSWORD_LENGTH
+from app.api.helper.validation import STRONG_MIN_PASSWORD_LENGTH, validate_password
+from app.logging.user_activity import create_user_log
 
 from app.system_models import (
     Permission,
@@ -116,6 +117,27 @@ def get_permission(name: str):
     return db.session.scalar(
         sa.select(Permission).where(Permission.Name == name)
     )
+
+
+def find_bootstrap_administrator():
+    """Return the uniquely earliest-created account, or ``None`` when unsafe.
+
+    ``init-production`` refuses to initialize a database that already has a
+    user, making its administrator the earliest account. Creation time is the
+    durable evidence available after first-run setup changes its email and
+    clears ``Needs_Setup``. A tie cannot safely identify one account, so the
+    caller must refuse recovery without changing either account.
+    """
+    earliest = db.session.scalar(sa.select(sa.func.min(User.Created_At)))
+    if earliest is None:
+        return None
+
+    candidates = db.session.scalars(
+        sa.select(User).where(User.Created_At == earliest).limit(2)
+    ).all()
+    if len(candidates) != 1:
+        return None
+    return candidates[0]
 
 # =========================
 # SEED: PERMISSIONS
@@ -341,6 +363,41 @@ def sync_permissions_command():
 
     click.echo(f"Permissions added: {', '.join(added) or 'none'}")
     click.echo(f"Granted to Administrator: {', '.join(granted) or 'none'}")
+
+
+@click.command("recover-bootstrap-admin")
+@with_appcontext
+def recover_bootstrap_admin_command():
+    """Privately reset the uniquely identified bootstrap administrator password."""
+    bootstrap = find_bootstrap_administrator()
+    if bootstrap is None:
+        raise click.ClickException(
+            "Bootstrap administrator could not be identified safely; no account was changed."
+        )
+
+    password = click.prompt(
+        "Temporary password",
+        hide_input=True,
+        confirmation_prompt=True,
+    )
+    password_error = validate_password(password)
+    if password_error is not None:
+        response, _status = password_error
+        raise click.ClickException(response.get_json()["message"])
+
+    try:
+        bootstrap.set_password(password)
+        bootstrap.Must_Change_Password = True
+        create_user_log(
+            bootstrap.UserID,
+            "Recovered bootstrap administrator password; password change required.",
+        )
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        raise click.ClickException(f"Bootstrap administrator recovery failed: {e}")
+
+    click.echo("Bootstrap administrator recovered. A password change is required at next sign-in.")
 
 
 # =========================

@@ -34,9 +34,9 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 ## Plan
 
-1. [ ] Add failing CLI recovery tests in `server/tests/unit/test_bootstrap_admin_recovery.py` for successful pre/post-setup recovery, password validation/confirmation, target ambiguity/missing cases, preserved account state, and sanitized audit logging.
-2. [ ] Implement the `recover-bootstrap-admin` Flask command and safe bootstrap-identity helper in `server/app/api/commands/seed.py`, then register it in `server/app/__init__.py`.
-3. [ ] Document development and installed-appliance recovery invocation plus session behavior in `README.md`, `spec files/Backend_Modules_and_Routes.md`, `spec files/Data_Model_and_Integrations.md`, and `spec files/Implementation_Status.md`.
+1. [x] Add failing CLI recovery tests in `server/tests/unit/test_bootstrap_admin_recovery.py` for successful pre/post-setup recovery, password validation/confirmation, target ambiguity/missing cases, preserved account state, and sanitized audit logging.
+2. [x] Implement the `recover-bootstrap-admin` Flask command and safe bootstrap-identity helper in `server/app/api/commands/seed.py`, then register it in `server/app/__init__.py`.
+3. [x] Document development and installed-appliance recovery invocation plus session behavior in `README.md`, `spec files/Backend_Modules_and_Routes.md`, `spec files/Data_Model_and_Integrations.md`, and `spec files/Implementation_Status.md`.
 4. [ ] Run focused tests, backend verification, docs verification, and full verification; re-read issue #95, then remove this progress file and open a pull request if every finish condition is proven.
 
 ## Round log
@@ -45,15 +45,16 @@ One row per loop round, newest last.
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| 1 | Added private CLI recovery, safe earliest-created bootstrap lookup, tests, and documentation. | `server/.venv/bin/python -m pytest server/tests/unit/test_bootstrap_admin_recovery.py -q`; `scripts/verify.sh docs`; `scripts/verify.sh backend` | Focused tests: 8 passed. Docs: green. Initial restricted backend run failed only local socket/DNS tests; approved rerun: 2,330 passed / 14 skipped, green. |
 
 ## State for the next session
 
 Everything a fresh session needs to continue without redoing work.
 
-- Last check run (exact command): `gh api repos/{owner}/{repo}/issues/95`
-- Result (first failing lines, or "green"): Retrieved the issue through REST; `gh issue view 95` is blocked by the GitHub CLI's deprecated Projects-classic GraphQL field.
-- Hypothesis: The production initializer creates exactly one initial user. The recovery command can identify it as the sole earliest-created user, fail safely on no user or equal earliest timestamps, and never rely on email, user ID, or `Needs_Setup`.
-- Next action (one specific step, not "continue"): Add the focused failing CLI recovery tests.
+- Last check run (exact command): `scripts/verify.sh backend` (approved unrestricted execution)
+- Result (first failing lines, or "green"): green — 2,330 passed, 14 skipped in 275.66s.
+- Hypothesis: All implemented behavior and documentation are ready for the required full CI-equivalent verification.
+- Next action (one specific step, not "continue"): Run `scripts/verify.sh all` and then re-read issue #95 through the REST API before marking its finish condition.
 
 ## Decisions and notes
 

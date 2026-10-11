@@ -33,6 +33,22 @@ settings.security, settings.system, settings.discovery, settings.plugins, settin
 Some seeded permissions are not attached to a current route. That is tracked as
 current-state inventory rather than treated as intended permission design.
 
+## Operator CLI commands
+
+`app/api/commands/seed.py` provides `flask recover-bootstrap-admin` for an
+operator with local server access when the original bootstrap administrator has
+lost its password. It privately prompts for a confirmed temporary password and
+applies the current password policy. The command identifies the bootstrap
+account as the uniquely earliest-created `User` (the production initializer
+refuses an existing user); it never uses email, user ID, or `Needs_Setup` as
+identity. Missing or tied earliest accounts fail without a database change.
+Recovery changes only the password hash and `Must_Change_Password`, preserves
+`Needs_Setup`, status, role, permissions and related records, and writes a
+password-free activity event. Installed appliances expose it as
+`sudo pinpoint recover-bootstrap-admin`; that installer-owned wrapper finds the
+application and virtual environment. Existing browser sessions retain their
+normal configured timeout; immediate invalidation is not part of this command.
+
 ## Response and request conventions
 
 - API routes use `success(...)` and `error(...)` from

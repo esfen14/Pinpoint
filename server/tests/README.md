@@ -88,6 +88,7 @@ Basenames below live under `unit/`, except `integration/test_live_nagios.py`.
 | `test_session_timeout.py` | Cookie-backed idle timeout, activity refresh, logout cleanup, and configured/default timeout values |
 | `test_settings_permissions.py` | General/security/system settings authorization and inactive-role permission behavior |
 | `test_seed.py` | System-settings creation and idempotence through the `flask seed` command |
+| `test_bootstrap_admin_recovery.py` | Operator-only bootstrap-account recovery: private password prompt, policy validation, preserved setup/account state, safe identity rejection, and sanitized audit log |
 | `test_converter.py` | State conversion, UTC/UNIX conversion, performance-data parsing, date ranges, and email normalization |
 | `test_validation.py` | Password, JSON-body, field, and email validation helpers |
 

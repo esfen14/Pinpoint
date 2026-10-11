@@ -31,6 +31,7 @@ pytest                                      # run the backend suite
 pytest tests/unit/test_dashboard.py -v        # run one test module
 flask seed                                  # add missing seed data
 flask sync-permissions                      # upgrade: add new permissions, grant to Administrator
+flask recover-bootstrap-admin               # privately recover the original bootstrap account
 ```
 
 Do not use `flask seed --reset` on data you need to keep; it drops and rebuilds

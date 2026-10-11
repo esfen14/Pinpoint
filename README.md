@@ -172,6 +172,17 @@ flask db upgrade
 - Existing install: back up both databases, then `flask db upgrade`, then
   `flask sync-permissions` (adds any permission introduced since the install and
   grants it to Administrator; idempotent, never touches users or other roles).
+- Bootstrap administrator recovery: an operator with local server access can
+  run `flask recover-bootstrap-admin` from `server/` (activate its virtual
+  environment first). It privately prompts twice for a policy-compliant
+  temporary password; no password belongs on the command line or in a pipe.
+  On an installed appliance use `sudo pinpoint recover-bootstrap-admin`, whose
+  wrapper locates the deployed application and virtual environment. The command
+  identifies only the uniquely earliest-created account, refuses ambiguous or
+  missing identity without changes, preserves account status/role/data and a
+  pending first-run setup requirement, then requires a password change at the
+  next sign-in. Existing browser sessions expire normally through the configured
+  session timeout; they are not immediately invalidated.
 - Server built earlier with `db.create_all()`: run `flask db stamp head` once,
   then upgrade normally.
 - Development: `server/reset_db.sh` rebuilds both databases and runs

@@ -50,12 +50,14 @@ login.login_view = None
 from app.api.commands.seed import (
     seed_command,
     init_production_command,
+    recover_bootstrap_admin_command,
     sync_permissions_command,
     warn_if_permissions_missing,
 )
 
 app.cli.add_command(seed_command)
 app.cli.add_command(init_production_command)
+app.cli.add_command(recover_bootstrap_admin_command)
 app.cli.add_command(sync_permissions_command)
 
 from app import system_models, history_models, plugin_models
