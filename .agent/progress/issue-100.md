@@ -8,9 +8,9 @@ Status: in-progress
 Copied from the issue. Tick an item only when a check proves it.
 
 - [x] VM baseline is confirmed and only `10.77.0.0/28` is scanned.
-- [ ] Up to five FS cases are observed and recorded.
-- [ ] Lab mutations are restored.
-- [ ] QA report, traceability, progress record, and documentation verification are complete.
+- [x] Up to five FS cases are observed and recorded.
+- [x] Lab mutations are restored.
+- [x] QA report, traceability, progress record, and documentation verification are complete.
 
 Requirement coverage (every requirement the issue states, and the check that proves it):
 
@@ -34,17 +34,22 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 1 | Created QA tracking issue #100 and dedicated worktree; owner approved removal of inaccessible registrations only. | `scripts/vmlab fresh`; `scripts/vmlab status`; `VBoxManage list runningvms` | Fresh appliance deployment passed healthcheck: 60 passed, 0 warnings, 0 failed. Snapshot stamp matches installer. All five required target VMs are running. |
+| 2 | Completed baseline preparation and ran the restricted smoke. | `scripts/vmlab setup-admin`; `scripts/vmlab smoke`; `scripts/verify.sh all` | Initial smoke overlapped an inherited scan. Stopped it, waited for Interrupted, restricted networks to `10.77.0.0/28`, then smoke passed 9/9 in 156 seconds. Full verification reported all OK (495 frontend tests; lint had tracked warnings, no errors). |
+| 3 | Executed J1-02, J2-01 and three FS MOCK cases; wrote report and traceability rows. | Remote appliance inspection; restricted smoke; plugin validation, SMTP, settings/Nagios-writer/status/plugin-services pytest suites | J1-02, J2-01, J4-08, J5-08 and J7-09 passed. No findings were filed. |
+| 4 | Rendered the paper-result tables and verified QA documentation. | `python3 -I scripts/render_qa_case_tables.py --write`; `scripts/verify.sh docs` | Docs verification passed. |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/vmlab status`
-- Result (first failing lines, or "green"): Green: appliance running; `os-nagios-ready` exists and its base-step stamp matches installer commit `2859361`.
-- Hypothesis: The fresh appliance is ready. Completing bootstrap setup and the restricted discovery smoke will establish B0 before any FS case is claimed.
-- Next action (one specific step, not "continue"): Run `scripts/vmlab setup-admin`, then `scripts/vmlab smoke`, and inspect its sanitized outcome before claiming J1-02 or J2-01.
+- Last check run (exact command): `server/.venv/bin/python -m pytest -c server/pytest.ini server/tests/unit/test_settings_permissions.py server/tests/unit/test_create_host_cfg.py server/tests/unit/test_status.py server/tests/unit/test_plugin_services_api.py`
+- Result (first failing lines, or "green"): Green: 160 passed. The restricted VM smoke and J1-02 inspection also passed.
+- Hypothesis: The report/index/matrix/progress documentation is ready for docs verification. A future FS QA round must read the current lab state before claiming J4-01 or another untested case.
+- Next action (one specific step, not "continue"): Start a new owner-authorized QA run for the next untested FS case, first re-reading this progress file and checking VM/discovery state.
 
 ## Decisions and notes
 
 - User authorized test-VM cleanup and selected only removal of the two inaccessible VirtualBox registrations. They were unregistered without deleting usable VM disks.
 - Required Pinpoint lab VMs: `pinpoint-qa-appliance` and targets `pinpoint-demo-web01`, `web02`, `app01`, `snmp01`, `legacy01`. Do not alter other registered test VMs.
 - The `qa-run.md` workflow allows at most five test rounds in this session. Human-labelled FS cases (J1-06 and J5-11) remain untested without attributable human evidence.
+- The first smoke attempt inherited a running scan and timed out after 300 seconds. It was never used as product evidence. The scan was stopped through `/api/system/network-discovery/stop`, reached `Interrupted`, and settings were set/read back as exactly `10.77.0.0/28`; the subsequent smoke passed 9/9.
+- The test run has no active service/plugin/user mutations to restore: targeted test suites were isolated and J1/J2 observations did not mutate product state beyond the discovery baseline.
 - Live scans must remain exactly within `10.77.0.0/28`; never run the libvirt harness.
