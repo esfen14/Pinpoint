@@ -1,7 +1,11 @@
 # Issue #85: Add a fix-found loop that fixes QA-found issues and returns cases to retest
 
 Branch: `issue-63-qa-loop-readiness` (Phase 3 evidence carried on PR #88)
-Status: ready-for-review
+Status: ready-for-review (not blocked)
+
+Issue #85 has no remaining implementation or `qa-found` issue dependency. Its
+changes share PR #88 with issue #63, so final delivery waits only for that PR's
+main-branch conflict and CI state to be resolved.
 
 ## Finish condition
 
@@ -38,7 +42,7 @@ Status: ready-for-review
 - Last check run: `scripts/verify.sh all` with local-socket/DNS permission.
 - Result: green: docs including 7 fix-found contracts; backend 2315 passed, 14 skipped; frontend 492 passed, build passed, lint 0 errors/25 tracked warnings.
 - Hypothesis: all #85 finish conditions are covered by corrected historical evidence, scratch queue fixtures and executable contract checks.
-- Next action: keep #85 ready for review; delete this shared progress file only when PR #88 is made ready after #63's CI requirement is satisfied.
+- Next action: keep #85 ready for review; delete this shared progress file only when PR #88 is reconciled with main and made ready after #63's CI requirement is satisfied.
 
 ## Decisions and notes
 
@@ -48,6 +52,8 @@ Status: ready-for-review
 - The planted J2-labelled assertion is deliberately false workflow evidence, not a `qa-found` product issue. It does not change the real J2-01 result.
 - PR #91 was opened unmerged by the agent and later merged by a human. Its closed synthetic issue supplies a scratch-only handoff example; it does not prove a J2-08 fix.
 - The queue's `needs-decision` and open-PR skip paths are exercised by scratch fixtures and enforced by `scripts/test_fix_found_workflow.py`, avoiding more fake GitHub issues.
+- #85 is not blocked. The shared PR's merge conflict and missing CI checks are #63
+  integration work, not missing fix-found behavior.
 
 ### 2026-10-11 resumed audit
 

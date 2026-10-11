@@ -1,7 +1,12 @@
 # Issue #63: Complete QA loop readiness
 
 Branch: `issue-63-qa-loop-readiness`
-Status: in-progress
+Status: in-progress (not blocked)
+
+The planned `qa-found` case is no longer an issue dependency. The planted failure
+was deliberately synthetic and proved the workflow without creating a product issue.
+The remaining work is repository integration: PR #88 currently conflicts with main
+and reports no CI checks.
 
 ## Finish condition
 
@@ -10,7 +15,7 @@ Status: in-progress
 - [x] Labels, draft severity rubric and enforceable lab/browser boundaries.
 - [x] Exact-pinned Playwright, credential-safe role setup, Vitest exclusion and both-role live smoke passes.
 - [x] Complete the planted-failure J2/J3 dry run and sanitized report; both expected failures are recorded without filing a product issue.
-- [ ] Full verification and CI green: local `scripts/verify.sh all` is green; PR #88 currently reports no CI checks and remains draft.
+- [ ] Full verification and CI green: local `scripts/verify.sh all` is green; PR #88 is draft, conflicts with main and currently reports no CI checks.
 
 ## Plan
 
@@ -23,7 +28,7 @@ Status: in-progress
 - [x] Complete qa-run progress validation, safety, issue search and merged-fix retest semantics.
 - [x] Complete role setup, forced-change handling, mock validation, repeatable Staff provisioning and teammate installation instructions.
 - [x] Keep the broader incomplete J2/J3 acceptance cases recorded as partial; they are outside the single planted-failure round required by #63.
-- [ ] Resolve PR #88's missing CI checks and update its checklist with only observed results.
+- [ ] Reconcile PR #88 with main, obtain the required CI checks and update its checklist with only observed results.
 
 ## Round log
 
@@ -38,8 +43,8 @@ Status: in-progress
 
 - Last check run: `scripts/verify.sh all` with local-socket/DNS permission.
 - Result: green: docs contracts; backend 2315 passed, 14 skipped; frontend 492 passed, build passed, lint 0 errors/25 tracked warnings.
-- Hypothesis: implementation, live role coverage, planted-failure evidence and full local verification are complete; only PR CI evidence remains.
-- Next action: determine why PR #88 has no reported CI checks and get the required jobs running; keep the PR draft until they are green.
+- Hypothesis: implementation, live role coverage, planted-failure evidence and full local verification are complete; only shared-branch integration and PR CI evidence remain.
+- Next action: reconcile PR #88 with main, push the resolved branch and get the required jobs running; keep the PR draft until they are green.
 
 ## Decisions and notes
 
@@ -154,5 +159,6 @@ and browser safety was unenforced are superseded by the verified role-smoke evid
 
 ### Current state
 
-- #63 is not blocked. The only unticked finish item is CI: PR #88 currently reports no checks.
+- #63 is not blocked and has no `qa-found` dependency. The only unticked finish item
+  is integration/CI: PR #88 currently conflicts with main and reports no checks.
 - No product code, scratch assertion or lab process remains unfinished or running. The temporary Staff account remains only on the disposable appliance and is reset safely by `scripts/vmlab setup-restricted`.
