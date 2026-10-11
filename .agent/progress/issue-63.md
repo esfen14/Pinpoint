@@ -22,8 +22,8 @@ Status: in-progress
 - [x] Test-first complete traceability checker and matrix; integrate docs drift check.
 - [x] Complete qa-run progress validation, safety, issue search and merged-fix retest semantics.
 - [x] Complete role setup, forced-change handling, mock validation, repeatable Staff provisioning and teammate installation instructions.
-- [ ] Keep the broader incomplete J2/J3 acceptance cases recorded as partial; they are outside the single planted-failure round required by #63.
-- [ ] Update PR #88 with only the observed role-smoke and planted-failure results after explicit approval; CI currently has no reported checks.
+- [x] Keep the broader incomplete J2/J3 acceptance cases recorded as partial; they are outside the single planted-failure round required by #63.
+- [ ] Resolve PR #88's missing CI checks and update its checklist with only observed results.
 
 ## Round log
 

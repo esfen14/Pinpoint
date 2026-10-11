@@ -29,16 +29,16 @@ Status: ready-for-review
 | 1 | Created workflow and adapters | `scripts/check_agent_progress.py` | Initial draft created |
 | 2 | Added queue rules and synthetic demonstration | `gh issue list --label qa-found --state open` | Issue #90 was closed as incorrectly filed; PR #91 was later merged; no product fix |
 | Recovery 1 | Corrected queue, gh compatibility, guardrails, human merge gate and overstated report | `scripts/verify.sh docs` | green; live/synthetic acceptance incomplete |
-| Recovery 2 | Added executable documentation contracts for queue, skips, limits, permission stop, real-merge handoff and human merge gate | `python3 -I scripts/test_fix_found_workflow.py`; `scripts/verify.sh docs` | 6 contract tests pass; external synthetic issue/PR demonstration still pending |
+| Recovery 2 | Added executable documentation contracts for queue, skips, limits, permission stop, real-merge handoff and human merge gate | `python3 -I scripts/test_fix_found_workflow.py`; `scripts/verify.sh docs` | contract tests pass; later expanded to 7 checks |
 | 3 | Repaired progress structure for PR verification | `scripts/verify.sh docs` | green |
 | Recovery 3 | Ran the planted assertion twice and reconciled #90/#91 as scratch-only workflow evidence | two `scripts/playwright-lab --project admin -g 'J2-01 planted failure'` runs; PR #91 merge evidence; workflow contract tests | expected assertion failed twice; PR was human-merged; scratch row moves to retest while product J2-08 remains unchanged |
 
 ## State for the next session
 
 - Last check run: `scripts/verify.sh all` with local-socket/DNS permission.
-- Result: green: docs including 6 fix-found contracts; backend 2315 passed, 14 skipped; frontend 492 passed, build passed, lint 0 errors/25 tracked warnings.
+- Result: green: docs including 7 fix-found contracts; backend 2315 passed, 14 skipped; frontend 492 passed, build passed, lint 0 errors/25 tracked warnings.
 - Hypothesis: all #85 finish conditions are covered by corrected historical evidence, scratch queue fixtures and executable contract checks.
-- Next action: re-run docs verification, checkpoint this correction, and leave PR #88 ready for review of the #85 portion.
+- Next action: keep #85 ready for review; delete this shared progress file only when PR #88 is made ready after #63's CI requirement is satisfied.
 
 ## Decisions and notes
 
