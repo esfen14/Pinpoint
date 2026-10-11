@@ -5,13 +5,15 @@ The master plan for the QA agent loop: every case has a stable ID, an ISO/IEC
 What the cases are *for* (journeys, invariants, scope, decisions) is in
 [`QA_Journeys_and_Scope.md`](QA_Journeys_and_Scope.md); read it first, especially §4
 (out of scope) and §7 (known defects). Results go in
-[`docs/test-runs/`](../test-runs/README.md), never in this file.
+[`docs/test-runs/`](../test-runs/README.md). The generated paper table holds only
+the current per-case status; immutable run results and evidence remain in test runs.
 
 For paper-format tables grouped by ISO characteristic and a separate current-result
 ledger, see [`QA_Paper_Test_Case_Tables.md`](QA_Paper_Test_Case_Tables.md). Those
 tables are generated from this plan and the traceability matrix; do not edit them by hand.
 
-**Status:** draft; reconciliation against `main` at `a55ae595` started 2026-10-11 (coverage updates pending), aligned with the October 2026 paper draft (162 pages). Sources are named
+**Status:** draft; reconciled against `main` at `b11e6dcb` on 2026-10-11, aligned
+with the October 2026 paper draft (162 pages). Sources are named
 per case; where the journeys file and a spec disagree, the journeys file §0 order applies.
 
 ---
@@ -791,7 +793,7 @@ The black-box cases restate the paper's acceptance tests (Core Functionality Tes
 | BB-02 | Agent Installation: deployment commands sent to hosts → monitoring agent installed and configured automatically | J3-02 and J3-05 pass | FS | VM |
 | BB-03 | Device Monitoring: client device connected to the monitoring server → system detects host availability and status | J2-03 and J7-07 pass | FS | VM |
 | BB-04 | Service Monitoring: monitoring service enabled → system displays service health and status | J4-03 and J4-04 pass | FS | VM |
-| BB-05 | Alert Notification System: service failure detected → system generates alert notification | J5-05 and J5-03 pass (J5-01 covers a host; J5-08 stays `Blocked` until B8) | RE | VM |
+| BB-05 | Alert Notification System: service failure detected → system generates alert notification | J5-05 and J5-03 pass (J5-01 covers a host). J5-08 verifies the SMTP contract and J5-11 records human inbox delivery separately | RE | VM |
 | BB-06 | Network Discovery: discovered devices → structured view of the network | J2-01 and J2-03 pass | FS | VM |
 | BB-07 | Dashboard Visualization: data collected from devices → summarized network health information | J7-01 and J7-02 pass (J7-03 and J7-06 add detail) | FS | VM |
 
@@ -839,7 +841,7 @@ case here with a new ID and link it; do not renumber the appendix.
 | J1-06 | Physical console, the installer ISO's interactive screens |
 | J8-05 | Judging a printed page; the browser's PDF dialog |
 | J8-04 (Excel opens the file) | Needs Excel |
-| J5-08 (when built) | A real mail account |
+| J5-11 | A real mail account and inbox confirmation |
 | PT-05 sign-off at release (optional) | The loop runs 4 h; a person may extend to 24 h for release |
 
 ---

@@ -5,9 +5,9 @@ Status: in-progress (not blocked)
 
 The planned `qa-found` case is no longer an issue dependency. The planted failure
 was deliberately synthetic and proved the workflow without creating a product issue.
-The remaining work is delivery integration: main is merged and fully verified in
-the local checkout, but the merge is intentionally unpushed. PR #88 therefore still
-conflicts with main, has a stale checklist and reports no CI checks.
+The remaining work is remote delivery only: main is merged locally and the release
+verification is green. PR #88 still needs the owner to release the local branch so
+GitHub can recalculate its mergeability and run CI.
 
 ## Finish condition
 
@@ -16,7 +16,7 @@ conflicts with main, has a stale checklist and reports no CI checks.
 - [x] Labels, draft severity rubric and enforceable lab/browser boundaries.
 - [x] Exact-pinned Playwright, credential-safe role setup, Vitest exclusion and both-role live smoke passes.
 - [x] Complete the planted-failure J2/J3 dry run and sanitized report; both expected failures are recorded without filing a product issue.
-- [ ] Full verification and CI green: the main-integrated local branch passes `scripts/verify.sh all`; PR #88 remains draft/conflicting with no checks until the remaining work is reviewed and a push is authorized.
+- [ ] Full verification and CI green: the main-integrated local branch passes `scripts/verify.sh all`; remote PR #88 CI has not run because the release branch has not yet been pushed.
 
 ## Plan
 
@@ -29,7 +29,7 @@ conflicts with main, has a stale checklist and reports no CI checks.
 - [x] Complete qa-run progress validation, safety, issue search and merged-fix retest semantics.
 - [x] Complete role setup, forced-change handling, mock validation, repeatable Staff provisioning and teammate installation instructions.
 - [x] Keep the broader incomplete J2/J3 acceptance cases recorded as partial; they are outside the single planted-failure round required by #63.
-- [ ] Review the remaining work, then push the verified main integration, update PR #88's stale checklist and obtain the required CI checks.
+- [ ] Owner releases the verified branch, updates PR #88's stale checklist, and records green CI checks.
 
 ## Round log
 
@@ -40,13 +40,14 @@ conflicts with main, has a stale checklist and reports no CI checks.
 | Recovery 3 | Added fix-found contract checks and executed the planted failure twice; removed scratch assertion | `scripts/verify.sh all` with required socket/DNS permissions | all green: docs, 2315 backend passed/14 skipped, 492 frontend passed/build/lint with 25 tracked warnings |
 | Recovery 4 | Corrected planted-failure handling and audited PR state | two matching planted runs; `gh pr checks 88` | sanitized workflow report added; no product issue required; PR #88 has no reported checks |
 | Recovery 5 | Merged `origin/main` locally and audited the issue/PR checklists; did not push at the owner's direction | `scripts/verify.sh all` with required socket/DNS permissions | all green on the integrated checkout: docs, 2315 backend passed/14 skipped, 492 frontend passed/build/lint with 25 tracked warnings |
+| Release 6 | Re-fetched main, simulated the merge, ran the release suite, and corrected QA-document contradictions | `git merge-tree`; `scripts/verify.sh all` | no merge conflict markers; docs green; 2315 backend passed/14 skipped; 492 frontend passed/build/lint with 25 tracked warnings |
 
 ## State for the next session
 
 - Last check run: `scripts/verify.sh all` with local-socket/DNS permission.
-- Result: green: docs contracts; backend 2315 passed, 14 skipped; frontend 492 passed, build passed, lint 0 errors/25 tracked warnings.
-- Hypothesis: implementation, live role coverage, planted-failure evidence and full local verification are complete; the remote PR description and branch state have not caught up.
-- Next action: review the remaining work with the owner. Do not push the local main merge or update PR #88 until that review is complete.
+- Result: green: docs contracts and merge simulation; backend 2315 passed, 14 skipped; frontend 492 passed, build passed, lint 0 errors/25 tracked warnings.
+- Hypothesis: implementation, live role coverage, planted-failure evidence, QA-table consistency and full local verification are complete.
+- Next action: after the owner releases the branch, check PR #88's CI and update this file only with the observed remote result.
 
 ## Decisions and notes
 
@@ -162,6 +163,6 @@ and browser safety was unenforced are superseded by the verified role-smoke evid
 ### Current state
 
 - #63 is not blocked and has no `qa-found` dependency. The only unticked finish item
-  is delivery/CI: the locally integrated branch is green, while remote PR #88 still
-  conflicts with main and reports no checks because the merge has not been pushed.
+  is remote delivery/CI. Local release evidence is complete, including a clean merge
+  simulation against `origin/main`; PR #88 has not yet received the released head.
 - No product code, scratch assertion or lab process remains unfinished or running. The temporary Staff account remains only on the disposable appliance and is reset safely by `scripts/vmlab setup-restricted`.

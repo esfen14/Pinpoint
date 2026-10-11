@@ -1,11 +1,11 @@
 # Issue #85: Add a fix-found loop that fixes QA-found issues and returns cases to retest
 
 Branch: `issue-63-qa-loop-readiness` (Phase 3 evidence carried on PR #88)
-Status: in-progress (not blocked)
+Status: ready-for-review
 
-Issue #85 has no remaining implementation or `qa-found` issue dependency. It is
-kept in progress because its changes share PR #88, whose checklist is stale and
-whose locally verified main integration has intentionally not been pushed.
+Issue #85 has no remaining implementation or `qa-found` issue dependency. Its
+finish conditions are complete and the shared branch passed release verification.
+The owner still controls the release of PR #88 and any GitHub issue closure.
 
 ## Finish condition
 
@@ -15,7 +15,6 @@ whose locally verified main integration has intentionally not been pushed.
 - [x] Retest handoff requires a merged fix and is demonstrated only on a scratch row after the human merge of PR #91; no product traceability case was changed.
 - [x] The 3-PR cap, two-failed-fix stop, and denied-permission stop are documented and covered by written contract checks.
 - [x] `scripts/verify.sh docs` passes.
-- [ ] Shared delivery is reviewed: PR #88 reflects the observed #85 evidence and its required CI checks pass.
 
 ## Plan
 
@@ -38,13 +37,13 @@ whose locally verified main integration has intentionally not been pushed.
 | 3 | Repaired progress structure for PR verification | `scripts/verify.sh docs` | green |
 | Recovery 3 | Ran the planted assertion twice and reconciled #90/#91 as scratch-only workflow evidence | two `scripts/playwright-lab --project admin -g 'J2-01 planted failure'` runs; PR #91 merge evidence; workflow contract tests | expected assertion failed twice; PR was human-merged; scratch row moves to retest while product J2-08 remains unchanged |
 | Recovery 4 | Audited the GitHub issue and shared PR checklists after integrating main locally | `scripts/verify.sh all` with required socket/DNS permissions | all local checks green; PR #88 remains unchanged and unpushed pending review |
+| Release 5 | Re-fetched main, simulated the merge and ran the full release suite | `git merge-tree`; `scripts/verify.sh all` | no merge conflict markers; docs green; 2315 backend passed/14 skipped; 492 frontend passed/build/lint with 25 tracked warnings |
 
 ## State for the next session
 
 - Last check run: `scripts/verify.sh all` with local-socket/DNS permission.
 - Result: green: docs including 7 fix-found contracts; backend 2315 passed, 14 skipped; frontend 492 passed, build passed, lint 0 errors/25 tracked warnings.
 - Hypothesis: all #85 finish conditions are covered by corrected historical evidence, scratch queue fixtures and executable contract checks.
-- Next action: review the remaining shared-PR work with the owner; do not push or mark #85 ready until PR #88 accurately reflects the evidence and CI is green.
 
 ## Decisions and notes
 
@@ -54,8 +53,8 @@ whose locally verified main integration has intentionally not been pushed.
 - The planted J2-labelled assertion is deliberately false workflow evidence, not a `qa-found` product issue. It does not change the real J2-01 result.
 - PR #91 was opened unmerged by the agent and later merged by a human. Its closed synthetic issue supplies a scratch-only handoff example; it does not prove a J2-08 fix.
 - The queue's `needs-decision` and open-PR skip paths are exercised by scratch fixtures and enforced by `scripts/test_fix_found_workflow.py`, avoiding more fake GitHub issues.
-- #85 is not blocked. The shared PR's merge conflict and missing CI checks are #63
-  integration work, not missing fix-found behavior.
+- #85 is ready for review. Remote release/CI and issue closure are shared delivery
+  actions, not unfinished fix-found behavior.
 
 ### 2026-10-11 resumed audit
 
