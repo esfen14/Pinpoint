@@ -1,7 +1,8 @@
 # QA finding loop
 
-Read `AGENTS.md`, `docs/qa/QA_Journeys_and_Scope.md`, the master test plan,
-traceability matrix, `docs/test-runs/README.md`, and the QA rules in
+Read `AGENTS.md`, `docs/qa/QA_Journeys_and_Scope.md`, the master test plan
+(`docs/qa/QA_Test_Plan.md`), `docs/qa/Requirements_Traceability.md`,
+`docs/qa/QA_Paper_Test_Case_Tables.md`, `docs/test-runs/README.md`, and the QA rules in
 `spec files/Agent_Workflow_and_CI.md`. This workflow finds and retests defects;
 it never fixes product code or weakens the case's expected result.
 
@@ -54,11 +55,21 @@ HUMAN cases remain untested until a person supplies attributable evidence.
 7. Create a report with `scripts/new_test_run.sh <unique-slug> docs/qa/QA_Test_Plan.md`,
    fill actual results, and index it in `docs/test-runs/README.md`. Raw auth state,
    traces, screenshots and database extracts stay outside committed evidence.
-8. Update matrix: `pass` only for full observed coverage, `fail-filed` with the real
-   issue and evidence, `needs-decision` with the question. Skipped/blocked and partial
-   observations stay `untested` with reasons. `won't-do` requires an explicit scope
-   decision, not an agent's inability to execute. Restore the case's mutations.
-9. Update progress, verify docs and checkpoint with
+8. Synchronize the result artifacts before checkpointing:
+   - Update `docs/qa/Requirements_Traceability.md`: `pass` only for full observed
+     coverage; `fail-filed` with the real issue and evidence; `needs-decision` with
+     the question. Skipped/blocked and partial observations stay `untested` with
+     reasons. `won't-do` requires an explicit scope decision, not an agent's inability
+     to execute. Every changed row links the new report and, where applicable, the
+     finding or decision issue.
+   - Regenerate, never hand-edit, `docs/qa/QA_Paper_Test_Case_Tables.md` with
+     `python3 -I scripts/render_qa_case_tables.py --write`. Inspect the rendered
+     result so its case status and note match the traceability row.
+   - Restore the case's mutations, run `git diff --check`, then run
+     `scripts/verify.sh docs`. A failed render or docs check blocks the checkpoint;
+     correct the records rather than leaving one artifact stale.
+9. Update progress with the report path, traceability status, paper-table regeneration
+   and docs-check result, then checkpoint with
    `scripts/agent_checkpoint.sh <n> '<case and observed result>'`.
 
 ## Retest handoff
@@ -87,7 +98,7 @@ issue, PR and affected cases; confirm the test environment contains that SHA bef
 execution. Preserve original failure evidence. A failed retest links the original
 finding; after two failed fixes for the same case, mark needs-decision and stop on it.
 
-## Stop and report
+## Complete the tracking issue and report
 
 Stop at five rounds, denied permissions, unsafe/unavailable environment or an owner
 lab claim. Checkpoint with exact unfinished work; leave PR draft. Continue unrelated
@@ -96,4 +107,18 @@ safe cases when only a product decision is blocking. Never merge a PR.
 The finding pass is accounted for when every in-scope row is `pass`, `fail-filed`,
 `needs-decision` or explicitly authorized `won't-do` (none untested/retest). This is
 not release approval: unresolved failures and decisions still need human triage.
-Report case/result/evidence/issue and restoration state, plus what was not verified.
+
+For a tracking issue that covers the whole test plan, do not treat that accounting
+shortcut as completion: every master-plan case, including HUMAN cases, must have the
+result and attributable evidence required by the tracking issue's finish condition.
+Before resolving that issue, verify that every executed case has a sanitized run report
+and index entry, its traceability row is current, the paper table was regenerated, and
+`scripts/verify.sh docs` is green. Re-read the issue and its comments; if its finish
+condition is narrower than the whole plan, close only the work it actually covers.
+
+When the tracking issue's finish condition is fully met, open the documentation PR
+with `Closes #<n>` in its body and the report, matrix and rendered-table changes in the
+diff. GitHub automatically closes the tracking issue when the PR merges; do not close
+it directly or claim completion while the PR is draft, checks are red, a HUMAN result
+is missing, or any required row is still `untested` or `retest`. Never merge the PR. Report
+case/result/evidence/issue and restoration state, plus what was not verified.
