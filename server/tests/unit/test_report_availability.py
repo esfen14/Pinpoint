@@ -9,6 +9,7 @@ from app.history_models import HostStateType
 AVAILABILITY = "/api/system/report/availability"
 HOSTS_BY_OS = "/api/system/report/hosts-by-os"
 REQUEST = "app.api.system.report.request_host_availability_range"
+NETWORK_REQUEST = "app.api.system.network_health_activity.request_host_availability_range"
 
 
 def _rows():
@@ -97,3 +98,28 @@ class TestReportAvailabilityNagiosSource:
             response = logged_in_client.get(HOSTS_BY_OS)
 
         assert response.status_code == 502
+
+    def test_network_health_and_report_use_equivalent_availability_semantics(
+        self, logged_in_client, db_session, seeded_permissions
+    ):
+        """Equivalent Nagios durations produce the same percentage in both routes."""
+        rows = [{
+            "hostname": "web-01",
+            "time_up": 80,
+            "time_down": 15,
+            "time_unreachable": 5,
+            "time_indeterminate": 100,
+        }]
+        with (
+            patch(REQUEST, return_value=rows),
+            patch(NETWORK_REQUEST, return_value=rows),
+        ):
+            report_response = logged_in_client.get(AVAILABILITY)
+            health_response = logged_in_client.get(
+                "/api/system/network-health/availability?days=1"
+            )
+
+        assert report_response.status_code == 200
+        assert health_response.status_code == 200
+        assert report_response.get_json()["data"]["summary"]["uptime_pct"] == 80.0
+        assert health_response.get_json()["data"]["availability_pct"] == 80.0
