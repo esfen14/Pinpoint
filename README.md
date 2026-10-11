@@ -176,10 +176,9 @@ flask db upgrade
   run `flask recover-bootstrap-admin` from `server/` (activate its virtual
   environment first). It privately prompts twice for a policy-compliant
   temporary password; no password belongs on the command line or in a pipe.
-  The installer must expose the corresponding appliance wrapper as
-  `sudo pinpoint recover-bootstrap-admin`, locating the deployed application
-  and virtual environment; it is installer-owned and is not yet present in the
-  installer repository. The command identifies only the uniquely
+  A future installer-owned convenience wrapper is tracked separately; until it
+  lands, invoke the command from the deployed application environment. The
+  command identifies only the uniquely
   earliest-created account, refuses ambiguous or missing identity without
   changes, preserves account status/role/data and a pending first-run setup
   requirement, then requires a password change at the next sign-in. Existing

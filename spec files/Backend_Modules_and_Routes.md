@@ -44,11 +44,10 @@ refuses an existing user); it never uses email, user ID, or `Needs_Setup` as
 identity. Missing or tied earliest accounts fail without a database change.
 Recovery changes only the password hash and `Must_Change_Password`, preserves
 `Needs_Setup`, status, role, permissions and related records, and writes a
-password-free activity event. The installer must expose it as
-`sudo pinpoint recover-bootstrap-admin`; that installer-owned wrapper must find
-the application and virtual environment, but is not yet present in the installer
-repository. Existing browser sessions retain their normal configured timeout;
-immediate invalidation is not part of this command.
+password-free activity event. An installer-owned convenience wrapper for
+`sudo pinpoint recover-bootstrap-admin` is a separate follow-up; it does not
+affect this backend command's contract. Existing browser sessions retain their
+normal configured timeout; immediate invalidation is not part of this command.
 
 ## Response and request conventions
 
