@@ -31,7 +31,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 1. [x] Add precise backend regression coverage in `server/tests/unit/test_management.py` for both rejected super-admin status values, their message, and a non-status edit of the same account; run the focused test.
 2. [x] Add UI regression coverage in `client/src/test/ManageAccountsPage.test.tsx` for the disabled super-admin status control; run the focused frontend test.
 3. [x] Audit every `User.Status` mutation in `server/app/` and confirm the account update route is the only mutable application path; record the result and run the narrow backend/frontend checks.
-4. [ ] Update `spec files/Backend_Modules_and_Routes.md`, `spec files/Frontend_Modules_and_Routes.md`, and `spec files/Implementation_Status.md` to document the shipped super-admin guard; run `scripts/verify.sh docs`.
+4. [x] Update `spec files/Backend_Modules_and_Routes.md`, `spec files/Frontend_Modules_and_Routes.md`, and `spec files/Implementation_Status.md` to document the shipped super-admin guard; run `scripts/verify.sh docs`.
 5. [ ] Re-read issue #72 and its comments, verify every finish-condition item with current evidence, then run `scripts/verify.sh all`.
 
 ## Round log
@@ -44,15 +44,16 @@ One row per loop round, newest last.
 | 1 | Added parameterized rejected-status assertions (including the response message) and an allowed non-status edit for the first account. | `cd server && ./.venv/bin/python -m pytest tests/unit/test_management.py::TestEditAccount -q` | 8 passed. |
 | 2 | Added a super-admin API fixture and UI assertion; associated the Status label with its select after the new accessibility-aware test first failed. | `cd client && npm run test -- ManageAccountsPage.test.tsx` | 25 passed. |
 | 3 | Audited application `User.Status` assignments; only the guarded account-update route mutates an existing user's status. | Focused backend and frontend regression tests | 8 backend tests and 25 frontend tests passed. |
+| 4 | Documented the `is_super_admin` response field, protected status-update contract, and disabled form control. | `scripts/verify.sh docs` | Passed. |
 
 ## State for the next session
 
 Everything a fresh session needs to continue without redoing work.
 
-- Last check run (exact command): `cd server && ./.venv/bin/python -m pytest tests/unit/test_management.py::TestEditAccount -q; cd ../client && npm run test -- ManageAccountsPage.test.tsx`
-- Result (first failing lines, or "green"): green — backend 8 passed in 2.06s; frontend 25 passed in 2.64s.
-- Hypothesis: The status guard's route/UI contract is proven; the owning specifications and implementation inventory need explicit coverage before docs verification.
-- Next action (one specific step, not "continue"): Document the super-admin `is_super_admin` account field, status-update guard, and disabled edit-form behavior in the owning specifications and implementation status.
+- Last check run (exact command): `scripts/verify.sh docs`
+- Result (first failing lines, or "green"): green — docs, route drift, QA validators and progress-file validation passed.
+- Hypothesis: All scoped work is complete; re-read issue #72/comments and run the full CI-equivalent verifier before marking the finish condition.
+- Next action (one specific step, not "continue"): Re-read issue #72 and comments through GitHub REST, then run `scripts/verify.sh all`.
 
 ## Decisions and notes
 
