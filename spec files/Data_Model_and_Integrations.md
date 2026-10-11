@@ -162,6 +162,7 @@ These sources are intentionally not interchangeable:
 |---|---|---|
 | What is happening now? | Latest rows in `history.db` | `statistics.py`, dashboard, host, service, and network-health routes |
 | What changed between two times? | Nagios `archivejson.cgi` event log | `nagios/notifications.py`, history/report routes |
+| What was host availability during a reporting period? | Nagios `archivejson.cgi` availability durations | Network Health and Reports availability routes; no snapshot fallback |
 | Who acknowledged something in Pinpoint? | `AlertAcknowledgement` and `AckHistory` in `system.db` | Acknowledgement and history routes |
 | Was a notification sent? | Nagios archive notification events | Notification/history/report routes |
 

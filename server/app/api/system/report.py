@@ -64,6 +64,7 @@ from app.nagios.notifications import (
     request_alert_count_range,
     request_notifications_range,
     request_notification_count_range,
+    request_host_availability_range,
     normalize_alert,
     normalize_notification,
     fill_previous_states,
@@ -168,6 +169,42 @@ def _period_meta(period, start_dt, end_dt):
     }
 
 
+def _availability_rows(start_ts, end_ts, hostname=None):
+    """Read host availability from Nagios archivejson or raise a route error."""
+    rows = request_host_availability_range(start_ts, end_ts, hostname=hostname)
+    if rows is None:
+        raise RuntimeError("Unable to read availability from Nagios.")
+    return list(rows.values()) if isinstance(rows, dict) else list(rows)
+
+
+def _availability_host(row):
+    """Normalize one Nagios availability row to the existing report shape."""
+    hostname = row.get("hostname") or row.get("host_name") or row.get("name") or ""
+    up = float(row.get("time_up") or 0)
+    down = float(row.get("time_down") or 0)
+    unreachable = float(row.get("time_unreachable") or 0)
+    known = up + down + unreachable
+    state = row.get("state") or row.get("current_state") or row.get("status")
+    if isinstance(state, int):
+        state = {0: "Up", 1: "Down", 2: "Down", 4: "Unreachable"}.get(state, "Unknown")
+    state = str(state or "Unknown").replace("UP", "Up").replace("DOWN", "Down").replace("UNREACHABLE", "Unreachable")
+    return {
+        "hostname": hostname,
+        "state": state,
+        "uptime_pct": round(up / known * 100, 2) if known else None,
+        "total_snapshots": int(known),
+        "last_check": row.get("last_check"),
+        "last_state_change": row.get("last_state_change"),
+        "_up": up,
+        "_known": known,
+    }
+
+
+def _clean_availability_host(host):
+    """Remove internal duration fields before serializing a report row."""
+    return {key: value for key, value in host.items() if not key.startswith("_")}
+
+
 # ---------------------------------------------------------------------------
 # 1. Host Availability
 # ---------------------------------------------------------------------------
@@ -211,74 +248,20 @@ def report_host_availability():
 
         period = request.args.get("period", "last_24h").strip().lower()
 
-        # All snapshots within the window (need every row for uptime %)
-        all_snapshots = db.session.execute(
-            sa.select(
-                HostStatus.Hostname,
-                HostStatus.Current_State,
-                HostStatus.Last_Check,
-                HostStatus.Last_State_Change,
-            )
-            .where(
-                HostStatus.Timestamp >= start_dt,
-                HostStatus.Timestamp <= end_dt,
-            )
-            .order_by(HostStatus.Hostname.asc(), HostStatus.Last_Check.asc())
-        ).all()
-
-        # Aggregate per-host stats
-        host_stats: dict[str, dict] = {}
-
-        for snap in all_snapshots:
-            h = snap.Hostname
-            if h not in host_stats:
-                host_stats[h] = {
-                    "total": 0,
-                    "up": 0,
-                    "last_check": None,
-                    "last_state_change": None,
-                    "state": None,
-                }
-            s = host_stats[h]
-            s["total"] += 1
-            if snap.Current_State.value == "Up":
-                s["up"] += 1
-            # The rows are ordered by Last_Check asc, so last iteration = most recent
-            s["last_check"] = snap.Last_Check
-            s["last_state_change"] = snap.Last_State_Change
-            s["state"] = snap.Current_State.value
-
-        hosts = []
-        state_counts = Counter()
-        total_up_snaps = 0
-        total_snaps = 0
-
-        for hostname, s in sorted(host_stats.items()):
-            total = s["total"]
-            up = s["up"]
-            uptime_pct = round((up / total) * 100, 2) if total > 0 else None
-            state = s["state"] or "Unknown"
-
-            state_counts[state] += 1
-            total_up_snaps += up
-            total_snaps += total
-
-            hosts.append({
-                "hostname":          hostname,
-                "state":             state,
-                "uptime_pct":        uptime_pct,
-                "total_snapshots":   total,
-                "last_check":        s["last_check"].isoformat() if s["last_check"] else None,
-                "last_state_change": (
-                    s["last_state_change"].isoformat()
-                    if s["last_state_change"] else None
-                ),
-            })
-
-        overall_uptime = (
-            round((total_up_snaps / total_snaps) * 100, 2)
-            if total_snaps > 0 else None
-        )
+        hostname = request.args.get("hostname") or None
+        raw_hosts = _availability_rows(start_ts, end_ts, hostname=hostname)
+        host_rows = [
+            _availability_host(row)
+            for row in raw_hosts
+            if row.get("hostname") or row.get("host_name") or row.get("name")
+        ]
+        if hostname:
+            host_rows = [host for host in host_rows if host["hostname"] == hostname]
+        hosts = [_clean_availability_host(host) for host in sorted(host_rows, key=lambda item: item["hostname"])]
+        state_counts = Counter(host["state"] for host in hosts)
+        total_known = sum(host["_known"] for host in host_rows)
+        total_up = sum(host["_up"] for host in host_rows)
+        overall_uptime = round(total_up / total_known * 100, 2) if total_known else None
 
         return success({
             "period": _period_meta(period, start_dt, end_dt),
@@ -292,10 +275,10 @@ def report_host_availability():
             "hosts": hosts,
         })
 
+    except RuntimeError as exc:
+        return error(str(exc), 502)
     except Exception:
-        current_app.logger.exception(
-            "Unexpected error in report_host_availability"
-        )
+        current_app.logger.exception("Unexpected error in report_host_availability")
         return error("An unexpected error occurred.", 500)
 
 
@@ -310,7 +293,8 @@ def report_hosts_by_os():
     """
     Host availability within the selected period, grouped by OS type.
 
-    Works identically to /report/availability but adds the OS_Type dimension
+    Uses the same Nagios-backed availability data as /report/availability and adds
+     the OS_Type dimension
     from NetworkDiscovery.  For each OS group the response includes:
       - a per-host breakdown (same as availability)
       - aggregate UP / DOWN / UNREACHABLE counts
@@ -358,6 +342,54 @@ def report_hosts_by_os():
             return err
 
         period = request.args.get("period", "last_24h").strip().lower()
+        hostname = request.args.get("hostname") or None
+        raw_hosts = _availability_rows(start_ts, end_ts, hostname=hostname)
+        host_rows = [
+            _availability_host(row)
+            for row in raw_hosts
+            if row.get("hostname") or row.get("host_name") or row.get("name")
+        ]
+        if hostname:
+            host_rows = [host for host in host_rows if host["hostname"] == hostname]
+        nd_rows = db.session.execute(
+            sa.select(NetworkDiscovery.Nagios_Host_Name, NetworkDiscovery.Hostname, NetworkDiscovery.OS_Type)
+        ).all()
+        os_map = {
+            (row.Nagios_Host_Name or row.Hostname): (row.OS_Type or "Unknown")
+            for row in nd_rows
+            if row.Nagios_Host_Name or row.Hostname
+        }
+        by_os = {}
+        for host in host_rows:
+            os_type = os_map.get(host["hostname"], "Unknown")
+            by_os.setdefault(os_type, []).append(_clean_availability_host(host))
+        groups = []
+        for os_type, hosts in sorted(by_os.items()):
+            counts = Counter(host["state"] for host in hosts)
+            known = sum(host["_known"] for host in host_rows if os_map.get(host["hostname"], "Unknown") == os_type)
+            up = sum(host["_up"] for host in host_rows if os_map.get(host["hostname"], "Unknown") == os_type)
+            groups.append({
+                "os_type": os_type,
+                "total": len(hosts),
+                "up": counts.get("Up", 0),
+                "down": counts.get("Down", 0),
+                "unreachable": counts.get("Unreachable", 0),
+                "uptime_pct": round(up / known * 100, 2) if known else None,
+                "hosts": hosts,
+            })
+        total_known = sum(host["_known"] for host in host_rows)
+        total_up = sum(host["_up"] for host in host_rows)
+        return success({
+            "period": _period_meta(period, start_dt, end_dt),
+            "summary": {
+                "total_hosts": len(host_rows),
+                "up": sum(group["up"] for group in groups),
+                "down": sum(group["down"] for group in groups),
+                "unreachable": sum(group["unreachable"] for group in groups),
+                "uptime_pct": round(total_up / total_known * 100, 2) if total_known else None,
+            },
+            "by_os": groups,
+        })
 
         # ── All snapshots for every host within the window ──────────────────
         # We need ALL rows (not just the latest) to compute uptime %.
@@ -513,10 +545,10 @@ def report_hosts_by_os():
             "by_os": by_os,
         })
 
+    except RuntimeError as exc:
+        return error(str(exc), 502)
     except Exception:
-        current_app.logger.exception(
-            "Unexpected error in report_hosts_by_os"
-        )
+        current_app.logger.exception("Unexpected error in report_hosts_by_os")
         return error("An unexpected error occurred.", 500)
 
 

@@ -35,7 +35,9 @@ the normative behavior in the requirement specifications.
   preserving creation behavior; unexpected command failures remain ERROR (#47).
 - Activity, configuration, discovery, NCPA, and export logs.
 - Availability, OS, network-service, device-service, alert, and notification
-  report APIs.
+  report APIs. Host availability and hosts-by-OS reports use Nagios
+  `archivejson.cgi` durations, matching Network Health; Nagios failure returns
+  502 without snapshot fallback (#92).
 - Plugin Manager scanning, inventory, running checks, summaries, details,
   dependencies, enable/disable, validation, custom upload, command overrides,
   updates/rollback, history, and target configuration.
