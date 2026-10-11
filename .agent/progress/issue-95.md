@@ -1,7 +1,7 @@
 # Issue #95: Add backend recovery for the bootstrap administrator account
 
 Branch: `issue-95-bootstrap-admin-recovery`
-Status: in-progress
+Status: blocked
 
 ## Finish condition
 
@@ -46,18 +46,20 @@ One row per loop round, newest last.
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 1 | Added private CLI recovery, safe earliest-created bootstrap lookup, tests, and documentation. | `server/.venv/bin/python -m pytest server/tests/unit/test_bootstrap_admin_recovery.py -q`; `scripts/verify.sh docs`; `scripts/verify.sh backend` | Focused tests: 8 passed. Docs: green. Initial restricted backend run failed only local socket/DNS tests; approved rerun: 2,330 passed / 14 skipped, green. |
+| 2 | Ran final CI-equivalent verification and inspected the installer contract. | `scripts/verify.sh all`; installer tree API inspection | `all` green: docs, 2,330 backend passed / 14 skipped, 492 frontend passed, build and lint (25 existing warnings/no errors). Blocked: the installer repository has no `pinpoint` wrapper, so the appliance acceptance criterion cannot be proven from this repository. |
 
 ## State for the next session
 
 Everything a fresh session needs to continue without redoing work.
 
-- Last check run (exact command): `scripts/verify.sh backend` (approved unrestricted execution)
-- Result (first failing lines, or "green"): green — 2,330 passed, 14 skipped in 275.66s.
-- Hypothesis: All implemented behavior and documentation are ready for the required full CI-equivalent verification.
-- Next action (one specific step, not "continue"): Run `scripts/verify.sh all` and then re-read issue #95 through the REST API before marking its finish condition.
+- Last check run (exact command): `scripts/verify.sh all` (approved unrestricted execution)
+- Result (first failing lines, or "green"): green — docs, 2,330 backend passed / 14 skipped, 492 frontend passed, build and lint completed with 25 existing warnings and no errors.
+- Hypothesis: The application-side change is ready, but issue #95 cannot finish until the installer repository adds and verifies the required appliance wrapper.
+- Next action (one specific step, not "continue"): Ask the installer owner to implement `sudo pinpoint recover-bootstrap-admin`, then resume this issue to verify it on an appliance and complete the acceptance criterion.
 
 ## Decisions and notes
 
 - Issue #95 has no comments and its stated requirements are all represented in the finish condition above.
 - The installer wrapper lives in the separate installer repository. This repository will document its required installed-appliance invocation (`sudo pinpoint recover-bootstrap-admin`) without changing installer code.
 - No migration is planned: the command changes only an existing password hash and `Must_Change_Password`; sessions continue to use the configured timeout, as explicitly scoped by the issue.
+- Final issue re-read found no comments or changed requirements. The installer repository's recursive tree on `main` has no `pinpoint` wrapper, so this repository cannot honestly claim the installed-appliance command is exposed.

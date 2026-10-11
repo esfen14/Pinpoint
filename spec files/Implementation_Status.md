@@ -10,8 +10,7 @@ the normative behavior in the requirement specifications.
 - Session login/logout and current-user identity.
 - Account, role, permission-option, and per-user preference APIs, including the
   bootstrap administrator's first-run setup (`POST /api/user/complete-setup`)
-  and server-access recovery (`flask recover-bootstrap-admin`; installed
-  appliances expose `sudo pinpoint recover-bootstrap-admin`). Recovery privately
+  and server-access recovery (`flask recover-bootstrap-admin`). Recovery privately
   prompts for a policy-compliant temporary password, identifies only the unique
   earliest-created account, preserves setup/status/role/data, forces a password
   change and records a password-free audit event; current sessions continue to
@@ -75,6 +74,7 @@ the normative behavior in the requirement specifications.
 
 | Area | Current state | Required direction |
 |---|---|---|
+| Bootstrap-administrator recovery wrapper | The application command `flask recover-bootstrap-admin` is implemented, but the separate installer repository has no `pinpoint` appliance wrapper | Installer owners must add `sudo pinpoint recover-bootstrap-admin`, locating the deployed app and virtual environment without accepting a password as an argument |
 | History frontend | `/history` is routed to `HistoryPage` with a sidebar entry and the `system.history` client permission, and calls the list and detail routes. It has not been audited against `Alerts_Notifications_History_Requirements.md` | Audit the page against the requirements and fix gaps |
 | Auto-resolved acknowledgements | `AckAction.AUTO_RESOLVED` and model contract exist; status polling does not clean resolved active acknowledgements | On UP/OK transition, delete the active acknowledgement and append an AUTO_RESOLVED history record |
 | Per-host alert recipients | Every contact is in one `system_users` group used by all hosts and services | Choose recipients per host (#79), after #80 is verified on the VM lab |
