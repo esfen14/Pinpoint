@@ -18,7 +18,7 @@ import {
 type ReportView = 'availability' | 'network-services' | ExtraReportView
 
 const VIEW_TABS: { value: ReportView; label: string; description: string }[] = [
-  { value: 'availability', label: 'Host Availability', description: 'Host uptime and availability computed from live Nagios polling snapshots.' },
+  { value: 'availability', label: 'Host Availability', description: 'Host uptime and availability reported by Nagios archive data.' },
   { value: 'network-services', label: 'Network Services', description: 'Service health across every monitored host, aggregated by service name.' },
   { value: 'hosts-by-os', label: 'Hosts by OS', description: 'Host availability grouped by operating system.' },
   { value: 'device-services', label: 'Device Services', description: 'Service health for each monitored device.' },

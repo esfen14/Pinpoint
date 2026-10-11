@@ -47,6 +47,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 1 | Added failing Nagios-source tests, implemented archivejson-backed availability for both report routes, forwarded optional hostname scope, and updated an existing stable-name test to mock Nagios. | `server/.venv/bin/python -m pytest server/tests/unit/test_report_availability.py server/tests/unit/test_device_name_consumers.py::TestReportUsesTheNagiosName -q` | 7 passed; initial test-first run failed because the helper was not yet imported, then implementation passed. |
+| 2 | Updated route/data/status documentation and Reports description; verified targeted report/consumer/alert tests and docs. | `scripts/verify.sh docs`; `cd server && .venv/bin/python -m pytest tests/unit/test_report_availability.py tests/unit/test_report_notifications_alerts.py tests/unit/test_device_name_consumers.py -q`; `scripts/verify.sh backend` | Docs green; targeted backend 58 passed. Full backend reached pytest with route drift green but exceeded the 120-second command timeout while still running; no test failure observed. |
 
 ## State for the next session
 

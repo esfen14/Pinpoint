@@ -264,8 +264,8 @@ accepts an optional `data` argument for errors the client must act on.
 
 | Method and path | Permission | Purpose |
 |---|---|---|
-| `GET /api/system/report/availability` | `system.report` | Host availability for a period |
-| `GET /api/system/report/hosts-by-os` | `system.report` | Host availability grouped by OS |
+| `GET /api/system/report/availability` | `system.report` | Host availability for a period from Nagios `archivejson.cgi` durations; optional `hostname` scope is forwarded |
+| `GET /api/system/report/hosts-by-os` | `system.report` | The same Nagios-backed host availability grouped by OS |
 | `GET /api/system/report/network-services` | `system.report` | Network-wide service health report |
 | `GET /api/system/report/device-services` | `system.report` | Per-device service health report |
 | `GET /api/system/report/alerts` | `system.report` | Alert events/count from Nagios archives |

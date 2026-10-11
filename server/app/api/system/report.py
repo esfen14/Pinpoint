@@ -293,7 +293,8 @@ def report_hosts_by_os():
     """
     Host availability within the selected period, grouped by OS type.
 
-    Works identically to /report/availability but adds the OS_Type dimension
+    Uses the same Nagios-backed availability data as /report/availability and adds
+     the OS_Type dimension
     from NetworkDiscovery.  For each OS group the response includes:
       - a per-host breakdown (same as availability)
       - aggregate UP / DOWN / UNREACHABLE counts
