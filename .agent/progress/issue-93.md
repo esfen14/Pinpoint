@@ -30,8 +30,8 @@ Requirement coverage (every requirement the issue states, and the check that pro
 Ordered steps the agent will take. Write the whole plan before changing code;
 revise it in place and say why in the round log. Name the files each step touches.
 
-1. [ ] Verify that the already-merged restricted-role provisioning, smoke, documentation, and PR #88 evidence satisfy each issue requirement; inspect `scripts/vmlab`, `lab/setup_restricted.py`, `scripts/playwright-lab`, `client/e2e/`, `docs/qa/Playwright_Setup.md`, and `docs/test-runs/2026-10-11-role-smoke/REPORT.md`.
-2. [ ] Run the offline safety regression and `scripts/verify.sh docs`; record the observed results in this progress file.
+1. [x] Verify that the already-merged restricted-role provisioning, smoke, documentation, and PR #88 evidence satisfy each issue requirement; inspect `scripts/vmlab`, `lab/setup_restricted.py`, `scripts/playwright-lab`, `client/e2e/`, `docs/qa/Playwright_Setup.md`, and `docs/test-runs/2026-10-11-role-smoke/REPORT.md`.
+2. [x] Run the offline safety regression and `scripts/verify.sh docs`; record the observed results in this progress file.
 3. [ ] Re-read issue #93 and PR #88, then close #93 with an attributable evidence comment if every finish-condition item is proven; remove this progress file and push the branch.
 
 ## Round log
@@ -41,15 +41,16 @@ One row per loop round, newest last.
 | Round | Change made | Check run | Result |
 |---|---|---|
 | 1 | Started issue branch after finding the full implementation and live report already merged via PR #88. | GitHub issue/PR and commit-ancestry inspection | Evidence is on `origin/main`; offline verification remains. |
+| 2 | Installed the pinned isolated dependencies and verified the inherited implementation. | `python3 -I scripts/test_playwright_safety.py`; `scripts/verify.sh docs`; `scripts/verify.sh all` | Safety: 8 passed. Docs: green. Full verification reached backend route drift then could not create the isolated worktree's generated `server/host-config-files` under the sandbox (`OSError: [Errno 30] Read-only file system`). |
 
 ## State for the next session
 
 Everything a fresh session needs to continue without redoing work.
 
-- Last check run (exact command): `git merge-base --is-ancestor 1bae5171 origin/main`
-- Result (first failing lines, or "green"): green (`0`); the attributable role-smoke evidence commit is already on `origin/main`.
-- Hypothesis: issue #93 is an unclosed duplicate of work delivered in merged PR #88; offline safety/docs verification will establish whether it can be closed without a code change.
-- Next action (one specific step, not "continue"): run `python3 -I scripts/test_playwright_safety.py` and `scripts/verify.sh docs`.
+- Last check run (exact command): `scripts/verify.sh all`
+- Result (first failing lines, or "green"): docs green; backend route drift stopped before tests because sandboxed execution could not create `server/host-config-files` in the isolated sibling worktree (`OSError: [Errno 30] Read-only file system`).
+- Hypothesis: the verification failure is sandbox-only; rerunning the identical command with the required workspace write permission should execute the actual checks without changing tracked files.
+- Next action (one specific step, not "continue"): rerun `scripts/verify.sh all` with elevated workspace permission.
 
 ## Decisions and notes
 
