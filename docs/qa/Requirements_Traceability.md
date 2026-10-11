@@ -95,3 +95,13 @@
 | PT-04 | QA_Test_Plan.md | PE | VM | agent · destructive | untested | |
 | PT-05 | QA_Test_Plan.md | RE | VM | agent | untested | |
 | PT-06 | QA_Test_Plan.md | PE | VM | agent | untested | |
+
+| **Acceptance** | | | | | | |
+|---|---|---|---|---|---|---|
+| BB-01 | QA_Test_Plan.md §5 (Black-box acceptance) | FS | VM | agent | untested | Automated Nagios Deployment (Nagios Core installed and configured) |
+| BB-02 | QA_Test_Plan.md §5 (Black-box acceptance) | FS | VM | agent | untested | Agent Installation (monitoring agent installed and configured automatically) |
+| BB-03 | QA_Test_Plan.md §5 (Black-box acceptance) | FS | VM | agent | untested | Device Monitoring (system detects host availability and status) |
+| BB-04 | QA_Test_Plan.md §5 (Black-box acceptance) | FS | VM | agent | untested | Service Monitoring (system displays service health and status) |
+| BB-05 | QA_Test_Plan.md §5 (Black-box acceptance) | RE | VM | agent | untested | Alert Notification System (system generates alert notification) |
+| BB-06 | QA_Test_Plan.md §5 (Black-box acceptance) | FS | VM | agent | untested | Network Discovery (structured view of the network) |
+| BB-07 | QA_Test_Plan.md §5 (Black-box acceptance) | FS | VM | agent | untested | Dashboard Visualization (summarized network health information) |
