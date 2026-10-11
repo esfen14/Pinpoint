@@ -4,10 +4,12 @@ What the QA agent loop tests and what it must leave alone: nine user journeys,
 six invariants, and the out-of-scope list. The cases that exercise them are in
 [`QA_Test_Plan.md`](QA_Test_Plan.md). The loop mechanics (traceability, the
 `qa-run` workflow, lab safety) are issue #63 and are not defined here.
+The paper-format case and actual-result tables are in
+[`QA_Paper_Test_Case_Tables.md`](QA_Paper_Test_Case_Tables.md).
 
 | | |
 |---|---|
-| **Status** | Draft; reconciliation against `main` at `a55ae595` started 2026-10-11 (coverage updates pending), aligned with the October 2026 paper draft. Team decisions are final where marked **DECIDED**; everything else is a recommendation the QA agent follows until the team changes it |
+| **Status** | Draft; reconciled against `main` at `b11e6dcb` on 2026-10-11, aligned with the October 2026 paper draft. Team decisions are final where marked **DECIDED**; everything else is a recommendation the QA agent follows until the team changes it |
 | **Sources** | The capstone paper, Chapters I-III, October 2026 draft (162 pages; "p." is the printed page number, which equals the PDF page; tables and figures are cited by page because several numbers repeat), the repository specs in `spec files/`, the application code, the installer repository (`lorraine-pangilinan/PinPoint-Installer`) and the lab run reports in `docs/test-runs/` |
 | **Quality model** | ISO/IEC 25010:2023, five characteristics in scope (**DECIDED**, §5 D-2) |
 | **Paper status** | The October 2026 draft was realigned with the repository (§5 lists which conflicts that closed), but it is still a draft and calls the prototype "not totally functional" (p.130). A fact that comes only from the paper may be outdated; the repository and team decisions win |
@@ -106,7 +108,9 @@ has the roles Administrator, Manager and Staff (§4A A16); where a journey says
   profile) are the Ubuntu autoinstall prompts, not the Pinpoint web UI (§5 D-5).
 - **Steps:** boot the ISO, answer the interactive Ubuntu prompts (identity, storage and
   the others the autoinstall leaves interactive), let first boot finish, read the
-  generated web credentials, open the web UI, sign in.
+  generated web credentials, open the web UI, sign in as the bootstrap administrator,
+  then change both the email and password in the mandatory first-login setup window
+  before accessing the Dashboard.
 - **Expect:**
   1. First boot installs Nagios Core 4.5.11, the official plugins and SNMP, and serves
      the web app through Nginx (port 80) and Gunicorn, with Apache moved to
@@ -115,8 +119,10 @@ has the roles Administrator, Manager and Staff (§4A A16); where a journey says
      60 after #45, which added the `check_ncpa.py runs as nagios` check).
   3. The web administrator credentials are generated (`admin-xxxxx@pinpoint.lan`),
      shown once, and removed after the administrator confirms they were recorded.
-  4. The login page loads. Valid credentials lead to the Dashboard; invalid credentials
-     are refused and create no session.
+  4. The login page loads. Valid bootstrap credentials open mandatory first-login
+     setup: change both email and password before accessing the Dashboard. Subsequent
+     valid logins after setup lead to the Dashboard; invalid credentials are refused
+     and create no session.
   5. The stored password is a hash, never plaintext [PAPER p.64].
   6. Sign out asks for confirmation, then requires a new login [SHOT p.154].
 - **First-login setup (#61, implemented).** The bootstrap administrator must set a
@@ -150,10 +156,15 @@ has the roles Administrator, Manager and Staff (§4A A16); where a journey says
   7. A paused device (`Include_Device_In_Scanning` false) is kept in the device list but
      left out of Nagios and out of Dashboard/Network Health counts
      (`Device_Inventory_Requirements.md` §12).
-  8. One device record per host. #59/#66/#67 are closed; retain regression cases
-     J2-08/J2-09/J2-11/J3-10. #86 tracks duplicate persistence on a build containing
-     those fixes; the creation trigger remains unisolated. Do not infer a clean
-     baseline from the inherited database or file duplicate findings.
+  8. Device identity remains stable across rescans. #59/#66/#67 are closed; retain
+     regression cases J2-08/J2-09/J2-11/J3-10. Under #86 and merged PR #89, the
+     reconciliation engine intentionally isolates conflicting identities instead of
+     silently merging them: multiple records or Address Unknown state may remain when
+     a Needs Review item is created. QA verifies ownership/history preservation, visible
+     conflict state, and an available Merge/Retire resolution path. A duplicate count
+     alone is not a failure; unexplained new records, silent reassignment, or missing
+     review/resolution evidence are failures. Do not infer a clean baseline from an
+     inherited conflicted database.
   9. Removing a network preserves device ownership in unscanned networks. Newly
      added scan-setting ports are recorded on known devices (J2-09/J2-11).
 - **Variants:**
@@ -348,7 +359,7 @@ has the roles Administrator, Manager and Staff (§4A A16); where a journey says
      applied") [SHOT p.147; confirm the behavior].
   4. A password reset stores a new hash.
   5. **Role matrix (DECIDED, §5 D-8):** derived from `server/app/api/commands/seed.py`.
-     Administrator holds all 34 seeded permissions; **Manager and Staff are seeded with
+     Administrator holds all 36 seeded permissions; **Manager and Staff are seeded with
      no permissions**, so a new Manager or Staff user can open only Settings > General
      until an administrator grants permissions in Manage Roles. A role lacking a
      permission cannot open or act on the related page, in the UI and in the API.
@@ -443,8 +454,8 @@ Not out of scope. The specs decide; the paper cannot be used to reject them.
 | D-5 | *Mostly closed in the October 2026 draft.* The paper now describes a Subiquity autoinstall with a few interactive prompts, keeps Calamares only as a backup reference (p.101), shows Subiquity-style installer screens (pp.131-134), has generated web credentials in the flowchart (p.97) and a Plugin Manager "independent of the initial installation process" (p.56). Remaining wrinkle: the installer's "Profile Setup" screen (p.133) is the Ubuntu identity prompt, not the web administrator | **The installer repository decides:** an Ubuntu 22.04.5 autoinstall with interactive sections, a first-boot stage, generated web credentials (J1) |
 | D-6 | The paper is now consistent with itself: minimum 4 cores, 8 GB RAM, 60 GB SSD (Table 3, pp.107-108) and a deployed VM with 4 cores, 8 GB and 60 GB (p.106). The lab appliance is smaller (4 GB RAM, 4 CPUs, 40 GB disk) | The lab spec is used for QA, so timings and the 4 h soak are measured below the paper's minimum. Record it in each report; do not file it. The team may raise the lab to the paper's 8 GB / 60 GB |
 | D-7 | *Closed in the October 2026 draft.* The paper now documents a 36-table System-Plugin database (p.62) and a five-table History database of polled snapshots (p.87), and says alert and notification events "are generated by Nagios" (p.118) | Nagios is the source of truth for monitoring state. The repository has `system.db` (application state) and `history.db` (polled Nagios snapshots). The paper says its data types "should be verified against the implemented SQLAlchemy models" (pp.62, 87) |
-| D-8 | *Role names closed in the October 2026 draft:* the use case (p.121) and screenshot (p.148) both say Administrator, Manager, Staff. Still open: no permission matrix anywhere in the paper | **DECIDED (owner, 2026-10-09): derive the matrix from `seed.py`.** Administrator holds every seeded permission (34); Manager and Staff are seeded with none. QA verifies this seeded state and that permissions set in Manage Roles are enforced in the UI and the API. If the team later grants Manager/Staff permissions in the seed, update J9 step 5 and `QA_Test_Plan.md` J9 cases |
-| D-9 | "Real time" is undefined. Dashboard refresh ≤3 s (PT-03, p.126) vs auto-refresh every 5 minutes (SHOT p.150). Host availability reads 16.9% on Network Health (7-day window) and 51.54% on Reports (24 h) for the same hosts, with no formula given | **DECIDED (owner, 2026-10-09): PT-04 clock starts at the Nagios state change** (`last_state_change` of the host/service). Pass = the alert is visible in the app (active-alerts feed, bell) within 3 s of that timestamp. Detection delay (the check interval times the retries; 5 minutes by default, configurable since #60) is measured and reported separately, not judged against 3 s. **DECIDED: PT-05 is a 4 h agent-run soak** (`QA_Test_Plan.md` PT-05). **Still open:** one availability formula and window for Network Health and Reports. Until decided, QA checks availability sanity only (100% with no outage, lower after one), not equality between the two pages, and files one `needs-decision` |
+| D-8 | *Role names closed in the October 2026 draft:* the use case (p.121) and screenshot (p.148) both say Administrator, Manager, Staff. Still open: no permission matrix anywhere in the paper | **DECIDED (owner, 2026-10-09): derive the matrix from `seed.py`.** Administrator holds every seeded permission (36 on main at `b11e6dcb`); Manager and Staff are seeded with none. QA verifies this seeded state and that permissions set in Manage Roles are enforced in the UI and the API. If the team later changes the seeded permissions, update J9 step 5 and `QA_Test_Plan.md` J9 cases |
+| D-9 | "Real time" is undefined. Dashboard refresh ≤3 s (PT-03, p.126) vs auto-refresh every 5 minutes (SHOT p.150). Host availability reads 16.9% on Network Health (7-day window) and 51.54% on Reports (24 h) for the same hosts, with no formula given | **DECIDED (owner, 2026-10-09): PT-04 clock starts at the Nagios state change** (`last_state_change` of the host/service). Pass = the alert is visible in the app (active-alerts feed, bell) within 3 s of that timestamp. Detection delay (the check interval times the retries; 5 minutes by default today, a setting once #60 lands) is measured and reported separately, not judged against 3 s. **DECIDED: PT-05 is a 4 h agent-run soak** (`QA_Test_Plan.md` PT-05). **DECIDED (owner): rely on Nagios, not a Pinpoint-defined availability formula.** Nagios is the reference for availability; QA compares Pinpoint's displayed values with Nagios for the same hosts, reporting window and calculation options. Different windows are not expected to produce equal percentages. Record the Nagios source and parameters with the evidence; if equivalent reference data is unavailable, mark that comparison blocked rather than inventing a formula or claiming a pass. This decision does not change the PT-04 clock or PT-05 soak above |
 | D-10 | *Closed in the October 2026 draft.* The earlier paper promised resource metrics for "Linux-based hosts" but deployed NCPA to Ubuntu only; p.10 now says the metrics apply to "Ubuntu devices" (NCPA deployment: pp.61, 108) | Ubuntu is the promised target. Other distributions are best effort; no defects filed |
 | D-11 | *Narrowed in the October 2026 draft.* The earlier claim of "all native monitoring capabilities of Nagios Core" is gone; the paper now says the web interface presents Nagios Core data "such as host and service status, acknowledgements and notification history" (p.9) | The boundary is the specs: Nagios' own UI is not a Pinpoint operator surface (`System_Overview_and_Architecture.md`). Test features with a page in the navigation plus §4D. Do not test every Nagios feature |
 
@@ -454,11 +465,11 @@ Not out of scope. The specs decide; the paper cannot be used to reject them.
 
 | Item | Needed from | Blocks |
 |------|-------------|--------|
-| One availability formula and window for Network Health and Reports (D-9) | Team | Equality check between the two pages |
+| Availability authority (D-9, decided: Nagios) | QA tester | Compare each page against Nagios with matching hosts, window and calculation options; do not assert equality across different windows |
 | *Closed:* the paper's BB-01 to BB-07 (pp.124-125) are now mapped in `QA_Test_Plan.md` §5 ("Black-box acceptance"). The earlier BB-03 guess (plugin enablement) was wrong: the paper's BB-03 is Device Monitoring | Paper owner | Nothing |
-| Email alerts (B8) and password recovery (B10) | Installer and application owners | J5 step 5, J1/J9 recovery |
-| First-login setup (#61, implemented) | QA tester | Execute J1-07 on the approved fresh lab before completing setup; implementation is not pending |
-| Paper edits still open: email promises (pp.46, 54, 60, 97, 99, 111, 117-119) until B8 lands; flowchart "adds the devices to monitor with it" (p.97) against automatic attachment; "auto-recommendation of a recommended plugin bundle" (pp.57, 99, 102), which the client has no code for; "Usability" against ISO 25010:2023 "Interaction Capability" (D-2); lab spec below the paper's minimum (D-6); "possible causes" wording (pp.4, 7); Reports screenshots with four views Table 2 omits; the Add User screenshot (p.148) shows a first-sign-in checkbox that is part of #61; PT-05 has no threshold (p.126); duplicate table and figure numbers (Table 9, 10 and 12 each appear twice; Figures 5, 6, 25, 31, 32 and 43 repeat); the 5-point Likert scale (pp.127-128) has 1 as "Strongly agree" | Paper owner | Nothing in QA; avoids defense questions |
+| Real inbox delivery (B8) | QA tester and mail-account owner | J5-11 records inbox arrival. SMTP settings and administrator-assisted password recovery are implemented; this is release evidence, not an implementation blocker |
+| First-login setup (#61, implemented and merged) | QA tester | Execute J1-07: after bootstrap administrator login, change both email and password; implementation is not pending |
+| Paper edits still open: email promises (pp.46, 54, 60, 97, 99, 111, 117-119) should describe the current Gmail STARTTLS scope and human inbox evidence; flowchart "adds the devices to monitor with it" (p.97) against automatic attachment; "auto-recommendation of a recommended plugin bundle" (pp.57, 99, 102), which the client has no code for; "Usability" against ISO/IEC 25010:2023 "Interaction Capability" (D-2); lab spec below the paper's minimum (D-6); "possible causes" wording (pp.4, 7); Reports screenshots with four views Table 2 omits; the Add User screenshot (p.148) shows a first-sign-in checkbox that is part of #61; PT-05 has no threshold (p.126); duplicate table and figure numbers (Table 9, 10 and 12 each appear twice; Figures 5, 6, 25, 31, 32 and 43 repeat); the 5-point Likert scale (pp.127-128) has 1 as "Strongly agree" | Paper owner | Nothing in QA; avoids defense questions |
 
 ## 7. Known defects the agent must not duplicate
 
@@ -468,25 +479,27 @@ Not out of scope. The specs decide; the paper cannot be used to reject them.
 | [#82](https://github.com/esfen14/Pinpoint/issues/82) | Full-hour controlled history measurement remains pending; #60 implementation is closed | PT-06 is a measurement follow-up, not a product failure |
 | `Implementation_Status.md` gaps | Auto-resolved acknowledgements, discovery stop permission, History audit and others | Do not file a gap that is listed there; file only when the behavior contradicts a requirement |
 
-## 8. Repository facts checked on 2026-10-09
+## 8. Repository facts checked against main on 2026-10-11
 
-The paper-versus-repository statements were re-checked against the code on this date.
-The 2026-10-10 realignment re-read the paper (not the code); see §5 for which conflicts closed.
+These paper-versus-repository statements were re-checked against
+`origin/main` at commit `b11e6dcb`. Installer behavior is recorded only where
+the application repository or a committed live-run report exposes its contract;
+the installer itself remains in its separate repository.
 
 | ID | Statement | Result |
 |----|-----------|--------|
-| R-1 | Gmail SMTP application controls | Implemented on the merged baseline: Settings > Email and SMTP routes; installer owns provisioning. Real inbox evidence remains separate from mocked transport tests (B8) |
-| R-2 | System Status lives in `TopologyPage.tsx` at `/topology` | Confirmed (`App.tsx`, `Sidebar.tsx`: label "System Status"; permission `system.network_health` in `pageAccess.ts`). Decision B9: keep |
-| R-3 | Installer reality | Per the installer repository (D-5) |
-| R-4 | NCPA services CRITICAL on installer-built appliances (#45) | **Stale; fixed.** #45 is closed and the fresh-run report shows all six services OK |
-| R-5 | Plugins with no port cannot be enabled; custom plugin upload disabled | Confirmed (`Implementation_Status.md`) |
-| R-6 | Export formats | Confirmed: CSV is a real file, `.xls` is an HTML table, PDF is a print view (`client/src/utils/exportData.ts`) |
-| R-7 | Settings tabs | Confirmed: General Settings, Security, System, Network Discovery, Plugins (`SettingsPage.tsx`). The paper's navigation (Fig. 8) lacks the Plugins tab |
-| R-8 | Forgot Password | Implemented administrator-assisted request and reset; not a self-service email link (B10, J9-12) |
-| R-9 | Lab evidence | Updated: `docs/test-runs/` holds six reports. The VM lab now passes alerts, acknowledge, `break`/`fix`/`load`, `up`/`down`/`revert` (API level). Not yet run: plugin enablement beyond the scan, the alert UI in a browser, service-level alerts, load alerts |
-| R-10 | `Device_Inventory_Requirements.md` missing from the router and index | Fixed in this change (`AGENTS.md`, `spec files/README.md`). Its acceptance criteria (§10, §12.4) feed J2 and J7 |
-| R-11 | Seeded roles and permissions | Administrator has all 34 permissions; Manager and Staff have none (`seed.py`, `seed_roles`) |
-| R-12 | Reports views | The page lists six views, including Hosts by OS, Device Services, Alerts, Notifications (`ReportsPage.tsx`); the team decided two are required (B4) |
+| R-1 | Gmail SMTP alerts | Implemented. Settings > Email manages Gmail STARTTLS/587 credentials through `/api/system/smtp-settings`, sends a test message, and delegates appliance configuration to `/usr/local/sbin/pinpoint-apply-smtp`. Active users who opt in through `Receive_Email_Alerts` become Nagios contacts; the issue #80 live report records host and service delivery through Gmail |
+| R-2 | System Status | Implemented in `TopologyPage.tsx` at `/topology`, labelled "System Status" in the sidebar and guarded by `system.network_health`. Decision B9 keeps the page; the old topology name remains only in the implementation path |
+| R-3 | Installer boundary | The application repository defines and tests the helper-facing contracts and records installer commits in live-run reports. The installer implementation remains authoritative in its separate repository (D-5) |
+| R-4 | NCPA services on installer-built appliances | The earlier CRITICAL result is fixed. #45 is closed, and the fresh-run report records all six NCPA services OK; later issue #59 and #66 reports cover repeated discovery and NCPA checks |
+| R-5 | Plugin limitations | Automatic service attachment remains port-driven, so no-port plugins attach to nothing through ordinary enablement. Per-device custom checks cover argument-driven and ping-family plugins, while custom plugin upload remains disabled. The full plugin-driven monitoring browser/live-Nagios acceptance run is still pending (`Implementation_Status.md`) |
+| R-6 | Export formats | CSV is a file download, `.xls` is an HTML table with the Excel MIME type, and PDF opens a print-formatted browser view (`client/src/utils/exportData.ts`) |
+| R-7 | Settings tabs | `SettingsPage.tsx` contains six tabs: General Settings, Security, System, Network Discovery, Plugins and Email. General is available to every signed-in user; the other tabs are permission-gated |
+| R-8 | Forgot Password | Implemented as administrator-assisted recovery. `LoginPage.tsx` posts to public `/api/user/forgot-password`; authorized account administrators list, resolve or dismiss pending requests. It deliberately does not email a self-service recovery link (B10) |
+| R-9 | Committed live evidence | The `docs/test-runs/README.md` index contains 12 reports. They cover installer/appliance smoke, NCPA deployment, repeated discovery, alert and acknowledgement operations, cadence/rollback checks, network-identity retests and Gmail alert delivery. Partial or unrun cases remain labelled as such, including the full plugin-driven monitoring browser/live-Nagios run |
+| R-10 | Device Inventory requirements | `Device_Inventory_Requirements.md` is linked from `AGENTS.md` and `spec files/README.md`; its acceptance criteria feed J2 and J7. Main also exposes unresolved identity conflicts through the Device Inventory Needs Review workflow |
+| R-11 | Seeded roles and permissions | `seed.py` defines 36 permissions. Administrator receives all of them; Manager and Staff receive none from `seed_roles` |
+| R-12 | Reports views | `ReportsPage.tsx` presents six selectors, but only Host Availability and Network Services fetch and render report data. Hosts by OS, Device Services, Alerts and Notifications remain selectable placeholders; B4 requires the two implemented views |
 
 ## 9. Maintenance
 

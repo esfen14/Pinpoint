@@ -48,6 +48,9 @@ table while you test, not afterward.
 
 | Run | Kind | Commit | Result | Report |
 |---|---|---|---|---|
+| [2026-10-11 qa-loop-planted-run](2026-10-11-qa-loop-planted-run/REPORT.md) | Synthetic QA workflow probe, not a product test | `1bae5171` plus removed scratch assertion | Pass: identical expected failure twice; no product issue filed | [REPORT.md](2026-10-11-qa-loop-planted-run/REPORT.md) |
+| [2026-10-11 role-smoke](2026-10-11-role-smoke/REPORT.md) | VM lab Playwright administrator and restricted Staff smoke | `c8fcd586` | Pass: 4/4 setup and smoke tests; J1-04/J9-04 browser-role coverage | [REPORT.md](2026-10-11-role-smoke/REPORT.md) |
+| [2026-10-11 j2-j3-dry-run](2026-10-11-j2-j3-dry-run/REPORT.md) | VM lab J2/J3 continuation | `67243ef5` | Partial: J3-02 and J3-06 pass; J3-03 partial; J3-05 blocked; J3-09 skipped | [REPORT.md](2026-10-11-j2-j3-dry-run/REPORT.md) |
 | [2026-10-11 qa-dry-run-j2-j3-second](2026-10-11-qa-dry-run-j2-j3-second/REPORT.md) | VM lab continuation and attributed handoff (#62) | `ebb5aea3` | Partial: 5 handoff passes, 1 fail (#86), 3 partial, 2 skipped; settings restored | [REPORT.md](2026-10-11-qa-dry-run-j2-j3-second/REPORT.md) |
 | [2026-10-09 qa-dry-run-j2-j3](2026-10-09-qa-dry-run-j2-j3/REPORT.md) | VM lab, dry run of QA plan cases J1-01, J2 and J3 (issue #62) | `65b63e5b` (app code same as `main` `13076192`) | Partial: 13 pass, 1 fail (J2-09), 6 not run; plan steps corrected | [REPORT.md](2026-10-09-qa-dry-run-j2-j3/REPORT.md) |
 | [2026-10-10 issue-80](2026-10-10-issue-80/REPORT.md) | VM lab, fresh install, per-user email alert setting, account.alerts, host and service alert email through Gmail | app `f0f934db`, re-checked on merged `6c6d0102`, installer `c5cd3de` | Pass; mail not re-sent on the merged commit; opted-out inbox check tester-reported | [REPORT.md](2026-10-10-issue-80/REPORT.md) |

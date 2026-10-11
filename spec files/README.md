@@ -20,7 +20,7 @@ This directory is the authoritative documentation set for Pinpoint. The root
 | [`Alerts_Notifications_History_Requirements.md`](Alerts_Notifications_History_Requirements.md) | Normative Alerts and Notifications History page behavior |
 | [`Device_Inventory_Requirements.md`](Device_Inventory_Requirements.md) | Normative Device Inventory behavior: a device's ports and why each is or is not monitored, pin/hold/ignore actions, the monitoring-state label, and pause/resume, with acceptance criteria |
 | [`Plugins_List.md`](Plugins_List.md) | Nagios Plugins 2.4.12 capability, argument, output, and performance-data reference |
-| [`../docs/qa/QA_Test_Plan.md`](../docs/qa/QA_Test_Plan.md) | QA test cases, coverage model, and methodology |
+| [`../docs/qa/QA_Test_Plan.md`](../docs/qa/QA_Test_Plan.md) and [`../docs/qa/QA_Paper_Test_Case_Tables.md`](../docs/qa/QA_Paper_Test_Case_Tables.md) | QA test cases, coverage model, methodology, and paper-ready tables grouped by ISO characteristic with a current-result ledger |
 
 Related QA scope and decisions: [`QA_Journeys_and_Scope.md`](../docs/qa/QA_Journeys_and_Scope.md).
 

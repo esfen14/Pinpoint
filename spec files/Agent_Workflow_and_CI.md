@@ -128,14 +128,38 @@ Where results go is defined in [`docs/test-runs/README.md`](../docs/test-runs/RE
 | Local lab (fast lane) | Docker | `scripts/lab up`, `scripts/lab smoke`; see [`docs/manuals/Local_Lab.md`](../docs/manuals/Local_Lab.md). A real Nagios and five target servers on an isolated network; not the installer, systemd, DHCP or NCPA installs |
 | Real appliance and VM lab | Installer build, VirtualBox (this laptop) or libvirt (the retained lab) | `scripts/vmlab` with the `demo/` target VMs; plan in [`docs/plans/VM_Lab_Plan.md`](../docs/plans/VM_Lab_Plan.md). The snapshot holds Ubuntu + Nagios only, so it cannot go stale. The libvirt e2e harness in `server/tests/e2e/network_discovery/` is separate. Manual or scheduled, never on pull requests from forks |
 
-An agent loop may use the local lab; it must not run the real-lab harness.
+### QA finding (qa-run) and agent loop safety constraints
+
+The `.agent/workflows/qa-run.md` workflow automates the execution of the QA test plan under strict parameters.
+
+- **Authority rules:** The behavioral specification wins; `Implementation_Status.md` records known gaps, not overrides. Conflicts without an explicit team decision require a `needs-decision` issue. Passing requires observed behavior.
+- **Reporting rules:** A test failure is repeated exactly once before filing. Maintainers must search open and closed issues first; file use the Task template containing case ID and evidence; sanitize evidence (never paste passwords, credentials, tokens, SNMP communities, or raw database dumps). Defects determined to be installer bugs are written as notes for the owner, not filed against the application.
+- **Safety boundaries:** Using `scripts/vmlab` and `scripts/lab` is permitted for QA sweeps; the libvirt e2e harness is strictly forbidden. Network scans MUST be tightly restricted to `10.77.0.0/28` using a guard; overlapping discoveries are banned (#59). One appliance is tested at a time, checking disk/RAM capacity before provisioning.
+- **Labels:** The loop uses `qa-found` for test plan failures and `needs-decision` for blocker/ambiguity issues.
+- **Severity rubric:**
+  - **High:** Blocks entire journeys, unrecoverable crashes, security breaches, data corruption.
+  - **Medium:** Feature fails but has a workaround; significant UI defect affecting usability; correctable data error.
+  - **Low:** Cosmetic issues, minor inconveniences, performance degradation within limits.
 Record results of lab runs in `docs/test-runs/`.
+
+### Find, fix, retest
+
+`qa-run.md` records observed failures without fixing them. `fix-found.md` selects
+eligible `qa-found` issues by severity then age and follows `work-issue.md` in a
+separate issue worktree. It records skipped candidates, never weakens a QA case,
+and opens at most three PRs in five rounds. Permission denial stops the loop.
+Humans merge PRs; agents never merge. Only an actual merged fix plus a closed
+finding returns its affected traceability rows to `retest`, with the original
+failure, PR and merge SHA retained. Two failed retests after separate merged fixes
+label that finding `needs-decision` and stop work on the case. Synthetic workflow
+demonstrations use scratch traceability data and do not establish product passes.
+See `.agent/workflows/fix-found.md` for commands and written boundary checks.
 
 ## Verification commands
 
 | Stage | Command | Notes |
 |---|---|---|
-| Docs | `scripts/verify.sh docs` | Agent progress files are well formed; relative links resolve; environment variables match the README table; browser routes match `App.tsx`, `pageAccess.ts` and the spec. Standard library only |
+| Docs | `scripts/verify.sh docs` | Agent progress files are well formed; relative links resolve; environment variables match the README table; browser routes match `App.tsx`, `pageAccess.ts` and the spec; traceability matrix matches test cases; fix-found queue and stop-rule contracts are present. Standard library only |
 | Backend | `scripts/verify.sh backend` | Route and client-API drift checks, then `pytest tests/unit` in `server/` with `FLASK_DEBUG=1`; ~4 min, 2,167 passed / 14 skipped on 2026-10-08 |
 | Frontend | `scripts/verify.sh frontend` | `npm run test`, `npm run build`, `npm run lint` (errors fail; warnings do not) |
 | Everything | `scripts/verify.sh all` | Same stages as CI |
