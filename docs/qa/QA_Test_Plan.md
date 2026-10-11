@@ -7,6 +7,10 @@ What the cases are *for* (journeys, invariants, scope, decisions) is in
 (out of scope) and §7 (known defects). Results go in
 [`docs/test-runs/`](../test-runs/README.md), never in this file.
 
+For paper-format tables grouped by ISO characteristic and a separate current-result
+ledger, see [`QA_Paper_Test_Case_Tables.md`](QA_Paper_Test_Case_Tables.md). Those
+tables are generated from this plan and the traceability matrix; do not edit them by hand.
+
 **Status:** draft; reconciliation against `main` at `a55ae595` started 2026-10-11 (coverage updates pending), aligned with the October 2026 paper draft (162 pages). Sources are named
 per case; where the journeys file and a spec disagree, the journeys file §0 order applies.
 

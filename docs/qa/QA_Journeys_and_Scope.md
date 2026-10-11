@@ -4,6 +4,8 @@ What the QA agent loop tests and what it must leave alone: nine user journeys,
 six invariants, and the out-of-scope list. The cases that exercise them are in
 [`QA_Test_Plan.md`](QA_Test_Plan.md). The loop mechanics (traceability, the
 `qa-run` workflow, lab safety) are issue #63 and are not defined here.
+The paper-format case and actual-result tables are in
+[`QA_Paper_Test_Case_Tables.md`](QA_Paper_Test_Case_Tables.md).
 
 | | |
 |---|---|

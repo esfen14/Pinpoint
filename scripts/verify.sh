@@ -20,6 +20,8 @@ docs() {
   python3 -I "$root/scripts/check_frontend_route_drift.py"
   echo "==> docs: traceability matrix and QA test plan align"
   python3 -I "$root/scripts/check_traceability.py"
+  echo "==> docs: paper-ready QA case tables match the master plan and result ledger"
+  python3 -I "$root/scripts/render_qa_case_tables.py" --check
   echo "==> docs: traceability validator contract tests"
   python3 -I "$root/scripts/test_traceability.py"
   echo "==> docs: agent progress files are well formed"

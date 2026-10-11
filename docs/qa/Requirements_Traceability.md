@@ -5,7 +5,7 @@
 | J1-01 | QA_Test_Plan.md | RE | VM | agent | untested | |
 | J1-02 | QA_Test_Plan.md | FS | VM | agent | untested | |
 | J1-03 | QA_Test_Plan.md | SE | VM | agent | untested | |
-| J1-04 | QA_Test_Plan.md | SE | VM | agent | pass | Admin Playwright login/dashboard smoke passed; see PR #88 QA evidence |
+| J1-04 | QA_Test_Plan.md | SE | VM | agent | untested | Admin Playwright login/dashboard smoke does not inspect the stored password hash; hash verification remains unexecuted |
 | J1-05 | QA_Test_Plan.md | IC | VM | agent | untested | |
 | J1-06 | QA_Test_Plan.md | FS | MANUAL | HUMAN | untested | |
 | J1-07 | QA_Test_Plan.md | SE | VM | agent | untested | |
@@ -14,7 +14,7 @@
 | J2-03 | QA_Test_Plan.md | FS | VM | agent | untested | API identifiers/ports passed; browser drawer not exercised |
 | J2-04 | QA_Test_Plan.md | FS | VM | agent | untested | SSH plugin enablement observed; complete per-host before/after assertion not established |
 | J2-05 | QA_Test_Plan.md | RE | VM | agent | untested | Live changed-network case not completed |
-| J2-06 | QA_Test_Plan.md | IC | VM | agent | pass | Discovery stop returned terminal Interrupted |
+| J2-06 | QA_Test_Plan.md | IC | VM | agent | untested | Discovery stop returned terminal Interrupted; the required UI progress/cancellation and System Logs assertions remain unexecuted |
 | J2-07 | QA_Test_Plan.md | FS | VM | agent | untested | Pause/resume API passed; UI/config/count assertions not exercised |
 | J2-08 | QA_Test_Plan.md | RE | VM | agent | untested | Conflict review endpoint passed; full two-rescan baseline comparison not captured |
 | J2-09 | QA_Test_Plan.md | FS | VM | agent | untested | Existing 8080 rows prevented a clean first-insertion claim |
