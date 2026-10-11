@@ -14,12 +14,12 @@ Status: in-progress
 
 ## Plan
 
-- [ ] Recovery: correct queue, command compatibility, guardrails and handoff in `.agent/workflows/fix-found.md` and the owning specification.
+- [x] Recovery: correct queue, command compatibility, guardrails and handoff in `.agent/workflows/fix-found.md` and the owning specification.
 - [ ] Recovery: correct overstated synthetic report; add written boundary checks and verify actual GitHub evidence.
 
 - [x] Create the workflow and thin adapters.
 - [x] Document queue ordering, skip rules, caps, permission stop, and merged-fix retest semantics.
-- [x] Record synthetic issue/PR demonstration without merging.
+- [ ] Record a valid synthetic demonstration with observed skips and scratch retest handoff.
 - [x] Verify docs and update the evidence report with observed results; `scripts/verify.sh docs` passes and the 2026-10-11 live continuation is recorded as partial.
 
 ## Round log
@@ -27,10 +27,14 @@ Status: in-progress
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 1 | Created workflow and adapters | `scripts/check_agent_progress.py` | Initial draft created |
-| 2 | Added queue rules and synthetic demonstration | `gh issue list --label qa-found --state open` | Issue #90 was closed as incorrectly filed; PR #91 remains unmerged |
+| 2 | Added queue rules and synthetic demonstration | `gh issue list --label qa-found --state open` | Issue #90 was closed as incorrectly filed; PR #91 was later merged; no product fix |
+| Recovery 1 | Corrected queue, gh compatibility, guardrails, human merge gate and overstated report | `scripts/verify.sh docs` | green; live/synthetic acceptance incomplete |
 | 3 | Repaired progress structure for PR verification | `scripts/verify.sh docs` | Pending rerun |
 
 ## State for the next session
+
+- Current last check: `scripts/verify.sh docs` — green after workflow correction.
+- Current next action: repair role setup, then record an attributable synthetic demonstration; do not use #91 as a product fix.
 
 - Last check run: `scripts/verify.sh docs`
 - Result: previously failed because this file had the wrong format; repaired now.
@@ -40,7 +44,7 @@ Status: in-progress
 ## Decisions and notes
 
 - No PR is merged by the agent.
-- Issue #90 was synthetic and incorrectly treated intentional #86 identity conflicts as a defect; it was closed. PR #91 is not a product fix and must not be presented as one.
+- Issue #90 was synthetic and incorrectly treated intentional #86 identity conflicts as a defect; it was closed. PR #91 is merged but is not a product fix and must not be presented as one.
 - Live restricted-role and J2/J3 acceptance tests remain pending unless an authorized account and clean appliance baseline are available.
 
 ### 2026-10-11 resumed audit

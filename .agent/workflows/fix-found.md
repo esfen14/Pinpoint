@@ -1,32 +1,121 @@
-# Workflow: fix-found
+# Fix QA findings
 
-Run the fix loop for `qa-found` issues. The fix loop picks candidates, implements fixes, and opens pull requests, keeping the traceability matrix up to date for re-testing.
+This queue delegates each fix to [work-issue.md](work-issue.md), without replacing
+any of its steps, verification requirements or stop conditions. Read `AGENTS.md`,
+the QA journeys, traceability matrix and the owning specifications first.
 
-## Constraints
-- Max 5 rounds per session.
-- At most 3 PRs per session.
-- Keep agent state in `.agent/progress/fix-found.md`.
-- All fixes must first add or update a test that fails for the right reason.
-- QA-found defects are verified by their original test case (or a regression).
-- Mark newly found defects with label `qa-found`.
-- Do not log known gaps documented in `docs/qa/QA_Journeys_and_Scope.md`.
-- Use `scripts/vmlab` and `scripts/lab` for VM/Docker environments. Limit network scanning strictly to `10.77.0.0/28`. Use credentials from `.local/share/pinpoint-vmlab-*` but never print them.
+## Start or resume
 
-## Fix Loop Steps
-1. Create or resume `.agent/progress/issue-85.md` (not `fix-found.md`; the progress file is issue-scoped).
-2. List candidates: `gh issue list --label qa-found --state open --limit 100 --json number,title,labels,createdAt | jq -r '.[] | select(.labels[].name == "needs-decision" | not) | "\(.number)|\(.title)|\(.createdAt)"' | sort -t'|' -k1,1`.
-3. Filter and rank: highest severity first (rubric in `docs/qa/QA_Journeys_and_Scope.md`), then oldest. Skip — and record the skip reason in `.agent/progress/issue-85.md` — any issue that:
-    - has `needs-decision` label.
-    - has an open PR (`gh pr list --state open --search "Closes #<n>"`).
-    - has an active `issue-<n>-*` working branch (`git branch -a --list 'issue-*-*'`).
-    - lacks a defined case ID (no `J*`/`PT*`/`BB*` reference in the title or body).
-    - lacks a finish condition.
-    - touches a sensitive module (see `spec files/Engineering_Standards.md`).
-    - needs a migration, new dependency, or live Nagios integration (needs a person).
-4. If this session already has 3 PRs or this case has had 2 failed fixes, stop and record the reason (3-PR cap / 2-failed-fix stop) in the progress file.
-5. If a tool denies permission, stop immediately; do not switch tools to bypass. Record the denial.
-6. Run `work-issue.md` for the chosen issue in a new branch `issue-<n>-<slug>`.
-7. Testing: The fix must pass the original failing QA case (or a new regression test). Repeat once if it fails; if the repeat differs, mark inconclusive.
-8. Opening PR: `gh pr create --title '<case>: fix' --body 'Closes #<n> • Test case <id>'`. Do not merge; leave it open for human review.
-9. Verification: CI must be green (run `scripts/verify.sh all` or at least `docs` / the relevant stage).
-10. Retest: After the PR is merged (`gh pr view <n> --json mergedAt,merged` confirms) and the issue is marked `closed` with the PR cross-referenced, update the traceability row to `retest`; do not retest on unmerged or unreferenced closure.
+Use a dedicated checkout and an `issue-<tracking-number>-<slug>` branch. Keep queue
+state in `.agent/progress/issue-<tracking-number>.md` using `TEMPLATE.md`; each chosen
+finding has its own issue-scoped progress file in its own worktree. Never hardcode
+issue #85 as the tracking issue for future sessions. Record candidates, skip reasons,
+case IDs, PR count, failed-fix history, evidence and next action; checkpoint after
+each round. Resume existing work instead of creating a competing branch or PR.
+
+The severity rubric is in `spec files/Agent_Workflow_and_CI.md`: High, Medium, Low.
+Existing labels map `Top Priority` to High, `Medium Priority` to Medium, and
+`Low Priority` to Low. If neither the issue body nor a label establishes severity,
+record it as blocked for triage; conflicting severities also need a decision.
+
+## Select the queue
+
+Fetch all pages, including issue bodies and labels (REST also returns PRs, so filter
+those out). These are read-only commands; replace NUMBER with an observed issue ID.
+
+```bash
+gh api --paginate 'repos/esfen14/Pinpoint/issues?state=open&labels=qa-found&per_page=100' \
+  --jq '.[] | select(.pull_request == null) | {number,title,body,labels:[.labels[].name],created_at,html_url}'
+git fetch -q origin
+gh issue view NUMBER --json number,title,body,labels,comments,state,url
+gh api --paginate repos/esfen14/Pinpoint/issues/NUMBER/timeline \
+  --jq '.[] | select(.event == "cross-referenced") | .source.issue.html_url'
+gh api --paginate 'repos/esfen14/Pinpoint/pulls?state=open&per_page=100' \
+  --jq '.[] | {number,title,body,html_url,head:.head.ref}'
+git branch -a --list 'issue-NUMBER-*' 'remotes/origin/issue-NUMBER-*'
+git worktree list --porcelain
+```
+
+Inspect cross-references and open PR bodies for actual links to the finding,
+including `Fixes`, `Resolves` and `Closes`; a search for only `Closes #NUMBER` misses
+valid fixes. Record every skipped candidate and reason before ordering eligible
+candidates by severity descending, then `created_at` ascending (number breaks ties).
+Skip a candidate that:
+
+- has `needs-decision`;
+- has an open fix PR, or an `issue-NUMBER-*` branch with work: record the existing
+  worktree/PR as the resume target rather than creating a duplicate;
+- has no valid case ID in the master QA plan or no explicit finish condition
+  covering that failing case;
+- touches a sensitive module, needs a migration, new dependency, live Nagios or a
+  secret without the required authorization; record the question for the owner;
+- belongs to the installer: write sanitized notes for its owner, do not fix it here.
+
+Known gaps are linked, not refiled. Never alter the QA plan to make a failure pass;
+a disputed case needs a separate documentation issue labelled `needs-decision`.
+
+## Fix and open for review
+
+1. Stop after five total rounds per session or three rounds on the same failure,
+   as in `work-issue.md`. At most three PRs may be opened per session, including
+   drafts. Persist the count so a resume cannot reset it.
+2. If two merged fixes have failed retesting the same case, run
+   `gh issue edit NUMBER --add-label needs-decision`, record both PRs and failed
+   retest reports, and stop on that case. Failed attempts before merge still obey
+   the work-issue three-round limit; they are not two merged fixes.
+3. If any permission is denied (filing, PR creation, lab access), stop the loop and
+   record the action and denial. Do not switch tools or accounts to bypass it.
+4. Follow `work-issue.md` exactly in the finding's own worktree and issue branch:
+   test first, implement one fix per PR, verify the failing case or regression,
+   update specs and progress, checkpoint, and run `scripts/verify.sh all`.
+   Lab retests require explicit authorization for that case in the issue and the
+   `qa-run.md` safety preflight; no libvirt harness. Never print credentials.
+5. Use the repository PR template. Put the actual case ID and `Closes #NUMBER` in
+   a reviewed body file. The work-issue finish rules determine ready versus draft:
+   `gh pr create --base main --title 'CASE: fix description' --body-file /tmp/fix-body.md`
+   (add `--draft` when unfinished). Never merge. Record the actual URL and inspect
+   CI with `gh pr checks PR_NUMBER`; local verification alone does not prove CI green.
+
+## Return a merged fix to retest
+
+Use the [qa-run.md retest handoff](qa-run.md#retest-handoff). Check the actual issue
+state, timeline closing event, merged PR, and case coverage. A closed issue or a
+synthetic documentation PR alone is not proof of a product fix. Do not use the
+unsupported `merged` JSON field or assume a PR number equals the issue number.
+
+```bash
+gh issue view NUMBER --json state,url,body
+gh api --paginate repos/esfen14/Pinpoint/issues/NUMBER/timeline \
+  --jq '.[] | select(.event == "closed" or .event == "cross-referenced")'
+gh pr view PR_NUMBER --json state,mergedAt,mergeCommit,body,url
+gh pr diff PR_NUMBER
+```
+
+Only after the fix is merged and the finding closed, change its affected matrix
+rows to `retest`, retaining the original failure and recording the issue, PR, merge
+SHA and evidence. Confirm that the lab contains the merge before the next qa-run.
+A failed retest links the original finding (reopen it if appropriate), increments
+its failed-fix count, and never creates a disconnected duplicate issue. A synthetic
+handoff must use a clearly separate scratch matrix; it cannot certify a product case.
+
+## Written boundary checks
+
+Run these checks with scratch queue/progress data; do not create real defects merely
+to exercise a limit. Record the input, selected action and expected result.
+
+| Input | Required action / expected result |
+|---|---|
+| High newer issue, Low older issue, Medium issue | Select High, then Medium, then Low; oldest first within each severity |
+| Candidate has both `qa-found` and `needs-decision` | Skip once with reason, never select because another label differs |
+| Candidate linked by `Fixes #NUMBER` to an open PR | Skip and record existing PR/resume target |
+| Progress already records three opened PRs | Stop before a fourth `gh pr create` |
+| Case has two merged fixes, each followed by a failed retest | Label `needs-decision`, record both failures, stop on case |
+| Issue creation, PR creation or lab command denied | Record denial and stop; no retry through another tool |
+| Closed issue with an unmerged PR | Keep row `fail-filed`; no retest handoff |
+| Closed issue with merged documentation-only/synthetic PR | No product retest; scratch demonstration only |
+| Closed finding with merged actual fix and recorded case coverage | Set that row `retest`; preserve failure evidence |
+
+## Session report
+
+One line per issue: PR link, skipped with reason, or blocked with the precise
+question. Keep unfinished work draft and checkpoint its next action.

@@ -71,9 +71,11 @@ For each matching `fail-filed` row, inspect its issue timeline:
 ```bash
 gh api --paginate repos/esfen14/Pinpoint/issues/NUMBER/timeline \
   --jq '.[] | select(.event == "cross-referenced") | .source.issue.html_url'
-gh pr view PR_NUMBER --json state,mergedAt,mergeCommit,closingIssuesReferences,url
+gh pr view PR_NUMBER --json state,mergedAt,mergeCommit,body,url
 ```
 
+Inspect the timeline closing event and PR diff to verify the closing reference and
+actual fix (`gh pr diff PR_NUMBER`); this also works with older gh versions.
 Replace NUMBER/PR_NUMBER from the finding and linked fix, not a guessed search hit.
 Only a merged PR actually fixing/closing the finding triggers `retest`; closure as
 unreproducible, duplicate or out-of-scope does not establish a fix. Record merge SHA,

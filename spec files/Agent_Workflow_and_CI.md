@@ -142,6 +142,19 @@ The `.agent/workflows/qa-run.md` workflow automates the execution of the QA test
   - **Low:** Cosmetic issues, minor inconveniences, performance degradation within limits.
 Record results of lab runs in `docs/test-runs/`.
 
+### Find, fix, retest
+
+`qa-run.md` records observed failures without fixing them. `fix-found.md` selects
+eligible `qa-found` issues by severity then age and follows `work-issue.md` in a
+separate issue worktree. It records skipped candidates, never weakens a QA case,
+and opens at most three PRs in five rounds. Permission denial stops the loop.
+Humans merge PRs; agents never merge. Only an actual merged fix plus a closed
+finding returns its affected traceability rows to `retest`, with the original
+failure, PR and merge SHA retained. Two failed retests after separate merged fixes
+label that finding `needs-decision` and stop work on the case. Synthetic workflow
+demonstrations use scratch traceability data and do not establish product passes.
+See `.agent/workflows/fix-found.md` for commands and written boundary checks.
+
 ## Verification commands
 
 | Stage | Command | Notes |
