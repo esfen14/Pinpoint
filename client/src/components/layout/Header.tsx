@@ -15,7 +15,7 @@ const pageTitles: Record<string, { section: string; page: string }> = {
   '/dashboard': { section: 'Dashboards', page: 'Overview' },
   '/network-health': { section: 'Network Health', page: 'Overview' },
   '/device-inventory': { section: 'Host Inventory', page: 'Overview' },
-  '/topology': { section: 'System Status', page: 'All Hosts' },
+  '/system-status': { section: 'System Status', page: 'All Hosts' },
   '/plugins': { section: 'Plugins', page: 'System Plugins' },
   '/ncpa-deployment': { section: 'Plugins', page: 'NCPA Deployment' },
   '/history': { section: 'History', page: 'Alerts & Notifications' },

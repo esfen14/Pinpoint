@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, Outlet } from 'react-router-dom'
 import { describe, it, expect, vi } from 'vitest'
 import App from '../App'
 
@@ -13,8 +13,8 @@ vi.mock('../pages/DeviceInventoryPage', () => ({
 vi.mock('../pages/NetworkHealthPage', () => ({
   NetworkHealthPage: () => <div>Network Health Page</div>,
 }))
-vi.mock('../pages/TopologyPage', () => ({
-  TopologyPage: () => <div>Topology Page</div>,
+vi.mock('../pages/SystemStatusPage', () => ({
+  SystemStatusPage: () => <div>System Status Page</div>,
 }))
 vi.mock('../pages/ManageAccountsPage', () => ({
   ManageAccountsPage: () => <div>Manage Accounts Page</div>,
@@ -23,7 +23,7 @@ vi.mock('../pages/PlaceholderPage', () => ({
   PlaceholderPage: ({ title }: { title: string }) => <div>{title} Page</div>,
 }))
 vi.mock('../components/layout/AdminLayout', () => ({
-  AdminLayout: () => <div>Admin Layout</div>,
+  AdminLayout: () => <Outlet />,
 }))
 
 function renderApp(initialEntry = '/') {
@@ -51,6 +51,17 @@ describe('App routing', () => {
     renderApp('/login')
     // LoginPage renders "Log In to your Account" heading
     expect(screen.getByText('Log In to your Account')).toBeInTheDocument()
+  })
+
+  it('registers the System Status page at /system-status', () => {
+    renderApp('/system-status')
+    expect(screen.getByText('System Status Page')).toBeInTheDocument()
+  })
+
+  it('does not register the former /topology route', () => {
+    renderApp('/topology')
+    expect(screen.getByText('Log In to your Account')).toBeInTheDocument()
+    expect(screen.queryByText('System Status Page')).not.toBeInTheDocument()
   })
 
   it('renders wildcard * redirect to /login', () => {

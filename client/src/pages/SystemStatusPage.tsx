@@ -19,7 +19,7 @@ function buildQuery(params: Record<string, string | number>) {
   return search.toString()
 }
 
-export function TopologyPage() {
+export function SystemStatusPage() {
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [stateFilter, setStateFilter] = useState<'All' | ServiceState>('All')

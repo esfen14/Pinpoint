@@ -5,7 +5,7 @@ import { LoginPage } from './pages/LoginPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { NetworkHealthPage } from './pages/NetworkHealthPage'
 import { DeviceInventoryPage } from './pages/DeviceInventoryPage'
-import { TopologyPage } from './pages/TopologyPage' 
+import { SystemStatusPage } from './pages/SystemStatusPage'
 import { ReportsPage } from './pages/ReportsPage'
 import { HistoryPage } from './pages/HistoryPage'
 import { SystemLogsPage } from './pages/SystemLogsPage'
@@ -49,10 +49,7 @@ export default function App() {
           element={<DeviceInventoryPage />}
         />
 
-        {<Route
-          path="topology"
-          element={<TopologyPage />}
-        /> }
+        <Route path="system-status" element={<SystemStatusPage />} />
         
 
         <Route
