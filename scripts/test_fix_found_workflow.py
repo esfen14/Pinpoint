@@ -7,6 +7,7 @@ import unittest
 ROOT = Path(__file__).resolve().parent.parent
 WORKFLOW = (ROOT / ".agent/workflows/fix-found.md").read_text()
 WORK_ISSUE = (ROOT / ".agent/workflows/work-issue.md").read_text()
+QA_RUN = (ROOT / ".agent/workflows/qa-run.md").read_text()
 
 
 class FixFoundContract(unittest.TestCase):
@@ -57,6 +58,11 @@ class FixFoundContract(unittest.TestCase):
 
     def test_work_issue_keeps_human_merge_gate(self):
         self.assertIn("Never merge a pull request", WORK_ISSUE)
+
+    def test_planted_harness_failure_is_not_a_product_issue(self):
+        self.assertIn("deliberately false scratch assertion", QA_RUN)
+        self.assertIn("not create a `qa-found`", QA_RUN)
+        self.assertIn("do not create a `qa-found`", QA_RUN)
 
 
 if __name__ == "__main__":

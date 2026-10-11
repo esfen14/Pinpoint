@@ -1,7 +1,7 @@
 # Issue #63: Complete QA loop readiness
 
 Branch: `issue-63-qa-loop-readiness`
-Status: blocked
+Status: in-progress
 
 ## Finish condition
 
@@ -9,14 +9,14 @@ Status: blocked
 - [x] Resumable qa-run and thin adapters with consistent safety and retest rules.
 - [x] Labels, draft severity rubric and enforceable lab/browser boundaries.
 - [x] Exact-pinned Playwright, credential-safe role setup, Vitest exclusion and both-role live smoke passes.
-- [ ] Complete the planted-failure J2/J3 dry run: both required attempts are recorded, but the prepared `qa-found` issue and sanitized report still need approved GitHub publication/linkage.
+- [x] Complete the planted-failure J2/J3 dry run and sanitized report; both expected failures are recorded without filing a product issue.
 - [ ] Full verification and CI green: local `scripts/verify.sh all` is green; PR #88 currently reports no CI checks and remains draft.
 
 ## Plan
 
 - [x] Recovery: repair role-separated Playwright setup and forced-change handling in `client/e2e/`; verify offline, then both roles live.
 - [x] Recovery: verify lab authentication and provision the approved restricted account.
-- [ ] Publish and link the observed planted-failure evidence after explicit approval for the GitHub state changes.
+- [x] Record and link the planted-failure evidence without changing the real J2-01 result or filing a synthetic product issue.
 
 - [x] Restore accurate state; test and fix Playwright credential/artifact defaults.
 - [x] Test-first complete traceability checker and matrix; integrate docs drift check.
@@ -32,14 +32,14 @@ Status: blocked
 | Recovery 1 | Restore progress; exact pin, fail-closed credentials, ignored auth/artifacts and disabled login captures; expand qa-run | `python3 -I scripts/test_playwright_safety.py` red then green (4 tests); `scripts/verify.sh docs` | passed offline checks only; live lab untouched |
 | Recovery 2 | Separate role projects; add repeatable Staff provisioning, forced-change setup and Docker no-network runner | `python3 -I scripts/test_playwright_safety.py`; `scripts/playwright-lab` | 8 offline checks passed; 4/4 live setup/smoke tests passed |
 | Recovery 3 | Added fix-found contract checks and executed the planted failure twice; removed scratch assertion | `scripts/verify.sh all` with required socket/DNS permissions | all green: docs, 2315 backend passed/14 skipped, 492 frontend passed/build/lint with 25 tracked warnings |
-| Recovery 4 | Audited the external finish gate and PR state | `gh issue list --state all --search 'J2-01 planted failure impossible discovery banner'`; `gh pr checks 88` | no matching issue; PR #88 has no reported checks; prepared issue body is `/tmp/qa63-planted-issue.md` |
+| Recovery 4 | Corrected planted-failure handling and audited PR state | two matching planted runs; `gh pr checks 88` | sanitized workflow report added; no product issue required; PR #88 has no reported checks |
 
 ## State for the next session
 
 - Last check run: `scripts/verify.sh all` with local-socket/DNS permission.
 - Result: green: docs contracts; backend 2315 passed, 14 skipped; frontend 492 passed, build passed, lint 0 errors/25 tracked warnings.
-- Hypothesis: local implementation, live role coverage, the two planted-failure attempts and full verification are complete; only external issue/report linkage and CI evidence remain.
-- Next action: obtain explicit approval for the prepared GitHub mutations, then file the planted finding, link its sanitized report, update PR #88 evidence and re-check CI.
+- Hypothesis: implementation, live role coverage, planted-failure evidence and full local verification are complete; only PR CI evidence remains.
+- Next action: determine why PR #88 has no reported CI checks and get the required jobs running; keep the PR draft until they are green.
 
 ## Decisions and notes
 
@@ -148,10 +148,11 @@ and browser safety was unenforced are superseded by the verified role-smoke evid
 - A scratch-only Playwright assertion titled `J2-01 planted failure: impossible discovery banner` ran twice through `scripts/playwright-lab --project admin`.
 - Both attempts loaded the administrator Dashboard and failed at the same intentionally impossible heading assertion. Each attempt reported one setup pass and one planted failure.
 - The scratch spec and temporary config inclusion were removed immediately afterward. No J2-01 product result or traceability status was changed.
-- The open/closed issue search for the exact planted symptom returned no match. A sanitized issue body is prepared at `/tmp/qa63-planted-issue.md`; automatic approval review blocked external issue/PR state changes until the user explicitly approves them.
+- The open/closed issue search for the exact planted symptom returned no match. No
+  issue is needed because the failure was deliberately injected and does not describe
+  product behavior. Sanitized report: `docs/test-runs/2026-10-11-qa-loop-planted-run/REPORT.md`.
 
-### Current blocker
+### Current state
 
-- Automatic approval review rejected publishing the PR #88 evidence comment and closing #93 because those actions disclose project evidence and mutate external GitHub state.
-- The same explicit approval is required before creating the synthetic `qa-found` issue needed to finish the planted-failure report.
+- #63 is not blocked. The only unticked finish item is CI: PR #88 currently reports no checks.
 - No product code, scratch assertion or lab process remains unfinished or running. The temporary Staff account remains only on the disposable appliance and is reset safely by `scripts/vmlab setup-restricted`.

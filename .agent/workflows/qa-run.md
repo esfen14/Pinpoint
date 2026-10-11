@@ -47,6 +47,10 @@ HUMAN cases remain untested until a person supplies attributable evidence.
    `gh issue create --label qa-found --title '<case>: <symptom>' --body-file <sanitized-file>`
    Record the returned URL; never invent one. On denied permission stop, record it,
    and do not switch tools to bypass the denial.
+   A deliberately false scratch assertion used only to validate this workflow is
+   expected harness evidence, not an application defect: record both attempts in a
+   sanitized synthetic report, remove the assertion, and do not create a `qa-found`
+   issue or change the real case's traceability status.
 7. Create a report with `scripts/new_test_run.sh <unique-slug> docs/qa/QA_Test_Plan.md`,
    fill actual results, and index it in `docs/test-runs/README.md`. Raw auth state,
    traces, screenshots and database extracts stay outside committed evidence.
