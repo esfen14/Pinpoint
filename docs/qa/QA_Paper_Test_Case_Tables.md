@@ -164,11 +164,11 @@ in lowercase). Every Pass must link to sanitized evidence in the Notes column.
 | J4-03 | Untested | No result recorded yet. |
 | J4-06 | Untested | No result recorded yet. |
 | J4-07 | Untested | No result recorded yet. |
-| J4-08 | Untested | No result recorded yet. |
+| J4-08 | Pass | `test_plugin_validation.py`: 28 passed in 2026-10-12 FS VM-lab run |
 | J5-02 | Untested | No result recorded yet. |
 | J5-03 | Untested | No result recorded yet. |
 | J5-04 | Untested | No result recorded yet. |
-| J5-08 | Untested | No result recorded yet. |
+| J5-08 | Pass | `test_smtp_settings.py`: 38 passed in 2026-10-12 FS VM-lab run |
 | J5-11 | Untested | No result recorded yet. |
 | J6-01 | Untested | No result recorded yet. |
 | J6-02 | Untested | No result recorded yet. |
@@ -180,7 +180,7 @@ in lowercase). Every Pass must link to sanitized evidence in the Notes column.
 | J7-06 | Untested | No result recorded yet. |
 | J7-07 | Untested | No result recorded yet. |
 | J7-08 | Untested | No result recorded yet. |
-| J7-09 | Untested | No result recorded yet. |
+| J7-09 | Pass | Settings, Nagios writer, status and plugin-services suite: 160 passed in 2026-10-12 FS VM-lab run |
 | J8-01 | Untested | No result recorded yet. |
 | J8-02 | Untested | No result recorded yet. |
 | J8-03 | Untested | No result recorded yet. |

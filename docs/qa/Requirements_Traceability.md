@@ -37,7 +37,7 @@
 | J4-05 | QA_Test_Plan.md | SE | VM | agent | untested | |
 | J4-06 | QA_Test_Plan.md | FS | VM | agent · destructive | untested | |
 | J4-07 | QA_Test_Plan.md | FS | VM | agent | untested | |
-| J4-08 | QA_Test_Plan.md | FS | MOCK | agent | untested | |
+| J4-08 | QA_Test_Plan.md | FS | MOCK | agent | pass | `test_plugin_validation.py`: 28 passed in 2026-10-12 FS VM-lab run |
 | J5-01 | QA_Test_Plan.md | RE | VM | agent · destructive | untested | |
 | J5-02 | QA_Test_Plan.md | FS | VM | agent · destructive | untested | |
 | J5-03 | QA_Test_Plan.md | FS | VM | agent · destructive | untested | |
@@ -45,7 +45,7 @@
 | J5-05 | QA_Test_Plan.md | RE | VM | agent · destructive | untested | |
 | J5-06 | QA_Test_Plan.md | RE | VM | agent · destructive | untested | |
 | J5-07 | QA_Test_Plan.md | RE | VM | agent · destructive | untested | |
-| J5-08 | QA_Test_Plan.md | FS | MOCK | agent | untested | |
+| J5-08 | QA_Test_Plan.md | FS | MOCK | agent | pass | `test_smtp_settings.py`: 38 passed in 2026-10-12 FS VM-lab run |
 | J5-10 | QA_Test_Plan.md | IC | VM | agent (UI) | untested | |
 | J5-11 | QA_Test_Plan.md | FS | VM | HUMAN | untested | |
 | J5-09 | QA_Test_Plan.md | SE | MOCK | agent | untested | |
@@ -62,7 +62,7 @@
 | J7-06 | QA_Test_Plan.md | FS | VM | agent | untested | |
 | J7-07 | QA_Test_Plan.md | FS | VM | agent | untested | |
 | J7-08 | QA_Test_Plan.md | FS | VM | agent | untested | |
-| J7-09 | QA_Test_Plan.md | FS | MOCK | agent | untested | |
+| J7-09 | QA_Test_Plan.md | FS | MOCK | agent | pass | Settings, Nagios writer, status and plugin-services suite: 160 passed in 2026-10-12 FS VM-lab run |
 | J8-01 | QA_Test_Plan.md | FS | VM | agent | untested | |
 | J8-02 | QA_Test_Plan.md | FS | VM | agent | untested | |
 | J8-03 | QA_Test_Plan.md | FS | VM | agent | untested | |
