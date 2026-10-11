@@ -45,15 +45,16 @@ One row per loop round, newest last.
 | 2 | Added a super-admin API fixture and UI assertion; associated the Status label with its select after the new accessibility-aware test first failed. | `cd client && npm run test -- ManageAccountsPage.test.tsx` | 25 passed. |
 | 3 | Audited application `User.Status` assignments; only the guarded account-update route mutates an existing user's status. | Focused backend and frontend regression tests | 8 backend tests and 25 frontend tests passed. |
 | 4 | Documented the `is_super_admin` response field, protected status-update contract, and disabled form control. | `scripts/verify.sh docs` | Passed. |
+| 5 | Re-read issue and comments; ran the full verifier. | `scripts/verify.sh all` | Docs passed; backend had 5 failures and 1 error caused by sandbox-blocked socket/DNS tests. |
 
 ## State for the next session
 
 Everything a fresh session needs to continue without redoing work.
 
-- Last check run (exact command): `scripts/verify.sh docs`
-- Result (first failing lines, or "green"): green — docs, route drift, QA validators and progress-file validation passed.
-- Hypothesis: All scoped work is complete; re-read issue #72/comments and run the full CI-equivalent verifier before marking the finish condition.
-- Next action (one specific step, not "continue"): Re-read issue #72 and comments through GitHub REST, then run `scripts/verify.sh all`.
+- Last check run (exact command): `scripts/verify.sh all`
+- Result (first failing lines, or "green"): 5 failed, 2326 passed, 14 skipped, 1 error in 241.14s. The failures were `test_lab_findings` local-port checks, `test_ncpa_identity` TLS-probe checks, and `test_plugin_update::test_public_https_allowed`, all blocked by unavailable socket/DNS access in the sandbox.
+- Hypothesis: The failures are verification-environment restrictions rather than issue #72 regressions; the full verifier should pass with permitted network/socket access.
+- Next action (one specific step, not "continue"): Re-run `scripts/verify.sh all` with elevated network permissions and use that result to finish or diagnose further.
 
 ## Decisions and notes
 
