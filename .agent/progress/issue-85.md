@@ -1,11 +1,11 @@
 # Issue #85: Add a fix-found loop that fixes QA-found issues and returns cases to retest
 
 Branch: `issue-63-qa-loop-readiness` (Phase 3 evidence carried on PR #88)
-Status: ready-for-review (not blocked)
+Status: in-progress (not blocked)
 
-Issue #85 has no remaining implementation or `qa-found` issue dependency. Its
-changes share PR #88 with issue #63, so final delivery waits only for that PR's
-main-branch conflict and CI state to be resolved.
+Issue #85 has no remaining implementation or `qa-found` issue dependency. It is
+kept in progress because its changes share PR #88, whose checklist is stale and
+whose locally verified main integration has intentionally not been pushed.
 
 ## Finish condition
 
@@ -15,6 +15,7 @@ main-branch conflict and CI state to be resolved.
 - [x] Retest handoff requires a merged fix and is demonstrated only on a scratch row after the human merge of PR #91; no product traceability case was changed.
 - [x] The 3-PR cap, two-failed-fix stop, and denied-permission stop are documented and covered by written contract checks.
 - [x] `scripts/verify.sh docs` passes.
+- [ ] Shared delivery is reviewed: PR #88 reflects the observed #85 evidence and its required CI checks pass.
 
 ## Plan
 
@@ -36,13 +37,14 @@ main-branch conflict and CI state to be resolved.
 | Recovery 2 | Added executable documentation contracts for queue, skips, limits, permission stop, real-merge handoff and human merge gate | `python3 -I scripts/test_fix_found_workflow.py`; `scripts/verify.sh docs` | contract tests pass; later expanded to 7 checks |
 | 3 | Repaired progress structure for PR verification | `scripts/verify.sh docs` | green |
 | Recovery 3 | Ran the planted assertion twice and reconciled #90/#91 as scratch-only workflow evidence | two `scripts/playwright-lab --project admin -g 'J2-01 planted failure'` runs; PR #91 merge evidence; workflow contract tests | expected assertion failed twice; PR was human-merged; scratch row moves to retest while product J2-08 remains unchanged |
+| Recovery 4 | Audited the GitHub issue and shared PR checklists after integrating main locally | `scripts/verify.sh all` with required socket/DNS permissions | all local checks green; PR #88 remains unchanged and unpushed pending review |
 
 ## State for the next session
 
 - Last check run: `scripts/verify.sh all` with local-socket/DNS permission.
 - Result: green: docs including 7 fix-found contracts; backend 2315 passed, 14 skipped; frontend 492 passed, build passed, lint 0 errors/25 tracked warnings.
 - Hypothesis: all #85 finish conditions are covered by corrected historical evidence, scratch queue fixtures and executable contract checks.
-- Next action: keep #85 ready for review; delete this shared progress file only when PR #88 is reconciled with main and made ready after #63's CI requirement is satisfied.
+- Next action: review the remaining shared-PR work with the owner; do not push or mark #85 ready until PR #88 accurately reflects the evidence and CI is green.
 
 ## Decisions and notes
 
