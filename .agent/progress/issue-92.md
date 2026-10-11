@@ -37,9 +37,9 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 1. [ ] Step: Add failing backend tests for Nagios-backed availability, period/host forwarding, hosts-by-OS grouping, no-data/failure, and snapshot fallback prevention in `server/tests/unit/test_report_availability.py`.
 2. [ ] Step: Implement shared Nagios availability querying and compatible response aggregation in `server/app/nagios/notifications.py` and `server/app/api/system/report.py`.
-3. [ ] Step: Run targeted backend tests, then backend verification; record results in this file.
-4. [ ] Step: Update route/catalog/status documentation to describe Nagios authority in `spec files/Backend_Modules_and_Routes.md`, `spec files/Data_Model_and_Integrations.md`, `spec files/Implementation_Status.md`, and the frontend report description in `client/src/pages/ReportsPage.tsx` if needed.
-5. [ ] Step: Run frontend verification and create a sanitized issue test report in `docs/test-runs/2026-10-11-issue-92/REPORT.md` plus its index row.
+3. [x] Step: Run targeted backend tests, then backend verification; record results in this file.
+4. [x] Step: Update route/catalog/status documentation to describe Nagios authority in `spec files/Backend_Modules_and_Routes.md`, `spec files/Data_Model_and_Integrations.md`, `spec files/Implementation_Status.md`, and the frontend report description in `client/src/pages/ReportsPage.tsx` if needed.
+5. [x] Step: Run frontend verification and create a sanitized issue test report in `docs/test-runs/2026-10-11-issue-92/REPORT.md` plus its index row.
 6. [ ] Step: Re-read issue, run `scripts/verify.sh all`, tick proven finish conditions, remove this progress file, commit, push, and open the pull request.
 
 ## Round log
@@ -50,13 +50,14 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | 2 | Updated route/data/status documentation and Reports description; verified targeted report/consumer/alert tests and docs. | `scripts/verify.sh docs`; `cd server && .venv/bin/python -m pytest tests/unit/test_report_availability.py tests/unit/test_report_notifications_alerts.py tests/unit/test_device_name_consumers.py -q`; `scripts/verify.sh backend` | Docs green; targeted backend 58 passed. Full backend route/API drift passed, then pytest stopped at 258 passed on pre-existing missing migration revision `f3a8c1d6b2e9`. |
 | 3 | Ran frontend verification and recorded sanitized test report with remaining backend migration limitation. | `scripts/verify.sh frontend`; `cd server && .venv/bin/python -m pytest tests/unit/ --maxfail=1 -x -q` | Frontend green: 492 tests, build, lint (warnings only). Backend blocked by missing migration revision in starting worktree; full all not green. |
 | 4 | Added a direct cross-endpoint equivalence regression test using identical mocked Nagios durations, including indeterminate time exclusion. | `cd server && .venv/bin/python -m pytest tests/unit/test_report_availability.py -q` | 7 passed. |
+| 5 | Restored the complete migration versions folder without removing unrelated work, committed it, and reran backend verification. | `scripts/verify.sh backend` | Green: 2,322 passed, 14 skipped. |
 
 ## State for the next session
 
-- Last check run (exact command): `cd server && .venv/bin/python -m pytest tests/unit/test_report_availability.py -q`
-- Result (first failing lines, or "green"): green, 7 passed
-- Hypothesis: The direct equivalence regression now proves Network Health and Reports use matching Nagios duration semantics; full backend/all verification remains blocked by the missing migration revision.
-- Next action (one specific step, not "continue"): checkpoint this test addition and restore the migration baseline before final verification.
+- Last check run (exact command): `scripts/verify.sh backend`
+- Result (first failing lines, or "green"): green, 2,322 passed, 14 skipped
+- Hypothesis: Restoring the migration versions resolved the previous backend verification blocker; issue #92 targeted behavior and the complete backend suite now pass.
+- Next action (one specific step, not "continue"): update the test-run report and checkpoint the green backend result, then run the final docs/frontend/all verification.
 
 ## Decisions and notes
 
