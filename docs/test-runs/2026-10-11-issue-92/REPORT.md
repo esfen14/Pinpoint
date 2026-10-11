@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Date | 2026-10-11 |
-| Commit tested | `e7eaecea` |
+| Commit tested | `8427b0e9` |
 | Plan | Issue #92 finish-condition backend and documentation checks |
 | Tester | OpenCode agent |
 | Environment | Local isolated Flask tests; in-memory SQLite binds; Nagios availability mocked |
@@ -11,9 +11,9 @@
 
 ## Result
 
-**Overall: Partial.** Targeted backend tests and documentation verification passed. The full backend verification passed after restoring the migration versions folder: route/API drift checks passed and the isolated suite reported 2,322 passed and 14 skipped. Frontend verification also passed. Full `verify.sh all` remains to be run.
+**Overall: Partial.** Targeted backend tests and documentation verification passed. The complete verification passed after restoring the migration versions folder: backend route/API drift and the isolated suite reported 2,322 passed and 14 skipped; frontend reported 492 passed, build success, and lint warnings only. `scripts/verify.sh all` passed.
 
-Totals: Pass 4, Fail 0, Blocked 0, Skipped 1.
+Totals: Pass 5, Fail 0, Blocked 0, Skipped 0.
 
 ## Cases
 
@@ -23,7 +23,7 @@ Totals: Pass 4, Fail 0, Blocked 0, Skipped 1.
 | Existing report alerts/notifications compatibility | Pass | `test_report_notifications_alerts.py` and related report consumer tests: 58 tests passed | |
 | Documentation verification | Pass | `scripts/verify.sh docs`: links, drift, traceability, and progress checks passed | |
 | Full backend verification | Pass | `scripts/verify.sh backend`: route/API drift passed; 2,322 backend tests passed and 14 skipped after migration restoration | |
-| Frontend tests/build and full verification | Skipped | Not run in this session | |
+| Frontend tests/build and full verification | Pass | Frontend: 492 tests passed, production build succeeded, lint completed with existing warnings; `scripts/verify.sh all` passed | |
 
 ## Deviations from the plan
 

@@ -5,17 +5,17 @@ Status: in-progress
 
 ## Finish condition
 
-- [ ] `GET /api/system/report/availability` obtains availability from Nagios rather than calculating it directly from Pinpoint `HostStatus` snapshots.
-- [ ] `GET /api/system/report/hosts-by-os` uses the same Nagios-backed availability source and semantics.
-- [ ] The selected reporting period and host scope are passed to Nagios correctly.
-- [ ] The Reports API response remains compatible with the existing frontend, or any intentional response change is documented and tested.
-- [ ] Network Health and Reports produce equivalent availability values for equivalent hosts, windows, and calculation options, subject only to documented rounding.
-- [ ] Nagios request failure and no-data cases return clear, tested error or unavailable responses without silent snapshot fallback.
-- [ ] Backend tests cover Nagios-backed results, period handling, hosts-by-os grouping, no-data behavior, request failure, and prevention of snapshot fallback.
-- [ ] Frontend tests and build pass.
-- [ ] Relevant route and implementation documentation describe Nagios as the availability authority.
-- [ ] A sanitized test report records observed results and remaining limitations.
-- [ ] `scripts/verify.sh all` passes.
+- [x] `GET /api/system/report/availability` obtains availability from Nagios rather than calculating it directly from Pinpoint `HostStatus` snapshots.
+- [x] `GET /api/system/report/hosts-by-os` uses the same Nagios-backed availability source and semantics.
+- [x] The selected reporting period and host scope are passed to Nagios correctly.
+- [x] The Reports API response remains compatible with the existing frontend, or any intentional response change is documented and tested.
+- [x] Network Health and Reports produce equivalent availability values for equivalent hosts, windows, and calculation options, subject only to documented rounding.
+- [x] Nagios request failure and no-data cases return clear, tested error or unavailable responses without silent snapshot fallback.
+- [x] Backend tests cover Nagios-backed results, period handling, hosts-by-os grouping, no-data behavior, request failure, and prevention of snapshot fallback.
+- [x] Frontend tests and build pass.
+- [x] Relevant route and implementation documentation describe Nagios as the availability authority.
+- [x] A sanitized test report records observed results and remaining limitations.
+- [x] `scripts/verify.sh all` passes.
 
 Requirement coverage (every requirement the issue states, and the check that proves it):
 
@@ -51,13 +51,14 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | 3 | Ran frontend verification and recorded sanitized test report with remaining backend migration limitation. | `scripts/verify.sh frontend`; `cd server && .venv/bin/python -m pytest tests/unit/ --maxfail=1 -x -q` | Frontend green: 492 tests, build, lint (warnings only). Backend blocked by missing migration revision in starting worktree; full all not green. |
 | 4 | Added a direct cross-endpoint equivalence regression test using identical mocked Nagios durations, including indeterminate time exclusion. | `cd server && .venv/bin/python -m pytest tests/unit/test_report_availability.py -q` | 7 passed. |
 | 5 | Restored the complete migration versions folder without removing unrelated work, committed it, and reran backend verification. | `scripts/verify.sh backend` | Green: 2,322 passed, 14 skipped. |
+| 6 | Ran final full verification after migration restoration and updated the test-run report and finish-condition evidence. | `scripts/verify.sh all` | Green: backend 2,322 passed/14 skipped; frontend 492 passed, build and lint successful; docs successful. |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh backend`
-- Result (first failing lines, or "green"): green, 2,322 passed, 14 skipped
-- Hypothesis: Restoring the migration versions resolved the previous backend verification blocker; issue #92 targeted behavior and the complete backend suite now pass.
-- Next action (one specific step, not "continue"): update the test-run report and checkpoint the green backend result, then run the final docs/frontend/all verification.
+- Last check run (exact command): `scripts/verify.sh all`
+- Result (first failing lines, or "green"): green; backend 2,322 passed/14 skipped, frontend 492 passed/build/lint, docs passed
+- Hypothesis: All issue #92 finish-condition requirements now have observed automated proof.
+- Next action (one specific step, not "continue"): checkpoint the final evidence, then remove the progress file and prepare the pull request.
 
 ## Decisions and notes
 
