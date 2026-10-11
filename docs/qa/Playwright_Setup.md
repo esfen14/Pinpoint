@@ -2,13 +2,21 @@
 
 Pinpoint uses Playwright for end-to-end (E2E) testing. This document covers setup and running specs against a local lab or mocked backend.
 
+**Status: incomplete draft.** The current admin scaffold has not passed a live
+smoke test. Restricted-role setup, forced password changes and mocked-backend specs
+remain unfinished. Do not run against a lab owned by another teammate. The baseURL
+is not network isolation; an OS/container egress boundary must be established before
+agent browser exploration. Login captures are disabled, and missing credentials fail
+closed rather than using a default password. No live run is authorized while the
+owner investigates #86.
+
 ## 1. Prerequisites
 
 You will need a Linux environment (Debian 13 or Ubuntu 24.04). Playwright uses Chromium and requires system libraries.
 
 ```bash
 cd client/
-npm install @playwright/test --save-dev
+npm ci # installs the committed exact Playwright pin and lockfile
 ```
 
 Install Playwright browsers and dependencies:

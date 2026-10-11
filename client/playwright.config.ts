@@ -9,7 +9,10 @@ export default defineConfig({
   reporter: 'json',
   use: {
     baseURL: 'http://127.0.0.1:18080',
-    trace: 'retain-on-failure',
+    // Login artifacts can expose passwords; opt-in capture must never cover setup.
+    trace: 'off',
+    screenshot: 'off',
+    video: 'off',
   },
   projects: [
     {

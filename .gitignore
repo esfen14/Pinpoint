@@ -208,3 +208,9 @@ server/database-backups/
 
 # Local test output (JUnit XML, coverage); CI uploads its own
 /test-results/
+
+# Browser sessions and raw evidence may contain credentials
+/client/.auth/
+/client/test-results/
+/client/playwright-report/
+/client/blob-report/

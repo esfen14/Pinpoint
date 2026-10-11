@@ -132,7 +132,7 @@ Where results go is defined in [`docs/test-runs/README.md`](../docs/test-runs/RE
 
 The `.agent/workflows/qa-run.md` workflow automates the execution of the QA test plan under strict parameters.
 
-- **Authority rules:** The specification rules unless `Implementation_Status.md` states otherwise; conflicts without an explicit team decision require a `needs-decision` issue. Passing requires observed behavior.
+- **Authority rules:** The behavioral specification wins; `Implementation_Status.md` records known gaps, not overrides. Conflicts without an explicit team decision require a `needs-decision` issue. Passing requires observed behavior.
 - **Reporting rules:** A test failure is repeated exactly once before filing. Maintainers must search open and closed issues first; file use the Task template containing case ID and evidence; sanitize evidence (never paste passwords, credentials, tokens, SNMP communities, or raw database dumps). Defects determined to be installer bugs are written as notes for the owner, not filed against the application.
 - **Safety boundaries:** Using `scripts/vmlab` and `scripts/lab` is permitted for QA sweeps; the libvirt e2e harness is strictly forbidden. Network scans MUST be tightly restricted to `10.77.0.0/28` using a guard; overlapping discoveries are banned (#59). One appliance is tested at a time, checking disk/RAM capacity before provisioning.
 - **Labels:** The loop uses `qa-found` for test plan failures and `needs-decision` for blocker/ambiguity issues.
