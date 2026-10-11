@@ -5,7 +5,7 @@ Status: in-progress
 
 ## Finish condition
 
-- [ ] The exclusive VM-lab baseline and `10.77.0.0/28` scan restriction are revalidated.
+- [x] The exclusive VM-lab baseline and `10.77.0.0/28` scan restriction are revalidated.
 - [ ] Up to five claimed FS cases are observed and recorded.
 - [ ] Mutable plugin/lab state is restored.
 - [ ] Report, traceability, progress record and docs verification are complete.
@@ -22,8 +22,8 @@ Requirement coverage (every requirement the issue states, and the check that pro
 ## Plan
 
 1. [x] Create the tracking issue and dedicated worktree; read QA workflow, plugin requirements/plans and current lab state.
-2. [ ] Authenticate to the running appliance and read discovery networks/status; reject the run if any configured scan range is outside `10.77.0.0/28` or a scan is active.
-3. [ ] Claim and execute J4-01, J4-02 and J4-03, including live inventory/scan/enable observations and Nagios config/status evidence.
+2. [x] Authenticate to the running appliance and read discovery networks/status; reject the run if any configured scan range is outside `10.77.0.0/28` or a scan is active.
+3. [ ] Claim J4-01, J4-02 and J4-03; then execute them with live inventory/scan/enable observations and Nagios config/status evidence.
 4. [ ] Execute the next prerequisite-satisfied FS cases, at most five total, restore plugin/lab state, and repeat any failure once before issue triage.
 5. [ ] Create a sanitized report; update index and traceability for only full observations; verify docs and checkpoint.
 
@@ -32,13 +32,14 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 1 | Created tracking issue #101 and a dedicated worktree; reviewed plugin and QA requirements. | `scripts/vmlab status`; `scripts/vmlab targets up` | Appliance is running, base snapshot stamp matches; all five required targets are already running. |
+| 2 | Revalidated the live preflight and claimed J4-01, J4-02, J4-03. | Authenticated reads of discovery settings/status and plugin summary/inventory | Configured networks read exactly `10.77.0.0/28`; discovery terminal Success and not running. Plugin summary begins at 65 installed, 0 enabled. Report created at `docs/test-runs/2026-10-12-fs-plugin-manager/`. |
 
 ## State for the next session
 
 - Last check run (exact command): `scripts/vmlab targets up`
 - Result (first failing lines, or "green"): Green: all five target VMs already running.
 - Hypothesis: The appliance retained the restricted discovery baseline from the preceding FS round; it must be read back before a mutating plugin case.
-- Next action (one specific step, not "continue"): Authenticate to the appliance and read `/api/system/discovery-settings` and `/api/system/discover/status` to establish the required guard.
+- Next action (one specific step, not "continue"): Execute J4-01 inventory reconciliation, then start and observe the J4-02 plugin scan before enabling a plugin.
 
 ## Decisions and notes
 
