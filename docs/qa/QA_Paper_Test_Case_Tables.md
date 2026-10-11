@@ -159,7 +159,7 @@ in lowercase). Every Pass must link to sanitized evidence in the Notes column.
 | J2-09 | Untested | Existing 8080 rows prevented a clean first-insertion claim |
 | J3-01 | Untested | No result recorded yet. |
 | J3-02 | Pass | Live deployment to two authorized targets succeeded; see 2026-10-11 j2-j3-dry-run report |
-| J4-01 | Untested | No result recorded yet. |
+| J4-01 | Pass | Fresh installer-built appliance: Plugin Manager summary and complete inventory both reported 65 installed plugins; see [2026-10-12 FS J4 inventory report](../test-runs/2026-10-12-fs-j4-inventory/REPORT.md). |
 | J4-02 | Untested | No result recorded yet. |
 | J4-03 | Untested | No result recorded yet. |
 | J4-06 | Untested | No result recorded yet. |

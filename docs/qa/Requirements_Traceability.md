@@ -30,7 +30,7 @@
 | J3-08 | QA_Test_Plan.md | RE | VM | agent | untested | |
 | J3-09 | QA_Test_Plan.md | RE | VM | agent | untested | Required before/after identity baseline was not captured for this deployment |
 | J3-10 | QA_Test_Plan.md | RE | MOCK | agent | untested | |
-| J4-01 | QA_Test_Plan.md | FS | VM | agent | untested | |
+| J4-01 | QA_Test_Plan.md | FS | VM | agent | pass | Fresh installer-built appliance: Plugin Manager summary and complete inventory both reported 65 installed plugins; see [2026-10-12 FS J4 inventory report](../test-runs/2026-10-12-fs-j4-inventory/REPORT.md). |
 | J4-02 | QA_Test_Plan.md | FS | VM | agent | untested | |
 | J4-03 | QA_Test_Plan.md | FS | VM | agent | untested | |
 | J4-04 | QA_Test_Plan.md | RE | VM | agent | untested | |
