@@ -34,8 +34,8 @@ Status: in-progress
 
 ## State for the next session
 
-- Last check run: `python3 -I scripts/test_fix_found_workflow.py`.
-- Result: 6 contract tests pass after correcting the workflow and its GitHub CLI commands.
+- Last check run: `scripts/verify.sh all` with local-socket/DNS permission.
+- Result: green: docs including 6 fix-found contracts; backend 2315 passed, 14 skipped; frontend 492 passed, build passed, lint 0 errors/25 tracked warnings.
 - Hypothesis: implementation and written guardrails are complete; only an attributable external synthetic issue/PR/skip/handoff demonstration remains.
 - Next action: after explicit approval for the external GitHub mutations, file the prepared planted finding and run the synthetic queue demonstration without merging.
 

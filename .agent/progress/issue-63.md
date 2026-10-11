@@ -31,13 +31,14 @@ Status: in-progress
 |---|---|---|---|
 | Recovery 1 | Restore progress; exact pin, fail-closed credentials, ignored auth/artifacts and disabled login captures; expand qa-run | `python3 -I scripts/test_playwright_safety.py` red then green (4 tests); `scripts/verify.sh docs` | passed offline checks only; live lab untouched |
 | Recovery 2 | Separate role projects; add repeatable Staff provisioning, forced-change setup and Docker no-network runner | `python3 -I scripts/test_playwright_safety.py`; `scripts/playwright-lab` | 8 offline checks passed; 4/4 live setup/smoke tests passed |
+| Recovery 3 | Added fix-found contract checks and executed the planted failure twice; removed scratch assertion | `scripts/verify.sh all` with required socket/DNS permissions | all green: docs, 2315 backend passed/14 skipped, 492 frontend passed/build/lint with 25 tracked warnings |
 
 ## State for the next session
 
-- Last check run: `scripts/playwright-lab`.
-- Result: 4 passed (admin setup/smoke and restricted setup/smoke), with Chromium in a Docker `--network none` boundary and only a Unix-socket bridge to the lab origin.
-- Hypothesis: browser-role acceptance is complete; #63 remains open only for the planted-failure J2/J3 run and full verification/CI.
-- Next action: complete the planted-failure J2/J3 dry run, then run `scripts/verify.sh all`.
+- Last check run: `scripts/verify.sh all` with local-socket/DNS permission.
+- Result: green: docs contracts; backend 2315 passed, 14 skipped; frontend 492 passed, build passed, lint 0 errors/25 tracked warnings.
+- Hypothesis: local implementation and verification are complete; #63 remains open for the GitHub issue filing/report linkage and CI evidence.
+- Next action: after explicit approval, file the prepared planted finding, commit its sanitized report, and inspect PR CI.
 
 ## Decisions and notes
 
