@@ -1,8 +1,8 @@
-"""initial schema
+"""empty message
 
-Revision ID: c3610bb0fc54
+Revision ID: af83add66452
 Revises: 
-Create Date: 2026-09-28 23:38:38.843630
+Create Date: 2026-10-11 13:11:34.117193
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'c3610bb0fc54'
+revision = 'af83add66452'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -132,6 +132,9 @@ def upgrade_():
     sa.Column('Email', sa.String(length=120), nullable=False),
     sa.Column('Hashed_Password', sa.String(length=256), nullable=False),
     sa.Column('Status', sa.Enum('ACTIVE', 'INACTIVE', 'SUSPENDED', name='userstatus'), nullable=False),
+    sa.Column('Must_Change_Password', sa.Boolean(), server_default=sa.text('0'), nullable=False),
+    sa.Column('Needs_Setup', sa.Boolean(), server_default=sa.text('0'), nullable=False),
+    sa.Column('Receive_Email_Alerts', sa.Boolean(), server_default=sa.text('1'), nullable=False),
     sa.Column('Created_At', sa.DateTime(), nullable=False),
     sa.Column('Updated_At', sa.DateTime(), nullable=False),
     sa.Column('RoleID', sa.Integer(), nullable=False),
@@ -186,6 +189,35 @@ def upgrade_():
         batch_op.create_index(batch_op.f('ix_ALERT_ACKNOWLEDGEMENT_Hostname'), ['Hostname'], unique=False)
         batch_op.create_index(batch_op.f('ix_ALERT_ACKNOWLEDGEMENT_Service_Name'), ['Service_Name'], unique=False)
 
+    op.create_table('DISCOVERY_SETTINGS',
+    sa.Column('Id', sa.Integer(), nullable=False),
+    sa.Column('Networks', sa.JSON(), nullable=True),
+    sa.Column('TCP_Ports', sa.JSON(), nullable=True),
+    sa.Column('UDP_Ports', sa.JSON(), nullable=True),
+    sa.Column('TCP_Port_Services', sa.JSON(), nullable=True),
+    sa.Column('UDP_Port_Services', sa.JSON(), nullable=True),
+    sa.Column('Version', sa.Integer(), nullable=False),
+    sa.Column('Updated_At', sa.DateTime(), nullable=False),
+    sa.Column('Updated_By', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['Updated_By'], ['USER.UserID'], ),
+    sa.PrimaryKeyConstraint('Id')
+    )
+    with op.batch_alter_table('DISCOVERY_SETTINGS', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_DISCOVERY_SETTINGS_Updated_By'), ['Updated_By'], unique=False)
+
+    op.create_table('NETWORK_PROFILE',
+    sa.Column('Id', sa.Integer(), nullable=False),
+    sa.Column('Name', sa.String(length=100), nullable=False),
+    sa.Column('Reference', sa.String(length=50), nullable=True),
+    sa.Column('Details', sa.JSON(), nullable=True),
+    sa.Column('Updated_At', sa.DateTime(), nullable=False),
+    sa.Column('Updated_By', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['Updated_By'], ['USER.UserID'], ),
+    sa.PrimaryKeyConstraint('Id')
+    )
+    with op.batch_alter_table('NETWORK_PROFILE', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_NETWORK_PROFILE_Updated_By'), ['Updated_By'], unique=False)
+
     op.create_table('NOTIFICATION_CURSOR',
     sa.Column('UserID', sa.Integer(), nullable=False),
     sa.Column('last_seen_ts', sa.BigInteger(), nullable=False),
@@ -193,9 +225,57 @@ def upgrade_():
     sa.ForeignKeyConstraint(['UserID'], ['USER.UserID'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('UserID')
     )
+    op.create_table('PASSWORD_RESET_REQUEST',
+    sa.Column('RequestID', sa.Integer(), nullable=False),
+    sa.Column('UserID', sa.Integer(), nullable=False),
+    sa.Column('Status', sa.String(length=10), server_default='Pending', nullable=False),
+    sa.Column('Requested_At', sa.DateTime(), nullable=False),
+    sa.Column('Resolved_At', sa.DateTime(), nullable=True),
+    sa.Column('Resolved_By', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['Resolved_By'], ['USER.UserID'], ondelete='SET NULL'),
+    sa.ForeignKeyConstraint(['UserID'], ['USER.UserID'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('RequestID')
+    )
+    with op.batch_alter_table('PASSWORD_RESET_REQUEST', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_PASSWORD_RESET_REQUEST_Status'), ['Status'], unique=False)
+        batch_op.create_index(batch_op.f('ix_PASSWORD_RESET_REQUEST_UserID'), ['UserID'], unique=False)
+
+    op.create_table('PLUGIN_SETTINGS',
+    sa.Column('Id', sa.Integer(), nullable=False),
+    sa.Column('Plugin_Name', sa.String(length=50), nullable=False),
+    sa.Column('Variables', sa.JSON(), nullable=False),
+    sa.Column('Version', sa.Integer(), nullable=False),
+    sa.Column('Updated_At', sa.DateTime(), nullable=False),
+    sa.Column('Updated_By', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['Updated_By'], ['USER.UserID'], ),
+    sa.PrimaryKeyConstraint('Id')
+    )
+    with op.batch_alter_table('PLUGIN_SETTINGS', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_PLUGIN_SETTINGS_Plugin_Name'), ['Plugin_Name'], unique=True)
+        batch_op.create_index(batch_op.f('ix_PLUGIN_SETTINGS_Updated_By'), ['Updated_By'], unique=False)
+
+    op.create_table('SMTP_SETTINGS',
+    sa.Column('Id', sa.Integer(), nullable=False),
+    sa.Column('Provider', sa.String(length=20), nullable=False),
+    sa.Column('Host', sa.String(length=255), nullable=False),
+    sa.Column('Port', sa.Integer(), nullable=False),
+    sa.Column('Tls', sa.String(length=10), nullable=False),
+    sa.Column('Username', sa.String(length=255), nullable=False),
+    sa.Column('Sender', sa.String(length=255), nullable=False),
+    sa.Column('Password_Encrypted', sa.Text(), nullable=True),
+    sa.Column('Version', sa.Integer(), nullable=False),
+    sa.Column('Updated_At', sa.DateTime(), nullable=False),
+    sa.Column('Updated_By', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['Updated_By'], ['USER.UserID'], ),
+    sa.PrimaryKeyConstraint('Id')
+    )
+    with op.batch_alter_table('SMTP_SETTINGS', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_SMTP_SETTINGS_Updated_By'), ['Updated_By'], unique=False)
+
     op.create_table('SYSTEM_SETTINGS',
     sa.Column('Id', sa.Integer(), nullable=False),
     sa.Column('Scan_Frequency', sa.Integer(), nullable=False),
+    sa.Column('Check_Interval', sa.Integer(), nullable=False),
     sa.Column('Notifications', sa.Boolean(), nullable=False),
     sa.Column('Export_Formats', sa.String(length=50), nullable=False),
     sa.Column('Session_Timeout', sa.Integer(), nullable=False),
@@ -270,8 +350,11 @@ def upgrade_():
     sa.Column('Start_At', sa.DateTime(), nullable=False),
     sa.Column('Completed_At', sa.DateTime(), nullable=True),
     sa.Column('Error', sa.String(), nullable=True),
+    sa.Column('Reviewed_At', sa.DateTime(), nullable=True),
     sa.Column('LogID', sa.Integer(), nullable=False),
+    sa.Column('Reviewed_By', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['LogID'], ['ACTIVITY_LOG.LogID'], ),
+    sa.ForeignKeyConstraint(['Reviewed_By'], ['USER.UserID'], ),
     sa.PrimaryKeyConstraint('NCPADeployStatusID')
     )
     op.create_table('NETWORK_DISCOVERY_STATUS',
@@ -338,6 +421,22 @@ def upgrade_():
     with op.batch_alter_table('PLUGIN_SCAN_STATUS', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_PLUGIN_SCAN_STATUS_LogID'), ['LogID'], unique=False)
 
+    op.create_table('DEVICE_REVIEW_ITEM',
+    sa.Column('ReviewID', sa.Integer(), nullable=False),
+    sa.Column('Kind', sa.Enum('CONFLICT', 'IDENTITY_CHANGED', 'IP_REUSE', 'DUPLICATE_IDENTITY', 'STATIC_MOVED', 'SERVICE_CHANGED', name='reviewkind'), nullable=False),
+    sa.Column('IP_Address', sa.String(length=45), nullable=True),
+    sa.Column('MAC_Address', sa.String(length=17), nullable=True),
+    sa.Column('Message', sa.String(length=255), nullable=False),
+    sa.Column('Candidate_Device_IDs', sa.JSON(), nullable=True),
+    sa.Column('Created_At', sa.DateTime(), nullable=False),
+    sa.Column('Resolved_At', sa.DateTime(), nullable=True),
+    sa.Column('DiscoveryStatusID', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['DiscoveryStatusID'], ['NETWORK_DISCOVERY_STATUS.DiscoveryStatusID'], ),
+    sa.PrimaryKeyConstraint('ReviewID')
+    )
+    with op.batch_alter_table('DEVICE_REVIEW_ITEM', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_DEVICE_REVIEW_ITEM_DiscoveryStatusID'), ['DiscoveryStatusID'], unique=False)
+
     op.create_table('NETWORK_DISCOVERY',
     sa.Column('NetDiscoveryID', sa.Integer(), nullable=False),
     sa.Column('Hostname', sa.String(length=100), nullable=True),
@@ -350,11 +449,23 @@ def upgrade_():
     sa.Column('Scanned_At', sa.DateTime(), nullable=False),
     sa.Column('Include_Device_In_Scanning', sa.Boolean(), nullable=False),
     sa.Column('Plugin_Variables', sa.JSON(), nullable=True),
+    sa.Column('Nagios_Host_Name', sa.String(length=100), nullable=True),
+    sa.Column('Display_Name', sa.String(length=100), nullable=True),
+    sa.Column('Addressing', sa.Enum('DHCP', 'STATIC', 'UNKNOWN', name='addressingmode'), nullable=False),
+    sa.Column('Identity_Confidence', sa.Enum('VERIFIED', 'LIKELY', 'UNVERIFIED', name='identityconfidence'), nullable=False),
+    sa.Column('Device_State', sa.Enum('ACTIVE', 'MISSING', 'ADDRESS_UNKNOWN', 'RETIRED', 'MERGED', name='devicestate'), nullable=False),
+    sa.Column('First_Seen_At', sa.DateTime(), nullable=True),
+    sa.Column('Last_Seen_At', sa.DateTime(), nullable=True),
+    sa.Column('Missed_Scans', sa.Integer(), nullable=False),
     sa.Column('DiscoveryStatusID', sa.Integer(), nullable=False),
+    sa.Column('Merged_Into_ID', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['DiscoveryStatusID'], ['NETWORK_DISCOVERY_STATUS.DiscoveryStatusID'], ),
-    sa.PrimaryKeyConstraint('NetDiscoveryID')
+    sa.ForeignKeyConstraint(['Merged_Into_ID'], ['NETWORK_DISCOVERY.NetDiscoveryID'], ),
+    sa.PrimaryKeyConstraint('NetDiscoveryID'),
+    sa.UniqueConstraint('Nagios_Host_Name', name='uq_network_discovery_nagios_host_name')
     )
     with op.batch_alter_table('NETWORK_DISCOVERY', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_NETWORK_DISCOVERY_Device_State'), ['Device_State'], unique=False)
         batch_op.create_index(batch_op.f('ix_NETWORK_DISCOVERY_DiscoveryStatusID'), ['DiscoveryStatusID'], unique=False)
         batch_op.create_index(batch_op.f('ix_NETWORK_DISCOVERY_IP_Address'), ['IP_Address'], unique=False)
         batch_op.create_index(batch_op.f('ix_NETWORK_DISCOVERY_MAC_Address'), ['MAC_Address'], unique=False)
@@ -376,6 +487,37 @@ def upgrade_():
     with op.batch_alter_table('SKIPPED_SERVICE', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_SKIPPED_SERVICE_DiscoveryStatusID'), ['DiscoveryStatusID'], unique=False)
 
+    op.create_table('DEVICE_ADDRESS_HISTORY',
+    sa.Column('AddressID', sa.Integer(), nullable=False),
+    sa.Column('IP_Address', sa.String(length=45), nullable=False),
+    sa.Column('Network', sa.String(length=18), nullable=True),
+    sa.Column('MAC_Address', sa.String(length=17), nullable=True),
+    sa.Column('Source', sa.Enum('SCAN', 'NCPA_RELOCATE', 'MANUAL', name='addresssource'), nullable=False),
+    sa.Column('First_Seen_At', sa.DateTime(), nullable=False),
+    sa.Column('Last_Seen_At', sa.DateTime(), nullable=False),
+    sa.Column('Closed_At', sa.DateTime(), nullable=True),
+    sa.Column('NetDiscoveryID', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['NetDiscoveryID'], ['NETWORK_DISCOVERY.NetDiscoveryID'], ),
+    sa.PrimaryKeyConstraint('AddressID')
+    )
+    with op.batch_alter_table('DEVICE_ADDRESS_HISTORY', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_DEVICE_ADDRESS_HISTORY_NetDiscoveryID'), ['NetDiscoveryID'], unique=False)
+
+    op.create_table('DEVICE_IDENTIFIER',
+    sa.Column('IdentifierID', sa.Integer(), nullable=False),
+    sa.Column('Kind', sa.Enum('NCPA_CERT', 'MACHINE_ID', 'SSH_HOST_KEY', 'MAC', 'DNS_NAME', name='identifierkind'), nullable=False),
+    sa.Column('Value', sa.String(length=255), nullable=False),
+    sa.Column('Is_Strong', sa.Boolean(), nullable=False),
+    sa.Column('First_Seen_At', sa.DateTime(), nullable=False),
+    sa.Column('Last_Seen_At', sa.DateTime(), nullable=False),
+    sa.Column('NetDiscoveryID', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['NetDiscoveryID'], ['NETWORK_DISCOVERY.NetDiscoveryID'], ),
+    sa.PrimaryKeyConstraint('IdentifierID')
+    )
+    with op.batch_alter_table('DEVICE_IDENTIFIER', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_DEVICE_IDENTIFIER_NetDiscoveryID'), ['NetDiscoveryID'], unique=False)
+        batch_op.create_index('uq_device_identifier_strong', ['Kind', 'Value'], unique=True, sqlite_where=sa.text('"Is_Strong" = 1'), postgresql_where=sa.text('"Is_Strong" = true'))
+
     op.create_table('NCPA_DEPLOYMENT',
     sa.Column('NCPADeployID', sa.Integer(), nullable=False),
     sa.Column('Deployement_Method', sa.Enum('AUTOMATIC', 'MANUAL', name='deploymentmethod'), nullable=True),
@@ -391,13 +533,44 @@ def upgrade_():
     with op.batch_alter_table('NCPA_DEPLOYMENT', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_NCPA_DEPLOYMENT_NetworkDiscoveryID'), ['NetworkDiscoveryID'], unique=False)
 
+    op.create_table('NCPA_DEPLOYMENT_RESULT',
+    sa.Column('NCPADeployResultID', sa.Integer(), nullable=False),
+    sa.Column('Hostname', sa.String(length=255), nullable=True),
+    sa.Column('IP_Address', sa.String(length=45), nullable=True),
+    sa.Column('Outcome', sa.Enum('PENDING', 'RUNNING', 'SUCCESS', 'FAILED', 'UNREACHABLE', 'INCOMPATIBLE', 'REJECTED', 'SKIPPED', name='deploymentoutcome'), nullable=False),
+    sa.Column('Error', sa.String(length=255), nullable=True),
+    sa.Column('Started_At', sa.DateTime(), nullable=True),
+    sa.Column('Completed_At', sa.DateTime(), nullable=True),
+    sa.Column('NCPADeploymentStatusID', sa.Integer(), nullable=False),
+    sa.Column('NetworkDiscoveryID', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['NCPADeploymentStatusID'], ['NCPA_DEPLOYMENT_STATUS.NCPADeployStatusID'], ),
+    sa.ForeignKeyConstraint(['NetworkDiscoveryID'], ['NETWORK_DISCOVERY.NetDiscoveryID'], ),
+    sa.PrimaryKeyConstraint('NCPADeployResultID')
+    )
+    with op.batch_alter_table('NCPA_DEPLOYMENT_RESULT', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_NCPA_DEPLOYMENT_RESULT_NCPADeploymentStatusID'), ['NCPADeploymentStatusID'], unique=False)
+        batch_op.create_index(batch_op.f('ix_NCPA_DEPLOYMENT_RESULT_NetworkDiscoveryID'), ['NetworkDiscoveryID'], unique=False)
+
     op.create_table('OPEN_TCP_Services',
     sa.Column('OpenPortID', sa.Integer(), nullable=False),
     sa.Column('Port_Number', sa.Integer(), nullable=False),
     sa.Column('Service_Name', sa.String(length=255), nullable=False),
+    sa.Column('Port_State', sa.Enum('SUGGESTED', 'MONITORED', 'MISSING', 'ARCHIVED', 'IGNORED', name='portstate'), nullable=False),
+    sa.Column('Source', sa.Enum('SCAN', 'NCPA', 'USER', name='portsource'), nullable=False),
+    sa.Column('Plugin_Name', sa.String(length=100), nullable=True),
+    sa.Column('Observed_Service_Name', sa.String(length=255), nullable=True),
+    sa.Column('Identified_By', sa.Enum('USER', 'PORT_RULE', 'FINGERPRINT', 'PORT_HINT', name='serviceidentification'), nullable=True),
+    sa.Column('Expected_Service_Name', sa.String(length=255), nullable=True),
+    sa.Column('Mismatch_Acknowledged_At', sa.DateTime(), nullable=True),
+    sa.Column('Promotion_Held', sa.Boolean(), server_default=sa.text('0'), nullable=False),
+    sa.Column('First_Seen_At', sa.DateTime(), nullable=True),
+    sa.Column('Last_Seen_At', sa.DateTime(), nullable=True),
+    sa.Column('Closed_At', sa.DateTime(), nullable=True),
+    sa.Column('Missed_Scans', sa.Integer(), nullable=False),
     sa.Column('NetDiscoveryID', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['NetDiscoveryID'], ['NETWORK_DISCOVERY.NetDiscoveryID'], ),
-    sa.PrimaryKeyConstraint('OpenPortID')
+    sa.PrimaryKeyConstraint('OpenPortID'),
+    sa.UniqueConstraint('NetDiscoveryID', 'Port_Number', name='uq_open_tcp_device_port')
     )
     with op.batch_alter_table('OPEN_TCP_Services', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_OPEN_TCP_Services_NetDiscoveryID'), ['NetDiscoveryID'], unique=False)
@@ -406,9 +579,22 @@ def upgrade_():
     sa.Column('OpenPortID', sa.Integer(), nullable=False),
     sa.Column('Port_Number', sa.Integer(), nullable=False),
     sa.Column('Service_Name', sa.String(length=255), nullable=False),
+    sa.Column('Port_State', sa.Enum('SUGGESTED', 'MONITORED', 'MISSING', 'ARCHIVED', 'IGNORED', name='portstate'), nullable=False),
+    sa.Column('Source', sa.Enum('SCAN', 'NCPA', 'USER', name='portsource'), nullable=False),
+    sa.Column('Plugin_Name', sa.String(length=100), nullable=True),
+    sa.Column('Observed_Service_Name', sa.String(length=255), nullable=True),
+    sa.Column('Identified_By', sa.Enum('USER', 'PORT_RULE', 'FINGERPRINT', 'PORT_HINT', name='serviceidentification'), nullable=True),
+    sa.Column('Expected_Service_Name', sa.String(length=255), nullable=True),
+    sa.Column('Mismatch_Acknowledged_At', sa.DateTime(), nullable=True),
+    sa.Column('Promotion_Held', sa.Boolean(), server_default=sa.text('0'), nullable=False),
+    sa.Column('First_Seen_At', sa.DateTime(), nullable=True),
+    sa.Column('Last_Seen_At', sa.DateTime(), nullable=True),
+    sa.Column('Closed_At', sa.DateTime(), nullable=True),
+    sa.Column('Missed_Scans', sa.Integer(), nullable=False),
     sa.Column('NetDiscoveryID', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['NetDiscoveryID'], ['NETWORK_DISCOVERY.NetDiscoveryID'], ),
-    sa.PrimaryKeyConstraint('OpenPortID')
+    sa.PrimaryKeyConstraint('OpenPortID'),
+    sa.UniqueConstraint('NetDiscoveryID', 'Port_Number', name='uq_open_udp_device_port')
     )
     with op.batch_alter_table('OPEN_UDP_Services', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_OPEN_UDP_Services_NetDiscoveryID'), ['NetDiscoveryID'], unique=False)
@@ -416,6 +602,12 @@ def upgrade_():
     op.create_table('PLUGIN_CONFIGURATION',
     sa.Column('PluginConfigurationID', sa.Integer(), nullable=False),
     sa.Column('Service_Description', sa.String(length=200), nullable=True),
+    sa.Column('Port_Number', sa.Integer(), nullable=True),
+    sa.Column('Protocol', sa.String(length=3), nullable=True),
+    sa.Column('Metric', sa.String(length=255), nullable=True),
+    sa.Column('Nagios_Service_Name', sa.String(length=200), nullable=True),
+    sa.Column('Applied_At', sa.DateTime(), nullable=True),
+    sa.Column('Origin', sa.Enum('AUTO', 'MANUAL', 'CUSTOM', name='pluginconfigurationorigin'), nullable=False),
     sa.Column('Status', sa.Enum('PENDING', 'APPLIED', 'FAILED', name='pluginconfigurationstatus'), nullable=False),
     sa.Column('Configuration_Data', sa.JSON(), nullable=True),
     sa.Column('Created_At', sa.DateTime(), nullable=False),
@@ -424,7 +616,8 @@ def upgrade_():
     sa.Column('NetDiscoveryID', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['NetDiscoveryID'], ['NETWORK_DISCOVERY.NetDiscoveryID'], ),
     sa.ForeignKeyConstraint(['PluginID'], ['PLUGIN.PluginID'], ),
-    sa.PrimaryKeyConstraint('PluginConfigurationID')
+    sa.PrimaryKeyConstraint('PluginConfigurationID'),
+    sa.UniqueConstraint('PluginID', 'NetDiscoveryID', 'Nagios_Service_Name', name='uq_plugin_config_service')
     )
     with op.batch_alter_table('PLUGIN_CONFIGURATION', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_PLUGIN_CONFIGURATION_NetDiscoveryID'), ['NetDiscoveryID'], unique=False)
@@ -479,10 +672,24 @@ def downgrade_():
         batch_op.drop_index(batch_op.f('ix_OPEN_TCP_Services_NetDiscoveryID'))
 
     op.drop_table('OPEN_TCP_Services')
+    with op.batch_alter_table('NCPA_DEPLOYMENT_RESULT', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_NCPA_DEPLOYMENT_RESULT_NetworkDiscoveryID'))
+        batch_op.drop_index(batch_op.f('ix_NCPA_DEPLOYMENT_RESULT_NCPADeploymentStatusID'))
+
+    op.drop_table('NCPA_DEPLOYMENT_RESULT')
     with op.batch_alter_table('NCPA_DEPLOYMENT', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_NCPA_DEPLOYMENT_NetworkDiscoveryID'))
 
     op.drop_table('NCPA_DEPLOYMENT')
+    with op.batch_alter_table('DEVICE_IDENTIFIER', schema=None) as batch_op:
+        batch_op.drop_index('uq_device_identifier_strong', sqlite_where=sa.text('"Is_Strong" = 1'), postgresql_where=sa.text('"Is_Strong" = true'))
+        batch_op.drop_index(batch_op.f('ix_DEVICE_IDENTIFIER_NetDiscoveryID'))
+
+    op.drop_table('DEVICE_IDENTIFIER')
+    with op.batch_alter_table('DEVICE_ADDRESS_HISTORY', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_DEVICE_ADDRESS_HISTORY_NetDiscoveryID'))
+
+    op.drop_table('DEVICE_ADDRESS_HISTORY')
     with op.batch_alter_table('SKIPPED_SERVICE', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_SKIPPED_SERVICE_DiscoveryStatusID'))
 
@@ -492,8 +699,13 @@ def downgrade_():
         batch_op.drop_index(batch_op.f('ix_NETWORK_DISCOVERY_MAC_Address'))
         batch_op.drop_index(batch_op.f('ix_NETWORK_DISCOVERY_IP_Address'))
         batch_op.drop_index(batch_op.f('ix_NETWORK_DISCOVERY_DiscoveryStatusID'))
+        batch_op.drop_index(batch_op.f('ix_NETWORK_DISCOVERY_Device_State'))
 
     op.drop_table('NETWORK_DISCOVERY')
+    with op.batch_alter_table('DEVICE_REVIEW_ITEM', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_DEVICE_REVIEW_ITEM_DiscoveryStatusID'))
+
+    op.drop_table('DEVICE_REVIEW_ITEM')
     with op.batch_alter_table('PLUGIN_SCAN_STATUS', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_PLUGIN_SCAN_STATUS_LogID'))
 
@@ -529,7 +741,29 @@ def downgrade_():
         batch_op.drop_index(batch_op.f('ix_SYSTEM_SETTINGS_Updated_By'))
 
     op.drop_table('SYSTEM_SETTINGS')
+    with op.batch_alter_table('SMTP_SETTINGS', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_SMTP_SETTINGS_Updated_By'))
+
+    op.drop_table('SMTP_SETTINGS')
+    with op.batch_alter_table('PLUGIN_SETTINGS', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_PLUGIN_SETTINGS_Updated_By'))
+        batch_op.drop_index(batch_op.f('ix_PLUGIN_SETTINGS_Plugin_Name'))
+
+    op.drop_table('PLUGIN_SETTINGS')
+    with op.batch_alter_table('PASSWORD_RESET_REQUEST', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_PASSWORD_RESET_REQUEST_UserID'))
+        batch_op.drop_index(batch_op.f('ix_PASSWORD_RESET_REQUEST_Status'))
+
+    op.drop_table('PASSWORD_RESET_REQUEST')
     op.drop_table('NOTIFICATION_CURSOR')
+    with op.batch_alter_table('NETWORK_PROFILE', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_NETWORK_PROFILE_Updated_By'))
+
+    op.drop_table('NETWORK_PROFILE')
+    with op.batch_alter_table('DISCOVERY_SETTINGS', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_DISCOVERY_SETTINGS_Updated_By'))
+
+    op.drop_table('DISCOVERY_SETTINGS')
     with op.batch_alter_table('ALERT_ACKNOWLEDGEMENT', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_ALERT_ACKNOWLEDGEMENT_Service_Name'))
         batch_op.drop_index(batch_op.f('ix_ALERT_ACKNOWLEDGEMENT_Hostname'))
