@@ -76,18 +76,22 @@ def request_alert_count_range(start_ts, end_ts, hostname=None, service=None):
 
 
 # ======================= AVAILABILITY ===============================
-def request_host_availability_range(start_ts, end_ts):
+def request_host_availability_range(start_ts, end_ts, hostname=None):
     """
-    Query per-host availability for a UNIX timestamp range. Returns the
-    list under data.hosts — one dict per host with time_up, time_down,
-    time_unreachable and time_indeterminate_* (seconds) — or None if
-    Nagios can't be reached.
+    Query per-host availability for a UNIX timestamp range.
+
+    Returns the list under ``data.hosts`` with Nagios' duration fields, or
+    ``None`` when Nagios cannot be reached or returns an invalid response.
+    An optional hostname is passed to archivejson so callers can limit the
+    report without filtering a different source locally.
     """
     params = {
         "availabilityobjecttype": "hosts",
         "starttime": start_ts,
         "endtime": end_ts,
     }
+    if hostname:
+        params["hostname"] = hostname
 
     return _request_archive("availability", params, result_key="hosts")
 

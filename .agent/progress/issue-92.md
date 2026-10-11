@@ -46,13 +46,14 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| 1 | Added failing Nagios-source tests, implemented archivejson-backed availability for both report routes, forwarded optional hostname scope, and updated an existing stable-name test to mock Nagios. | `server/.venv/bin/python -m pytest server/tests/unit/test_report_availability.py server/tests/unit/test_device_name_consumers.py::TestReportUsesTheNagiosName -q` | 7 passed; initial test-first run failed because the helper was not yet imported, then implementation passed. |
 
 ## State for the next session
 
-- Last check run (exact command): not run yet
-- Result (first failing lines, or "green"): not run yet
-- Hypothesis: Reports needs to reuse the archivejson host-availability query and aggregation semantics already used by Network Health; no snapshot fallback should remain.
-- Next action (one specific step, not "continue"): add the failing availability route tests.
+- Last check run (exact command): `server/.venv/bin/python -m pytest server/tests/unit/test_report_availability.py server/tests/unit/test_device_name_consumers.py::TestReportUsesTheNagiosName -q`
+- Result (first failing lines, or "green"): green, 7 passed
+- Hypothesis: Reports now uses the same Nagios archive availability source as Network Health and does not read HostStatus for these endpoints.
+- Next action (one specific step, not "continue"): clean up route documentation and run the broader backend verification, then update the owning specifications and test-run report.
 
 ## Decisions and notes
 

@@ -69,7 +69,11 @@ class TestReportUsesTheNagiosName:
         _make_host(db_session, "stable.lan", state=HostStateType.UP)
         db_session.session.commit()
 
-        resp = logged_in_client.get("/api/system/report/hosts-by-os?period=last_24h")
+        with patch(
+            "app.api.system.report.request_host_availability_range",
+            return_value=[{"hostname": "stable.lan", "time_up": 60, "time_down": 0, "time_unreachable": 0}],
+        ):
+            resp = logged_in_client.get("/api/system/report/hosts-by-os?period=last_24h")
 
         assert resp.status_code == 200
         groups = {g["os_type"]: g for g in resp.get_json()["data"]["by_os"]}
