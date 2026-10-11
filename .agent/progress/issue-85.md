@@ -14,10 +14,13 @@ Status: in-progress
 
 ## Plan
 
+- [ ] Recovery: correct queue, command compatibility, guardrails and handoff in `.agent/workflows/fix-found.md` and the owning specification.
+- [ ] Recovery: correct overstated synthetic report; add written boundary checks and verify actual GitHub evidence.
+
 - [x] Create the workflow and thin adapters.
 - [x] Document queue ordering, skip rules, caps, permission stop, and merged-fix retest semantics.
 - [x] Record synthetic issue/PR demonstration without merging.
-- [ ] Verify docs and update the evidence report with observed results.
+- [x] Verify docs and update the evidence report with observed results; `scripts/verify.sh docs` passes and the 2026-10-11 live continuation is recorded as partial.
 
 ## Round log
 
@@ -39,3 +42,10 @@ Status: in-progress
 - No PR is merged by the agent.
 - Issue #90 was synthetic and incorrectly treated intentional #86 identity conflicts as a defect; it was closed. PR #91 is not a product fix and must not be presented as one.
 - Live restricted-role and J2/J3 acceptance tests remain pending unless an authorized account and clean appliance baseline are available.
+
+### 2026-10-11 resumed audit
+
+- Re-ran `scripts/verify.sh docs`: green. Existing uncommitted progress edits retained.
+- Read current GitHub issues #63, #85 and #93. User released the lab for the remaining checks, including restricted-account provisioning and restoration.
+- PR #91 is merged (2026-10-11); it is a synthetic no-product-fix PR. Its merge does not prove J2-08 was fixed.
+- Source inspection contradicts earlier completion notes: restricted setup is selected by the admin setup project, forced-change handling is absent, and fix-found has conflicting filenames and unsupported CLI fields. Recovery steps above supersede those completion claims.

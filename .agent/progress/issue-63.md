@@ -5,20 +5,23 @@ Status: in-progress
 
 ## Finish condition
 
-- [ ] Complete traceability including BB cases, spec headings and observed evidence; tested drift checker.
-- [ ] Resumable qa-run and thin adapters with consistent safety and retest rules.
-- [ ] Labels, draft severity rubric and enforceable lab/browser boundaries.
-- [ ] Exact-pinned Playwright, credential-safe role setup, Vitest exclusion and both-role live smoke passes.
-- [ ] Actual planted-failure J2/J3 dry run and sanitized report.
+- [x] Complete traceability checker/matrix structure and test the docs drift checker; live rows still contain explicit untested/partial notes where evidence is incomplete.
+- [x] Resumable qa-run and thin adapters with consistent safety and retest rules.
+- [x] Labels, draft severity rubric and enforceable lab/browser boundaries.
+- [ ] Exact-pinned Playwright, credential-safe role setup, Vitest exclusion and both-role live smoke passes; admin smoke passed, restricted role is blocked by issue #93.
+- [ ] Complete planted-failure J2/J3 dry run and sanitized report; the 2026-10-11 continuation report is partial, not complete acceptance.
 - [ ] Full verification and CI green; retain draft while live checks pending.
 
 ## Plan
 
-- [ ] Restore accurate state; test and fix Playwright credential/artifact defaults.
-- [ ] Test-first complete traceability checker and matrix; integrate docs drift check.
-- [ ] Complete qa-run progress validation, safety, issue search and merged-fix retest semantics.
-- [ ] Complete role setup, forced-change handling, mock validation and teammate installation instructions.
-- [ ] After owner releases lab, execute live role smoke and real dry run.
+- [ ] Recovery: repair role-separated Playwright setup and forced-change handling in `client/e2e/`; verify offline, then both roles live.
+- [ ] Recovery: verify lab authentication and provision the approved restricted account; continue safe J2/J3 evidence.
+
+- [x] Restore accurate state; test and fix Playwright credential/artifact defaults.
+- [x] Test-first complete traceability checker and matrix; integrate docs drift check.
+- [x] Complete qa-run progress validation, safety, issue search and merged-fix retest semantics.
+- [x] Complete role setup, forced-change handling, mock validation and teammate installation instructions; restricted-account provisioning remains an environment gap tracked by #93.
+- [ ] After owner releases lab, execute restricted-role smoke and complete the remaining live J2/J3 cases.
 - [ ] Verify all and update PR checklist with only observed results.
 
 ## Round log
@@ -29,10 +32,10 @@ Status: in-progress
 
 ## State for the next session
 
-- Last check run: `git status --short`
-- Result: clean before recovery changes.
-- Hypothesis: previous scaffolding lacks security protections and acceptance evidence.
-- Next action: Add and run isolated browser configuration safety tests, fix failures without contacting the lab.
+- Last check run: `scripts/verify.sh docs`; live NCPA helper completed separately.
+- Result: docs verification passed; J3-02 and J3-06 passed, while J3-03 is partial, J3-05 blocked, and J3-09 was not captured.
+- Hypothesis: offline QA-loop scaffolding is complete, but full PR acceptance is blocked by missing restricted-role provisioning and incomplete controlled live evidence.
+- Next action: resolve issue #93 by provisioning a real restricted-role QA account, then run restricted Playwright smoke and continue the remaining authorized J2/J3 cases.
 
 ## Decisions and notes
 
@@ -111,3 +114,20 @@ not captured with the required identity baseline. Report:
 `docs/test-runs/2026-10-11-j2-j3-dry-run/REPORT.md`.
 Full test timeout never means success. Existing checker does not validate headings,
 BB rows are absent, role tests have not run, and safety rules are not enforced yet.
+
+### Current remaining work for PR #88
+
+- Issue #93 tracks safe provisioning of a real restricted-role QA account; the current
+  Playwright suite does not create one, and the bootstrap Administrator is not a substitute.
+- Live report `docs/test-runs/2026-10-11-j2-j3-dry-run/REPORT.md` records J3-02/J3-06
+  as passed, J3-03 as partial, J3-05 as blocked, and J3-09 as skipped.
+- Remaining evidence includes restricted-role smoke, clean-baseline J2-09, complete UI/config
+  assertions for API-only J2 cases, J2-05, J3-03 database inspection, J3-05 with check_ncpa,
+  J3-07/J3-08, and J3-09 identity baseline comparison.
+
+### 2026-10-11 resumed audit
+
+- Re-ran `scripts/verify.sh docs`: green. Existing uncommitted progress edits retained.
+- Read current GitHub issues #63, #85 and #93. User released the lab for the remaining checks, including restricted-account provisioning and restoration.
+- PR #91 is merged (2026-10-11); it is a synthetic no-product-fix PR. Its merge does not prove J2-08 was fixed.
+- Source inspection contradicts earlier completion notes: restricted setup is selected by the admin setup project, forced-change handling is absent, and fix-found has conflicting filenames and unsupported CLI fields. Recovery steps above supersede those completion claims.
