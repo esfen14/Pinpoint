@@ -62,6 +62,27 @@ signal to run `provision --force`.
 No console steps: everything runs from `scripts/vmlab`, using your local clone of the
 installer repository for the setup steps.
 
+### 4.0 Preflight and recovery
+
+Before a QA run, run `scripts/vmlab status`.  A usable faithful lane has all of
+the following:
+
+- the configured appliance VM exists;
+- the `os-nagios-ready` snapshot exists and is not stale against the installer
+  base steps;
+- `VBoxManage list vms` runs without a missing-`/dev/vboxdrv` error (the
+  VirtualBox host driver and its udev device nodes are available);
+- VirtualBox has enough free disk and RAM for one appliance plus the five
+  targets; and
+- no other tester owns the appliance or targets.
+
+If the appliance or snapshot is missing, recreate the lane with steps 1 through
+5 below.  This is a setup/recovery operation, not a QA case: obtain the lab
+owner's approval first and do not run it alongside another live test.  After
+recovery, prove the lane with `scripts/vmlab fresh`, `scripts/vmlab setup-admin`
+and `scripts/vmlab smoke` before claiming a journey case.  Record that recovery
+and the tested commit in a new sanitized test-run report.
+
 1. **Targets.** `python3 demo/demo_lab.py create --apply` (after `build-base`), then
    `scripts/vmlab targets up`.
 2. **ISO.** `scripts/vmlab iso` downloads the stock Ubuntu 22.04.5 live-server ISO
