@@ -787,7 +787,7 @@ The black-box cases restate the paper's acceptance tests (Core Functionality Tes
 | BB-02 | Agent Installation: deployment commands sent to hosts → monitoring agent installed and configured automatically | J3-02 and J3-05 pass | FS | VM |
 | BB-03 | Device Monitoring: client device connected to the monitoring server → system detects host availability and status | J2-03 and J7-07 pass | FS | VM |
 | BB-04 | Service Monitoring: monitoring service enabled → system displays service health and status | J4-03 and J4-04 pass | FS | VM |
-| BB-05 | Alert Notification System: service failure detected → system generates alert notification | J5-05 and J5-03 pass (J5-01 covers a host; J5-08 stays `Blocked` until B8) | RE | VM |
+| BB-05 | Alert Notification System: service failure detected → system generates alert notification | J5-05 and J5-03 pass (J5-01 covers a host; J5-08 covers mocked SMTP; J5-11 separately requires human inbox confirmation) | RE | VM |
 | BB-06 | Network Discovery: discovered devices → structured view of the network | J2-01 and J2-03 pass | FS | VM |
 | BB-07 | Dashboard Visualization: data collected from devices → summarized network health information | J7-01 and J7-02 pass (J7-03 and J7-06 add detail) | FS | VM |
 

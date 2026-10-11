@@ -22,6 +22,8 @@ This directory is the authoritative documentation set for Pinpoint. The root
 | [`Plugins_List.md`](Plugins_List.md) | Nagios Plugins 2.4.12 capability, argument, output, and performance-data reference |
 | [`../docs/qa/QA_Test_Plan.md`](../docs/qa/QA_Test_Plan.md) | QA test cases, coverage model, and methodology |
 
+Related QA scope and decisions: [`QA_Journeys_and_Scope.md`](../docs/qa/QA_Journeys_and_Scope.md).
+
 ## Document types
 
 - **Normative requirements** define what the product must do. The three page

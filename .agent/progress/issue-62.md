@@ -70,6 +70,18 @@ Status: in-progress
 
 ## Decisions and notes
 
+### Phase 1 recovery verification
+
+Owner has approved a fresh reset and Playwright installation; previous pending-approval
+notes below are historical. Availability remains a team decision in PR #65. No merge.
+On this resume `scripts/verify.sh all` completed successfully after `npm ci` installed
+this checkout's missing frontend dependencies. Earlier timed-out runs were NOT passes.
+Full output: `/tmp/opencode/phase1-verify-all.log` (local only). Backend first completed
+run: 2315 passed, 14 skipped. npm reported 8 audit findings (3 moderate, 3 high,
+2 critical); no automatic dependency upgrades were applied. Lab measurement and fresh
+identity reproduction remain unfinished; do not infer them from isolated verification.
+
+
 ### Phase 1 coverage inventory (2026-10-11; inspection, not test passes)
 
 Merged `origin/main` at `a55ae595` in `f9271feb`. Docs verification passes, but a
