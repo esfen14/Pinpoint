@@ -603,8 +603,9 @@ function EditAccountModal({
 
         <div className="mt-4 grid grid-cols-2 gap-4">
           <div>
-            <label className="mb-1.5 block text-sm text-[var(--text)]">Status</label>
+            <label htmlFor="edit-account-status" className="mb-1.5 block text-sm text-[var(--text)]">Status</label>
             <select
+              id="edit-account-status"
               value={form.status}
               onChange={(e) => setForm({ ...form, status: e.target.value as UserStatus })}
               disabled={user.isSuperAdmin}

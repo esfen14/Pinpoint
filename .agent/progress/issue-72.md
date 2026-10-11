@@ -29,7 +29,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 ## Plan
 
 1. [x] Add precise backend regression coverage in `server/tests/unit/test_management.py` for both rejected super-admin status values, their message, and a non-status edit of the same account; run the focused test.
-2. [ ] Add UI regression coverage in `client/src/test/ManageAccountsPage.test.tsx` for the disabled super-admin status control; run the focused frontend test.
+2. [x] Add UI regression coverage in `client/src/test/ManageAccountsPage.test.tsx` for the disabled super-admin status control; run the focused frontend test.
 3. [ ] Audit every `User.Status` mutation in `server/app/` and confirm the account update route is the only mutable application path; record the result and run the narrow backend/frontend checks.
 4. [ ] Update `spec files/Backend_Modules_and_Routes.md`, `spec files/Frontend_Modules_and_Routes.md`, and `spec files/Implementation_Status.md` to document the shipped super-admin guard; run `scripts/verify.sh docs`.
 5. [ ] Re-read issue #72 and its comments, verify every finish-condition item with current evidence, then run `scripts/verify.sh all`.
@@ -42,18 +42,20 @@ One row per loop round, newest last.
 |---|---|---|---|
 | 0 | Inspected current `origin/main`; the server guard and disabled selector are already present, but targeted regression evidence and documentation are incomplete. | Source inspection and issue read | Plan created; no code changed. |
 | 1 | Added parameterized rejected-status assertions (including the response message) and an allowed non-status edit for the first account. | `cd server && ./.venv/bin/python -m pytest tests/unit/test_management.py::TestEditAccount -q` | 8 passed. |
+| 2 | Added a super-admin API fixture and UI assertion; associated the Status label with its select after the new accessibility-aware test first failed. | `cd client && npm run test -- ManageAccountsPage.test.tsx` | 25 passed. |
 
 ## State for the next session
 
 Everything a fresh session needs to continue without redoing work.
 
-- Last check run (exact command): `cd server && ./.venv/bin/python -m pytest tests/unit/test_management.py::TestEditAccount -q`
-- Result (first failing lines, or "green"): green — 8 passed in 1.88s.
-- Hypothesis: The server behavior is covered; frontend coverage must demonstrate the disabled super-admin status selector from the API flag.
-- Next action (one specific step, not "continue"): Add a `ManageAccountsPage` test fixture with `is_super_admin: true` and assert that its edit dialog's Status select is disabled.
+- Last check run (exact command): `cd client && npm run test -- ManageAccountsPage.test.tsx`
+- Result (first failing lines, or "green"): green — 25 passed in 2.76s.
+- Hypothesis: The route is the only application status mutation; a scoped source audit can prove the shared guard requirement before documentation updates.
+- Next action (one specific step, not "continue"): Audit all assignments to `User.Status` in `server/app/` and run the focused backend and frontend regression tests together.
 
 ## Decisions and notes
 
 - `gh issue view 72` currently fails because GitHub's GraphQL response includes a deprecated Projects classic field. The issue and comments were read through `gh api repos/{owner}/{repo}/issues/72` and its `/comments` endpoint instead.
 - The branch was created from `origin/main` at `aefe80dd`; current upstream already contains the route guard, list/detail `is_super_admin` contract, and UI disabled selector.
+- The UI test initially failed because the Status label was not associated with the select. `htmlFor`/`id` now expose the selector as an accessible `Status` combobox.
 - No live/lab tests are in scope.
