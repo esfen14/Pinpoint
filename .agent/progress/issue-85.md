@@ -1,7 +1,7 @@
 # Issue #85: Add a fix-found loop that fixes QA-found issues and returns cases to retest
 
 Branch: `issue-63-qa-loop-readiness` (Phase 3 evidence carried on PR #88)
-Status: in-progress
+Status: blocked
 
 ## Finish condition
 
@@ -30,20 +30,24 @@ Status: in-progress
 | 2 | Added queue rules and synthetic demonstration | `gh issue list --label qa-found --state open` | Issue #90 was closed as incorrectly filed; PR #91 was later merged; no product fix |
 | Recovery 1 | Corrected queue, gh compatibility, guardrails, human merge gate and overstated report | `scripts/verify.sh docs` | green; live/synthetic acceptance incomplete |
 | Recovery 2 | Added executable documentation contracts for queue, skips, limits, permission stop, real-merge handoff and human merge gate | `python3 -I scripts/test_fix_found_workflow.py`; `scripts/verify.sh docs` | 6 contract tests pass; external synthetic issue/PR demonstration still pending |
-| 3 | Repaired progress structure for PR verification | `scripts/verify.sh docs` | Pending rerun |
+| 3 | Repaired progress structure for PR verification | `scripts/verify.sh docs` | green |
+| Recovery 3 | Ran the real planted assertion twice and prepared the candidate issue; audited the external gate | two `scripts/playwright-lab --project admin -g 'J2-01 planted failure'` runs; exact `gh issue list` search | both attempts failed at the planted assertion; no duplicate issue exists; GitHub mutations await explicit approval |
 
 ## State for the next session
 
 - Last check run: `scripts/verify.sh all` with local-socket/DNS permission.
 - Result: green: docs including 6 fix-found contracts; backend 2315 passed, 14 skipped; frontend 492 passed, build passed, lint 0 errors/25 tracked warnings.
-- Hypothesis: implementation and written guardrails are complete; only an attributable external synthetic issue/PR/skip/handoff demonstration remains.
-- Next action: after explicit approval for the external GitHub mutations, file the prepared planted finding and run the synthetic queue demonstration without merging.
+- Hypothesis: implementation, written guardrails and the planted input are complete; only the attributable external issue/PR/skip demonstration and post-merge scratch retest handoff remain.
+- Next action: obtain explicit approval, create the prepared synthetic `qa-found` candidate and a `needs-decision` skip candidate, then run the documented queue and open one unmerged closing PR.
 
 ## Decisions and notes
 
 - No PR is merged by the agent.
 - Issue #90 was synthetic and incorrectly treated intentional #86 identity conflicts as a defect; it was closed. PR #91 is merged but is not a product fix and must not be presented as one.
 - Live restricted-role smoke passed; the remaining J2/J3 acceptance is independent of #85.
+- Automatic approval review rejected the PR comment/issue-state mutations because the user had not explicitly approved publishing project evidence or changing GitHub issue state. Do not retry through another tool.
+- The planned valid demonstration uses a clearly synthetic J2-01 scratch failure. It must not change the real J2-01 traceability result. One synthetic candidate will be skipped for `needs-decision`; after the selected candidate receives an open PR, the next queue pass records the open-PR skip.
+- The agent will not merge the demonstration PR. The final retest-handoff checkbox remains blocked until a human merge supplies the required merged-fix event.
 
 ### 2026-10-11 resumed audit
 

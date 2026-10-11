@@ -1,7 +1,7 @@
 # Issue #63: Complete QA loop readiness
 
 Branch: `issue-63-qa-loop-readiness`
-Status: in-progress
+Status: blocked
 
 ## Finish condition
 
@@ -9,21 +9,21 @@ Status: in-progress
 - [x] Resumable qa-run and thin adapters with consistent safety and retest rules.
 - [x] Labels, draft severity rubric and enforceable lab/browser boundaries.
 - [x] Exact-pinned Playwright, credential-safe role setup, Vitest exclusion and both-role live smoke passes.
-- [ ] Complete planted-failure J2/J3 dry run and sanitized report; the 2026-10-11 continuation report is partial, not complete acceptance.
-- [ ] Full verification and CI green; retain draft while live checks pending.
+- [ ] Complete the planted-failure J2/J3 dry run: both required attempts are recorded, but the prepared `qa-found` issue and sanitized report still need approved GitHub publication/linkage.
+- [ ] Full verification and CI green: local `scripts/verify.sh all` is green; PR #88 currently reports no CI checks and remains draft.
 
 ## Plan
 
 - [x] Recovery: repair role-separated Playwright setup and forced-change handling in `client/e2e/`; verify offline, then both roles live.
 - [x] Recovery: verify lab authentication and provision the approved restricted account.
-- [ ] Continue the remaining safe J2/J3 evidence and planted-failure dry run.
+- [ ] Publish and link the observed planted-failure evidence after explicit approval for the GitHub state changes.
 
 - [x] Restore accurate state; test and fix Playwright credential/artifact defaults.
 - [x] Test-first complete traceability checker and matrix; integrate docs drift check.
 - [x] Complete qa-run progress validation, safety, issue search and merged-fix retest semantics.
 - [x] Complete role setup, forced-change handling, mock validation, repeatable Staff provisioning and teammate installation instructions.
-- [ ] Complete the remaining live J2/J3 cases.
-- [ ] Verify all and update PR checklist with only observed results.
+- [ ] Keep the broader incomplete J2/J3 acceptance cases recorded as partial; they are outside the single planted-failure round required by #63.
+- [ ] Update PR #88 with only the observed role-smoke and planted-failure results after explicit approval; CI currently has no reported checks.
 
 ## Round log
 
@@ -32,13 +32,14 @@ Status: in-progress
 | Recovery 1 | Restore progress; exact pin, fail-closed credentials, ignored auth/artifacts and disabled login captures; expand qa-run | `python3 -I scripts/test_playwright_safety.py` red then green (4 tests); `scripts/verify.sh docs` | passed offline checks only; live lab untouched |
 | Recovery 2 | Separate role projects; add repeatable Staff provisioning, forced-change setup and Docker no-network runner | `python3 -I scripts/test_playwright_safety.py`; `scripts/playwright-lab` | 8 offline checks passed; 4/4 live setup/smoke tests passed |
 | Recovery 3 | Added fix-found contract checks and executed the planted failure twice; removed scratch assertion | `scripts/verify.sh all` with required socket/DNS permissions | all green: docs, 2315 backend passed/14 skipped, 492 frontend passed/build/lint with 25 tracked warnings |
+| Recovery 4 | Audited the external finish gate and PR state | `gh issue list --state all --search 'J2-01 planted failure impossible discovery banner'`; `gh pr checks 88` | no matching issue; PR #88 has no reported checks; prepared issue body is `/tmp/qa63-planted-issue.md` |
 
 ## State for the next session
 
 - Last check run: `scripts/verify.sh all` with local-socket/DNS permission.
 - Result: green: docs contracts; backend 2315 passed, 14 skipped; frontend 492 passed, build passed, lint 0 errors/25 tracked warnings.
-- Hypothesis: local implementation and verification are complete; #63 remains open for the GitHub issue filing/report linkage and CI evidence.
-- Next action: after explicit approval, file the prepared planted finding, commit its sanitized report, and inspect PR CI.
+- Hypothesis: local implementation, live role coverage, the two planted-failure attempts and full verification are complete; only external issue/report linkage and CI evidence remain.
+- Next action: obtain explicit approval for the prepared GitHub mutations, then file the planted finding, link its sanitized report, update PR #88 evidence and re-check CI.
 
 ## Decisions and notes
 
@@ -115,8 +116,8 @@ sanitized deployment log. J3-03 remains partial because database-level inspectio
 was not performed; J3-05 is blocked because `check_ncpa` was not enabled; J3-09 was
 not captured with the required identity baseline. Report:
 `docs/test-runs/2026-10-11-j2-j3-dry-run/REPORT.md`.
-Full test timeout never means success. Existing checker does not validate headings,
-BB rows are absent, role tests have not run, and safety rules are not enforced yet.
+Full test timeout never means success. Earlier statements that role tests had not run
+and browser safety was unenforced are superseded by the verified role-smoke evidence below.
 
 ### Current remaining work for PR #88
 
@@ -124,8 +125,8 @@ BB rows are absent, role tests have not run, and safety rules are not enforced y
   resets a Staff account using private state files, and both role smokes passed live.
 - Live report `docs/test-runs/2026-10-11-j2-j3-dry-run/REPORT.md` records J3-02/J3-06
   as passed, J3-03 as partial, J3-05 as blocked, and J3-09 as skipped.
-- Remaining evidence includes restricted-role smoke, clean-baseline J2-09, complete UI/config
-  assertions for API-only J2 cases, J2-05, J3-03 database inspection, J3-05 with check_ncpa,
+- Broader QA evidence still includes clean-baseline J2-09, complete UI/config assertions
+  for API-only J2 cases, J2-05, J3-03 database inspection, J3-05 with check_ncpa,
   J3-07/J3-08, and J3-09 identity baseline comparison.
 
 ### 2026-10-11 resumed audit
@@ -148,3 +149,9 @@ BB rows are absent, role tests have not run, and safety rules are not enforced y
 - Both attempts loaded the administrator Dashboard and failed at the same intentionally impossible heading assertion. Each attempt reported one setup pass and one planted failure.
 - The scratch spec and temporary config inclusion were removed immediately afterward. No J2-01 product result or traceability status was changed.
 - The open/closed issue search for the exact planted symptom returned no match. A sanitized issue body is prepared at `/tmp/qa63-planted-issue.md`; automatic approval review blocked external issue/PR state changes until the user explicitly approves them.
+
+### Current blocker
+
+- Automatic approval review rejected publishing the PR #88 evidence comment and closing #93 because those actions disclose project evidence and mutate external GitHub state.
+- The same explicit approval is required before creating the synthetic `qa-found` issue needed to finish the planted-failure report.
+- No product code, scratch assertion or lab process remains unfinished or running. The temporary Staff account remains only on the disposable appliance and is reset safely by `scripts/vmlab setup-restricted`.
