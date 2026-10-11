@@ -8,13 +8,13 @@ Status: in-progress
 
 Copied from the issue. Tick an item only when a check proves it.
 
-- [ ] Define the supported QA provisioning path for a temporary Staff or Manager account on a fresh appliance.
-- [ ] Ensure the account has the permissions required by the restricted-role QA cases and lacks administrator-only permissions.
-- [ ] Make the provisioning step safe to repeat and document cleanup or appliance-reset handling.
-- [ ] Supply credentials to Playwright through approved environment/secret handling only; never commit or print them.
-- [ ] Run the restricted-role Playwright smoke suite successfully, or record any genuine product defect separately.
-- [ ] Update the QA documentation and PR #88 evidence with the attributable result.
-- [ ] Run the relevant verification checks, including `scripts/verify.sh docs`.
+- [x] Define the supported QA provisioning path for a temporary Staff or Manager account on a fresh appliance.
+- [x] Ensure the account has the permissions required by the restricted-role QA cases and lacks administrator-only permissions.
+- [x] Make the provisioning step safe to repeat and document cleanup or appliance-reset handling.
+- [x] Supply credentials to Playwright through approved environment/secret handling only; never commit or print them.
+- [x] Run the restricted-role Playwright smoke suite successfully, or record any genuine product defect separately.
+- [x] Update the QA documentation and PR #88 evidence with the attributable result.
+- [x] Run the relevant verification checks, including `scripts/verify.sh docs`.
 
 Requirement coverage (every requirement the issue states, and the check that proves it):
 
@@ -41,16 +41,17 @@ One row per loop round, newest last.
 | Round | Change made | Check run | Result |
 |---|---|---|
 | 1 | Started issue branch after finding the full implementation and live report already merged via PR #88. | GitHub issue/PR and commit-ancestry inspection | Evidence is on `origin/main`; offline verification remains. |
-| 2 | Installed the pinned isolated dependencies and verified the inherited implementation. | `python3 -I scripts/test_playwright_safety.py`; `scripts/verify.sh docs`; `scripts/verify.sh all` | Safety: 8 passed. Docs: green. Full verification reached backend route drift then could not create the isolated worktree's generated `server/host-config-files` under the sandbox (`OSError: [Errno 30] Read-only file system`). |
+| 2 | Installed the pinned isolated dependencies and verified the inherited implementation. | `python3 -I scripts/test_playwright_safety.py`; `scripts/verify.sh docs`; initial `scripts/verify.sh all` | Safety: 8 passed. Docs: green. The initial full check reached backend route drift then could not create the isolated worktree's generated `server/host-config-files` under the sandbox (`OSError: [Errno 30] Read-only file system`). |
+| 3 | Re-ran the full gate with the isolated worktree write access required for generated test files. | `scripts/verify.sh all` | Green: docs, route/API drift, backend unit suite, frontend tests/build, and lint completed; the process exited cleanly and left the branch clean. |
 
 ## State for the next session
 
 Everything a fresh session needs to continue without redoing work.
 
 - Last check run (exact command): `scripts/verify.sh all`
-- Result (first failing lines, or "green"): docs green; backend route drift stopped before tests because sandboxed execution could not create `server/host-config-files` in the isolated sibling worktree (`OSError: [Errno 30] Read-only file system`).
-- Hypothesis: the verification failure is sandbox-only; rerunning the identical command with the required workspace write permission should execute the actual checks without changing tracked files.
-- Next action (one specific step, not "continue"): rerun `scripts/verify.sh all` with elevated workspace permission.
+- Result (first failing lines, or "green"): green; docs, route/API drift, backend unit tests, frontend tests/build, and lint completed successfully.
+- Hypothesis: #93 is fully satisfied by work merged into PR #88; closing it with the precise report and commit evidence is appropriate.
+- Next action (one specific step, not "continue"): re-read issue #93 and PR #88, then post the attributable closure comment.
 
 ## Decisions and notes
 
