@@ -37,7 +37,7 @@ Status: in-progress
 - Last check run: `scripts/playwright-lab`.
 - Result: 4 passed (admin setup/smoke and restricted setup/smoke), with Chromium in a Docker `--network none` boundary and only a Unix-socket bridge to the lab origin.
 - Hypothesis: browser-role acceptance is complete; #63 remains open only for the planted-failure J2/J3 run and full verification/CI.
-- Next action: checkpoint the browser/provisioning change, rerun against that exact SHA, and commit a sanitized report.
+- Next action: complete the planted-failure J2/J3 dry run, then run `scripts/verify.sh all`.
 
 ## Decisions and notes
 
@@ -133,3 +133,10 @@ BB rows are absent, role tests have not run, and safety rules are not enforced y
 - Read current GitHub issues #63, #85 and #93. User released the lab for the remaining checks, including restricted-account provisioning and restoration.
 - PR #91 is merged (2026-10-11); it is a synthetic no-product-fix PR. Its merge does not prove J2-08 was fixed.
 - Source inspection contradicts earlier completion notes: restricted setup is selected by the admin setup project, forced-change handling is absent, and fix-found has conflicting filenames and unsupported CLI fields. Recovery steps above supersede those completion claims.
+
+### Restricted-role live evidence
+
+- Checkpoint `c8fcd586cf2072099d1ece0caf8482a0e2f67b17` was tested after resetting the temporary Staff account.
+- `scripts/playwright-lab`: 4 passed, 0 failed, 0 skipped. The Docker container had no network; a private Unix socket exposed only the application loopback origin.
+- The restricted setup observed and completed the forced password-change window. J9-04 then observed the Dashboard redirect, General-only Settings access and a Dashboard API 403.
+- Sanitized report: `docs/test-runs/2026-10-11-role-smoke/REPORT.md`.
