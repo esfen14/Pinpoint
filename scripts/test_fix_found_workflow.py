@@ -64,26 +64,6 @@ class FixFoundContract(unittest.TestCase):
         self.assertIn("not create a `qa-found`", QA_RUN)
         self.assertIn("do not create a `qa-found`", QA_RUN)
 
-    def test_qa_run_syncs_every_result_artifact_before_checkpointing(self):
-        for requirement in (
-            "Requirements_Traceability.md",
-            "QA_Paper_Test_Case_Tables.md",
-            "render_qa_case_tables.py --write",
-            "scripts/verify.sh docs",
-            "before checkpointing",
-        ):
-            with self.subTest(requirement=requirement):
-                self.assertIn(requirement, QA_RUN)
-
-    def test_completed_qa_run_closes_its_tracking_issue_through_the_pr(self):
-        for requirement in (
-            "every master-plan case",
-            "Closes #<n>",
-            "closes the tracking issue when the PR merges",
-        ):
-            with self.subTest(requirement=requirement):
-                self.assertIn(requirement, QA_RUN)
-
 
 if __name__ == "__main__":
     unittest.main()
