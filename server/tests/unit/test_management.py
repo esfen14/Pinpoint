@@ -572,19 +572,47 @@ class TestEditAccount:
         )
         assert resp.status_code == 200
 
+    @pytest.mark.parametrize("status", ("Suspended", "Inactive"))
     def test_super_admin_cannot_be_suspended_or_inactivated(
+        self, logged_in_client, db_session, admin_user, admin_role, status
+    ):
+        first = db.session.execute(
+            sa.select(User).order_by(User.UserID).limit(1)
+        ).scalar_one()
+        resp = logged_in_client.put(
+            f"/api/user/accounts/{first.UserID}",
+            json=self._payload(admin_role, email=first.Email, status=status),
+        )
+        assert resp.status_code == 400
+        assert resp.get_json()["message"] == (
+            "The super admin account cannot be suspended or made inactive."
+        )
+        db.session.refresh(first)
+        assert first.Status == UserStatus.ACTIVE
+
+    def test_super_admin_allows_non_status_edits(
         self, logged_in_client, db_session, admin_user, admin_role
     ):
         first = db.session.execute(
             sa.select(User).order_by(User.UserID).limit(1)
         ).scalar_one()
-        for status in ("Suspended", "Inactive"):
-            resp = logged_in_client.put(
-                f"/api/user/accounts/{first.UserID}",
-                json=self._payload(admin_role, email=first.Email, status=status),
-            )
-            assert resp.status_code == 400
+
+        resp = logged_in_client.put(
+            f"/api/user/accounts/{first.UserID}",
+            json=self._payload(
+                admin_role,
+                first_name="Renamed",
+                last_name="Administrator",
+                email=first.Email,
+                password="",
+                confirm_password="",
+            ),
+        )
+
+        assert resp.status_code == 200
         db.session.refresh(first)
+        assert first.First_Name == "Renamed"
+        assert first.Last_Name == "Administrator"
         assert first.Status == UserStatus.ACTIVE
 
     def test_other_accounts_can_still_be_suspended(

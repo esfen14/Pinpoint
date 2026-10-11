@@ -37,7 +37,14 @@ vi.mock('../lib/api', async () => {
 // ─── API fixtures (server/app/api/user/management.py shapes) ────────────────
 // Backend statuses are Active / Inactive / Suspended (UserStatus enum).
 
-function account(id: number, first: string, last: string, status: string, role = 'Admin') {
+function account(
+  id: number,
+  first: string,
+  last: string,
+  status: string,
+  role = 'Admin',
+  isSuperAdmin = false,
+) {
   return {
     id,
     first_name: first,
@@ -45,6 +52,7 @@ function account(id: number, first: string, last: string, status: string, role =
     email: `${first.toLowerCase()}@example.com`,
     role,
     status,
+    is_super_admin: isSuperAdmin,
     receive_email_alerts: true,
     created_at: '2026-09-01T08:00:00+00:00',
     updated_at: '2026-09-01T08:00:00+00:00',
@@ -52,7 +60,7 @@ function account(id: number, first: string, last: string, status: string, role =
 }
 
 const ACCOUNTS = [
-  account(1, 'Marie', 'Santos', 'Active'),
+  account(1, 'Marie', 'Santos', 'Active', 'Admin', true),
   account(2, 'Chloe', 'Baltazar', 'Active', 'Viewer'),
   account(3, 'Lucas', 'Mitchell', 'Active', 'Viewer'),
   account(4, 'John', 'Cruz', 'Inactive', 'Viewer'),
@@ -179,6 +187,22 @@ describe('ManageAccountsPage', () => {
     accountsResponse = { items: [] }
     await renderLoaded()
     expect(screen.getByRole('button', { name: 'Export' })).toBeDisabled()
+  })
+
+  it('disables the super admin status selector', async () => {
+    const user = userEvent.setup()
+    await renderLoaded()
+
+    const superAdminRow = screen.getByText('Marie Santos').closest('tr') as HTMLElement
+    await user.click(within(superAdminRow).getByTitle('Edit'))
+
+    const status = screen.getByRole('combobox', { name: 'Status' })
+    expect(status).toHaveValue('active')
+    expect(status).toBeDisabled()
+    expect(status).toHaveAttribute(
+      'title',
+      'The super admin account cannot be suspended or made inactive.',
+    )
   })
 
   it('shows an error banner when loading fails', async () => {
