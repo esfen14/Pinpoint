@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Date | 2026-10-11 |
-| Commit tested | `8427b0e9` |
+| Commit tested | `5dc0b1d9` |
 | Plan | Issue #92 finish-condition backend and documentation checks |
 | Tester | OpenCode agent |
 | Environment | Local isolated Flask tests; in-memory SQLite binds; Nagios availability mocked |
@@ -11,7 +11,7 @@
 
 ## Result
 
-**Overall: Partial.** Targeted backend tests and documentation verification passed. The complete verification passed after restoring the migration versions folder: backend route/API drift and the isolated suite reported 2,322 passed and 14 skipped; frontend reported 492 passed, build success, and lint warnings only. `scripts/verify.sh all` passed.
+**Overall: Pass.** Targeted and full automated verification passed after restoring the migration versions folder: backend route/API drift and the isolated suite reported 2,322 passed and 14 skipped; frontend reported 492 passed, build success, and lint warnings only. `scripts/verify.sh all` passed.
 
 Totals: Pass 5, Fail 0, Blocked 0, Skipped 0.
 
@@ -32,7 +32,7 @@ No live Nagios or VM lab was used; the issue explicitly requires mocked backend 
 ## Follow-up
 
 - Defects found: none.
-- Cases to repeat in the next run: full backend, frontend, and `scripts/verify.sh all`.
+- Cases to repeat in the next run: none for this issue; live Nagios/VM validation remains outside the automated unit-test scope.
 
 ## Sanitization checklist
 

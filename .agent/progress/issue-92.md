@@ -1,7 +1,7 @@
 # Issue #92: Align Reports availability with Nagios source of truth
 
 Branch: `issue-92-reports-nagios-availability`
-Status: in-progress
+Status: ready-for-review
 
 ## Finish condition
 
