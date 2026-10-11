@@ -9,7 +9,12 @@ the normative behavior in the requirement specifications.
 
 - Session login/logout and current-user identity.
 - Account, role, permission-option, and per-user preference APIs, including the
-  bootstrap administrator's first-run setup (`POST /api/user/complete-setup`).
+  bootstrap administrator's first-run setup (`POST /api/user/complete-setup`)
+  and server-access recovery (`flask recover-bootstrap-admin`). Recovery privately
+  prompts for a policy-compliant temporary password, identifies only the unique
+  earliest-created account, preserves setup/status/role/data, forces a password
+  change and records a password-free audit event; current sessions continue to
+  expire on their configured timeout.
 - Singleton system settings with personal/system separation and optimistic
   version conflict handling. The system Check interval (1/2/5/10/15 minutes)
   generates host and service check intervals through the shared Nagios writer;
