@@ -156,7 +156,7 @@ in `server/tests/plans/` are referenced as **Detail:** and are not copied (§8).
 
 #### J1-03 Sign in succeeds and fails correctly
 `[SE]` · VM · agent
-- **Pre:** B0.
+- **Pre:** B0; bootstrap first-login setup (J1-07) is complete. Use the updated administrator email and password. A fresh bootstrap login must complete setup, not bypass it to reach the Dashboard.
 - **Steps:** 1. On `/login`, submit the administrator credentials. 2. Sign out and submit a wrong password. 3. Submit an unknown email.
 - **Expect:** 1. Redirect to the Dashboard. 2. and 3. The login is refused with an error message, no session cookie is set, and `GET /api/user/me` returns 401. The two refusals do not reveal which of email or password was wrong.
 
@@ -178,7 +178,7 @@ in `server/tests/plans/` are referenced as **Detail:** and are not copied (§8).
 - **Steps:** Boot the ISO; answer the interactive Ubuntu prompts; let first boot finish; read the generated web credentials (shown once); confirm they were recorded; reopen the credentials script.
 - **Expect:** The credentials are `admin-xxxxx@pinpoint.lan` plus a password; after confirmation they are removed and the credentials script says so and does nothing; the web UI is reachable at the VM's address and the healthcheck passes. A failed install can be rerun.
 
-#### J1-07 First-login setup window (#61)
+#### J1-07 Change administrator email and password after first login (#61, merged)
 `[SE]` · VM · agent
 - **Pre:** owner-approved fresh appliance from `scripts/vmlab fresh`; do not run `setup-admin` before checking the setup window. Never print the generated login.
 - **Steps:** Sign in with the state-folder bootstrap credentials; try a protected page and `GET /api/user/accounts`; submit a reserved-domain email and then a valid non-reserved email with a different policy-compliant password through the setup window. Inspect `/api/user/me` and the sanitized config-apply result. For negative paths run `server/.venv/bin/python -m pytest -c server/pytest.ini server/tests/unit/test_admin_setup.py` from the repository root.
@@ -230,11 +230,11 @@ in `server/tests/plans/` are referenced as **Detail:** and are not copied (§8).
 - **Steps:** Pause `snmp01` from the drawer (confirm); read the Dashboard total and the Nagios `hosts.cfg`; resume (confirm).
 - **Expect:** While paused the device shows the Paused label and "last known status", is left out of Dashboard and Network Health counts and of the active alerts, and is removed from the generated Nagios config; after resume it counts again. A user-log entry exists for each action (Device Inventory §12.3, ACs 27, 30–34).
 
-#### J2-08 One record per host after rescans
+#### J2-08 Identity stability and explicit conflicts after rescans
 `[RE]` · VM · agent
-- **Pre:** J2-01.
-- **Steps:** Run two rescans back to back; list `GET /api/system/network-health/hosts` and the device list; count records per IP.
-- **Expect:** Exactly one record per IP, none in "Address Unknown" while its target is up. #59 is fixed; #86 tracks remaining duplicate persistence observed on a build containing that fix. On the inherited #86 baseline record `Skipped (known gap: #86)`, not a clean-baseline pass. Link new evidence to #86 after checking its scope.
+- **Pre:** J2-01; classify the baseline as clean/unique or inherited/conflicted. Record device IDs, current addresses, identity states, ownership and existing Needs Review items before testing. Verify discovery is restricted to `10.77.0.0/28` and no run is active.
+- **Steps:** Record Device Inventory and Needs Review state before the first scan, including device IDs, identity states, ownership/history and review-item IDs. Run two rescans sequentially, waiting for a terminal status before starting the next. After each scan, compare those records with the baseline. Use `GET /api/system/network-health/hosts` only as supporting monitoring evidence, not as the authoritative identity inventory. Verify that any conflict remains visible and that the affected device exposes the documented Merge/Retire resolution path. Do not execute Merge/Retire or delete records during this stability test.
+- **Expect:** On a clean, unique-identity baseline, rescans preserve identity without unexplained new records. On an inherited conflict baseline, #86 / merged PR #89 makes retained multiple records or Address Unknown state acceptable when the corresponding Needs Review item, preserved ownership/history, and Merge/Retire path are present. A duplicate count alone is not a failure. Fail only for unexplained new identities, silent reassignment, lost ownership/history, missing conflict visibility, or missing resolution controls. Do not claim clean-baseline uniqueness from a conflicted fixture. Merge/Retire execution is a separate operator-resolution case.
 
 #### J2-09 Discovery settings apply to the next scan
 `[FS]` · VM · agent
@@ -311,8 +311,8 @@ in `server/tests/plans/` are referenced as **Detail:** and are not copied (§8).
 #### J3-09 One record per host after deployment
 `[RE]` · VM · agent
 - **Pre:** J3-02, J2-08.
-- **Steps:** Count device records for 10.77.0.6.
-- **Expect:** One. The known #86 baseline limitation applies exactly as in J2-08; the original #59 is closed.
+- **Steps:** Record the target's device ID, identity state, ownership/history and Needs Review items before deployment. Deploy NCPA, then compare the same fields and verify the Device Inventory conflict exposes the documented Merge/Retire resolution path. Do not resolve or delete the record during this case.
+- **Expect:** On a clean baseline, deployment preserves identity without unexplained new records. On a pre-existing conflict baseline, retained multiple records or Address Unknown state is acceptable under #86 / PR #89 when the conflict item, ownership/history and Merge/Retire path remain present. A row count alone is not a pass/fail criterion; fail only for newly introduced unexplained identities, silent reassignment, lost history or missing review/resolution controls.
 
 #### J3-10 Identity regressions on an isolated fixture
 `[RE]` · MOCK · agent
@@ -682,7 +682,7 @@ in `server/tests/plans/` are referenced as **Detail:** and are not copied (§8).
 `[FS]` · VM · agent
 - **Pre:** X3-02 complete and at least 30 minutes of history.
 - **Steps:** Read availability for `app01` and an untouched host on Network Health and on Reports.
-- **Expect:** The untouched host is at or near 100% on both; `app01` is lower than the untouched host on both; every value is between 0 and 100. **Equality between the two pages is not asserted** (journeys D-9 open); file one `needs-decision` if they differ.
+- **Expect:** Nagios is the availability reference (journeys D-9, decided). Compare each page with Nagios for the same hosts, reporting window and calculation options; record the reference source and parameters. Values must agree at the displayed precision, and percentages must be between 0 and 100. Do not invent a Pinpoint-specific formula or require equality between pages using different windows. If matching Nagios reference data cannot be obtained, record the comparison as Blocked with the evidence gap, not Pass. For a fully observed window with no outage the untouched host should be at or near 100%; assess the interrupted host against Nagios rather than assuming an arbitrary percentage.
 
 #### X4-01 Unauthenticated access is refused
 `[SE]` · VM · agent

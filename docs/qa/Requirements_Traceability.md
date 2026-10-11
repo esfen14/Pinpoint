@@ -5,30 +5,30 @@
 | J1-01 | QA_Test_Plan.md | RE | VM | agent | untested | |
 | J1-02 | QA_Test_Plan.md | FS | VM | agent | untested | |
 | J1-03 | QA_Test_Plan.md | SE | VM | agent | untested | |
-| J1-04 | QA_Test_Plan.md | SE | VM | agent | untested | |
+| J1-04 | QA_Test_Plan.md | SE | VM | agent | pass | Admin Playwright login/dashboard smoke passed; see PR #88 QA evidence |
 | J1-05 | QA_Test_Plan.md | IC | VM | agent | untested | |
 | J1-06 | QA_Test_Plan.md | FS | MANUAL | HUMAN | untested | |
 | J1-07 | QA_Test_Plan.md | SE | VM | agent | untested | |
 | J2-01 | QA_Test_Plan.md | FS | VM | agent | untested | |
 | J2-02 | QA_Test_Plan.md | RE | VM | agent (UI) | untested | |
-| J2-03 | QA_Test_Plan.md | FS | VM | agent | untested | |
-| J2-04 | QA_Test_Plan.md | FS | VM | agent | untested | |
-| J2-05 | QA_Test_Plan.md | RE | VM | agent | untested | |
-| J2-06 | QA_Test_Plan.md | IC | VM | agent | untested | |
-| J2-07 | QA_Test_Plan.md | FS | VM | agent | untested | |
-| J2-08 | QA_Test_Plan.md | RE | VM | agent | untested | |
-| J2-09 | QA_Test_Plan.md | FS | VM | agent | untested | |
+| J2-03 | QA_Test_Plan.md | FS | VM | agent | untested | API identifiers/ports passed; browser drawer not exercised |
+| J2-04 | QA_Test_Plan.md | FS | VM | agent | untested | SSH plugin enablement observed; complete per-host before/after assertion not established |
+| J2-05 | QA_Test_Plan.md | RE | VM | agent | untested | Live changed-network case not completed |
+| J2-06 | QA_Test_Plan.md | IC | VM | agent | pass | Discovery stop returned terminal Interrupted |
+| J2-07 | QA_Test_Plan.md | FS | VM | agent | untested | Pause/resume API passed; UI/config/count assertions not exercised |
+| J2-08 | QA_Test_Plan.md | RE | VM | agent | untested | Conflict review endpoint passed; full two-rescan baseline comparison not captured |
+| J2-09 | QA_Test_Plan.md | FS | VM | agent | untested | Existing 8080 rows prevented a clean first-insertion claim |
 | J2-10 | QA_Test_Plan.md | RE | MOCK | agent | untested | |
 | J2-11 | QA_Test_Plan.md | RE | MOCK | agent | untested | |
 | J3-01 | QA_Test_Plan.md | FS | VM | agent (UI) | untested | |
-| J3-02 | QA_Test_Plan.md | FS | VM | agent | untested | |
-| J3-03 | QA_Test_Plan.md | SE | VM | agent | untested | |
+| J3-02 | QA_Test_Plan.md | FS | VM | agent | pass | Live deployment to two authorized targets succeeded; see 2026-10-11 j2-j3-dry-run report |
+| J3-03 | QA_Test_Plan.md | SE | VM | agent | untested | API response contained no password; database inspection not performed |
 | J3-04 | QA_Test_Plan.md | SE | VM | agent | untested | |
-| J3-05 | QA_Test_Plan.md | RE | VM | agent | untested | |
-| J3-06 | QA_Test_Plan.md | SE | VM | agent | untested | |
+| J3-05 | QA_Test_Plan.md | RE | VM | agent | untested | check_ncpa was not enabled before the deployment run |
+| J3-06 | QA_Test_Plan.md | SE | VM | agent | pass | Deployment log recorded actor, time, outcome and progress; see report |
 | J3-07 | QA_Test_Plan.md | RE | VM | agent | untested | |
 | J3-08 | QA_Test_Plan.md | RE | VM | agent | untested | |
-| J3-09 | QA_Test_Plan.md | RE | VM | agent | untested | |
+| J3-09 | QA_Test_Plan.md | RE | VM | agent | untested | Required before/after identity baseline was not captured for this deployment |
 | J3-10 | QA_Test_Plan.md | RE | MOCK | agent | untested | |
 | J4-01 | QA_Test_Plan.md | FS | VM | agent | untested | |
 | J4-02 | QA_Test_Plan.md | FS | VM | agent | untested | |
