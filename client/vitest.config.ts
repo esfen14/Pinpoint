@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config'
+import { defineConfig, configDefaults } from 'vitest/config'
 
 // Vitest picks this file over vite.config.ts. JSX is compiled by esbuild
 // from tsconfig ("jsx": "react-jsx"), so the Vite plugins are not needed.
@@ -7,5 +7,6 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
+    exclude: [...configDefaults.exclude, '**/e2e/**'],
   },
 })
