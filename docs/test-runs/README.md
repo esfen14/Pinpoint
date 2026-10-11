@@ -48,6 +48,7 @@ table while you test, not afterward.
 
 | Run | Kind | Commit | Result | Report |
 |---|---|---|---|---|
+| [2026-10-11 issue-92](2026-10-11-issue-92/REPORT.md) | Issue #92 mocked availability report checks | `e7eaecea` | Partial: targeted backend and docs checks pass; full backend/frontend/all pending | [REPORT.md](2026-10-11-issue-92/REPORT.md) |
 | [2026-10-11 qa-loop-planted-run](2026-10-11-qa-loop-planted-run/REPORT.md) | Synthetic QA workflow probe, not a product test | `1bae5171` plus removed scratch assertion | Pass: identical expected failure twice; no product issue filed | [REPORT.md](2026-10-11-qa-loop-planted-run/REPORT.md) |
 | [2026-10-11 role-smoke](2026-10-11-role-smoke/REPORT.md) | VM lab Playwright administrator and restricted Staff smoke | `c8fcd586` | Pass: 4/4 setup and smoke tests; J1-04/J9-04 browser-role coverage | [REPORT.md](2026-10-11-role-smoke/REPORT.md) |
 | [2026-10-11 j2-j3-dry-run](2026-10-11-j2-j3-dry-run/REPORT.md) | VM lab J2/J3 continuation | `67243ef5` | Partial: J3-02 and J3-06 pass; J3-03 partial; J3-05 blocked; J3-09 skipped | [REPORT.md](2026-10-11-j2-j3-dry-run/REPORT.md) |

@@ -47,14 +47,15 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 1 | Added failing Nagios-source tests, implemented archivejson-backed availability for both report routes, forwarded optional hostname scope, and updated an existing stable-name test to mock Nagios. | `server/.venv/bin/python -m pytest server/tests/unit/test_report_availability.py server/tests/unit/test_device_name_consumers.py::TestReportUsesTheNagiosName -q` | 7 passed; initial test-first run failed because the helper was not yet imported, then implementation passed. |
-| 2 | Updated route/data/status documentation and Reports description; verified targeted report/consumer/alert tests and docs. | `scripts/verify.sh docs`; `cd server && .venv/bin/python -m pytest tests/unit/test_report_availability.py tests/unit/test_report_notifications_alerts.py tests/unit/test_device_name_consumers.py -q`; `scripts/verify.sh backend` | Docs green; targeted backend 58 passed. Full backend reached pytest with route drift green but exceeded the 120-second command timeout while still running; no test failure observed. |
+| 2 | Updated route/data/status documentation and Reports description; verified targeted report/consumer/alert tests and docs. | `scripts/verify.sh docs`; `cd server && .venv/bin/python -m pytest tests/unit/test_report_availability.py tests/unit/test_report_notifications_alerts.py tests/unit/test_device_name_consumers.py -q`; `scripts/verify.sh backend` | Docs green; targeted backend 58 passed. Full backend route/API drift passed, then pytest stopped at 258 passed on pre-existing missing migration revision `f3a8c1d6b2e9`. |
+| 3 | Ran frontend verification and recorded sanitized test report with remaining backend migration limitation. | `scripts/verify.sh frontend`; `cd server && .venv/bin/python -m pytest tests/unit/ --maxfail=1 -x -q` | Frontend green: 492 tests, build, lint (warnings only). Backend blocked by missing migration revision in starting worktree; full all not green. |
 
 ## State for the next session
 
-- Last check run (exact command): `server/.venv/bin/python -m pytest server/tests/unit/test_report_availability.py server/tests/unit/test_device_name_consumers.py::TestReportUsesTheNagiosName -q`
-- Result (first failing lines, or "green"): green, 7 passed
-- Hypothesis: Reports now uses the same Nagios archive availability source as Network Health and does not read HostStatus for these endpoints.
-- Next action (one specific step, not "continue"): clean up route documentation and run the broader backend verification, then update the owning specifications and test-run report.
+- Last check run (exact command): `cd server && .venv/bin/python -m pytest tests/unit/ --maxfail=1 -x -q`
+- Result (first failing lines, or "green"): 258 passed, then setup error: `Can't locate revision identified by 'f3a8c1d6b2e9'`
+- Hypothesis: Product changes pass targeted backend and frontend checks; full backend/all verification is blocked by unrelated migration files missing from the starting worktree.
+- Next action (one specific step, not "continue"): inspect git status, checkpoint the report/progress, and ask for the migration baseline to be restored before final verification/PR.
 
 ## Decisions and notes
 
