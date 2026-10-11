@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { canAccessPage, firstAccessiblePage } from '../lib/pageAccess'
+import { canAccessPage, firstAccessiblePage, PAGE_PERMISSIONS } from '../lib/pageAccess'
 import { PageAccessGuard } from '../components/layout/PageAccessGuard'
 import { Sidebar } from '../components/layout/Sidebar'
 import { SettingsPage } from '../pages/SettingsPage'
@@ -38,6 +38,12 @@ describe('pageAccess', () => {
     expect(canAccessPage('/ncpa-deployment', ['system.deploy.ncpa'])).toBe(true)
     expect(canAccessPage('/ncpa-deployment', ['plugin.view'])).toBe(false)
     expect(firstAccessiblePage(['system.deploy.ncpa'])).toBe('/ncpa-deployment')
+  })
+
+  it('uses the System Status path and no longer recognizes topology', () => {
+    expect(canAccessPage('/system-status', ['system.network_health'])).toBe(true)
+    expect(canAccessPage('/system-status', [])).toBe(false)
+    expect(PAGE_PERMISSIONS).not.toHaveProperty('/topology')
   })
 
   it('always allows Settings', () => {
