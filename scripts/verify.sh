@@ -24,6 +24,8 @@ docs() {
   python3 -I "$root/scripts/test_traceability.py"
   echo "==> docs: agent progress files are well formed"
   python3 -I "$root/scripts/check_agent_progress.py"
+  echo "==> docs: fix-found workflow contract"
+  python3 -I "$root/scripts/test_fix_found_workflow.py"
 }
 
 backend() {

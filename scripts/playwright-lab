@@ -47,8 +47,8 @@ docker run --rm --network none --shm-size=1g \
     export PINPOINT_RESTRICTED_PASSWORD="$(cat /state/restricted-password)"
     export PINPOINT_RESTRICTED_NEW_PASSWORD="$(cat /state/restricted-new-password)"
     cd /work/client
-    ./node_modules/.bin/playwright test
-  '
+    ./node_modules/.bin/playwright test "$@"
+  ' bash "$@"
 test_status=$?
 set -e
 

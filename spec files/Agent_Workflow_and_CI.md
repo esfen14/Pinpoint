@@ -159,7 +159,7 @@ See `.agent/workflows/fix-found.md` for commands and written boundary checks.
 
 | Stage | Command | Notes |
 |---|---|---|
-| Docs | `scripts/verify.sh docs` | Agent progress files are well formed; relative links resolve; environment variables match the README table; browser routes match `App.tsx`, `pageAccess.ts` and the spec; traceability matrix matches test cases. Standard library only |
+| Docs | `scripts/verify.sh docs` | Agent progress files are well formed; relative links resolve; environment variables match the README table; browser routes match `App.tsx`, `pageAccess.ts` and the spec; traceability matrix matches test cases; fix-found queue and stop-rule contracts are present. Standard library only |
 | Backend | `scripts/verify.sh backend` | Route and client-API drift checks, then `pytest tests/unit` in `server/` with `FLASK_DEBUG=1`; ~4 min, 2,167 passed / 14 skipped on 2026-10-08 |
 | Frontend | `scripts/verify.sh frontend` | `npm run test`, `npm run build`, `npm run lint` (errors fail; warnings do not) |
 | Everything | `scripts/verify.sh all` | Same stages as CI |

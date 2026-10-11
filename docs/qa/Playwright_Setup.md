@@ -65,6 +65,9 @@ scripts/vmlab setup-restricted
 scripts/playwright-lab
 ```
 
+Playwright CLI filters may be passed through, for example
+`scripts/playwright-lab --project admin -g J1-04`.
+
 `scripts/playwright-lab` uses the locally installed exact Chromium build and a local
 Node image; it does not download packages. Raw JSON stays under ignored
 `client/test-results/`. Use direct `npx playwright test` only for mocked specs that

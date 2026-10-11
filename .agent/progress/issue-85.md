@@ -5,17 +5,17 @@ Status: in-progress
 
 ## Finish condition
 
-- [ ] `.agent/workflows/fix-found.md` and both adapters exist and do not contradict `work-issue.md`.
-- [ ] Queue selection, severity ordering, skip rules, and exact `gh` commands are documented.
+- [x] `.agent/workflows/fix-found.md` and both adapters exist and do not contradict `work-issue.md`.
+- [x] Queue selection, severity ordering, skip rules, and exact `gh` commands are documented.
 - [ ] A synthetic demonstration opens one unmerged PR with a closing reference and records skipped candidates.
 - [ ] Retest handoff requires a merged fix and records the affected traceability case.
-- [ ] The 3-PR cap, two-failed-fix stop, and denied-permission stop are documented.
-- [ ] `scripts/verify.sh docs` passes.
+- [x] The 3-PR cap, two-failed-fix stop, and denied-permission stop are documented and covered by written contract checks.
+- [x] `scripts/verify.sh docs` passes.
 
 ## Plan
 
 - [x] Recovery: correct queue, command compatibility, guardrails and handoff in `.agent/workflows/fix-found.md` and the owning specification.
-- [ ] Recovery: correct overstated synthetic report; add written boundary checks and verify actual GitHub evidence.
+- [x] Recovery: correct overstated synthetic report; add written boundary checks and verify actual GitHub evidence.
 
 - [x] Create the workflow and thin adapters.
 - [x] Document queue ordering, skip rules, caps, permission stop, and merged-fix retest semantics.
@@ -29,23 +29,21 @@ Status: in-progress
 | 1 | Created workflow and adapters | `scripts/check_agent_progress.py` | Initial draft created |
 | 2 | Added queue rules and synthetic demonstration | `gh issue list --label qa-found --state open` | Issue #90 was closed as incorrectly filed; PR #91 was later merged; no product fix |
 | Recovery 1 | Corrected queue, gh compatibility, guardrails, human merge gate and overstated report | `scripts/verify.sh docs` | green; live/synthetic acceptance incomplete |
+| Recovery 2 | Added executable documentation contracts for queue, skips, limits, permission stop, real-merge handoff and human merge gate | `python3 -I scripts/test_fix_found_workflow.py`; `scripts/verify.sh docs` | 6 contract tests pass; external synthetic issue/PR demonstration still pending |
 | 3 | Repaired progress structure for PR verification | `scripts/verify.sh docs` | Pending rerun |
 
 ## State for the next session
 
-- Current last check: `scripts/verify.sh docs` — green after workflow correction.
-- Current next action: repair role setup, then record an attributable synthetic demonstration; do not use #91 as a product fix.
-
-- Last check run: `scripts/verify.sh docs`
-- Result: previously failed because this file had the wrong format; repaired now.
-- Hypothesis: docs verification will pass after the structural repair unless another progress file is malformed.
-- Next action: rerun `scripts/verify.sh docs`, then run the offline PR #88 checks.
+- Last check run: `python3 -I scripts/test_fix_found_workflow.py`.
+- Result: 6 contract tests pass after correcting the workflow and its GitHub CLI commands.
+- Hypothesis: implementation and written guardrails are complete; only an attributable external synthetic issue/PR/skip/handoff demonstration remains.
+- Next action: after explicit approval for the external GitHub mutations, file the prepared planted finding and run the synthetic queue demonstration without merging.
 
 ## Decisions and notes
 
 - No PR is merged by the agent.
 - Issue #90 was synthetic and incorrectly treated intentional #86 identity conflicts as a defect; it was closed. PR #91 is merged but is not a product fix and must not be presented as one.
-- Live restricted-role and J2/J3 acceptance tests remain pending unless an authorized account and clean appliance baseline are available.
+- Live restricted-role smoke passed; the remaining J2/J3 acceptance is independent of #85.
 
 ### 2026-10-11 resumed audit
 

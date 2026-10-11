@@ -140,3 +140,10 @@ BB rows are absent, role tests have not run, and safety rules are not enforced y
 - `scripts/playwright-lab`: 4 passed, 0 failed, 0 skipped. The Docker container had no network; a private Unix socket exposed only the application loopback origin.
 - The restricted setup observed and completed the forced password-change window. J9-04 then observed the Dashboard redirect, General-only Settings access and a Dashboard API 403.
 - Sanitized report: `docs/test-runs/2026-10-11-role-smoke/REPORT.md`.
+
+### Planted-failure execution
+
+- A scratch-only Playwright assertion titled `J2-01 planted failure: impossible discovery banner` ran twice through `scripts/playwright-lab --project admin`.
+- Both attempts loaded the administrator Dashboard and failed at the same intentionally impossible heading assertion. Each attempt reported one setup pass and one planted failure.
+- The scratch spec and temporary config inclusion were removed immediately afterward. No J2-01 product result or traceability status was changed.
+- The open/closed issue search for the exact planted symptom returned no match. A sanitized issue body is prepared at `/tmp/qa63-planted-issue.md`; automatic approval review blocked external issue/PR state changes until the user explicitly approves them.
