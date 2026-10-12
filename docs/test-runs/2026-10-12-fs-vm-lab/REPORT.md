@@ -16,7 +16,7 @@ installer/service wiring was observed as specified; the restricted VM smoke pass
 against all five targets. The run stopped after five QA rounds before additional
 FS cases could be claimed.
 
-Totals: Pass 4, Fail 0, Blocked 0, Skipped 0.
+Totals: Pass 5, Fail 0, Blocked 0, Skipped 0.
 
 ## Cases
 

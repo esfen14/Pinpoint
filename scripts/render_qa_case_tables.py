@@ -26,7 +26,7 @@ ISO_ORDER = (
 )
 CASE_HEADER = re.compile(r"^#### (?P<id>(?:[JX]\d+|PT)-\d+) (?P<title>.+)$", re.M)
 METADATA = re.compile(r"^`\[(?P<iso>FS|PE|IC|RE|SE)\]` · (?P<env>.+?) · (?P<executor>.+?)$", re.M)
-FIELD = re.compile(r"^- \*\*(?P<name>Steps|Expect)(?: [^*]*)?:\*\* (?P<value>.+)$", re.M)
+FIELD = re.compile(r"^- \*\*(?P<name>Module|Steps|Expect)(?: [^*]*)?:\*\* (?P<value>.+)$", re.M)
 
 
 def cell(value: str) -> str:
@@ -41,10 +41,11 @@ def cases_from_plan(text: str) -> dict[str, dict[str, str]]:
         block = text[header.end():headers[index + 1].start() if index + 1 < len(headers) else len(text)]
         metadata = METADATA.search(block)
         fields = {match.group("name"): match.group("value") for match in FIELD.finditer(block)}
-        if metadata is None or "Steps" not in fields or "Expect" not in fields:
-            raise ValueError(f"{header.group('id')} is missing metadata, Steps, or Expect")
+        if metadata is None or any(name not in fields for name in ("Module", "Steps", "Expect")):
+            raise ValueError(f"{header.group('id')} is missing metadata, Module, Steps, or Expect")
         cases[header.group("id")] = {
             "title": header.group("title"),
+            "module": fields["Module"],
             "iso": metadata.group("iso"),
             "environment": metadata.group("env"),
             "executor": metadata.group("executor"),
@@ -60,6 +61,7 @@ def cases_from_plan(text: str) -> dict[str, dict[str, str]]:
         action, expected = remainder.split(" → ", 1)
         cases[columns[1]] = {
             "title": module,
+            "module": module,
             "iso": iso,
             "environment": environment,
             "executor": "agent (aggregate)",
@@ -102,7 +104,7 @@ def render(plan: str, traceability: str) -> str:
         "# QA Paper Test Case Tables",
         "",
         "These tables are suitable for the paper and for QA execution. They are rendered from",
-        "[`QA_Test_Plan.md`](QA_Test_Plan.md) (scenario, action and expected result) and",
+        "[`QA_Test_Plan.md`](QA_Test_Plan.md) (module, scenario, action and expected result) and",
         "[`Requirements_Traceability.md`](Requirements_Traceability.md) (current result).",
         "The detailed plan remains the authority for preconditions and full procedure.",
         "",
@@ -113,13 +115,14 @@ def render(plan: str, traceability: str) -> str:
         "",
         "Each case is listed once under its primary quality characteristic. `VM`, `MOCK` and",
         "`HUMAN` identify the required environment; the executor column identifies who performs it.",
+        "Module under test names the feature or subsystem exercised; cross-module cases list each affected module.",
     ]
     for tag, name in ISO_ORDER:
         group = [(case_id, case) for case_id, case in cases.items() if case["iso"] == tag]
-        out.extend(["", f"### {tag} — {name}", "", "| Test case | Test scenario | Input / action | Expected output | Environment / executor |", "|---|---|---|---|---|"])
+        out.extend(["", f"### {tag} — {name}", "", "| Test case | Module under test | Test scenario | Input / action | Expected output | Environment / executor |", "|---|---|---|---|---|---|"])
         for case_id, case in group:
             out.append(
-                f"| {case_id} | {cell(case['title'])} | {cell(case['steps'])} | "
+                f"| {case_id} | {cell(case['module'])} | {cell(case['title'])} | {cell(case['steps'])} | "
                 f"{cell(case['expect'])} | {cell(case['environment'])} / {cell(case['executor'])} |"
             )
 
@@ -135,12 +138,12 @@ def render(plan: str, traceability: str) -> str:
     ])
     for tag, name in ISO_ORDER:
         group = [(case_id, case) for case_id, case in cases.items() if case["iso"] == tag]
-        out.extend(["", f"### {tag} — {name}", "", "| Test case | Actual result | Evidence / QA note |", "|---|---|---|"])
+        out.extend(["", f"### {tag} — {name}", "", "| Test case | Module under test | Actual result | Evidence / QA note |", "|---|---|---|---|"])
         for case_id, case in group:
             row = rows[case_id]
             result = row["status"].replace("-", " ").title()
             note = row["notes"] or "No result recorded yet."
-            out.append(f"| {case_id} | {result} | {cell(note)} |")
+            out.append(f"| {case_id} | {cell(case['module'])} | {result} | {cell(note)} |")
     return "\n".join(out) + "\n"
 
 
