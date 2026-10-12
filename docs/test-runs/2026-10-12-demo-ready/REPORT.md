@@ -28,6 +28,7 @@ acknowledgement/recovery and SMTP delivery were not rehearsed in this setup.
 | NCPA deployment | Pass | Web01 retry completed in 30 seconds: host-key read/trust, SSH login/sudo, deployment and Deployed NCPA state all passed (10 checks). Legacy01 remains pending for the live wizard. | — |
 | NCPA metrics and appliance reboot | Pass | After the saved appliance booted, CPU, memory and root-disk services reported OK. The service API listed 26 services, all OK. | — |
 | Installed snapshot | Pass | Powered-off `demo-ready` snapshot created on `pinpoint-qa-appliance`; UUID `816aba9f-d9fa-40c5-bb42-bc6d6c8417d9`. The lower `os-nagios-ready` snapshot is retained. | — |
+| Final shutdown | Pass | Appliance and all five targets shut down gracefully. The older `pinpoint-demo` VM did not stop after its ACPI request and was powered off. VirtualBox listed no running VMs afterward. | — |
 | Alert/browser walkthrough | Skipped | Presenter steps are documented; no browser or alert lifecycle acceptance pass is claimed. | — |
 | Email delivery | Skipped | Gmail SMTP credentials were not supplied or configured. | — |
 

@@ -9,6 +9,8 @@ The administrator email and password are stored privately in
 locally to sign in; do not include them in slides or recordings. The targets use
 the public disposable demo login documented in [README.md](README.md).
 
+All demo VMs were powered off after setup; start them with the commands below.
+
 ## Start the presentation
 
 From the repository root:
