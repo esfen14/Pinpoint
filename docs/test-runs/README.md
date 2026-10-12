@@ -48,6 +48,7 @@ table while you test, not afterward.
 
 | Run | Kind | Commit | Result | Report |
 |---|---|---|---|---|
+| [2026-10-12 fs-j4-inventory](2026-10-12-fs-j4-inventory/REPORT.md) | FS QA follow-up: fresh VM-lab Plugin Manager inventory | `24cac847` appliance deployment | Pass: J4-01 observes matching summary and inventory counts of 65; lab reverted | [REPORT.md](2026-10-12-fs-j4-inventory/REPORT.md) |
 | [2026-10-12 fs-vm-lab](2026-10-12-fs-vm-lab/REPORT.md) | FS QA round: appliance/service wiring, restricted discovery smoke and isolated FS regression cases | `bb7e967` appliance deployment | Partial: J1-02, J2-01, J4-08, J5-08 and J7-09 pass; no findings filed | [REPORT.md](2026-10-12-fs-vm-lab/REPORT.md) |
 | [2026-10-11 issue-92](2026-10-11-issue-92/REPORT.md) | Issue #92 mocked availability report checks | `e7eaecea` | Partial: targeted backend and docs checks pass; full backend/frontend/all pending | [REPORT.md](2026-10-11-issue-92/REPORT.md) |
 | [2026-10-11 qa-loop-planted-run](2026-10-11-qa-loop-planted-run/REPORT.md) | Synthetic QA workflow probe, not a product test | `1bae5171` plus removed scratch assertion | Pass: identical expected failure twice; no product issue filed | [REPORT.md](2026-10-11-qa-loop-planted-run/REPORT.md) |
