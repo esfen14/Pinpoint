@@ -5,6 +5,9 @@ discovery to find, so you can demo discovery, Nagios monitoring, alerts and NCPA
 deployment. **Pinpoint itself is not part of this**: you deploy your own Pinpoint
 VM and point it at the lab network (section 3).
 
+For the installed appliance and presenter walkthrough on this laptop, see
+[`DEMO_READY.md`](DEMO_READY.md).
+
 Everything is run by hand with [`demo_lab.py`](demo_lab.py) (Python 3.10+,
 `VBoxManage` and `ssh`; no pip packages). Commands that create or delete things
 print a plan and change nothing until you add `--apply`.
