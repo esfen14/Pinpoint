@@ -160,7 +160,7 @@ in lowercase). Every Pass must link to sanitized evidence in the Notes column.
 | J2-09 | Settings / Network Discovery | Untested | Existing 8080 rows prevented a clean first-insertion claim |
 | J3-01 | NCPA Deployment | Untested | No result recorded yet. |
 | J3-02 | NCPA Deployment | Pass | Live deployment to two authorized targets succeeded; see 2026-10-11 j2-j3-dry-run report |
-| J4-01 | Plugin Manager | Untested | No result recorded yet. |
+| J4-01 | Plugin Manager | Pass | Fresh installer-built appliance: Plugin Manager summary and complete inventory both reported 65 installed plugins; see [2026-10-12 FS J4 inventory report](../test-runs/2026-10-12-fs-j4-inventory/REPORT.md). |
 | J4-02 | Plugin Manager | Untested | No result recorded yet. |
 | J4-03 | Plugin Manager / Service Monitoring | Untested | No result recorded yet. |
 | J4-06 | Plugin Manager / Service Monitoring | Untested | No result recorded yet. |
