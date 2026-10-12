@@ -34,9 +34,16 @@ Assignments must be disjoint within a queue; the tool rejects duplicate IDs and
 set names. Share the preview through the team's existing coordination channel
 and compare it with other testers' queues/progress before execution. A local
 queue cannot enforce reservations across separate checkouts or machines. Owners
-must separately agree on exclusive lab access; different ISO sets can mutate the
-same appliance. Isolated MOCK work may run independently when its prerequisites
-do not require the shared lab.
+must separately agree on access to each test environment. Testers on different
+machines may run in parallel when each uses a separate appliance and targets;
+each still runs one appliance at a time locally. If their machines connect to the
+same appliance or targets, require exclusive access to that shared environment.
+Use the same reviewed queue and agreed source revision, record each deployed
+application SHA, and verify prerequisites on each tester's own environment.
+Another tester's successful case does not establish this environment's setup.
+Isolated MOCK work may run independently when its prerequisites do not require
+the shared lab. Keep separate tracking issues, branches and attributable reports;
+preserve both testers' result updates when combining their documentation PRs.
 
 ## Start or resume
 
