@@ -23,6 +23,8 @@ This directory is the authoritative documentation set for Pinpoint. The root
 | [`../docs/qa/QA_Test_Plan.md`](../docs/qa/QA_Test_Plan.md) and [`../docs/qa/QA_Paper_Test_Case_Tables.md`](../docs/qa/QA_Paper_Test_Case_Tables.md) | QA test cases, coverage model, methodology, and paper-ready tables grouped by ISO characteristic with a current-result ledger |
 
 Related QA scope and decisions: [`QA_Journeys_and_Scope.md`](../docs/qa/QA_Journeys_and_Scope.md).
+Preparing multiple ISO-scoped runs and coordinating case assignments:
+[`QA_Run_Queues.md`](../docs/qa/QA_Run_Queues.md).
 
 ## Document types
 

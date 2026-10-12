@@ -20,6 +20,10 @@ per case; where the journeys file and a spec disagree, the journeys file §0 ord
 
 ## 1. How to use this plan
 
+Before executing a new run, [prepare an ISO-scoped queue](QA_Run_Queues.md), review
+the exact pending case lists and owners, and wait for an explicit start naming one
+set. Prerequisites do not automatically expand that set's scope.
+
 1. Prepare the baseline **B0** (§4), or the Docker lab where a case says `DOCKER`.
 2. Run cases in ID order within a journey. Run cases tagged **destructive** last in
    their journey and restore state afterwards (each case says how).
@@ -113,7 +117,8 @@ complete this entry gate:
    use `scripts/playwright-lab`; its prerequisites are in
    [Playwright Setup](Playwright_Setup.md).
 
-Unless a retest is ready, use this default order.  It minimizes resets and
+Within the explicitly started queue set, prioritize a ready retest, then use this
+default order for its selected cases only. It minimizes resets and
 ensures later cases have their required discovered hosts and services:
 
 1. J1-01, J1-02, J1-03, J1-07 — installer/application baseline.
@@ -199,42 +204,49 @@ in `server/tests/plans/` are referenced as **Detail:** and are not copied (§8).
 
 #### J1-01 Installer steps complete on a clean snapshot
 `[RE]` · VM · agent
+- **Module:** Installer and Nagios Deployment
 - **Pre:** appliance exists and `scripts/vmlab status` shows snapshot `os-nagios-ready` with no staleness warning.
 - **Steps:** 1. `scripts/vmlab fresh`. 2. Read the final healthcheck summary.
 - **Expect:** 1. The command exits 0. 2. The healthcheck reports **0 failed** (60 passed on `main` after #45; a different pass count is recorded but is not a failure if failed is 0).
 
 #### J1-02 Services are wired as the installer says
 `[FS]` · VM · agent
+- **Module:** Installer and Nagios Deployment
 - **Pre:** J1-01 passed.
 - **Steps:** 1. On the appliance, list listeners (`ss -ltnp`) and unit states (`systemctl is-active nagios nginx apache2 pinpoint*`; use the unit names the healthcheck prints). 2. `curl -sI http://127.0.0.1:18080/` from the host.
 - **Expect:** 1. Nginx listens on port 80; Apache on `127.0.0.1:8081`; Gunicorn is running as the `pinpoint` user; Nagios is active. 2. The host gets an HTTP response from the web app, not the Nagios UI.
 
 #### J1-03 Sign in succeeds and fails correctly
 `[SE]` · VM · agent
+- **Module:** Authentication
 - **Pre:** B0; bootstrap first-login setup (J1-07) is complete. Use the updated administrator email and password. A fresh bootstrap login must complete setup, not bypass it to reach the Dashboard.
 - **Steps:** 1. On `/login`, submit the administrator credentials. 2. Sign out and submit a wrong password. 3. Submit an unknown email.
 - **Expect:** 1. Redirect to the Dashboard. 2. and 3. The login is refused with an error message, no session cookie is set, and `GET /api/user/me` returns 401. The two refusals do not reveal which of email or password was wrong.
 
 #### J1-04 Passwords are stored hashed
 `[SE]` · VM · agent
+- **Module:** Authentication
 - **Pre:** B0.
 - **Steps:** On the appliance, read the administrator's `Hashed_Password` column from the application database (`DATABASE_URL` in `/etc/pinpoint/pinpoint.env`, else `server/system.db`) without printing it to the report.
 - **Expect:** The value is a Werkzeug hash with a scheme prefix (`scrypt:` by default; `pbkdf2:` on older Werkzeug) and does not equal the password. Record only "hashed" in the report.
 
 #### J1-05 Sign out asks for confirmation
 `[IC]` · VM · agent
+- **Module:** Authentication
 - **Pre:** signed in.
 - **Steps:** Press Sign out; cancel; press it again and confirm.
 - **Expect:** Cancel keeps the session. Confirm ends it and the next protected URL redirects to `/login`.
 
 #### J1-06 Installer ISO path, generated credentials and cleanup
 `[FS]` · MANUAL · HUMAN
+- **Module:** Installer and Nagios Deployment
 - **Pre:** `PinPoint-Installer-v1.1.iso` (or the release candidate) and a blank VM.
 - **Steps:** Boot the ISO; answer the interactive Ubuntu prompts; let first boot finish; read the generated web credentials (shown once); confirm they were recorded; reopen the credentials script.
 - **Expect:** The credentials are `admin-xxxxx@pinpoint.lan` plus a password; after confirmation they are removed and the credentials script says so and does nothing; the web UI is reachable at the VM's address and the healthcheck passes. A failed install can be rerun.
 
 #### J1-07 Change administrator email and password after first login (#61, merged)
 `[SE]` · VM · agent
+- **Module:** Authentication / First-login Setup
 - **Pre:** owner-approved fresh appliance from `scripts/vmlab fresh`; do not run `setup-admin` before checking the setup window. Never print the generated login.
 - **Steps:** Sign in with the state-folder bootstrap credentials; try a protected page and `GET /api/user/accounts`; submit a reserved-domain email and then a valid non-reserved email with a different policy-compliant password through the setup window. Inspect `/api/user/me` and the sanitized config-apply result. For negative paths run `server/.venv/bin/python -m pytest -c server/pytest.ini server/tests/unit/test_admin_setup.py` from the repository root.
 - **Expect:** Setup cannot be skipped; protected API returns 403 before completion. Reserved domains and invalid passwords are rejected. Successful setup clears `needs_setup` and `must_change_password`, unlocks access and rebuilds the contact with the new email. Failed Nagios apply reports a warning without undoing the account change. Later-created administrators do not receive this bootstrap gate. No deliverability assertion. Record browser, API and MOCK results separately.
@@ -245,66 +257,77 @@ in `server/tests/plans/` are referenced as **Detail:** and are not copied (§8).
 
 #### J2-01 First scan finds every target
 `[FS]` · VM · agent
+- **Module:** Network Discovery
 - **Pre:** `scripts/vmlab fresh`, `setup-admin`; no discovery run yet; targets up.
 - **Steps:** 1. `scripts/vmlab smoke` (it adds `10.77.0.0/28`, starts discovery and waits for hosts). 2. `GET /api/system/network-health/hosts`.
 - **Expect:** 1. Exit 0 (or a re-run passes; see §4.1). 2. Hosts with IPs 10.77.0.2 to .6 are listed with state UP. The list also holds the Nagios server's own `localhost`, so judge the targets by address, not by a total count. Hosts are named `dev-xxxxxx`: web01 is .2, web02 .3, app01 .4, snmp01 .5, legacy01 .6. The appliance's lab address (10.77.0.1) is not one of the five.
 
 #### J2-02 Scan progress and terminal status
 `[RE]` · VM · agent (UI)
+- **Module:** Network Discovery
 - **Pre:** B0.
 - **Steps:** Press Rescan Network on the Dashboard; confirm the modal; poll `GET /api/system/discover/status` every 5 s until it stops changing.
 - **Expect:** The UI shows "Scanning in progress" and then "Rescan successful". The status moves from running to exactly one of Success, Failed, Interrupted. Progress is shown while running (X5).
 
 #### J2-03 Each host records its attributes
 `[FS]` · VM · agent
+- **Module:** Network Discovery / Device Inventory
 - **Pre:** J2-01.
 - **Steps:** Open the Device Inventory drawer for `web01` and `legacy01`; read `GET /api/system/hosts/<id>/ports`, `GET /api/system/hosts/<id>/identifiers` (IP, MAC) and `GET /api/system/report/hosts-by-os` (OS).
 - **Expect:** Hostname, IP, MAC and OS are present (no route read exposed a device type; record what the drawer shows). `web01` lists ports 22/tcp and 80/tcp and 443/tcp; `legacy01` lists SSH on 2222/tcp. Each port shows a state and a reason (Device Inventory §2, §4).
 
 #### J2-04 Services follow plugins, not just ports
 `[FS]` · VM · agent
+- **Module:** Network Discovery / Plugin Manager / Service Monitoring
 - **Pre:** J2-01 and no plugin enabled (clean install).
 - **Steps:** Read the services list (`GET /api/system/network-health/services`) before and after enabling `check_ssh` (J4-03).
 - **Expect:** Before: no `ssh-22` service on discovered hosts (only the host check). After: one SSH service per discovered host that has port 22 or the pinned SSH port.
 
 #### J2-05 Changed network is applied and reloaded; unchanged is not
 `[RE]` · VM · agent
+- **Module:** Network Discovery
 - **Pre:** J2-01 passed; identities have settled with one active device per target; TCP scan settings include 22 and 2222. Record the plugin state and existing port states first.
 - **Steps:** 1. Run a rescan with no change to the lab. 2. Run `scripts/vmlab targets ssh-port web02 2222`, wait one minute, rescan once. Inspect the port rows and System Logs > Network Discovery. 3. Restore with `scripts/vmlab targets ssh-port web02 22` even on failure; rescan only after the preceding scan is terminal and confirm the live listener and port observations are restored.
 - **Expect:** 1. "Host configuration unchanged; Nagios was not reloaded." 2. The newly found SSH port is recorded, but one missed scan does not remove the old port or force an SSH-port switch. An unchanged config is valid when no enabled plugin changes the generated services. The old port is preferred until its lifecycle excludes it: after 5 missed scans a Suggested port archives, while a Monitored port becomes Missing and retains its Nagios service. Judge reload versus no reload against an actual generated-config change, not the physical move alone (`Data_Model_and_Integrations.md`, port lifecycle; `port_lifecycle.py`, `age_unseen_port` and `device_ssh_port`). 3. The live SSH listener is back on 22. A separate five-scan lifecycle run is not implied by this one-rescan case. Mark `destructive`: always restore step 3.
 
 #### J2-06 Cancel a scan
 `[IC]` · VM · agent
+- **Module:** Network Discovery
 - **Pre:** B0.
 - **Steps:** Start a rescan; press Stop immediately.
 - **Expect:** The run ends as Interrupted and System Logs shows "Network discovery was cancelled". (The stop route checks `network.discovery` in code and seeds `system.discover`; see `Implementation_Status.md`. If the administrator gets 403, record it as the listed known gap, not a new defect.)
 
 #### J2-07 Pause and resume a device
 `[FS]` · VM · agent
+- **Module:** Device Inventory / Monitoring State
 - **Pre:** B0, user holds `system.hosts.edit`.
 - **Steps:** Pause `snmp01` from the drawer (confirm); read the Dashboard total and the Nagios `hosts.cfg`; resume (confirm).
 - **Expect:** While paused the device shows the Paused label and "last known status", is left out of Dashboard and Network Health counts and of the active alerts, and is removed from the generated Nagios config; after resume it counts again. A user-log entry exists for each action (Device Inventory §12.3, ACs 27, 30–34).
 
 #### J2-08 Identity stability and explicit conflicts after rescans
 `[RE]` · VM · agent
+- **Module:** Network Discovery / Device Identity / Device Inventory
 - **Pre:** J2-01; classify the baseline as clean/unique or inherited/conflicted. Record device IDs, current addresses, identity states, ownership and existing Needs Review items before testing. Verify discovery is restricted to `10.77.0.0/28` and no run is active.
 - **Steps:** Record Device Inventory and Needs Review state before the first scan, including device IDs, identity states, ownership/history and review-item IDs. Run two rescans sequentially, waiting for a terminal status before starting the next. After each scan, compare those records with the baseline. Use `GET /api/system/network-health/hosts` only as supporting monitoring evidence, not as the authoritative identity inventory. Verify that any conflict remains visible and that the affected device exposes the documented Merge/Retire resolution path. Do not execute Merge/Retire or delete records during this stability test.
 - **Expect:** On a clean, unique-identity baseline, rescans preserve identity without unexplained new records. On an inherited conflict baseline, #86 / merged PR #89 makes retained multiple records or Address Unknown state acceptable when the corresponding Needs Review item, preserved ownership/history, and Merge/Retire path are present. A duplicate count alone is not a failure. Fail only for unexplained new identities, silent reassignment, lost ownership/history, missing conflict visibility, or missing resolution controls. Do not claim clean-baseline uniqueness from a conflicted fixture. Merge/Retire execution is a separate operator-resolution case.
 
 #### J2-09 Discovery settings apply to the next scan
 `[FS]` · VM · agent
+- **Module:** Settings / Network Discovery
 - **Pre:** B0, `settings.discovery`.
 - **Steps:** In Settings > Network Discovery narrow TCP ports to `1-1024`, rescan, then add `8080`; save; rescan. (8080 is already inside the default range 1-10000, so adding it alone proves nothing.)
 - **Expect:** A Configuration Change entry records the edit; `app01` (HTTP on 8080) shows a 8080/tcp port after the rescan. Restore the ports afterwards. Retest of closed #66: the original dry run failed; the port portion passed in [2026-10-10 issue-66](../test-runs/2026-10-10-issue-66/REPORT.md). A fresh port timestamp on an already-existing row proves refresh, not first insertion; record that limitation as Partial rather than claiming the full case passed.
 
 #### J2-10 Maintenance Mode suppresses scheduled scans
 `[RE]` · MOCK · agent
+- **Module:** Settings / Scheduled Automation
 - **Pre:** none.
 - **Steps:** `scripts/verify.sh backend`; read `server/tests/unit/test_automation.py` for the maintenance case. On the lab, turn Maintenance Mode on in Settings > System.
 - **Expect:** The unit test for maintenance passes. The UI shows the maintenance banner while the setting is on; turn it off afterwards. (Waiting for a 6-hour scheduled scan is not part of the loop.)
 
 #### J2-11 Removing a discovery network preserves device ownership (#67)
 `[RE]` · MOCK · agent
+- **Module:** Network Discovery / Device Identity
 - **Pre:** isolated backend test environment. The multi-network fixture is not permission to scan outside `10.77.0.0/28` on the VM lab.
 - **Steps:** Run `server/.venv/bin/python -m pytest -c server/pytest.ini server/tests/unit/test_device_identity.py -k 'removed_network_device_not_reassigned or devices_on_networks_that_were_not_scanned'` from the repository root.
 - **Expect:** Both regressions pass. A device from the removed network is not reassigned to a known host in a scanned network; devices in unscanned networks retain their ownership. See Device Inventory AC35. Any live follow-up needs a separately approved fixture and sanitized report; the earlier VM evidence is in `docs/test-runs/2026-10-10-issue-67-retest/REPORT.md`.
@@ -317,60 +340,70 @@ in `server/tests/plans/` are referenced as **Detail:** and are not copied (§8).
 
 #### J3-01 Eligibility and selection
 `[FS]` · VM · agent (UI)
+- **Module:** NCPA Deployment
 - **Pre:** B0, `system.deploy.ncpa`.
 - **Steps:** Open NCPA Deployment; read `GET /api/system/deployment/ncpa/devices`; try to select a device that is not eligible.
 - **Expect:** Ubuntu targets are eligible and selectable. A device that is not eligible shows Incompatible or Excluded and cannot be selected. The lab has only Ubuntu targets, so exercise the Incompatible path in `MOCK` with `server/tests/unit/` NCPA eligibility tests and record which test names passed.
 
 #### J3-02 Deploy to two targets
 `[FS]` · VM · agent
+- **Module:** NCPA Deployment
 - **Pre:** B0; `scripts/vmlab targets creds` for the login.
 - **Steps:** In the wizard select `web01` and `legacy01`, verify and approve each host key, enter the device login, confirm. Or drive the same API with `scripts/vmlab ncpa`.
 - **Expect:** The run ends Success; each device goes Pending NCPA then Deployed NCPA; `legacy01` deploys over its SSH port 2222.
 
 #### J3-03 The SSH password is not persisted
 `[SE]` · VM · agent
+- **Module:** NCPA Deployment / SSH Credentials
 - **Pre:** J3-02.
 - **Steps:** Inspect the deployment run and trusted-device records (`GET /api/system/deployment/ncpa/runs/<id>`, `/devices/trusted`) and the application database.
 - **Expect:** Only port, key-installed flag and key fingerprint are stored; no password appears in any response or table. Report "not persisted" without printing values.
 
 #### J3-04 Host key must be approved
 `[SE]` · VM · agent
+- **Module:** NCPA Deployment / SSH Trust
 - **Pre:** B0.
 - **Steps:** Start the wizard for a device and try to continue without approving its fingerprint; where the API allows, call `check-credentials` before `confirm-trust`.
 - **Expect:** The wizard blocks until the fingerprint is approved; the API refuses an unapproved key.
 
 #### J3-05 The NCPA services are OK
 `[RE]` · VM · agent
+- **Module:** NCPA Monitoring / Service Monitoring
 - **Pre:** J3-02; `check_ncpa` (listed as `check_ncpa.py`) enabled in Plugin Manager (J4); wait for one Nagios check cycle.
 - **Steps:** Read the NCPA services from `GET /api/system/network-health/services` or Nagios `status.dat`.
 - **Expect:** Three NCPA services per deployed host (CPU, root disk, memory in the 2026-10-08 run; the paper also lists running processes, p.10, which that run did not show), each with real output, normally OK (a WARNING is a genuine threshold hit, for example memory near 50 %); none CRITICAL with exit code 127. If 127 appears, the installer fix for #45 is missing: reopen #45.
 
 #### J3-06 Deployment is logged
 `[SE]` · VM · agent
+- **Module:** NCPA Deployment / System Logs
 - **Pre:** J3-02.
 - **Steps:** Read System Logs > NCPA Deployment.
 - **Expect:** An entry per run with who started it, time, and the outcome (for example "Deployment completed with 1 failure(s)" for a partial run).
 
 #### J3-07 One bad device fails only that device
 `[RE]` · VM · agent
+- **Module:** NCPA Deployment
 - **Pre:** B0, `web02` not yet deployed.
 - **Steps:** Deploy to `web02` and `app01` with a deliberately wrong login for `web02` only (use a throwaway wrong value; never log it).
 - **Expect:** The run ends Partial Failure; `web02` is Deployment Failed with a readable reason; `app01` is Deployed NCPA. Then redeploy `web02` correctly or revert it.
 
 #### J3-08 Cancel a deployment
 `[RE]` · VM · agent
+- **Module:** NCPA Deployment
 - **Pre:** B0.
 - **Steps:** Start a deployment and press Stop.
 - **Expect:** The run ends Interrupted; devices not yet reached stay Pending NCPA or return to their previous state; the log records the interruption.
 
 #### J3-09 One record per host after deployment
 `[RE]` · VM · agent
+- **Module:** NCPA Deployment / Device Identity / Device Inventory
 - **Pre:** J3-02, J2-08.
 - **Steps:** Record the target's device ID, identity state, ownership/history and Needs Review items before deployment. Deploy NCPA, then compare the same fields and verify the Device Inventory conflict exposes the documented Merge/Retire resolution path. Do not resolve or delete the record during this case.
 - **Expect:** On a clean baseline, deployment preserves identity without unexplained new records. On a pre-existing conflict baseline, retained multiple records or Address Unknown state is acceptable under #86 / PR #89 when the conflict item, ownership/history and Merge/Retire path remain present. A row count alone is not a pass/fail criterion; fail only for newly introduced unexplained identities, silent reassignment, lost history or missing review/resolution controls.
 
 #### J3-10 Identity regressions on an isolated fixture
 `[RE]` · MOCK · agent
+- **Module:** Network Discovery / Device Identity
 - **Pre:** backend test environment installed; no lab or live Nagios required.
 - **Steps:** From the repository root run `server/.venv/bin/python -m pytest -c server/pytest.ini server/tests/unit/test_device_identity.py -k 'address_unknown_host_reactivates or a_rescan_at_the_same_address or known_clone_key_hosts_keep_new_tcp_ports'`.
 - **Expect:** All selected regressions pass: repeat discovery preserves identity and known cloned-key targets retain newly discovered ports. This is isolated regression evidence for #59/#66, not proof that the live #86 finding is fixed.
@@ -381,48 +414,56 @@ in `server/tests/plans/` are referenced as **Detail:** and are not copied (§8).
 
 #### J4-01 Plugin inventory is consistent and reads 65
 `[FS]` · VM · agent
+- **Module:** Plugin Manager
 - **Pre:** B0, `plugin.view`.
 - **Steps:** Open Plugins; read the Installed tile, the All Plugins table row count and `GET /api/plugin/summary`.
 - **Expect:** All three agree and read **65** on an installer-built appliance (journeys D-4). A different number: record it, file one `needs-decision`, and judge only that the three agree.
 
 #### J4-02 Scan for Plugins refreshes the inventory
 `[FS]` · VM · agent
+- **Module:** Plugin Manager
 - **Pre:** J4-01.
 - **Steps:** Press Scan for Plugins; poll `GET /api/plugin/scan/status`.
 - **Expect:** The scan reaches a terminal status; the tiles (Installed, Active Capabilities, Custom, Updates Available, Validation Issues) equal the counts in the tables; Installed still reads 65.
 
 #### J4-03 Enable a port-driven plugin
 `[FS]` · VM · agent
+- **Module:** Plugin Manager / Service Monitoring
 - **Pre:** J2-01; `plugin.enable`.
 - **Steps:** Open `check_ssh`; read the enable preview (`GET /api/plugin/<id>/enable-preview`); enable it; repeat for `check_http`.
 - **Expect:** The preview names the services and devices; after enabling, exactly those services exist (Currently Running lists device, IP, service and running-since); Nagios loads the config (no reload error) and the services leave Pending within two check cycles.
 
 #### J4-04 Enabled services report real status
 `[RE]` · VM · agent
+- **Module:** Plugin Manager / Service Monitoring
 - **Pre:** J4-03.
 - **Steps:** Read the service states from `GET /api/system/network-health/services`.
 - **Expect:** `ssh` services on the five targets (`legacy01` on port 2222) are OK with plugin output text; `http` services are OK on `web01` and `web02` (port 80). `app01` serves HTTP on 8080: record whether the enable preview attached a service to it, and judge that service OK only if it did. The Nagios server's own `localhost` services are unaffected.
 
 #### J4-05 Plugin actions are logged
 `[SE]` · VM · agent
+- **Module:** Plugin Manager / System Logs
 - **Pre:** J4-03.
 - **Steps:** Read the Activity Log.
 - **Expect:** Entries for `plugin.enable` (and `plugin.validate` if a validation was run) with user and time. No `plugin.configure` entry is expected.
 
 #### J4-06 Disable removes the services; enable restores them
 `[FS]` · VM · agent · destructive
+- **Module:** Plugin Manager / Service Monitoring
 - **Pre:** J4-03; `plugin.disable`.
 - **Steps:** Disable `check_http`; read the services; enable it again.
 - **Expect:** Disabled: no `http` services and no `http` alerts. Enabled again: the same services come back.
 
 #### J4-07 A plugin with no port cannot be enabled
 `[FS]` · VM · agent
+- **Module:** Plugin Manager
 - **Pre:** J4-01.
 - **Steps:** Open `check_ping` or `check_load` and try to enable it.
 - **Expect:** The UI shows "Not service-driven" and no enable action. **Not a defect** (`Implementation_Status.md` "Plugins with no port").
 
 #### J4-08 Validation Issues tile matches the table
 `[FS]` · MOCK · agent
+- **Module:** Plugin Manager
 - **Pre:** none.
 - **Steps:** Run the plugin validation unit tests (`scripts/verify.sh backend`; `server/tests/unit/` plugin validator tests).
 - **Expect:** The validator tests pass. On the lab, the Validation Issues tile equals the number of plugins marked as having validation issues. (There is no UI to create an invalid plugin, because custom upload is disabled.)
@@ -433,66 +474,77 @@ in `server/tests/plans/` are referenced as **Detail:** and are not copied (§8).
 
 #### J5-01 A host going down raises an alert
 `[RE]` · VM · agent · destructive
+- **Module:** Alerts and Notifications
 - **Pre:** B0. Record the active alerts first (`GET /api/system/dashboard/alerts?limit=100`).
 - **Steps:** `scripts/vmlab targets break web01 host`; poll the alerts every 15 s for up to the check interval times retries plus 2 minutes.
 - **Expect:** A new alert for 10.77.0.2's host appears, state DOWN or CRITICAL. Record the elapsed time from the break command to the alert as the **detection delay** (reported, not judged; journeys D-9). Always run `scripts/vmlab targets fix web01 host` at the end.
 
 #### J5-02 Counts rise by the same amount everywhere
 `[FS]` · VM · agent · destructive
+- **Module:** Dashboard / Device Inventory / Network Health / System Status
 - **Pre:** J5-01 while web01 is down.
 - **Steps:** Read the Dashboard summary, Device Inventory totals, Network Health summary and the System Status counts.
 - **Expect:** Hosts down rise by one on every page; Dashboard Active Alerts rises by the number of hosts plus services newly not OK/UP (X3).
 
 #### J5-03 In-app notification appears
 `[FS]` · VM · agent · destructive
+- **Module:** In-app Notifications
 - **Pre:** J5-01 while web01 is down; `system.notifications`.
 - **Steps:** `GET /api/system/notifications/unread-count` before and after; open the bell.
 - **Expect:** The unread count increases and the bell lists an entry for the host.
 
 #### J5-04 Alert and notification appear in History
 `[FS]` · VM · agent · destructive
+- **Module:** Alerts and Notifications History
 - **Pre:** J5-01.
 - **Steps:** `GET /api/system/history/alerts` and `/history/notifications`; open History in the UI.
 - **Expect:** The state change to DOWN is in Alerts History with timestamp and state; a matching event is in Notifications History when Nagios recorded one. If Notifications History has none, record that observation and do not file it unless `Alerts_Notifications_History_Requirements.md` §4 requires one for this event.
 
 #### J5-05 A stopped service raises a service alert
 `[RE]` · VM · agent · destructive
+- **Module:** Alerts and Notifications
 - **Pre:** F-ENABLE (J4-03).
 - **Steps:** `scripts/vmlab targets break web01 http`; poll the alerts; then `scripts/vmlab targets fix web01 http`.
 - **Expect:** A CRITICAL `http` service alert for web01 appears within the check interval; it clears after the fix. Without F-ENABLE no service alert is expected (not a defect).
 
 #### J5-06 Recovery clears every page and is recorded
 `[RE]` · VM · agent · destructive
+- **Module:** Device Monitoring / Service Monitoring / Alerts and Notifications History
 - **Pre:** J5-01 or J5-05 followed by the fix command.
 - **Steps:** Wait for the state to recover; read all pages and History.
 - **Expect:** UP/OK everywhere (X3 holds again); Alerts History shows a recovery event with the recovery duration (`Alerts_Notifications_History_Requirements.md` §3.2).
 
 #### J5-07 High CPU raises an alert from NCPA thresholds
 `[RE]` · VM · agent · destructive
+- **Module:** NCPA Monitoring / Alerts
 - **Pre:** F-NCPA and J3-05.
 - **Steps:** `scripts/vmlab targets load web01 --seconds 90`; poll the CPU service state for 5 minutes.
 - **Expect:** The NCPA CPU service moves to WARNING or CRITICAL while load is high and returns to OK afterwards. (Skipped in earlier runs; first lab run of this case.)
 
 #### J5-08 SMTP settings and test-email response
 `[FS]` · MOCK · agent
+- **Module:** Settings / Email Notifications
 - **Pre:** isolated backend environment; SMTP transport and installer helper mocked. Installer owns mail provisioning; this repository owns Settings > Email, `/api/system/smtp-settings`, and the test-email action.
 - **Steps:** Run `server/.venv/bin/python -m pytest -c server/pytest.ini server/tests/unit/test_smtp_settings.py` from the repository root.
 - **Expect:** Tests pass for permission enforcement, Gmail-only `smtp.gmail.com`/587/STARTTLS, optimistic-version conflict (409), helper failure without saving, password secrecy and preservation of an existing password on blank input. A successful send returns `ok:true`; a failed send can be HTTP 200 with `ok:false`, a useful error code and explanation. HTTP 200 alone is not send success. No three-second email-delivery threshold is specified.
 
 #### J5-10 Email tab permissions and error presentation
 `[IC]` · VM · agent (UI)
+- **Module:** Settings / Email Notifications / Permissions
 - **Pre:** an existing configured lab, administrator with `settings.email`, and a second user without it; do not provision a real mail account for this case.
 - **Steps:** Open Settings as each user. As the permitted user inspect the locked Gmail preset, blank password field and saved/not-saved indicator. As the restricted user call `GET /api/system/smtp-settings`. If no SMTP settings exist, press Send test email and inspect the error; otherwise leave live sending to J5-11. Do not overwrite existing SMTP secrets.
 - **Expect:** Email tab is available only with `settings.email`; restricted API request returns 403. Saved passwords are never displayed. An unconfigured test action reports that settings must be saved. Record which branch was exercised; configured send/error branches are covered by J5-08 MOCK or J5-11 HUMAN, not inferred from this read-only UI check.
 
 #### J5-11 Real email delivery
 `[FS]` · VM · HUMAN
+- **Module:** Settings / Email Notifications
 - **Pre:** owner-provisioned mail transport and owner-controlled sender/recipient accounts, authorization to send a test message; no credentials in evidence.
 - **Steps:** A person saves the Gmail settings through Settings > Email, checks saved-state feedback, sends one test email and confirms arrival in the signed-in recipient's inbox. Record the result without message contents or addresses. Retain or restore settings as agreed with the owner.
 - **Expect:** Save succeeds and the app reports successful sending; the intended inbox receives the message. Transport/provisioning failures go to the installer owner as sanitized notes, not application defects unless the in-repo contract fails. No delivery-time threshold asserted.
 
 #### J5-09 Alert path for a Staff user without acknowledge permission
 `[SE]` · MOCK · agent
+- **Module:** Alert Acknowledgement / Permissions
 - **Pre:** none.
 - **Steps:** Run the permission unit tests (`scripts/verify.sh backend`).
 - **Expect:** `POST /api/system/dashboard/alerts/acknowledge` without `system.acknowledge_alerts` returns 403 in the tests.
@@ -503,30 +555,35 @@ in `server/tests/plans/` are referenced as **Detail:** and are not copied (§8).
 
 #### J6-01 Acknowledge a DOWN or CRITICAL row
 `[FS]` · VM · agent · destructive
+- **Module:** Alert Acknowledgement
 - **Pre:** an active alert (J5-01 or J5-05).
 - **Steps:** In Device Inventory or System Status press Acknowledge; confirm.
 - **Expect:** The row shows "By <user>" and the action becomes Unacknowledge; `GET /api/system/dashboard/alerts?ack_filter=acknowledged` lists it. (API passed 2026-10-08; this case adds the browser.)
 
 #### J6-02 Unacknowledge
 `[FS]` · VM · agent · destructive
+- **Module:** Alert Acknowledgement
 - **Pre:** J6-01.
 - **Steps:** Press Unacknowledge.
 - **Expect:** The acknowledgement is cleared on every page.
 
 #### J6-03 The acknowledgement appears in History
 `[FS]` · VM · agent
+- **Module:** Alert Acknowledgement / Alerts History
 - **Pre:** J6-01 and J6-02 done.
 - **Steps:** Open History.
 - **Expect:** The acknowledge and unacknowledge actions appear with the acting user and time (Alerts History row detail: acknowledging user). A missing or wrong entry is a finding: the page is unaudited.
 
 #### J6-04 Automatic resolution on recovery
 `[FS]` · VM · agent
+- **Module:** Alert Acknowledgement / Alerts History
 - **Pre:** an acknowledged alert whose target is then fixed.
 - **Steps:** Fix the target; wait for UP/OK; read the active acknowledgement and History.
 - **Expect (per spec):** the active acknowledgement is removed and an AUTO_RESOLVED record is appended. **Known gap:** not implemented. Record `Skipped (known gap: Implementation_Status "Auto-resolved acknowledgements")`.
 
 #### J6-05 No acknowledge without permission
 `[SE]` · VM · agent
+- **Module:** Alert Acknowledgement / Permissions
 - **Pre:** F-USERS with `qa-view` (dashboard only).
 - **Steps:** Sign in as `qa-viewer`; look for the Acknowledge action; call the acknowledge route.
 - **Expect:** No Acknowledge action is shown; the API returns 403.
@@ -537,54 +594,63 @@ in `server/tests/plans/` are referenced as **Detail:** and are not copied (§8).
 
 #### J7-01 Dashboard content
 `[FS]` · VM · agent
+- **Module:** Dashboard
 - **Pre:** B0 and F-ENABLE.
 - **Steps:** Open the Dashboard; read `GET /api/system/dashboard/status` and `/summary`.
 - **Expect:** Total hosts is 6 (the five targets plus the Nagios server's `localhost`; the smoke script expects the same); latency, warnings, critical issues, the up/down chart, the performance chart and the Nagios status panel render with values from the API and no error banner.
 
 #### J7-02 Network Health content and time ranges
 `[FS]` · VM · agent
+- **Module:** Network Health
 - **Pre:** B0.
 - **Steps:** Open Network Health; switch the time range for the latency, packet-loss and bandwidth views; read `GET /api/system/network-health/summary` and `/trends`.
 - **Expect:** Online/offline devices, host availability and resource averages render; each view redraws for each range without error; averages are shown only with at least two data points.
 
 #### J7-03 NCPA hosts show resources; ping-only hosts do not
 `[FS]` · VM · agent
+- **Module:** Device Inventory / NCPA Monitoring
 - **Pre:** F-NCPA.
 - **Steps:** Open the host detail of `web01` (NCPA) and `snmp01` (no NCPA).
 - **Expect:** `web01` shows CPU, memory and disk values; `snmp01` shows availability and latency only (and SNMP services if enabled).
 
 #### J7-04 Refresh behavior
 `[IC]` · VM · agent
+- **Module:** Dashboard / Settings
 - **Pre:** B0.
 - **Steps:** Read the Dashboard refresh rate in Settings > General (default 5 min), the system Check interval in Settings > System, and the General tab's refresh hint; press manual refresh and measure render time.
 - **Expect:** Browser refresh defaults to 5 minutes and is per user. The hint names the configured Nagios check interval and independent 60-second poll. Manual refresh fetches data, not a discovery scan or forced Nagios check. The 3-second budget is judged separately in PT-03.
 
 #### J7-05 Network card and "Not configured" tiles
 `[IC]` · VM · agent
+- **Module:** Network Health / Plugin Settings
 - **Pre:** B0.
 - **Steps:** Read the Network Health network card and the Bandwidth and Avg Response Time tiles; in Settings > Plugins > NCPA Metrics add a bandwidth row.
 - **Expect:** The card renders its fields (IP range, gateway, subnet mask, DNS server, ISP, location, Last Scan) without error; the tiles read "Not configured" until set up, then show data once the row exists and NCPA reports it. Remove the row afterwards.
 
 #### J7-06 System Status
 `[FS]` · VM · agent
+- **Module:** System Status
 - **Pre:** F-ENABLE.
 - **Steps:** Open `/topology` ("System Status"); filter by state, search by service name, sort, page.
 - **Expect:** The OK / Warning / Unknown / Critical cards add up to the total; filters, search and sort change the rows; acknowledgement works on a non-OK row. The route name is not a defect (B9).
 
 #### J7-07 Device Inventory table and drawer
 `[FS]` · VM · agent
+- **Module:** Device Inventory
 - **Pre:** B0.
 - **Steps:** Open Device Inventory; use search and filters; open a drawer.
 - **Expect:** Host table with IP, state, Monitoring chip, filter opening on Monitored; summary cards count monitored hosts only; the drawer shows host state, services and the Ports section. Check acceptance criteria 1–5 and 33 of `Device_Inventory_Requirements.md`.
 
 #### J7-08 Ports section actions
 `[FS]` · VM · agent
+- **Module:** Device Inventory / Port Monitoring
 - **Pre:** J7-07, `system.hosts.edit`.
 - **Steps:** On `app01` use Monitor, Ignore, Leave suggested, Set service and Remove pin on an HTTP-8080 port, confirming where asked; then repeat read-only as a user without `system.hosts.edit`.
 - **Expect:** Each action behaves as `Device_Inventory_Requirements.md` §5–§6 and criteria 6–23 describe; a view-only user sees no action and the view-only note.
 
 #### J7-09 Check interval validation, apply and rollback (#60)
 `[FS]` · MOCK · agent
+- **Module:** Settings / Nagios Configuration / Status Polling
 - **Pre:** isolated backend test environment; generated configurations and Nagios writer mocked.
 - **Steps:** Run `server/.venv/bin/python -m pytest -c server/pytest.ini server/tests/unit/test_settings_permissions.py server/tests/unit/test_create_host_cfg.py server/tests/unit/test_status.py server/tests/unit/test_plugin_services_api.py` from the repository root.
 - **Expect:** Tests pass: interval defaults to 5 minutes, accepts 1/2/5/10/15 only, needs `settings.system`, generates host/service intervals through the shared writer, and rolls back settings/version on failed validation or reload. Re-polling the same `Last_Check` adds no duplicate host/service history or performance row. A new check is not suppressed merely because state/output is unchanged. Plugin waiting/stale text follows the configured interval. Live cadence is a separate VM observation, not inferred from MOCK.
@@ -593,42 +659,49 @@ in `server/tests/plans/` are referenced as **Detail:** and are not copied (§8).
 
 #### J8-01 Host Availability report
 `[FS]` · VM · agent
+- **Module:** Reports and Export
 - **Pre:** B0 with several minutes of history.
 - **Steps:** Report > Host Availability, Last 24 hours, Run Report; `GET /api/system/report/availability`.
 - **Expect:** One row per monitored host with state, uptime %, snapshots, last check and last state change; uptime values are 0 to 100; the host total equals Device Inventory (X3).
 
 #### J8-02 Network Services report
 `[FS]` · VM · agent
+- **Module:** Reports and Export
 - **Pre:** F-ENABLE.
 - **Steps:** Report > Network Services, Run Report.
 - **Expect:** One row per service name with an aggregate of OK/Warning/Critical across hosts; totals match the System Status counts.
 
 #### J8-03 CSV export
 `[FS]` · VM · agent
+- **Module:** Reports and Export
 - **Pre:** J8-01.
 - **Steps:** Export as CSV.
 - **Expect:** A downloaded `.csv` with a header row and as many data rows as the table shows; it opens as text.
 
 #### J8-04 Excel export
 `[FS]` · VM · agent
+- **Module:** Reports and Export
 - **Pre:** J8-01.
 - **Steps:** Export as Excel.
 - **Expect:** A `.xls` file (an HTML table, per `exportData.ts`) with the same rows; Excel opening it is a `HUMAN` check recorded in the notes. Do not require a binary `.xls`.
 
 #### J8-05 PDF export is a print view
 `[IC]` · VM · HUMAN
+- **Module:** Reports and Export
 - **Pre:** J8-01.
 - **Steps:** Export as PDF; use the browser's Save as PDF.
 - **Expect:** A print-formatted window opens with the same rows; the saved PDF is readable. A person judges layout.
 
 #### J8-06 Exports are logged
 `[SE]` · VM · agent
+- **Module:** Reports and Export / System Logs
 - **Pre:** J8-03 to J8-05 done.
 - **Steps:** Read System Logs > Export Log (`GET /api/system/exportlog`).
 - **Expect:** One entry per export: who, report type, format, start, end, time (X2).
 
 #### J8-07 Empty period
 `[IC]` · VM · agent
+- **Module:** Reports and Export
 - **Pre:** B0.
 - **Steps:** Run the report for a period with no data (a custom range before the install).
 - **Expect:** An empty state, not an error and not a blank page.
@@ -637,72 +710,84 @@ in `server/tests/plans/` are referenced as **Detail:** and are not copied (§8).
 
 #### J9-01 Create a role with chosen permissions
 `[FS]` · VM · agent
+- **Module:** Role Management
 - **Pre:** B0.
 - **Steps:** Manage Roles > add role `qa-view` with `system.dashboard` only.
 - **Expect:** The role appears Active with exactly that permission; the Activity Log records the creation.
 
 #### J9-02 Create a user with that role
 `[FS]` · VM · agent
+- **Module:** Account Management
 - **Pre:** J9-01.
 - **Steps:** Manage Accounts > add `qa-viewer@example.test`, role `qa-view`, Active.
 - **Expect:** The user appears Active with the role; Activity Log records "Created account for qa-viewer@example.test".
 
 #### J9-03 Seeded role matrix
 `[SE]` · MOCK · agent
+- **Module:** Role Management / Permissions
 - **Pre:** none.
 - **Steps:** Read `server/app/api/commands/seed.py`; on the lab, `GET /api/user/roles` and `/api/user/roles/<id>` for each seeded role.
 - **Expect:** Administrator holds all 36 seeded permissions; Manager and Staff hold none (journeys D-8). A new Manager or Staff user can open only Settings (General).
 
 #### J9-04 Enforcement in the UI and the API
 `[SE]` · VM · agent
+- **Module:** Authentication / Permissions
 - **Pre:** J9-02.
 - **Steps:** Sign in as `qa-viewer`; open each sidebar page by URL; call one route per permission area (for example `GET /api/system/log`, `/api/system/report/availability`, `/api/user/accounts`, `POST /api/system/discover/start`).
 - **Expect:** Only the Dashboard (and Settings) opens; other URLs redirect away; the API returns 403 for each route outside `system.dashboard`.
 
 #### J9-05 Inactive and suspended users cannot sign in
 `[SE]` · VM · agent
+- **Module:** Account Management / Authentication
 - **Pre:** J9-02.
 - **Steps:** Set the user Inactive, then Suspended; try to sign in each time; set Active again.
 - **Expect:** Sign-in is refused for both states; works when Active.
 
 #### J9-06 Editing signs the user out
 `[IC]` · VM · agent
+- **Module:** Account Management
 - **Pre:** J9-02, the user signed in in a second browser session.
 - **Steps:** Edit the user (change the role) and save.
 - **Expect:** The edit dialog warns the user will be signed out; the second session is signed out on its next request. (The warning wording came from an older screenshot; judge the behavior.)
 
 #### J9-07 Password reset stores a new hash and forces a change
 `[SE]` · VM · agent
+- **Module:** Account Management / Password Recovery
 - **Pre:** J9-02.
 - **Steps:** An administrator resets the user's password; sign in as the user.
 - **Expect:** The old password no longer works; the new one signs in and the user is forced to change it (`Must_Change_Password`); the stored value is a different hash. The creation checkbox defaults to checked; unchecking opts out only at creation, not after an administrator reset (J9-12).
 
 #### J9-08 Account list filters and export
 `[IC]` · VM · agent
+- **Module:** Account Management
 - **Pre:** J9-02.
 - **Steps:** Use the Active, Inactive and Suspended filters; press Export.
 - **Expect:** Each filter shows only that status; Export downloads a file. Record the format and whether an Export Log entry appears (the paper does not say; SHOT p.147 only shows the button).
 
 #### J9-09 Settings scope
 `[FS]` · VM · agent
+- **Module:** Settings / User Preferences
 - **Pre:** two users, both able to open Settings.
 - **Steps:** User A changes theme and Dashboard refresh rate; administrator changes scan frequency; read both users' Settings.
 - **Expect:** Theme and refresh rate change only for user A; scan frequency changes for everyone, as the labels say.
 
 #### J9-10 Super administrator cannot be disabled (#72)
 `[SE]` · MOCK · agent
+- **Module:** Account Management
 - **Pre:** isolated backend test environment.
 - **Steps:** Run `server/.venv/bin/python -m pytest -c server/pytest.ini server/tests/unit/test_management.py -k 'super_admin_cannot_be_suspended_or_inactivated or other_accounts_can_still_be_suspended'`.
 - **Expect:** Both tests pass: changing the protected first account to Suspended/Inactive returns 400 and leaves it Active; another account can still be suspended. Do not attempt to disable the live lab administrator as a substitute for this fixture.
 
 #### J9-11 Email-alert opt-in and account permission (#80)
 `[SE]` · MOCK · agent
+- **Module:** Account Management / Email Notifications
 - **Pre:** isolated backend test environment with mocked Nagios writer; no email sent.
 - **Steps:** Run `server/.venv/bin/python -m pytest -c server/pytest.ini server/tests/unit/test_email_alerts.py`.
 - **Expect:** New and migrated users default to alerts on. Creation with alerts off and changing the flag require `account.alerts`; resending the unchanged value does not. Only Active opted-in users become contacts; contact-affecting account changes rebuild config. Non-boolean flags are rejected. Failed apply keeps the saved account change and returns config failure information; flag changes are audited. No per-host recipient requirement (#79 excluded).
 
 #### J9-12 First-sign-in password choice and administrator-assisted recovery
 `[SE]` · MOCK · agent
+- **Module:** Account Management / Authentication / Password Recovery
 - **Pre:** isolated backend test environment, no real mail account.
 - **Steps:** Run `server/.venv/bin/python -m pytest -c server/pytest.ini server/tests/unit/test_admin_setup.py server/tests/unit/test_password_requests.py`.
 - **Expect:** Account creation defaults to requiring a password change; explicit false opts out, but an administrator reset forces it again. Public forgot-password requests create at most one Pending request for an active account; unknown/inactive addresses receive the same response. Only authorized administrators list/resolve requests; resolution validates the new password and forces change at next sign-in. A handled request cannot be reused (409). This is administrator-assisted recovery, not an emailed self-service reset link.
@@ -711,42 +796,49 @@ in `server/tests/plans/` are referenced as **Detail:** and are not copied (§8).
 
 #### X1-01 The main path needs no shell and no `.cfg` edit
 `[IC]` · VM · agent
+- **Module:** Network Discovery / Plugin Manager / Alerts
 - **Pre:** B0 fresh.
 - **Steps:** Starting from a signed-in browser, complete discover (J2-02), enable `check_ssh` (J4-03) and see the alert (J5-01) using only the web UI for every user action. The agent may use the shell for fault injection and evidence only.
 - **Expect:** Every user action in the path was possible in the UI; no step required SSH to the appliance or editing a Nagios file.
 
 #### X2-01 State-changing actions are logged
 `[SE]` · VM · agent
+- **Module:** System Logs
 - **Pre:** the actions of J2-05, J3-02, J4-03, J8-03, J9-01, J9-02 performed.
 - **Steps:** Read System Logs: Activity, Configuration Change, Network Discovery, NCPA Deployment, Export.
 - **Expect:** Each action appears once in the category matching its type, with who, what and when.
 
 #### X3-01 Counts reconcile at rest
 `[FS]` · VM · agent
+- **Module:** Dashboard / Device Inventory / Network Health / Reports
 - **Pre:** B0, all five targets up, F-ENABLE.
 - **Steps:** Read hosts up/down from the Dashboard, Device Inventory, Network Health and the Host Availability report.
 - **Expect:** Identical hosts up and down on all four pages (six hosts up: the five targets and `localhost`). Dashboard Active Alerts equals the number of non-OK/UP hosts plus services.
 
 #### X3-02 Counts reconcile with one host down
 `[FS]` · VM · agent · destructive
+- **Module:** Dashboard / Device Inventory / Network Health / Reports
 - **Pre:** X3-01.
 - **Steps:** `scripts/vmlab targets break app01 host`; wait for the alert; read the same four pages; fix.
 - **Expect:** Hosts down is 1 on all four pages and hosts up is 5; Active Alerts rose by the same number on the Dashboard as the hosts and services that changed.
 
 #### X3-03 Availability sanity
 `[FS]` · VM · agent
+- **Module:** Network Health / Reports / Nagios Availability
 - **Pre:** X3-02 complete and at least 30 minutes of history.
 - **Steps:** Read availability for `app01` and an untouched host on Network Health and on Reports.
 - **Expect:** Nagios is the availability reference (journeys D-9, decided). Compare each page with Nagios for the same hosts, reporting window and calculation options; record the reference source and parameters. Values must agree at the displayed precision, and percentages must be between 0 and 100. Do not invent a Pinpoint-specific formula or require equality between pages using different windows. If matching Nagios reference data cannot be obtained, record the comparison as Blocked with the evidence gap, not Pass. For a fully observed window with no outage the untouched host should be at or near 100%; assess the interrupted host against Nagios rather than assuming an arbitrary percentage.
 
 #### X4-01 Unauthenticated access is refused
 `[SE]` · VM · agent
+- **Module:** Authentication / Page and API Access
 - **Pre:** B0, no session.
 - **Steps:** Request each browser route and each `/api` route in `Backend_Modules_and_Routes.md` without a cookie (read-only requests; do not send `POST` bodies that change data except `login`).
 - **Expect:** Protected pages redirect to `/login`; protected APIs return 401; only `/login` and `POST /api/user/login` are public.
 
 #### X5-01 Long operations end in a terminal status
 `[RE]` · VM · agent
+- **Module:** Network Discovery / NCPA Deployment / Reports
 - **Pre:** B0.
 - **Steps:** Observe a scan (J2-02), a deployment (J3-02) and a report run (J8-01).
 - **Expect:** Each shows progress or a running state and ends in exactly one of Success, Failed, Partial Failure or Interrupted (a report ends in data or an error message).
@@ -755,6 +847,7 @@ in `server/tests/plans/` are referenced as **Detail:** and are not copied (§8).
 
 #### PT-01 Initialisation ≤ 10 s
 `[PE]` · VM · agent
+- **Module:** Application Startup / Authentication / Dashboard
 - **Definition [INFER; the paper says only "System initialization ≤ 10 seconds", p.126]:** from starting the web service to the first successful authenticated response of `GET /api/system/dashboard/summary`.
 - **Pre:** B0.
 - **Steps:** On the appliance, restart the Pinpoint service (unit name from the healthcheck output); time until `GET /api/user/me` with a fresh session returns 200 and the dashboard summary returns data; repeat three times.
@@ -762,6 +855,7 @@ in `server/tests/plans/` are referenced as **Detail:** and are not copied (§8).
 
 #### PT-02 Availability check of 10 hosts ≤ 5 s
 `[PE]` · MOCK · agent
+- **Module:** Network Health / Reports
 - **Definition:** server time for the availability endpoints with 10 monitored hosts. The lab has 5 targets (journeys A10), so use a fixture with 10 hosts.
 - **Pre:** a scratch script using the Flask test client (`server/tests/support/` builders) that seeds 10 hosts with history rows.
 - **Steps:** Time `GET /api/system/network-health/availability` and `GET /api/system/report/availability` ten times each.
@@ -769,12 +863,14 @@ in `server/tests/plans/` are referenced as **Detail:** and are not copied (§8).
 
 #### PT-03 Dashboard refresh of 15 updates ≤ 3 s
 `[PE]` · VM · agent
+- **Module:** Dashboard
 - **Pre:** at least 15 hosts and services reporting. Count them from `GET /api/system/dashboard/summary`; if F-ENABLE and F-NCPA give fewer than 15, enable more port-driven plugins (J4-03) until the Dashboard lists 15.
 - **Steps:** In the browser press the Dashboard manual refresh; measure from click to the last Dashboard request finishing (Performance API or devtools network timings); repeat five times.
 - **Expect:** The median of five is ≤ 3 s.
 
 #### PT-04 Alert visible ≤ 3 s after the Nagios state change
 `[PE]` · VM · agent · destructive
+- **Module:** Alerts / In-app Notifications
 - **Definition (DECIDED, journeys D-9):** the clock starts at the Nagios `last_state_change` of the host or service; it stops when the alert appears in `GET /api/system/dashboard/alerts` (and the bell).
 - **Pre:** B0.
 - **Steps:** `scripts/vmlab targets break web02 host`; poll the Pinpoint alerts every second and Nagios `status.dat` for web02's `last_state_change`; stop when the alert appears; fix web02. Repeat twice.
@@ -782,6 +878,7 @@ in `server/tests/plans/` are referenced as **Detail:** and are not copied (§8).
 
 #### PT-05 Stability over a 4-hour soak
 `[RE]` · VM · agent
+- **Module:** Application Runtime / Nagios / Status Polling
 - **Definition:** the paper lists PT-05 as "Continuous" "System stability" with no threshold (p.126); the criteria below are the team's.
 - **Pre:** B0 with F-ENABLE and F-NCPA; no other VMs competing for RAM (the appliance has 4 GB, below the paper's 8 GB minimum; journeys D-6).
 - **Steps:** 1. Record the start time, appliance `uptime`, the Gunicorn and Nagios PIDs and free memory. 2. Every 5 minutes for 4 hours: `GET /api/user/me` (after login), `GET /api/system/dashboard/summary`, free memory, and the count of new log lines containing a traceback or HTTP 500 in the Gunicorn journal. 3. At the end repeat step 1.
@@ -789,6 +886,7 @@ in `server/tests/plans/` are referenced as **Detail:** and are not copied (§8).
 
 #### PT-06 Controlled status-history rows per object per hour (#82)
 `[PE]` · VM · agent
+- **Module:** Status Polling / History Storage
 - **Status:** pending the controlled run; not satisfied by the short [#60 VM comparison](../test-runs/2026-10-10-issue-60/REPORT.md).
 - **Pre:** owner-approved fresh/reverted appliance for each phase, one appliance at a time; equivalent target/plugin configuration and selected host/service set. Baseline is `27ebe46d0b3658820927740ccb9ebfd6f79a4613` (main immediately before PR #83); after is `a55ae595` or a recorded later main SHA. Use five-minute Nagios check intervals in both phases (baseline default); do not change baseline product code to add the later setting. Confirm actual generated intervals and `interval_length=60`. Finish discovery and first checks before starting; no pending selected objects.
 - **Steps:** With reset approval, use `scripts/vmlab fresh <pushed-baseline-branch>` for baseline and `scripts/vmlab fresh <pushed-after-branch>` for after; record the exact app SHA from each deployment. Complete setup and approved lab-only discovery before timing. On each appliance record a UTC start and end separated by at least 3600 seconds. Between boundaries make no config/discovery changes, reloads or restarts. Record selected hostnames and `(hostname, service)` pairs before the window, and separately record host and service counts. Run the read-only extraction below on each appliance with its actual history database path and boundaries. Retain extracts outside git; summarize rates and after/before ratios per matching object. If generated names differ across fresh builds, explicitly map them to the same target/service rather than comparing by name alone.
@@ -897,7 +995,7 @@ case here with a new ID and link it; do not renumber the appendix.
 
 ## 9. Maintenance and checks
 
-- **Adding a case:** give it the next free ID in its group, a single ISO tag, an environment and an executor, a precondition, steps and an **Expect** a machine can judge. Never reuse or renumber an ID.
+- **Adding a case:** give it the next free ID in its group, a single ISO tag, an environment and an executor, a **Module** naming the feature or subsystem under test (list all affected modules for cross-module cases), a precondition, steps and an **Expect** a machine can judge. Never reuse or renumber an ID.
 - **Coverage table (§3):** regenerate the case counts after any change with the command below; the table lists the IDs per tag.
 - **Drift:** `scripts/verify.sh docs` checks that relative links here resolve. A check that every traceability row cites an existing case ID is part of #63.
 

@@ -6,7 +6,45 @@ Read `AGENTS.md`, `docs/qa/QA_Journeys_and_Scope.md`, the master test plan
 `spec files/Agent_Workflow_and_CI.md`. This workflow finds and retests defects;
 it never fixes product code or weakens the case's expected result.
 
+## Prepare a queue before execution
+
+Every new QA run starts with preparation, not execution. Read
+[`QA_Run_Queues.md`](../../docs/qa/QA_Run_Queues.md). A user may queue multiple
+named sets in one request, each with one ISO characteristic (FS, PE, IC, RE, SE),
+an owner, and optionally a subset of case IDs. Select only `untested` and `retest`
+cases from the current plan and traceability matrix. Do not include passed cases
+or filed failures, silently broaden scope, or add prerequisite cases from another
+set or characteristic. Explicit IDs must also be pending and match the set's ISO.
+
+Use `python3 -I scripts/qa_queue.py prepare` with repeated `--set` arguments and
+a new `--output` filename. This saves a fixed JSON queue and a Markdown preview.
+Show the full case list for every set before starting: set name, ISO, owner, case
+ID, module, scenario, environment/executor, current status, prerequisites and
+existing notes. Point out HUMAN cases, destructive actions, missing prerequisites
+and shared-lab work. Queue preparation does not execute tests, provision/reset a
+lab, file issues, change traceability statuses, or claim cases or lab ownership.
+
+Wait for the user's explicit start command naming the queue and set. Displaying
+the preview, elapsed time, or preparing another set is not permission to start.
+After one set ends, wait for an explicit start for the next set; never automatically
+drain the queue. Sets assigned to a teammate are handoffs, not permission for this
+agent to execute them or message the teammate.
+
+Assignments must be disjoint within a queue; the tool rejects duplicate IDs and
+set names. Share the preview through the team's existing coordination channel
+and compare it with other testers' queues/progress before execution. A local
+queue cannot enforce reservations across separate checkouts or machines. Owners
+must separately agree on exclusive lab access; different ISO sets can mutate the
+same appliance. Isolated MOCK work may run independently when its prerequisites
+do not require the shared lab.
+
 ## Start or resume
+
+On an explicit start, run `python3 -I scripts/qa_queue.py check --queue <file>
+--run <set>` against current sources, then `show` the same set. If procedures,
+statuses or notes changed, prepare and show a replacement queue and wait for a
+new explicit start. Never silently substitute cases or include newly pending IDs.
+The check confirms scope freshness, not environment readiness or lab ownership.
 
 Use a dedicated checkout and an `issue-<n>-qa-run` branch for the tracking issue.
 Use `.agent/progress/issue-<n>.md` and the existing TEMPLATE and checkpoint script:
@@ -16,14 +54,23 @@ restoration steps, evidence location, issue links and next action. Resume by rea
 that file, checking git status and re-running the last safe check. Never rerun a
 mutating test without checking the current lab state first.
 
+Record the queue path, set name, owner and exact case IDs in the tracking issue
+and progress file. On resume keep that fixed scope: compare remaining cases with
+their saved procedures/status/notes, and use progress/report evidence for completed
+cases (their result changes are expected). Re-preview changed remaining scope and
+wait for an explicit start before continuing it. Preserve the five-round limit;
+larger sets remain queued/in progress across sessions. Record blocked prerequisites
+without adding their cases; request a separately prepared set if needed.
+
 Owner lab claims override earlier general approval. If another person owns the lab,
 do only isolated tests and document the live checks pending; do not connect to it.
 HUMAN cases remain untested until a person supplies attributable evidence.
 
 ## Each round (maximum five per session)
 
-1. Check merged-fix candidates as below, then select the next unclaimed `retest`
-   or `untested` row whose prerequisites are satisfied. Record the claim before work.
+1. Check merged-fix candidates as below only within the explicitly started set,
+   then select its next unclaimed `retest` or `untested` row whose prerequisites
+   are satisfied. Never select outside the saved case list. Record the claim before work.
 2. Read the full case, applicable spec and implementation-status gap. Status inventory
    does not override requirements. On an unresolved conflict, search for an existing
    `needs-decision` issue, link it or file one, and continue another unblocked case.

@@ -3,13 +3,13 @@
 | ID | Source Spec/Journey | ISO Characteristic | Env | Verification | Status | Notes |
 |---|---|---|---|---|---|---|
 | J1-01 | QA_Test_Plan.md | RE | VM | agent | untested | |
-| J1-02 | QA_Test_Plan.md | FS | VM | agent | untested | |
+| J1-02 | QA_Test_Plan.md | FS | VM | agent | pass | Installer/service wiring observed: listeners, active services, Gunicorn account, and web-app response; see [2026-10-12 FS VM-lab report](../test-runs/2026-10-12-fs-vm-lab/REPORT.md). |
 | J1-03 | QA_Test_Plan.md | SE | VM | agent | untested | |
 | J1-04 | QA_Test_Plan.md | SE | VM | agent | untested | Admin Playwright login/dashboard smoke does not inspect the stored password hash; hash verification remains unexecuted |
 | J1-05 | QA_Test_Plan.md | IC | VM | agent | untested | |
 | J1-06 | QA_Test_Plan.md | FS | MANUAL | HUMAN | untested | |
 | J1-07 | QA_Test_Plan.md | SE | VM | agent | untested | |
-| J2-01 | QA_Test_Plan.md | FS | VM | agent | untested | |
+| J2-01 | QA_Test_Plan.md | FS | VM | agent | pass | Restricted smoke completed successfully; all five documented targets were monitored and Up; see [2026-10-12 FS VM-lab report](../test-runs/2026-10-12-fs-vm-lab/REPORT.md). |
 | J2-02 | QA_Test_Plan.md | RE | VM | agent (UI) | untested | |
 | J2-03 | QA_Test_Plan.md | FS | VM | agent | untested | API identifiers/ports passed; browser drawer not exercised |
 | J2-04 | QA_Test_Plan.md | FS | VM | agent | untested | SSH plugin enablement observed; complete per-host before/after assertion not established |
@@ -37,7 +37,7 @@
 | J4-05 | QA_Test_Plan.md | SE | VM | agent | untested | |
 | J4-06 | QA_Test_Plan.md | FS | VM | agent · destructive | untested | |
 | J4-07 | QA_Test_Plan.md | FS | VM | agent | untested | |
-| J4-08 | QA_Test_Plan.md | FS | MOCK | agent | pass | `test_plugin_validation.py`: 28 passed in 2026-10-12 FS VM-lab run |
+| J4-08 | QA_Test_Plan.md | FS | MOCK | agent | pass | `test_plugin_validation.py`: 28 passed; see [2026-10-12 FS VM-lab report](../test-runs/2026-10-12-fs-vm-lab/REPORT.md). |
 | J5-01 | QA_Test_Plan.md | RE | VM | agent · destructive | untested | |
 | J5-02 | QA_Test_Plan.md | FS | VM | agent · destructive | untested | |
 | J5-03 | QA_Test_Plan.md | FS | VM | agent · destructive | untested | |
@@ -45,7 +45,7 @@
 | J5-05 | QA_Test_Plan.md | RE | VM | agent · destructive | untested | |
 | J5-06 | QA_Test_Plan.md | RE | VM | agent · destructive | untested | |
 | J5-07 | QA_Test_Plan.md | RE | VM | agent · destructive | untested | |
-| J5-08 | QA_Test_Plan.md | FS | MOCK | agent | pass | `test_smtp_settings.py`: 38 passed in 2026-10-12 FS VM-lab run |
+| J5-08 | QA_Test_Plan.md | FS | MOCK | agent | pass | `test_smtp_settings.py`: 38 passed; see [2026-10-12 FS VM-lab report](../test-runs/2026-10-12-fs-vm-lab/REPORT.md). |
 | J5-10 | QA_Test_Plan.md | IC | VM | agent (UI) | untested | |
 | J5-11 | QA_Test_Plan.md | FS | VM | HUMAN | untested | |
 | J5-09 | QA_Test_Plan.md | SE | MOCK | agent | untested | |
@@ -62,7 +62,7 @@
 | J7-06 | QA_Test_Plan.md | FS | VM | agent | untested | |
 | J7-07 | QA_Test_Plan.md | FS | VM | agent | untested | |
 | J7-08 | QA_Test_Plan.md | FS | VM | agent | untested | |
-| J7-09 | QA_Test_Plan.md | FS | MOCK | agent | pass | Settings, Nagios writer, status and plugin-services suite: 160 passed in 2026-10-12 FS VM-lab run |
+| J7-09 | QA_Test_Plan.md | FS | MOCK | agent | pass | Settings, Nagios writer, status, and plugin-services suite: 160 passed; see [2026-10-12 FS VM-lab report](../test-runs/2026-10-12-fs-vm-lab/REPORT.md). |
 | J8-01 | QA_Test_Plan.md | FS | VM | agent | untested | |
 | J8-02 | QA_Test_Plan.md | FS | VM | agent | untested | |
 | J8-03 | QA_Test_Plan.md | FS | VM | agent | untested | |

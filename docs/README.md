@@ -14,6 +14,10 @@ description of what Pinpoint is and must do lives in
 
 ## Rules
 
+Prepare and share fixed ISO-scoped case lists with
+[`QA_Run_Queues.md`](qa/QA_Run_Queues.md) before starting QA. Saved queues are
+planning snapshots; executed results remain in `test-runs/`.
+
 - A document that says "Status: draft", lists decisions still to be made, or
   records one test run is a plan or report, not a specification.
 - Specifications state current behavior and constraints. They do not hold
