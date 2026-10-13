@@ -1,13 +1,14 @@
 import { test, expect } from '@playwright/test'
 
-// Opt-in Docker lab check, deliberately outside the configured smoke projects.
+// Opt-in lab check, deliberately outside the configured smoke projects.
+const baseUrl = process.env.LAB_BASE_URL ?? 'http://127.0.0.1:5173'
 test('administrator saves and reloads notification policy in the browser', async ({ page }) => {
-  await page.goto('http://127.0.0.1:5173/login')
+  await page.goto(`${baseUrl}/login`)
   await page.getByPlaceholder('Enter your email').fill(process.env.LAB_ADMIN_EMAIL ?? 'admin@test.com')
   await page.locator('input[type="password"]').fill(process.env.LAB_ADMIN_PASSWORD ?? '')
   await page.getByRole('button', { name: /sign in|log in/i }).click()
   await expect(page).not.toHaveURL(/\/login$/)
-  await page.goto('http://127.0.0.1:5173/settings')
+  await page.goto(`${baseUrl}/settings`)
   await page.getByRole('button', { name: 'System', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Notification policy' })).toBeVisible()
   await page.getByRole('button', { name: 'Add quiet hours' }).click()

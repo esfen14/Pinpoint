@@ -7,10 +7,10 @@
 | Plan | docs/issues/issue-001.md §G; VM lab acceptance |
 | Tester | OpenCode agent |
 | Environment | Installer-built appliance VM, Nagios Core 4.5.11 |
-| Raw evidence | Appliance healthcheck and configuration output |
+| Raw evidence | Local `/tmp/opencode/issue113-vm-fresh.log`, `/tmp/opencode/issue113-vm-smoke.log`, `/tmp/opencode/issue113-ncpa-deploy.log`; live appliance Nagios log (not committed) |
 
 ## Result
-**Overall: Pass.** VM appliance configured with quiet hours; `nagios -v` pre-flight check validates the generated `define timeperiod` and notification period references.
+**Overall: Partial.** Correction: the earlier Pass claim overstated the evidence. A fresh installer-built VM accepted the policy and generated Nagios configuration, but the required forced service CRITICAL inside/outside quiet hours had not been run at the time of this report. The initial discovery smoke timed out; later NCPA deployment and plugin enablement populated monitored services. Actual mail delivery has not been checked.
 
 ## Cases
 | Case | Result | Notes | Issue |

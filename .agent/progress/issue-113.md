@@ -1,7 +1,7 @@
 # Issue #113: System Implementation Add Configurable Notification Policy With Nagios Timeperiods and Settings Screen
 
 Branch: `issue-113-notification-policy`
-Status: ready-for-review
+Status: in-progress
 
 ## Finish condition
 
@@ -46,8 +46,8 @@ Requirement coverage (every requirement the issue states, and the check that pro
 12. [x] Update manual and owning specs (`spec files/Backend_Modules_and_Routes.md`, `Data_Model_and_Integrations.md`, `Frontend_Modules_and_Routes.md`, `Implementation_Status.md`), then verify docs.
 13. [x] Exercise browser save/reload with the approved Docker lab, update `docs/test-runs/2026-10-13-issue-113-notification-policy/REPORT.md` and check required finish evidence.
 14. [x] Run `scripts/verify.sh all`, re-read issue and decide PR status from observed evidence (draft pending installer VM/inbox/review).
-15. [ ] Inspect isolated VM-lab prerequisites and deploy issue branch to installer-built appliance without touching unrelated lab work (`scripts/vmlab`, `demo/`, VM plan). Preflight: 98 GB disk available, 6.5 GiB RAM available before shutting down Docker lab, VirtualBox appliance powered off with base snapshot present; retained `demo-ready` snapshot must not be deleted.
-16. [ ] Run `nagios -v`, force service CRITICAL within/outside a quiet window, and verify browser/API behavior in VM; record sanitized evidence in a new `docs/test-runs/` report.
+15. [x] Inspect isolated VM-lab prerequisites and deploy issue branch to installer-built appliance without touching unrelated lab work (`scripts/vmlab`, `demo/`, VM plan). Preflight: 98 GB disk available, 6.5 GiB RAM available before shutting down Docker lab, VirtualBox appliance powered off with base snapshot present; retained `demo-ready` snapshot must not be deleted.
+16. [x] Run `nagios -v`, force service CRITICAL within/outside a quiet window, and verify browser/API behavior in VM; record sanitized evidence in `docs/test-runs/2026-10-13-issue-113-vm-service-retest/REPORT.md`. Nagios dispatch observed (0 quiet, 1 outside); mailbox arrival unverified.
 17. [x] Re-run applicable verification, update owning status/docs and draft PR with observed VM outcome; retain progress file until all finish conditions are proven.
 
 ## Round log
@@ -76,13 +76,14 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | resumed | Re-read issue and comments; clean branch, reran prior frontend verification | `scripts/verify.sh frontend > /tmp/opencode/issue113-resume-frontend.log 2>&1` | green (26 warnings) |
 | 1 | Verified full suites and acceptance regressions, corrected lab report commit attribution; remaining installer VM/inbox/reviewer conditions prevent ready-for-review claim | `scripts/verify.sh all > /tmp/opencode/issue113-all.log 2>&1`; focused backend/frontend; `scripts/verify.sh docs > /tmp/opencode/issue113-docs-correction.log 2>&1` | all green: 2371 backend passed, 14 skipped; 513 frontend passed; docs green; focused 93 backend/38 frontend passed |
 | resumed | User explicitly authorized VM testing; issue unchanged, clean branch and docs check rerun | `scripts/verify.sh docs > /tmp/opencode/issue113-vm-resume-docs.log 2>&1` | green |
+| resumed | Rechecked docs, tested VM service CRITICAL to HARD in and out of quiet hours (0 vs 1 Nagios dispatch), restored target/policy; Playwright VM save/reload; corrected initial overclaim in separate retest report | `scripts/verify.sh docs > /tmp/opencode/issue113-vm-resume-docs.log 2>&1`; VM Nagios log; `LAB_BASE_URL=… node_modules/.bin/playwright test --config=notification-policy.lab.config.ts`; `scripts/verify.sh frontend > /tmp/opencode/issue113-vm-frontend.log 2>&1` | VM dispatch comparison passed; browser 1 passed; frontend green (26 warnings); inbox unverified |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh docs > /tmp/opencode/issue113-vm-resume-docs.log 2>&1`
-- Result (first failing lines, or "green"): green.
-- Hypothesis: User authorization resolves the VM testing question; inspect VM ownership and prerequisites before altering any appliance.
-- Next action (one specific step, not "continue"): Read VM-lab plan/manual and check status, disk and RAM before deploying issue branch.
+- Last check run (exact command): `scripts/verify.sh docs > /tmp/opencode/issue113-vm-retest-docs.log 2>&1`
+- Result (first failing lines, or "green"): green; frontend verification green; VM Nagios CRITICAL dispatch count 0 quiet versus 1 outside; Playwright VM browser 1 passed.
+- Hypothesis: VM step 16 is proven for Nagios dispatch and browser, but actual inbox delivery, full output attached to PR, CI and reviewer approval are not proven. The initial discovery smoke timed out and must not be presented as green.
+- Next action (one specific step, not "continue"): Update draft PR #140 with the VM retest evidence and explicitly note inbox delivery is unverified.
 
 ## Decisions and notes
 
