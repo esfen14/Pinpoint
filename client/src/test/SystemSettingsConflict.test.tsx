@@ -117,6 +117,12 @@ describe('SystemSettingsProvider conflict handling', () => {
     vi.unstubAllGlobals()
   })
 
+  it('describes the general toggle as header-bell only', async () => {
+    render(<SystemSettingsProvider><GeneralSettings /></SystemSettingsProvider>)
+    expect(await screen.findByText('Show notification bell in the header')).toBeInTheDocument()
+    expect(screen.getByText(/Only shows or hides the header bell/)).toBeInTheDocument()
+  })
+
   it('saves check interval as a system setting without changing per-user refresh', async () => {
     await renderLoaded()
     act(() => api.updateSettings({ checkInterval: 2 }))

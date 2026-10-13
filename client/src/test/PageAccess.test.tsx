@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { canAccessPage, firstAccessiblePage, PAGE_PERMISSIONS } from '../lib/pageAccess'
@@ -19,7 +19,7 @@ vi.mock('../contexts/CurrentUserContext', () => ({
 // Settings tabs render real forms; stub them to keep this about which tabs show.
 vi.mock('../components/settings/GeneralSettings', () => ({ GeneralSettings: () => <div>General form</div> }))
 vi.mock('../components/settings/SecuritySettings', () => ({ SecuritySettings: () => <div>Security form</div> }))
-vi.mock('../components/settings/SystemSettings', () => ({ SystemSettings: () => <div>System form</div> }))
+vi.mock('../components/settings/SystemSettings', () => ({ SystemSettings: () => <div>Notification policy card</div> }))
 vi.mock('../contexts/SystemSettingsContext', () => ({
   useSystemSettings: () => ({ refreshSettings: () => Promise.resolve() }),
 }))
@@ -134,6 +134,20 @@ describe('SettingsPage tabs', () => {
       </MemoryRouter>,
     )
   }
+
+  it('keeps notification policy inaccessible without settings.system, including via a URL fragment', () => {
+    signIn([])
+    render(<MemoryRouter initialEntries={['/settings#system']}><SettingsPage /></MemoryRouter>)
+    expect(screen.queryByText('Notification policy card')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^system$/i })).not.toBeInTheDocument()
+  })
+
+  it('shows notification policy on the permitted System tab', () => {
+    signIn(['settings.system'])
+    renderSettings()
+    fireEvent.click(screen.getByRole('button', { name: /^system$/i }))
+    expect(screen.getByText('Notification policy card')).toBeInTheDocument()
+  })
 
   it('shows only General without settings permissions', () => {
     signIn([])

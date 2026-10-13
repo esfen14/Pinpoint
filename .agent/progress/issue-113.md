@@ -40,7 +40,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 6. [x] Create `client/src/types/notificationPolicy.ts` and `client/src/lib/notificationPolicyApi.ts`.
 7. [x] Create `client/src/components/settings/NotificationPolicySettings.tsx`, place in permission-gated System tab through `SystemSettings.tsx`, and relabel General bell toggle.
 8. [x] Strengthen generated-config regression and full contact/service propagation in `server/tests/unit/test_notification_policy_templates.py`, `server/app/network_discovery/create_host_cfg.py`, `server/app/network_discovery/host_config_templates.py`.
-9. [ ] Expand frontend permission/label tests in `client/src/test/NotificationPolicySettings.test.tsx` and related Settings tests; correct UI as needed.
+9. [x] Expand frontend permission/label tests in `client/src/test/NotificationPolicySettings.test.tsx` and related Settings tests; correct UI as needed.
 10. [ ] Review backend validation/apply edge cases and default byte parity in `server/tests/unit/test_notification_policy_api.py`, `server/tests/unit/test_notification_policy_templates.py` and owning backend modules.
 11. [ ] Run approved Docker lab for `nagios -v` and inside/outside notification events; record sanitized evidence under `docs/test-runs/`.
 12. [ ] Update manual and owning specs (`spec files/Backend_Modules_and_Routes.md`, `Data_Model_and_Integrations.md`, `Frontend_Modules_and_Routes.md`, `Implementation_Status.md`), then verify finish conditions.
@@ -60,13 +60,14 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | 1 | Added failing client adapter test, typed wire contract and shared GET/PUT wrapper; fixed test typing after build exposed widened literals | `npm run test -- src/test/NotificationPolicyApi.test.ts`; `scripts/verify.sh frontend > /tmp/opencode/issue113-frontend-round1.log 2>&1` | green; 505 frontend tests and build/lint pass (25 warnings) |
 | 2 | Added failing interaction suite, policy card on System tab and corrected bell-only label | `npm run test -- src/test/NotificationPolicySettings.test.tsx`; `scripts/verify.sh frontend > /tmp/opencode/issue113-frontend-round2.log 2>&1` | green: focused 5 passed; full frontend stage passed (26 warnings) |
 | 3 | Added failing contact propagation/template-registration test; custom contacts inherit a non-registering policy template while default users retain generic-contact | `.venv/bin/python -m pytest tests/unit/test_notification_policy_templates.py -q`; `scripts/verify.sh backend > /tmp/opencode/issue113-backend-round3b.log 2>&1` | green: 4 focused; 2369 passed, 14 skipped |
+| 4 | Added Settings permission/fragment and bell-label regression assertions; existing tab guard and corrected label already satisfied them | `npm run test -- src/test/SystemSettingsConflict.test.tsx src/test/PageAccess.test.tsx`; `scripts/verify.sh frontend > /tmp/opencode/issue113-frontend-round4.log 2>&1` | green: 27 focused tests; frontend stage green (26 warnings) |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh backend > /tmp/opencode/issue113-backend-round3b.log 2>&1`
-- Result (first failing lines, or "green"): green: 2369 passed, 14 skipped.
-- Hypothesis: The System tab is permission gated, but explicit regression tests must establish this and the bell-only label.
-- Next action (one specific step, not "continue"): Add failing permission/label frontend tests for Settings and run focused suite.
+- Last check run (exact command): `scripts/verify.sh frontend > /tmp/opencode/issue113-frontend-round4.log 2>&1`
+- Result (first failing lines, or "green"): green: frontend stage, 26 warnings.
+- Hypothesis: The default parity test still requires an independent pre-change rendering comparison, and Nagios syntax must be checked in lab.
+- Next action (one specific step, not "continue"): Add independent byte-parity test using pre-change baseline fixture, then review API edge cases.
 
 ## Decisions and notes
 
