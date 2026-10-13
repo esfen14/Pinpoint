@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 from app import db
@@ -120,12 +121,57 @@ def create_service(service, service_command):
         rendered = add_inactive_lines(rendered, service.get("notes") or "Address unknown")
     return rendered
     
+# ----------------------------------------------------------------------
+# Notification commands
+#
+# Alert email is formatted HTML. The two commands below call
+# server/scripts/pinpoint_notify_email.py, which builds the message and hands it
+# to msmtp. If the script is missing, or its path holds a character that is not
+# safe to write into a Nagios command line, contacts keep Nagios's stock
+# plain-text commands, so alerts are never lost.
+# ----------------------------------------------------------------------
+NOTIFY_PYTHON = "/usr/bin/python3"
+STOCK_NOTIFY_COMMANDS = {"host": "notify-host-by-email", "service": "notify-service-by-email"}
+HTML_NOTIFY_COMMANDS = {"host": "pinpoint_notify_host_html", "service": "pinpoint_notify_service_html"}
+_SAFE_COMMAND_PATH = re.compile(r"^/[A-Za-z0-9_./-]+$")
+
+
+def notification_script_path():
+    """Absolute path of the HTML notification script, or None when it cannot be used."""
+    script = Path(__file__).resolve().parents[2] / "scripts" / "pinpoint_notify_email.py"
+    path = script.as_posix()
+    if not script.is_file() or not _SAFE_COMMAND_PATH.match(path):
+        return None
+    return path
+
+
+def notification_command_names():
+    """{'host': ..., 'service': ...}: the commands contacts use for host and service alerts."""
+    return HTML_NOTIFY_COMMANDS if notification_script_path() else STOCK_NOTIFY_COMMANDS
+
+
+def create_notification_commands():
+    """The `define command` blocks for HTML alert email, or an empty string when the stock commands are used."""
+    script = notification_script_path()
+    if script is None:
+        return ""
+    return _load_template("notification_commands.cfg.tpl").format(
+        host_command=HTML_NOTIFY_COMMANDS["host"],
+        service_command=HTML_NOTIFY_COMMANDS["service"],
+        python=NOTIFY_PYTHON,
+        script=script,
+    )
+
+
 def create_contact(contact):
+    commands = notification_command_names()
     return _load_template("contact.cfg.tpl").format(
         contact_name=contact["contact_name"],
         use=contact["use"],
         alias=contact["full_name"],
-        email_address=contact["email_address"] 
+        email_address=contact["email_address"],
+        service_command=commands["service"],
+        host_command=commands["host"],
     )
 
 def create_contact_template(contact_template):
