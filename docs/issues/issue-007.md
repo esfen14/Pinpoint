@@ -16,7 +16,7 @@
 
 > **Blocked / conditional:** **Part 7.1 (System):** Needs a security review of the design before coding, because it makes Nagios trigger actions. The execution model below (Nagios only records an event, PinPoint decides and runs an allowlisted action) is a proposal that must be confirmed on a lab appliance: spool directory permissions and who can read the spool were not verified.  
 > **Part 7.2 (Web-Interface):** Same condition as Part 7.1.  
-> **Part 7.3 (Installer):** Design to be confirmed with the security review of Part 7.1. Where the executable should live and its permissions on an installed appliance were not verified: the application directory is owned by another user and the `nagios` user may not be able to traverse it.
+> **Part 7.3 (Installer):** Design to be confirmed with the security review of Part 7.1. The installer repository was read on 2026-10-13 (see section B): `/opt/pinpoint` is mode 755, so `nagios` can reach it, but the executable should still not depend on it. Spool directory ownership must account for `www-data` being in group `nagios`.
 
 #### A. Problem Description
 
@@ -53,7 +53,7 @@ Paths below were verified in the repository on 2026-10-13 unless marked *(propos
 - Part 7.2: `client/src/lib/pageAccess.ts`, `components/layout/Sidebar.tsx`, `client/src/App.tsx` and `client/src/test/PageAccess.test.tsx` define navigation and permissions and must be updated together when a page is added.
 - Part 7.3: On a lab appliance: `/usr/local/nagios/var/spool` exists, `pinpoint` is in group `nagios` (`id pinpoint`), and `/usr/local/nagios/etc` is group-writable. `sudoers` for `pinpoint` allows only the SMTP helper and `systemctl reload nagios`.
 - Part 7.3: The application code is under `/opt/pinpoint/Network-Diagnosis-System`, and git reports "dubious ownership" for a non-owner, so directory ownership differs between users.
-- Part 7.3: The installer code is not in this repository, so its file locations are *further investigation required*.
+- Part 7.3: Installer repository findings (2026-10-13, files under `setup/`): `install-nagios-core.sh` lines 98-114 run the stock Nagios `make` targets and never create `var/spool` itself; line 100 adds `www-data` to group `nagios`. `configure-pinpoint-privileges.sh` line 251 adds `pinpoint` to group `nagios`, installs `/usr/local/sbin/pinpoint-apply-smtp` as `root:root` 755 (lines 538-539, a `#!/usr/bin/python3 -I` script that reads JSON on stdin and takes no arguments) and writes its sudoers files with `mktemp`, `visudo -cf` and `install -m 440 -o root -g root` (lines 302-316 and 545-559). `deploy-pinpoint-web.sh` line 446 sets `APP_ROOT` to 755 and lines 872-900 define `pinpoint-gunicorn` with no `NoNewPrivileges`, `ReadWritePaths` or `ProtectSystem`. The installer writes only `interval_length` and `cfg_file=` lines into `nagios.cfg` (via `ensure-nagios-interval.sh`) and does not set `enable_event_handlers`, `event_handler_timeout` or `log_event_handlers`. It has no installer version marker and only two test scripts (`tests/check-interval-tests.sh`, `tests/smtp-admin-email-tests.sh`). AppArmor and SELinux are not mentioned anywhere.
 
 #### C. Required Changes
 
@@ -76,10 +76,12 @@ Paths below were verified in the repository on 2026-10-13 unless marked *(propos
 
 **Installer / Deployment**
 
-1. **Part 7.3 (Installer):** Create a spool directory *(proposed, for example `/usr/local/nagios/var/spool/pinpoint-events`)* owned by `nagios:nagios` with mode 2770 so the `pinpoint` user can read and delete entries and nobody else can.
-2. **Part 7.3 (Installer):** Install the handler executable *(proposed)* to a root-owned path both users can execute (for example under `/usr/local/nagios/libexec`), mode 0755, not writable by the web user, with no dependency on the application directory.
-3. **Part 7.3 (Installer):** Add upgrade handling so existing appliances get the directory and the executable without losing configuration.
-4. **Part 7.3 (Installer):** Do not change `sudoers` unless Issue #8 requires it.
+1. **Part 7.3 (Installer):** Create a spool directory *(proposed, for example `/usr/local/nagios/var/spool/pinpoint-events`)* owned by `nagios` with group `pinpoint` and mode 2770, so `nagios` can write, `pinpoint` can read and delete entries, and nobody else can. Do **not** use group `nagios`: the installer adds `www-data` to that group, so a `nagios:nagios` 2770 directory would be writable by the web server. Confirm on the lab appliance that `pinpoint` is a real group, and that `nagios` can write and `pinpoint` can delete.
+2. **Part 7.3 (Installer):** Install the handler executable *(proposed)* as `/usr/local/sbin/pinpoint-event-handler`, `root:root` 755, following the SMTP helper pattern (`#!/usr/bin/python3 -I`, written from the installer, no dependency on the application directory). It is world-executable but not writable by `pinpoint`, `nagios` or `www-data`. This replaces the earlier idea of putting it under `libexec`, whose only installer-managed file is `nagios:nagios`.
+3. **Part 7.3 (Installer):** Add a new idempotent step modeled on `ensure-nagios-interval.sh` that sets `enable_event_handlers=1`, `log_event_handlers=1` and a short `event_handler_timeout` in `nagios.cfg`, with a backup and rollback if `nagios -v` fails. The installer sets none of these today; the earlier "enabled globally" check came from a lab appliance running the stock value.
+4. **Part 7.3 (Installer):** Put the new files in `configure-pinpoint-privileges.sh` (or a script beside it), which already overwrites its own helpers on every run, so upgrade handling is the same as for the SMTP helper. Check whether `make install-config` in `configure-nagios.sh` (line 76) overwrites `nagios.cfg` on a re-run, because that would remove the new settings.
+5. **Part 7.3 (Installer):** Add the new checks to the step 9 verification in `configure-pinpoint-privileges.sh` (spool owner, group and mode; helper `root:root` 755), and add a test script under `tests/` in the style of `smtp-admin-email-tests.sh`.
+6. **Part 7.3 (Installer):** Do not change `sudoers` unless Issue #8 requires it.
 
 #### D. Implementation Guidelines
 
@@ -117,7 +119,8 @@ General rules for every issue:
 - [ ] **Part 7.2 (Web-Interface):** Existing navigation and page-access tests pass after being updated for the new page.
 - [ ] **Part 7.3 (Installer):** On a fresh install and on an upgraded appliance the spool directory exists with the stated owner and mode.
 - [ ] **Part 7.3 (Installer):** The `nagios` user can run the executable and append to the spool, and the `pinpoint` user can read and remove entries.
-- [ ] **Part 7.3 (Installer):** The web user cannot modify the executable.
+- [ ] **Part 7.3 (Installer):** The web user cannot modify the executable, and `www-data` can neither write to nor read the spool.
+- [ ] **Part 7.3 (Installer):** `nagios.cfg` has the event handler settings after an install and after a re-run, and a failed `nagios -v` restores the previous file.
 - [ ] **Part 7.3 (Installer):** The upgrade does not alter other Nagios configuration or the SMTP helper.
 
 #### F. Required Deliverables
