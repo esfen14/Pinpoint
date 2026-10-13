@@ -81,6 +81,8 @@ Consequence: the existing deployment account **cannot** be used to restart a mon
 
 ### 3.4 Security review of the Issue #7 design
 
+The checklist for the reviewer, with the threats, the current rights on the appliance and the three decisions (D1 narrow the `nagios` group, D2 remote restart, D3 handler location), is in [`Event_Handler_Security_Review.md`](Event_Handler_Security_Review.md). Finding on 2026-10-13: `www-data` runs the Nagios CGIs that PinPoint reads alert history from, so it must stay in group `nagios`; the rights that group grants need narrowing instead (D1).
+
 Review the model "Nagios only appends one validated JSON line to a spool, PinPoint decides and runs an allowlisted action as `pinpoint`" before any code. Questions for the review:
 
 - Can any process other than `nagios` write a spool line, and what happens if it does (the consumer must treat every line as untrusted)?
