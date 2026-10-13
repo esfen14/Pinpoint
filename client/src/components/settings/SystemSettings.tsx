@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 
 import { SettingsCard } from './SettingsCard'
+import { NotificationPolicySettings } from './NotificationPolicySettings'
 import { SettingsSelect } from './SettingsSelect'
 import { SettingsToggle } from './SettingsToggle'
 import { SettingsActions } from './SettingsActions'
@@ -176,6 +177,8 @@ export function SystemSettings() {
         />
         
       </SettingsCard>
+
+      <NotificationPolicySettings />
 
       <SettingsCard
         title="System Status"

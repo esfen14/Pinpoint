@@ -38,7 +38,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 4. [x] Create `server/app/network_discovery/templates/timeperiod.cfg.tpl` and update `host.cfg.tpl`, `service.cfg.tpl`, `contact_template.cfg.tpl` and rendering in `host_config_templates.py`.
 5. [x] Update `server/app/network_discovery/create_host_cfg.py` to render the timeperiod in the candidate file.
 6. [x] Create `client/src/types/notificationPolicy.ts` and `client/src/lib/notificationPolicyApi.ts`.
-7. [ ] Create `client/src/components/settings/NotificationPolicySettings.tsx` and integrate it into `SettingsPage.tsx`.
+7. [x] Create `client/src/components/settings/NotificationPolicySettings.tsx`, place in permission-gated System tab through `SystemSettings.tsx`, and relabel General bell toggle.
 8. [ ] Implement tests and verify.
 
 ## Round log
@@ -54,13 +54,14 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | 5 | Added failing full-file test; render custom period in shared candidate config | `.venv/bin/python -m pytest tests/unit/test_notification_policy_templates.py -q`; `scripts/verify.sh backend` | 3 passed; 2368 passed, 14 skipped |
 | resumed | No earlier plan steps repeated | `scripts/verify.sh backend` | green: 2368 passed, 14 skipped |
 | 1 | Added failing client adapter test, typed wire contract and shared GET/PUT wrapper; fixed test typing after build exposed widened literals | `npm run test -- src/test/NotificationPolicyApi.test.ts`; `scripts/verify.sh frontend > /tmp/opencode/issue113-frontend-round1.log 2>&1` | green; 505 frontend tests and build/lint pass (25 warnings) |
+| 2 | Added failing interaction suite, policy card on System tab and corrected bell-only label | `npm run test -- src/test/NotificationPolicySettings.test.tsx`; `scripts/verify.sh frontend > /tmp/opencode/issue113-frontend-round2.log 2>&1` | green: focused 5 passed; full frontend stage passed (26 warnings) |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh frontend > /tmp/opencode/issue113-frontend-round1.log 2>&1`
-- Result (first failing lines, or "green"): green: 505 tests, build, lint (25 warnings).
-- Hypothesis: System tab already requires `settings.system`, so card can be placed there without a new route.
-- Next action (one specific step, not "continue"): Add failing Settings UI interaction tests then implement the card and header-bell label.
+- Last check run (exact command): `scripts/verify.sh frontend > /tmp/opencode/issue113-frontend-round2.log 2>&1`
+- Result (first failing lines, or "green"): green: frontend stage, 26 warnings.
+- Hypothesis: Need stronger backend parity and real Nagios syntax review before claiming finished.
+- Next action (one specific step, not "continue"): Add failing byte-parity test comparing pre-change rendered hosts.cfg to default branch output, then fix differences and strengthen service behavior.
 
 ## Decisions and notes
 
