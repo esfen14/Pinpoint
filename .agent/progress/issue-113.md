@@ -50,6 +50,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 16. [x] Run `nagios -v`, force service CRITICAL within/outside a quiet window, and verify browser/API behavior in VM; record sanitized evidence in `docs/test-runs/2026-10-13-issue-113-vm-service-retest/REPORT.md`. Nagios dispatch observed (0 quiet, 1 outside); mailbox arrival unverified.
 17. [x] Re-run applicable verification, update owning status/docs and draft PR with observed VM outcome; retain progress file until all finish conditions are proven.
 18. [ ] Attach the full `scripts/verify.sh all` output to PR #140 in an approved, sanitized artifact; obtain required reviewer approval before marking all issue boxes complete.
+19. [ ] After the lab owner privately configures Gmail SMTP through Settings → Email, verify test send and recipient confirmation, then repeat issue #113 outside/inside quiet-window email comparison; record a separate sanitized run. The current incremental installer update alone does not prove delivery.
 
 ## Round log
 
@@ -79,13 +80,14 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | resumed | User explicitly authorized VM testing; issue unchanged, clean branch and docs check rerun | `scripts/verify.sh docs > /tmp/opencode/issue113-vm-resume-docs.log 2>&1` | green |
 | resumed | Rechecked docs, tested VM service CRITICAL to HARD in and out of quiet hours (0 vs 1 Nagios dispatch), restored target/policy; Playwright VM save/reload; corrected initial overclaim in separate retest report | `scripts/verify.sh docs > /tmp/opencode/issue113-vm-resume-docs.log 2>&1`; VM Nagios log; `LAB_BASE_URL=… node_modules/.bin/playwright test --config=notification-policy.lab.config.ts`; `scripts/verify.sh frontend > /tmp/opencode/issue113-vm-frontend.log 2>&1` | VM dispatch comparison passed; browser 1 passed; frontend green (26 warnings); inbox unverified |
 | resumed | Audited issue E/F/H, checked evidenced items on issue, reran full local verification; PR CI green but no reviewer approval and full local output not attached | `scripts/verify.sh all > /tmp/opencode/issue113-final-all.log 2>&1`; `gh pr checks 140` | all green (2371 backend, 14 skipped, 513 frontend, 26 warnings); PR checks green; issue remains open/draft |
+| resumed | Fast-forwarded clean installer checkout to `697869e`; applied only current `configure-pinpoint-privileges.sh` to existing VM, recorded incremental mail transport run | VM scoped helper with empty stdin, `nagios -v`, `scripts/vmlab health`, `scripts/verify.sh docs` | Helper reached JSON validation without password prompt, Nagios zero warnings/errors, appliance 60/0; SMTP send and inbox untested; existing base snapshot still older |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh all > /tmp/opencode/issue113-final-all.log 2>&1`
-- Result (first failing lines, or "green"): green (2371 backend passed, 14 skipped, 513 frontend passed, 26 lint warnings); PR CI docs/backend/frontend green.
-- Hypothesis: All E criteria and most F/H items have evidence, but F full local output attachment, H reviewer approval, and therefore H all-deliverables-complete cannot be checked. The first VM smoke timed out; later NCPA/service retest passed. Inbox arrival is not proven, though Nagios dispatch is.
-- Next action (one specific step, not "continue"): Arrange an approved way to attach the sanitized full local verification output to PR #140, then request required reviewer approval; leave PR draft until all issue boxes are checked.
+- Last check run (exact command): `scripts/verify.sh docs > /tmp/opencode/issue113-mail-docs.log 2>&1`
+- Result (first failing lines, or "green"): green; prior full local verification and PR CI docs/backend/frontend green. VM Nagios config and appliance health green.
+- Hypothesis: Incremental installer mail transport fixes the missing helper and sudo prompt, but no Gmail account is configured and email delivery remains untested. The base snapshot has not been reprovisioned. F full output attachment and H reviewer approval remain outstanding.
+- Next action (one specific step, not "continue"): Ask the lab owner to privately save a dedicated Gmail account/app password in VM Settings → Email and confirm test message receipt; do not ask for credentials in chat.
 
 ## Decisions and notes
 

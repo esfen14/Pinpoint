@@ -48,6 +48,7 @@ table while you test, not afterward.
 
 | Run | Kind | Commit | Result | Report |
 |---|---|---|---|---|
+| [2026-10-13 issue-113-vm-mail-transport](2026-10-13-issue-113-vm-mail-transport/REPORT.md) | Incremental installer mail-transport update on existing VM | app `560ad780`, installer `697869e` (privileges module only) | Partial: transport and scoped helper verified; SMTP send and inbox delivery untested | [REPORT.md](2026-10-13-issue-113-vm-mail-transport/REPORT.md) |
 | [2026-10-13 issue-113-vm-service-retest](2026-10-13-issue-113-vm-service-retest/REPORT.md) | Fresh VM policy, service CRITICAL inside/outside quiet hours and browser save/reload | app `1ca2c757` | Partial: Nagios dispatch and browser passed; inbox delivery unverified | [REPORT.md](2026-10-13-issue-113-vm-service-retest/REPORT.md) |
 | [2026-10-13 issue-113-vm-initial](2026-10-13-2026-10-13-issue-113-notification-policy-vm/REPORT.md) | Initial VM policy apply, before forced service retest | app `1ca2c757` | Partial: configuration accepted; service comparison not run at that time | [REPORT.md](2026-10-13-2026-10-13-issue-113-notification-policy-vm/REPORT.md) |
 | [2026-10-13 issue-113-notification-policy](2026-10-13-issue-113-notification-policy/REPORT.md) | Docker lab policy apply, Nagios validation, forced host DOWN inside/outside quiet hours | `6fb8df73`, `b5937ec4`, `6c2a5be1` (case commits in report) | Partial: host/service timing and browser flow passed; VM/email not exercised | [REPORT.md](2026-10-13-issue-113-notification-policy/REPORT.md) |
