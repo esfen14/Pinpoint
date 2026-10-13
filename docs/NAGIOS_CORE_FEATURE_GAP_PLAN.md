@@ -31,7 +31,7 @@ These totals match the Section 2 table row by row. **21 issues** are raised (Sec
 
 ### Development issues
 
-Each issue below is expanded into engineering-ready tickets in [`docs/issues/`](issues/README.md), split into independently deliverable sub-issues (for example `Issue #19.1`). Writing them corrected three statements in this plan, which are fixed in place: `check_pop` and `check_imap` are not in the bundled catalog, the per-device `Plugin_Variables` override has no writer, and PinPoint stores no SSH password.
+Each issue below is expanded into one engineering-ready ticket in [`docs/issues/`](issues/README.md) with the same number. Work that spans layers is divided into labelled parts inside the ticket (for example `Part 19.2`). Writing them corrected three statements in this plan, which are fixed in place: `check_pop` and `check_imap` are not in the bundled catalog, the per-device `Plugin_Variables` override has no writer, and PinPoint stores no SSH password.
 
 ### Scope decisions applied (team, 2026-10-13)
 

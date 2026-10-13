@@ -10,11 +10,11 @@
 
 **Related Nagios Core Feature:** Notification Dependencies
 
-**Dependencies:** [Issue #4.1](issue-004-1.md)
+**Dependencies:** [Issue #4](issue-004.md)
 
 **Plan reference:** Issue #5 in [`docs/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../NAGIOS_CORE_FEATURE_GAP_PLAN.md) §3. The number is a plan identifier, not a GitHub issue number.
 
-> **Blocked / conditional:** Depends on Issue #4.1, which itself awaits a scope decision.
+> **Blocked / conditional:** Depends on Issue #4, which itself awaits a scope decision.
 
 #### A. Problem Description
 
@@ -40,7 +40,7 @@ Paths below were verified in the repository on 2026-10-13 unless marked *(propos
 2. Rule 1: each service on a host depends on the host being UP, with `notification_failure_criteria d,u` so service notifications stop while the host is down.
 3. Rule 2: each NCPA metric service depends on the device's NCPA port service being OK, with `notification_failure_criteria c,u`.
 4. Generate rules only for services that exist in the same config, and skip a rule whose target is missing, so Nagios never rejects a dangling dependency.
-5. Add an on/off setting for dependency generation *(proposed field on `SystemSettings` or the notification policy of Issue #1.1)*, default on, and a migration if a column is added. Apply through `regenerate_and_apply_config_status()`.
+5. Add an on/off setting for dependency generation *(proposed field on `SystemSettings` or the notification policy of Issue #1)*, default on, and a migration if a column is added. Apply through `regenerate_and_apply_config_status()`.
 
 #### D. Implementation Guidelines
 
