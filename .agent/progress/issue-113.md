@@ -37,7 +37,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 3. [x] Create `server/app/api/system/notification_policy.py` and register it in `server/app/api/system/__init__.py`.
 4. [x] Create `server/app/network_discovery/templates/timeperiod.cfg.tpl` and update `host.cfg.tpl`, `service.cfg.tpl`, `contact_template.cfg.tpl` and rendering in `host_config_templates.py`.
 5. [x] Update `server/app/network_discovery/create_host_cfg.py` to render the timeperiod in the candidate file.
-6. [ ] Create `client/src/types/notificationPolicy.ts` and `client/src/lib/notificationPolicyApi.ts`.
+6. [x] Create `client/src/types/notificationPolicy.ts` and `client/src/lib/notificationPolicyApi.ts`.
 7. [ ] Create `client/src/components/settings/NotificationPolicySettings.tsx` and integrate it into `SettingsPage.tsx`.
 8. [ ] Implement tests and verify.
 
@@ -52,13 +52,15 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | 3 | Added failing API cases; implemented guarded GET/PUT, validation and rollback; updated route catalog for drift check | `.venv/bin/python -m pytest tests/unit/test_notification_policy_api.py -q`; `scripts/verify.sh backend` | 11 passed; 2365 passed, 14 skipped |
 | 4 | Added failing rendering test, conditional period and template directives preserving default | `.venv/bin/python -m pytest tests/unit/test_notification_policy_templates.py -q`; `scripts/verify.sh backend` | 2 passed; 2367 passed, 14 skipped |
 | 5 | Added failing full-file test; render custom period in shared candidate config | `.venv/bin/python -m pytest tests/unit/test_notification_policy_templates.py -q`; `scripts/verify.sh backend` | 3 passed; 2368 passed, 14 skipped |
+| resumed | No earlier plan steps repeated | `scripts/verify.sh backend` | green: 2368 passed, 14 skipped |
+| 1 | Added failing client adapter test, typed wire contract and shared GET/PUT wrapper; fixed test typing after build exposed widened literals | `npm run test -- src/test/NotificationPolicyApi.test.ts`; `scripts/verify.sh frontend > /tmp/opencode/issue113-frontend-round1.log 2>&1` | green; 505 frontend tests and build/lint pass (25 warnings) |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh backend`
-- Result (first failing lines, or "green"): green: 2368 passed, 14 skipped.
-- Hypothesis: Need frontend types and API adapter, then settings card and lab check; no live evidence yet.
-- Next action (one specific step, not "continue"): Add failing frontend API adapter test then implement `notificationPolicy.ts` and `notificationPolicyApi.ts`.
+- Last check run (exact command): `scripts/verify.sh frontend > /tmp/opencode/issue113-frontend-round1.log 2>&1`
+- Result (first failing lines, or "green"): green: 505 tests, build, lint (25 warnings).
+- Hypothesis: System tab already requires `settings.system`, so card can be placed there without a new route.
+- Next action (one specific step, not "continue"): Add failing Settings UI interaction tests then implement the card and header-bell label.
 
 ## Decisions and notes
 
