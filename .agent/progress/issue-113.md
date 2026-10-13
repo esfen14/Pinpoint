@@ -46,6 +46,9 @@ Requirement coverage (every requirement the issue states, and the check that pro
 12. [x] Update manual and owning specs (`spec files/Backend_Modules_and_Routes.md`, `Data_Model_and_Integrations.md`, `Frontend_Modules_and_Routes.md`, `Implementation_Status.md`), then verify docs.
 13. [x] Exercise browser save/reload with the approved Docker lab, update `docs/test-runs/2026-10-13-issue-113-notification-policy/REPORT.md` and check required finish evidence.
 14. [x] Run `scripts/verify.sh all`, re-read issue and decide PR status from observed evidence (draft pending installer VM/inbox/review).
+15. [ ] Inspect isolated VM-lab prerequisites and deploy issue branch to installer-built appliance without touching unrelated lab work (`scripts/vmlab`, `demo/`, VM plan). Preflight: 98 GB disk available, 6.5 GiB RAM available before shutting down Docker lab, VirtualBox appliance powered off with base snapshot present; retained `demo-ready` snapshot must not be deleted.
+16. [ ] Run `nagios -v`, force service CRITICAL within/outside a quiet window, and verify browser/API behavior in VM; record sanitized evidence in a new `docs/test-runs/` report.
+17. [ ] Re-run applicable verification, update owning status/docs and draft PR with observed VM outcome; retain progress file until all finish conditions are proven.
 
 ## Round log
 
@@ -72,13 +75,14 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | 5 | Added opt-in Playwright Docker browser flow: sign in, save quiet window, refresh/reload, remove and save; updated sanitized report and status | `LAB_ADMIN_PASSWORD=… node_modules/.bin/playwright test --config=notification-policy.lab.config.ts`; `scripts/verify.sh docs > /tmp/opencode/issue113-docs-browser.log 2>&1`; `scripts/verify.sh frontend > /tmp/opencode/issue113-frontend-browser.log 2>&1` | Playwright 1 passed; docs green; frontend green (26 warnings) |
 | resumed | Re-read issue and comments; clean branch, reran prior frontend verification | `scripts/verify.sh frontend > /tmp/opencode/issue113-resume-frontend.log 2>&1` | green (26 warnings) |
 | 1 | Verified full suites and acceptance regressions, corrected lab report commit attribution; remaining installer VM/inbox/reviewer conditions prevent ready-for-review claim | `scripts/verify.sh all > /tmp/opencode/issue113-all.log 2>&1`; focused backend/frontend; `scripts/verify.sh docs > /tmp/opencode/issue113-docs-correction.log 2>&1` | all green: 2371 backend passed, 14 skipped; 513 frontend passed; docs green; focused 93 backend/38 frontend passed |
+| resumed | User explicitly authorized VM testing; issue unchanged, clean branch and docs check rerun | `scripts/verify.sh docs > /tmp/opencode/issue113-vm-resume-docs.log 2>&1` | green |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh docs > /tmp/opencode/issue113-docs-correction.log 2>&1`
-- Result (first failing lines, or "green"): green; `scripts/verify.sh all` green (2371 backend passed, 14 skipped; 513 frontend passed; 26 lint warnings).
-- Hypothesis: Approved Docker checks cover behavior, but issue §G expressly names VM; actual email and reviewer approval remain unavailable. Do not mark ready until that discrepancy is decided and evidence supplied.
-- Next action (one specific step, not "continue"): Await maintainer decision on whether approved Docker lab satisfies the issue's VM-specific acceptance; if not, arrange an installer-built VM run and capture mail-delivery evidence before marking ready.
+- Last check run (exact command): `scripts/verify.sh docs > /tmp/opencode/issue113-vm-resume-docs.log 2>&1`
+- Result (first failing lines, or "green"): green.
+- Hypothesis: User authorization resolves the VM testing question; inspect VM ownership and prerequisites before altering any appliance.
+- Next action (one specific step, not "continue"): Read VM-lab plan/manual and check status, disk and RAM before deploying issue branch.
 
 ## Decisions and notes
 
@@ -87,4 +91,4 @@ Requirement coverage (every requirement the issue states, and the check that pro
 - Resolved blocker: issue comment from esfen14 on 2026-10-13 approves and instructs use of repository Docker labs. No source code changed yet.
 - The earlier pre-existing worktree modification to `client/src/test/SystemSettingsConflict.test.tsx` was not included in issue commits; inspect status before touching it.
 - Plan expanded after lab evidence showed browser UI flow remains untested and the issue requires full verification; added steps 13–14. Prior session stopped at five rounds; step 10 now has an independent fixture from pre-change commit `92a896d5` and a byte comparison (timestamp normalized only). Plan revised because the original final step omitted explicit lab, documentation and regression stages; these are required deliverables. This session must verify actual default generated-file byte parity against pre-change output, not only template-level assertions. Also review timeperiod syntax against Nagios (`24:00` and comma-separated ranges) in the Docker lab, and review whether service default directives must be explicit without violating byte parity.
-- Draft PR #140 opened with progress file retained and outstanding VM/inbox/review work listed. Five rounds completed the prior session; stop per workflow §4. Sensitive-module review: API validation whitelists weekday/time/option values, no shell interpolation introduced, generated file uses fixed destination and existing Nagios pre-apply validation; no secrets added to policy logs/responses. Docker lab and documentation done; installer VM, inbox delivery and reviewer approval remain unverified.
+- User explicitly approved VM testing in the current conversation. Plan expanded with VM deployment, observation and reporting steps because earlier draft lacked installer-built VM evidence. Draft PR #140 opened with progress file retained and outstanding VM/inbox/review work listed. Five rounds completed the prior session; stop per workflow §4. Sensitive-module review: API validation whitelists weekday/time/option values, no shell interpolation introduced, generated file uses fixed destination and existing Nagios pre-apply validation; no secrets added to policy logs/responses. Docker lab and documentation done; installer VM, inbox delivery and reviewer approval remain unverified.
