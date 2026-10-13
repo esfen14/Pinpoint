@@ -20,6 +20,11 @@ the normative behavior in the requirement specifications.
   from its assigned role. Both routes reject before changing persisted data. The
   account and role responses mark the protected choices so their edit forms explain
   the restriction and disable unsafe status, role, and permission controls.
+  The built-in `Administrator` role additionally has an immutable permission set
+  for every account assigned to it: direct API edits reject changed grants before
+  saving metadata, while reordered unchanged grants permit description edits.
+  Its name is fixed to preserve the role's built-in identity, and role management
+  displays all its permission controls read-only with an explanation.
 - Singleton system settings with personal/system separation and optimistic
   version conflict handling. The system Check interval (1/2/5/10/15 minutes)
   generates host and service check intervals through the shared Nagios writer;
