@@ -43,7 +43,9 @@ Requirement coverage (every requirement the issue states, and the check that pro
 9. [x] Expand frontend permission/label tests in `client/src/test/NotificationPolicySettings.test.tsx` and related Settings tests; correct UI as needed.
 10. [x] Review backend validation/apply edge cases and default byte parity in `server/tests/unit/test_notification_policy_api.py`, `server/tests/unit/test_notification_policy_templates.py` and owning backend modules.
 11. [x] Run approved Docker lab for `nagios -v` and inside/outside notification events; record sanitized evidence under `docs/test-runs/` (host DOWN and service CRITICAL dispatch; browser/VM/email evidence remains unverified).
-12. [ ] Update manual and owning specs (`spec files/Backend_Modules_and_Routes.md`, `Data_Model_and_Integrations.md`, `Frontend_Modules_and_Routes.md`, `Implementation_Status.md`), then verify finish conditions.
+12. [x] Update manual and owning specs (`spec files/Backend_Modules_and_Routes.md`, `Data_Model_and_Integrations.md`, `Frontend_Modules_and_Routes.md`, `Implementation_Status.md`), then verify docs.
+13. [ ] Exercise browser save/reload with the approved Docker lab, update `docs/test-runs/2026-10-13-issue-113-notification-policy/REPORT.md` and check required finish evidence.
+14. [ ] Run `scripts/verify.sh all`, re-read issue and decide PR status from observed evidence.
 
 ## Round log
 
@@ -66,13 +68,14 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | 1 | Rendered identical isolated fixture on pre-change commit `92a896d5`; checked normalized output with `cmp`; added golden-file byte comparison with active email contact | `.venv/bin/python -m pytest tests/unit/test_notification_policy_templates.py -q`; `scripts/verify.sh backend > /tmp/opencode/issue113-backend-parity.log 2>&1` | green: 5 focused; 2371 passed, 14 skipped |
 | 2 | Docker lab: upgraded existing seeded DB after initial smoke failed (missing table); repeat 9/9 passed; policy PUT and `nagios -v` accepted custom period; forced host DOWN yielded zero notifications quiet versus 28 outside; recorded partial sanitized report | `scripts/lab smoke`; `docker compose -f lab/compose.yaml exec appliance /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg`; `scripts/verify.sh docs > /tmp/opencode/issue113-docs-lab.log 2>&1` | smoke 9/9 after upgrade; Nagios 0 warnings/errors; docs green; service CRITICAL and browser still untested |
 | 3 | Enabled SSH plugin, generated five service checks, forced CRITICAL to HARD during quiet/24x7 windows; sanitized partial report updated | `docker compose -f lab/compose.yaml exec appliance /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg`; `scripts/verify.sh docs > /tmp/opencode/issue113-docs-service.log 2>&1` | 13 services and 0 Nagios errors; 0 quiet service notifications versus 28 outside; docs green |
+| 4 | Documented API contract, model/Nagios ownership, settings UI and operator instructions; status notes Docker coverage and remaining gaps | `scripts/verify.sh docs > /tmp/opencode/issue113-docs-specs.log 2>&1` | green |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh docs > /tmp/opencode/issue113-docs-service.log 2>&1`
-- Result (first failing lines, or "green"): green: docs stage; service CRITICAL HARD yielded 0 quiet versus 28 outside dispatch records.
-- Hypothesis: Need the owning specifications/manual and browser interaction evidence; Docker does not prove actual email delivery or installer VM behavior.
-- Next action (one specific step, not "continue"): Update the owning specifications and settings manual, then verify docs; consider browser UI lab evidence before finish.
+- Last check run (exact command): `scripts/verify.sh docs > /tmp/opencode/issue113-docs-specs.log 2>&1`
+- Result (first failing lines, or "green"): green.
+- Hypothesis: Browser UI interaction remains the only explicit Docker lab flow unobserved; the approved Docker lab does not prove installed VM or inbox delivery.
+- Next action (one specific step, not "continue"): Drive Settings → System Notification policy in a browser against Docker, save and reload, then update the sanitized report.
 
 ## Decisions and notes
 
@@ -80,5 +83,5 @@ Requirement coverage (every requirement the issue states, and the check that pro
 - `flask db migrate --multidb` and `flask db upgrade --multidb` are not recognized by installed Flask-Migrate; `flask db migrate` generated both default and history functions. Reviewed generated schema; manual seed necessary because autogenerate does not populate singleton data. Migration round trip tested on disposable databases.
 - Resolved blocker: issue comment from esfen14 on 2026-10-13 approves and instructs use of repository Docker labs. No source code changed yet.
 - The earlier pre-existing worktree modification to `client/src/test/SystemSettingsConflict.test.tsx` was not included in issue commits; inspect status before touching it.
-- Prior session stopped at five rounds; step 10 now has an independent fixture from pre-change commit `92a896d5` and a byte comparison (timestamp normalized only). Plan revised because the original final step omitted explicit lab, documentation and regression stages; these are required deliverables. This session must verify actual default generated-file byte parity against pre-change output, not only template-level assertions. Also review timeperiod syntax against Nagios (`24:00` and comma-separated ranges) in the Docker lab, and review whether service default directives must be explicit without violating byte parity.
+- Plan expanded after lab evidence showed browser UI flow remains untested and the issue requires full verification; added steps 13–14. Prior session stopped at five rounds; step 10 now has an independent fixture from pre-change commit `92a896d5` and a byte comparison (timestamp normalized only). Plan revised because the original final step omitted explicit lab, documentation and regression stages; these are required deliverables. This session must verify actual default generated-file byte parity against pre-change output, not only template-level assertions. Also review timeperiod syntax against Nagios (`24:00` and comma-separated ranges) in the Docker lab, and review whether service default directives must be explicit without violating byte parity.
 - Sensitive-module review pending: API validation whitelists weekday/time/option values, no shell interpolation introduced, generated file uses fixed destination and existing Nagios pre-apply validation; verify no secrets enter new logs or response. Lab acceptance and documentation remain unverified.

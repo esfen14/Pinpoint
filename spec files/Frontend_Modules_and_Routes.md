@@ -29,7 +29,7 @@ requests use `src/lib/api.ts`; Plugin Manager wrappers live in
 | `/system-logs` | `SystemLogsPage` | `system.logs` | Connected to five log categories |
 | `/accounts` | `ManageAccountsPage` | `account.view` | Connected to account/role APIs. The table shows each user's Email Alerts (On/Off); the add and edit forms show a "Send this user email alerts" checkbox only with `account.alerts`, and a failed Nagios apply is shown as a notice. The first account is marked by the account API as `is_super_admin`; its edit form keeps Status Active, disables the status selector, explains that the bootstrap administrator must retain account/role administration, and disables role options whose `preserves_bootstrap_admin_access` value is false |
 | `/manage-roles` | `ManageRolesPage` | `role.view` | Connected to role and permission APIs. The built-in `Administrator` role shows every permission as read-only with an explanation, and its name cannot be edited. The bootstrap administrator's assigned role is marked as locked; its edit form disables the seven account/role administration permission controls and role deactivation, even when assigned to a different role |
-| `/settings` | `SettingsPage` | Any logged-in user; tabs are separately gated | Connected to system settings and user preferences. Tabs: General Settings, Security, System, Network Discovery and Plugins |
+| `/settings` | `SettingsPage` | Any logged-in user; tabs are separately gated | Connected to system settings and user preferences. Tabs: General Settings, Security, System, Network Discovery, Plugins and Email; the System tab includes the notification-policy card |
 | `/` | Redirect | — | Redirects to `/login` |
 | unmatched path | Redirect | — | Redirects to `/login` |
 
@@ -41,7 +41,7 @@ This is usability protection only; backend permission checks remain mandatory.
 
 The Settings page is generally available to logged-in users. Its Security,
 System, Network Discovery, Plugins and Email tabs require `settings.security`,
-`settings.system`, `settings.discovery`, `settings.plugins` and `settings.email`, respectively.
+`settings.system`, `settings.discovery`, `settings.plugins` and `settings.email`, respectively. General's `notifications` toggle only shows/hides the header bell; it does not stop email or change Nagios' `enable_notifications`. The System tab's `NotificationPolicySettings` card is visible only with `settings.system` and reads/writes `/api/system/notification-policy` through `lib/notificationPolicyApi.ts` and `types/notificationPolicy.ts`. Quiet-hour weekdays and 24-hour times are interpreted in Nagios server local time. The card validates time format, order, overlap, options and interval; 409 offers a reload and 400/422 display the server's message.
 
 `AdminLayout` replaces the whole shell with a blocking window while the account
 is flagged: `FirstRunSetup` when `needsSetup` (bootstrap administrator: current

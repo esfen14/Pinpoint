@@ -123,6 +123,8 @@ Security and system setting fields are restricted with `settings.security` and
 | `GET /api/system/notification-policy` | `settings.system` | Read the singleton policy; quiet-hour windows use the Nagios server's local time |
 | `PUT /api/system/notification-policy` | `settings.system` | Validate quiet-hour windows, host/service options, and renotify interval (0–1440 minutes); 400 on invalid fields, 409 on stale version, 422 with Nagios feedback on failed config apply, rolling back the database; audit changed fields when enabled |
 
+Both routes use the standard success/error envelopes. GET returns `quietHours` (weekday, `start`, `end` in 24-hour `HH:MM`), `hostOptions`, `serviceOptions`, `renotifyInterval`, `version` and `timeZone` (`Nagios server local time`). PUT accepts those editable fields plus the current integer `version`; `timeZone` is informational. Quiet windows cannot cross midnight or overlap on one weekday. The policy belongs to the default-bind singleton, and a successful save regenerates/validates/applies the shared Nagios candidate file before committing.
+
 ### `app/api/system/dashboard.py`
 
 | Method and path | Permission | Purpose |
