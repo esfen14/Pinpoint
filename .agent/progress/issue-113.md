@@ -45,7 +45,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 11. [x] Run approved Docker lab for `nagios -v` and inside/outside notification events; record sanitized evidence under `docs/test-runs/` (host DOWN and service CRITICAL dispatch; browser/VM/email evidence remains unverified).
 12. [x] Update manual and owning specs (`spec files/Backend_Modules_and_Routes.md`, `Data_Model_and_Integrations.md`, `Frontend_Modules_and_Routes.md`, `Implementation_Status.md`), then verify docs.
 13. [x] Exercise browser save/reload with the approved Docker lab, update `docs/test-runs/2026-10-13-issue-113-notification-policy/REPORT.md` and check required finish evidence.
-14. [ ] Run `scripts/verify.sh all`, re-read issue and decide PR status from observed evidence.
+14. [x] Run `scripts/verify.sh all`, re-read issue and decide PR status from observed evidence (draft pending installer VM/inbox/review).
 
 ## Round log
 
@@ -70,13 +70,15 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | 3 | Enabled SSH plugin, generated five service checks, forced CRITICAL to HARD during quiet/24x7 windows; sanitized partial report updated | `docker compose -f lab/compose.yaml exec appliance /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg`; `scripts/verify.sh docs > /tmp/opencode/issue113-docs-service.log 2>&1` | 13 services and 0 Nagios errors; 0 quiet service notifications versus 28 outside; docs green |
 | 4 | Documented API contract, model/Nagios ownership, settings UI and operator instructions; status notes Docker coverage and remaining gaps | `scripts/verify.sh docs > /tmp/opencode/issue113-docs-specs.log 2>&1` | green |
 | 5 | Added opt-in Playwright Docker browser flow: sign in, save quiet window, refresh/reload, remove and save; updated sanitized report and status | `LAB_ADMIN_PASSWORD=… node_modules/.bin/playwright test --config=notification-policy.lab.config.ts`; `scripts/verify.sh docs > /tmp/opencode/issue113-docs-browser.log 2>&1`; `scripts/verify.sh frontend > /tmp/opencode/issue113-frontend-browser.log 2>&1` | Playwright 1 passed; docs green; frontend green (26 warnings) |
+| resumed | Re-read issue and comments; clean branch, reran prior frontend verification | `scripts/verify.sh frontend > /tmp/opencode/issue113-resume-frontend.log 2>&1` | green (26 warnings) |
+| 1 | Verified full suites and acceptance regressions, corrected lab report commit attribution; remaining installer VM/inbox/reviewer conditions prevent ready-for-review claim | `scripts/verify.sh all > /tmp/opencode/issue113-all.log 2>&1`; focused backend/frontend; `scripts/verify.sh docs > /tmp/opencode/issue113-docs-correction.log 2>&1` | all green: 2371 backend passed, 14 skipped; 513 frontend passed; docs green; focused 93 backend/38 frontend passed |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh frontend > /tmp/opencode/issue113-frontend-browser.log 2>&1`
-- Result (first failing lines, or "green"): green (26 warnings); Playwright browser run 1 passed and docs green.
-- Hypothesis: Remaining sign-off requires full verification and reviewer approval; Docker cannot prove installer VM/inbox delivery, but issue comment authorized the Docker lab.
-- Next action (one specific step, not "continue"): Re-read issue/finish-condition coverage, run `scripts/verify.sh all`, then decide whether to open a draft PR with outstanding review and verification recorded.
+- Last check run (exact command): `scripts/verify.sh docs > /tmp/opencode/issue113-docs-correction.log 2>&1`
+- Result (first failing lines, or "green"): green; `scripts/verify.sh all` green (2371 backend passed, 14 skipped; 513 frontend passed; 26 lint warnings).
+- Hypothesis: Approved Docker checks cover behavior, but issue §G expressly names VM; actual email and reviewer approval remain unavailable. Do not mark ready until that discrepancy is decided and evidence supplied.
+- Next action (one specific step, not "continue"): Open a draft PR with the outstanding VM/inbox/review limitations and ask maintainer whether Docker authorization substitutes for VM acceptance.
 
 ## Decisions and notes
 

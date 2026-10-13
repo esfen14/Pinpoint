@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Date | 2026-10-13 |
-| Commit tested | `6fb8df73` (working tree unchanged application code during run) |
+| Commit tested | `6fb8df73` for Nagios/API lab cases; `b5937ec4` for service timing; `6c2a5be1` plus the uncommitted Playwright test script for the browser case (script committed in `ee6d425e`) |
 | Plan | `docs/issues/issue-001.md` §G; approved repository Docker lab |
 | Tester | OpenCode agent |
 | Environment | Docker local lab, Nagios Core 4.5.11, isolated `10.78.0.0/24`, existing seeded appliance upgraded to issue migration |
