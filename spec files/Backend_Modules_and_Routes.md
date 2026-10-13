@@ -116,6 +116,13 @@ The `system_bp` root makes these paths `/api/system`.
 Security and system setting fields are restricted with `settings.security` and
 `settings.system`; personal fields are handled by `/api/user/preferences`.
 
+### `app/api/system/notification_policy.py`
+
+| Method and path | Permission | Purpose |
+|---|---|---|
+| `GET /api/system/notification-policy` | `settings.system` | Read the singleton policy; quiet-hour windows use the Nagios server's local time |
+| `PUT /api/system/notification-policy` | `settings.system` | Validate quiet-hour windows, host/service options, and renotify interval (0–1440 minutes); 400 on invalid fields, 409 on stale version, 422 with Nagios feedback on failed config apply, rolling back the database; audit changed fields when enabled |
+
 ### `app/api/system/dashboard.py`
 
 | Method and path | Permission | Purpose |
