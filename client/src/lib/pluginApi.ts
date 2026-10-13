@@ -38,6 +38,7 @@ export type InventoryQuery = {
   search?: string
   type?: string
   status?: string
+  group?: string
 }
 
 export function getPluginSummary() {

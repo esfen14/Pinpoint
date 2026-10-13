@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ArrowUpDown, Filter, Search } from 'lucide-react'
 import type { ServiceRow, ServiceState } from '../../types/service'
 import { useDisplayTime } from '../../hooks/useDisplayTime'
+import { Pagination } from '../shared/Pagination'
 
 type ServiceStatusTableProps = {
   services: ServiceRow[]
@@ -147,8 +148,6 @@ export function ServiceStatusTable({
   page,
   pageCount,
   total,
-  hasNext,
-  hasPrev,
   onPageChange,
   onAcknowledge,
   onUnacknowledge,
@@ -289,25 +288,7 @@ export function ServiceStatusTable({
       <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3 text-sm text-gray-500 dark:border-white/10 dark:text-gray-400">
         <span>Page {page} of {pageCount} · {total} services total</span>
 
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => onPageChange(page - 1)}
-            disabled={!hasPrev}
-            className="rounded-lg px-3 py-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-white/10"
-          >
-            Previous
-          </button>
-          <span className="rounded-lg bg-gray-900 px-3 py-1 text-white dark:bg-white/10">{page}</span>
-          <button
-            type="button"
-            onClick={() => onPageChange(page + 1)}
-            disabled={!hasNext}
-            className="rounded-lg px-3 py-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-white/10"
-          >
-            Next
-          </button>
-        </div>
+        <Pagination page={page} pageCount={pageCount} onPageChange={onPageChange} />
       </div>
 
     </div>

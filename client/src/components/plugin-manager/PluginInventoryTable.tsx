@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { ArrowUpDown, Filter, RefreshCw, Search } from 'lucide-react'
 import type { PluginListItem, PluginStatus, PluginType } from '../../types/plugin'
 import { useDisplayTime } from '../../hooks/useDisplayTime'
+import { PLUGIN_GROUPS, type PluginGroup } from './pluginGroups'
+import { Pagination } from '../shared/Pagination'
 
 type Props = {
   plugins: PluginListItem[]
@@ -12,6 +14,8 @@ type Props = {
   onTypeFilterChange: (type: 'All' | PluginType) => void
   statusFilter: 'All' | PluginStatus | 'Failed'
   onStatusFilterChange: (status: 'All' | PluginStatus | 'Failed') => void
+  group: 'All' | PluginGroup
+  onGroupChange: (group: 'All' | PluginGroup) => void
   showFilter: boolean
   onToggleFilter: () => void
   sortAsc: boolean
@@ -96,6 +100,8 @@ export function PluginInventoryTable({
   onTypeFilterChange,
   statusFilter,
   onStatusFilterChange,
+  group,
+  onGroupChange,
   showFilter,
   onToggleFilter,
   sortAsc,
@@ -103,8 +109,6 @@ export function PluginInventoryTable({
   page,
   pageCount,
   total,
-  hasNext,
-  hasPrev,
   onPageChange,
   onSelectPlugin,
   onScan,
@@ -208,6 +212,25 @@ export function PluginInventoryTable({
         </div>
       </div>
 
+      <div role="tablist" aria-label="Plugin category" className="flex gap-1 overflow-x-auto border-b border-gray-200 px-4 dark:border-white/10">
+        {(['All', ...PLUGIN_GROUPS] as const).map((g) => (
+          <button
+            key={g}
+            type="button"
+            role="tab"
+            aria-selected={group === g}
+            onClick={() => onGroupChange(g)}
+            className={`whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium transition ${
+              group === g
+                ? 'border-[#ffb100] text-[#ffb100]'
+                : 'border-transparent text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
+            }`}
+          >
+            {g}
+          </button>
+        ))}
+      </div>
+
       <div className="overflow-x-auto">
         <table className="w-full min-w-225 text-left text-sm">
           <thead>
@@ -276,29 +299,7 @@ export function PluginInventoryTable({
           Page {page} of {pageCount} · {total} plugins total
         </span>
 
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => onPageChange(page - 1)}
-            disabled={!hasPrev}
-            className="rounded-lg px-3 py-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-white/10"
-          >
-            Previous
-          </button>
-
-          <span className="rounded-lg bg-white border border-gray-200 px-3 py-1 text-gray-900 shadow-sm dark:bg-white/10 dark:text-white dark:border-transparent">
-            {page}
-          </span>
-
-          <button
-            type="button"
-            onClick={() => onPageChange(page + 1)}
-            disabled={!hasNext}
-            className="rounded-lg px-3 py-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-white/10"
-          >
-            Next
-          </button>
-        </div>
+        <Pagination page={page} pageCount={pageCount} onPageChange={onPageChange} />
       </div>
       {hover && (
         <div

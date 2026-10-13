@@ -279,7 +279,7 @@ def plugin_inventory():
 
     **Errors**
 
-    * ``400`` - invalid sort field, order, page, per_page, type, or status.
+    * ``400`` - invalid sort field, order, page, per_page, type, status, or group.
     * ``500`` - unexpected internal error (logged with traceback).
     """
     try:
@@ -290,10 +290,11 @@ def plugin_inventory():
         search = request.args.get("search", default="", type=str)
         plugin_type = request.args.get("type", default=None, type=str)
         status = request.args.get("status", default=None, type=str)
+        group = request.args.get("group", default=None, type=str)
 
         data = service.get_plugin_inventory(
             page=page, per_page=per_page, search=search,
-            plugin_type=plugin_type, status=status,
+            plugin_type=plugin_type, status=status, group=group,
             sort_by=sort_by, order=order,
         )
         return success(data)
