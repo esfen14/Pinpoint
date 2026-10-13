@@ -1,7 +1,7 @@
 # Issue #133: Clear acknowledgements on recovery and audit History
 
 Branch: `issue-133-clear-ack-recovery-audit-history`
-Status: ready-for-review
+Status: in-progress
 
 ## Finish condition
 
@@ -97,7 +97,7 @@ Requirement coverage (section A problem, C changes, D guidelines, G testing, exc
 - Last check run (exact command): `scripts/verify.sh all > /tmp/opencode/issue-133-all.log 2>&1; tail -30 /tmp/opencode/issue-133-all.log`
 - Result (first failing lines, or "green"): green — verify: all OK; 26 lint warnings, zero errors
 - Hypothesis: Backend-dependent history gaps remain open as #141–#144; live lab and reviewer/CI evidence are not available in this session, so PR must stay draft with progress file.
-- Next action (one specific step, not "continue"): After a fresh session, re-run full verification and arrange a live appliance walk for acknowledge/recovery/history and History filters, then finish PR review checklist.
+- Next action (one specific step, not "continue"): Arrange a live appliance walk for acknowledge/recovery/history and History filters; record sanitized evidence and then re-run full verification before marking PR ready.
 
 ## Decisions and notes
 
@@ -105,3 +105,4 @@ Requirement coverage (section A problem, C changes, D guidelines, G testing, exc
 - Specs: Display_Requirements.md §4.9; Data_Model_and_Integrations.md §§Nagios integration, Alert acknowledgement lifecycle; Alerts_Notifications_History_Requirements.md §§1–5. Implementation_Status.md identifies both gaps.
 - Section G explicitly calls for live lab and manual walk, but no lab action will be implied by isolated tests. If unavailable, report honestly and use a draft PR.
 - H reviewer approvals and CI require people/remote CI and cannot be ticked speculatively.
+- Draft PR: https://github.com/esfen14/Pinpoint/pull/145. `gh pr edit` hits deprecated projectCards GraphQL; body updated via `gh api PATCH`. This remains unfinished: backend gaps #141–#144, live lab/manual verification, CI/review evidence. Local full verification log is `/tmp/opencode/issue-133-all.log` (not attached as an artifact).
