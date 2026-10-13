@@ -71,7 +71,7 @@ describe('ManageRolesPage bootstrap administrator protection', () => {
     })
   })
 
-  it('explains and locks the permissions needed for account and role management', async () => {
+  it('explains and locks every built-in Administrator permission', async () => {
     const user = userEvent.setup()
     render(
       <MemoryRouter>
@@ -84,12 +84,13 @@ describe('ManageRolesPage bootstrap administrator protection', () => {
 
     expect(
       await screen.findByText(
-        'This role belongs to the bootstrap administrator. Permissions required to manage accounts and roles cannot be removed.',
+        'The built-in Administrator role has fixed permissions. They cannot be added, removed, or changed.',
       ),
     ).toBeInTheDocument()
     for (const name of REQUIRED_PERMISSIONS) {
       expect(screen.getByRole('checkbox', { name })).toBeDisabled()
     }
-    expect(screen.getByRole('checkbox', { name: 'system.dashboard' })).toBeEnabled()
+    expect(screen.getByRole('checkbox', { name: 'system.dashboard' })).toBeDisabled()
+    expect(screen.getByDisplayValue('Administrator')).toBeDisabled()
   })
 })

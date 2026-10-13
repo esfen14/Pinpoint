@@ -340,6 +340,7 @@ def edit_role(id):
         if is_active is not None and not isinstance(is_active, bool):
             return error("is_active must be true or false.", 400)
 
+        role = get_role_by_id(id)
         super_admin = get_super_admin()
         if is_active is False and super_admin is not None and super_admin.RoleID == id:
             return error("The super admin's role cannot be deactivated.", 400)
@@ -354,6 +355,16 @@ def edit_role(id):
             if err is not None:
                 return err
 
+        if role.Name == "Administrator":
+            if role_name != role.Name:
+                return error("The built-in Administrator role cannot be renamed.", 400)
+            current_permission_ids = set(db.session.scalars(
+                sa.select(RolePermission.PermissionID)
+                .where(RolePermission.RoleID == id)
+            ))
+            if set(permissions) != current_permission_ids:
+                return error("The built-in Administrator role's permissions cannot be changed.", 400)
+
         if (
             super_admin is not None
             and super_admin.RoleID == id
@@ -366,8 +377,6 @@ def edit_role(id):
             )
         
         try:
-            role = get_role_by_id(id)
-            
             role.Name = role_name
             role.Description = description
             if is_active is not None:

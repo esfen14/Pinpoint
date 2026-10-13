@@ -277,6 +277,76 @@ class TestCreateRole:
 # ─── Edit Role ────────────────────────────────────────────────────────────────
 
 class TestEditRole:
+    @pytest.mark.parametrize("change", ["add", "remove", "replace", "clear"])
+    def test_administrator_permissions_are_immutable_for_direct_api_requests(
+        self, logged_in_client, db_session, admin_role, admin_user, seeded_permissions, change
+    ):
+        admin_role.Name = "Administrator"
+        db_session.session.commit()
+        original = set(db.session.scalars(
+            sa.select(RolePermission.PermissionID)
+            .where(RolePermission.RoleID == admin_role.RoleID)
+        ))
+        extra = Permission(Name="new.permission")
+        db_session.session.add(extra)
+        db_session.session.commit()
+        changes = {
+            "add": original | {extra.PermissionID},
+            "remove": original - {seeded_permissions["system.dashboard"].PermissionID},
+            "replace": {extra.PermissionID},
+            "clear": set(),
+        }
+        response = logged_in_client.put(
+            f"/api/user/roles/{admin_role.RoleID}",
+            json={"name": "Administrator", "description": "Changed", "permissions": list(changes[change])},
+        )
+        assert response.status_code == 400
+        assert response.get_json()["success"] is False
+        db.session.refresh(admin_role)
+        assert admin_role.Description == "Administrator"
+        assert set(db.session.scalars(
+            sa.select(RolePermission.PermissionID)
+            .where(RolePermission.RoleID == admin_role.RoleID)
+        )) == original
+
+    def test_administrator_same_permissions_in_reverse_order_allows_metadata_edit(
+        self, logged_in_client, db_session, admin_role, admin_user
+    ):
+        admin_role.Name = "Administrator"
+        db_session.session.commit()
+        original = list(db.session.scalars(
+            sa.select(RolePermission.PermissionID)
+            .where(RolePermission.RoleID == admin_role.RoleID)
+        ))
+        response = logged_in_client.put(
+            f"/api/user/roles/{admin_role.RoleID}",
+            json={"name": "Administrator", "description": "Updated", "permissions": list(reversed(original))},
+        )
+        assert response.status_code == 200
+        db.session.refresh(admin_role)
+        assert admin_role.Description == "Updated"
+        assert set(db.session.scalars(
+            sa.select(RolePermission.PermissionID)
+            .where(RolePermission.RoleID == admin_role.RoleID)
+        )) == set(original)
+
+    def test_administrator_cannot_be_renamed_to_evade_permission_lock(
+        self, logged_in_client, db_session, admin_role, admin_user
+    ):
+        admin_role.Name = "Administrator"
+        db_session.session.commit()
+        original = list(db.session.scalars(
+            sa.select(RolePermission.PermissionID)
+            .where(RolePermission.RoleID == admin_role.RoleID)
+        ))
+        response = logged_in_client.put(
+            f"/api/user/roles/{admin_role.RoleID}",
+            json={"name": "Renamed", "description": "Administrator", "permissions": original},
+        )
+        assert response.status_code == 400
+        db.session.refresh(admin_role)
+        assert admin_role.Name == "Administrator"
+
     def test_edit_role_success(self, logged_in_client, db_session, seeded_permissions):
         role = _make_role(db_session, "EditableRole")
         perm_id = list(seeded_permissions.values())[0].PermissionID
