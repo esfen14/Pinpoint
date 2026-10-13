@@ -13,6 +13,16 @@ import { useDisplayTime } from '../hooks/useDisplayTime'
 
 type StatusFilter = 'all' | 'active' | 'inactive'
 
+const BOOTSTRAP_ADMIN_REQUIRED_PERMISSIONS = new Set([
+  'account.view',
+  'account.edit',
+  'account.info',
+  'role.view',
+  'role.edit',
+  'role.info',
+  'role.list',
+])
+
 async function fetchRoles(): Promise<Role[]> {
   const data = await apiGet<{ items: Parameters<typeof fromRoleRecord>[0][] }>(
     '/api/user/roles?per_page=100'
@@ -559,23 +569,41 @@ function EditRoleModal({
             </div>
 
             <h3 className="mt-6 text-sm font-medium text-[var(--text)]">Permissions</h3>
+            {role.isLocked && (
+              <p className="mt-2 text-xs text-[var(--text-muted)]">
+                This role belongs to the bootstrap administrator. Permissions required to manage
+                accounts and roles cannot be removed.
+              </p>
+            )}
             <div className="mt-2 max-h-56 overflow-y-auto rounded-2xl border border-[var(--border)]">
-              {permissionOptions.map((perm, i) => (
-                <label
-                  key={perm.id}
-                  className={`flex cursor-pointer items-center justify-between px-4 py-3 text-sm text-[var(--text)] hover:bg-[var(--hover)] ${
-                    i !== permissionOptions.length - 1 ? 'border-b border-[var(--border)]' : ''
-                  }`}
-                >
-                  <span>{perm.name}</span>
-                  <input
-                    type="checkbox"
-                    checked={permissions.includes(perm.id)}
-                    onChange={() => togglePermission(perm.id)}
-                    className="h-4 w-4 rounded border-[var(--border)] accent-[#ffb100]"
-                  />
-                </label>
-              ))}
+              {permissionOptions.map((perm, i) => {
+                const isRequiredForBootstrapAdmin =
+                  role.isLocked && BOOTSTRAP_ADMIN_REQUIRED_PERMISSIONS.has(perm.name)
+                return (
+                  <label
+                    key={perm.id}
+                    className={`flex items-center justify-between px-4 py-3 text-sm text-[var(--text)] hover:bg-[var(--hover)] ${
+                      isRequiredForBootstrapAdmin ? 'cursor-not-allowed' : 'cursor-pointer'
+                    } ${
+                      i !== permissionOptions.length - 1 ? 'border-b border-[var(--border)]' : ''
+                    }`}
+                  >
+                    <span>{perm.name}</span>
+                    <input
+                      type="checkbox"
+                      checked={permissions.includes(perm.id)}
+                      onChange={() => togglePermission(perm.id)}
+                      disabled={isRequiredForBootstrapAdmin}
+                      title={
+                        isRequiredForBootstrapAdmin
+                          ? 'Required for the bootstrap administrator to manage accounts and roles.'
+                          : undefined
+                      }
+                      className="h-4 w-4 rounded border-[var(--border)] accent-[#ffb100] disabled:cursor-not-allowed disabled:opacity-60"
+                    />
+                  </label>
+                )
+              })}
             </div>
 
             {error && <p className="mt-4 text-center text-sm text-red-600">{error}</p>}
