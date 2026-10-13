@@ -33,7 +33,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 ## Plan
 
 1. [x] Create `NotificationPolicy` model in `server/app/system_models.py`.
-2. [ ] Add migration with `flask db migrate --multidb`.
+2. [x] Add multi-bind migration via `flask db migrate` (the `--multidb` flag is unsupported in this repository's initialized multi-bind Alembic environment).
 3. [ ] Create `server/app/api/system/notification_policy.py` and register it in `server/app/api/system/__init__.py`.
 4. [ ] Create `server/app/network_discovery/templates/timeperiod.cfg.tpl` and update `host.cfg.tpl`, `service.cfg.tpl`, `contact_template.cfg.tpl`.
 5. [ ] Update `server/app/network_discovery/create_host_cfg.py` to use `NotificationPolicy`.
@@ -48,17 +48,18 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | 1 | Plan created | N/A | N/A |
 | resumed | Issue comment approves sensitive-module changes and repository Docker lab | N/A (no prior check run) | in-progress |
 | 1 | Added failing model-default test then `NotificationPolicy` model | `.venv/bin/python -m pytest tests/unit/test_notification_policy.py -q`; `scripts/verify.sh backend` | focused green (1 passed); broad check timed out after 45%, not a test failure |
+| 2 | Added failing migration round-trip test, generated multi-bind revision, manually seeded singleton | `.venv/bin/python -m pytest tests/unit/test_notification_policy_migration.py -q`; `scripts/verify.sh backend` | 1 passed; 2354 passed, 14 skipped |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh backend` (120000 ms timeout)
-- Result (first failing lines, or "green"): Timed out at 45% of pytest; no failure observed. Focused test green (1 passed).
-- Hypothesis: Isolated suite needs more than 120 seconds.
-- Next action (one specific step, not "continue"): Write failing migration upgrade/downgrade test, then generate and review multi-bind migration.
+- Last check run (exact command): `scripts/verify.sh backend`
+- Result (first failing lines, or "green"): green: 2354 passed, 14 skipped.
+- Hypothesis: Next round requires guarded API and validated payload before config use.
+- Next action (one specific step, not "continue"): Add failing API tests for permissions, validation, stale version and rollback; implement the route.
 
 ## Decisions and notes
 
 - Reusing `SystemSettings` singleton pattern for `NotificationPolicy`.
-- Need to ensure `flask db migrate` correctly handles the new table.
+- `flask db migrate --multidb` and `flask db upgrade --multidb` are not recognized by installed Flask-Migrate; `flask db migrate` generated both default and history functions. Reviewed generated schema; manual seed necessary because autogenerate does not populate singleton data. Migration round trip tested on disposable databases.
 - Resolved blocker: issue comment from esfen14 on 2026-10-13 approves and instructs use of repository Docker labs. No source code changed yet.
 - Pre-existing worktree modification: `client/src/test/SystemSettingsConflict.test.tsx` was already modified at branch creation; do not overwrite or include it.
