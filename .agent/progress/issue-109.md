@@ -34,7 +34,7 @@ revise it in place and say why in the round log. Name the files each step touche
 
 1. [x] Add failing backend regression tests for both lockout paths, unchanged persistence, and permitted edits in `server/tests/unit/test_management.py`; implement the shared required-permission guard and response metadata in `server/app/api/user/management.py`; run the focused test module and `scripts/verify.sh backend`.
 2. [x] Add failing UI regression tests in `client/src/test/ManageAccountsPage.test.tsx` and a focused Manage Roles test; update `client/src/types/user.ts`, `client/src/pages/ManageAccountsPage.tsx`, and `client/src/pages/ManageRolesPage.tsx` to explain and prevent unsafe changes before save; run focused tests and `scripts/verify.sh frontend`.
-3. [ ] Update `spec files/Backend_Modules_and_Routes.md`, `spec files/Frontend_Modules_and_Routes.md`, and `spec files/Implementation_Status.md`; run `scripts/verify.sh docs`.
+3. [x] Update `spec files/Backend_Modules_and_Routes.md`, `spec files/Frontend_Modules_and_Routes.md`, and `spec files/Implementation_Status.md`; run `scripts/verify.sh docs`.
 4. [ ] Re-read issue #109, map every requirement to observed proof, run the named focused checks and `scripts/verify.sh all`, then complete the PR workflow.
 
 ## Round log
@@ -45,15 +45,16 @@ One row per loop round, newest last.
 |---|---|---|---|
 | 1 | Added backend regression coverage, required-permission guards before mutation, and role-option safety metadata. | `.venv/bin/python -m pytest tests/unit/test_management.py -q`; `scripts/verify.sh backend` | Focused suite: 66 passed. Initial sandboxed backend run: 5 failed / 1 error because sockets and DNS were denied; identical escalated run: 2,337 passed, 14 skipped, backend OK. |
 | 2 | Added account-role safety mapping and UI explanation/disabled unsafe options; added locked-role explanation and disabled required permission controls; added focused page tests. | `npm run test -- --run src/test/ManageAccountsPage.test.tsx src/test/ManageRolesPage.test.tsx`; `scripts/verify.sh frontend` | Tests failed first because both protections were absent, then 27 passed; full frontend test/build/lint stage passed with 25 existing warnings. |
+| 3 | Documented the backend invariant/response metadata, both pre-save UI protections, and completed implementation status. | `scripts/verify.sh docs` | Green: links, drift checks, QA contracts, and progress validation passed; `verify: docs OK`. |
 
 ## State for the next session
 
 Everything a fresh session needs to continue without redoing work.
 
-- Last check run (exact command): `scripts/verify.sh frontend`
-- Result (first failing lines, or "green"): Green: frontend tests, build, and lint passed; 25 existing lint warnings remain non-blocking.
-- Hypothesis: The backend route catalog, frontend page catalog, and implementation inventory need concise updates describing the seven-permission invariant and the pre-save controls.
-- Next action (one specific step, not "continue"): Update the three owning specification files and run `scripts/verify.sh docs`.
+- Last check run (exact command): `scripts/verify.sh docs`
+- Result (first failing lines, or "green"): Green: `verify: docs OK`.
+- Hypothesis: All implementation and documentation requirements are covered; the finish pass must re-read the live issue, rerun each proof, and finish with `scripts/verify.sh all`.
+- Next action (one specific step, not "continue"): Re-read issue #109 including comments and map each current requirement to a proof command before the final verification run.
 
 ## Decisions and notes
 

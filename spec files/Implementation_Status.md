@@ -14,10 +14,12 @@ the normative behavior in the requirement specifications.
   prompts for a policy-compliant temporary password, identifies only the unique
   earliest-created account, preserves setup/status/role/data, forces a password
   change and records a password-free audit event; current sessions continue to
-  expire on their configured timeout. The first account (super admin) is protected
-  from suspension or inactivation by the account-update route, while its other
-  fields remain editable; the account response marks it for the edit form, which
-  disables its status selector.
+  expire on their configured timeout. The first account (bootstrap administrator)
+  is protected from suspension, inactivation, assignment to a role without the
+  seven account/role administration permissions, and removal of those permissions
+  from its assigned role. Both routes reject before changing persisted data. The
+  account and role responses mark the protected choices so their edit forms explain
+  the restriction and disable unsafe status, role, and permission controls.
 - Singleton system settings with personal/system separation and optimistic
   version conflict handling. The system Check interval (1/2/5/10/15 minutes)
   generates host and service check intervals through the shared Nagios writer;
