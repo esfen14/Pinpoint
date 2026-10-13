@@ -480,6 +480,13 @@ def _create_host_cfg_file(discovered_hosts, skipped=None):
 
     host_config.append(_add_space(4))
 
+    # A custom notification timeperiod belongs in this same candidate file so
+    # Nagios validates it together with every object that references it.
+    timeperiod = create_notification_timeperiod()
+    if timeperiod:
+        host_config.append(timeperiod)
+        host_config.append(_add_space(4))
+
     host_config.append(
         f"""
 

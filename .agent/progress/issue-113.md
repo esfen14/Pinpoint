@@ -36,7 +36,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 2. [x] Add multi-bind migration via `flask db migrate` (the `--multidb` flag is unsupported in this repository's initialized multi-bind Alembic environment).
 3. [x] Create `server/app/api/system/notification_policy.py` and register it in `server/app/api/system/__init__.py`.
 4. [x] Create `server/app/network_discovery/templates/timeperiod.cfg.tpl` and update `host.cfg.tpl`, `service.cfg.tpl`, `contact_template.cfg.tpl` and rendering in `host_config_templates.py`.
-5. [ ] Update `server/app/network_discovery/create_host_cfg.py` to use `NotificationPolicy`.
+5. [x] Update `server/app/network_discovery/create_host_cfg.py` to render the timeperiod in the candidate file.
 6. [ ] Create `client/src/types/notificationPolicy.ts` and `client/src/lib/notificationPolicyApi.ts`.
 7. [ ] Create `client/src/components/settings/NotificationPolicySettings.tsx` and integrate it into `SettingsPage.tsx`.
 8. [ ] Implement tests and verify.
@@ -51,13 +51,14 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | 2 | Added failing migration round-trip test, generated multi-bind revision, manually seeded singleton | `.venv/bin/python -m pytest tests/unit/test_notification_policy_migration.py -q`; `scripts/verify.sh backend` | 1 passed; 2354 passed, 14 skipped |
 | 3 | Added failing API cases; implemented guarded GET/PUT, validation and rollback; updated route catalog for drift check | `.venv/bin/python -m pytest tests/unit/test_notification_policy_api.py -q`; `scripts/verify.sh backend` | 11 passed; 2365 passed, 14 skipped |
 | 4 | Added failing rendering test, conditional period and template directives preserving default | `.venv/bin/python -m pytest tests/unit/test_notification_policy_templates.py -q`; `scripts/verify.sh backend` | 2 passed; 2367 passed, 14 skipped |
+| 5 | Added failing full-file test; render custom period in shared candidate config | `.venv/bin/python -m pytest tests/unit/test_notification_policy_templates.py -q`; `scripts/verify.sh backend` | 3 passed; 2368 passed, 14 skipped |
 
 ## State for the next session
 
 - Last check run (exact command): `scripts/verify.sh backend`
-- Result (first failing lines, or "green"): green: 2367 passed, 14 skipped.
-- Hypothesis: Config builder must emit the timeperiod in hosts.cfg only for quiet hours and preserve default bytes.
-- Next action (one specific step, not "continue"): Add failing full-config rendering regression test, then wire the timeperiod into `_create_host_cfg_file()`.
+- Result (first failing lines, or "green"): green: 2368 passed, 14 skipped.
+- Hypothesis: Need frontend types and API adapter, then settings card and lab check; no live evidence yet.
+- Next action (one specific step, not "continue"): Add failing frontend API adapter test then implement `notificationPolicy.ts` and `notificationPolicyApi.ts`.
 
 ## Decisions and notes
 
