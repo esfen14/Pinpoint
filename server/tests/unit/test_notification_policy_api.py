@@ -58,6 +58,15 @@ def test_stale_and_failed_apply_roll_back(logged_in_client, db_session):
     assert logged_in_client.put(URL, json=data).status_code == 409
 
 
+def test_boolean_version_cannot_bypass_optimistic_lock(logged_in_client):
+    data = policy(logged_in_client)
+    data["version"] = True
+    with patch("app.network_discovery.create_host_cfg.regenerate_and_apply_config_status") as apply:
+        response = logged_in_client.put(URL, json=data)
+    assert response.status_code == 409
+    apply.assert_not_called()
+
+
 def test_save_persists_and_regenerates(logged_in_client):
     data = policy(logged_in_client)
     data["renotifyInterval"] = 15

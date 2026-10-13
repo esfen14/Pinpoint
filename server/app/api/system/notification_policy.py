@@ -110,7 +110,7 @@ def update_notification_policy():
         return error(problem, 400)
     try:
         row = policy_row()
-        if data.get("version") != row.Version:
+        if type(data.get("version")) is not int or data["version"] != row.Version:
             db.session.rollback()
             return error("Notification policy was updated by someone else. Reload and try again.", 409)
         before = serialize_policy(row)

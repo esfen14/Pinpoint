@@ -61,13 +61,14 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | 2 | Added failing interaction suite, policy card on System tab and corrected bell-only label | `npm run test -- src/test/NotificationPolicySettings.test.tsx`; `scripts/verify.sh frontend > /tmp/opencode/issue113-frontend-round2.log 2>&1` | green: focused 5 passed; full frontend stage passed (26 warnings) |
 | 3 | Added failing contact propagation/template-registration test; custom contacts inherit a non-registering policy template while default users retain generic-contact | `.venv/bin/python -m pytest tests/unit/test_notification_policy_templates.py -q`; `scripts/verify.sh backend > /tmp/opencode/issue113-backend-round3b.log 2>&1` | green: 4 focused; 2369 passed, 14 skipped |
 | 4 | Added Settings permission/fragment and bell-label regression assertions; existing tab guard and corrected label already satisfied them | `npm run test -- src/test/SystemSettingsConflict.test.tsx src/test/PageAccess.test.tsx`; `scripts/verify.sh frontend > /tmp/opencode/issue113-frontend-round4.log 2>&1` | green: 27 focused tests; frontend stage green (26 warnings) |
+| 5 | Reproduced boolean-version optimistic-lock bypass and rejected it before Nagios apply | `.venv/bin/python -m pytest tests/unit/test_notification_policy_api.py -q`; `scripts/verify.sh backend > /tmp/opencode/issue113-backend-round5.log 2>&1` | green: 12 focused; 2370 passed, 14 skipped |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh frontend > /tmp/opencode/issue113-frontend-round4.log 2>&1`
-- Result (first failing lines, or "green"): green: frontend stage, 26 warnings.
-- Hypothesis: The default parity test still requires an independent pre-change rendering comparison, and Nagios syntax must be checked in lab.
-- Next action (one specific step, not "continue"): Add independent byte-parity test using pre-change baseline fixture, then review API edge cases.
+- Last check run (exact command): `scripts/verify.sh backend > /tmp/opencode/issue113-backend-round5.log 2>&1`
+- Result (first failing lines, or "green"): green: 2370 passed, 14 skipped.
+- Hypothesis: Default byte parity requires an independent pre-change rendering comparison; custom contact inheritance and timeperiod syntax need actual Nagios lab validation.
+- Next action (one specific step, not "continue"): Add a byte-parity test with a pre-change baseline fixture (normalize generated timestamp), then run approved Docker lab syntax check.
 
 ## Decisions and notes
 
@@ -75,5 +76,5 @@ Requirement coverage (every requirement the issue states, and the check that pro
 - `flask db migrate --multidb` and `flask db upgrade --multidb` are not recognized by installed Flask-Migrate; `flask db migrate` generated both default and history functions. Reviewed generated schema; manual seed necessary because autogenerate does not populate singleton data. Migration round trip tested on disposable databases.
 - Resolved blocker: issue comment from esfen14 on 2026-10-13 approves and instructs use of repository Docker labs. No source code changed yet.
 - The earlier pre-existing worktree modification to `client/src/test/SystemSettingsConflict.test.tsx` was not included in issue commits; inspect status before touching it.
-- Plan revised because the original final step omitted explicit lab, documentation and regression stages; these are required deliverables. This session must verify actual default generated-file byte parity against pre-change output, not only template-level assertions. Also review timeperiod syntax against Nagios (`24:00` and comma-separated ranges) in the Docker lab, and review whether service default directives must be explicit without violating byte parity.
+- Five implementation rounds completed this session; stop per workflow §4. Step 10 remains unticked because independent byte-parity and remaining API review are pending. Plan revised because the original final step omitted explicit lab, documentation and regression stages; these are required deliverables. This session must verify actual default generated-file byte parity against pre-change output, not only template-level assertions. Also review timeperiod syntax against Nagios (`24:00` and comma-separated ranges) in the Docker lab, and review whether service default directives must be explicit without violating byte parity.
 - Sensitive-module review pending: API validation whitelists weekday/time/option values, no shell interpolation introduced, generated file uses fixed destination and existing Nagios pre-apply validation; verify no secrets enter new logs or response. Lab acceptance and documentation remain unverified.
