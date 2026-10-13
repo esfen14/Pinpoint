@@ -1,7 +1,7 @@
 # Issue #133: Clear acknowledgements on recovery and audit History
 
 Branch: `issue-133-clear-ack-recovery-audit-history`
-Status: in-progress
+Status: ready-for-review
 
 ## Finish condition
 
@@ -80,7 +80,7 @@ Requirement coverage (section A problem, C changes, D guidelines, G testing, exc
 2. [x] Add failing History page interaction tests `client/src/test/HistoryPage.test.tsx` (list, filters, pagination, detail, sources, empty/error, permission), audit `spec files/Alerts_Notifications_History_Requirements.md` against `client/src/pages/HistoryPage.tsx`; fix page-only gaps in page and related frontend code, then verify focused test and `scripts/verify.sh frontend`. Document audit table in `docs/test-runs/` or PR.
 3. [x] For backend-dependent audit gaps, search existing issues then file separate issues and link in audit table; preserve backend scope, verify audit table with `scripts/verify.sh docs`.
 4. [x] Recheck routes/regressions in `server/tests/unit/test_dashboard.py`, `test_status.py`, `test_history.py` and `client/src/test/PageAccess.test.tsx`, `App.test.tsx`; update specs `spec files/Data_Model_and_Integrations.md`, `Display_Requirements.md`, `Alerts_Notifications_History_Requirements.md`, `Frontend_Modules_and_Routes.md`, `Implementation_Status.md`; verify narrow checks and stage checks.
-5. [ ] Re-read issue/comments, prove each requirement, run `scripts/verify.sh docs` and `scripts/verify.sh all` once; record real output. If live Nagios/manual lab unavailable or review/CI outstanding, keep progress file and open draft PR; otherwise finish per workflow.
+5. [x] Re-read issue/comments, prove each requirement, run `scripts/verify.sh docs` and `scripts/verify.sh all` once; record real output. If live Nagios/manual lab unavailable or review/CI outstanding, keep progress file and open draft PR; otherwise finish per workflow.
 
 ## Round log
 
@@ -90,13 +90,14 @@ Requirement coverage (section A problem, C changes, D guidelines, G testing, exc
 | 2 | Added `HistoryPage.test.tsx`; enabled sortable supported columns and alert-to-notification link in `HistoryPage.tsx` | `npm run test -- --run src/test/HistoryPage.test.tsx`; `scripts/verify.sh frontend` | Red first: 3 failures (sort/link/test selector), then green: 5 passed, frontend OK (26 warnings) |
 | 3 | Audited each History requirement in `docs/test-runs/2026-10-14-issue-133-history-audit/AUDIT.md`; filed #141–#144 for backend gaps | `scripts/verify.sh docs` | green — docs OK |
 | 4 | Added no-check/re-failure safety tests; ran route and page guard regressions; updated five specs | `server/.venv/bin/python -m pytest server/tests/unit/test_dashboard.py server/tests/unit/test_status.py server/tests/unit/test_history.py -q --tb=short`; `npm run test -- --run src/test/HistoryPage.test.tsx src/test/PageAccess.test.tsx src/test/App.test.tsx`; `scripts/verify.sh docs` | green — 163 backend, 29 frontend, docs OK |
+| 5 | Re-read issue/comments; checked full local CI-equivalent suite; no further code changes | `scripts/verify.sh all > /tmp/opencode/issue-133-all.log 2>&1; tail -30 /tmp/opencode/issue-133-all.log` | green — verify: all OK; 26 lint warnings, zero errors |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh docs > /tmp/opencode/issue-133-spec-docs.log 2>&1; tail -24 /tmp/opencode/issue-133-spec-docs.log`
-- Result (first failing lines, or "green"): green — verify: docs OK; regression checks also 163 backend and 29 frontend passed
-- Hypothesis: Full verification remains; live lab is not authorized by this issue workflow's hard limit unless issue explicitly says to (section G says lab/manual, so permission may apply, but no lab environment has been prepared). Review/CI remain external.
-- Next action (one specific step, not "continue"): Re-read issue/comments and run `scripts/verify.sh all`, then record evidence and open a draft PR for outstanding live/review items.
+- Last check run (exact command): `scripts/verify.sh all > /tmp/opencode/issue-133-all.log 2>&1; tail -30 /tmp/opencode/issue-133-all.log`
+- Result (first failing lines, or "green"): green — verify: all OK; 26 lint warnings, zero errors
+- Hypothesis: Backend-dependent history gaps remain open as #141–#144; live lab and reviewer/CI evidence are not available in this session, so PR must stay draft with progress file.
+- Next action (one specific step, not "continue"): After a fresh session, re-run full verification and arrange a live appliance walk for acknowledge/recovery/history and History filters, then finish PR review checklist.
 
 ## Decisions and notes
 
