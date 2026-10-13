@@ -35,7 +35,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 1. [x] Create `NotificationPolicy` model in `server/app/system_models.py`.
 2. [x] Add multi-bind migration via `flask db migrate` (the `--multidb` flag is unsupported in this repository's initialized multi-bind Alembic environment).
 3. [x] Create `server/app/api/system/notification_policy.py` and register it in `server/app/api/system/__init__.py`.
-4. [ ] Create `server/app/network_discovery/templates/timeperiod.cfg.tpl` and update `host.cfg.tpl`, `service.cfg.tpl`, `contact_template.cfg.tpl`.
+4. [x] Create `server/app/network_discovery/templates/timeperiod.cfg.tpl` and update `host.cfg.tpl`, `service.cfg.tpl`, `contact_template.cfg.tpl` and rendering in `host_config_templates.py`.
 5. [ ] Update `server/app/network_discovery/create_host_cfg.py` to use `NotificationPolicy`.
 6. [ ] Create `client/src/types/notificationPolicy.ts` and `client/src/lib/notificationPolicyApi.ts`.
 7. [ ] Create `client/src/components/settings/NotificationPolicySettings.tsx` and integrate it into `SettingsPage.tsx`.
@@ -50,13 +50,14 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | 1 | Added failing model-default test then `NotificationPolicy` model | `.venv/bin/python -m pytest tests/unit/test_notification_policy.py -q`; `scripts/verify.sh backend` | focused green (1 passed); broad check timed out after 45%, not a test failure |
 | 2 | Added failing migration round-trip test, generated multi-bind revision, manually seeded singleton | `.venv/bin/python -m pytest tests/unit/test_notification_policy_migration.py -q`; `scripts/verify.sh backend` | 1 passed; 2354 passed, 14 skipped |
 | 3 | Added failing API cases; implemented guarded GET/PUT, validation and rollback; updated route catalog for drift check | `.venv/bin/python -m pytest tests/unit/test_notification_policy_api.py -q`; `scripts/verify.sh backend` | 11 passed; 2365 passed, 14 skipped |
+| 4 | Added failing rendering test, conditional period and template directives preserving default | `.venv/bin/python -m pytest tests/unit/test_notification_policy_templates.py -q`; `scripts/verify.sh backend` | 2 passed; 2367 passed, 14 skipped |
 
 ## State for the next session
 
 - Last check run (exact command): `scripts/verify.sh backend`
-- Result (first failing lines, or "green"): green: 2365 passed, 14 skipped.
-- Hypothesis: Templates must preserve exact default formatting and add custom timeperiod only when windows exist.
-- Next action (one specific step, not "continue"): Add failing template tests for default and quiet-hour rendering, then parameterize templates.
+- Result (first failing lines, or "green"): green: 2367 passed, 14 skipped.
+- Hypothesis: Config builder must emit the timeperiod in hosts.cfg only for quiet hours and preserve default bytes.
+- Next action (one specific step, not "continue"): Add failing full-config rendering regression test, then wire the timeperiod into `_create_host_cfg_file()`.
 
 ## Decisions and notes
 
