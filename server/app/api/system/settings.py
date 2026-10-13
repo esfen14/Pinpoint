@@ -35,11 +35,16 @@ FIELD_PERMISSIONS = {
     "Security_Check_Frequency": "settings.security",
     "System_Update_Frequency": "settings.system",
     "Check_Interval": "settings.system",
+    "Retry_Interval": "settings.system",
+    "Max_Check_Attempts": "settings.system",
     "Maintenance_Mode": "settings.system",
     "Automatic_Backups": "settings.system",
     "Log_Retention_Days": "settings.system",
     "Diagnostic_History_Retention_Days": "settings.system",
 }
+
+# Settings rendered into the generated Nagios config: changing one rebuilds and applies it.
+CHECK_TIMING_FIELDS = ("Check_Interval", "Retry_Interval", "Max_Check_Attempts")
 
 PERMISSION_LABELS = {
     "settings.security": "Security",
@@ -117,6 +122,8 @@ def update_settings():
         field_map = [
             ("Scan_Frequency", "scanFrequency"),
             ("Check_Interval", "checkInterval"),
+            ("Retry_Interval", "retryInterval"),
+            ("Max_Check_Attempts", "maxCheckAttempts"),
             ("Notifications", "notifications"),
             ("Session_Timeout", "sessionTimeout"),
             ("Strong_Password_Policy", "strongPasswordPolicy"),
@@ -134,10 +141,23 @@ def update_settings():
         if type(interval) is not int or interval not in (1, 2, 5, 10, 15):
             return error("Check interval must be 1, 2, 5, 10 or 15 minutes.", 400)
 
+        # The retry settings are optional in the body, so a client that predates
+        # them keeps the saved values. Every value is checked against the
+        # check interval that will be in effect after this save.
+        retry_interval = payload.get("retryInterval", row.Retry_Interval)
+        if type(retry_interval) is not int or not 1 <= retry_interval <= 10:
+            return error("Retry interval must be a whole number of minutes from 1 to 10.", 400)
+        if retry_interval > interval:
+            return error("Retry interval cannot be longer than the check interval.", 400)
+        max_check_attempts = payload.get("maxCheckAttempts", row.Max_Check_Attempts)
+        if type(max_check_attempts) is not int or not 1 <= max_check_attempts <= 10:
+            return error("Maximum check attempts must be a whole number from 1 to 10.", 400)
+        resolved = {"retryInterval": retry_interval, "maxCheckAttempts": max_check_attempts}
+
         changes = []
         for attr, key in field_map:
             old_value = getattr(row, attr)
-            new_value = payload[key]
+            new_value = resolved[key] if key in resolved else payload[key]
             if old_value != new_value:
                 changes.append((attr, old_value, new_value))
                 setattr(row, attr, new_value)
@@ -160,14 +180,14 @@ def update_settings():
             tabs = " and ".join(PERMISSION_LABELS[p] for p in denied)
             return error(f"You don't have permission to change {tabs} settings.", 403)
 
-        if any(attr == "Check_Interval" for attr, _, _ in changes):
+        if any(attr in CHECK_TIMING_FIELDS for attr, _, _ in changes):
             from app.network_discovery.create_host_cfg import regenerate_and_apply_config_status
 
             db.session.flush()
             status, message = regenerate_and_apply_config_status()
             if status == "failed":
                 db.session.rollback()
-                return error(f"Check interval could not be applied: {message}", 422)
+                return error(f"Check settings could not be applied: {message}", 422)
 
         row.Version += 1
         row.Updated_By = current_user.UserID

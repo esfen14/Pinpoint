@@ -41,6 +41,8 @@ export interface SystemSettings {
   dashboardRefreshRate: number
   scanFrequency: number
   checkInterval: number
+  retryInterval: number
+  maxCheckAttempts: number
   dashboardLayout: DashboardLayout
 
   // Notifications

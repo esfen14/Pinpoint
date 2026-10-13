@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { GeneralSettings } from '../components/settings/GeneralSettings'
 import { SystemSettings } from '../components/settings/SystemSettings'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
@@ -193,5 +193,83 @@ describe('SystemSettingsProvider conflict handling', () => {
     expect(systemPuts).toHaveLength(1)
     expect(server.sessionTimeout).toBe(60)
     expect(server.scanFrequency).toBe(3)
+  })
+})
+
+describe('Check timing controls (retry interval and maximum check attempts)', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    server = { ...DEFAULT_SYSTEM_SETTINGS, version: 1 }
+    systemPuts = []
+    applyError = null
+    fetchMock.mockClear()
+    vi.stubGlobal('fetch', fetchMock)
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  // The labels are not linked to their selects, so find the select inside the label's block.
+  function selectFor(label: string) {
+    const block = screen.getByText(label).closest('div')
+    const select = block?.querySelector('select')
+    if (!select) throw new Error(`no select for ${label}`)
+    return select as HTMLSelectElement
+  }
+
+  async function renderControls() {
+    render(<SystemSettingsProvider><Probe /><SystemSettings /></SystemSettingsProvider>)
+    await waitFor(() => expect(api.isLoading).toBe(false))
+  }
+
+  it('defaults to the values the generated config always used', () => {
+    expect(DEFAULT_SYSTEM_SETTINGS.retryInterval).toBe(1)
+    expect(DEFAULT_SYSTEM_SETTINGS.maxCheckAttempts).toBe(3)
+  })
+
+  it('shows both controls with the saved values and explains the trade-off', async () => {
+    server.retryInterval = 2
+    server.maxCheckAttempts = 4
+    await renderControls()
+    expect(selectFor('Retry interval').value).toBe('2')
+    expect(selectFor('Maximum check attempts').value).toBe('4')
+    expect(screen.getByText(/slower alerts and fewer false alarms/i)).toBeInTheDocument()
+  })
+
+  it('saves both values as system settings', async () => {
+    await renderControls()
+    fireEvent.change(selectFor('Maximum check attempts'), { target: { value: '5' } })
+    fireEvent.change(selectFor('Retry interval'), { target: { value: '2' } })
+    await save()
+    expect(systemPuts[0].maxCheckAttempts).toBe(5)
+    expect(systemPuts[0].retryInterval).toBe(2)
+    expect(server.maxCheckAttempts).toBe(5)
+  })
+
+  it('only offers retry intervals that fit inside the check interval', async () => {
+    server.checkInterval = 2
+    await renderControls()
+    const values = Array.from(selectFor('Retry interval').options).map((option) => option.value)
+    expect(values).toEqual(['1', '2'])
+  })
+
+  it('lowers the retry interval when the check interval drops below it', async () => {
+    server.checkInterval = 10
+    server.retryInterval = 5
+    await renderControls()
+    fireEvent.change(selectFor('Check interval'), { target: { value: '2' } })
+    expect(api.settings.checkInterval).toBe(2)
+    expect(api.settings.retryInterval).toBe(2)
+    await save()
+    expect(systemPuts[0].retryInterval).toBe(2)
+  })
+
+  it('shows the server message when the Nagios config is rejected', async () => {
+    await renderControls()
+    applyError = 'Check settings could not be applied: Nagios reload failed'
+    fireEvent.change(selectFor('Maximum check attempts'), { target: { value: '6' } })
+    await save()
+    expect(screen.getByTestId('error')).toHaveTextContent('Nagios reload failed')
   })
 })

@@ -19,8 +19,9 @@ the normative behavior in the requirement specifications.
   fields remain editable; the account response marks it for the edit form, which
   disables its status selector.
 - Singleton system settings with personal/system separation and optimistic
-  version conflict handling. The system Check interval (1/2/5/10/15 minutes)
-  generates host and service check intervals through the shared Nagios writer;
+  version conflict handling. The system Check interval (1/2/5/10/15 minutes),
+  Retry interval (1 to 10 minutes) and Maximum check attempts (1 to 10)
+  generate host and service check timing through the shared Nagios writer;
   unchanged Nagios `Last_Check` results are not stored again. Plugin status text,
   stale fallback and the per-user browser-refresh hint use the setting. Fresh
   appliance cadence, backup and validation/reload rollback were verified in

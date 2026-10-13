@@ -469,6 +469,36 @@ class TestCreateHostCfgFile:
         assert re.search(r"check_interval\s+2\b", host_block)
         assert re.search(r"check_interval\s+2\b", service_block)
 
+    def _blocks(self, app, tmp_path):
+        discovered = {"10.0.0.0/24": {"10.0.0.11": make_host("host-a", tcp={"22": "ssh"})}}
+        with patched_config(app, HOST_CONFIG_DIR=tmp_path):
+            text = _create_host_cfg_file(discovered).read_text()
+        return (re.search(r"define host \{.*?\}", text, re.S).group(),
+                re.search(r"define service \{.*?\}", text, re.S).group())
+
+    def test_check_timing_defaults_reproduce_the_previous_config(self, app, db_session, plugin_config, tmp_path):
+        """No saved row, and a row with the defaults, must render exactly what was rendered before."""
+        host_block, service_block = self._blocks(app, tmp_path)
+        assert re.search(r"max_check_attempts\s+3\b", host_block)
+        assert re.search(r"max_check_attempts\s+3\b", service_block)
+        assert re.search(r"retry_interval\s+1\b", service_block)
+        assert "retry_interval" not in host_block
+
+        db_session.session.add(SystemSettings(Id=1))
+        db_session.session.commit()
+        assert self._blocks(app, tmp_path) == (host_block, service_block)
+
+    def test_retry_interval_and_max_attempts_are_rendered_on_hosts_and_services(self, app, db_session, plugin_config, tmp_path):
+        db_session.session.add(SystemSettings(Id=1, Check_Interval=10, Retry_Interval=4, Max_Check_Attempts=6))
+        db_session.session.commit()
+
+        host_block, service_block = self._blocks(app, tmp_path)
+
+        for block in (host_block, service_block):
+            assert re.search(r"max_check_attempts\s+6\b", block)
+            assert re.search(r"retry_interval\s+4\b", block)
+            assert len(re.findall(r"retry_interval", block)) == 1
+
     def test_each_host_gets_only_its_own_services(self, app, db_session, admin_user, plugin_config, tmp_path):
         ncpa_device = make_device(db_session, admin_user, "host-b", "10.0.0.12")
         make_ncpa_deployment(db_session, ncpa_device, "tokenB", ["sda1"])

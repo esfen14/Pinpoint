@@ -111,7 +111,7 @@ The `system_bp` root makes these paths `/api/system`.
 | Method and path | Permission | Purpose |
 |---|---|---|
 | `GET /api/system` | Login | Return singleton system settings |
-| `PUT /api/system` | Login, field-level settings permissions | Save the full settings object with optimistic version handling; `checkInterval` accepts 1/2/5/10/15 minutes with `settings.system`, regenerates the Nagios config through the shared writer and rolls back on apply failure (422 with message) |
+| `PUT /api/system` | Login, field-level settings permissions | Save the full settings object with optimistic version handling; `checkInterval` accepts 1/2/5/10/15 minutes, `retryInterval` 1 to 10 minutes (never longer than the check interval in effect after the save) and `maxCheckAttempts` 1 to 10, all with `settings.system` (400 for a bad value; the two retry fields are optional in the body and keep their saved value when omitted); any change to one of the three regenerates the Nagios config through the shared writer and rolls back on apply failure (422 with message) |
 
 Security and system setting fields are restricted with `settings.security` and
 `settings.system`; personal fields are handled by `/api/user/preferences`.

@@ -3,7 +3,7 @@ define host {{
     alias                           {alias}
     address                         {address}
     check_command                   check-host-alive
-    max_check_attempts              3
+    max_check_attempts              {max_check_attempts}{retry_interval_line}
     check_interval                  {check_interval}
     checks_enabled                  1
     retain_status_information       1

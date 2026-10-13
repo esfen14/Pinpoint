@@ -8,6 +8,18 @@ def check_interval():
     row = db.session.get(SystemSettings, 1)
     return row.Check_Interval if row else 5
 
+
+DEFAULT_RETRY_INTERVAL = 1
+DEFAULT_MAX_CHECK_ATTEMPTS = 3
+
+
+def check_timing():
+    """(retry_interval, max_check_attempts) in effect; the values the config always used when nothing is saved."""
+    row = db.session.get(SystemSettings, 1)
+    if row is None:
+        return DEFAULT_RETRY_INTERVAL, DEFAULT_MAX_CHECK_ATTEMPTS
+    return row.Retry_Interval, row.Max_Check_Attempts
+
 _template_cache = {}
 
 def _load_template(name):
@@ -44,12 +56,18 @@ def _drop_empty_contact_groups(rendered):
 
 
 def create_host(host):
+    retry_interval, max_attempts = check_timing()
+    # Hosts have never had an explicit retry_interval; write one only when it
+    # differs from the default, so default output stays exactly as it was.
+    retry_line = "" if retry_interval == DEFAULT_RETRY_INTERVAL else "\n    retry_interval                  %d" % retry_interval
     rendered = _load_template("host.cfg.tpl").format(
         host_name=host["host_name"],
         alias=host["alias"],
         address=host["address"],
         contact_groups=host["contact_groups"],
         check_interval=check_interval(),
+        max_check_attempts=max_attempts,
+        retry_interval_line=retry_line,
     )
     rendered = _drop_empty_contact_groups(rendered)
     if host.get("active_checks_enabled") is False:
@@ -57,12 +75,15 @@ def create_host(host):
     return rendered
     
 def create_service(service, service_command):
+    retry_interval, max_attempts = check_timing()
     rendered = _load_template("service.cfg.tpl").format(
         host_name=service["host_name"],
         service_name=service["service_name"],
         command=service_command,
         contact_groups=service["contact_groups"],
         check_interval=check_interval(),
+        retry_interval=retry_interval,
+        max_check_attempts=max_attempts,
     )
     rendered = _drop_empty_contact_groups(rendered)
     if service.get("active_checks_enabled") is False:

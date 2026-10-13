@@ -33,6 +33,10 @@ const updateFrequencyOptions = [
   },
 ]
 
+// Same bounds as the server (PUT /api/system): retry 1 to 10 minutes, attempts 1 to 10.
+const RETRY_INTERVAL_MINUTES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+const CHECK_ATTEMPT_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
 const retentionOptions = [
   {
     value: '7',
@@ -106,7 +110,32 @@ export function SystemSettings() {
             description="How often Nagios checks generated hosts and services; separate from network discovery and browser refresh."
             value={String(settings.checkInterval)}
             options={[1, 2, 5, 10, 15].map((minutes) => ({ value: String(minutes), label: `${minutes} minutes` }))}
-            onChange={(value) => updateSettings({ checkInterval: Number(value) })}
+            onChange={(value) => {
+              const checkInterval = Number(value)
+              // A retry never waits longer than a normal check, so keep the two consistent.
+              updateSettings({
+                checkInterval,
+                retryInterval: Math.min(settings.retryInterval, checkInterval),
+              })
+            }}
+          />
+
+          <SettingsSelect
+            label="Retry interval"
+            description="How soon Nagios re-checks something that just failed. Cannot be longer than the check interval."
+            value={String(settings.retryInterval)}
+            options={RETRY_INTERVAL_MINUTES
+              .filter((minutes) => minutes <= settings.checkInterval)
+              .map((minutes) => ({ value: String(minutes), label: `${minutes} ${minutes === 1 ? 'minute' : 'minutes'}` }))}
+            onChange={(value) => updateSettings({ retryInterval: Number(value) })}
+          />
+
+          <SettingsSelect
+            label="Maximum check attempts"
+            description="Failed checks in a row before a problem is confirmed and alerts are sent. More attempts means slower alerts and fewer false alarms."
+            value={String(settings.maxCheckAttempts)}
+            options={CHECK_ATTEMPT_OPTIONS.map((attempts) => ({ value: String(attempts), label: `${attempts} ${attempts === 1 ? 'attempt' : 'attempts'}` }))}
+            onChange={(value) => updateSettings({ maxCheckAttempts: Number(value) })}
           />
 
           <SettingsToggle

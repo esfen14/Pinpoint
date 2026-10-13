@@ -743,6 +743,10 @@ class SystemSettings(db.Model):
     # General (system-wide only)
     Scan_Frequency: so.Mapped[int] = so.mapped_column(sa.Integer(), default=6)
     Check_Interval: so.Mapped[int] = so.mapped_column(sa.Integer(), default=5)
+    # How soon a failing check is re-run, and how many failures in a row turn a
+    # problem from SOFT into HARD. Rendered into every generated host and service.
+    Retry_Interval: so.Mapped[int] = so.mapped_column(sa.Integer(), default=1, server_default="1")
+    Max_Check_Attempts: so.Mapped[int] = so.mapped_column(sa.Integer(), default=3, server_default="3")
     Notifications: so.Mapped[bool] = so.mapped_column(sa.Boolean(), default=True)
     Export_Formats: so.Mapped[str] = so.mapped_column(sa.String(50), default="CSV,PDF,XLS")
 
@@ -776,6 +780,8 @@ class SystemSettings(db.Model):
         return {
             "scanFrequency": self.Scan_Frequency,
             "checkInterval": self.Check_Interval,
+            "retryInterval": self.Retry_Interval,
+            "maxCheckAttempts": self.Max_Check_Attempts,
             "notifications": self.Notifications,
             "exportFormats": self.Export_Formats.split(",") if self.Export_Formats else [],
             "sessionTimeout": self.Session_Timeout,
