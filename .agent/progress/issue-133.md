@@ -1,7 +1,7 @@
 # Issue #133: Clear acknowledgements on recovery and audit History
 
 Branch: `issue-133-clear-ack-recovery-audit-history`
-Status: in-progress
+Status: blocked
 
 ## Finish condition
 
@@ -97,10 +97,10 @@ Requirement coverage (section A problem, C changes, D guidelines, G testing, exc
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh all > /tmp/opencode/issue-133-all.log 2>&1; result=$?; tail -40 /tmp/opencode/issue-133-all.log; exit "$result"`
-- Result (first failing lines, or "green"): green — 2382 passed, 14 skipped backend; 518 passed frontend; lint 0 errors/26 warnings; `verify: all OK`. First 120-second attempt timed out; 600-second rerun passed.
-- Hypothesis: Isolated tests and CI are green, but the requested live Nagios appliance and real-event History walk require a person/lab. PR must stay draft; #141–#144 are separately filed backend gaps, not implementation in #133.
-- Next action (one specific step, not "continue"): Ask the lab owner to perform acknowledge → recover → check History and manually walk filters/details with real events, then provide a sanitized `docs/test-runs/` report and deployment evidence.
+- Last check run (exact command): `ssh -i "$HOME/.local/share/pinpoint-vmlab/id_ed25519" -p 2250 -o BatchMode=yes -o StrictHostKeyChecking=accept-new lab@127.0.0.1 'git -C /opt/pinpoint/Network-Diagnosis-System rev-parse --short HEAD; systemctl is-active pinpoint-gunicorn nagios'`
+- Result (first failing lines, or "green"): failed: `WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!` / `Host key verification failed.` Existing `[127.0.0.1]:2250` known_hosts key conflicts with VM's presented ED25519 key. Local `scripts/verify.sh all` green; VM running and targets up, but no verified SSH deployment identity.
+- Hypothesis: VM may have been reverted/reprovisioned since known_hosts was written, but cannot presume that. `scripts/vmlab` bypasses host key checking, so it must not be used to trust the appliance before independent verification. PR stays draft.
+- Next action (one specific step, not "continue"): Ask VM owner to authenticate the current SSH host-key fingerprint out of band and confirm whether the running VM is exclusively ours; only then update known_hosts and inspect deployed commit before a targeted live run.
 
 ## Decisions and notes
 
@@ -109,4 +109,5 @@ Requirement coverage (section A problem, C changes, D guidelines, G testing, exc
 - Section G explicitly calls for live lab and manual walk, but no lab action will be implied by isolated tests. If unavailable, report honestly and use a draft PR.
 - CI docs/backend/frontend checks succeeded on PR head `18ca01f3`; no human reviews or comments were present when queried. Recheck CI for this progress-only checkpoint and review state before completion.
 - Owner approved VM with Playwright for remaining functionality in issue comment https://github.com/esfen14/Pinpoint/issues/133#issuecomment-6157312406. This answers the prior blocker and justifies plan step 6. It does not explicitly authorize destructive `fresh`/`provision --force`. Existing snapshot stamp differs from current installer base-step hash; inspect running deployment before any sync and avoid reset.
+- Security stop: a direct SSH connection with host-key checking failed because the current appliance key differs from the pinned `[127.0.0.1]:2250` key. Do not suppress host-key checking or delete the pinned entry on assumption; ask the lab owner to verify the presented fingerprint through a trusted console and confirm lab ownership. No live test or deploy was performed.
 - Draft PR: https://github.com/esfen14/Pinpoint/pull/145. `gh pr edit` hits deprecated projectCards GraphQL; body updated via `gh api PATCH`. Backend gaps #141–#144 are tracked out of scope. Local full verification log is `/tmp/opencode/issue-133-all.log`; result excerpts are posted in a PR comment, but the full log is not uploaded.
