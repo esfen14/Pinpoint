@@ -1,7 +1,7 @@
 # Issue #113: System Implementation Add Configurable Notification Policy With Nagios Timeperiods and Settings Screen
 
 Branch: `issue-113-notification-policy`
-Status: blocked
+Status: in-progress
 
 ## Finish condition
 
@@ -32,7 +32,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 ## Plan
 
-1. [ ] Create `NotificationPolicy` model in `server/app/system_models.py`.
+1. [x] Create `NotificationPolicy` model in `server/app/system_models.py`.
 2. [ ] Add migration with `flask db migrate --multidb`.
 3. [ ] Create `server/app/api/system/notification_policy.py` and register it in `server/app/api/system/__init__.py`.
 4. [ ] Create `server/app/network_discovery/templates/timeperiod.cfg.tpl` and update `host.cfg.tpl`, `service.cfg.tpl`, `contact_template.cfg.tpl`.
@@ -46,17 +46,19 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 1 | Plan created | N/A | N/A |
+| resumed | Issue comment approves sensitive-module changes and repository Docker lab | N/A (no prior check run) | in-progress |
+| 1 | Added failing model-default test then `NotificationPolicy` model | `.venv/bin/python -m pytest tests/unit/test_notification_policy.py -q`; `scripts/verify.sh backend` | focused green (1 passed); broad check timed out after 45%, not a test failure |
 
 ## State for the next session
 
-- Last check run (exact command): N/A
-- Result (first failing lines, or "green"): N/A
-- Hypothesis: N/A
-- Next action (one specific step, not "continue"): Ask maintainer to approve sensitive-module change and provide a safe path for the required lab appliance verification.
+- Last check run (exact command): `scripts/verify.sh backend` (120000 ms timeout)
+- Result (first failing lines, or "green"): Timed out at 45% of pytest; no failure observed. Focused test green (1 passed).
+- Hypothesis: Isolated suite needs more than 120 seconds.
+- Next action (one specific step, not "continue"): Write failing migration upgrade/downgrade test, then generate and review multi-bind migration.
 
 ## Decisions and notes
 
 - Reusing `SystemSettings` singleton pattern for `NotificationPolicy`.
 - Need to ensure `flask db migrate` correctly handles the new table.
-- Blocker: Issue explicitly requires changes under `app/network_discovery/` (sensitive module), an existing-data migration, and appliance verification. Workflow §4 says a person must act before proceeding. Its hard limit §1 also says not to touch VM/Docker labs unless the issue says to; this issue does request a lab run, but access and approval still need confirmation. No source code changed.
+- Resolved blocker: issue comment from esfen14 on 2026-10-13 approves and instructs use of repository Docker labs. No source code changed yet.
 - Pre-existing worktree modification: `client/src/test/SystemSettingsConflict.test.tsx` was already modified at branch creation; do not overwrite or include it.
