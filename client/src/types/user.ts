@@ -23,6 +23,21 @@ export type User = {
 export type RoleOption = {
   id: number
   name: string
+  preservesBootstrapAdminAccess: boolean
+}
+
+type RoleOptionApiRecord = {
+  id: number
+  name: string
+  preserves_bootstrap_admin_access: boolean
+}
+
+export function fromRoleOptionRecord(record: RoleOptionApiRecord): RoleOption {
+  return {
+    id: record.id,
+    name: record.name,
+    preservesBootstrapAdminAccess: record.preserves_bootstrap_admin_access,
+  }
 }
 
 type AccountApiRecord = {

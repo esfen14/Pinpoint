@@ -7,7 +7,13 @@ import { useCurrentUser } from '../contexts/CurrentUserContext'
 import { usePasswordRequests } from '../hooks/usePasswordRequests'
 import { useSystemSettings } from '../contexts/SystemSettingsContext'
 import { apiGet, apiPost, apiPut, errorMessage } from '../lib/api'
-import { fromAccountRecord, type RoleOption, type User, type UserStatus } from '../types/user'
+import {
+  fromAccountRecord,
+  fromRoleOptionRecord,
+  type RoleOption,
+  type User,
+  type UserStatus,
+} from '../types/user'
 
 // Mirrors server/app/api/helper/validation.py's validate_password() — kept
 // in sync with the Strong Password Policy setting so the client-side check
@@ -53,8 +59,10 @@ async function fetchAccounts(): Promise<User[]> {
 }
 
 async function fetchRoleOptions(): Promise<RoleOption[]> {
-  const data = await apiGet<{ items: RoleOption[] }>('/api/user/roles/options')
-  return data.items
+  const data = await apiGet<{
+    items: Parameters<typeof fromRoleOptionRecord>[0][]
+  }>('/api/user/roles/options')
+  return data.items.map(fromRoleOptionRecord)
 }
 
 export function ManageAccountsPage() {
@@ -595,9 +603,21 @@ function EditAccountModal({
               className={SELECT_CLASS}
             >
               {roleOptions.map((role) => (
-                <option key={role.id} value={role.id} className="bg-[var(--card)]">{role.name}</option>
+                <option
+                  key={role.id}
+                  value={role.id}
+                  disabled={user.isSuperAdmin && !role.preservesBootstrapAdminAccess}
+                  className="bg-[var(--card)]"
+                >
+                  {role.name}
+                </option>
               ))}
             </select>
+            {user.isSuperAdmin && (
+              <p className="mt-1.5 text-xs text-[var(--text-muted)]">
+                The bootstrap administrator must keep a role that can manage accounts and roles.
+              </p>
+            )}
           </div>
         </div>
 
