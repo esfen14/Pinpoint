@@ -42,7 +42,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 8. [x] Strengthen generated-config regression and full contact/service propagation in `server/tests/unit/test_notification_policy_templates.py`, `server/app/network_discovery/create_host_cfg.py`, `server/app/network_discovery/host_config_templates.py`.
 9. [x] Expand frontend permission/label tests in `client/src/test/NotificationPolicySettings.test.tsx` and related Settings tests; correct UI as needed.
 10. [x] Review backend validation/apply edge cases and default byte parity in `server/tests/unit/test_notification_policy_api.py`, `server/tests/unit/test_notification_policy_templates.py` and owning backend modules.
-11. [ ] Run approved Docker lab for `nagios -v` and inside/outside notification events; record sanitized evidence under `docs/test-runs/`.
+11. [x] Run approved Docker lab for `nagios -v` and inside/outside notification events; record sanitized evidence under `docs/test-runs/` (host DOWN and service CRITICAL dispatch; browser/VM/email evidence remains unverified).
 12. [ ] Update manual and owning specs (`spec files/Backend_Modules_and_Routes.md`, `Data_Model_and_Integrations.md`, `Frontend_Modules_and_Routes.md`, `Implementation_Status.md`), then verify finish conditions.
 
 ## Round log
@@ -65,13 +65,14 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | resumed | Re-read issue and continued at default byte-parity proof | `scripts/verify.sh backend > /tmp/opencode/issue113-resume-backend.log 2>&1` | green: 2370 passed, 14 skipped |
 | 1 | Rendered identical isolated fixture on pre-change commit `92a896d5`; checked normalized output with `cmp`; added golden-file byte comparison with active email contact | `.venv/bin/python -m pytest tests/unit/test_notification_policy_templates.py -q`; `scripts/verify.sh backend > /tmp/opencode/issue113-backend-parity.log 2>&1` | green: 5 focused; 2371 passed, 14 skipped |
 | 2 | Docker lab: upgraded existing seeded DB after initial smoke failed (missing table); repeat 9/9 passed; policy PUT and `nagios -v` accepted custom period; forced host DOWN yielded zero notifications quiet versus 28 outside; recorded partial sanitized report | `scripts/lab smoke`; `docker compose -f lab/compose.yaml exec appliance /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg`; `scripts/verify.sh docs > /tmp/opencode/issue113-docs-lab.log 2>&1` | smoke 9/9 after upgrade; Nagios 0 warnings/errors; docs green; service CRITICAL and browser still untested |
+| 3 | Enabled SSH plugin, generated five service checks, forced CRITICAL to HARD during quiet/24x7 windows; sanitized partial report updated | `docker compose -f lab/compose.yaml exec appliance /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg`; `scripts/verify.sh docs > /tmp/opencode/issue113-docs-service.log 2>&1` | 13 services and 0 Nagios errors; 0 quiet service notifications versus 28 outside; docs green |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh docs > /tmp/opencode/issue113-docs-lab.log 2>&1`
-- Result (first failing lines, or "green"): green: docs stage; lab Nagios 0 errors/warnings, smoke 9/9 after upgrade, host dispatch 0 quiet versus 28 outside.
-- Hypothesis: To fulfill the issue's explicit service CRITICAL criterion, enable a service check in Docker and repeat timing observations; browser and VM evidence remain.
-- Next action (one specific step, not "continue"): Enable one service check in the isolated Docker lab, regenerate config and force CRITICAL inside/outside quiet hours with notification-log counts.
+- Last check run (exact command): `scripts/verify.sh docs > /tmp/opencode/issue113-docs-service.log 2>&1`
+- Result (first failing lines, or "green"): green: docs stage; service CRITICAL HARD yielded 0 quiet versus 28 outside dispatch records.
+- Hypothesis: Need the owning specifications/manual and browser interaction evidence; Docker does not prove actual email delivery or installer VM behavior.
+- Next action (one specific step, not "continue"): Update the owning specifications and settings manual, then verify docs; consider browser UI lab evidence before finish.
 
 ## Decisions and notes
 

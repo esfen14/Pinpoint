@@ -11,9 +11,9 @@
 
 ## Result
 
-**Overall: Partial.** Config validation and host notification timing passed in the Docker lab; service alert timing, browser UI interaction, and actual email delivery were not observed. The first smoke attempt failed because the existing seeded appliance had not run the new migration; after `flask db upgrade`, the repeat passed. Docker is not the installer-built VM specified in the issue.
+**Overall: Partial.** Config validation and host/service notification timing passed in the Docker lab; browser UI interaction and actual email delivery were not observed. The first smoke attempt failed because the existing seeded appliance had not run the new migration; after `flask db upgrade`, the repeat passed. Docker is not the installer-built VM specified in the issue.
 
-Totals: Pass 4, Fail 0, Blocked 0, Skipped 3.
+Totals: Pass 5, Fail 0, Blocked 0, Skipped 2.
 
 ## Cases
 
@@ -23,18 +23,18 @@ Totals: Pass 4, Fail 0, Blocked 0, Skipped 3.
 | Custom policy apply and `nagios -v` | Pass | PUT of quiet hours covering current local day succeeded; `nagios -v` checked 6 time periods, 6 hosts, 29 contacts, 0 errors/warnings. Generated `pinpoint-contact` had `register 0` and the custom period; host objects referenced it. Container command output observed interactively. | — |
 | Forced DOWN during quiet window | Pass | After stopping one isolated target and sending `PROCESS_HOST_CHECK_RESULT`, Nagios logged the HARD DOWN for `issue113 quiet test` and zero matching `HOST NOTIFICATION` events. Raw Nagios log in container. | — |
 | Forced DOWN outside quiet window | Pass | Restored target, removed quiet window through the policy API, then forced DOWN; Nagios logged 28 matching `HOST NOTIFICATION` events for `issue113 outside test`. Raw Nagios log in container. This is Nagios notification dispatch, not inbox delivery. | — |
-| Service CRITICAL inside/outside quiet window | Skipped | Discovery generated zero services in this seeded lab (plugins disabled); only host notifications were exercised. | — |
+| Service CRITICAL inside/outside quiet window | Pass | Enabled the SSH plugin in the lab; five services attached, `nagios -v` then checked 13 services with zero errors/warnings. A forced service CRITICAL reached HARD in both windows: zero matching `SERVICE NOTIFICATION` during quiet hours, 28 matching notifications after restoring 24x7. The target SSH daemon was restarted and service reset to OK afterward. Raw Nagios log in container. | — |
 | Browser settings flow | Skipped | API was exercised with a cookie-session script; browser card was not driven. | — |
 | Installer-built VM and actual email | Skipped | Repository Docker lab was approved; installer/systemd and mail delivery are outside this run. | — |
 
 ## Deviations from the plan
 
-The issue requests a VM service CRITICAL exercise; this approved Docker run used a host DOWN transition instead because the seeded discovery had no enabled service checks. The first run on existing lab state required a manual database upgrade; `scripts/lab up` seeds/upgrades only on first initialization. The lab's accelerated check interval does not represent production renotification timing.
+The issue requests a VM service CRITICAL exercise; this approved Docker run covered both host DOWN and service CRITICAL after enabling the SSH plugin. The first run on existing lab state required a manual database upgrade; `scripts/lab up` seeds/upgrades only on first initialization. The lab's accelerated check interval does not represent production renotification timing.
 
 ## Follow-up
 
 - Defects found: none confirmed from this run. Existing-container migration handling is a lab limitation; fresh initialization runs migrations.
-- Cases to repeat: service CRITICAL timing after enabling checks, browser save/reload, and installer-built VM/email delivery if required for sign-off.
+- Cases to repeat: browser save/reload and installer-built VM/email delivery if required for sign-off.
 - Policy restored to no quiet hours and isolated target restarted after testing.
 
 ## Sanitization checklist
