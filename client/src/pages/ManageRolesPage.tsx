@@ -469,6 +469,7 @@ function EditRoleModal({
   onCancel: () => void
   onSaved: () => void
 }) {
+  const isBuiltInAdministrator = role.name === 'Administrator'
   const [form, setForm] = useState({
     name: role.name,
     description: role.description,
@@ -546,6 +547,7 @@ function EditRoleModal({
                 <input
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  disabled={isBuiltInAdministrator}
                   className="w-full rounded-full border border-[var(--border)] bg-[var(--input-bg)] px-4 py-2.5 text-sm text-[var(--text)] outline-none focus:border-gray-500"
                 />
               </div>
@@ -569,7 +571,11 @@ function EditRoleModal({
             </div>
 
             <h3 className="mt-6 text-sm font-medium text-[var(--text)]">Permissions</h3>
-            {role.isLocked && (
+            {isBuiltInAdministrator ? (
+              <p className="mt-2 text-xs text-[var(--text-muted)]">
+                The built-in Administrator role has fixed permissions. They cannot be added, removed, or changed.
+              </p>
+            ) : role.isLocked && (
               <p className="mt-2 text-xs text-[var(--text-muted)]">
                 This role belongs to the bootstrap administrator. Permissions required to manage
                 accounts and roles cannot be removed.
@@ -579,11 +585,12 @@ function EditRoleModal({
               {permissionOptions.map((perm, i) => {
                 const isRequiredForBootstrapAdmin =
                   role.isLocked && BOOTSTRAP_ADMIN_REQUIRED_PERMISSIONS.has(perm.name)
+                const isReadOnly = isBuiltInAdministrator || isRequiredForBootstrapAdmin
                 return (
                   <label
                     key={perm.id}
                     className={`flex items-center justify-between px-4 py-3 text-sm text-[var(--text)] hover:bg-[var(--hover)] ${
-                      isRequiredForBootstrapAdmin ? 'cursor-not-allowed' : 'cursor-pointer'
+                      isReadOnly ? 'cursor-not-allowed' : 'cursor-pointer'
                     } ${
                       i !== permissionOptions.length - 1 ? 'border-b border-[var(--border)]' : ''
                     }`}
@@ -593,9 +600,11 @@ function EditRoleModal({
                       type="checkbox"
                       checked={permissions.includes(perm.id)}
                       onChange={() => togglePermission(perm.id)}
-                      disabled={isRequiredForBootstrapAdmin}
+                      disabled={isReadOnly}
                       title={
-                        isRequiredForBootstrapAdmin
+                        isBuiltInAdministrator
+                          ? 'The built-in Administrator role has fixed permissions.'
+                          : isRequiredForBootstrapAdmin
                           ? 'Required for the bootstrap administrator to manage accounts and roles.'
                           : undefined
                       }
