@@ -39,13 +39,36 @@ No application code. Output is a short note added to each affected issue.
 
 ### 3.2 Lab checks still to run on an installed appliance (VM lab, `scripts/vmlab fresh`)
 
-Record the output under `docs/test-runs/` with its template.
+Most of these are scripted. With the appliance running (`scripts/vmlab fresh`, or `scripts/vmlab up` on an installed one):
+
+```
+scripts/vmlab phase0                       # read-only checks and a temporary spool trial
+scripts/vmlab phase0 --with-notification   # also sends ONE custom notification (may email a real contact)
+```
+
+The probe is [`lab/phase0_event_handler_probe.sh`](../../lab/phase0_event_handler_probe.sh). It prints PASS, FAIL and INFO lines, saves the output under the vmlab state folder, and removes its test directories. It does not cover the handler timeout test or the installer re-run comparison (run `phase0` before and after `scripts/vmlab fresh` and compare the `nagios.cfg sha256` line). Record the output under `docs/test-runs/` with its template (`scripts/new_test_run.sh phase0-event-handler-checks`).
 
 1. `ls -ld /usr/local/nagios/var/spool /usr/local/nagios/libexec` and `id nagios; id pinpoint`: can a new `pinpoint-events` directory be created with mode 2770 `nagios:nagios` and read by `pinpoint`?
 2. `sudo -u nagios test -x <path>` for a candidate executable path: can `nagios` execute a root-owned file under `libexec`, and can it not traverse `/opt/pinpoint`?
 3. `grep -E "enable_event_handlers|event_handler_timeout|log_event_handlers|check_external_commands" /usr/local/nagios/etc/nagios.cfg`.
 4. Write a harmless `SEND_CUSTOM_SVC_NOTIFICATION` line to the pipe for a lab service and confirm a notification appears in the archive and in the PinPoint feed (needed by #22).
 5. Confirm the Nagios event handler timeout kills a slow handler (the handler only writes one line, so this should be instant).
+
+### 3.2.1 Results of the first run (2026-10-13)
+
+| Check | Result | Consequence |
+|---|---|---|
+| `pinpoint` is in groups `pinpoint` and `nagios`; `www-data` is in `nagios` | As the installer read predicted | Spool group must be `pinpoint`, not `nagios`. |
+| Trial spool `nagios:pinpoint` 2770 | `nagios` writes, new files inherit group `pinpoint`, `pinpoint` reads and deletes, `www-data` cannot list or write | Design for Part 7.3 confirmed. A `nagios:nagios` 2770 trial directory **was** writable by `www-data`. |
+| `/usr/local/nagios/var/spool` | `root:root` 755 | `nagios` cannot create the spool subdirectory itself; the installer (root) must create it. |
+| `/usr/local/nagios/libexec` | `nagios:nagios` 775 | Group-writable, so `pinpoint` and `www-data` could replace a file there. The handler must not live in `libexec`; `/usr/local/sbin/pinpoint-event-handler` (`root:root` 755) is confirmed as the location. `nagios` can execute a root-owned 755 file in `/usr/local/sbin`. |
+| `/usr/local/nagios/var/rw/nagios.cmd` | `nagios:nagios` 660 pipe | **New finding for Issue #19 and its security review:** `www-data` is in group `nagios`, so the web server user can also write Nagios commands. Decide whether to remove `www-data` from the group (check what Nagios CGI needs it for) or accept and document the risk. |
+| `nagios.cfg` | `enable_event_handlers=1`, `log_event_handlers=1`, `event_handler_timeout=30`, `check_external_commands=1`; `nagios -v` passes | These are stock values, as the installer read said. Part 7.3 still makes them explicit. |
+| `pinpoint-gunicorn` | `NoNewPrivileges=no`, no `ProtectSystem` or `ReadWritePaths` | No systemd change needed. |
+| sudo for `pinpoint` | Only `pinpoint-apply-smtp ""` and `systemctl reload nagios`; cannot restart Nagios | Matches installer step 9. |
+| AppArmor | 39 profiles in enforce mode, none for nagios, pinpoint or gunicorn | No blocker. |
+
+Limits: this appliance reports no vmlab stamp and a `.venv` is not under the app directory, so it was not built by `vmlab fresh`; repeat on a `vmlab fresh` build before relying on it for the report in `docs/test-runs/`.
 
 ### 3.3 Finding: the remote sudo rule does not allow restarts (Issue #8 Part 8.3)
 
@@ -148,6 +171,6 @@ New lab checks arising from these findings (add to section 3.2): `id pinpoint` a
 | 2026-10-13 | 3.1 command pipe | Verified in earlier lab run, recorded in Issue #19. |
 | 2026-10-13 | 3.3 remote sudo rule | Verified from source: helper cannot restart services. |
 | 2026-10-13 | 5 installer repository | Read by the team; findings in 5.1. Issues #7 and #8 updated. |
-| | 3.2 lab checks (plus the additions in 5.1) | Not run. |
+| 2026-10-13 | 3.2 lab checks (plus the additions in 5.1) | Run once with `lab/phase0_event_handler_probe.sh` on a running appliance (host `pinpoint`, Ubuntu 22.04.5, app commit `d4df736`, no vmlab stamp, so not a `vmlab fresh` build): **16 PASS, 0 FAIL**. Findings in 3.2.1. Not run: custom notification (`--with-notification`), handler timeout, installer re-run comparison. |
 | | 3.4 security review | Not started. |
 | | 3.5 product decisions | Open. |
