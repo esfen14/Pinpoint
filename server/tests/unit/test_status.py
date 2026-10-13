@@ -438,6 +438,21 @@ class TestPollAckResolution:
         assert len(db_session.session.scalars(sa.select(AlertAcknowledgement)).all()) == 1
         assert self.rows(db_session) == []
 
+    def test_unchecked_recovery_never_clears_ack(self, app, db_session, admin_user):
+        self.ack(db_session, admin_user.UserID, service="PING")
+        self.poll(app, services={HOSTNAME: {"PING": service_payload(last_check=None)}})
+        assert len(db_session.session.scalars(sa.select(AlertAcknowledgement)).all()) == 1
+        assert self.rows(db_session) == []
+
+    def test_re_failure_after_recovery_can_be_acknowledged_again(self, app, db_session, admin_user):
+        self.ack(db_session, admin_user.UserID, service="PING")
+        self.poll(app)
+        checked = int(datetime.now(timezone.utc).timestamp() * 1000) + 1000
+        self.poll(app, services={HOSTNAME: {"PING": service_payload(status="critical", last_check=checked)}})
+        self.ack(db_session, admin_user.UserID, service="PING")
+        assert len(self.rows(db_session)) == 1
+        assert len(db_session.session.scalars(sa.select(AlertAcknowledgement)).all()) == 1
+
     def test_history_commit_failure_rolls_back_deletion(self, app, db_session, admin_user):
         self.ack(db_session, admin_user.UserID, service="PING")
         real_commit = db_session.session.commit

@@ -1255,7 +1255,10 @@ Consistent with §3.3:
   resolution, the acknowledgement record is cleared automatically.
 - If a resolved alert re-enters a problem state, it starts unacknowledged.
   Previous acknowledgement history is retained in the Alerts & Notifications
-  History page and is not lost on resolution.
+  History page and is not lost on resolution. Pinpoint clears acknowledgements only
+  after a successful nonempty Nagios status poll reports a fresh UP/OK check for the
+  same target. A missing, stale or failed check never implies recovery; the deletion
+  and actorless `AUTO_RESOLVED` history append commit together.
 
 **Implementation note — data model:**
 Live acknowledgement state is stored in the `ALERT_ACKNOWLEDGEMENT` table
