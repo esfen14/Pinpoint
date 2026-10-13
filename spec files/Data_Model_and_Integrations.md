@@ -185,6 +185,26 @@ corresponding performance rows are also skipped on repeated polls. A host status
 or pending is logged as an error and that host is skipped for that poll; the rest of
 the poll continues.
 
+`app/nagios/commands.py` is the only writer of the Nagios external command pipe
+(`Config.NAGIOS_COMMAND_FILE`, env `NAGIOS_COMMAND_FILE`, default
+`/usr/local/nagios/var/rw/nagios.cmd`; the service user must be in group
+`nagios`). The CGI route is not used: `cgi.cfg` authorizes commands only for
+`nagiosadmin`, which has no password. The allowlist is closed, one function per
+command: acknowledge/remove acknowledgement (host, service), forced check (host,
+service) and schedule downtime (host, service; for the maintenance-window
+work). Each line is `[epoch] COMMAND;args`, built only after validation: host,
+service and author may not contain newline, CR, NUL or `;`; a comment may not
+contain newline, CR or NUL (400 at the route) and has `;` replaced by `,`, is cut
+to 255 characters and logged at INFO only to 40; a line may not exceed 4096 bytes
+(one atomic pipe write); and the host or service must be in the latest snapshot
+(paused, retired and merged devices are not). The pipe is checked to be a FIFO and
+opened `O_NONBLOCK`, so a stopped Nagios fails at once and a full pipe gives up
+after 2 s; every function returns a typed result (`invalid`, `unknown_target`,
+`unavailable`, `timeout`) instead of raising. Failures of acknowledgement sync are
+written to the audit log. Acknowledgements are sent as normal (not sticky),
+matching `AcknowledgementType.NORMACK`. This path is injection-sensitive
+(Engineering Standards, Sensitive modules).
+
 `app/nagios/notifications.py` reads `archivejson.cgi` for durable alert and
 notification event ranges.
 
@@ -412,7 +432,7 @@ appear in logs, API responses, or persisted Nagios snapshot check commands.
 - One active Pinpoint acknowledgement is allowed per `(hostname, service)`;
   `service = null` identifies a host alert.
 - A comment is required when acknowledging.
-- Acknowledgement and manual unacknowledgement append `AckHistory` records.
+- Acknowledgement and manual unacknowledgement append `AckHistory` records, then are sent to Nagios through `app/nagios/commands.py`; a Nagios failure never undoes the local record.
 - When an alert resolves to UP/OK, the active acknowledgement must be removed
   and an `AUTO_RESOLVED` history row written. The model contract exists, but the
   polling cleanup is not currently wired; see `Implementation_Status.md`.

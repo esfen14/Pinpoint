@@ -16,8 +16,12 @@ Routes:
   DELETE /system/network-health/hosts/acknowledge
       Unacknowledge a host-level alert (requires system.acknowledge_alerts).
 
+  POST /system/network-health/hosts/<hostname>/recheck
+      Check Now: ask Nagios to re-check a host (requires system.recheck).
+
 All routes require login and "system.network_health" permission, except the
-acknowledge routes which require "system.acknowledge_alerts".
+acknowledge routes which require "system.acknowledge_alerts" and Check Now
+which requires "system.recheck".
 """
 
 from datetime import datetime, timezone
@@ -30,6 +34,7 @@ from sqlalchemy.exc import IntegrityError
 from app import db
 from app.api.helper.database_access.permissions import require_permission
 from app.api.helper.responses import success, error
+from app.nagios import commands as nagios_commands
 from app.logging.user_activity import create_audit_log
 from app.api.system import system_bp
 from app.history_models import (
@@ -449,6 +454,8 @@ def acknowledge_host():
             return error("hostname is required.", 400)
         if not comment:
             return error("comment is required and must not be blank.", 400)
+        if nagios_commands.has_forbidden_chars(comment):
+            return error("comment must not contain line breaks or NUL characters.", 400)
 
         # Verify the host is actually in a problem state.
         latest_subq = (
@@ -488,7 +495,9 @@ def acknowledge_host():
         create_audit_log(current_user.UserID, f"Acknowledged alert on {hostname}: {comment}")
         db.session.commit()
 
-        return success(_serialize_ack(ack), message="Host alert acknowledged.", status=201)
+        data = _serialize_ack(ack)
+        data.update(nagios_commands.sync_acknowledge(hostname, None, comment))
+        return success(data, message="Host alert acknowledged.", status=201)
 
     except IntegrityError:
         db.session.rollback()
@@ -544,13 +553,59 @@ def unacknowledge_host():
         create_audit_log(current_user.UserID, f"Removed acknowledgement from {hostname}")
         db.session.commit()
 
-        return success(message="Acknowledgement removed.")
+        return success(nagios_commands.sync_unacknowledge(hostname, None), message="Acknowledgement removed.")
 
     except Exception:
         db.session.rollback()
         current_app.logger.exception(
             "Unexpected error in DELETE /system/network-health/hosts/acknowledge"
         )
+        return error("An unexpected error occurred.", 500)
+
+
+# ---------------------------------------------------------------------------
+# Check Now — force an immediate Nagios re-check
+# ---------------------------------------------------------------------------
+
+@system_bp.post("/network-health/hosts/<hostname>/recheck")
+@login_required
+@require_permission("system.recheck")
+def recheck_host(hostname: str):
+    """
+    Ask Nagios to re-check a host now (Check Now).
+
+    Allowed once per target every 10 seconds (429 with the seconds to wait).
+    Refused with 404 when the target is not in the latest Nagios status, and 409
+    when its device is paused, retired or merged. Returns 503 when the Nagios
+    command pipe cannot be written.
+
+    Requires "system.recheck".
+    """
+    try:
+        refusal = nagios_commands.recheck_refusal(hostname)
+        if refusal:
+            return error(refusal[1], refusal[0])
+
+        wait = nagios_commands.claim_recheck(hostname)
+        if wait:
+            return error(f"A check was just requested. Try again in {wait} seconds.", 429,
+                         {"retry_after": wait})
+
+        result = nagios_commands.schedule_forced_host_check(hostname)
+        if not result.ok:
+            nagios_commands.release_recheck(hostname)
+            create_audit_log(current_user.UserID, f"Check now failed for {hostname}: {result.error}")
+            db.session.commit()
+            return error("Nagios could not be asked to re-check. " + result.message, 503)
+
+        create_audit_log(current_user.UserID, f"Requested check now for {hostname}")
+        db.session.commit()
+        return success({"retry_after": nagios_commands.RECHECK_INTERVAL_SECONDS},
+                       message="Check requested. The result appears after the next poll.")
+
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("Unexpected error in POST /network-health/hosts/<hostname>/recheck")
         return error("An unexpected error occurred.", 500)
 
 

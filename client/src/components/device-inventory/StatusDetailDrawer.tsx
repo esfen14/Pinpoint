@@ -7,6 +7,9 @@ import { DeviceMonitoringSection } from './DeviceMonitoringSection'
 import { DevicePortsSection } from './DevicePortsSection'
 import type { MonitoringState } from '../../types/host'
 import { useDisplayTime } from '../../hooks/useDisplayTime'
+import { CheckNowButton } from '../shared/CheckNowButton'
+import { NagiosSyncNotice } from '../shared/NagiosSyncNotice'
+import { nagiosSyncNotice, type NagiosSyncResult } from '../../types/nagiosSync'
 
 
 type PerfMetric = {
@@ -88,6 +91,7 @@ export function StatusDetailDrawer({ hostname, onClose, onMonitoringChanged }: P
   const [comment, setComment] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [ackError, setAckError] = useState<string | null>(null)
+  const [syncNotice, setSyncNotice] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -114,26 +118,30 @@ export function StatusDetailDrawer({ hostname, onClose, onMonitoringChanged }: P
   useEffect(() => {
     setComment('')
     setAckError(null)
+    setSyncNotice(null)
   }, [hostname, service])
 
   async function changeAcknowledgement(acknowledge: boolean) {
     if (!service) return
     setIsSaving(true)
     setAckError(null)
+    setSyncNotice(null)
     try {
+      let result: NagiosSyncResult | undefined
       if (acknowledge) {
-        await apiPost('/api/system/network-health/services/acknowledge', {
+        result = await apiPost<NagiosSyncResult>('/api/system/network-health/services/acknowledge', {
           hostname,
           service_name: service,
           comment: comment.trim(),
         })
       } else {
-        await apiDelete('/api/system/network-health/services/acknowledge', {
+        result = await apiDelete<NagiosSyncResult>('/api/system/network-health/services/acknowledge', {
           hostname,
           service_name: service,
         })
       }
       setComment('')
+      setSyncNotice(nagiosSyncNotice(result))
       setReloadKey((k) => k + 1)
     } catch (err) {
       setAckError(errorMessage(err, acknowledge ? 'Unable to acknowledge service.' : 'Unable to remove acknowledgement.'))
@@ -207,6 +215,10 @@ export function StatusDetailDrawer({ hostname, onClose, onMonitoringChanged }: P
                   </p>
                 )}
               </section>
+
+              <NagiosSyncNotice message={syncNotice} onDismiss={() => setSyncNotice(null)} />
+
+              <CheckNowButton hostname={hostname} service={service ?? undefined} />
 
               {!service && detail.device_id != null && detail.monitoring_state && (
                 <DeviceMonitoringSection

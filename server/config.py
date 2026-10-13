@@ -170,6 +170,10 @@ class Config:
     NAGIOS_BIN = Path(os.environ.get('NAGIOS_BIN') or "/usr/local/nagios/bin/nagios")
     NAGIOS_MAIN_CFG = Path(os.environ.get('NAGIOS_MAIN_CFG') or "/usr/local/nagios/etc/nagios.cfg")
 
+    # Nagios external command pipe (command_file in nagios.cfg). PinPoint writes
+    # one command per line (acknowledge, forced check) through app/nagios/commands.py.
+    NAGIOS_COMMAND_FILE = Path(os.environ.get('NAGIOS_COMMAND_FILE') or "/usr/local/nagios/var/rw/nagios.cmd")
+
     # Nagios web/API host and port, used to build the status, archive and
     # object JSON CGI endpoints. Override via env if Nagios runs elsewhere
     # (e.g. Docker, or the installer's 127.0.0.1:8081).

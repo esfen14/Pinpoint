@@ -63,6 +63,7 @@ from app.history_models import (
     ServiceStateType,
     ProgramStatus,
 )
+from app.nagios import commands as nagios_commands
 from app.nagios.notifications import request_notifications_last, normalize_notification
 from app.system_models import AlertAcknowledgement, AckHistory, AckAction
 
@@ -289,6 +290,16 @@ def _alert_sort_key(alert: dict) -> tuple:
         downtime = 1
 
     return (downtime, sev, acked, -alert["duration_seconds"])
+
+
+def _sync_ack_to_nagios_batch(targets_list, comment) -> dict:
+    """Send a batch of saved acknowledgements to Nagios; loads the snapshot once."""
+    if not targets_list:
+        return {"nagios_synced": True, "nagios_message": None}
+    snapshot = nagios_commands.known_targets()
+    results = [nagios_commands.acknowledge_target(h, s, comment, snapshot) for h, s in targets_list]
+    return nagios_commands.sync_fields(
+        current_user.UserID, results, f"acknowledge-all ({len(targets_list)} alerts)")
 
 
 def _new_ack(
@@ -586,6 +597,8 @@ def acknowledge_alert():
             return error("hostname is required.", 400)
         if not comment:
             return error("comment is required and must not be blank.", 400)
+        if nagios_commands.has_forbidden_chars(comment):
+            return error("comment must not contain line breaks or NUL characters.", 400)
 
         # Verify the alert actually exists and is in a problem state.
         if service_name:
@@ -609,11 +622,9 @@ def acknowledge_alert():
         )
         db.session.commit()
 
-        return success(
-            _serialize_ack(ack),
-            message="Alert acknowledged.",
-            status=201,
-        )
+        data = _serialize_ack(ack)
+        data.update(nagios_commands.sync_acknowledge(hostname, service_name, comment))
+        return success(data, message="Alert acknowledged.", status=201)
 
     except IntegrityError:
         db.session.rollback()
@@ -658,10 +669,13 @@ def acknowledge_all_alerts():
             return error("comment is required and must not be blank.", 400)
         if not alerts:
             return error("alerts list must not be empty.", 400)
+        if nagios_commands.has_forbidden_chars(comment):
+            return error("comment must not contain line breaks or NUL characters.", 400)
 
         now = datetime.now(timezone.utc)
         created = 0
         skipped = 0
+        new_targets = []
 
         for item in alerts:
             hostname     = (item.get("hostname") or "").strip()
@@ -683,6 +697,7 @@ def acknowledge_all_alerts():
 
             db.session.add(_new_ack(hostname, service_name, comment, now))
             db.session.add(_new_ack_history(hostname, service_name, AckAction.ACKNOWLEDGED, now, comment))
+            new_targets.append((hostname, service_name))
             created += 1
 
         if created:
@@ -692,10 +707,9 @@ def acknowledge_all_alerts():
             )
         db.session.commit()
 
-        return success({
-            "acknowledged": created,
-            "skipped":      skipped,
-        }, message=f"Acknowledged {created} alert(s).")
+        data = {"acknowledged": created, "skipped": skipped}
+        data.update(_sync_ack_to_nagios_batch(new_targets, comment))
+        return success(data, message=f"Acknowledged {created} alert(s).")
 
     except Exception:
         db.session.rollback()
@@ -752,7 +766,7 @@ def unacknowledge_alert():
         )
         db.session.commit()
 
-        return success(message="Acknowledgement removed.")
+        return success(nagios_commands.sync_unacknowledge(hostname, service_name), message="Acknowledgement removed.")
 
     except Exception:
         db.session.rollback()
