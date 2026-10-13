@@ -5,6 +5,7 @@ import { PageHeader } from '../components/shared/PageHeader'
 import { apiGet, errorMessage } from '../lib/api'
 import { formatTimeAgo } from '../utils/formatDateTime'
 import { useDisplayTime } from '../hooks/useDisplayTime'
+import { Pagination } from '../components/shared/Pagination'
 
 
 type HistoryTab = 'alerts' | 'notifications'
@@ -698,25 +699,7 @@ export function HistoryPage() {
         </div>
 
         {data && data.pages > 1 && (
-          <div className="flex items-center justify-end gap-3 text-sm text-[var(--text)]">
-            <button
-              type="button"
-              disabled={page <= 1 || isLoading}
-              onClick={() => setPage(page - 1)}
-              className="rounded-xl border border-[var(--border)] px-4 py-2 hover:bg-[var(--hover)] disabled:opacity-50"
-            >
-              Previous
-            </button>
-            <span>Page {data.page} of {data.pages}</span>
-            <button
-              type="button"
-              disabled={page >= data.pages || isLoading}
-              onClick={() => setPage(page + 1)}
-              className="rounded-xl border border-[var(--border)] px-4 py-2 hover:bg-[var(--hover)] disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
+          <Pagination page={data.page} pageCount={data.pages} onPageChange={setPage} disabled={isLoading} variant="themed" />
         )}
       </div>
     </main>

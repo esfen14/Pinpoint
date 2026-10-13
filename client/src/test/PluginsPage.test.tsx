@@ -52,12 +52,19 @@ describe('PluginsPage', () => {
     })
   })
 
-  it('is one plugin inventory with no Currently Running tab', async () => {
+  it('is one plugin inventory with category tabs and no Currently Running tab', async () => {
     render(<PluginsPage />)
 
     expect(await screen.findByText('check_ssh')).toBeInTheDocument()
-    expect(screen.queryByRole('tablist')).not.toBeInTheDocument()
-    expect(screen.queryByRole('tab')).not.toBeInTheDocument()
+    expect(screen.getAllByRole('tab').map((t) => t.textContent)).toEqual([
+      'All',
+      'Network Services',
+      'Device Availability',
+      'Network Protocols',
+      'Servers',
+      'Application',
+      'Other',
+    ])
     expect(screen.queryByText(/currently running/i)).not.toBeInTheDocument()
     expect(screen.getByText('Plugin Inventory')).toBeInTheDocument()
   })

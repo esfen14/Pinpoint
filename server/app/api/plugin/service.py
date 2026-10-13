@@ -71,6 +71,39 @@ FAILED_STATUSES = (
 # real monitoring-configuration behavior.
 BLOCKED_TRANSITION_STATUSES = FAILED_STATUSES + (PluginStatus.ROLLBACK,)
 
+# Inventory tabs. Catalog categories (plugin_catalog_data.py) -> tab; anything
+# unmatched (including no category) is "Other".
+PLUGIN_GROUP_CATEGORIES = {
+    "Network Services": ["Network Services", "DNS & Time"],
+    "Device Availability": ["SNMP & Devices"],
+    "Network Protocols": ["Connectivity"],
+    "Servers": ["System", "Storage", "Hardware", "Agents"],
+    "Application": ["Database", "Web", "Mail"],
+}
+# Plugins whose catalog category puts them on the wrong tab.
+PLUGIN_GROUP_OVERRIDES = {
+    "Network Services": ["check_dhcp"],
+    "Application": ["check_ldap", "check_ldaps", "check_radius", "check_flexlm"],
+    "Servers": ["check_by_ssh", "check_mailq", "check_cluster"],
+}
+PLUGIN_GROUPS = [*PLUGIN_GROUP_CATEGORIES, "Other"]
+
+
+def _plugin_group_clause(group):
+    """SQL condition selecting the plugins in one inventory tab."""
+    overridden = [n for names in PLUGIN_GROUP_OVERRIDES.values() for n in names]
+    if group == "Other":
+        known = [c for cats in PLUGIN_GROUP_CATEGORIES.values() for c in cats]
+        return sa.and_(
+            Plugin.Name.notin_(overridden),
+            sa.or_(Plugin.Category.is_(None), Plugin.Category.notin_(known)),
+        )
+    by_category = sa.and_(
+        Plugin.Category.in_(PLUGIN_GROUP_CATEGORIES[group]), Plugin.Name.notin_(overridden)
+    )
+    return sa.or_(by_category, Plugin.Name.in_(PLUGIN_GROUP_OVERRIDES.get(group, [])))
+
+
 PLUGIN_SORT_FIELDS = {
     "name": Plugin.Name,
     "type": Plugin.Plugin_Type,
@@ -161,7 +194,7 @@ def describe_custom_support(plugin):
     return describe(plugin)
 
 
-def get_plugin_inventory(page, per_page, search, plugin_type, status, sort_by, order):
+def get_plugin_inventory(page, per_page, search, plugin_type, status, sort_by, order, group=None):
     """
     Paginated plugin inventory (UI Flow Section 7).
 
@@ -176,6 +209,7 @@ def get_plugin_inventory(page, per_page, search, plugin_type, status, sort_by, o
             states into one "Failed" option), or None for no filter.
         sort_by: one of PLUGIN_SORT_FIELDS' keys.
         order: "asc" or "desc".
+        group: one of PLUGIN_GROUPS (an inventory tab) or None for all.
 
     Returns: dict shaped for success() -> items/page/per_page/pages/
         total/has_next/has_prev.
@@ -215,6 +249,11 @@ def get_plugin_inventory(page, per_page, search, plugin_type, status, sort_by, o
                 query = query.where(Plugin.Status == PluginStatus(status))
             except ValueError:
                 raise InvalidQueryError(f"Invalid status filter: {status}")
+
+    if group:
+        if group not in PLUGIN_GROUPS:
+            raise InvalidQueryError(f"Invalid group filter: {group}")
+        query = query.where(_plugin_group_clause(group))
 
     if order == "desc":
         query = query.order_by(sort_column.desc())

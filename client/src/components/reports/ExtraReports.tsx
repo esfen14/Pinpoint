@@ -7,6 +7,7 @@ import { apiGet, errorMessage } from '../../lib/api'
 import { formatServerDateTime } from '../../utils/formatDateTime'
 import { exportRows } from '../../utils/exportData'
 import { ExportMenu } from '../shared/ExportMenu'
+import { Pagination } from '../shared/Pagination'
 
 
 export type ExtraReportView = 'hosts-by-os' | 'device-services' | 'alerts' | 'notifications'
@@ -442,19 +443,7 @@ export function ExtraReports({ view, query, runKey, onStatus, onCards }: Props) 
           <span>
             Showing {filtered.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} of {filtered.length} {report?.noun ?? 'rows'}
           </span>
-          <div className="flex gap-2">
-            <button type="button" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={currentPage <= 1}
-              className="rounded-lg px-3 py-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-white/10">
-              Previous
-            </button>
-            <span className="rounded-lg bg-white border border-gray-200 px-3 py-1 text-gray-900 shadow-sm dark:bg-white/10 dark:text-white dark:border-transparent">
-              {currentPage} / {pageCount}
-            </span>
-            <button type="button" onClick={() => setPage((p) => Math.min(pageCount, p + 1))} disabled={currentPage >= pageCount}
-              className="rounded-lg px-3 py-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-white/10">
-              Next
-            </button>
-          </div>
+          <Pagination page={currentPage} pageCount={pageCount} onPageChange={setPage} />
         </div>
       </div>
     </>
