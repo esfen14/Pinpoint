@@ -347,6 +347,32 @@ class TestEditRole:
         db.session.refresh(admin_role)
         assert admin_role.Name == "Administrator"
 
+    def test_administrator_role_stays_protected_after_bootstrap_account_moves(
+        self, logged_in_client, db_session, admin_role, admin_user
+    ):
+        admin_role.Name = "Administrator"
+        replacement = _make_role(db_session, "Replacement")
+        original = set(db.session.scalars(
+            sa.select(RolePermission.PermissionID)
+            .where(RolePermission.RoleID == admin_role.RoleID)
+        ))
+        for permission_id in original:
+            db_session.session.add(RolePermission(
+                RoleID=replacement.RoleID, PermissionID=permission_id
+            ))
+        admin_user.RoleID = replacement.RoleID
+        db_session.session.commit()
+
+        response = logged_in_client.put(
+            f"/api/user/roles/{admin_role.RoleID}",
+            json={"name": "Administrator", "description": "Changed", "permissions": []},
+        )
+        assert response.status_code == 400
+        assert set(db.session.scalars(
+            sa.select(RolePermission.PermissionID)
+            .where(RolePermission.RoleID == admin_role.RoleID)
+        )) == original
+
     def test_edit_role_success(self, logged_in_client, db_session, seeded_permissions):
         role = _make_role(db_session, "EditableRole")
         perm_id = list(seeded_permissions.values())[0].PermissionID
@@ -359,6 +385,13 @@ class TestEditRole:
             },
         )
         assert resp.status_code == 200
+        db.session.refresh(role)
+        assert role.Name == "EditableRoleUpdated"
+        assert role.Description == "Updated description"
+        assert set(db.session.scalars(
+            sa.select(RolePermission.PermissionID)
+            .where(RolePermission.RoleID == role.RoleID)
+        )) == {perm_id}
 
     def test_edit_role_not_found(self, logged_in_client, db_session, seeded_permissions):
         perm_id = list(seeded_permissions.values())[0].PermissionID

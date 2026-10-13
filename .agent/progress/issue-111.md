@@ -1,18 +1,18 @@
 # Issue #111: Prevent changes to the Administrator role's permissions
 
 Branch: `issue-111-administrator-permissions`
-Status: in-progress
+Status: ready-for-review
 
 ## Finish condition
 
-- [ ] Backend rejects built-in Administrator permission changes and preserves persisted grants.
-- [ ] Role management displays Administrator permissions read-only with an explanation.
-- [ ] Direct API requests, including from an Administrator, cannot bypass protection.
-- [ ] Same-set requests work regardless of permission order and allow otherwise permitted edits.
-- [ ] Other roles remain editable under existing authorization.
-- [ ] Regression tests cover rejection, persistence, same-set requests, and other roles.
-- [ ] Backend/frontend specifications and Implementation_Status.md document the restriction.
-- [ ] `scripts/verify.sh all` passes.
+- [x] Backend rejects built-in Administrator permission changes and preserves persisted grants.
+- [x] Role management displays Administrator permissions read-only with an explanation.
+- [x] Direct API requests, including from an Administrator, cannot bypass protection.
+- [x] Same-set requests work regardless of permission order and allow otherwise permitted edits.
+- [x] Other roles remain editable under existing authorization.
+- [x] Regression tests cover rejection, persistence, same-set requests, and other roles.
+- [x] Backend/frontend specifications and Implementation_Status.md document the restriction.
+- [x] `scripts/verify.sh all` passes.
 
 Requirement coverage (every requirement the issue states, and the check that proves it):
 
@@ -30,7 +30,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 2. [x] Implement Administrator role protection in `server/app/api/user/management.py`; run focused tests and `scripts/verify.sh backend`.
 3. [x] Add failing UI cases in `client/src/test/ManageRolesPage.test.tsx` and implement read-only presentation in `client/src/pages/ManageRolesPage.tsx`; run focused tests and `scripts/verify.sh frontend`.
 4. [x] Update `spec files/Backend_Modules_and_Routes.md`, `Frontend_Modules_and_Routes.md`, and `Implementation_Status.md`; run `scripts/verify.sh docs`.
-5. [ ] Re-read issue, prove each finish item, run `scripts/verify.sh all`, remove progress file, and open PR.
+5. [x] Re-read issue, prove each finish item, run `scripts/verify.sh all`, remove progress file, and open PR.
 
 ## Round log
 
@@ -39,10 +39,10 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh docs`
+- Last check run (exact command): `scripts/verify.sh all`
 - Result (first failing lines, or "green"): green.
-- Hypothesis: The specification and stage checks agree; final full verification remains.
-- Next action (one specific step, not "continue"): Re-read issue #111 and run final requirement checks, then `scripts/verify.sh all`.
+- Hypothesis: Every issue requirement is proven by the focused role tests, UI test, specs, and green full gate.
+- Next action (one specific step, not "continue"): Remove this progress file, push the branch, and open the PR.
 
 ## Decisions and notes
 
