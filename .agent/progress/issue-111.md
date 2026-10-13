@@ -27,7 +27,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 ## Plan
 
 1. [x] Add failing backend cases in `server/tests/unit/test_management.py` for built-in Administrator role and API permission changes.
-2. [ ] Implement Administrator role protection in `server/app/api/user/management.py`; run focused tests and `scripts/verify.sh backend`.
+2. [x] Implement Administrator role protection in `server/app/api/user/management.py`; run focused tests and `scripts/verify.sh backend`.
 3. [ ] Add failing UI cases in `client/src/test/ManageRolesPage.test.tsx` and implement read-only presentation in `client/src/pages/ManageRolesPage.tsx`; run focused tests and `scripts/verify.sh frontend`.
 4. [ ] Update `spec files/Backend_Modules_and_Routes.md`, `Frontend_Modules_and_Routes.md`, and `Implementation_Status.md`; run `scripts/verify.sh docs`.
 5. [ ] Re-read issue, prove each finish item, run `scripts/verify.sh all`, remove progress file, and open PR.
@@ -40,9 +40,9 @@ Requirement coverage (every requirement the issue states, and the check that pro
 ## State for the next session
 
 - Last check run (exact command): `scripts/verify.sh backend`
-- Result (first failing lines, or "green"): 2337 passed, 14 skipped; 5 failed and 1 error: `PermissionError: [Errno 1] Operation not permitted` in socket tests; DNS resolution also failed.
-- Hypothesis: Backend failures come from sandbox network restrictions; focused role tests all passed.
-- Next action (one specific step, not "continue"): Re-run `scripts/verify.sh backend` with network permission.
+- Result (first failing lines, or "green"): green: 2343 passed, 14 skipped.
+- Hypothesis: Backend and role regression checks pass.
+- Next action (one specific step, not "continue"): Run `scripts/verify.sh frontend` and record its result.
 
 ## Decisions and notes
 
