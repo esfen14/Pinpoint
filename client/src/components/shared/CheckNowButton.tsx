@@ -63,7 +63,7 @@ export function CheckNowButton({ hostname, service, onRequested }: Props) {
         type="button"
         disabled={isSending || cooldown > 0}
         onClick={checkNow}
-        className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--text)] hover:bg-[var(--hover)] disabled:cursor-not-allowed disabled:opacity-50"
+        className="rounded-lg bg-[#ffb100] px-3 py-1.5 text-xs font-semibold text-black disabled:cursor-not-allowed disabled:opacity-50"
       >
         {isSending ? 'Requesting…' : cooldown > 0 ? `Check now (wait ${cooldown}s)` : 'Check now'}
       </button>

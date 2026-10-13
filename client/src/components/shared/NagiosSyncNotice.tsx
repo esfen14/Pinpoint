@@ -9,7 +9,7 @@ export function NagiosSyncNotice({ message, onDismiss }: Props) {
   return (
     <div
       role="status"
-      className="flex items-start justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-700/50 dark:bg-amber-900/20 dark:text-amber-300"
+      className="flex items-start justify-between gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-600 dark:text-amber-400"
     >
       <span>{message}</span>
       <button type="button" onClick={onDismiss} className="text-xs font-medium underline">
