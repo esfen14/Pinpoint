@@ -28,7 +28,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 1. [x] Add failing backend cases in `server/tests/unit/test_management.py` for built-in Administrator role and API permission changes.
 2. [x] Implement Administrator role protection in `server/app/api/user/management.py`; run focused tests and `scripts/verify.sh backend`.
-3. [ ] Add failing UI cases in `client/src/test/ManageRolesPage.test.tsx` and implement read-only presentation in `client/src/pages/ManageRolesPage.tsx`; run focused tests and `scripts/verify.sh frontend`.
+3. [x] Add failing UI cases in `client/src/test/ManageRolesPage.test.tsx` and implement read-only presentation in `client/src/pages/ManageRolesPage.tsx`; run focused tests and `scripts/verify.sh frontend`.
 4. [ ] Update `spec files/Backend_Modules_and_Routes.md`, `Frontend_Modules_and_Routes.md`, and `Implementation_Status.md`; run `scripts/verify.sh docs`.
 5. [ ] Re-read issue, prove each finish item, run `scripts/verify.sh all`, remove progress file, and open PR.
 
@@ -39,10 +39,10 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh backend`
-- Result (first failing lines, or "green"): green: 2343 passed, 14 skipped.
-- Hypothesis: Backend and role regression checks pass.
-- Next action (one specific step, not "continue"): Run `scripts/verify.sh frontend` and record its result.
+- Last check run (exact command): `scripts/verify.sh frontend`
+- Result (first failing lines, or "green"): green; lint 0 errors, 25 warnings.
+- Hypothesis: Backend and frontend behavior pass required stage checks.
+- Next action (one specific step, not "continue"): Update backend/frontend specifications and Implementation_Status.md.
 
 ## Decisions and notes
 
