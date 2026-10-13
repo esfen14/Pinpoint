@@ -47,6 +47,27 @@ def _make_user(db_session, role, email, first_name="Test", last_name="User",
     return user
 
 
+BOOTSTRAP_ADMIN_REQUIRED_PERMISSIONS = {
+    "account.view",
+    "account.edit",
+    "account.info",
+    "role.view",
+    "role.edit",
+    "role.info",
+    "role.list",
+}
+
+
+def _grant_permissions(db_session, role, seeded_permissions, names):
+    """Grant the named seeded permissions to a role and persist them."""
+    for name in names:
+        db_session.session.add(RolePermission(
+            RoleID=role.RoleID,
+            PermissionID=seeded_permissions[name].PermissionID,
+        ))
+    db_session.session.commit()
+
+
 # ─── Permissions Options ──────────────────────────────────────────────────────
 
 class TestPermissionsOptions:
@@ -146,6 +167,16 @@ class TestRolesOptions:
     def test_roles_options_requires_role_list_permission(self, limited_client, db_session, admin_role):
         resp = limited_client.get("/api/user/roles/options")
         assert resp.status_code == 403
+
+    def test_roles_options_identify_roles_that_preserve_bootstrap_admin_access(
+        self, logged_in_client, db_session, admin_user, admin_role, regular_role
+    ):
+        resp = logged_in_client.get("/api/user/roles/options")
+
+        assert resp.status_code == 200
+        items = {item["id"]: item for item in resp.get_json()["data"]["items"]}
+        assert items[admin_role.RoleID]["preserves_bootstrap_admin_access"] is True
+        assert items[regular_role.RoleID]["preserves_bootstrap_admin_access"] is False
 
 
 # ─── Role Info ────────────────────────────────────────────────────────────────
@@ -299,6 +330,71 @@ class TestEditRole:
             },
         )
         assert resp.status_code == 200
+
+    def test_bootstrap_admin_role_rejects_removing_required_permissions_without_changes(
+        self, logged_in_client, db_session, admin_user, admin_role, seeded_permissions
+    ):
+        original_permission_ids = set(db.session.scalars(
+            sa.select(RolePermission.PermissionID)
+            .where(RolePermission.RoleID == admin_role.RoleID)
+        ))
+        kept_permission_ids = [
+            permission.PermissionID
+            for name, permission in seeded_permissions.items()
+            if name != "role.list"
+        ]
+
+        resp = logged_in_client.put(
+            f"/api/user/roles/{admin_role.RoleID}",
+            json={
+                "name": "Unsafe renamed role",
+                "description": "This must not be saved",
+                "permissions": kept_permission_ids,
+                "is_active": True,
+            },
+        )
+
+        assert resp.status_code == 400
+        assert resp.get_json()["message"] == (
+            "The bootstrap administrator's role must keep the permissions required "
+            "to manage accounts and roles."
+        )
+        db.session.refresh(admin_role)
+        assert admin_role.Name == "Admin"
+        assert admin_role.Description == "Administrator"
+        assert admin_role.Is_Active is True
+        assert set(db.session.scalars(
+            sa.select(RolePermission.PermissionID)
+            .where(RolePermission.RoleID == admin_role.RoleID)
+        )) == original_permission_ids
+
+    def test_bootstrap_admin_role_allows_edit_that_keeps_required_permissions(
+        self, logged_in_client, db_session, admin_user, admin_role, seeded_permissions
+    ):
+        required_ids = [
+            seeded_permissions[name].PermissionID
+            for name in BOOTSTRAP_ADMIN_REQUIRED_PERMISSIONS
+        ]
+
+        resp = logged_in_client.put(
+            f"/api/user/roles/{admin_role.RoleID}",
+            json={
+                "name": "Primary Administrator",
+                "description": "Protected account administration role",
+                "permissions": required_ids,
+                "is_active": True,
+            },
+        )
+
+        assert resp.status_code == 200
+        db.session.refresh(admin_role)
+        assert admin_role.Name == "Primary Administrator"
+        assert admin_role.Description == "Protected account administration role"
+        assert set(db.session.scalars(
+            sa.select(Permission.Name)
+            .join(RolePermission, RolePermission.PermissionID == Permission.PermissionID)
+            .where(RolePermission.RoleID == admin_role.RoleID)
+        )) == BOOTSTRAP_ADMIN_REQUIRED_PERMISSIONS
 
 
 # ─── Role Status Toggle ───────────────────────────────────────────────────────
@@ -614,6 +710,68 @@ class TestEditAccount:
         assert first.First_Name == "Renamed"
         assert first.Last_Name == "Administrator"
         assert first.Status == UserStatus.ACTIVE
+
+    def test_bootstrap_admin_rejects_role_without_required_permissions_without_changes(
+        self, logged_in_client, db_session, admin_user, admin_role, regular_role
+    ):
+        first = db.session.scalar(sa.select(User).order_by(User.UserID).limit(1))
+        original = {
+            "first_name": first.First_Name,
+            "last_name": first.Last_Name,
+            "email": first.Email,
+            "role_id": first.RoleID,
+            "status": first.Status,
+        }
+
+        resp = logged_in_client.put(
+            f"/api/user/accounts/{first.UserID}",
+            json=self._payload(
+                regular_role,
+                first_name="Unsafe",
+                last_name="Change",
+                email=first.Email,
+                password="",
+                confirm_password="",
+            ),
+        )
+
+        assert resp.status_code == 400
+        assert resp.get_json()["message"] == (
+            "The bootstrap administrator must use an active role with the permissions "
+            "required to manage accounts and roles."
+        )
+        db.session.refresh(first)
+        assert first.First_Name == original["first_name"]
+        assert first.Last_Name == original["last_name"]
+        assert first.Email == original["email"]
+        assert first.RoleID == original["role_id"]
+        assert first.Status == original["status"]
+
+    def test_bootstrap_admin_allows_role_change_that_keeps_required_permissions(
+        self, logged_in_client, db_session, admin_user, admin_role, seeded_permissions
+    ):
+        first = db.session.scalar(sa.select(User).order_by(User.UserID).limit(1))
+        replacement = _make_role(db_session, "Replacement Administrator")
+        _grant_permissions(
+            db_session,
+            replacement,
+            seeded_permissions,
+            BOOTSTRAP_ADMIN_REQUIRED_PERMISSIONS,
+        )
+
+        resp = logged_in_client.put(
+            f"/api/user/accounts/{first.UserID}",
+            json=self._payload(
+                replacement,
+                email=first.Email,
+                password="",
+                confirm_password="",
+            ),
+        )
+
+        assert resp.status_code == 200
+        db.session.refresh(first)
+        assert first.RoleID == replacement.RoleID
 
     def test_other_accounts_can_still_be_suspended(
         self, logged_in_client, db_session, admin_user, admin_role

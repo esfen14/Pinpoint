@@ -14,7 +14,38 @@ from app.network_discovery.create_host_cfg import regenerate_and_apply_config_st
 from app.api.user import user_bp
 from app.logging.user_activity import create_user_log, create_audit_log
 from app.api.helper.settings_flags import is_audit_logging_enabled
-    
+
+
+BOOTSTRAP_ADMIN_REQUIRED_PERMISSIONS = frozenset({
+    "account.view",
+    "account.edit",
+    "account.info",
+    "role.view",
+    "role.edit",
+    "role.info",
+    "role.list",
+})
+
+
+def permission_ids_preserve_bootstrap_admin_access(permission_ids):
+    """Return whether permission IDs retain account and role administration."""
+    names = set(db.session.scalars(
+        sa.select(Permission.Name)
+        .where(Permission.PermissionID.in_(permission_ids))
+    ))
+    return BOOTSTRAP_ADMIN_REQUIRED_PERMISSIONS.issubset(names)
+
+
+def role_preserves_bootstrap_admin_access(role_id):
+    """Return whether a persisted role retains account and role administration."""
+    names = set(db.session.scalars(
+        sa.select(Permission.Name)
+        .join(RolePermission, RolePermission.PermissionID == Permission.PermissionID)
+        .where(RolePermission.RoleID == role_id)
+    ))
+    return BOOTSTRAP_ADMIN_REQUIRED_PERMISSIONS.issubset(names)
+
+
 @user_bp.get('/permissions/options')
 @login_required
 @require_permission("role.edit")
@@ -211,7 +242,10 @@ def list_roles():
             items.append(
                 {
                     "id": role.RoleID,
-                    "name": role.Name
+                    "name": role.Name,
+                    "preserves_bootstrap_admin_access": (
+                        role_preserves_bootstrap_admin_access(role.RoleID)
+                    ),
                 }
             )
         
@@ -319,6 +353,17 @@ def edit_role(id):
             err = validate_permission_exists(permission_id)
             if err is not None:
                 return err
+
+        if (
+            super_admin is not None
+            and super_admin.RoleID == id
+            and not permission_ids_preserve_bootstrap_admin_access(permissions)
+        ):
+            return error(
+                "The bootstrap administrator's role must keep the permissions "
+                "required to manage accounts and roles.",
+                400,
+            )
         
         try:
             role = get_role_by_id(id)
@@ -703,6 +748,12 @@ def edit_account(id):
                 return error("The super admin account cannot be suspended or made inactive.", 400)
             if not role_info.Is_Active:
                 return error("The super admin cannot be moved to an inactive role.", 400)
+            if not role_preserves_bootstrap_admin_access(role_info.RoleID):
+                return error(
+                    "The bootstrap administrator must use an active role with the "
+                    "permissions required to manage accounts and roles.",
+                    400,
+                )
         was_active = user_info.Status == UserStatus.ACTIVE
         old_status = user_info.Status.value
         is_self = user_info.UserID == current_user.UserID

@@ -32,7 +32,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 Ordered steps the agent will take. Write the whole plan before changing code;
 revise it in place and say why in the round log. Name the files each step touches.
 
-1. [ ] Add failing backend regression tests for both lockout paths, unchanged persistence, and permitted edits in `server/tests/unit/test_management.py`; implement the shared required-permission guard and response metadata in `server/app/api/user/management.py`; run the focused test module and `scripts/verify.sh backend`.
+1. [x] Add failing backend regression tests for both lockout paths, unchanged persistence, and permitted edits in `server/tests/unit/test_management.py`; implement the shared required-permission guard and response metadata in `server/app/api/user/management.py`; run the focused test module and `scripts/verify.sh backend`.
 2. [ ] Add failing UI regression tests in `client/src/test/ManageAccountsPage.test.tsx` and a focused Manage Roles test; update `client/src/types/user.ts`, `client/src/pages/ManageAccountsPage.tsx`, and `client/src/pages/ManageRolesPage.tsx` to explain and prevent unsafe changes before save; run focused tests and `scripts/verify.sh frontend`.
 3. [ ] Update `spec files/Backend_Modules_and_Routes.md`, `spec files/Frontend_Modules_and_Routes.md`, and `spec files/Implementation_Status.md`; run `scripts/verify.sh docs`.
 4. [ ] Re-read issue #109, map every requirement to observed proof, run the named focused checks and `scripts/verify.sh all`, then complete the PR workflow.
@@ -43,19 +43,20 @@ One row per loop round, newest last.
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
-| 1 | Planning checkpoint only. | Not run yet. | Plan ready; implementation has not started. |
+| 1 | Added backend regression coverage, required-permission guards before mutation, and role-option safety metadata. | `.venv/bin/python -m pytest tests/unit/test_management.py -q`; `scripts/verify.sh backend` | Focused suite: 66 passed. Initial sandboxed backend run: 5 failed / 1 error because sockets and DNS were denied; identical escalated run: 2,337 passed, 14 skipped, backend OK. |
 
 ## State for the next session
 
 Everything a fresh session needs to continue without redoing work.
 
-- Last check run (exact command): Not run yet (planning checkpoint).
-- Result (first failing lines, or "green"): No check run yet.
-- Hypothesis: A shared check for the account/role route permissions can reject unsafe bootstrap-account role assignments and unsafe replacement permission sets before any model mutation.
-- Next action (one specific step, not "continue"): Add backend tests in `server/tests/unit/test_management.py` that demonstrate both lockout paths currently succeed when they must return 400 and preserve database state.
+- Last check run (exact command): `scripts/verify.sh backend`
+- Result (first failing lines, or "green"): Green: 2,337 passed, 14 skipped; `verify: backend OK`.
+- Hypothesis: The client can use `preserves_bootstrap_admin_access` from active role options and the existing locked-role marker to explain and disable unsafe bootstrap-administrator changes before save.
+- Next action (one specific step, not "continue"): Add failing frontend tests for the bootstrap account's role choices and the locked role's required permission controls.
 
 ## Decisions and notes
 
 - The required permission set is the set used by the account and role management workflows: `account.view`, `account.edit`, `account.info`, `role.view`, `role.edit`, `role.info`, and `role.list`. `account.alerts` and unrelated system/plugin/settings permissions are not required to recover account/role administration.
 - The existing user change in `client/src/test/SystemSettingsConflict.test.tsx` predates this issue and must not be included in checkpoints or the pull request.
 - Password recovery behavior is explicitly outside issue #109 and will not be changed.
+- The first full backend run was sandbox-limited, not a product failure: local socket creation raised `PermissionError` and DNS resolution failed. The same command passed outside the sandbox.
