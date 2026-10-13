@@ -69,6 +69,8 @@ type Filters = {
   source: string
 }
 
+type Sort = { column: string; order: 'asc' | 'desc' }
+
 const EMPTY_FILTERS: Filters = {
   preset: '24h',
   startDate: '',
@@ -160,7 +162,7 @@ function Timestamp({ ts }: { ts: number }) {
   )
 }
 
-function buildQuery(filters: Filters, tab: HistoryTab, page: number, perPage: number) {
+function buildQuery(filters: Filters, tab: HistoryTab, page: number, perPage: number, sort: Sort) {
   const p = new URLSearchParams()
   if (filters.preset === 'custom') {
     if (filters.startDate) p.set('start_date', filters.startDate)
@@ -179,6 +181,10 @@ function buildQuery(filters: Filters, tab: HistoryTab, page: number, perPage: nu
     if (filters.state) p.set('state', filters.state)
     if (filters.contact.trim()) p.set('contact', filters.contact.trim())
     if (filters.source) p.set('source', filters.source)
+  }
+  if (sort.column !== 'timestamp' || sort.order !== 'desc') {
+    p.set('sort_by', sort.column)
+    p.set('order', sort.order)
   }
   p.set('page', String(page))
   p.set('per_page', String(perPage))
@@ -206,6 +212,7 @@ export function HistoryPage() {
   const [applied, setApplied] = useState<Filters>(EMPTY_FILTERS)
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(25)
+  const [sort, setSort] = useState<Sort>({ column: 'timestamp', order: 'desc' })
 
   const [alerts, setAlerts] = useState<Page<AlertEvent> | null>(null)
   const [notifications, setNotifications] = useState<Page<NotificationEvent> | null>(null)
@@ -229,7 +236,7 @@ export function HistoryPage() {
     setIsLoading(true)
     setLoadError(null)
     try {
-      const qs = buildQuery(applied, tab, page, perPage)
+      const qs = buildQuery(applied, tab, page, perPage, sort)
       if (tab === 'alerts') {
         const result = await apiGet<Page<AlertEvent>>(`/api/system/history/alerts?${qs}`)
         if (thisRequest === requestId.current) setAlerts(result)
@@ -243,7 +250,7 @@ export function HistoryPage() {
     } finally {
       if (thisRequest === requestId.current) setIsLoading(false)
     }
-  }, [applied, tab, page, perPage])
+  }, [applied, tab, page, perPage, sort])
 
   useEffect(() => {
     load()
@@ -251,10 +258,20 @@ export function HistoryPage() {
 
   function switchTab(next: HistoryTab) {
     setTab(next)
+    setSort({ column: 'timestamp', order: 'desc' })
     setPage(1)
     setExpanded(null)
     setFilters({ ...EMPTY_FILTERS, preset: filters.preset, startDate: filters.startDate, endDate: filters.endDate })
     setApplied({ ...EMPTY_FILTERS, preset: filters.preset, startDate: filters.startDate, endDate: filters.endDate })
+  }
+
+  function changeSort(column: string) {
+    setSort((current) => ({
+      column,
+      order: current.column === column && current.order === 'desc' ? 'asc' : 'desc',
+    }))
+    setPage(1)
+    setExpanded(null)
   }
 
   function applyFilters() {
@@ -504,24 +521,24 @@ export function HistoryPage() {
               {tab === 'alerts' ? (
                 <tr>
                   <th className="w-8 px-3 py-3" />
-                  <th className="px-3 py-3">Time</th>
+                  <th className="px-3 py-3"><button type="button" onClick={() => changeSort('timestamp')}>Time</button></th>
                   <th className="px-3 py-3">Type</th>
-                  <th className="px-3 py-3">Host</th>
+                  <th className="px-3 py-3"><button type="button" onClick={() => changeSort('hostname')}>Host</button></th>
                   <th className="px-3 py-3">Service</th>
-                  <th className="px-3 py-3">Previous → New</th>
+                  <th className="px-3 py-3"><button type="button" onClick={() => changeSort('new_state')}>Previous → New</button></th>
                   <th className="px-3 py-3">State type</th>
-                  <th className="px-3 py-3">Time in previous state</th>
+                  <th className="px-3 py-3"><button type="button" onClick={() => changeSort('duration')}>Time in previous state</button></th>
                   <th className="px-3 py-3">Output</th>
                 </tr>
               ) : (
                 <tr>
                   <th className="w-8 px-3 py-3" />
-                  <th className="px-3 py-3">Time</th>
+                  <th className="px-3 py-3"><button type="button" onClick={() => changeSort('timestamp')}>Time</button></th>
                   <th className="px-3 py-3">Source</th>
                   <th className="px-3 py-3">Type</th>
-                  <th className="px-3 py-3">Host</th>
+                  <th className="px-3 py-3"><button type="button" onClick={() => changeSort('hostname')}>Host</button></th>
                   <th className="px-3 py-3">Service</th>
-                  <th className="px-3 py-3">State</th>
+                  <th className="px-3 py-3"><button type="button" onClick={() => changeSort('state')}>State</button></th>
                   <th className="px-3 py-3">Contact</th>
                   <th className="px-3 py-3">Method / message</th>
                 </tr>
@@ -608,7 +625,13 @@ export function HistoryPage() {
                                   <ul className="space-y-1">
                                     {alertDetail.linked_notifications.map((n, i) => (
                                       <li key={i} className="text-[var(--text-muted)]">
-                                        <Timestamp ts={n.timestamp} /> · <StateBadge state={n.state} /> · {n.contact}
+                                        <button type="button" className="underline" onClick={() => {
+                                          setFilters({ ...EMPTY_FILTERS, hostname: alertDetail.hostname, service: alertDetail.service_name ?? '', source: 'nagios' })
+                                          setApplied({ ...EMPTY_FILTERS, hostname: alertDetail.hostname, service: alertDetail.service_name ?? '', source: 'nagios' })
+                                          setTab('notifications')
+                                          setPage(1)
+                                          setExpanded(null)
+                                        }}>View notification · <Timestamp ts={n.timestamp} /> · <StateBadge state={n.state} /> · {n.contact}</button>
                                         {n.message ? ` — ${n.message}` : ''}
                                       </li>
                                     ))}
