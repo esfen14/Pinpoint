@@ -1,7 +1,7 @@
 # Issue #113: System Implementation Add Configurable Notification Policy With Nagios Timeperiods and Settings Screen
 
 Branch: `issue-113-notification-policy`
-Status: in-progress
+Status: blocked
 
 ## Finish condition
 
@@ -52,9 +52,11 @@ Requirement coverage (every requirement the issue states, and the check that pro
 - Last check run (exact command): N/A
 - Result (first failing lines, or "green"): N/A
 - Hypothesis: N/A
-- Next action (one specific step, not "continue"): Create `NotificationPolicy` model in `server/app/system_models.py`.
+- Next action (one specific step, not "continue"): Ask maintainer to approve sensitive-module change and provide a safe path for the required lab appliance verification.
 
 ## Decisions and notes
 
 - Reusing `SystemSettings` singleton pattern for `NotificationPolicy`.
 - Need to ensure `flask db migrate` correctly handles the new table.
+- Blocker: Issue explicitly requires changes under `app/network_discovery/` (sensitive module), an existing-data migration, and appliance verification. Workflow §4 says a person must act before proceeding. Its hard limit §1 also says not to touch VM/Docker labs unless the issue says to; this issue does request a lab run, but access and approval still need confirmation. No source code changed.
+- Pre-existing worktree modification: `client/src/test/SystemSettingsConflict.test.tsx` was already modified at branch creation; do not overwrite or include it.
