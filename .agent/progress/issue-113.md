@@ -64,13 +64,14 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | 5 | Reproduced boolean-version optimistic-lock bypass and rejected it before Nagios apply | `.venv/bin/python -m pytest tests/unit/test_notification_policy_api.py -q`; `scripts/verify.sh backend > /tmp/opencode/issue113-backend-round5.log 2>&1` | green: 12 focused; 2370 passed, 14 skipped |
 | resumed | Re-read issue and continued at default byte-parity proof | `scripts/verify.sh backend > /tmp/opencode/issue113-resume-backend.log 2>&1` | green: 2370 passed, 14 skipped |
 | 1 | Rendered identical isolated fixture on pre-change commit `92a896d5`; checked normalized output with `cmp`; added golden-file byte comparison with active email contact | `.venv/bin/python -m pytest tests/unit/test_notification_policy_templates.py -q`; `scripts/verify.sh backend > /tmp/opencode/issue113-backend-parity.log 2>&1` | green: 5 focused; 2371 passed, 14 skipped |
+| 2 | Docker lab: upgraded existing seeded DB after initial smoke failed (missing table); repeat 9/9 passed; policy PUT and `nagios -v` accepted custom period; forced host DOWN yielded zero notifications quiet versus 28 outside; recorded partial sanitized report | `scripts/lab smoke`; `docker compose -f lab/compose.yaml exec appliance /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg`; `scripts/verify.sh docs > /tmp/opencode/issue113-docs-lab.log 2>&1` | smoke 9/9 after upgrade; Nagios 0 warnings/errors; docs green; service CRITICAL and browser still untested |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh backend > /tmp/opencode/issue113-backend-parity.log 2>&1`
-- Result (first failing lines, or "green"): green: 2371 passed, 14 skipped.
-- Hypothesis: Custom contact inheritance and timeperiod syntax require actual Nagios lab validation.
-- Next action (one specific step, not "continue"): Read lab instructions and run approved Docker lab to check `nagios -v` on generated custom policy, then exercise quiet-window notifications.
+- Last check run (exact command): `scripts/verify.sh docs > /tmp/opencode/issue113-docs-lab.log 2>&1`
+- Result (first failing lines, or "green"): green: docs stage; lab Nagios 0 errors/warnings, smoke 9/9 after upgrade, host dispatch 0 quiet versus 28 outside.
+- Hypothesis: To fulfill the issue's explicit service CRITICAL criterion, enable a service check in Docker and repeat timing observations; browser and VM evidence remain.
+- Next action (one specific step, not "continue"): Enable one service check in the isolated Docker lab, regenerate config and force CRITICAL inside/outside quiet hours with notification-log counts.
 
 ## Decisions and notes
 
