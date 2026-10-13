@@ -139,6 +139,7 @@ PERMISSION_NAMES = [
     "system.dashboard",
     "system.network_health",
     "system.acknowledge_alerts",
+    "system.recheck",
     "system.history",
     "plugin.scan",
     "plugin.view",

@@ -108,3 +108,14 @@ When adding a page:
   when connecting a feature.
 - Service names in URL paths must be encoded, and backend routes must retain the
   Flask `path` converter because names may contain `/`.
+
+## Nagios command channel UI
+
+- `components/shared/CheckNowButton.tsx`: **Check now** in the host and service views of
+  `StatusDetailDrawer`. Shown only with `system.recheck`; shows Requesting…, a
+  success line, the server's error, and a countdown from the 429 `retry_after`
+  (default 10 s) during which it is disabled.
+- `components/shared/NagiosSyncNotice.tsx` with `types/nagiosSync.ts`: every acknowledge
+  and unacknowledge call (Dashboard, Device Inventory, System Status, the drawer)
+  reads `nagios_synced` from the response and shows a dismissible notice when it
+  is false; nothing is shown when it is true or absent.

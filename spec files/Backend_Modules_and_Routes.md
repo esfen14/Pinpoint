@@ -23,7 +23,7 @@ role.edit, role.view, role.info, role.list
 account.view, account.edit, account.info, account.alerts
 system.discover, system.deploy.ncpa, system.hosts, system.hosts.edit, system.logs
 system.report, system.notifications, system.services, system.network_health
-system.acknowledge_alerts, system.dashboard, system.history
+system.acknowledge_alerts, system.recheck, system.dashboard, system.history
 plugin.scan, plugin.view, plugin.enable, plugin.disable
 plugin.command_override, plugin.command_restore, plugin.validate
 plugin.custom_add, plugin.custom_check, plugin.update, plugin.update_rollback
@@ -132,9 +132,9 @@ Both routes use the standard success/error envelopes. GET returns `quietHours` (
 | `GET /api/system/dashboard/status` | `system.dashboard` | Nagios process and monitoring-server resource health |
 | `GET /api/system/dashboard/summary` | `system.dashboard` | Host/service counts, active-alert counts, ping and NCPA summaries |
 | `GET /api/system/dashboard/alerts` | `system.dashboard` | Active alerts from the latest snapshot, with acknowledgement filters |
-| `POST /api/system/dashboard/alerts/acknowledge` | `system.acknowledge_alerts` | Acknowledge one host or service alert |
-| `POST /api/system/dashboard/alerts/acknowledge-all` | `system.acknowledge_alerts` | Acknowledge a supplied batch of alerts |
-| `DELETE /api/system/dashboard/alerts/acknowledge` | `system.acknowledge_alerts` | Remove one application acknowledgement |
+| `POST /api/system/dashboard/alerts/acknowledge` | `system.acknowledge_alerts` | Acknowledge one host or service alert; also sent to Nagios (`nagios_synced`, `nagios_message` in the response). A comment with a line break or NUL returns 400 |
+| `POST /api/system/dashboard/alerts/acknowledge-all` | `system.acknowledge_alerts` | Acknowledge a supplied batch of alerts; `nagios_synced` is false if any command failed |
+| `DELETE /api/system/dashboard/alerts/acknowledge` | `system.acknowledge_alerts` | Remove one application acknowledgement and the Nagios one (`nagios_synced`) |
 | `GET /api/system/dashboard/notifications` | `system.dashboard` | Return the five latest Nagios notifications |
 
 Detailed fields and behavior are normative in `Display_Requirements.md`.
@@ -169,7 +169,8 @@ each route's docstring.
 |---|---|---|
 | `GET /api/system/network-health/hosts` | `system.network_health` | Paginated/filterable latest host snapshot; each item carries `device_id` (the discovered device behind the Nagios host name, `null` for a host with no device record such as `localhost`) and `ip_address` (that device's current IP, `null` in the same case), and `monitoring_state` / `monitored` (the device's monitoring label and whether Nagios fully checks it; both `null` in the same case). Optional `monitoring` filter: `all`, `not_monitored`, `monitored`, `missing`, `address_unknown`, `paused`, `retired` or `merged` (400 otherwise); a host with no device counts as monitored |
 | `GET /api/system/network-health/hosts/<hostname>/detail` | `system.network_health` | Host detail panel data, including `device_id`, `monitoring_state` and `monitored` |
-| `POST /api/system/network-health/hosts/acknowledge` | `system.acknowledge_alerts` | Acknowledge a host alert |
+| `POST /api/system/network-health/hosts/<hostname>/recheck` | `system.recheck` | Check Now: force a Nagios host check. 429 inside the 10 s per-target limit (`data.retry_after`), 404 not in the latest snapshot, 409 paused/retired/merged, 503 command pipe unavailable. Audited |
+| `POST /api/system/network-health/hosts/acknowledge` | `system.acknowledge_alerts` | Acknowledge a host alert. Response data adds `nagios_synced` and `nagios_message` |
 | `DELETE /api/system/network-health/hosts/acknowledge` | `system.acknowledge_alerts` | Unacknowledge a host alert |
 
 ### `app/api/system/network_services.py`
@@ -178,7 +179,8 @@ each route's docstring.
 |---|---|---|
 | `GET /api/system/network-health/services` | `system.network_health` | Paginated/filterable latest service snapshot |
 | `GET /api/system/network-health/services/<hostname>/<path:service_name>/detail` | `system.network_health` | Service detail panel data |
-| `POST /api/system/network-health/services/acknowledge` | `system.acknowledge_alerts` | Acknowledge a service alert |
+| `POST /api/system/network-health/services/<hostname>/<path:service_name>/recheck` | `system.recheck` | Check Now for a service; same responses as the host route |
+| `POST /api/system/network-health/services/acknowledge` | `system.acknowledge_alerts` | Acknowledge a service alert. Response data adds `nagios_synced` and `nagios_message` |
 | `DELETE /api/system/network-health/services/acknowledge` | `system.acknowledge_alerts` | Unacknowledge a service alert |
 
 ### `app/api/system/history.py`

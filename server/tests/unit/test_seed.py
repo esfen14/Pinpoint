@@ -112,6 +112,10 @@ class TestInitProductionCommand:
         assert db_session.session.scalar(sa.select(sa.func.count()).select_from(User)) == 0
 
 
+def select_permission(name):
+    return sa.select(Permission).where(Permission.Name == name)
+
+
 class TestSyncPermissions:
 
     def _seed_old_install(self, db_session):
@@ -139,6 +143,28 @@ class TestSyncPermissions:
         assert added == ["system.hosts.edit"]
         assert granted == ["system.hosts.edit"]
         assert missing_permissions() == []
+
+    def test_sync_adds_recheck_for_an_install_that_predates_check_now(self, app, db_session):
+        """An existing install gets system.recheck from `flask sync-permissions`, granted to Administrator only."""
+        from app.api.commands.seed import seed_permissions, seed_roles
+        seed_permissions()
+        seed_roles()
+        perm = db_session.session.scalar(select_permission("system.recheck"))
+        db_session.session.execute(sa.delete(RolePermission).where(RolePermission.PermissionID == perm.PermissionID))
+        db_session.session.execute(sa.delete(Permission).where(Permission.PermissionID == perm.PermissionID))
+        db_session.session.commit()
+        assert missing_permissions() == ["system.recheck"]
+
+        added, granted = sync_permissions()
+
+        assert added == ["system.recheck"] and granted == ["system.recheck"]
+        holders = db_session.session.scalars(
+            sa.select(Role.Name)
+            .join(RolePermission, RolePermission.RoleID == Role.RoleID)
+            .join(Permission, Permission.PermissionID == RolePermission.PermissionID)
+            .where(Permission.Name == "system.recheck")
+        ).all()
+        assert holders == ["Administrator"]
 
     def test_second_run_changes_nothing(self, app, db_session):
         self._seed_old_install(db_session)
