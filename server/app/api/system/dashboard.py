@@ -313,14 +313,15 @@ def _new_ack_history(
     action: AckAction,
     actioned_at: datetime,
     comment: str | None = None,
+    system_action: bool = False,
 ) -> AckHistory:
-    """Build a new (unsaved) AckHistory row for the current user."""
+    """Build an unsaved history row for the user, or an actorless system action."""
     return AckHistory(
         Hostname     = hostname,
         Service_Name = service_name,
         Action       = action,
         Actioned_At  = actioned_at,
-        ActorUserID  = current_user.UserID,
+        ActorUserID  = None if system_action else current_user.UserID,
         Comment      = comment,
     )
 

@@ -76,7 +76,7 @@ Requirement coverage (section A problem, C changes, D guidelines, G testing, exc
 
 ## Plan
 
-1. [ ] Add failing isolated poll lifecycle tests in `server/tests/unit/test_status.py` for host/service recovery, repeat, stale/missing/failed/empty, still failing, deleted target, rollback; implement in `server/app/nagios/status.py` with shared history builder in `server/app/api/system/dashboard.py` or extracted module; verify `test_status.py` then `scripts/verify.sh backend`.
+1. [x] Add failing isolated poll lifecycle tests in `server/tests/unit/test_status.py` for host/service recovery, repeat, stale/missing/failed/empty, still failing, deleted target, rollback; implement in `server/app/nagios/status.py` with shared history builder in `server/app/api/system/dashboard.py` or extracted module; verify `test_status.py` then `scripts/verify.sh backend`.
 2. [ ] Add failing History page interaction tests `client/src/test/HistoryPage.test.tsx` (list, filters, pagination, detail, sources, empty/error, permission), audit `spec files/Alerts_Notifications_History_Requirements.md` against `client/src/pages/HistoryPage.tsx`; fix page-only gaps in page and related frontend code, then verify focused test and `scripts/verify.sh frontend`. Document audit table in `docs/test-runs/` or PR.
 3. [ ] For backend-dependent audit gaps, search existing issues then file separate issues and link in audit table; preserve backend scope, verify audit table with `scripts/verify.sh docs`.
 4. [ ] Recheck routes/regressions in `server/tests/unit/test_dashboard.py`, `test_status.py`, `test_history.py` and `client/src/test/PageAccess.test.tsx`, `App.test.tsx`; update specs `spec files/Data_Model_and_Integrations.md`, `Display_Requirements.md`, `Alerts_Notifications_History_Requirements.md`, `Frontend_Modules_and_Routes.md`, `Implementation_Status.md`; verify narrow checks and stage checks.
@@ -86,13 +86,14 @@ Requirement coverage (section A problem, C changes, D guidelines, G testing, exc
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| 1 | Added recovery/safety tests and poll reconciliation with shared dashboard history builder in `test_status.py`, `status.py`, `dashboard.py` | `server/.venv/bin/python -m pytest server/tests/unit/test_status.py -q --tb=short`; `scripts/verify.sh backend` | Red first: 3 expected recovery failures; green: 26 passed, backend 2380 passed/14 skipped |
 
 ## State for the next session
 
-- Last check run (exact command): not run yet
-- Result (first failing lines, or "green"): not run yet
-- Hypothesis: Poller only writes snapshots and does not reconcile Pinpoint acknowledgements; History page lacks sorting controls, custom date/time, and exact linked-row navigation.
-- Next action (one specific step, not "continue"): Write failing recovery and safety tests in `server/tests/unit/test_status.py` and run that file.
+- Last check run (exact command): `scripts/verify.sh backend > /tmp/opencode/issue-133-backend.log 2>&1; tail -30 /tmp/opencode/issue-133-backend.log`
+- Result (first failing lines, or "green"): green — 2380 passed, 14 skipped; verify: backend OK
+- Hypothesis: History page lacks sorting controls, custom date/time, and exact linked-row navigation; audit will separate page-only from backend-dependent gaps.
+- Next action (one specific step, not "continue"): Add failing interaction tests in `client/src/test/HistoryPage.test.tsx` for list, filters, pagination, detail, sources, empty/error and permission.
 
 ## Decisions and notes
 
