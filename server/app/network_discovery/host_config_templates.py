@@ -132,6 +132,7 @@ def create_contact_template(contact_template):
     policy = notification_policy()
     return _load_template("contact_template.cfg.tpl").format(
         template_name=contact_template,
+        register=("\n    register                        0" if contact_template == "pinpoint-contact" else ""),
         period=notification_period(policy),
         host_options=policy.Host_Options,
         service_options=policy.Service_Options,

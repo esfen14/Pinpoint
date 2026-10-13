@@ -5,5 +5,5 @@ define contact {{
     service_notification_options    {service_options}
     host_notification_options       {host_options} 
     service_notification_commands   notify-service-by-email
-    host_notification_commands      notify-host-by-email 
+    host_notification_commands      notify-host-by-email {register}
 }}

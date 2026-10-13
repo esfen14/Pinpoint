@@ -39,7 +39,11 @@ Requirement coverage (every requirement the issue states, and the check that pro
 5. [x] Update `server/app/network_discovery/create_host_cfg.py` to render the timeperiod in the candidate file.
 6. [x] Create `client/src/types/notificationPolicy.ts` and `client/src/lib/notificationPolicyApi.ts`.
 7. [x] Create `client/src/components/settings/NotificationPolicySettings.tsx`, place in permission-gated System tab through `SystemSettings.tsx`, and relabel General bell toggle.
-8. [ ] Implement tests and verify.
+8. [x] Strengthen generated-config regression and full contact/service propagation in `server/tests/unit/test_notification_policy_templates.py`, `server/app/network_discovery/create_host_cfg.py`, `server/app/network_discovery/host_config_templates.py`.
+9. [ ] Expand frontend permission/label tests in `client/src/test/NotificationPolicySettings.test.tsx` and related Settings tests; correct UI as needed.
+10. [ ] Review backend validation/apply edge cases and default byte parity in `server/tests/unit/test_notification_policy_api.py`, `server/tests/unit/test_notification_policy_templates.py` and owning backend modules.
+11. [ ] Run approved Docker lab for `nagios -v` and inside/outside notification events; record sanitized evidence under `docs/test-runs/`.
+12. [ ] Update manual and owning specs (`spec files/Backend_Modules_and_Routes.md`, `Data_Model_and_Integrations.md`, `Frontend_Modules_and_Routes.md`, `Implementation_Status.md`), then verify finish conditions.
 
 ## Round log
 
@@ -55,13 +59,14 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | resumed | No earlier plan steps repeated | `scripts/verify.sh backend` | green: 2368 passed, 14 skipped |
 | 1 | Added failing client adapter test, typed wire contract and shared GET/PUT wrapper; fixed test typing after build exposed widened literals | `npm run test -- src/test/NotificationPolicyApi.test.ts`; `scripts/verify.sh frontend > /tmp/opencode/issue113-frontend-round1.log 2>&1` | green; 505 frontend tests and build/lint pass (25 warnings) |
 | 2 | Added failing interaction suite, policy card on System tab and corrected bell-only label | `npm run test -- src/test/NotificationPolicySettings.test.tsx`; `scripts/verify.sh frontend > /tmp/opencode/issue113-frontend-round2.log 2>&1` | green: focused 5 passed; full frontend stage passed (26 warnings) |
+| 3 | Added failing contact propagation/template-registration test; custom contacts inherit a non-registering policy template while default users retain generic-contact | `.venv/bin/python -m pytest tests/unit/test_notification_policy_templates.py -q`; `scripts/verify.sh backend > /tmp/opencode/issue113-backend-round3b.log 2>&1` | green: 4 focused; 2369 passed, 14 skipped |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh frontend > /tmp/opencode/issue113-frontend-round2.log 2>&1`
-- Result (first failing lines, or "green"): green: frontend stage, 26 warnings.
-- Hypothesis: Need stronger backend parity and real Nagios syntax review before claiming finished.
-- Next action (one specific step, not "continue"): Add failing byte-parity test comparing pre-change rendered hosts.cfg to default branch output, then fix differences and strengthen service behavior.
+- Last check run (exact command): `scripts/verify.sh backend > /tmp/opencode/issue113-backend-round3b.log 2>&1`
+- Result (first failing lines, or "green"): green: 2369 passed, 14 skipped.
+- Hypothesis: The System tab is permission gated, but explicit regression tests must establish this and the bell-only label.
+- Next action (one specific step, not "continue"): Add failing permission/label frontend tests for Settings and run focused suite.
 
 ## Decisions and notes
 
@@ -69,5 +74,5 @@ Requirement coverage (every requirement the issue states, and the check that pro
 - `flask db migrate --multidb` and `flask db upgrade --multidb` are not recognized by installed Flask-Migrate; `flask db migrate` generated both default and history functions. Reviewed generated schema; manual seed necessary because autogenerate does not populate singleton data. Migration round trip tested on disposable databases.
 - Resolved blocker: issue comment from esfen14 on 2026-10-13 approves and instructs use of repository Docker labs. No source code changed yet.
 - The earlier pre-existing worktree modification to `client/src/test/SystemSettingsConflict.test.tsx` was not included in issue commits; inspect status before touching it.
-- Five implementation rounds completed this session; stopping per workflow §4. Next session must verify actual default generated-file byte parity against pre-change output, not only template-level assertions. Also review timeperiod syntax against Nagios (`24:00` and comma-separated ranges) in the Docker lab, and review whether service default directives must be explicit without violating byte parity.
+- Plan revised because the original final step omitted explicit lab, documentation and regression stages; these are required deliverables. This session must verify actual default generated-file byte parity against pre-change output, not only template-level assertions. Also review timeperiod syntax against Nagios (`24:00` and comma-separated ranges) in the Docker lab, and review whether service default directives must be explicit without violating byte parity.
 - Sensitive-module review pending: API validation whitelists weekday/time/option values, no shell interpolation introduced, generated file uses fixed destination and existing Nagios pre-apply validation; verify no secrets enter new logs or response. Lab acceptance and documentation remain unverified.
