@@ -5,18 +5,18 @@ Status: in-progress
 
 ## Finish condition
 
-- [ ] **Part 1.1 (System):** A policy with quiet hours produces a valid `define timeperiod` block, and hosts, services and contacts reference it.
-- [ ] **Part 1.1 (System):** With the default policy, generated `hosts.cfg` is byte-identical to the output before this change.
-- [ ] **Part 1.1 (System):** Saving an invalid policy (bad time, overlap, unknown option letter, interval out of range) returns 400 with a message that names the field.
-- [ ] **Part 1.1 (System):** A stale `version` returns 409. A policy that Nagios rejects is rolled back and returns 422 with Nagios's message.
-- [ ] **Part 1.1 (System):** Without `settings.system` the API returns 403.
-- [ ] **Part 1.1 (System):** On a lab appliance, a forced state change inside a quiet window sends no notification, and the same change outside it does.
-- [ ] **Part 1.1 (System):** Existing hosts, services, contacts and Check interval behavior are unchanged.
-- [ ] **Part 1.2 (Web-Interface):** The old toggle's label and help text say it controls the header bell only.
-- [ ] **Part 1.2 (Web-Interface):** A user with `settings.system` can add, edit and remove quiet-hour windows and change options and interval, and the values reload after a refresh.
-- [ ] **Part 1.2 (Web-Interface):** Invalid input is blocked in the form with a message naming the field, and a server 400, 409 or 422 shows the server's message.
-- [ ] **Part 1.2 (Web-Interface):** A user without the permission does not see the card and cannot reach it by URL.
-- [ ] **Part 1.2 (Web-Interface):** The existing General and System settings tests still pass.
+- [x] **Part 1.1 (System):** A policy with quiet hours produces a valid `define timeperiod` block, and hosts, services and contacts reference it.
+- [x] **Part 1.1 (System):** With the default policy, generated `hosts.cfg` is byte-identical to the output before this change.
+- [x] **Part 1.1 (System):** Saving an invalid policy (bad time, overlap, unknown option letter, interval out of range) returns 400 with a message that names the field.
+- [x] **Part 1.1 (System):** A stale `version` returns 409. A policy that Nagios rejects is rolled back and returns 422 with Nagios's message.
+- [x] **Part 1.1 (System):** Without `settings.system` the API returns 403.
+- [x] **Part 1.1 (System):** On a lab appliance, a forced state change inside a quiet window sends no notification, and the same change outside it does.
+- [x] **Part 1.1 (System):** Existing hosts, services, contacts and Check interval behavior are unchanged.
+- [x] **Part 1.2 (Web-Interface):** The old toggle's label and help text say it controls the header bell only.
+- [x] **Part 1.2 (Web-Interface):** A user with `settings.system` can add, edit and remove quiet-hour windows and change options and interval, and the values reload after a refresh.
+- [x] **Part 1.2 (Web-Interface):** Invalid input is blocked in the form with a message naming the field, and a server 400, 409 or 422 shows the server's message.
+- [x] **Part 1.2 (Web-Interface):** A user without the permission does not see the card and cannot reach it by URL.
+- [x] **Part 1.2 (Web-Interface):** The existing General and System settings tests still pass.
 
 Requirement coverage (every requirement the issue states, and the check that proves it):
 
@@ -49,6 +49,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 15. [x] Inspect isolated VM-lab prerequisites and deploy issue branch to installer-built appliance without touching unrelated lab work (`scripts/vmlab`, `demo/`, VM plan). Preflight: 98 GB disk available, 6.5 GiB RAM available before shutting down Docker lab, VirtualBox appliance powered off with base snapshot present; retained `demo-ready` snapshot must not be deleted.
 16. [x] Run `nagios -v`, force service CRITICAL within/outside a quiet window, and verify browser/API behavior in VM; record sanitized evidence in `docs/test-runs/2026-10-13-issue-113-vm-service-retest/REPORT.md`. Nagios dispatch observed (0 quiet, 1 outside); mailbox arrival unverified.
 17. [x] Re-run applicable verification, update owning status/docs and draft PR with observed VM outcome; retain progress file until all finish conditions are proven.
+18. [ ] Attach the full `scripts/verify.sh all` output to PR #140 in an approved, sanitized artifact; obtain required reviewer approval before marking all issue boxes complete.
 
 ## Round log
 
@@ -77,13 +78,14 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | 1 | Verified full suites and acceptance regressions, corrected lab report commit attribution; remaining installer VM/inbox/reviewer conditions prevent ready-for-review claim | `scripts/verify.sh all > /tmp/opencode/issue113-all.log 2>&1`; focused backend/frontend; `scripts/verify.sh docs > /tmp/opencode/issue113-docs-correction.log 2>&1` | all green: 2371 backend passed, 14 skipped; 513 frontend passed; docs green; focused 93 backend/38 frontend passed |
 | resumed | User explicitly authorized VM testing; issue unchanged, clean branch and docs check rerun | `scripts/verify.sh docs > /tmp/opencode/issue113-vm-resume-docs.log 2>&1` | green |
 | resumed | Rechecked docs, tested VM service CRITICAL to HARD in and out of quiet hours (0 vs 1 Nagios dispatch), restored target/policy; Playwright VM save/reload; corrected initial overclaim in separate retest report | `scripts/verify.sh docs > /tmp/opencode/issue113-vm-resume-docs.log 2>&1`; VM Nagios log; `LAB_BASE_URL=… node_modules/.bin/playwright test --config=notification-policy.lab.config.ts`; `scripts/verify.sh frontend > /tmp/opencode/issue113-vm-frontend.log 2>&1` | VM dispatch comparison passed; browser 1 passed; frontend green (26 warnings); inbox unverified |
+| resumed | Audited issue E/F/H, checked evidenced items on issue, reran full local verification; PR CI green but no reviewer approval and full local output not attached | `scripts/verify.sh all > /tmp/opencode/issue113-final-all.log 2>&1`; `gh pr checks 140` | all green (2371 backend, 14 skipped, 513 frontend, 26 warnings); PR checks green; issue remains open/draft |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh docs > /tmp/opencode/issue113-vm-retest-docs.log 2>&1`
-- Result (first failing lines, or "green"): green; frontend verification green; VM Nagios CRITICAL dispatch count 0 quiet versus 1 outside; Playwright VM browser 1 passed.
-- Hypothesis: VM step 16 is proven for Nagios dispatch and browser, but actual inbox delivery, full output attached to PR, CI and reviewer approval are not proven. The initial discovery smoke timed out and must not be presented as green.
-- Next action (one specific step, not "continue"): Update draft PR #140 with the VM retest evidence and explicitly note inbox delivery is unverified.
+- Last check run (exact command): `scripts/verify.sh all > /tmp/opencode/issue113-final-all.log 2>&1`
+- Result (first failing lines, or "green"): green (2371 backend passed, 14 skipped, 513 frontend passed, 26 lint warnings); PR CI docs/backend/frontend green.
+- Hypothesis: All E criteria and most F/H items have evidence, but F full local output attachment, H reviewer approval, and therefore H all-deliverables-complete cannot be checked. The first VM smoke timed out; later NCPA/service retest passed. Inbox arrival is not proven, though Nagios dispatch is.
+- Next action (one specific step, not "continue"): Arrange an approved way to attach the sanitized full local verification output to PR #140, then request required reviewer approval; leave PR draft until all issue boxes are checked.
 
 ## Decisions and notes
 
