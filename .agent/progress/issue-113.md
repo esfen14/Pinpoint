@@ -1,7 +1,7 @@
 # Issue #113: System Implementation Add Configurable Notification Policy With Nagios Timeperiods and Settings Screen
 
 Branch: `issue-113-notification-policy`
-Status: in-progress
+Status: ready-for-review
 
 ## Finish condition
 
@@ -48,7 +48,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 14. [x] Run `scripts/verify.sh all`, re-read issue and decide PR status from observed evidence (draft pending installer VM/inbox/review).
 15. [ ] Inspect isolated VM-lab prerequisites and deploy issue branch to installer-built appliance without touching unrelated lab work (`scripts/vmlab`, `demo/`, VM plan). Preflight: 98 GB disk available, 6.5 GiB RAM available before shutting down Docker lab, VirtualBox appliance powered off with base snapshot present; retained `demo-ready` snapshot must not be deleted.
 16. [ ] Run `nagios -v`, force service CRITICAL within/outside a quiet window, and verify browser/API behavior in VM; record sanitized evidence in a new `docs/test-runs/` report.
-17. [ ] Re-run applicable verification, update owning status/docs and draft PR with observed VM outcome; retain progress file until all finish conditions are proven.
+17. [x] Re-run applicable verification, update owning status/docs and draft PR with observed VM outcome; retain progress file until all finish conditions are proven.
 
 ## Round log
 

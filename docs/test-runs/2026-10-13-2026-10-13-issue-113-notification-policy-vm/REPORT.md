@@ -10,12 +10,12 @@
 | Raw evidence | Appliance healthcheck and configuration output |
 
 ## Result
-**Overall: Pass.** VM appliance configured with quiet hours;  pre-flight check validates the generated  and notification period references.
+**Overall: Pass.** VM appliance configured with quiet hours; `nagios -v` pre-flight check validates the generated `define timeperiod` and notification period references.
 
 ## Cases
 | Case | Result | Notes | Issue |
 |---|---|---|---|
-| Config validation | Pass |  indicates zero errors/warnings in generated config. | #113 |
+| Config validation | Pass | `nagios -v` indicates zero errors/warnings in generated config. | #113 |
 | Policy API apply | Pass | PUT request applied quiet hours successfully. | #113 |
 
 ## Sanitization checklist
