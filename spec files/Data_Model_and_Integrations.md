@@ -30,7 +30,7 @@ acknowledgements belong in `system.db` even though they relate to Nagios alerts.
   with `Reviewed_At`/`Reviewed_By`), `NCPADeploymentResult` (one row per device
   per run), `NCPADeployment` (each device's latest agent state),
   `NCPADevicePartition`.
-- Settings: singleton `SystemSettings`, one-per-user `UserPreferences`.
+- Settings: singleton `SystemSettings`, singleton `NotificationPolicy` (`NOTIFICATION_POLICY`, Id 1, migration `143c48cd6663`), one-per-user `UserPreferences`. `NotificationPolicy` stores weekday/HH:MM quiet windows as JSON, host/service option strings, a 0–1440-minute renotify interval, `Version`, and `Updated_By`; the migration seeds the historical 24x7/default-options/30-minute policy and removes the table on downgrade.
 - Notifications/alerts: `NotificationCursor`, `AlertAcknowledgement`,
   append-only `AckHistory`.
 
@@ -210,6 +210,7 @@ different purpose.
 |---|---|
 | Discovery Scan Frequency (`scanFrequency`) | Pinpoint automation scans for devices and ports; it does not execute Nagios checks or determine result freshness. |
 | Check interval (`checkInterval`) | System-wide 1, 2, 5 (default), 10 or 15 minutes. Nagios checks generated hosts and services at this cadence (`interval_length=60` seconds must hold on the appliance). The system administrator changes it on Settings → System; the shared config writer validates, backs up and reloads `hosts.cfg`, and a failed apply rolls the settings change back. Stock `localhost.cfg` objects are not rewritten. |
+| Notification policy | A separate system-wide singleton controls the generated host/service notification periods, contact periods/options, state options, and renotify interval. Quiet windows use **Nagios server local time**, not each user's display zone; allowed spans are rendered as the complement in a fixed `pinpoint_notify` timeperiod in `hosts.cfg`. No quiet windows emit no new period; historical default output is preserved. Custom contacts inherit a non-registering `pinpoint-contact` template rather than rewriting stock `generic-contact`. Saving validates the candidate with Nagios, rolls back database changes on failed apply, and respects the system audit setting. Stock `localhost.cfg` and check cadence are unchanged. |
 | Data polling frequency | Pinpoint reads Nagios CGI status every 60 seconds, fixed and independent of discovery and checks. Unchanged `Last_Check` does not add another host/service or performance row. |
 | Dashboard Refresh Rate | Per-user browser fetch, Manual/1/5/15 minutes, independent of the other schedules; its hint shows the Check interval and 60-second poll. |
 

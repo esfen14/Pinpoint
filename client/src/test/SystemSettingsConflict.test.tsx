@@ -1,4 +1,5 @@
-import { act, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { useState } from 'react'
 import { GeneralSettings } from '../components/settings/GeneralSettings'
 import { SystemSettings } from '../components/settings/SystemSettings'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
@@ -76,6 +77,17 @@ function Probe() {
   )
 }
 
+function SettingsTabs() {
+  const [tab, setTab] = useState<'general' | 'system'>('system')
+  return (
+    <>
+      <button onClick={() => setTab('general')}>General Settings tab</button>
+      <button onClick={() => setTab('system')}>System tab</button>
+      {tab === 'general' ? <GeneralSettings /> : <SystemSettings />}
+    </>
+  )
+}
+
 async function renderLoaded() {
   render(
     <SystemSettingsProvider>
@@ -105,6 +117,12 @@ describe('SystemSettingsProvider conflict handling', () => {
     vi.unstubAllGlobals()
   })
 
+  it('describes the general toggle as header-bell only', async () => {
+    render(<SystemSettingsProvider><GeneralSettings /></SystemSettingsProvider>)
+    expect(await screen.findByText('Show notification bell in the header')).toBeInTheDocument()
+    expect(screen.getByText(/Only shows or hides the header bell/)).toBeInTheDocument()
+  })
+
   it('saves check interval as a system setting without changing per-user refresh', async () => {
     await renderLoaded()
     act(() => api.updateSettings({ checkInterval: 2 }))
@@ -120,6 +138,21 @@ describe('SystemSettingsProvider conflict handling', () => {
     await waitFor(() => expect(screen.getByText(/Nagios checks every 2 minutes/)).toBeInTheDocument())
     expect(screen.getByText('Check interval')).toBeInTheDocument()
     expect(server.dashboardRefreshRate).toBe(5)
+  })
+
+  it('updates the General Settings description after saving Check interval in System', async () => {
+    render(<SystemSettingsProvider><SettingsTabs /></SystemSettingsProvider>)
+    const checkInterval = screen.getByText('Check interval').parentElement?.querySelector('select')
+    expect(checkInterval).toBeTruthy()
+    await waitFor(() => expect(checkInterval).toHaveValue('5'))
+
+    fireEvent.change(checkInterval!, { target: { value: '2' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }))
+    await waitFor(() => expect(server.checkInterval).toBe(2))
+
+    fireEvent.click(screen.getByRole('button', { name: 'General Settings tab' }))
+    expect(screen.getByText(/Nagios checks every 2 minutes/)).toBeInTheDocument()
+    expect(screen.getByText('Dashboard Refresh Rate').parentElement?.querySelector('select')).toHaveValue('5')
   })
 
   it('shows a Nagios apply failure instead of treating it as a version conflict', async () => {

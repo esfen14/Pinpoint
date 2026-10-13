@@ -5,6 +5,6 @@ define service {{
     max_check_attempts          3
     check_interval              {check_interval}
     retry_interval              1
-    check_period                24x7
+    check_period                24x7{notification_fields}
     contact_groups               {contact_groups}
 }}
