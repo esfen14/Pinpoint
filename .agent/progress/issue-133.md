@@ -1,63 +1,63 @@
 # Issue #133: Clear acknowledgements on recovery and audit History
 
 Branch: `issue-133-clear-ack-recovery-audit-history`
-Status: in-progress
+Status: blocked
 
 ## Finish condition
 
 Copied from issue sections E, F, H. Tick only with observed evidence.
 
 ### E — Acceptance
-- [ ] Recovered service removes active acknowledgement and writes exactly one actorless AUTO_RESOLVED row.
-- [ ] Repeated poll writes no further row.
-- [ ] Failed or empty poll leaves acknowledgements intact.
-- [ ] Still-failing item retains acknowledgement.
-- [ ] Acknowledge, unacknowledge and history routes retain behavior.
-- [ ] Audit table covers every History requirement with evidence and result.
-- [ ] Every page-only gap is fixed and tested.
-- [ ] Every backend-dependent gap has a separate linked issue.
-- [ ] New HistoryPage test file passes.
+- [x] Recovered service removes active acknowledgement and writes exactly one actorless AUTO_RESOLVED row (isolated `test_status.py`; live not run).
+- [x] Repeated poll writes no further row (`test_status.py`).
+- [x] Failed or empty poll leaves acknowledgements intact (`test_status.py`).
+- [x] Still-failing item retains acknowledgement (`test_status.py`).
+- [x] Acknowledge, unacknowledge and history routes retain behavior (`test_dashboard.py`, `test_history.py`; live not run).
+- [x] Audit table covers every History requirement with evidence and result (`docs/test-runs/2026-10-14-issue-133-history-audit/AUDIT.md`; source review only).
+- [x] Every page-only gap is fixed and tested (`HistoryPage.test.tsx`; backend-dependent gaps separately tracked).
+- [x] Every backend-dependent gap has a separate linked issue (audit links #141–#144).
+- [x] New HistoryPage test file passes (`scripts/verify.sh all`: 518 frontend tests passed).
 
 ### F — Deliverables
-- [ ] Updated application source code (section C).
-- [ ] New/updated API endpoints with docstrings and permission checks (N/A if no endpoint change).
-- [ ] Database migrations (N/A: no model changes planned).
-- [ ] Updated frontend components, types and routes (only where a gap requires changes).
-- [ ] Unit tests for new or modified logic.
-- [ ] Frontend interaction tests under client/src/test/.
-- [ ] Integration or regression tests for workflows in G (isolated tests; live run separately).
-- [ ] Updated Data_Model_and_Integrations.md, Display_Requirements.md, Alerts_Notifications_History_Requirements.md, Frontend_Modules_and_Routes.md, Implementation_Status.md.
-- [ ] User-facing documentation (N/A unless page change needs it).
-- [ ] scripts/verify.sh all output attached to PR.
+- [x] Updated application source code (section C): `status.py`, `dashboard.py`, `HistoryPage.tsx`.
+- [x] New/updated API endpoints with docstrings and permission checks: N/A; no endpoint changed.
+- [x] Database migrations: N/A; no model changes.
+- [x] Updated frontend components, types and routes where needed: `HistoryPage.tsx`; types/routes unchanged as not needed.
+- [x] Unit tests for new or modified logic (`test_status.py`).
+- [x] Frontend interaction tests under client/src/test/ (`HistoryPage.test.tsx`).
+- [ ] Integration or regression tests for workflows in G: isolated regression tests pass; live appliance workflow/manual walk outstanding.
+- [x] Updated Data_Model_and_Integrations.md, Display_Requirements.md, Alerts_Notifications_History_Requirements.md, Frontend_Modules_and_Routes.md, Implementation_Status.md.
+- [x] User-facing documentation: N/A; no separate user guide required by issue.
+- [x] `scripts/verify.sh all` output attached to PR as result excerpts in [verification comment](https://github.com/esfen14/Pinpoint/pull/145#issuecomment-6150729909); full local log not uploaded.
 
 ### H — Definition of done
-- [ ] All mandatory acceptance criteria satisfied.
-- [ ] Required functionality works as specified.
-- [ ] Existing behavior not unintentionally broken.
-- [ ] Applicable edge cases handled.
-- [ ] Code follows existing architecture and conventions.
-- [ ] No unnecessary duplicate functionality.
-- [ ] Relevant lint and static analysis pass.
-- [ ] No unresolved critical defects.
-- [ ] Required automated tests added or updated.
-- [ ] All applicable automated tests pass.
-- [ ] Relevant integration and regression tests pass.
-- [ ] Test results/evidence attached to PR.
-- [ ] Inputs/config validated.
-- [ ] Authorization enforced where required.
-- [ ] Sensitive data securely handled.
-- [ ] Errors controlled.
-- [ ] Performance/reliability requirements met.
-- [ ] Technical documentation updated.
-- [ ] User documentation updated if applicable.
-- [ ] New configuration parameters documented (N/A).
-- [ ] Deployment/migration steps documented if applicable (N/A).
-- [ ] PR references #133.
-- [ ] PR describes implementation/testing.
-- [ ] Required CI checks pass.
-- [ ] Required reviewer approvals obtained (human after PR).
-- [ ] Blocking review comments resolved (human after PR).
-- [ ] All applicable acceptance criteria/deliverables complete.
+- [ ] All mandatory acceptance criteria satisfied end-to-end: isolated E checks pass; live lab pending.
+- [ ] Required functionality works as specified in deployment: only isolated tests observed.
+- [ ] Existing behavior not unintentionally broken in deployment: regressions pass, live behavior unverified.
+- [x] Applicable edge cases handled in isolated tests (stale/missing/failed/empty, deleted target, rollback, repeated poll).
+- [x] Code follows existing architecture and conventions (source diff; shared history builder).
+- [x] No unnecessary duplicate functionality (shared `_new_ack_history` used).
+- [x] Relevant lint and static analysis pass (`scripts/verify.sh all`: 0 errors, 26 warnings).
+- [ ] No unresolved critical defects: live validation/review needed; #141–#144 are open backend History gaps.
+- [x] Required automated tests added or updated (`test_status.py`, `HistoryPage.test.tsx`).
+- [x] All applicable automated tests pass (`scripts/verify.sh all`: 2382 backend passed/14 skipped, 518 frontend passed).
+- [ ] Relevant integration and regression tests pass: isolated regressions pass; live lab pending.
+- [x] Test results/evidence attached to PR ([verification comment](https://github.com/esfen14/Pinpoint/pull/145#issuecomment-6150729909); full log not attached).
+- [x] Inputs/config validated for changed logic (fresh status checks; no new config; isolated tests).
+- [x] Authorization enforced where required (existing route guards unchanged; `test_dashboard.py`, `test_history.py`, `PageAccess.test.tsx`).
+- [x] Sensitive data securely handled (source review: no new logging/secret persistence in changed logic).
+- [x] Errors controlled (poll failure/empty/stale and rollback tests).
+- [ ] Performance/reliability requirements met in deployment: isolated safety tests pass; no live observation.
+- [x] Technical documentation updated (five specification files and audit).
+- [x] User documentation updated if applicable: N/A; issue marks it N/A.
+- [x] New configuration parameters documented: N/A; none added.
+- [x] Deployment/migration steps documented if applicable: N/A; none required by change.
+- [x] PR references #133 (`Closes #133` in PR #145).
+- [x] PR describes implementation/testing (PR #145 body and verification comment).
+- [x] Required CI checks pass (PR #145 head `18ca01f3`: docs/backend/frontend SUCCESS).
+- [ ] Required reviewer approvals obtained: no reviews yet.
+- [x] Blocking review comments resolved: none currently present (PR #145 reviews/comments queried); recheck before completion.
+- [ ] All applicable acceptance criteria/deliverables complete: live G workflow and review pending.
 
 Requirement coverage (section A problem, C changes, D guidelines, G testing, exclusions and E/F/H):
 
@@ -91,18 +91,20 @@ Requirement coverage (section A problem, C changes, D guidelines, G testing, exc
 | 3 | Audited each History requirement in `docs/test-runs/2026-10-14-issue-133-history-audit/AUDIT.md`; filed #141–#144 for backend gaps | `scripts/verify.sh docs` | green — docs OK |
 | 4 | Added no-check/re-failure safety tests; ran route and page guard regressions; updated five specs | `server/.venv/bin/python -m pytest server/tests/unit/test_dashboard.py server/tests/unit/test_status.py server/tests/unit/test_history.py -q --tb=short`; `npm run test -- --run src/test/HistoryPage.test.tsx src/test/PageAccess.test.tsx src/test/App.test.tsx`; `scripts/verify.sh docs` | green — 163 backend, 29 frontend, docs OK |
 | 5 | Re-read issue/comments; checked full local CI-equivalent suite; no further code changes | `scripts/verify.sh all > /tmp/opencode/issue-133-all.log 2>&1; tail -30 /tmp/opencode/issue-133-all.log` | green — verify: all OK; 26 lint warnings, zero errors |
+| resumed | Re-read issue and comments; reconciled finish condition with source audit, PR and CI. First check timed out at 120 seconds; reran with 600-second timeout. | `scripts/verify.sh all > /tmp/opencode/issue-133-all.log 2>&1; result=$?; tail -40 /tmp/opencode/issue-133-all.log; exit "$result"` | green — 2382 backend passed/14 skipped; 518 frontend passed; 26 lint warnings/0 errors. CI docs/backend/frontend success on PR head. Live lab/manual walk and human review remain blocked. |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh all > /tmp/opencode/issue-133-all.log 2>&1; tail -30 /tmp/opencode/issue-133-all.log`
-- Result (first failing lines, or "green"): green — verify: all OK; 26 lint warnings, zero errors
-- Hypothesis: Backend-dependent history gaps remain open as #141–#144; live lab and reviewer/CI evidence are not available in this session, so PR must stay draft with progress file.
-- Next action (one specific step, not "continue"): Arrange a live appliance walk for acknowledge/recovery/history and History filters; record sanitized evidence and then re-run full verification before marking PR ready.
+- Last check run (exact command): `scripts/verify.sh all > /tmp/opencode/issue-133-all.log 2>&1; result=$?; tail -40 /tmp/opencode/issue-133-all.log; exit "$result"`
+- Result (first failing lines, or "green"): green — 2382 passed, 14 skipped backend; 518 passed frontend; lint 0 errors/26 warnings; `verify: all OK`. First 120-second attempt timed out; 600-second rerun passed.
+- Hypothesis: Isolated tests and CI are green, but the requested live Nagios appliance and real-event History walk require a person/lab. PR must stay draft; #141–#144 are separately filed backend gaps, not implementation in #133.
+- Next action (one specific step, not "continue"): Ask the lab owner to perform acknowledge → recover → check History and manually walk filters/details with real events, then provide a sanitized `docs/test-runs/` report and deployment evidence.
 
 ## Decisions and notes
 
 - `gh issue view 133` fails because of deprecated projectCards GraphQL; `gh issue view 133 --json title,body,labels,state,comments` succeeds and is the issue text used.
 - Specs: Display_Requirements.md §4.9; Data_Model_and_Integrations.md §§Nagios integration, Alert acknowledgement lifecycle; Alerts_Notifications_History_Requirements.md §§1–5. Implementation_Status.md identifies both gaps.
 - Section G explicitly calls for live lab and manual walk, but no lab action will be implied by isolated tests. If unavailable, report honestly and use a draft PR.
-- H reviewer approvals and CI require people/remote CI and cannot be ticked speculatively.
-- Draft PR: https://github.com/esfen14/Pinpoint/pull/145. `gh pr edit` hits deprecated projectCards GraphQL; body updated via `gh api PATCH`. This remains unfinished: backend gaps #141–#144, live lab/manual verification, CI/review evidence. Local full verification log is `/tmp/opencode/issue-133-all.log` (not attached as an artifact).
+- CI docs/backend/frontend checks succeeded on PR head `18ca01f3`; no human reviews or comments were present when queried. Recheck CI for this progress-only checkpoint and review state before completion.
+- Needs a person: Who can run the live appliance acknowledgement/recovery/history check and manual History walk with real events, recording sanitized results and deployment evidence? No lab or secrets were used here.
+- Draft PR: https://github.com/esfen14/Pinpoint/pull/145. `gh pr edit` hits deprecated projectCards GraphQL; body updated via `gh api PATCH`. Backend gaps #141–#144 are tracked out of scope. Local full verification log is `/tmp/opencode/issue-133-all.log`; result excerpts are posted in a PR comment, but the full log is not uploaded.
