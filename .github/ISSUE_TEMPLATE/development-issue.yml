@@ -1,0 +1,186 @@
+name: Development issue
+description: An engineering-ready change from the feature-gap plan, with acceptance criteria, deliverables and merge requirements.
+title: "<Component> <Work Type> <Description>"
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Title format:** `<Component> <Work Type> <Description>`, for example `System Refinement Add Retry Interval and Maximum Check Attempts Settings`.
+        Component is Web-Interface, System or Installer. Work Type is Refinement (extends something that exists) or Implementation (nothing exists yet).
+        The description states one concrete engineering outcome. Do not use titles such as "Fix monitoring" or "Improve system".
+
+        Add a priority label (`Top Priority`, `Medium Priority` or `Low Priority`) after filing. Add `needs-decision` if the work is waiting on a product or scope decision.
+        The full specifications for the planned backlog are in `docs/issues/`.
+  - type: input
+    id: plan
+    attributes:
+      label: Plan issue
+      description: The number from docs/NAGIOS_CORE_FEATURE_GAP_PLAN.md, or "none" if this issue is not from the plan.
+      placeholder: "Plan issue #19"
+    validations:
+      required: true
+  - type: dropdown
+    id: component
+    attributes:
+      label: Category
+      description: Where the primary implementation work happens.
+      options:
+        - Web-Interface
+        - System
+        - Installer
+    validations:
+      required: true
+  - type: dropdown
+    id: work_type
+    attributes:
+      label: Work type
+      options:
+        - Refinement
+        - Implementation
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - Critical
+        - High
+        - Medium
+        - Low
+    validations:
+      required: true
+  - type: dropdown
+    id: complexity
+    attributes:
+      label: Estimated complexity
+      options:
+        - Low
+        - Medium
+        - High
+    validations:
+      required: true
+  - type: input
+    id: feature
+    attributes:
+      label: Related Nagios Core feature
+      description: The official feature name or names this addresses.
+      placeholder: "External Commands; Contact Notifications"
+    validations:
+      required: true
+  - type: input
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: Issues that must be finished first, by GitHub number, or "None".
+      placeholder: "None"
+    validations:
+      required: true
+  - type: textarea
+    id: blocked
+    attributes:
+      label: Blocked or conditional (optional)
+      description: A decision, review or investigation this issue is waiting on. Leave empty if none.
+  - type: textarea
+    id: problem
+    attributes:
+      label: A. Problem description
+      description: The current limitation, how it affects users or the system, the Nagios Core capability involved, and why the change is needed. List what is out of scope.
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: B. Current implementation
+      description: What exists today, with verified file paths, functions, routes, models, components and configuration. Mark anything proposed as proposed. Say what to reuse.
+    validations:
+      required: true
+  - type: textarea
+    id: changes
+    attributes:
+      label: C. Required changes
+      description: Step-by-step work, grouped by Backend / System, Frontend / Web Interface and Installer / Deployment. Include only the areas that apply.
+    validations:
+      required: true
+  - type: textarea
+    id: guidelines
+    attributes:
+      label: D. Implementation guidelines (optional)
+      description: Guidance specific to this issue. The general rules (reuse existing modules, Engineering_Standards.md, backward compatibility, validation, security, migrations, spec updates) apply to every issue and need not be repeated.
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: E. Acceptance criteria
+      description: Measurable, observable outcomes. This is the finish condition that work-issue reads.
+      value: |
+        - [ ]
+        - [ ]
+        - [ ] Existing behavior is unchanged where the issue does not say otherwise.
+        - [ ] Relevant automated tests pass.
+    validations:
+      required: true
+  - type: textarea
+    id: deliverables
+    attributes:
+      label: F. Required deliverables
+      description: Mark anything that does not apply as N/A.
+      value: |
+        - [ ] Updated application source code.
+        - [ ] New or updated API endpoints (or N/A).
+        - [ ] Database migration (or N/A).
+        - [ ] Updated frontend components (or N/A).
+        - [ ] Unit tests for new or modified logic.
+        - [ ] Integration or regression tests for the workflows in section G.
+        - [ ] Updated files in `spec files/` and `Implementation_Status.md`.
+        - [ ] Updated user-facing documentation (or N/A).
+        - [ ] Evidence that the functionality works: `scripts/verify.sh` output attached to the pull request.
+    validations:
+      required: true
+  - type: textarea
+    id: testing
+    attributes:
+      label: G. Testing and verification
+      description: Unit, API, frontend, end-to-end, failure and recovery, regression, security, and installation or upgrade tests, with expected results. For network features cover unreachable devices, timeouts, intermittent connectivity, duplicate events and recovery.
+    validations:
+      required: true
+  - type: textarea
+    id: merge
+    attributes:
+      label: H. Definition of done and merge requirements
+      description: A pull request for this issue must not be merged until every applicable box is ticked, with evidence. Do not claim test results or approvals without evidence.
+      value: |
+        **Functional completion**
+        - [ ] All mandatory acceptance criteria are satisfied.
+        - [ ] Existing behavior has not been unintentionally broken.
+        - [ ] Applicable edge cases are handled.
+
+        **Code quality**
+        - [ ] Code follows PinPoint's existing architectural patterns and conventions.
+        - [ ] No unnecessary duplicate functionality is introduced.
+        - [ ] Linting and static analysis pass.
+        - [ ] No unresolved critical defects remain.
+
+        **Testing**
+        - [ ] Required automated tests are added or updated and all applicable tests pass.
+        - [ ] Relevant integration and regression tests pass.
+        - [ ] Test results or verification evidence are attached to the pull request.
+
+        **Security and reliability**
+        - [ ] User inputs and configuration values are validated.
+        - [ ] Authorization is enforced where required.
+        - [ ] Sensitive data is handled securely.
+        - [ ] Errors are handled without introducing uncontrolled failures.
+
+        **Documentation**
+        - [ ] Technical documentation is updated.
+        - [ ] User documentation is updated for user-facing changes.
+        - [ ] New configuration parameters and migration steps are documented.
+
+        **Pull request review**
+        - [ ] The pull request references this issue.
+        - [ ] The pull request describes the implementation and testing performed.
+        - [ ] Required CI checks pass.
+        - [ ] All required reviewer approvals are obtained and blocking comments are resolved.
+    validations:
+      required: true
