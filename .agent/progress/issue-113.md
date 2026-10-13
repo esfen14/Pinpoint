@@ -50,7 +50,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 16. [x] Run `nagios -v`, force service CRITICAL within/outside a quiet window, and verify browser/API behavior in VM; record sanitized evidence in `docs/test-runs/2026-10-13-issue-113-vm-service-retest/REPORT.md`. Nagios dispatch observed (0 quiet, 1 outside); mailbox arrival unverified.
 17. [x] Re-run applicable verification, update owning status/docs and draft PR with observed VM outcome; retain progress file until all finish conditions are proven.
 18. [ ] Attach the full `scripts/verify.sh all` output to PR #140 in an approved, sanitized artifact; obtain required reviewer approval before marking all issue boxes complete.
-19. [ ] After the lab owner privately configures Gmail SMTP through Settings → Email, verify test send and recipient confirmation, then repeat issue #113 outside/inside quiet-window email comparison; record a separate sanitized run. The current incremental installer update alone does not prove delivery.
+19. [x] After lab owner privately configured Gmail SMTP, compare quiet-window suppression and outside-window CRITICAL arrival with owner-reported mailbox result; record separate sanitized runs. No independent agent mailbox access or direct Settings test-email send was used.
 
 ## Round log
 
@@ -83,13 +83,14 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | resumed | Fast-forwarded clean installer checkout to `697869e`; applied only current `configure-pinpoint-privileges.sh` to existing VM, recorded incremental mail transport run | VM scoped helper with empty stdin, `nagios -v`, `scripts/vmlab health`, `scripts/verify.sh docs` | Helper reached JSON validation without password prompt, Nagios zero warnings/errors, appliance 60/0; SMTP send and inbox untested; existing base snapshot still older |
 | resumed | Owner confirmed earlier recovery inbox receipt; ran paired VM CRITICAL trial with quiet window, then no quiet window; restored target SSH and policy; documented flapping confounder and non-flapping retry | Nagios log/status, `nagios -v`, journal msmtp response, `scripts/vmlab targets status`, `scripts/verify.sh docs` | Quiet web02 0 dispatch; first outside web02 flapped, so repeated on web01: 1 Nagios CRITICAL dispatch and Gmail SMTP 250/EX_OK; specific CRITICAL inbox receipt awaits owner |
 | resumed | Owner clarified duplicate pasted CRITICAL body was one web01 email, plus a separate recovery email; documented new mailbox confirmation run | Compared owner-provided timestamps/types with Nagios notification counts and SMTP 250 journal records; `scripts/verify.sh docs` | One web01 CRITICAL and one RECOVERY delivered per owner; quiet web02 inbox/spam absence still awaiting confirmation |
+| resumed | Owner reported no quiet-window web02 CRITICAL email after inbox/spam question; recorded a separate sanitized follow-up run without changing VM state | Owner confirmation correlated with earlier zero Nagios quiet notification events; `scripts/verify.sh docs` | Paired email comparison supported: no web02 quiet email observed, web01 outside CRITICAL delivered; review and PR full-output attachment still pending |
 
 ## State for the next session
 
 - Last check run (exact command): `scripts/verify.sh docs > /tmp/opencode/issue113-mail-docs.log 2>&1`
 - Result (first failing lines, or "green"): green; Nagios quiet web02 0 CRITICAL dispatch; outside non-flapping web01 1 CRITICAL dispatch, Gmail SMTP 250/EX_OK. Owner confirmed earlier recovery inbox receipt. Policy restored to no quiet hours; web01/web02 SSH UP.
-- Hypothesis: Owner confirmed one web01 CRITICAL inbox arrival at 15:22:08 UTC and a separate recovery at 15:22:29; the duplicated CRITICAL paste was not a second delivery. Mailbox absence of web02 CRITICAL at ~15:19 UTC remains unverified. F full local output attachment and H reviewer approval remain outstanding.
-- Next action (one specific step, not "continue"): Ask owner whether inbox and spam contain any web02 `ssh-22-tcp` CRITICAL from ~15:19 UTC, without requesting credentials; keep issue/PR draft until remaining finish conditions are met.
+- Hypothesis: Owner confirmed one web01 CRITICAL inbox arrival at 15:22:08 UTC and a separate recovery at 15:22:29; owner reported no web02 quiet-window email at ~15:19 UTC after inbox/spam question. F full local output attachment and H reviewer approval remain outstanding.
+- Next action (one specific step, not "continue"): Attach a sanitized full local `scripts/verify.sh all` output to PR #140 by an approved means, then seek reviewer approval; keep PR draft until all issue boxes are satisfied.
 
 ## Decisions and notes
 
