@@ -1,7 +1,7 @@
 # Issue #133: Clear acknowledgements on recovery and audit History
 
 Branch: `issue-133-clear-ack-recovery-audit-history`
-Status: blocked
+Status: in-progress
 
 ## Finish condition
 
@@ -81,6 +81,7 @@ Requirement coverage (section A problem, C changes, D guidelines, G testing, exc
 3. [x] For backend-dependent audit gaps, search existing issues then file separate issues and link in audit table; preserve backend scope, verify audit table with `scripts/verify.sh docs`.
 4. [x] Recheck routes/regressions in `server/tests/unit/test_dashboard.py`, `test_status.py`, `test_history.py` and `client/src/test/PageAccess.test.tsx`, `App.test.tsx`; update specs `spec files/Data_Model_and_Integrations.md`, `Display_Requirements.md`, `Alerts_Notifications_History_Requirements.md`, `Frontend_Modules_and_Routes.md`, `Implementation_Status.md`; verify narrow checks and stage checks.
 5. [x] Re-read issue/comments, prove each requirement, run `scripts/verify.sh docs` and `scripts/verify.sh all` once; record real output. If live Nagios/manual lab unavailable or review/CI outstanding, keep progress file and open draft PR; otherwise finish per workflow.
+6. [ ] With owner approval for VM Playwright in issue comment, inspect current lab ownership/deployment and run targeted live acknowledge → recover → history and real-event History browser checks using `scripts/vmlab` and `scripts/playwright-lab`; add a focused `client/e2e/` spec only if the existing runner cannot prove the workflow; record sanitized `docs/test-runs/<date>-issue-133-live/REPORT.md` and index, update evidence/PR, verify stages. Do not reset/provision the VM without separate explicit approval.
 
 ## Round log
 
@@ -92,6 +93,7 @@ Requirement coverage (section A problem, C changes, D guidelines, G testing, exc
 | 4 | Added no-check/re-failure safety tests; ran route and page guard regressions; updated five specs | `server/.venv/bin/python -m pytest server/tests/unit/test_dashboard.py server/tests/unit/test_status.py server/tests/unit/test_history.py -q --tb=short`; `npm run test -- --run src/test/HistoryPage.test.tsx src/test/PageAccess.test.tsx src/test/App.test.tsx`; `scripts/verify.sh docs` | green — 163 backend, 29 frontend, docs OK |
 | 5 | Re-read issue/comments; checked full local CI-equivalent suite; no further code changes | `scripts/verify.sh all > /tmp/opencode/issue-133-all.log 2>&1; tail -30 /tmp/opencode/issue-133-all.log` | green — verify: all OK; 26 lint warnings, zero errors |
 | resumed | Re-read issue and comments; reconciled finish condition with source audit, PR and CI. First check timed out at 120 seconds; reran with 600-second timeout. | `scripts/verify.sh all > /tmp/opencode/issue-133-all.log 2>&1; result=$?; tail -40 /tmp/opencode/issue-133-all.log; exit "$result"` | green — 2382 backend passed/14 skipped; 518 frontend passed; 26 lint warnings/0 errors. CI docs/backend/frontend success on PR head. Live lab/manual walk and human review remain blocked. |
+| resumed | Owner issue comment approved VM + Playwright for remaining functionality; added live-verification plan step, not previously available. Existing VM running; five targets up; base snapshot stamp is stale against newer installer base steps. | `scripts/verify.sh all > /tmp/opencode/issue-133-all.log 2>&1; result=$?; tail -40 /tmp/opencode/issue-133-all.log; exit "$result"`; `scripts/vmlab status`; `scripts/vmlab targets up` | green local all; VM running with `os-nagios-ready` snapshot but installer base-step stamp warning. No reset or provision. |
 
 ## State for the next session
 
@@ -106,5 +108,5 @@ Requirement coverage (section A problem, C changes, D guidelines, G testing, exc
 - Specs: Display_Requirements.md §4.9; Data_Model_and_Integrations.md §§Nagios integration, Alert acknowledgement lifecycle; Alerts_Notifications_History_Requirements.md §§1–5. Implementation_Status.md identifies both gaps.
 - Section G explicitly calls for live lab and manual walk, but no lab action will be implied by isolated tests. If unavailable, report honestly and use a draft PR.
 - CI docs/backend/frontend checks succeeded on PR head `18ca01f3`; no human reviews or comments were present when queried. Recheck CI for this progress-only checkpoint and review state before completion.
-- Needs a person: Who can run the live appliance acknowledgement/recovery/history check and manual History walk with real events, recording sanitized results and deployment evidence? No lab or secrets were used here.
+- Owner approved VM with Playwright for remaining functionality in issue comment https://github.com/esfen14/Pinpoint/issues/133#issuecomment-6157312406. This answers the prior blocker and justifies plan step 6. It does not explicitly authorize destructive `fresh`/`provision --force`. Existing snapshot stamp differs from current installer base-step hash; inspect running deployment before any sync and avoid reset.
 - Draft PR: https://github.com/esfen14/Pinpoint/pull/145. `gh pr edit` hits deprecated projectCards GraphQL; body updated via `gh api PATCH`. Backend gaps #141–#144 are tracked out of scope. Local full verification log is `/tmp/opencode/issue-133-all.log`; result excerpts are posted in a PR comment, but the full log is not uploaded.
