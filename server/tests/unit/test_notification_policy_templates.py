@@ -1,4 +1,7 @@
 """Generated notification directives and default compatibility."""
+import re
+from pathlib import Path
+
 from app.system_models import NotificationPolicy
 from app.network_discovery.create_host_cfg import _create_host_cfg_file
 from app.network_discovery.host_config_templates import (
@@ -7,6 +10,16 @@ from app.network_discovery.host_config_templates import (
 
 HOST = {"host_name": "h", "alias": "alias", "address": "10.0.0.1", "contact_groups": "system_users"}
 SERVICE = {"host_name": "h", "service_name": "ssh", "contact_groups": "system_users"}
+
+
+def test_default_full_config_matches_prechange_fixture(app, db_session, admin_user, tmp_path):
+    app.config['HOST_CONFIG_DIR'] = tmp_path
+    admin_user.Receive_Email_Alerts = True
+    db_session.session.flush()
+    actual = _create_host_cfg_file({}).read_bytes()
+    actual = re.sub(rb'(?<=generated at )\d\d-\d\d-\d{4}-\d\d-\d\d', b'TIMESTAMP', actual)
+    expected = (Path(__file__).parent / 'fixtures' / 'notification_policy_default_hosts.cfg').read_bytes()
+    assert actual == expected
 
 
 def test_default_templates_preserve_existing_output(db_session):
