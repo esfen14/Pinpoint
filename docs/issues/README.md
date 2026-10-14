@@ -81,3 +81,19 @@ These issues turn the gaps in [`docs/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../NAGIOS
 - Work in a branch and pull request per `.agent/workflows/work-issue.md`, and finish with `scripts/verify.sh`.
 - A pull request needs the acceptance criteria, deliverables and merge requirements in its issue. Evidence must be attached, never assumed.
 - No issue may weaken or skip an existing test.
+
+## GitHub numbers
+
+Plan identifiers are not GitHub numbers. Branches use the GitHub number (`issue-<number>-<slug>`).
+
+| Plan | GitHub | Plan | GitHub | Plan | GitHub |
+|---|---|---|---|---|---|
+| #1 | #113 | #10 | #123 | #19 | #132 |
+| #2 | #115 | #11 | #124 | #20 | #133 |
+| #3 | #116 | #12 | #125 | #21 | #134 |
+| #4 | #117 | #13 | #126 | #22 | #153 |
+| #5 | #118 | #14 | #127 | #23 | #154 |
+| #6 | #119 | #15 | #128 | #24 | #155 |
+| #7 | #120 | #16 | #129 | #25 | #156 |
+| #8 | #121 | #17 | #130 | | |
+| #9 | #122 | #18 | #131 | | |

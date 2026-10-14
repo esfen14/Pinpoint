@@ -68,4 +68,4 @@ Options: **(a)** accept the current rights and record the risk, **(b)** apply 1 
 | Role | Name | Decision on D1 | D2 | D3 | Date |
 |---|---|---|---|---|---|
 | Reviewer | | | | | |
-| Project owner | | | | | |
+| Project owner | (owner, decision recorded by the agent on request) | **b**: apply changes 1 to 3 | **a**: leave out | Confirmed: `/usr/local/sbin/pinpoint-event-handler`, source in this repository | 2026-10-14 |
