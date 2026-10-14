@@ -570,7 +570,8 @@ class TestCreateHostCfgFile:
         with patched_config(app, HOST_CONFIG_DIR=tmp_path):
             cfg_text = _create_host_cfg_file(discovered).read_text()
 
-        command_names = re.findall(r"command_name\s+(\S+)", cfg_text)
+        # The alert-email commands are written when the notification script is usable (Linux paths); they are not check commands.
+        command_names = [n for n in re.findall(r"command_name\s+(\S+)", cfg_text) if not n.startswith("pinpoint_notify_")]
         assert sorted(command_names) == ["pinpoint_nd_snmp", "pinpoint_nd_ssh"]
         assert "$USER1$/check_snmp -H $HOSTADDRESS$" in cfg_text
         assert "snmp-devices" not in cfg_text
@@ -622,7 +623,7 @@ class TestCreateHostCfgFile:
             cfg_text = _create_host_cfg_file(discovered).read_text()
 
         assert re.search(r"host_name\s+quiet-host", cfg_text)
-        assert "define command" not in cfg_text
+        assert [n for n in re.findall(r"command_name\s+(\S+)", cfg_text) if not n.startswith("pinpoint_notify_")] == []
         assert "define service" not in cfg_text
 
 
@@ -882,3 +883,56 @@ class TestAlertContacts:
         assert "define contactgroup" not in text
         assert "contact_groups" not in text
         assert "define host" in text and "define service" in text
+        assert "pinpoint_notify" not in text
+
+    def test_contacts_use_the_html_notification_commands(
+        self, app, db_session, admin_role, plugin_config, tmp_path, monkeypatch
+    ):
+        from app.network_discovery import host_config_templates as templates
+        monkeypatch.setattr(templates, "notification_script_path",
+                            lambda: "/opt/pinpoint/server/scripts/pinpoint_notify_email.py")
+        self._add_user(db_session, admin_role, "on@example.com")
+
+        text = self._generate(app, plugin_config, tmp_path)
+
+        assert re.search(r"command_name\s+pinpoint_notify_host_html", text)
+        assert re.search(r"command_name\s+pinpoint_notify_service_html", text)
+        assert ("/usr/bin/python3 -I /opt/pinpoint/server/scripts/pinpoint_notify_email.py service "
+                '"type=$NOTIFICATIONTYPE$"') in text
+        assert re.search(r"service_notification_commands\s+pinpoint_notify_service_html", text)
+        assert re.search(r"host_notification_commands\s+pinpoint_notify_host_html", text)
+        assert len(re.findall(r"command_name\s+pinpoint_notify_", text)) == 2
+
+    def test_contacts_keep_the_stock_commands_when_the_script_is_unavailable(
+        self, app, db_session, admin_role, plugin_config, tmp_path, monkeypatch
+    ):
+        from app.network_discovery import host_config_templates as templates
+        monkeypatch.setattr(templates, "notification_script_path", lambda: None)
+        self._add_user(db_session, admin_role, "on@example.com")
+
+        text = self._generate(app, plugin_config, tmp_path)
+
+        assert "pinpoint_notify" not in text
+        # No explicit lines: the contact inherits the stock commands from its template.
+        assert "service_notification_commands" not in text
+        assert "host_notification_commands" not in text
+
+
+class TestNotificationScriptPath:
+    def test_the_script_ships_with_the_application(self):
+        from pathlib import Path
+        from app.network_discovery import host_config_templates as templates
+        script = Path(templates.__file__).resolve().parents[2] / "scripts" / "pinpoint_notify_email.py"
+        assert script.is_file()
+
+    @pytest.mark.parametrize("path,safe", [
+        ("/opt/pinpoint/Network-Diagnosis-System/server/scripts/pinpoint_notify_email.py", True),
+        ("/opt/my app/x.py", False),
+        ('/opt/a"b/x.py', False),
+        ("/opt/a;b/x.py", False),
+        ("/opt/a$b/x.py", False),
+        ("relative/x.py", False),
+    ])
+    def test_only_plain_absolute_paths_are_written_into_nagios_config(self, path, safe):
+        from app.network_discovery import host_config_templates as templates
+        assert bool(templates._SAFE_COMMAND_PATH.match(path)) is safe
