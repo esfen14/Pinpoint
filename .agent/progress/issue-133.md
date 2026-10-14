@@ -1,7 +1,7 @@
 # Issue #133: Clear acknowledgements on recovery and audit History
 
 Branch: `issue-133-clear-ack-recovery-audit-history`
-Status: in-progress
+Status: blocked
 
 ## Finish condition
 
@@ -100,7 +100,7 @@ Requirement coverage (section A problem, C changes, D guidelines, G testing, exc
 - Last check run (exact command): `ssh -i "$HOME/.local/share/pinpoint-vmlab/id_ed25519" -p 2250 -o BatchMode=yes -o StrictHostKeyChecking=yes lab@127.0.0.1 'git -c safe.directory=/opt/pinpoint/Network-Diagnosis-System -C /opt/pinpoint/Network-Diagnosis-System rev-parse HEAD; git -c safe.directory=/opt/pinpoint/Network-Diagnosis-System -C /opt/pinpoint/Network-Diagnosis-System branch --show-current'`
 - Result (first failing lines, or "green"): green SSH authentication, but deployed application is `1ca2c757` on `issue-113-notification-policy`, not issue #133. `pinpoint-gunicorn` and Nagios active. No app deployment or live test yet.
 - Hypothesis: owner-authorized password recovery succeeded; the running VM still has another issue's installation and state. Need exclusive control confirmation before overwriting that installation with #133; no reset/provision authorized.
-- Next action (one specific step, not "continue"): Confirm with owner whether `issue-113-notification-policy` running deployment may be replaced by #133 using non-reset `scripts/vmlab sync --client` (preserves database), then run a targeted live test and sanitize results.
+- Next action (one specific step, not "continue"): Ask owner to confirm exclusive use and permission to replace the issue #113 application on the running VM with #133 via non-reset `scripts/vmlab sync --client` (preserves database), then run a targeted live test and sanitize results.
 
 ## Decisions and notes
 
