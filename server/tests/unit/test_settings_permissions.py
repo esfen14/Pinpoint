@@ -206,6 +206,90 @@ class TestSettingsPermissions:
         assert stored(db_session).Retry_Interval == 1
         assert stored(db_session).Max_Check_Attempts == 3
 
+    def test_flap_defaults_are_served(self, logged_in_client):
+        data = current_settings(logged_in_client)
+        assert data["flapDetectionEnabled"] is True
+        assert data["flapLowThreshold"] is None
+        assert data["flapHighThreshold"] is None
+
+    @pytest.mark.parametrize("changes", [
+        {"flapDetectionEnabled": False}, {"flapLowThreshold": 10}, {"flapHighThreshold": 30},
+    ])
+    def test_flap_settings_require_system_permission(self, limited_client, db_session, changes):
+        resp = save(limited_client, **changes)
+        assert resp.status_code == 403
+        assert "System settings" in resp.get_json()["message"]
+        assert stored(db_session).Flap_Detection_Enabled is True
+        assert stored(db_session).Flap_Low_Threshold is None
+
+    @pytest.mark.parametrize("changes", [
+        {"flapDetectionEnabled": "yes"}, {"flapDetectionEnabled": 1}, {"flapDetectionEnabled": None},
+        {"flapLowThreshold": -1}, {"flapLowThreshold": 101}, {"flapLowThreshold": "5"},
+        {"flapLowThreshold": True}, {"flapHighThreshold": 100.5}, {"flapHighThreshold": "x"},
+        {"flapHighThreshold": float("nan")},
+        {"flapLowThreshold": 30, "flapHighThreshold": 30}, {"flapLowThreshold": 40, "flapHighThreshold": 10},
+    ])
+    def test_invalid_flap_settings_are_rejected(self, logged_in_client, db_session, changes):
+        with patch("app.network_discovery.create_host_cfg.regenerate_and_apply_config_status") as apply:
+            resp = save(logged_in_client, **changes)
+        assert resp.status_code == 400
+        assert stored(db_session).Flap_Detection_Enabled is True
+        assert stored(db_session).Flap_Low_Threshold is None
+        assert stored(db_session).Flap_High_Threshold is None
+        apply.assert_not_called()
+
+    def test_a_threshold_is_checked_against_the_saved_other_one(self, logged_in_client, db_session):
+        with patch("app.network_discovery.create_host_cfg.regenerate_and_apply_config_status", return_value=("applied", "ok")):
+            assert save(logged_in_client, flapLowThreshold=10, flapHighThreshold=30).status_code == 200
+            resp = save(logged_in_client, flapHighThreshold=5)
+        assert resp.status_code == 400
+        assert "lower than" in resp.get_json()["message"]
+        assert stored(db_session).Flap_High_Threshold == 30
+
+    @pytest.mark.parametrize("changes", [
+        {"flapDetectionEnabled": False},
+        {"flapLowThreshold": 12.5},
+        {"flapHighThreshold": 40},
+        {"flapLowThreshold": 0, "flapHighThreshold": 100},
+    ])
+    def test_flap_settings_apply_through_the_shared_writer(self, logged_in_client, db_session, changes):
+        with patch("app.network_discovery.create_host_cfg.regenerate_and_apply_config_status", return_value=("applied", "ok")) as apply:
+            resp = save(logged_in_client, **changes)
+        assert resp.status_code == 200
+        data = resp.get_json()["data"]
+        for key, value in changes.items():
+            assert data[key] == value
+        apply.assert_called_once_with()
+
+    def test_clearing_a_threshold_goes_back_to_the_nagios_default(self, logged_in_client, db_session):
+        with patch("app.network_discovery.create_host_cfg.regenerate_and_apply_config_status", return_value=("applied", "ok")):
+            save(logged_in_client, flapLowThreshold=10)
+            resp = save(logged_in_client, flapLowThreshold=None)
+        assert resp.status_code == 200
+        assert stored(db_session).Flap_Low_Threshold is None
+
+    def test_failed_apply_restores_flap_settings(self, logged_in_client, db_session):
+        before = current_settings(logged_in_client)
+        with patch("app.network_discovery.create_host_cfg.regenerate_and_apply_config_status", return_value=("failed", "Config failed to validate")):
+            resp = save(logged_in_client, flapDetectionEnabled=False, flapLowThreshold=10)
+        assert resp.status_code == 422
+        assert "Config failed to validate" in resp.get_json()["message"]
+        assert stored(db_session).Flap_Detection_Enabled is True
+        assert stored(db_session).Flap_Low_Threshold is None
+        assert current_settings(logged_in_client)["version"] == before["version"]
+
+    def test_a_client_that_omits_the_flap_fields_keeps_them_unchanged(self, logged_in_client, db_session):
+        with patch("app.network_discovery.create_host_cfg.regenerate_and_apply_config_status", return_value=("applied", "ok")):
+            save(logged_in_client, flapDetectionEnabled=False, flapLowThreshold=10)
+        payload = current_settings(logged_in_client)
+        for key in ("flapDetectionEnabled", "flapLowThreshold", "flapHighThreshold"):
+            del payload[key]
+        payload["scanFrequency"] = 12
+        resp = logged_in_client.put("/api/system", json=payload)
+        assert resp.status_code == 200
+        assert stored(db_session).Flap_Detection_Enabled is False
+        assert stored(db_session).Flap_Low_Threshold == 10
+
     def test_inactive_role_loses_restricted_tabs(self, logged_in_client, db_session, admin_role):
         admin_role.Is_Active = False
         db_session.session.commit()

@@ -45,6 +45,36 @@ def add_inactive_lines(rendered, note):
     ]
     return "\n".join(lines)
 
+def flap_settings():
+    """(enabled, low, high) flap detection settings in effect; detection on with Nagios's own thresholds when nothing is saved."""
+    row = db.session.get(SystemSettings, 1)
+    if row is None:
+        return True, None, None
+    return row.Flap_Detection_Enabled, row.Flap_Low_Threshold, row.Flap_High_Threshold
+
+
+def add_flap_lines(rendered):
+    """
+    Append the saved flap detection settings to a rendered host/service object,
+    just before its closing brace. Nothing is added for the defaults (detection
+    on, no thresholds), so default output is unchanged. When detection is off
+    only `flap_detection_enabled 0` is written; the thresholds would be ignored.
+    """
+    enabled, low, high = flap_settings()
+    extra = []
+    if not enabled:
+        extra.append("    flap_detection_enabled          0")
+    else:
+        if low is not None:
+            extra.append("    low_flap_threshold              %g" % low)
+        if high is not None:
+            extra.append("    high_flap_threshold             %g" % high)
+    if not extra:
+        return rendered
+    body = rendered.rstrip()
+    assert body.endswith("}")
+    return "\n".join([body[:-1].rstrip(), *extra, "}"])
+
 def _drop_empty_contact_groups(rendered):
     """Remove a blank contact_groups line (no eligible alert contact exists)."""
     kept = []
@@ -70,6 +100,7 @@ def create_host(host):
         retry_interval_line=retry_line,
     )
     rendered = _drop_empty_contact_groups(rendered)
+    rendered = add_flap_lines(rendered)
     if host.get("active_checks_enabled") is False:
         rendered = add_inactive_lines(rendered, host.get("notes") or "Address unknown")
     return rendered
@@ -86,6 +117,7 @@ def create_service(service, service_command):
         max_check_attempts=max_attempts,
     )
     rendered = _drop_empty_contact_groups(rendered)
+    rendered = add_flap_lines(rendered)
     if service.get("active_checks_enabled") is False:
         rendered = add_inactive_lines(rendered, service.get("notes") or "Address unknown")
     return rendered

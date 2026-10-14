@@ -499,6 +499,39 @@ class TestCreateHostCfgFile:
             assert re.search(r"retry_interval\s+4\b", block)
             assert len(re.findall(r"retry_interval", block)) == 1
 
+    def test_flap_defaults_render_nothing_extra(self, app, db_session, plugin_config, tmp_path):
+        """Detection on with no thresholds is what Nagios already does, so no flap line is written."""
+        db_session.session.add(SystemSettings(Id=1))
+        db_session.session.commit()
+
+        for block in self._blocks(app, tmp_path):
+            assert "flap" not in block
+
+    def test_flap_thresholds_are_rendered_on_hosts_and_services(self, app, db_session, plugin_config, tmp_path):
+        db_session.session.add(SystemSettings(Id=1, Flap_Low_Threshold=10, Flap_High_Threshold=30.5))
+        db_session.session.commit()
+
+        for block in self._blocks(app, tmp_path):
+            assert re.search(r"low_flap_threshold\s+10", block)
+            assert re.search(r"high_flap_threshold\s+30\.5", block)
+            assert "flap_detection_enabled" not in block
+
+    def test_a_single_flap_threshold_is_rendered_alone(self, app, db_session, plugin_config, tmp_path):
+        db_session.session.add(SystemSettings(Id=1, Flap_High_Threshold=40))
+        db_session.session.commit()
+
+        for block in self._blocks(app, tmp_path):
+            assert re.search(r"high_flap_threshold\s+40", block)
+            assert "low_flap_threshold" not in block
+
+    def test_disabled_flap_detection_is_written_and_drops_the_thresholds(self, app, db_session, plugin_config, tmp_path):
+        db_session.session.add(SystemSettings(Id=1, Flap_Detection_Enabled=False, Flap_Low_Threshold=10, Flap_High_Threshold=30))
+        db_session.session.commit()
+
+        for block in self._blocks(app, tmp_path):
+            assert re.search(r"flap_detection_enabled\s+0", block)
+            assert "_flap_threshold" not in block
+
     def test_each_host_gets_only_its_own_services(self, app, db_session, admin_user, plugin_config, tmp_path):
         ncpa_device = make_device(db_session, admin_user, "host-b", "10.0.0.12")
         make_ncpa_deployment(db_session, ncpa_device, "tokenB", ["sda1"])

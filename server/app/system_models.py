@@ -747,6 +747,11 @@ class SystemSettings(db.Model):
     # problem from SOFT into HARD. Rendered into every generated host and service.
     Retry_Interval: so.Mapped[int] = so.mapped_column(sa.Integer(), default=1, server_default="1")
     Max_Check_Attempts: so.Mapped[int] = so.mapped_column(sa.Integer(), default=3, server_default="3")
+    # Nagios flap detection for generated hosts and services. Empty thresholds mean
+    # "use the global values in nagios.cfg", so nothing extra is rendered by default.
+    Flap_Detection_Enabled: so.Mapped[bool] = so.mapped_column(sa.Boolean(), default=True, server_default=sa.true())
+    Flap_Low_Threshold: so.Mapped[Optional[float]] = so.mapped_column(sa.Float(), default=None)
+    Flap_High_Threshold: so.Mapped[Optional[float]] = so.mapped_column(sa.Float(), default=None)
     Notifications: so.Mapped[bool] = so.mapped_column(sa.Boolean(), default=True)
     Export_Formats: so.Mapped[str] = so.mapped_column(sa.String(50), default="CSV,PDF,XLS")
 
@@ -782,6 +787,9 @@ class SystemSettings(db.Model):
             "checkInterval": self.Check_Interval,
             "retryInterval": self.Retry_Interval,
             "maxCheckAttempts": self.Max_Check_Attempts,
+            "flapDetectionEnabled": self.Flap_Detection_Enabled,
+            "flapLowThreshold": self.Flap_Low_Threshold,
+            "flapHighThreshold": self.Flap_High_Threshold,
             "notifications": self.Notifications,
             "exportFormats": self.Export_Formats.split(",") if self.Export_Formats else [],
             "sessionTimeout": self.Session_Timeout,
