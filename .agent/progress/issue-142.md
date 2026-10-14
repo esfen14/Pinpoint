@@ -5,7 +5,7 @@ Status: in-progress
 
 ## Finish condition
 
-- [ ] Both history list routes accept validated custom date/time bounds with clear timezone semantics.
+- [x] Both history list routes accept validated custom date/time bounds with clear timezone semantics.
 - [ ] Both routes support each table column as a sort key and timestamp descending as secondary tie-breaker.
 - [ ] Tests cover ranges, invalid bounds, each sort key, and ties; specs updated.
 
@@ -20,7 +20,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 ## Plan
 
-1. [ ] Add failing custom range validation and timezone tests in `server/tests/unit/test_history.py`; implement shared parsing in `server/app/api/system/history.py` and verify backend.
+1. [x] Add failing custom range validation and timezone tests in `server/tests/unit/test_history.py`; implement shared parsing in `server/app/api/system/history.py` and verify backend.
 2. [ ] Add failing per-column and tie sort tests in `server/tests/unit/test_history.py`; implement shared sorting in `server/app/api/system/history.py` and verify backend.
 3. [ ] Recheck issue and proof, update `spec files/Alerts_Notifications_History_Requirements.md`, `spec files/Backend_Modules_and_Routes.md`, `spec files/Implementation_Status.md`; verify docs and all.
 
@@ -28,13 +28,14 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| 1 | Added validated offset-aware ISO bounds alongside legacy date bounds to both lists, with range tests | `cd server && .venv/bin/python -m pytest tests/unit/test_history.py -q`; `scripts/verify.sh backend` | green: 99 tests; backend 2454 passed, 14 skipped |
 
 ## State for the next session
 
-- Last check run (exact command): none yet
-- Result (first failing lines, or "green"): not run
-- Hypothesis: date-only ranges use get_range_custom; list sorts only a subset without secondary order.
-- Next action (one specific step, not "continue"): add date-time range tests to server/tests/unit/test_history.py.
+- Last check run (exact command): `scripts/verify.sh backend`
+- Result (first failing lines, or "green"): green: 2454 passed, 14 skipped
+- Hypothesis: sorting still covers only four alert and three notification keys, without tie-breakers.
+- Next action (one specific step, not "continue"): add per-column and timestamp tie tests in server/tests/unit/test_history.py.
 
 ## Decisions and notes
 

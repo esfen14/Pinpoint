@@ -121,6 +121,35 @@ class TestHistoryAuthGuards:
 
 
 # ==========================================================
+# Shared list range contract
+# ==========================================================
+
+@pytest.mark.parametrize("route,archive", [
+    ("alerts", _ALERTS_RANGE), ("notifications", _NOTIFS_RANGE),
+])
+def test_custom_datetime_bounds_use_utc_inclusive_seconds(logged_in_client, db_session, route, archive):
+    params = {"start_date": "2024-01-01T08:00:00+08:00",
+              "end_date": "2024-01-01T02:00:00Z"}
+    with patch(archive, return_value=[]) as fetch:
+        response = logged_in_client.get(f"/api/system/history/{route}", query_string=params)
+    assert response.status_code == 200
+    assert any(call.args[:2] == (1704067200, 1704074400) for call in fetch.call_args_list)
+
+
+@pytest.mark.parametrize("route", ["alerts", "notifications"])
+@pytest.mark.parametrize("params", [
+    {"start_date": "2024-01-01T00:00:00Z"},
+    {"end_date": "2024-01-01T00:00:00Z"},
+    {"start_date": "2024-01-01T00:00:00", "end_date": "2024-01-02T00:00:00Z"},
+    {"start_date": "2024-01-02T00:00:00Z", "end_date": "2024-01-01T00:00:00Z"},
+    {"start_date": "2024-02-30", "end_date": "2024-03-01"},
+    {"start_date": "2024-01-01T00:00:00Z", "end_date": "2024-01-01"},
+])
+def test_invalid_custom_bounds_rejected(logged_in_client, db_session, route, params):
+    assert logged_in_client.get(f"/api/system/history/{route}", query_string=params).status_code == 400
+
+
+# ==========================================================
 # GET /api/system/history/alerts
 # ==========================================================
 
