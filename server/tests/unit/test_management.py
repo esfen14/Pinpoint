@@ -47,6 +47,27 @@ def _make_user(db_session, role, email, first_name="Test", last_name="User",
     return user
 
 
+BOOTSTRAP_ADMIN_REQUIRED_PERMISSIONS = {
+    "account.view",
+    "account.edit",
+    "account.info",
+    "role.view",
+    "role.edit",
+    "role.info",
+    "role.list",
+}
+
+
+def _grant_permissions(db_session, role, seeded_permissions, names):
+    """Grant the named seeded permissions to a role and persist them."""
+    for name in names:
+        db_session.session.add(RolePermission(
+            RoleID=role.RoleID,
+            PermissionID=seeded_permissions[name].PermissionID,
+        ))
+    db_session.session.commit()
+
+
 # ─── Permissions Options ──────────────────────────────────────────────────────
 
 class TestPermissionsOptions:
@@ -147,6 +168,16 @@ class TestRolesOptions:
         resp = limited_client.get("/api/user/roles/options")
         assert resp.status_code == 403
 
+    def test_roles_options_identify_roles_that_preserve_bootstrap_admin_access(
+        self, logged_in_client, db_session, admin_user, admin_role, regular_role
+    ):
+        resp = logged_in_client.get("/api/user/roles/options")
+
+        assert resp.status_code == 200
+        items = {item["id"]: item for item in resp.get_json()["data"]["items"]}
+        assert items[admin_role.RoleID]["preserves_bootstrap_admin_access"] is True
+        assert items[regular_role.RoleID]["preserves_bootstrap_admin_access"] is False
+
 
 # ─── Role Info ────────────────────────────────────────────────────────────────
 
@@ -246,6 +277,102 @@ class TestCreateRole:
 # ─── Edit Role ────────────────────────────────────────────────────────────────
 
 class TestEditRole:
+    @pytest.mark.parametrize("change", ["add", "remove", "replace", "clear"])
+    def test_administrator_permissions_are_immutable_for_direct_api_requests(
+        self, logged_in_client, db_session, admin_role, admin_user, seeded_permissions, change
+    ):
+        admin_role.Name = "Administrator"
+        db_session.session.commit()
+        original = set(db.session.scalars(
+            sa.select(RolePermission.PermissionID)
+            .where(RolePermission.RoleID == admin_role.RoleID)
+        ))
+        extra = Permission(Name="new.permission")
+        db_session.session.add(extra)
+        db_session.session.commit()
+        changes = {
+            "add": original | {extra.PermissionID},
+            "remove": original - {seeded_permissions["system.dashboard"].PermissionID},
+            "replace": {extra.PermissionID},
+            "clear": set(),
+        }
+        response = logged_in_client.put(
+            f"/api/user/roles/{admin_role.RoleID}",
+            json={"name": "Administrator", "description": "Changed", "permissions": list(changes[change])},
+        )
+        assert response.status_code == 400
+        assert response.get_json()["success"] is False
+        db.session.refresh(admin_role)
+        assert admin_role.Description == "Administrator"
+        assert set(db.session.scalars(
+            sa.select(RolePermission.PermissionID)
+            .where(RolePermission.RoleID == admin_role.RoleID)
+        )) == original
+
+    def test_administrator_same_permissions_in_reverse_order_allows_metadata_edit(
+        self, logged_in_client, db_session, admin_role, admin_user
+    ):
+        admin_role.Name = "Administrator"
+        db_session.session.commit()
+        original = list(db.session.scalars(
+            sa.select(RolePermission.PermissionID)
+            .where(RolePermission.RoleID == admin_role.RoleID)
+        ))
+        response = logged_in_client.put(
+            f"/api/user/roles/{admin_role.RoleID}",
+            json={"name": "Administrator", "description": "Updated", "permissions": list(reversed(original))},
+        )
+        assert response.status_code == 200
+        db.session.refresh(admin_role)
+        assert admin_role.Description == "Updated"
+        assert set(db.session.scalars(
+            sa.select(RolePermission.PermissionID)
+            .where(RolePermission.RoleID == admin_role.RoleID)
+        )) == set(original)
+
+    def test_administrator_cannot_be_renamed_to_evade_permission_lock(
+        self, logged_in_client, db_session, admin_role, admin_user
+    ):
+        admin_role.Name = "Administrator"
+        db_session.session.commit()
+        original = list(db.session.scalars(
+            sa.select(RolePermission.PermissionID)
+            .where(RolePermission.RoleID == admin_role.RoleID)
+        ))
+        response = logged_in_client.put(
+            f"/api/user/roles/{admin_role.RoleID}",
+            json={"name": "Renamed", "description": "Administrator", "permissions": original},
+        )
+        assert response.status_code == 400
+        db.session.refresh(admin_role)
+        assert admin_role.Name == "Administrator"
+
+    def test_administrator_role_stays_protected_after_bootstrap_account_moves(
+        self, logged_in_client, db_session, admin_role, admin_user
+    ):
+        admin_role.Name = "Administrator"
+        replacement = _make_role(db_session, "Replacement")
+        original = set(db.session.scalars(
+            sa.select(RolePermission.PermissionID)
+            .where(RolePermission.RoleID == admin_role.RoleID)
+        ))
+        for permission_id in original:
+            db_session.session.add(RolePermission(
+                RoleID=replacement.RoleID, PermissionID=permission_id
+            ))
+        admin_user.RoleID = replacement.RoleID
+        db_session.session.commit()
+
+        response = logged_in_client.put(
+            f"/api/user/roles/{admin_role.RoleID}",
+            json={"name": "Administrator", "description": "Changed", "permissions": []},
+        )
+        assert response.status_code == 400
+        assert set(db.session.scalars(
+            sa.select(RolePermission.PermissionID)
+            .where(RolePermission.RoleID == admin_role.RoleID)
+        )) == original
+
     def test_edit_role_success(self, logged_in_client, db_session, seeded_permissions):
         role = _make_role(db_session, "EditableRole")
         perm_id = list(seeded_permissions.values())[0].PermissionID
@@ -258,6 +385,13 @@ class TestEditRole:
             },
         )
         assert resp.status_code == 200
+        db.session.refresh(role)
+        assert role.Name == "EditableRoleUpdated"
+        assert role.Description == "Updated description"
+        assert set(db.session.scalars(
+            sa.select(RolePermission.PermissionID)
+            .where(RolePermission.RoleID == role.RoleID)
+        )) == {perm_id}
 
     def test_edit_role_not_found(self, logged_in_client, db_session, seeded_permissions):
         perm_id = list(seeded_permissions.values())[0].PermissionID
@@ -299,6 +433,71 @@ class TestEditRole:
             },
         )
         assert resp.status_code == 200
+
+    def test_bootstrap_admin_role_rejects_removing_required_permissions_without_changes(
+        self, logged_in_client, db_session, admin_user, admin_role, seeded_permissions
+    ):
+        original_permission_ids = set(db.session.scalars(
+            sa.select(RolePermission.PermissionID)
+            .where(RolePermission.RoleID == admin_role.RoleID)
+        ))
+        kept_permission_ids = [
+            permission.PermissionID
+            for name, permission in seeded_permissions.items()
+            if name != "role.list"
+        ]
+
+        resp = logged_in_client.put(
+            f"/api/user/roles/{admin_role.RoleID}",
+            json={
+                "name": "Unsafe renamed role",
+                "description": "This must not be saved",
+                "permissions": kept_permission_ids,
+                "is_active": True,
+            },
+        )
+
+        assert resp.status_code == 400
+        assert resp.get_json()["message"] == (
+            "The bootstrap administrator's role must keep the permissions required "
+            "to manage accounts and roles."
+        )
+        db.session.refresh(admin_role)
+        assert admin_role.Name == "Admin"
+        assert admin_role.Description == "Administrator"
+        assert admin_role.Is_Active is True
+        assert set(db.session.scalars(
+            sa.select(RolePermission.PermissionID)
+            .where(RolePermission.RoleID == admin_role.RoleID)
+        )) == original_permission_ids
+
+    def test_bootstrap_admin_role_allows_edit_that_keeps_required_permissions(
+        self, logged_in_client, db_session, admin_user, admin_role, seeded_permissions
+    ):
+        required_ids = [
+            seeded_permissions[name].PermissionID
+            for name in BOOTSTRAP_ADMIN_REQUIRED_PERMISSIONS
+        ]
+
+        resp = logged_in_client.put(
+            f"/api/user/roles/{admin_role.RoleID}",
+            json={
+                "name": "Primary Administrator",
+                "description": "Protected account administration role",
+                "permissions": required_ids,
+                "is_active": True,
+            },
+        )
+
+        assert resp.status_code == 200
+        db.session.refresh(admin_role)
+        assert admin_role.Name == "Primary Administrator"
+        assert admin_role.Description == "Protected account administration role"
+        assert set(db.session.scalars(
+            sa.select(Permission.Name)
+            .join(RolePermission, RolePermission.PermissionID == Permission.PermissionID)
+            .where(RolePermission.RoleID == admin_role.RoleID)
+        )) == BOOTSTRAP_ADMIN_REQUIRED_PERMISSIONS
 
 
 # ─── Role Status Toggle ───────────────────────────────────────────────────────
@@ -614,6 +813,68 @@ class TestEditAccount:
         assert first.First_Name == "Renamed"
         assert first.Last_Name == "Administrator"
         assert first.Status == UserStatus.ACTIVE
+
+    def test_bootstrap_admin_rejects_role_without_required_permissions_without_changes(
+        self, logged_in_client, db_session, admin_user, admin_role, regular_role
+    ):
+        first = db.session.scalar(sa.select(User).order_by(User.UserID).limit(1))
+        original = {
+            "first_name": first.First_Name,
+            "last_name": first.Last_Name,
+            "email": first.Email,
+            "role_id": first.RoleID,
+            "status": first.Status,
+        }
+
+        resp = logged_in_client.put(
+            f"/api/user/accounts/{first.UserID}",
+            json=self._payload(
+                regular_role,
+                first_name="Unsafe",
+                last_name="Change",
+                email=first.Email,
+                password="",
+                confirm_password="",
+            ),
+        )
+
+        assert resp.status_code == 400
+        assert resp.get_json()["message"] == (
+            "The bootstrap administrator must use an active role with the permissions "
+            "required to manage accounts and roles."
+        )
+        db.session.refresh(first)
+        assert first.First_Name == original["first_name"]
+        assert first.Last_Name == original["last_name"]
+        assert first.Email == original["email"]
+        assert first.RoleID == original["role_id"]
+        assert first.Status == original["status"]
+
+    def test_bootstrap_admin_allows_role_change_that_keeps_required_permissions(
+        self, logged_in_client, db_session, admin_user, admin_role, seeded_permissions
+    ):
+        first = db.session.scalar(sa.select(User).order_by(User.UserID).limit(1))
+        replacement = _make_role(db_session, "Replacement Administrator")
+        _grant_permissions(
+            db_session,
+            replacement,
+            seeded_permissions,
+            BOOTSTRAP_ADMIN_REQUIRED_PERMISSIONS,
+        )
+
+        resp = logged_in_client.put(
+            f"/api/user/accounts/{first.UserID}",
+            json=self._payload(
+                replacement,
+                email=first.Email,
+                password="",
+                confirm_password="",
+            ),
+        )
+
+        assert resp.status_code == 200
+        db.session.refresh(first)
+        assert first.RoleID == replacement.RoleID
 
     def test_other_accounts_can_still_be_suspended(
         self, logged_in_client, db_session, admin_user, admin_role

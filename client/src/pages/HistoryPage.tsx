@@ -5,6 +5,7 @@ import { PageHeader } from '../components/shared/PageHeader'
 import { apiGet, errorMessage } from '../lib/api'
 import { formatTimeAgo } from '../utils/formatDateTime'
 import { useDisplayTime } from '../hooks/useDisplayTime'
+import { Pagination } from '../components/shared/Pagination'
 
 
 type HistoryTab = 'alerts' | 'notifications'
@@ -18,6 +19,7 @@ type Page<T> = {
 }
 
 type AlertEvent = {
+  event_id: string
   timestamp: number
   type: 'host' | 'service'
   hostname: string
@@ -33,10 +35,11 @@ type AlertEvent = {
 type AlertDetail = AlertEvent & {
   ack: { acknowledged_by: string | null; acknowledged_at: string; comment: string | null } | null
   recovery_duration: number | null
-  linked_notifications: { timestamp: number; contact: string; state: string; message: string }[]
+  linked_notifications: { event_id: string; timestamp: number; contact: string; state: string; message: string }[]
 }
 
 type NotificationEvent = {
+  event_id?: string
   source: 'nagios' | 'pinpoint'
   id?: number
   timestamp: number
@@ -51,7 +54,7 @@ type NotificationEvent = {
 
 type NotificationDetail = NotificationEvent & {
   contacts: string[]
-  linked_alert: { timestamp: number; new_state: string; prev_state: string } | null
+  linked_alert: { event_id: string; timestamp: number; new_state: string; prev_state: string } | null
 }
 
 type Filters = {
@@ -67,6 +70,8 @@ type Filters = {
   contact: string
   source: string
 }
+
+type Sort = { column: string; order: 'asc' | 'desc' }
 
 const EMPTY_FILTERS: Filters = {
   preset: '24h',
@@ -159,8 +164,12 @@ function Timestamp({ ts }: { ts: number }) {
   )
 }
 
-function buildQuery(filters: Filters, tab: HistoryTab, page: number, perPage: number) {
+function buildQuery(filters: Filters, tab: HistoryTab, page: number, perPage: number, sort: Sort, eventId?: string) {
   const p = new URLSearchParams()
+  if (eventId) {
+    p.set('event_id', eventId)
+    return p.toString()
+  }
   if (filters.preset === 'custom') {
     if (filters.startDate) p.set('start_date', filters.startDate)
     if (filters.endDate) p.set('end_date', filters.endDate)
@@ -179,16 +188,21 @@ function buildQuery(filters: Filters, tab: HistoryTab, page: number, perPage: nu
     if (filters.contact.trim()) p.set('contact', filters.contact.trim())
     if (filters.source) p.set('source', filters.source)
   }
+  if (sort.column !== 'timestamp' || sort.order !== 'desc') {
+    p.set('sort_by', sort.column)
+    p.set('order', sort.order)
+  }
   p.set('page', String(page))
   p.set('per_page', String(perPage))
   return p.toString()
 }
 
 function detailQuery(
-  event: { hostname: string; service_name: string | null; timestamp: number; source?: string; id?: number },
+  event: { hostname: string; service_name: string | null; timestamp: number; event_id?: string; source?: string; id?: number },
   newState?: string
 ) {
   const p = new URLSearchParams({ hostname: event.hostname, timestamp: String(event.timestamp) })
+  if (event.event_id) p.set('event_id', event.event_id)
   if (event.source === 'pinpoint') {
     p.set('source', 'pinpoint')
     p.set('id', String(event.id ?? 0))
@@ -205,6 +219,8 @@ export function HistoryPage() {
   const [applied, setApplied] = useState<Filters>(EMPTY_FILTERS)
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(25)
+  const [sort, setSort] = useState<Sort>({ column: 'timestamp', order: 'desc' })
+  const [locator, setLocator] = useState<string | null>(null)
 
   const [alerts, setAlerts] = useState<Page<AlertEvent> | null>(null)
   const [notifications, setNotifications] = useState<Page<NotificationEvent> | null>(null)
@@ -220,7 +236,7 @@ export function HistoryPage() {
 
   const load = useCallback(async () => {
     const thisRequest = ++requestId.current
-    if (applied.preset === 'custom' && (!applied.startDate || !applied.endDate)) {
+    if (!locator && applied.preset === 'custom' && (!applied.startDate || !applied.endDate)) {
       setLoadError('Pick a start and end date for a custom range.')
       setIsLoading(false)
       return
@@ -228,13 +244,19 @@ export function HistoryPage() {
     setIsLoading(true)
     setLoadError(null)
     try {
-      const qs = buildQuery(applied, tab, page, perPage)
+      const qs = buildQuery(applied, tab, page, perPage, sort, locator ?? undefined)
       if (tab === 'alerts') {
         const result = await apiGet<Page<AlertEvent>>(`/api/system/history/alerts?${qs}`)
-        if (thisRequest === requestId.current) setAlerts(result)
+        if (thisRequest === requestId.current) {
+          setAlerts(result)
+          if (locator && result.items[0]?.event_id === locator) void toggleAlert(result.items[0])
+        }
       } else {
         const result = await apiGet<Page<NotificationEvent>>(`/api/system/history/notifications?${qs}`)
-        if (thisRequest === requestId.current) setNotifications(result)
+        if (thisRequest === requestId.current) {
+          setNotifications(result)
+          if (locator && result.items[0]?.event_id === locator) void toggleNotification(result.items[0])
+        }
       }
       if (thisRequest === requestId.current) setLoadedAt(new Date())
     } catch (err) {
@@ -242,27 +264,41 @@ export function HistoryPage() {
     } finally {
       if (thisRequest === requestId.current) setIsLoading(false)
     }
-  }, [applied, tab, page, perPage])
+  }, [applied, tab, page, perPage, sort, locator])
 
   useEffect(() => {
     load()
   }, [load])
 
   function switchTab(next: HistoryTab) {
+    setLocator(null)
     setTab(next)
+    setSort({ column: 'timestamp', order: 'desc' })
     setPage(1)
     setExpanded(null)
     setFilters({ ...EMPTY_FILTERS, preset: filters.preset, startDate: filters.startDate, endDate: filters.endDate })
     setApplied({ ...EMPTY_FILTERS, preset: filters.preset, startDate: filters.startDate, endDate: filters.endDate })
   }
 
+  function changeSort(column: string) {
+    setLocator(null)
+    setSort((current) => ({
+      column,
+      order: current.column === column && current.order === 'desc' ? 'asc' : 'desc',
+    }))
+    setPage(1)
+    setExpanded(null)
+  }
+
   function applyFilters() {
+    setLocator(null)
     setPage(1)
     setExpanded(null)
     setApplied(filters)
   }
 
   function clearFilters() {
+    setLocator(null)
     setFilters(EMPTY_FILTERS)
     setApplied(EMPTY_FILTERS)
     setPage(1)
@@ -270,7 +306,7 @@ export function HistoryPage() {
   }
 
   async function toggleAlert(event: AlertEvent) {
-    const key = `a-${event.hostname}-${event.service_name}-${event.timestamp}-${event.new_state}`
+    const key = `a-${event.event_id}`
     if (expanded === key) {
       setExpanded(null)
       return
@@ -288,7 +324,7 @@ export function HistoryPage() {
   }
 
   async function toggleNotification(event: NotificationEvent) {
-    const key = `n-${event.source}-${event.id ?? ''}-${event.hostname}-${event.service_name}-${event.timestamp}-${event.contact}`
+    const key = `n-${event.event_id ?? event.id}`
     if (expanded === key) {
       setExpanded(null)
       return
@@ -503,24 +539,24 @@ export function HistoryPage() {
               {tab === 'alerts' ? (
                 <tr>
                   <th className="w-8 px-3 py-3" />
-                  <th className="px-3 py-3">Time</th>
+                  <th className="px-3 py-3"><button type="button" onClick={() => changeSort('timestamp')}>Time</button></th>
                   <th className="px-3 py-3">Type</th>
-                  <th className="px-3 py-3">Host</th>
+                  <th className="px-3 py-3"><button type="button" onClick={() => changeSort('hostname')}>Host</button></th>
                   <th className="px-3 py-3">Service</th>
-                  <th className="px-3 py-3">Previous → New</th>
+                  <th className="px-3 py-3"><button type="button" onClick={() => changeSort('new_state')}>Previous → New</button></th>
                   <th className="px-3 py-3">State type</th>
-                  <th className="px-3 py-3">Time in previous state</th>
+                  <th className="px-3 py-3"><button type="button" onClick={() => changeSort('duration')}>Time in previous state</button></th>
                   <th className="px-3 py-3">Output</th>
                 </tr>
               ) : (
                 <tr>
                   <th className="w-8 px-3 py-3" />
-                  <th className="px-3 py-3">Time</th>
+                  <th className="px-3 py-3"><button type="button" onClick={() => changeSort('timestamp')}>Time</button></th>
                   <th className="px-3 py-3">Source</th>
                   <th className="px-3 py-3">Type</th>
-                  <th className="px-3 py-3">Host</th>
+                  <th className="px-3 py-3"><button type="button" onClick={() => changeSort('hostname')}>Host</button></th>
                   <th className="px-3 py-3">Service</th>
-                  <th className="px-3 py-3">State</th>
+                  <th className="px-3 py-3"><button type="button" onClick={() => changeSort('state')}>State</button></th>
                   <th className="px-3 py-3">Contact</th>
                   <th className="px-3 py-3">Method / message</th>
                 </tr>
@@ -548,7 +584,7 @@ export function HistoryPage() {
               )}
 
               {tab === 'alerts' && alerts?.items.map((a) => {
-                const key = `a-${a.hostname}-${a.service_name}-${a.timestamp}-${a.new_state}`
+                const key = `a-${a.event_id}`
                 const open = expanded === key
                 return (
                   <FragmentRows key={key}>
@@ -607,7 +643,14 @@ export function HistoryPage() {
                                   <ul className="space-y-1">
                                     {alertDetail.linked_notifications.map((n, i) => (
                                       <li key={i} className="text-[var(--text-muted)]">
-                                        <Timestamp ts={n.timestamp} /> · <StateBadge state={n.state} /> · {n.contact}
+                                        <button type="button" className="underline" onClick={() => {
+                                          setFilters(EMPTY_FILTERS)
+                                          setApplied(EMPTY_FILTERS)
+                                          setLocator(n.event_id)
+                                          setTab('notifications')
+                                          setPage(1)
+                                          setExpanded(null)
+                                        }}>View notification · <Timestamp ts={n.timestamp} /> · <StateBadge state={n.state} /> · {n.contact}</button>
                                         {n.message ? ` — ${n.message}` : ''}
                                       </li>
                                     ))}
@@ -624,7 +667,7 @@ export function HistoryPage() {
               })}
 
               {tab === 'notifications' && notifications?.items.map((n) => {
-                const key = `n-${n.source}-${n.id ?? ''}-${n.hostname}-${n.service_name}-${n.timestamp}-${n.contact}`
+                const key = `n-${n.event_id ?? n.id}`
                 const open = expanded === key
                 return (
                   <FragmentRows key={key}>
@@ -672,8 +715,9 @@ export function HistoryPage() {
                                     type="button"
                                     className="ml-2 underline"
                                     onClick={() => {
-                                      setFilters({ ...EMPTY_FILTERS, hostname: n.hostname, service: n.service_name ?? '' })
-                                      setApplied({ ...EMPTY_FILTERS, hostname: n.hostname, service: n.service_name ?? '' })
+                                      setFilters(EMPTY_FILTERS)
+                                      setApplied(EMPTY_FILTERS)
+                                      setLocator(notificationDetail.linked_alert!.event_id)
                                       setTab('alerts')
                                       setPage(1)
                                       setExpanded(null)
@@ -698,25 +742,7 @@ export function HistoryPage() {
         </div>
 
         {data && data.pages > 1 && (
-          <div className="flex items-center justify-end gap-3 text-sm text-[var(--text)]">
-            <button
-              type="button"
-              disabled={page <= 1 || isLoading}
-              onClick={() => setPage(page - 1)}
-              className="rounded-xl border border-[var(--border)] px-4 py-2 hover:bg-[var(--hover)] disabled:opacity-50"
-            >
-              Previous
-            </button>
-            <span>Page {data.page} of {data.pages}</span>
-            <button
-              type="button"
-              disabled={page >= data.pages || isLoading}
-              onClick={() => setPage(page + 1)}
-              className="rounded-xl border border-[var(--border)] px-4 py-2 hover:bg-[var(--hover)] disabled:opacity-50"
-            >
-              Next
-            </button>
-          </div>
+          <Pagination page={data.page} pageCount={data.pages} onPageChange={setPage} disabled={isLoading} variant="themed" />
         )}
       </div>
     </main>

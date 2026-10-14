@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ArrowUpDown, Filter, Search } from 'lucide-react'
 import type { ServiceRow, ServiceState } from '../../types/service'
 import { useDisplayTime } from '../../hooks/useDisplayTime'
+import { Pagination } from '../shared/Pagination'
 
 type ServiceStatusTableProps = {
   services: ServiceRow[]
@@ -11,6 +12,9 @@ type ServiceStatusTableProps = {
   onQueryChange: (query: string) => void
   stateFilter: 'All' | ServiceState
   onStateFilterChange: (state: 'All' | ServiceState) => void
+  // The "Flapping only" filter is shown only when the page supplies the handler.
+  flappingOnly?: boolean
+  onFlappingOnlyChange?: (flappingOnly: boolean) => void
   showFilter: boolean
   onToggleFilter: () => void
   sortAsc: boolean
@@ -140,6 +144,8 @@ export function ServiceStatusTable({
   onQueryChange,
   stateFilter,
   onStateFilterChange,
+  flappingOnly = false,
+  onFlappingOnlyChange,
   showFilter,
   onToggleFilter,
   sortAsc,
@@ -147,8 +153,6 @@ export function ServiceStatusTable({
   page,
   pageCount,
   total,
-  hasNext,
-  hasPrev,
   onPageChange,
   onAcknowledge,
   onUnacknowledge,
@@ -180,8 +184,9 @@ export function ServiceStatusTable({
             <button
               type="button"
               onClick={onToggleFilter}
+              aria-label="Filter"
               className={`rounded-lg p-2 ${
-                showFilter || stateFilter !== 'All'
+                showFilter || stateFilter !== 'All' || flappingOnly
                   ? 'bg-gray-200 text-gray-900 dark:bg-white/20 dark:text-white'
                   : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-white'
               }`}
@@ -205,6 +210,20 @@ export function ServiceStatusTable({
                     {s}
                   </button>
                 ))}
+                {onFlappingOnlyChange && (<>
+                <span className="mt-1 block px-2 py-1 text-xs font-medium text-gray-400">Flapping</span>
+                <button
+                  onClick={() => onFlappingOnlyChange(!flappingOnly)}
+                  aria-pressed={flappingOnly}
+                  className={`block w-full rounded-lg px-2 py-1.5 text-left text-sm ${
+                    flappingOnly
+                      ? 'bg-[#ffb100]/20 text-[#ffb100]'
+                      : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10'
+                  }`}
+                >
+                  Flapping only
+                </button>
+                </>)}
               </div>
             )}
           </div>
@@ -289,25 +308,7 @@ export function ServiceStatusTable({
       <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3 text-sm text-gray-500 dark:border-white/10 dark:text-gray-400">
         <span>Page {page} of {pageCount} · {total} services total</span>
 
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => onPageChange(page - 1)}
-            disabled={!hasPrev}
-            className="rounded-lg px-3 py-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-white/10"
-          >
-            Previous
-          </button>
-          <span className="rounded-lg bg-gray-900 px-3 py-1 text-white dark:bg-white/10">{page}</span>
-          <button
-            type="button"
-            onClick={() => onPageChange(page + 1)}
-            disabled={!hasNext}
-            className="rounded-lg px-3 py-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-white/10"
-          >
-            Next
-          </button>
-        </div>
+        <Pagination page={page} pageCount={pageCount} onPageChange={onPageChange} />
       </div>
 
     </div>

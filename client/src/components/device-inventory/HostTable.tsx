@@ -9,6 +9,7 @@ import {
   type MonitoringFilter,
 } from './monitoringState'
 import { useDisplayTime } from '../../hooks/useDisplayTime'
+import { Pagination } from '../shared/Pagination'
 
 type HostTableProps = {
   hosts: Host[]
@@ -20,6 +21,9 @@ type HostTableProps = {
   onStateFilterChange: (state: 'All' | HostState) => void
   monitoringFilter: MonitoringFilter
   onMonitoringFilterChange: (filter: MonitoringFilter) => void
+  // The "Flapping only" filter is shown only when the page supplies the handler.
+  flappingOnly?: boolean
+  onFlappingOnlyChange?: (flappingOnly: boolean) => void
   showFilter: boolean
   onToggleFilter: () => void
   sortAsc: boolean
@@ -64,6 +68,8 @@ export function HostTable({
   onStateFilterChange,
   monitoringFilter,
   onMonitoringFilterChange,
+  flappingOnly = false,
+  onFlappingOnlyChange,
   showFilter,
   onToggleFilter,
   sortAsc,
@@ -71,8 +77,6 @@ export function HostTable({
   page,
   pageCount,
   total,
-  hasNext,
-  hasPrev,
   onPageChange,
   onAcknowledge,
   onUnacknowledge,
@@ -106,7 +110,7 @@ export function HostTable({
               onClick={onToggleFilter}
               aria-label="Filter"
               className={`rounded-lg p-2 ${
-                showFilter || stateFilter !== 'All' || monitoringFilter !== 'all'
+                showFilter || stateFilter !== 'All' || monitoringFilter !== 'all' || flappingOnly
                   ? 'bg-gray-200 text-gray-900 dark:bg-white/20 dark:text-white'
                   : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-white'
               }`}
@@ -144,6 +148,20 @@ export function HostTable({
                     {option.label}
                   </button>
                 ))}
+                {onFlappingOnlyChange && (<>
+                <span className="mt-1 block px-2 py-1 text-xs font-medium text-gray-400">Flapping</span>
+                <button
+                  onClick={() => onFlappingOnlyChange(!flappingOnly)}
+                  aria-pressed={flappingOnly}
+                  className={`block w-full rounded-lg px-2 py-1.5 text-left text-sm ${
+                    flappingOnly
+                      ? 'bg-[#ffb100]/20 text-[#ffb100]'
+                      : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10'
+                  }`}
+                >
+                  Flapping only
+                </button>
+                </>)}
               </div>
             )}
           </div>
@@ -272,29 +290,7 @@ export function HostTable({
           Page {page} of {pageCount} · {total} hosts total
         </span>
 
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => onPageChange(page - 1)}
-            disabled={!hasPrev}
-            className="rounded-lg px-3 py-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-white/10"
-          >
-            Previous
-          </button>
-
-          <span className="rounded-lg bg-white border border-gray-200 px-3 py-1 text-gray-900 shadow-sm dark:bg-white/10 dark:text-white dark:border-transparent">
-            {page}
-          </span>
-
-          <button
-            type="button"
-            onClick={() => onPageChange(page + 1)}
-            disabled={!hasNext}
-            className="rounded-lg px-3 py-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-white/10"
-          >
-            Next
-          </button>
-        </div>
+        <Pagination page={page} pageCount={pageCount} onPageChange={onPageChange} />
       </div>
     </div>
   )

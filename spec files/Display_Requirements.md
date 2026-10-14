@@ -572,6 +572,7 @@ navigate away) showing:
 | `search` | string | — | Partial match on hostname |
 | `state` | `UP` \| `DOWN` \| `UNREACHABLE` | — | Filter by state |
 | `ack_filter` | `all` \| `acknowledged` \| `unacknowledged` | `all` | Filter by ack state |
+| `flapping` | `true` \| `false` | — | `true` lists only flapping hosts (the "Flapping only" filter) |
 
 **API — `GET /system/network-health/hosts` response shape:**
 
@@ -711,6 +712,7 @@ When the user selects a service row, show:
 | `hostname` | string | — | Exact hostname filter (different from `search`) |
 | `state` | `OK` \| `WARNING` \| `CRITICAL` \| `UNKNOWN` | — | Filter by state |
 | `ack_filter` | `all` \| `acknowledged` \| `unacknowledged` | `all` | Filter by ack state |
+| `flapping` | `true` \| `false` | — | `true` lists only flapping services (the "Flapping only" filter) |
 
 **API — `GET /system/network-health/services` response shape:**
 
@@ -1078,9 +1080,13 @@ Settings → General shows the per-user Dashboard Refresh Rate (Manual/1/5/15
 minutes) with a dynamic hint showing the current Check interval and fixed
 60-second data poll. Changing browser refresh does not change Nagios checks,
 polling, or network discovery. Settings → System offers administrators the
-system-wide Check interval (1/2/5/10/15 minutes, default 5) for generated
-Nagios hosts and services; saving it validates and reloads Nagios or shows an
-error and restores the old value.
+system-wide Check interval (1/2/5/10/15 minutes, default 5), Retry interval (1 to
+10 minutes, default 1, only values up to the Check interval are offered, and
+lowering the Check interval lowers the Retry interval with it) and Maximum
+check attempts (1 to 10, default 3) for generated Nagios hosts and services;
+the help text explains that more attempts means slower alerts and fewer false
+alarms. Saving validates and reloads Nagios or shows an error and restores the
+old values. Below them, a Flap detection card has an on/off switch and Low and High flap threshold inputs (percent, 0 to 100; empty means Nagios's own value, shown as help text with the 5% and 20% defaults); invalid values are explained next to the inputs and are not sent.
 
 ### 3.2 Empty States and "Plugin Not Configured" States
 
@@ -1154,8 +1160,29 @@ underlying problem — the alert remains active in Nagios terms — but it allow
 the team to distinguish "known and being handled" problems from "unnoticed"
 ones.
 
-Acknowledgement is tracked entirely within this system. No acknowledgement
-data is written back to Nagios.
+The acknowledgement is stored in this system (`system.db`), and is then also
+sent to Nagios through the command channel (`app/nagios/commands.py`): a normal
+(non-sticky) `ACKNOWLEDGE_HOST_PROBLEM` / `ACKNOWLEDGE_SVC_PROBLEM` with no extra
+notification and a persistent comment, so Nagios stops repeat notifications and
+reports `Acknowledgement_Type` "Normal Acknowledgement" on the next poll.
+Unacknowledging sends `REMOVE_HOST_ACKNOWLEDGEMENT` / `REMOVE_SVC_ACKNOWLEDGEMENT`.
+The local record is saved first and is never undone or blocked by a Nagios
+failure. The response carries `nagios_synced` (false when Nagios was not
+updated, with a `nagios_message`) and the interface then shows a notice that the
+acknowledgement was saved in PinPoint but Nagios was not updated, so
+notifications may continue. Nothing is shown when the sync succeeded. A comment
+containing a line break, carriage return or NUL is rejected with 400 and nothing
+is stored or sent.
+
+### 4.1.1 Check Now
+
+Users with the **Check now** permission (`system.recheck`) see a **Check now**
+button in the host and service detail drawer. It asks Nagios to run the check
+immediately (`SCHEDULE_FORCED_HOST_CHECK` / `SCHEDULE_FORCED_SVC_CHECK`); the new
+result appears after the next poll. A target may be re-checked once every 10
+seconds: a second request returns 429 and the button shows the wait. Targets not
+in the latest Nagios status are refused (404), as are paused, retired and merged
+devices (409). If Nagios cannot be reached the request fails with 503.
 
 ### 4.2 Permission
 
@@ -1255,7 +1282,10 @@ Consistent with §3.3:
   resolution, the acknowledgement record is cleared automatically.
 - If a resolved alert re-enters a problem state, it starts unacknowledged.
   Previous acknowledgement history is retained in the Alerts & Notifications
-  History page and is not lost on resolution.
+  History page and is not lost on resolution. Pinpoint clears acknowledgements only
+  after a successful nonempty Nagios status poll reports a fresh UP/OK check for the
+  same target. A missing, stale or failed check never implies recovery; the deletion
+  and actorless `AUTO_RESOLVED` history append commit together.
 
 **Implementation note — data model:**
 Live acknowledgement state is stored in the `ALERT_ACKNOWLEDGEMENT` table

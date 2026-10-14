@@ -17,6 +17,7 @@ import type {
 } from '../../types/plugin'
 import { CustomCheckDialog } from './CustomCheckDialog'
 import { useDisplayTime } from '../../hooks/useDisplayTime'
+import { Pagination } from '../shared/Pagination'
 
 type Props = {
   pluginId: number
@@ -267,24 +268,7 @@ export function PluginCustomChecksSection({ pluginId, pluginName, fields, target
         <span>
           Page {page} of {meta.pages} · {meta.total} {meta.total === 1 ? 'check' : 'checks'}
         </span>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => setPage(page - 1)}
-            disabled={!meta.hasPrev}
-            className="rounded-lg px-3 py-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-white/10"
-          >
-            Previous
-          </button>
-          <button
-            type="button"
-            onClick={() => setPage(page + 1)}
-            disabled={!meta.hasNext}
-            className="rounded-lg px-3 py-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-white/10"
-          >
-            Next
-          </button>
-        </div>
+        <Pagination page={page} pageCount={meta.pages} onPageChange={setPage} />
       </div>
 
       {dialog && (

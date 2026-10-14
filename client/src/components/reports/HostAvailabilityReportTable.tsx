@@ -5,6 +5,7 @@ import { formatServerDateTime } from '../../utils/formatDateTime'
 import { exportRows } from '../../utils/exportData'
 import { ExportMenu } from '../shared/ExportMenu'
 import type { HostAvailabilityRow } from '../../types/report'
+import { Pagination } from '../shared/Pagination'
 
 type HostAvailabilityReportTableProps = {
   hosts: HostAvailabilityRow[]
@@ -183,19 +184,7 @@ export function HostAvailabilityReportTable({
 
       <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3 text-sm text-gray-500 dark:border-white/10 dark:text-gray-400">
         <span>Showing {filtered.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} of {filtered.length} hosts</span>
-        <div className="flex gap-2">
-          <button type="button" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={currentPage <= 1}
-            className="rounded-lg px-3 py-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-white/10">
-            Previous
-          </button>
-          <span className="rounded-lg bg-white border border-gray-200 px-3 py-1 text-gray-900 shadow-sm dark:bg-white/10 dark:text-white dark:border-transparent">
-            {currentPage} / {pageCount}
-          </span>
-          <button type="button" onClick={() => setPage((p) => Math.min(pageCount, p + 1))} disabled={currentPage >= pageCount}
-            className="rounded-lg px-3 py-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-white/10">
-            Next
-          </button>
-        </div>
+        <Pagination page={currentPage} pageCount={pageCount} onPageChange={setPage} />
       </div>
     </div>
   )

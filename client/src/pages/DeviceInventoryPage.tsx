@@ -5,6 +5,8 @@ import { StatusDetailDrawer } from '../components/device-inventory/StatusDetailD
 import { PageHeader } from '../components/shared/PageHeader'
 import { SummaryStatCard } from '../components/shared/SummaryStatCard'
 import { useSystemSettings } from '../contexts/SystemSettingsContext'
+import { NagiosSyncNotice } from '../components/shared/NagiosSyncNotice'
+import { nagiosSyncNotice, type NagiosSyncResult } from '../types/nagiosSync'
 import { apiDelete, apiGet, apiPost, errorMessage } from '../lib/api'
 import type { MonitoringFilter } from '../components/device-inventory/monitoringState'
 import { fromHostRecord, type Host, type HostListResponse, type HostState } from '../types/host'
@@ -27,6 +29,7 @@ export function DeviceInventoryPage() {
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [stateFilter, setStateFilter] = useState<'All' | HostState>('All')
   const [monitoringFilter, setMonitoringFilter] = useState<MonitoringFilter>('monitored')
+  const [flappingOnly, setFlappingOnly] = useState(false)
   const [showFilter, setShowFilter] = useState(false)
   const [sortAsc, setSortAsc] = useState(true)
   const [page, setPage] = useState(1)
@@ -35,6 +38,7 @@ export function DeviceInventoryPage() {
   const [listMeta, setListMeta] = useState({ pages: 1, total: 0, hasNext: false, hasPrev: false })
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [syncNotice, setSyncNotice] = useState<string | null>(null)
 
   const [counts, setCounts] = useState({ total: 0, up: 0 })
 
@@ -51,7 +55,7 @@ export function DeviceInventoryPage() {
 
   useEffect(() => {
     setPage(1)
-  }, [stateFilter, monitoringFilter, sortAsc])
+  }, [stateFilter, monitoringFilter, flappingOnly, sortAsc])
 
   async function loadHosts() {
     setIsLoading(true)
@@ -65,6 +69,7 @@ export function DeviceInventoryPage() {
         search: debouncedQuery,
         state: stateFilter === 'All' ? '' : stateFilter,
         monitoring: monitoringFilter === 'all' ? '' : monitoringFilter,
+        flapping: flappingOnly ? 'true' : '',
       })
       const data = await apiGet<HostListResponse>(`/api/system/network-health/hosts?${qs}`)
       setHosts(data.items.map(fromHostRecord))
@@ -92,7 +97,7 @@ export function DeviceInventoryPage() {
   useEffect(() => {
     loadHosts()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, debouncedQuery, stateFilter, monitoringFilter, sortAsc])
+  }, [page, debouncedQuery, stateFilter, monitoringFilter, flappingOnly, sortAsc])
 
   useEffect(() => {
     loadCounts()
@@ -105,8 +110,9 @@ export function DeviceInventoryPage() {
 
   async function acknowledgeHost(host: Host, comment: string) {
     try {
-      await apiPost('/api/system/network-health/hosts/acknowledge', { hostname: host.hostname, comment })
+      const result = await apiPost<NagiosSyncResult>('/api/system/network-health/hosts/acknowledge', { hostname: host.hostname, comment })
       setAckTarget(null)
+      setSyncNotice(nagiosSyncNotice(result))
       await Promise.all([loadHosts(), loadCounts()])
     } catch (err) {
       setLoadError(errorMessage(err, 'Unable to acknowledge host.'))
@@ -115,7 +121,8 @@ export function DeviceInventoryPage() {
 
   async function unacknowledgeHost(host: Host) {
     try {
-      await apiDelete('/api/system/network-health/hosts/acknowledge', { hostname: host.hostname })
+      const result = await apiDelete<NagiosSyncResult>('/api/system/network-health/hosts/acknowledge', { hostname: host.hostname })
+      setSyncNotice(nagiosSyncNotice(result))
       await loadHosts()
     } catch (err) {
       setLoadError(errorMessage(err, 'Unable to remove acknowledgement.'))
@@ -137,6 +144,8 @@ export function DeviceInventoryPage() {
           highlight="All Hosts"
           description="Live Nagios host status for every monitored device in your network infrastructure."
         />
+
+        <NagiosSyncNotice message={syncNotice} onDismiss={() => setSyncNotice(null)} />
 
         {loadError && (
           <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300">
@@ -180,6 +189,8 @@ export function DeviceInventoryPage() {
           onStateFilterChange={(s) => { setStateFilter(s); setShowFilter(false) }}
           monitoringFilter={monitoringFilter}
           onMonitoringFilterChange={(f) => { setMonitoringFilter(f); setShowFilter(false) }}
+          flappingOnly={flappingOnly}
+          onFlappingOnlyChange={(v) => { setFlappingOnly(v); setShowFilter(false) }}
           showFilter={showFilter}
           onToggleFilter={() => setShowFilter((v) => !v)}
           sortAsc={sortAsc}

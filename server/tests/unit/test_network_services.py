@@ -255,6 +255,29 @@ class TestListServices:
         assert "mysql-3306-TCP" not in services
         assert "http-80-TCP" in services
 
+    def test_flapping_filter_lists_only_flapping_services_across_pages(self, logged_in_client, db_session):
+        for i in range(5):
+            _make_service(db_session, "h1", f"calm-{i}-TCP")
+        _make_service(db_session, "h1", "noisy-a-TCP", is_flapping=True)
+        _make_service(db_session, "h2", "noisy-b-TCP", is_flapping=True)
+        db_session.session.commit()
+        data = logged_in_client.get(
+            "/api/system/network-health/services?flapping=true&per_page=1"
+        ).get_json()["data"]
+        assert data["total"] == 2
+        assert all(s["is_flapping"] for s in data["items"])
+
+    @pytest.mark.parametrize("value", ["false", "all", ""])
+    def test_flapping_filter_off_lists_everything(self, logged_in_client, db_session, value):
+        _make_service(db_session, "h1", "calm-TCP")
+        _make_service(db_session, "h1", "noisy-TCP", is_flapping=True)
+        db_session.session.commit()
+        data = logged_in_client.get(f"/api/system/network-health/services?flapping={value}").get_json()["data"]
+        assert data["total"] == 2
+
+    def test_invalid_flapping_filter_returns_400(self, logged_in_client, db_session):
+        assert logged_in_client.get("/api/system/network-health/services?flapping=maybe").status_code == 400
+
 
 # ==========================================================
 # GET /api/system/network-health/services/<hostname>/<path:service_name>/detail

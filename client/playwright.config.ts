@@ -33,6 +33,24 @@ export default defineConfig({
       dependencies: ['setup-admin'],
     },
     {
+      name: 'issue-133-live',
+      testMatch: /issue-133\.lab\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: '.auth/admin.json',
+      },
+      dependencies: ['setup-admin'],
+    },
+    {
+      name: 'issue-133-restricted',
+      testMatch: /issue-133\.restricted\.lab\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: '.auth/restricted.json',
+      },
+      dependencies: ['setup-restricted'],
+    },
+    {
       name: 'restricted',
       testMatch: /smoke\.restricted\.spec\.ts/,
       use: {

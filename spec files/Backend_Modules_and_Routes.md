@@ -23,7 +23,7 @@ role.edit, role.view, role.info, role.list
 account.view, account.edit, account.info, account.alerts
 system.discover, system.deploy.ncpa, system.hosts, system.hosts.edit, system.logs
 system.report, system.notifications, system.services, system.network_health
-system.acknowledge_alerts, system.dashboard, system.history
+system.acknowledge_alerts, system.recheck, system.dashboard, system.history
 plugin.scan, plugin.view, plugin.enable, plugin.disable
 plugin.command_override, plugin.command_restore, plugin.validate
 plugin.custom_add, plugin.custom_check, plugin.update, plugin.update_rollback
@@ -79,14 +79,14 @@ normal configured timeout; immediate invalidation is not part of this command.
 | `GET /api/user/permissions/options` | `role.edit` | List permissions available for role editing |
 | `POST /api/user/roles` | `role.edit` | Create an active role and assign permissions |
 | `GET /api/user/roles` | `role.view` | Paginated role list |
-| `GET /api/user/roles/options` | `role.list` | Compact role choices for forms |
+| `GET /api/user/roles/options` | `role.list` | Compact active-role choices for forms. Each item includes `preserves_bootstrap_admin_access`, which is true when the role has all permissions required to manage accounts and roles (`account.view`, `account.edit`, `account.info`, `role.view`, `role.edit`, `role.info`, `role.list`) |
 | `GET /api/user/roles/<id>` | `role.info` | Role detail and permission set |
-| `PUT /api/user/roles/<id>` | `role.edit` | Replace role metadata and permissions |
+| `PUT /api/user/roles/<id>` | `role.edit` | Replace role metadata and permissions. The built-in role named `Administrator` cannot be renamed or have its permission set changed (adding, removing, replacing, or clearing); a reordered but otherwise identical set permits description edits. Rejections return 400 before metadata or grants change. The bootstrap administrator's assigned role also cannot be deactivated or lose any permission required to manage accounts and roles, even when it is a different role |
 | `PUT /api/user/roles/<id>/status` | `role.edit` | Change role active status |
 | `POST /api/user/accounts` | `account.edit` | Create a user account. Optional `require_password_change` (boolean, default true) sets `Must_Change_Password`; unticked, the user is not forced to change the admin-chosen password at first sign-in. Optional `receive_email_alerts` (boolean, default true); sending `false` needs `account.alerts` (403 otherwise). An Active account with alerts on is a Nagios contact, so the config is rebuilt through `regenerate_and_apply_config_status()`; the response carries `config_applied`, `config_ok`, `config_message` (a failed apply does not undo the account) |
 | `GET /api/user/accounts` | `account.view` | Paginated account list. Each row carries `is_super_admin` for the first account (lowest `UserID`) so clients can preserve its protected status |
 | `GET /api/user/accounts/<id>` | `account.info` | Account detail, including `receive_email_alerts` (the list rows carry it too) |
-| `PUT /api/user/accounts/<id>` | `account.edit` | Edit account details/status; users are not deleted. The first account (lowest `UserID`, the super admin) must remain Active: a Suspended or Inactive status returns 400, while its other fields remain editable. `password`/`confirm_password` are optional (omit to keep the password, so suspend/deactivate needs none). Setting a password on another account (always, regardless of the create-form option), or returning an account to Active from Suspended/Inactive, sets `Must_Change_Password`. Optional `receive_email_alerts` (boolean): changing it needs `account.alerts` (403 otherwise; resending the current value is allowed) and is written to the activity log. When the account's Nagios contact changes (status, alerts setting, email or name of an Active alert user), the config is rebuilt as on create and the response carries `config_applied`, `config_ok`, `config_message` |
+| `PUT /api/user/accounts/<id>` | `account.edit` | Edit account details/status; users are not deleted. The first account (lowest `UserID`, the bootstrap administrator) must remain Active and may be assigned only an active role that has every permission required to manage accounts and roles (`account.view`, `account.edit`, `account.info`, `role.view`, `role.edit`, `role.info`, `role.list`); either violation returns 400 before account data changes. Other fields remain editable. `password`/`confirm_password` are optional (omit to keep the password, so suspend/deactivate needs none). Setting a password on another account (always, regardless of the create-form option), or returning an account to Active from Suspended/Inactive, sets `Must_Change_Password`. Optional `receive_email_alerts` (boolean): changing it needs `account.alerts` (403 otherwise; resending the current value is allowed) and is written to the activity log. When the account's Nagios contact changes (status, alerts setting, email or name of an Active alert user), the config is rebuilt as on create and the response carries `config_applied`, `config_ok`, `config_message` |
 | `GET /api/user/me` | Login | Return the current user, permissions, `must_change_password` and `needs_setup` |
 | `POST /api/user/complete-setup` | Login (`Needs_Setup` only) | First-run setup for the bootstrap administrator: `current_password`, `new_email`, `new_password`, `confirm_password`. Checks the current password and the password policy; rejects an invalid or already-used email, the installer's `pinpoint.lan` placeholder domain, and reserved/non-routable domains (`.local`, `.lan`, `.test`, `.example`, `.invalid`, `.localhost`, `.internal`, `home.arpa`). No deliverability check. Saves both, clears `Needs_Setup` and `Must_Change_Password`, writes an audit-log entry, then regenerates the Nagios config through `regenerate_and_apply_config_status()` (Nagios contacts are named and addressed by `User.Email`). Returns `config_applied`, `config_ok`, `config_message`; a failed apply does not undo the account change. 400 for any other account. While `Needs_Setup` is set, every `/api` route except login, logout, `/me` and this one returns 403 (`enforce_password_change`), including `change-password` |
 | `POST /api/user/change-password` | Login | Change the caller's own password (`current_password`, `new_password`, `confirm_password`); clears `Must_Change_Password`. While that flag is set every other `/api` route except login, logout and `/me` returns 403 (`enforce_password_change`). A user whose status is no longer Active is signed out on their next request |
@@ -111,10 +111,19 @@ The `system_bp` root makes these paths `/api/system`.
 | Method and path | Permission | Purpose |
 |---|---|---|
 | `GET /api/system` | Login | Return singleton system settings |
-| `PUT /api/system` | Login, field-level settings permissions | Save the full settings object with optimistic version handling; `checkInterval` accepts 1/2/5/10/15 minutes with `settings.system`, regenerates the Nagios config through the shared writer and rolls back on apply failure (422 with message) |
+| `PUT /api/system` | Login, field-level settings permissions | Save the full settings object with optimistic version handling; `checkInterval` accepts 1/2/5/10/15 minutes, `retryInterval` 1 to 10 minutes (never longer than the check interval in effect after the save) and `maxCheckAttempts` 1 to 10, all with `settings.system` (400 for a bad value; the two retry fields are optional in the body and keep their saved value when omitted); `flapDetectionEnabled` (bool), `flapLowThreshold` and `flapHighThreshold` (0 to 100 percent or `null` for Nagios's own value, low below high, 400 otherwise) are optional in the body too and need `settings.system`; any change to one of these regenerates the Nagios config through the shared writer and rolls back on apply failure (422 with message) |
 
 Security and system setting fields are restricted with `settings.security` and
 `settings.system`; personal fields are handled by `/api/user/preferences`.
+
+### `app/api/system/notification_policy.py`
+
+| Method and path | Permission | Purpose |
+|---|---|---|
+| `GET /api/system/notification-policy` | `settings.system` | Read the singleton policy; quiet-hour windows use the Nagios server's local time |
+| `PUT /api/system/notification-policy` | `settings.system` | Validate quiet-hour windows, host/service options, and renotify interval (0–1440 minutes); 400 on invalid fields, 409 on stale version, 422 with Nagios feedback on failed config apply, rolling back the database; audit changed fields when enabled |
+
+Both routes use the standard success/error envelopes. GET returns `quietHours` (weekday, `start`, `end` in 24-hour `HH:MM`), `hostOptions`, `serviceOptions`, `renotifyInterval`, `version` and `timeZone` (`Nagios server local time`). PUT accepts those editable fields plus the current integer `version`; `timeZone` is informational. Quiet windows cannot cross midnight or overlap on one weekday. The policy belongs to the default-bind singleton, and a successful save regenerates/validates/applies the shared Nagios candidate file before committing.
 
 ### `app/api/system/dashboard.py`
 
@@ -123,9 +132,9 @@ Security and system setting fields are restricted with `settings.security` and
 | `GET /api/system/dashboard/status` | `system.dashboard` | Nagios process and monitoring-server resource health |
 | `GET /api/system/dashboard/summary` | `system.dashboard` | Host/service counts, active-alert counts, ping and NCPA summaries |
 | `GET /api/system/dashboard/alerts` | `system.dashboard` | Active alerts from the latest snapshot, with acknowledgement filters |
-| `POST /api/system/dashboard/alerts/acknowledge` | `system.acknowledge_alerts` | Acknowledge one host or service alert |
-| `POST /api/system/dashboard/alerts/acknowledge-all` | `system.acknowledge_alerts` | Acknowledge a supplied batch of alerts |
-| `DELETE /api/system/dashboard/alerts/acknowledge` | `system.acknowledge_alerts` | Remove one application acknowledgement |
+| `POST /api/system/dashboard/alerts/acknowledge` | `system.acknowledge_alerts` | Acknowledge one host or service alert; also sent to Nagios (`nagios_synced`, `nagios_message` in the response). A comment with a line break or NUL returns 400 |
+| `POST /api/system/dashboard/alerts/acknowledge-all` | `system.acknowledge_alerts` | Acknowledge a supplied batch of alerts; `nagios_synced` is false if any command failed |
+| `DELETE /api/system/dashboard/alerts/acknowledge` | `system.acknowledge_alerts` | Remove one application acknowledgement and the Nagios one (`nagios_synced`) |
 | `GET /api/system/dashboard/notifications` | `system.dashboard` | Return the five latest Nagios notifications |
 
 Detailed fields and behavior are normative in `Display_Requirements.md`.
@@ -152,24 +161,27 @@ each route's docstring.
 | `GET /api/system/network-health/cpu` | `system.network_health` | CPU utilization trend for one host with an NCPA CPU check (`hostname` optional) |
 | `GET /api/system/network-health/connections` | `system.network_health` | TCP connection counts by state on the Nagios/Pinpoint server, read from `/proc/net/tcp`; `available` is false without `/proc` |
 | `GET /api/system/network-health/insights` | `system.network_health` | Plain-language observations from the latest snapshot, most severe first |
+| `GET /api/system/network-health/flapping` | `system.network_health` | Hosts and services flagged as flapping in the last `hours` (1, 6, 24 default or 168; 400 otherwise): per item the number of flagged snapshots, first and last flagged time, whether it is flapping now and its current state, plus `global_flap_detection_enabled` (`null` until Nagios has reported). Counted from 60-second snapshots, so fast flaps can be missed; paused and retired devices are left out |
 | `GET /api/system/network-health/plugin-trends` | `system.network_health` | One entry per plugin enabled in Plugin Manager: state counts, current values and averaged trends for time and percentage metrics |
 
 ### `app/api/system/network_hosts.py`
 
 | Method and path | Permission | Purpose |
 |---|---|---|
-| `GET /api/system/network-health/hosts` | `system.network_health` | Paginated/filterable latest host snapshot; each item carries `device_id` (the discovered device behind the Nagios host name, `null` for a host with no device record such as `localhost`) and `ip_address` (that device's current IP, `null` in the same case), and `monitoring_state` / `monitored` (the device's monitoring label and whether Nagios fully checks it; both `null` in the same case). Optional `monitoring` filter: `all`, `not_monitored`, `monitored`, `missing`, `address_unknown`, `paused`, `retired` or `merged` (400 otherwise); a host with no device counts as monitored |
+| `GET /api/system/network-health/hosts` | `system.network_health` | Paginated/filterable latest host snapshot; each item carries `device_id` (the discovered device behind the Nagios host name, `null` for a host with no device record such as `localhost`) and `ip_address` (that device's current IP, `null` in the same case), and `monitoring_state` / `monitored` (the device's monitoring label and whether Nagios fully checks it; both `null` in the same case). Optional `flapping=true` lists only flapping hosts (`false`, `all` or empty lists everything, 400 otherwise). Optional `monitoring` filter: `all`, `not_monitored`, `monitored`, `missing`, `address_unknown`, `paused`, `retired` or `merged` (400 otherwise); a host with no device counts as monitored |
 | `GET /api/system/network-health/hosts/<hostname>/detail` | `system.network_health` | Host detail panel data, including `device_id`, `monitoring_state` and `monitored` |
-| `POST /api/system/network-health/hosts/acknowledge` | `system.acknowledge_alerts` | Acknowledge a host alert |
+| `POST /api/system/network-health/hosts/<hostname>/recheck` | `system.recheck` | Check Now: force a Nagios host check. 429 inside the 10 s per-target limit (`data.retry_after`), 404 not in the latest snapshot, 409 paused/retired/merged, 503 command pipe unavailable. Audited |
+| `POST /api/system/network-health/hosts/acknowledge` | `system.acknowledge_alerts` | Acknowledge a host alert. Response data adds `nagios_synced` and `nagios_message` |
 | `DELETE /api/system/network-health/hosts/acknowledge` | `system.acknowledge_alerts` | Unacknowledge a host alert |
 
 ### `app/api/system/network_services.py`
 
 | Method and path | Permission | Purpose |
 |---|---|---|
-| `GET /api/system/network-health/services` | `system.network_health` | Paginated/filterable latest service snapshot |
+| `GET /api/system/network-health/services` | `system.network_health` | Paginated/filterable latest service snapshot; optional `flapping=true` lists only flapping services (`false`, `all` or empty lists everything, 400 otherwise) |
 | `GET /api/system/network-health/services/<hostname>/<path:service_name>/detail` | `system.network_health` | Service detail panel data |
-| `POST /api/system/network-health/services/acknowledge` | `system.acknowledge_alerts` | Acknowledge a service alert |
+| `POST /api/system/network-health/services/<hostname>/<path:service_name>/recheck` | `system.recheck` | Check Now for a service; same responses as the host route |
+| `POST /api/system/network-health/services/acknowledge` | `system.acknowledge_alerts` | Acknowledge a service alert. Response data adds `nagios_synced` and `nagios_message` |
 | `DELETE /api/system/network-health/services/acknowledge` | `system.acknowledge_alerts` | Unacknowledge a service alert |
 
 ### `app/api/system/history.py`
@@ -180,6 +192,31 @@ each route's docstring.
 | `GET /api/system/history/alerts/detail` | `system.history` | Full detail for one alert event |
 | `GET /api/system/history/notifications` | `system.history` | Paginated notification events from Nagios and Pinpoint; every item has `source` (`nagios` or `pinpoint`), filterable with `source=`. Pinpoint items are finished network scans (`type: scan`, state SUCCESS/FAILED/CANCELLED) read from `NETWORK_DISCOVERY_STATUS`; host/service/contact/type filters exclude them |
 | `GET /api/system/history/notifications/detail` | `system.history` | Full detail for one notification event; Pinpoint events use `source=pinpoint&id=<DiscoveryStatusID>` |
+
+Alert list and detail annotate prior state and time in that state from preceding
+archive transitions for the same target; recovery detail computes the full
+problem episode duration from first problem detection. List annotations include
+transitions before the selected window. Without an earlier archive transition,
+Nagios-provided metadata is retained rather than inventing an onset.
+
+Both list routes support `preset=1h|6h|24h|7d|30d` (default 24h), or paired
+`start_date`/`end_date` as whole server-local `YYYY-MM-DD` days or inclusive
+ISO 8601 seconds with explicit timezone (`Z` or `±HH:MM`). Invalid or partial
+bounds return 400; a preset takes precedence. `sort_by` accepts every list
+column: alerts `timestamp|type|hostname|service_name|previous_state|new_state|state_type|duration_seconds|plugin_output|acknowledged`
+(with legacy `duration` alias); notifications `timestamp|type|hostname|service_name|state|contact|method|message`.
+`order=asc|desc` selects the primary direction; ties sort by timestamp desc.
+Unknown sort keys continue to default to timestamp. List output/message sort
+uses the truncated value. Nagios list and detail rows expose `event_id` (UNIX
+second plus digest of normalized archive fields); linked notifications/alerts in
+detail responses carry the target `event_id`. Both list routes accept `event_id`
+for a single-second exact lookup, overriding time range and filters; malformed
+IDs return 400, missing IDs yield an empty page. Detail routes also accept
+`event_id` to distinguish same-second rows (alongside legacy host/service/time
+parameters). Pinpoint scan records retain
+`id` instead. Links match host, service and state to the most recent preceding
+alert within five minutes. See `Alerts_Notifications_History_Requirements.md`
+§§3.3–3.4, 4.3–4.4 and 5.4.
 
 The route implementation exists, but `system.history` is not currently present
 in the seed permission list. This is tracked in `Implementation_Status.md`.
@@ -299,7 +336,7 @@ update/custom-plugin modules.
 |---|---|---|
 | `POST /api/plugin/scan` | `plugin.scan` | Start plugin-directory scan |
 | `GET /api/plugin/scan/status` | `plugin.scan` | Read latest scan status |
-| `GET /api/plugin` | `plugin.view` | Paginated plugin inventory |
+| `GET /api/plugin` | `plugin.view` | Paginated plugin inventory; optional `group` (Network Services, Device Availability, Network Protocols, Servers, Application, Other) filters to one inventory tab (catalog category, with per-plugin fixes in `PLUGIN_GROUP_OVERRIDES`), 400 otherwise |
 | `GET /api/plugin/summary` | `plugin.view` | Plugin-manager summary counts, including `enabled_plugins` (Enabled or Active; zero drives the "no plugins enabled" banner) |
 | `GET /api/plugin/history` | `plugin.view` | Plugin audit/history records |
 | `GET /api/plugin/<plugin_id>` | `plugin.view` | Plugin detail, including `description`, `category` and `documentation_url` (null for plugins outside the bundled catalog) |

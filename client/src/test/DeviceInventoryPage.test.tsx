@@ -168,6 +168,20 @@ describe('DeviceInventoryPage', () => {
     await waitFor(() => expect(tableCalls().at(-1)?.get('state')).toBe('DOWN'))
   })
 
+  it('can list only flapping hosts, and goes back to all of them', async () => {
+    const user = userEvent.setup()
+    await renderLoaded()
+    expect(tableCalls()[0].has('flapping')).toBe(false)
+
+    await user.click(screen.getByRole('button', { name: 'Filter' }))
+    await user.click(screen.getByRole('button', { name: 'Flapping only' }))
+    await waitFor(() => expect(tableCalls().at(-1)?.get('flapping')).toBe('true'))
+
+    await user.click(screen.getByRole('button', { name: 'Filter' }))
+    await user.click(screen.getByRole('button', { name: 'Flapping only' }))
+    await waitFor(() => expect(tableCalls().at(-1)?.has('flapping')).toBe(false))
+  })
+
   it('searches by hostname after typing', async () => {
     const user = userEvent.setup()
     await renderLoaded()

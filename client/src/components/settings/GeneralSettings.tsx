@@ -288,8 +288,8 @@ export function GeneralSettings() {
         />
 
         <SettingsToggle
-          label="Notifications"
-          description="Enable system-wide notifications"
+          label="Show notification bell in the header"
+          description="Only shows or hides the header bell. Email alerts are controlled by the Notification policy on the System tab and each account's email-alert setting."
           enabled={
             settings.notifications
           }

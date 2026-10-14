@@ -35,6 +35,9 @@ GET  /system/network-health/insights
 GET  /system/network-health/plugin-trends
     One entry per plugin added through the Plugin Manager: state counts,
     current values, and averaged trends for time / percentage metrics.
+
+GET  /system/network-health/flapping
+    Hosts and services whose snapshots were flagged as flapping in a window.
 """
 
 from collections import defaultdict
@@ -71,7 +74,9 @@ from app.network_discovery.custom_checks import plugin_for_custom_command
 from app.network_discovery.plugin_registry import normalize_plugin_name
 from app.network_discovery.port_lifecycle import ENABLED_PLUGIN_STATES
 from app.history_models import (
+    HostStatus,
     HostStateType,
+    ProgramStatus,
     ServicePerfData,
     ServiceStateType,
     ServiceStatus,
@@ -84,6 +89,10 @@ VALID_HOURS = VALID_TREND_HOURS
 
 # Longest availability window, in days. Each day is one archivejson call.
 MAX_AVAILABILITY_DAYS = 30
+
+# Windows offered for flap history. A subset of VALID_HOURS: five minutes is
+# too short for a flap to show up in 60-second snapshots.
+FLAP_HOURS = {1, 6, 24, 168}
 
 # Insight thresholds.
 HIGH_LATENCY_MS = 100
@@ -867,4 +876,106 @@ def network_health_plugin_trends():
 
     except Exception:
         current_app.logger.exception("Unexpected error in GET /system/network-health/plugin-trends")
+        return error("An unexpected error occurred.", 500)
+
+
+# ==========================================================
+# FLAP HISTORY
+# ==========================================================
+
+@system_bp.get("/network-health/flapping")
+@login_required
+@require_permission("system.network_health")
+def network_health_flapping():
+    """
+    Hosts and services that Nagios flagged as flapping in the last N hours.
+
+    Flapping is recorded once per status snapshot (about every 60 seconds), so
+    this counts flagged snapshots, not individual state changes, and a very
+    fast flap can be missed. Treat the numbers as a guide, not an exact count.
+    Devices that are paused or retired are left out, like the live status views.
+
+    Query params:
+        hours — 1, 6, 24 (default) or 168
+
+    Response shape:
+    {
+        "hours": int,
+        "global_flap_detection_enabled": bool | null,  // null: Nagios has not reported yet
+        "items": [
+            {
+                "type": "host" | "service",
+                "hostname": str,
+                "service": str | null,
+                "snapshots_flagged": int,
+                "first_flagged": iso,
+                "last_flagged": iso,
+                "currently_flapping": bool,
+                "current_state": str        // lower case, from the latest snapshot
+            }
+        ]
+    }
+    Items that are flapping now come first, then those flagged in the most
+    snapshots.
+    """
+    try:
+        hours = trend_hours(request.args.get("hours", "24"))
+    except ValueError:
+        hours = None
+    if hours not in FLAP_HOURS:
+        return error(f"hours must be one of: {sorted(FLAP_HOURS)}.", 400)
+
+    try:
+        since = datetime.now(timezone.utc) - timedelta(hours=hours)
+        program = db.session.scalar(
+            sa.select(ProgramStatus).order_by(ProgramStatus.Timestamp.desc()).limit(1)
+        )
+
+        items = []
+        for kind, model, latest in (
+            ("host", HostStatus, get_latest_hosts()),
+            ("service", ServiceStatus, get_latest_services()),
+        ):
+            columns = [model.Hostname]
+            if kind == "service":
+                columns.append(model.Service)
+            flagged = db.session.execute(
+                sa.select(
+                    *columns,
+                    sa.func.count().label("snapshots"),
+                    sa.func.min(model.Timestamp).label("first"),
+                    sa.func.max(model.Timestamp).label("last"),
+                )
+                .where(model.Is_Flapping.is_(True), model.Timestamp >= since)
+                .group_by(*columns)
+            ).all()
+            current = {
+                (row.Hostname, row.Service if kind == "service" else None): row
+                for row in latest
+            }
+            for row in flagged:
+                service = row.Service if kind == "service" else None
+                live = current.get((row.Hostname, service))
+                if live is None:
+                    continue
+                items.append({
+                    "type": kind,
+                    "hostname": row.Hostname,
+                    "service": service,
+                    "snapshots_flagged": row.snapshots,
+                    "first_flagged": utc_isoformat(row.first),
+                    "last_flagged": utc_isoformat(row.last),
+                    "currently_flapping": bool(live.Is_Flapping),
+                    "current_state": live.Current_State.value.lower(),
+                })
+
+        items.sort(key=lambda i: (not i["currently_flapping"], -i["snapshots_flagged"], i["hostname"], i["service"] or ""))
+        return success({
+            "hours": hours,
+            "global_flap_detection_enabled": None if program is None else bool(program.Enable_Flap_Detection),
+            "items": items,
+        })
+
+    except Exception:
+        current_app.logger.exception("Unexpected error in GET /system/network-health/flapping")
         return error("An unexpected error occurred.", 500)

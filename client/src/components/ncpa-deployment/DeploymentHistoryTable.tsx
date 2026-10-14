@@ -6,6 +6,7 @@ import { useSystemSettings } from '../../contexts/SystemSettingsContext'
 import { formatDateTime } from '../../utils/formatDateTime'
 import { runTag, type DeploymentRun } from '../../types/ncpaDeployment'
 import { OutcomeCounts, RunResultBadge } from './DeploymentBadges'
+import { Pagination } from '../shared/Pagination'
 
 const PER_PAGE = 10
 
@@ -158,27 +159,7 @@ export function DeploymentHistoryTable({ refreshKey, onSelectRun }: Props) {
         <span>
           Page {page} of {meta.pages} · {meta.total} runs total
         </span>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => setPage((p) => p - 1)}
-            disabled={!meta.hasPrev}
-            className="rounded-lg px-3 py-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-white/10"
-          >
-            Previous
-          </button>
-          <span className="rounded-lg border border-gray-200 bg-white px-3 py-1 text-gray-900 shadow-sm dark:border-transparent dark:bg-white/10 dark:text-white">
-            {page}
-          </span>
-          <button
-            type="button"
-            onClick={() => setPage((p) => p + 1)}
-            disabled={!meta.hasNext}
-            className="rounded-lg px-3 py-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-white/10"
-          >
-            Next
-          </button>
-        </div>
+        <Pagination page={page} pageCount={meta.pages} onPageChange={setPage} />
       </div>
     </section>
   )
