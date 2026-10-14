@@ -387,3 +387,24 @@ Reasons (shown in the drawer, and as the chip tooltip in the table):
 | O1 | A pin cannot be removed | **Add an unpin route.** Remove pin is included (§5, §6, criteria 21–23) |
 | O2 | "Ignore" (Suggested port) and "Stop monitoring" (Monitored port) both end Ignored | **Keep both labels** |
 | O3 | A held Suggested port can still be pinned and stays held | **Keep** |
+
+
+## 13. Host email alert recipients
+
+In the host detail drawer, a discovered device shows an **Email alert recipients**
+section only with `system.hosts.alerts` (separate from `account.alerts` and
+`system.hosts.edit`). It applies to the host and all its generated services, with
+one checkbox per user (name, email and eligibility). Only Active users with
+email alerts on receive notifications. Ineligible choices may remain selected
+and are labelled; no selections, or no eligible selections, uses the default
+recipients (all globally eligible users), with explanatory text. If no globally
+eligible users exist, no email recipients are generated.
+
+Save is enabled for changed choices and disabled during a request. Successful
+save shows confirmation and the server's selections. Failed apply keeps the old
+saved selection, displays the server error and leaves the proposed choices
+available for retry. Loading, load error with Retry, no accounts and read-only
+retired/merged states must be present. Hosts without a discovered-device record
+and service-detail views do not show the editor. Choices survive address/hostname
+changes and rescans; merges combine selections without duplicates; retiring
+removes that device's assignments. Pause preserves them.

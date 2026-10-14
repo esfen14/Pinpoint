@@ -76,10 +76,6 @@ def test_default_fallback_has_no_empty_group(app, db_session, admin_user, device
         assign(first, admin_user)
         admin_user.Receive_Email_Alerts = False
         # Keep one eligible contact for the global fallback.
-        from app.system_models import User
-        user = db.session.scalar(sa.select(User).where(User.Email == 'admin@example.com'))
-        assert user is not None
-        from tests.unit.test_management import _make_user
         _make_user(db_session, admin_user.Role, 'fallback@example.com')
     text = generate(app, monkeypatch, tmp_path)
     assert f'pinpoint_host_{first.NetDiscoveryID}' not in text
@@ -208,9 +204,9 @@ def test_permission_seeded():
 def test_custom_services_use_device_group(app, db_session, admin_user, devices, monkeypatch, tmp_path):
     first = devices[0]
     assign(first, admin_user)
-    with patch('app.network_discovery.create_host_cfg.load_custom_checks', return_value={first.NetDiscoveryID: [('custom-ssh-health', 'check_ssh!22', 'ssh')]}):
+    with patch('app.network_discovery.create_host_cfg.load_custom_checks', return_value={first.NetDiscoveryID: [('custom-ping-health', 'pinpoint_custom_check_ping!100,20%!500,60%', 'check_ping')]}):
         text = generate(app, monkeypatch, tmp_path)
-    custom = next(obj for obj in objects(text, 'service') if 'custom-ssh-health' in obj)
+    custom = next(obj for obj in objects(text, 'service') if 'custom-ping-health' in obj)
     assert f'pinpoint_host_{first.NetDiscoveryID}' in custom
 
 
@@ -258,7 +254,7 @@ def test_upgrade_permission_sync_grants_administrator(db_session, admin_role, se
     from app.api.commands.seed import sync_permissions
     permission = seeded_permissions['system.hosts.alerts']
     db.session.execute(sa.delete(RolePermission).where(RolePermission.PermissionID == permission.PermissionID))
-    db.session.delete(permission)
+    db.session.execute(sa.delete(Permission).where(Permission.PermissionID == permission.PermissionID))
     db.session.commit()
     admin_role.Name = 'Administrator'
     db.session.commit()
@@ -283,3 +279,39 @@ def test_migration_round_trip():
     assert report['rejected'] == [[1, 1], [999, 1], [1, 999]]
     assert report['rows'] == [[1, 1]]
     assert report['history_unchanged'] and report['removed']
+
+
+@pytest.mark.parametrize('ineligible', [False, True])
+def test_fallback_validates_through_shared_writer(app, db_session, admin_user, admin_role, devices, monkeypatch, tmp_path, ineligible):
+    """Fake Nagios at its process boundary, checking contact references in its candidate."""
+    from pathlib import Path
+    import app.network_discovery.create_host_cfg as cfg
+    first = devices[0]
+    if ineligible:
+        assign(first, admin_user)
+        admin_user.Receive_Email_Alerts = False
+        _make_user(db_session, admin_role, 'fallback@example.com')
+    monkeypatch.setitem(app.config, 'HOST_CONFIG_DIR', tmp_path)
+    live = tmp_path / 'running.cfg'
+    live.write_text('# previous config\n')
+    main = tmp_path / 'nagios.cfg'
+    main.write_text(f'cfg_file={live}\n')
+    monkeypatch.setitem(app.config, 'NAGIOS_HOST_CFG', live)
+    monkeypatch.setitem(app.config, 'NAGIOS_MAIN_CFG', main)
+    def verify(main_path):
+        candidate_path = Path(main_path.read_text().strip().split('=', 1)[1])
+        text = candidate_path.read_text()
+        contact_names = {re.search(r'contact_name\s+(\S+)', obj)[1] for obj in objects(text, 'contact')}
+        groups = {}
+        for obj in objects(text, 'contactgroup'):
+            name = re.search(r'contactgroup_name\s+(\S+)', obj)[1]
+            members = re.search(r'members\s+(\S+)', obj)[1].split(',')
+            assert members and set(members) <= contact_names
+            groups[name] = members
+        assert set(groups) == {'system_users'}
+        for obj in objects(text, 'host') + objects(text, 'service'):
+            assert re.search(r'contact_groups\s+(\S+)', obj)[1] in groups
+        return True, 'No errors found (fake Nagios).'
+    with patch.object(cfg, '_run_nagios_verify', side_effect=verify) as validator, patch.object(cfg, '_apply_new_host_cfg', return_value=(True, 'Applied.')):
+        assert cfg.regenerate_and_apply_config_status() == ('applied', 'Applied.')
+    validator.assert_called_once()

@@ -16,7 +16,7 @@ with tempfile.TemporaryDirectory() as tmp:
     config.Config.SQLALCHEMY_BINDS = {'history': 'sqlite:///' + history_path}
     import flask_migrate
     from app import app
-    before, target = '143c48cd6663', 'a79e14c0b621'
+    before, target = 'c5e2a8f4d716', 'a79e14c0b621'
     report = {}
 
     def migrate(revision, down=False):

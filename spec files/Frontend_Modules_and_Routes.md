@@ -119,3 +119,18 @@ When adding a page:
   and unacknowledge call (Dashboard, Device Inventory, System Status, the drawer)
   reads `nagios_synced` from the response and shows a dismissible notice when it
   is false; nothing is shown when it is true or absent.
+
+## Host email recipient editor
+
+`DeviceRecipientsSection` in `components/device-inventory/` is mounted by
+`StatusDetailDrawer` only in the host view, for a discovered device, and only
+with `system.hosts.alerts`. It reads and replaces `/api/system/hosts/<id>/recipients`
+through the shared API client; `types/hostRecipients.ts` owns the wire contract.
+Each user choice shows name, email and eligibility; inactive/opted-out selections
+remain visible. Saving sends `{recipient_ids: number[]}`. Empty or entirely
+ineligible selections visibly explain the default group of all Active opted-in
+users. Loading, load-error Retry, no accounts, apply errors and success are shown;
+inputs are disabled during save. Retired/merged devices are read-only. A rejected
+save retains the editable choice for retry and displays the server's message.
+This editor does not require account-management permission and does not change
+any user's global email setting.

@@ -1,13 +1,13 @@
 """Add stable device-to-user email alert selections.
 
 Revision ID: a79e14c0b621
-Revises: 143c48cd6663
+Revises: c5e2a8f4d716
 """
 from alembic import op
 import sqlalchemy as sa
 
 revision = 'a79e14c0b621'
-down_revision = '143c48cd6663'
+down_revision = 'c5e2a8f4d716'
 branch_labels = None
 depends_on = None
 
