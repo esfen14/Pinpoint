@@ -1,7 +1,7 @@
 # Issue #133: Clear acknowledgements on recovery and audit History
 
 Branch: `issue-133-clear-ack-recovery-audit-history`
-Status: in-progress
+Status: blocked
 
 ## Finish condition
 
@@ -112,7 +112,7 @@ Requirement coverage (section A problem, C changes, D guidelines, G testing, exc
 - Last check run (exact command): `scripts/verify.sh all > /tmp/opencode/issue-133-more-all.log 2>&1; result=$?; grep -E 'passed,|Test Files|Tests  |problems|verify: all' /tmp/opencode/issue-133-more-all.log | tail -10; exit "$result"`
 - Result (first failing lines, or "green"): green — 2382 backend passed, 14 skipped; 518 frontend passed; 26 lint warnings, 0 errors; `verify: all OK`. Browser project 3/3. Live poll retention and post-recovery idempotence observed, with harness timeout after restoration; later read-only count confirmed stable result.
 - Hypothesis: Issue flows tested with bounded live evidence. Actual backend page two/CGI outage and load benchmark remain unverified; current-head CI and human PR review remain outstanding. #141–#144 are tracked backend gaps. Keep PR draft.
-- Next action (one specific step, not "continue"): Checkpoint report/progress, post sanitized PR evidence and check current-head CI/review; ask reviewer to decide whether further full backend pagination/CGI outage or load testing is required before final approval.
+- Next action (one specific step, not "continue"): Ask a human reviewer to inspect PR #145 and decide if actual backend page-two/CGI-outage/load or clean-install evidence is required; obtain CI conclusions on the latest head before marking ready.
 
 ## Decisions and notes
 
@@ -126,4 +126,5 @@ Requirement coverage (section A problem, C changes, D guidelines, G testing, exc
 - User confirmed in chat that their manual History path plus targeted Playwright coverage satisfies the manual page-walk requirement, requested more live testing, and reported no desired code changes. This is not GitHub reviewer approval or a blanket deployment sign-off. Expanded plan steps 8–9 address live pagination/error display and bounded reliability; keep the appliance intact.
 - User reported in chat that their manual History path (filter host/service, see CRITICAL/recovery, expand detail, Refresh) worked. This is owner-reported, not agent-observed; record it separately from Playwright evidence. User approved further Playwright in chat and in https://github.com/esfen14/Pinpoint/issues/133#issuecomment-6159056949. This changes the plan: step 7 expands read-only coverage on the existing authorized VM. Human review approval and deployment/reliability sign-off remain unobserved. Current draft PR head has no check conclusions.
 - Owner authorized resetting disposable lab admin password in https://github.com/esfen14/Pinpoint/issues/133#issuecomment-6158705038. `flask recover-bootstrap-admin` succeeded with a private temporary password; the normal authenticated change-password route completed the forced change. Corrected the private lab admin email from the uniquely identified bootstrap account (the old state email mismatched); values were never printed. Targeted live evidence in `docs/test-runs/2026-10-14-issue-133-live/REPORT.md` with caveat: synced source on preserved issue #113 VM DB, not a clean #133 install; VM Git HEAD remains old despite matching source/build hashes.
+- Additional evidence posted at https://github.com/esfen14/Pinpoint/pull/145#issuecomment-6159572769. Current head `02f3d308` still has no CI conclusions or review approvals when queried; user did not grant a PR review approval by saying there were no code changes desired. Actual backend page two/CGI outage and load benchmark require a human scope decision before attempting invasive setup or marking reliability satisfied.
 - Draft PR: https://github.com/esfen14/Pinpoint/pull/145. `gh pr edit` hits deprecated projectCards GraphQL; body updated via `gh api PATCH`. Backend gaps #141–#144 are tracked out of scope. Local full verification log is `/tmp/opencode/issue-133-all.log`; result excerpts are posted in a PR comment, but the full log is not uploaded.
