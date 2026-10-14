@@ -50,6 +50,30 @@ test('issue 133: real History events can be filtered and inspected', async ({ pa
   await expect(page.getByText(/Showing .* notifications/)).toBeVisible()
 })
 
+test('issue 133: owner History path shows real CRITICAL and recovery after Refresh', async ({ page }) => {
+  const host = 'dev-28829a'
+  const service = 'ssh-22-tcp'
+  await page.goto('/history')
+  await page.getByRole('combobox', { name: 'Time range' }).selectOption('30d')
+  await page.getByRole('textbox', { name: 'Host', exact: true }).fill(host)
+  await page.getByRole('textbox', { name: 'Service', exact: true }).fill(service)
+  await page.getByRole('button', { name: 'Apply' }).click()
+  const rows = page.locator('tbody tr').filter({ hasText: host })
+  const critical = rows.filter({ hasText: /(?:OK|—) → CRITICAL/ })
+  const recovered = rows.filter({ hasText: /CRITICAL.*OK/ })
+  await expect(critical.first()).toBeVisible()
+  await expect(recovered.first()).toBeVisible()
+  await critical.first().click()
+  await expect(page.getByText('Plugin output', { exact: true })).toBeVisible()
+  await expect(page.locator('tbody tr').filter({ hasText: host }).first().locator('td').nth(1).locator('span[title]')).toHaveAttribute('title', /\d{4}/)
+  await recovered.first().click()
+  await expect(page.getByText('Plugin output', { exact: true })).toBeVisible()
+  await expect(page.getByText('Time in problem state before recovery:')).toBeVisible()
+  await page.getByRole('button', { name: 'Refresh' }).click()
+  await expect(critical.first()).toBeVisible()
+  await expect(recovered.first()).toBeVisible()
+})
+
 test('issue 133: browser pagination with intercepted totals and list failure recovery', async ({ page }) => {
   // The preserved lab has fewer than 26 alert events. Simulate only pagination
   // metadata with real returned rows; this does not verify backend page 2.

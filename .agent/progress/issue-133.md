@@ -33,21 +33,21 @@ Copied from issue sections E, F, H. Tick only with observed evidence.
 ### H — Definition of done
 - [x] All mandatory acceptance criteria satisfied by isolated tests, audit and targeted live service recovery; backend-dependent gaps tracked separately. Full manual History audit not claimed.
 - [x] Required functionality works on synced VM for one real service lifecycle and targeted browser History interactions; see live report.
-- [ ] Existing behavior not unintentionally broken in deployment: isolated regressions and targeted browser pass; broader deployed regression/clean-install scope needs reviewer decision.
+- [x] Existing behavior not unintentionally broken in the agreed module scope: isolated regressions, focused VM flows and independent owner-path recheck pass; owner accepted focused VM testing rather than broader clean-install/regression sweep. Not a claim of whole-product deployment validation.
 - [x] Applicable edge cases handled in isolated tests (stale/missing/failed/empty, deleted target, rollback, repeated poll).
 - [x] Code follows existing architecture and conventions (source diff; shared history builder).
 - [x] No unnecessary duplicate functionality (shared `_new_ack_history` used).
 - [x] Relevant lint and static analysis pass (`scripts/verify.sh all`: 0 errors, 26 warnings).
-- [ ] No unresolved critical defects: reviewer must classify open backend History gaps #141–#144 and any new findings before sign-off.
+- [ ] No unresolved critical defects: owner reports nothing major in chat; #141–#144 remain separately filed, but formal review must confirm no blocking critical finding.
 - [x] Required automated tests added or updated (`test_status.py`, `HistoryPage.test.tsx`).
-- [x] All applicable automated tests pass (`scripts/verify.sh all`: 2382 backend passed/14 skipped, 518 frontend passed; targeted Playwright 2 passed).
+- [x] All applicable automated tests pass (`scripts/verify.sh all`: 2382 backend passed/14 skipped, 518 frontend passed; latest focused Playwright project 4/4 passed).
 - [x] Relevant integration and regression tests pass: isolated suites and targeted VM/Playwright run passed (report); no claim of all possible live edge cases.
 - [x] Test results/evidence attached to PR ([local verification](https://github.com/esfen14/Pinpoint/pull/145#issuecomment-6150729909), [live recovery](https://github.com/esfen14/Pinpoint/pull/145#issuecomment-6158903980), [expanded browser](https://github.com/esfen14/Pinpoint/pull/145#issuecomment-6159179113)); full local log not uploaded.
 - [x] Inputs/config validated for changed logic (fresh status checks; no new config; isolated tests).
 - [x] Authorization enforced where required (existing route guards unchanged; `test_dashboard.py`, `test_history.py`, `PageAccess.test.tsx`).
 - [x] Sensitive data securely handled (source review: no new logging/secret persistence in changed logic).
 - [x] Errors controlled (poll failure/empty/stale and rollback tests).
-- [ ] Performance/reliability requirements met in deployment: bounded repeated-poll VM run passed; no scale/load benchmark or extended soak. Reviewer to accept this scope or specify measurable test.
+- [x] Performance/reliability requirements met in agreed issue scope: bounded repeated-poll VM retention/idempotence and isolated safety tests pass; owner explicitly said additional load/soak testing is not needed. No scale benchmark claimed.
 - [x] Technical documentation updated (five specification files and audit).
 - [x] User documentation updated if applicable: N/A; issue marks it N/A.
 - [x] New configuration parameters documented: N/A; none added.
@@ -85,7 +85,7 @@ Requirement coverage (section A problem, C changes, D guidelines, G testing, exc
 7. [x] With renewed Playwright approval and user's reported manual path, expand `client/e2e/issue-133.lab.spec.ts` for additional read-only real-event History interactions and restricted permission guard; use `scripts/playwright-lab`, preserve the existing VM state and test data, record a new sanitized `docs/test-runs/<date>-issue-133-expanded/REPORT.md` and index, run frontend/docs verification, and update PR evidence. Do not convert user-reported behavior into agent-observed pass or claim all requirement gaps closed.
 8. [x] With user's new request to test more, inspect History source and available real events; add focused Playwright coverage for live pagination and controlled read-only error display (intercept History list response, never alter VM data) in `client/e2e/issue-133.lab.spec.ts`. Run under `scripts/playwright-lab`, verify frontend, record a new sanitized `docs/test-runs/` report/index and PR evidence. Do not claim database/CGI failures from intercepted browser responses.
 9. [x] Recheck reliability in a bounded, non-destructive lab run: verify repeated poll idempotence and still-failing acknowledgement retention with one reversible target fault, restoring it in a `finally`-style cleanup; use existing lab helpers and record distinct real observations in a new sanitized run. No VM reset, credential changes or simulated Nagios outage. Run `scripts/verify.sh all`, update PR evidence and leave human review/CI boxes unticked unless observed.
-10. [ ] After owner accepted focused VM coverage/no load benchmark and requested a double-check, rerun the exact four-step `/history` host/service path on existing real events with a focused Playwright assertion in `client/e2e/issue-133.lab.spec.ts` for CRITICAL and recovery rows, expanded details/timestamp/output, and Refresh preserving both rows. Do not inject a new fault. Record a new sanitized `docs/test-runs/` report/index distinguishing this agent observation from the owner's earlier report; verify frontend/docs and update issue #133 H/PR evidence without treating chat as a formal PR approval.
+10. [x] After owner accepted focused VM coverage/no load benchmark and requested a double-check, rerun the exact four-step `/history` host/service path on existing real events with a focused Playwright assertion in `client/e2e/issue-133.lab.spec.ts` for CRITICAL and recovery rows, expanded details/timestamp/output, and Refresh preserving both rows. Do not inject a new fault. Record a new sanitized `docs/test-runs/` report/index distinguishing this agent observation from the owner's earlier report; verify frontend/docs and update issue #133 H/PR evidence without treating chat as a formal PR approval.
 
 ## Round log
 
@@ -109,13 +109,14 @@ Requirement coverage (section A problem, C changes, D guidelines, G testing, exc
 | 10 | Reversible web01 SSH fault to retain ack across two scheduler polls, then recovery and later count query; documented constrained evidence and restored SSH. | bounded private lab probe; `scripts/vmlab targets up`; `scripts/vmlab targets fix web01 ssh`; `scripts/verify.sh all > /tmp/opencode/issue-133-more-all.log 2>&1; result=$?; grep -E 'passed,|Test Files|Tests  |problems|verify: all' /tmp/opencode/issue-133-more-all.log | tail -10; exit "$result"` | Still-failing active 1/auto 1 after 145s; recovery active 0/auto 2; later count same. Probe timed out after restoration before final print; follow-up read confirmed service OK. All-stage verification green (2382 backend/14 skipped, 518 frontend, 26 lint warnings/0 errors). |
 | resumed | User requested Definition-of-Done clarity; updated issue #133 section H with evidence-linked checked/open boxes, limitations and explicit reviewer decisions; reconciled progress unchecked items. | `scripts/verify.sh all > /tmp/opencode/issue-133-more-all.log 2>&1; result=$?; grep -E 'passed,|Test Files|Tests  |problems|verify: all' /tmp/opencode/issue-133-more-all.log | tail -10; exit "$result"`; `gh issue view 133 --json body` | Local all green (2382 backend/14 skipped, 518 frontend, 26 lint warnings); issue H now has 21 checked and 6 open items. No PR approval or current-head CI result claimed. |
 | resumed | Owner accepted focused VM coverage and no further load benchmark, reported no major defects, and requested exact manual-path double-check; added step 10 rather than inferring formal PR approval. | `scripts/verify.sh docs`; `gh pr view 145 --json ...` | docs green; draft PR has no current-head CI checks or reviews. |
+| 11 | Added exact owner-path Playwright assertion for real filtered CRITICAL/recovery transitions, expanded detail/timestamp and Refresh; recorded separate agent-observed report/index. | `scripts/playwright-lab --project issue-133-live -g 'owner History path'`; `scripts/playwright-lab --project issue-133-live`; `scripts/verify.sh frontend`; `scripts/verify.sh docs` | Initial ambiguous CRITICAL-row selector yielded a false assertion; refined to transition into CRITICAL. Focused 2/2, full project 4/4, frontend/docs green. |
 
 ## State for the next session
 
 - Last check run (exact command): `scripts/verify.sh docs`
-- Result (first failing lines, or "green"): green — `verify: docs OK`. Earlier in this session `scripts/verify.sh all` passed: 2382 backend/14 skipped, 518 frontend, 26 lint warnings/0 errors. Issue #133 section H now lists evidence and six unchecked merge conditions; no CI/review result claimed.
-- Hypothesis: Issue flows tested with bounded live evidence. Actual backend page two/CGI outage and load benchmark remain unverified; current-head CI and human PR review remain outstanding. #141–#144 are tracked backend gaps. Keep PR draft.
-- Next action (one specific step, not "continue"): Add exact real-event CRITICAL/recovery/detail/Refresh assertions to the focused Playwright History spec, run it on the existing authorized VM, and record a separate sanitized run.
+- Result (first failing lines, or "green"): green — `verify: docs OK`. Agent-observed exact owner History path focused Playwright 2/2, full project 4/4, frontend green (26 lint warnings/0 errors). Report `docs/test-runs/2026-10-14-issue-133-owner-path-recheck/REPORT.md` distinguishes this from owner-reported manual pass.
+- Hypothesis: Focused module coverage and bounded reliability satisfy owner's clarified scope; real backend page two/CGI outage/load/clean install remain unrun but not newly required by issue G. Current-head CI and formal human PR review remain outstanding. #141–#144 are tracked backend gaps. Keep PR draft.
+- Next action (one specific step, not "continue"): Update issue #133 section H with owner's scope decisions and independent path evidence, post PR report link, then obtain final-head CI and formal review before merge readiness.
 
 ## Decisions and notes
 

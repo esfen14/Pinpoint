@@ -48,6 +48,7 @@ table while you test, not afterward.
 
 | Run | Kind | Commit | Result | Report |
 |---|---|---|---|---|
+| [2026-10-14 issue-133-owner-path-recheck](2026-10-14-issue-133-owner-path-recheck/REPORT.md) | Existing VM, independent real-event owner History path repeat | app `4dd006e3` synced; harness base `93b8361e` plus test assertion | Pass for exact filtered CRITICAL/recovery/detail/Refresh path; no PR approval implied | [REPORT.md](2026-10-14-issue-133-owner-path-recheck/REPORT.md) |
 | [2026-10-14 issue-133-poll-reliability](2026-10-14-issue-133-poll-reliability/REPORT.md) | Existing VM reversible SSH fault, still-failing ack and repeat recovery poll | app `4dd006e3` synced, branch `30bd3676` before report | Partial: lifecycle/idempotence pass; no load or failed-CGI run | [REPORT.md](2026-10-14-issue-133-poll-reliability/REPORT.md) |
 | [2026-10-14 issue-133-more-browser](2026-10-14-issue-133-more-browser/REPORT.md) | Existing VM real-event browser plus intercepted pagination/error responses | app `4dd006e3` synced; test at `f1766fa2` plus new assertions | Partial: browser pass; actual backend second page and CGI outage untested | [REPORT.md](2026-10-14-issue-133-more-browser/REPORT.md) |
 | [2026-10-14 issue-133-expanded](2026-10-14-issue-133-expanded/REPORT.md) | Existing VM, expanded real-event History Playwright and restricted permission | app source `4dd006e3` synced; new browser spec uncommitted during run | Partial: expanded browser and guard pass; full manual audit/CI/review outstanding | [REPORT.md](2026-10-14-issue-133-expanded/REPORT.md) |
