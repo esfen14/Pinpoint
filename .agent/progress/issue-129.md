@@ -13,8 +13,8 @@ Copied from issue sections E, F and H; tick only with observed proof.
 - [x] Missing stored port falls back to NCPA_PORT. (`test_deployed_port_resolution_uses_stored_port_and_default`, `test_only_deployed_agents_with_latest_deployment`)
 - [x] Migration downgrades cleanly. (`test_ncpa_port_migration_backfills_deployed_only_and_downgrades`)
 - [ ] Failed-install cleanup removes key, rule, helper and optionally account; reports steps.
-- [ ] Cleanup refuses healthy deployment, untrusted device and running deployment.
-- [ ] Changed host key stops cleanup before any command runs.
+- [x] Cleanup refuses healthy deployment, untrusted device and running deployment. (`TestCleanup.test_refuses_untrusted_healthy_and_running`)
+- [x] Changed host key stops cleanup before any command runs. (`test_changed_host_key_stops_before_cleanup`, `test_cleanup_connection_failure_runs_no_commands`)
 - [ ] No credentials in responses, logs or database.
 - [ ] Permitted user cleans failed device with confirmed host key and credentials, seeing step results.
 - [ ] Healthy deployed device has no cleanup action.
@@ -29,7 +29,7 @@ Copied from issue sections E, F and H; tick only with observed proof.
 
 ### F. Required deliverables
 - [ ] Updated application source (section C).
-- [ ] API endpoint with docstring and permission check.
+- [x] API endpoint with docstring and permission check. (`TestCleanup.test_requires_login_and_permission`, route catalog)
 - [ ] Multi-database reversible migration and sync-permissions note if applicable.
 - [ ] Updated frontend components, types and routes.
 - [ ] Unit tests for modified logic.
@@ -85,7 +85,7 @@ Requirement coverage (each issue requirement maps to E/F/H; proof pending):
 ## Plan
 
 1. [x] Port tracking: tests in `server/tests/unit/test_ncpa.py`, `test_ncpa_deployment_runs.py`, `test_ncpa_identity.py`, `test_port_lifecycle.py`, `test_create_host_cfg.py`, migration tests; model `server/app/system_models.py`, migration `server/migrations/versions/`, deployment `server/app/ncpa_deployment/ncpa_deployment.py`, discovery `server/app/network_discovery/{plugin_registry,ncpa_relocation,identity_probes,port_lifecycle,create_host_cfg}.py`.
-2. [ ] Cleanup backend: tests in `server/tests/unit/test_ncpa_deployment_runs.py`, `test_ncpa_command_logging.py`, `test_ncpa.py`; `server/app/api/system/ncpa_deployment.py`, `server/app/ncpa_deployment/ncpa_deployment.py`, activity/status integration. Explicit injection/secret review before touching these sensitive modules.
+2. [x] Cleanup backend: tests in `server/tests/unit/test_ncpa_deployment_runs.py`, `test_ncpa_command_logging.py`, `test_ncpa.py`; `server/app/api/system/ncpa_deployment.py`, `server/app/ncpa_deployment/ncpa_deployment.py`, activity/status integration. Explicit injection/secret review before touching these sensitive modules.
 3. [ ] Cleanup UI: tests under `client/src/test/NcpaDeploymentPage.test.tsx` and `NcpaDeployWizard.test.tsx`; `client/src/pages/NcpaDeploymentPage.tsx`, `client/src/components/ncpa-deployment/`, `client/src/lib/ncpaDeploymentApi.ts`, `client/src/types/ncpaDeployment.ts`.
 4. [ ] Macro secrets: tests `server/tests/unit/{test_create_host_cfg,test_custom_checks,test_ncpa,test_status}.py` and new resource-macro tests; `server/app/network_discovery/{resource_macros,create_host_cfg,plugin_registry,custom_checks}.py`, deployment/integration permissions contract. Review injection, process exposure and resource-file ownership with a person before code.
 5. [ ] Document new behavior, security/installer assumptions, user Help and upgrade guidance in `spec files/{Data_Model_and_Integrations,Backend_Modules_and_Routes,Frontend_Modules_and_Routes,Engineering_Standards,Implementation_Status}.md`, appropriate Help/Admin manual, README if configuration changes; run docs verification.
@@ -101,13 +101,14 @@ Requirement coverage (each issue requirement maps to E/F/H; proof pending):
 | 4 (partial) | Swept per distinct candidate port, probed matching certificate on that port, preserved legacy default sweep call; repaired optional disk getter compatibility | `cd server && .venv/bin/python -m pytest tests/unit/test_ncpa_identity.py tests/unit/test_ncpa_deployment_runs.py tests/unit/test_port_lifecycle.py tests/unit/test_ncpa.py tests/unit/test_create_host_cfg.py -q` | 216 passed. Step 1 remains unticked: migration roundtrip, non-default service rendering and complete stage check still needed. |
 | 5 (partial) | Added migration backfill/downgrade subprocess and non-default check rendering test | `cd server && .venv/bin/python -m pytest tests/unit/test_create_host_cfg.py::TestNcpaHost::test_alternate_listener_port_is_used_in_check tests/unit/test_ncpa_port_migration.py -q`; `scripts/verify.sh backend` | Focused 2 passed; backend green: 2588 passed, 14 skipped (301 s). Step 1 remained unticked pending legacy config equivalence. |
 | 6 | Tested pre/backfilled port output equality (ignoring generated timestamp); completed port-tracking step | `cd server && .venv/bin/python -m pytest tests/unit/test_create_host_cfg.py::TestCreateHostCfgFile::test_backfilled_port_preserves_existing_ncpa_config -q`; `scripts/verify.sh backend` | 1 passed; backend green, 2588 passed/14 skipped; spec documentation remains plan step 5. |
+| 7 | Added failed-only cleanup route, SSH fingerprint recheck, fixed-path/bootstrap artifact removal with quoted key, optional account removal gated on prior success, suppressed remote output, activity/status recording and API documentation. Reviewed shell construction and secret-bearing logging. | `cd server && .venv/bin/python -m pytest tests/unit/test_ncpa.py::TestCleanup tests/unit/test_ncpa_command_logging.py -q`; `scripts/verify.sh backend` | Focused 25 passed; backend green, 2599 passed/14 skipped. No live cleanup yet; UI and VM verification remain. |
 
 ## State for the next session
 
 - Last check run (exact command): `scripts/verify.sh backend`
-- Result (first failing lines, or "green"): green, 2588 passed, 14 skipped.
-- Hypothesis: Port tracking passes unit/regression tests; cleanup backend is the first unticked step, and VM evidence is still pending.
-- Next action (one specific step, not "continue"): Add failing cleanup route refusal/security tests in `server/tests/unit/test_ncpa.py`, then implement trusted-host cleanup in the existing route and worker.
+- Result (first failing lines, or "green"): green, 2599 passed, 14 skipped.
+- Hypothesis: Cleanup route/worker pass isolated checks; UI is the first unticked step and VM evidence is still pending.
+- Next action (one specific step, not "continue"): Add an interaction test for failed-only cleanup in `client/src/test/NcpaDeploymentPage.test.tsx`, then implement the cleanup dialog and API wrapper.
 
 ## Decisions and notes
 

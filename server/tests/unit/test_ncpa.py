@@ -77,6 +77,103 @@ def test_deployed_port_resolution_uses_stored_port_and_default(app, db_session, 
         assert deployed_ncpa_port(deployment) == 5864
 
 
+class TestCleanup:
+    def test_requires_login_and_permission(self, client, limited_client, db_session):
+        path = "/api/system/deployment/ncpa/1/cleanup"
+        assert client.post(path, json={}).status_code in (401, 302, 403)
+        assert limited_client.post(path, json={}).status_code == 403
+
+    def test_refuses_untrusted_healthy_and_running(self, logged_in_client, db_session, admin_user):
+        from app.api.system import ncpa_deployment as routes
+        device, creds = _make_ncpa_device(db_session, admin_user)
+        deployment = NCPADeployment(NetworkDiscoveryID=device.NetDiscoveryID, Agent_Status=AgentStatus.FAILED)
+        db_session.session.add(deployment)
+        db_session.session.commit()
+        path = f"/api/system/deployment/ncpa/{device.NetDiscoveryID}/cleanup"
+        body = {"username": "operator", "password": "private", "remove_account": True}
+        with patch.object(routes, "get_host_key_fingerprint") as fingerprint, \
+             patch.object(routes, "cleanup_ncpa_bootstrap") as cleanup:
+            assert logged_in_client.post(path, json=body).status_code == 409
+            creds.Key_Fingerprint = "abc:123"
+            deployment.Agent_Status = AgentStatus.DEPLOYED
+            db_session.session.commit()
+            assert logged_in_client.post(path, json=body).status_code == 409
+            deployment.Agent_Status = AgentStatus.FAILED
+            db_session.session.commit()
+            with patch.object(routes, "deploy_ncpa_thread") as thread:
+                thread.is_alive.return_value = True
+                assert logged_in_client.post(path, json=body).status_code == 409
+            fingerprint.assert_not_called()
+            cleanup.assert_not_called()
+
+    def test_body_cannot_override_url_device_id(self, logged_in_client, db_session, admin_user):
+        from app.api.system import ncpa_deployment as routes
+        device, _ = _make_ncpa_device(db_session, admin_user, trusted=True)
+        deployment = NCPADeployment(NetworkDiscoveryID=device.NetDiscoveryID, Agent_Status=AgentStatus.FAILED)
+        db_session.session.add(deployment)
+        db_session.session.commit()
+        with patch.object(routes, "get_host_key_fingerprint", return_value="abc:123"), \
+             patch.object(routes, "cleanup_ncpa_bootstrap", return_value=[{"step": "key", "ok": True}]) as cleanup:
+            response = logged_in_client.post(f"/api/system/deployment/ncpa/{device.NetDiscoveryID}/cleanup",
+                                             json={"device_id": device.NetDiscoveryID + 1,
+                                                   "username": "operator", "password": "private"})
+        assert response.status_code == 200
+        assert response.get_json()["data"]["device_id"] == device.NetDiscoveryID
+        cleanup.assert_called_once()
+
+    def test_changed_host_key_stops_before_cleanup(self, logged_in_client, db_session, admin_user):
+        from app.api.system import ncpa_deployment as routes
+        device, _ = _make_ncpa_device(db_session, admin_user, trusted=True)
+        db_session.session.add(NCPADeployment(NetworkDiscoveryID=device.NetDiscoveryID, Agent_Status=AgentStatus.FAILED))
+        db_session.session.commit()
+        with patch.object(routes, "get_host_key_fingerprint", return_value="different"), \
+             patch.object(routes, "cleanup_ncpa_bootstrap") as cleanup:
+            response = logged_in_client.post(f"/api/system/deployment/ncpa/{device.NetDiscoveryID}/cleanup",
+                                             json={"username": "operator", "password": "private"})
+        assert response.status_code == 409
+        assert "private" not in response.get_data(as_text=True)
+        cleanup.assert_not_called()
+
+    def test_success_reports_steps_and_clears_status_without_exposing_credentials(
+        self, logged_in_client, db_session, admin_user, caplog
+    ):
+        from app.api.system import ncpa_deployment as routes
+        device, _ = _make_ncpa_device(db_session, admin_user, trusted=True)
+        deployment = NCPADeployment(NetworkDiscoveryID=device.NetDiscoveryID, Agent_Status=AgentStatus.FAILED,
+                                    Error="Previous failure")
+        db_session.session.add(deployment)
+        db_session.session.commit()
+        steps = [{"step": name, "ok": True} for name in ("key", "sudo_rule", "helper", "account")]
+        with patch.object(routes, "get_host_key_fingerprint", return_value="abc:123"), \
+             patch.object(routes, "cleanup_ncpa_bootstrap", return_value=steps) as cleanup:
+            response = logged_in_client.post(f"/api/system/deployment/ncpa/{device.NetDiscoveryID}/cleanup",
+                                             json={"username": "operator", "password": "private",
+                                                   "remove_account": True})
+        assert response.status_code == 200
+        assert response.get_json()["data"]["steps"] == steps
+        assert response.get_json()["data"]["agent_status"] == AgentStatus.PENDING_NCPA.value
+        assert deployment.Agent_Status is AgentStatus.PENDING_NCPA and deployment.Error is None
+        assert cleanup.call_args.args[-2:] == ("private", True)
+        assert "private" not in response.get_data(as_text=True) + caplog.text
+        assert "private" not in str(deployment.Error)
+
+    def test_partial_failure_keeps_failed_status(self, logged_in_client, db_session, admin_user):
+        from app.api.system import ncpa_deployment as routes
+        device, _ = _make_ncpa_device(db_session, admin_user, trusted=True)
+        deployment = NCPADeployment(NetworkDiscoveryID=device.NetDiscoveryID, Agent_Status=AgentStatus.FAILED)
+        db_session.session.add(deployment)
+        db_session.session.commit()
+        steps = [{"step": "key", "ok": False}, {"step": "sudo_rule", "ok": True}]
+        with patch.object(routes, "get_host_key_fingerprint", return_value="abc:123"), \
+             patch.object(routes, "cleanup_ncpa_bootstrap", return_value=steps):
+            response = logged_in_client.post(f"/api/system/deployment/ncpa/{device.NetDiscoveryID}/cleanup",
+                                             json={"username": "operator", "password": "private"})
+        assert response.status_code == 200
+        assert response.get_json()["data"]["steps"] == steps
+        assert deployment.Agent_Status is AgentStatus.FAILED
+        assert "private" not in deployment.Error
+
+
 # ─── GET /api/system/deployment/ncpa/devices ──────────────────────────────────
 
 class TestNcpaEligibleDevices:
