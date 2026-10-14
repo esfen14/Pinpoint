@@ -20,7 +20,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 ## Plan
 
-1. [ ] Add failing episode-specific list/filter/detail tests in `server/tests/unit/test_history.py`; implement episode association in `server/app/api/system/history.py`; verify focused file and `scripts/verify.sh backend`.
+1. [x] Add failing episode-specific list/filter/detail tests in `server/tests/unit/test_history.py`; implement episode association in `server/app/api/system/history.py`; verify focused file and `scripts/verify.sh backend`.
 2. [ ] Add regression coverage for window boundaries and same-target mixed host/service actions in `server/tests/unit/test_history.py`; adjust `server/app/api/system/history.py` only if needed; verify focused file and `scripts/verify.sh backend`.
 3. [ ] Update `spec files/Alerts_Notifications_History_Requirements.md`, `spec files/Implementation_Status.md` for the behavior/gap and verify `scripts/verify.sh docs` (then finish checks).
 
@@ -30,13 +30,14 @@ One row per loop round, newest last.
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| 1 | Added host/service cycle tests and episode-aware list/filter/detail association | `.venv/bin/python -m pytest tests/unit/test_history.py -q` (server); `scripts/verify.sh backend` | Initial 2 failures on recovery badge; now 84 passed; backend 2439 passed, 14 skipped |
 
 ## State for the next session
 
-- Last check run (exact command): `git fetch -q origin && git checkout -b issue-141-ack-episodes origin/main`
-- Result (first failing lines, or "green"): green
-- Hypothesis: Target-only lookup loses episode boundaries; derive episodes from Nagios transitions and time-ordered ACK_HISTORY actions, including recovery and manual clear.
-- Next action (one specific step, not "continue"): Add failing list/filter/detail episode tests to `server/tests/unit/test_history.py`.
+- Last check run (exact command): `scripts/verify.sh backend`
+- Result (first failing lines, or "green"): green (2439 passed, 14 skipped)
+- Hypothesis: Whole-archive association works for complete cycles; need regressions for a selected window beginning after an older ACK and for cross-target separation.
+- Next action (one specific step, not "continue"): Add boundary and mixed-target regression tests to `server/tests/unit/test_history.py`.
 
 ## Decisions and notes
 

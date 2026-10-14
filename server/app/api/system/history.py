@@ -115,23 +115,67 @@ def normalize_nagios_list(raw):
     return list(raw) if raw else []
 
 
-def fetch_ack_history(hostname, service_name):
-    """
-    Return the most recent ACKNOWLEDGED AckHistory row for a given alert,
-    or None if the alert was never acknowledged.
+def ack_actions(hostname=None, service_name=None):
+    """Return chronological acknowledgement actions, optionally for one target."""
+    query = sa.select(AckHistory)
+    if hostname is not None:
+        query = query.where(AckHistory.Hostname == hostname,
+                            AckHistory.Service_Name == service_name)
+    return db.session.scalars(query.order_by(AckHistory.Actioned_At, AckHistory.AckHistoryID)).all()
 
-    Matches on hostname and service_name (None for host-level alerts).
+
+def build_ack_map(alerts, actions):
+    """Map problem events to the latest acknowledgement in their active episode.
+
+    A recovery closes an episode, as does an AUTO_RESOLVED action if the
+    recovery event is absent from the archive window. A manual unacknowledge
+    ends the active acknowledgement but preserves the historical badge.
     """
-    return db.session.scalar(
-        sa.select(AckHistory)
-        .where(
-            AckHistory.Hostname == hostname,
-            AckHistory.Service_Name == service_name,
-            AckHistory.Action == AckAction.ACKNOWLEDGED,
-        )
-        .order_by(AckHistory.Actioned_At.desc())
-        .limit(1)
-    )
+    from collections import defaultdict
+
+    events_by_target = defaultdict(list)
+    actions_by_target = defaultdict(list)
+    for alert in alerts:
+        events_by_target[(alert.get("hostname"), alert.get("service_description") or None)].append(alert)
+    for action in actions:
+        actions_by_target[(action.Hostname, action.Service_Name)].append(action)
+
+    result = {}
+    for target, events in events_by_target.items():
+        events.sort(key=lambda event: event.get("timestamp") or 0)
+        actions = actions_by_target[target]
+        episodes = []
+        current = []
+        for event in events:
+            if (event.get("state") or "").upper() in ("OK", "UP"):
+                if current:
+                    episodes.append((current, event["timestamp"]))
+                    current = []
+            else:
+                current.append(event)
+        if current:
+            episodes.append((current, None))
+
+        for episode, recovery_at in episodes:
+            start = episode[0]["timestamp"]
+            end = recovery_at
+            # AUTO_RESOLVED can bound an episode even when a Nagios recovery
+            # transition is missing from the fetched archive window.
+            for action in actions:
+                action_at = int(action.Actioned_At.replace(tzinfo=timezone.utc).timestamp())
+                if action_at >= start and action.Action == AckAction.AUTO_RESOLVED:
+                    if end is None or action_at < end:
+                        end = action_at
+                    break
+            acknowledgements = [action for action in actions
+                                if action.Action == AckAction.ACKNOWLEDGED
+                                and start <= int(action.Actioned_At.replace(tzinfo=timezone.utc).timestamp())
+                                and (end is None or int(action.Actioned_At.replace(tzinfo=timezone.utc).timestamp()) < end)]
+            if acknowledgements:
+                for event in episode:
+                    if end is None or event["timestamp"] < end:
+                        result[(target, event["timestamp"], event.get("state"))] = acknowledgements[-1]
+    return result
 
 
 def serialize_ack(ack_row):
@@ -249,9 +293,13 @@ def alerts_history():
 
         alerts = fill_previous_states([normalize_alert(a) for a in normalize_nagios_list(raw)])
 
-        # Load all ack history records for annotating the list.
-        # Keyed by (hostname, service_name) — service_name is None for host alerts.
-        ack_map = build_ack_map()
+        # Include earlier transitions so an episode beginning before the selected
+        # window is not confused with an acknowledgement from a prior episode.
+        episode_raw = request_alerts_range(0, end_ts)
+        if episode_raw is None:
+            return error("Failed to retrieve alert history from Nagios.", 502)
+        episode_alerts = [normalize_alert(a) for a in normalize_nagios_list(episode_raw)]
+        ack_map = build_ack_map(episode_alerts, ack_actions())
 
         items = []
         for alert in alerts:
@@ -273,7 +321,7 @@ def alerts_history():
             if state_type_f and state_type != state_type_f:
                 continue
 
-            is_acked = (hostname, service) in ack_map
+            is_acked = ((hostname, service), timestamp, new_state) in ack_map
             if ack_filter == "acknowledged" and not is_acked:
                 continue
             if ack_filter == "unacknowledged" and is_acked:
@@ -370,9 +418,14 @@ def alerts_history_detail():
         state_type   = (alert.get("state_type") or "").lower()
         duration     = alert.get("duration_seconds") or 0
 
-        # Acknowledgement detail from ACK_HISTORY
-        ack_row = fetch_ack_history(hostname, service)
-        ack     = serialize_ack(ack_row)
+        # Load preceding transitions to identify the event's problem episode.
+        episode_raw = request_alerts_range(0, int(datetime.now(timezone.utc).timestamp()),
+                                           hostname=hostname, service=service)
+        if episode_raw is None:
+            return error("Failed to retrieve alert detail from Nagios.", 502)
+        episode_alerts = [normalize_alert(a) for a in normalize_nagios_list(episode_raw)]
+        ack_map = build_ack_map(episode_alerts, ack_actions(hostname, service))
+        ack = serialize_ack(ack_map.get(((hostname, service), timestamp, new_state)))
 
         # Recovery duration — meaningful when new state is OK or UP
         recovery_duration = None
@@ -677,23 +730,3 @@ def notifications_history_detail():
         )
         return error("An unexpected error occurred.", 500)
 
-
-# ==========================================================
-# INTERNAL HELPERS
-# ==========================================================
-
-def build_ack_map():
-    """
-    Return a set of (hostname, service_name) tuples for all alerts that
-    have at least one ACKNOWLEDGED record in ACK_HISTORY.
-
-    Used to annotate the alerts list without making one DB query per row.
-    Service_name is None for host-level alerts.
-    """
-    rows = db.session.execute(
-        sa.select(AckHistory.Hostname, AckHistory.Service_Name)
-        .where(AckHistory.Action == AckAction.ACKNOWLEDGED)
-        .distinct()
-    ).all()
-
-    return {(row.Hostname, row.Service_Name) for row in rows}

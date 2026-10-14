@@ -14,6 +14,7 @@ are mocked in all tests so no live Nagios instance is needed.
 """
 
 import pytest
+from datetime import datetime, timezone
 from unittest.mock import patch
 
 # Patch targets inside history.py
@@ -476,6 +477,77 @@ class TestAlertsHistoryDetail:
                     f"&new_state={alert['state']}"
                 )
         assert resp.get_json()["data"]["type"] == "host"
+
+
+# ==========================================================
+# Acknowledgement episode association (list, filter, detail)
+# ==========================================================
+
+@pytest.mark.parametrize("service", [None, "http-80-TCP"])
+def test_acknowledgement_belongs_only_to_its_problem_episode(logged_in_client, db_session, admin_user, service):
+    from app.system_models import AckHistory, AckAction, User, UserStatus
+
+    hostname = "webserver"
+    healthy = "OK" if service else "UP"
+    problem = "CRITICAL" if service else "DOWN"
+    base = 1_700_000_000
+    events = [
+        {"hostname": hostname, "service_description": service, "timestamp": base + offset,
+         "state": state, "last_state": previous, "state_type": "hard", "plugin_output": state}
+        for offset, state, previous in [
+            (10, problem, healthy), (20, "WARNING" if service else "UNREACHABLE", problem),
+            (40, healthy, problem), (50, problem, healthy), (70, healthy, problem),
+            (80, problem, healthy), (110, healthy, problem),
+        ]
+    ]
+    other = User(First_Name="Other", Last_Name="Operator", Email="other@example.com",
+                 Status=UserStatus.ACTIVE, RoleID=admin_user.RoleID)
+    other.set_password("temporary")
+    db_session.session.add(other)
+    db_session.session.flush()
+    for offset, action, actor, comment in [
+        (25, AckAction.ACKNOWLEDGED, admin_user.UserID, "first"),
+        (41, AckAction.AUTO_RESOLVED, None, None),
+        (60, AckAction.ACKNOWLEDGED, other.UserID, "second"),
+        (65, AckAction.UNACKNOWLEDGED, other.UserID, None),
+        (71, AckAction.AUTO_RESOLVED, None, None),
+        (90, AckAction.ACKNOWLEDGED, other.UserID, "third"),
+        (111, AckAction.AUTO_RESOLVED, None, None),
+    ]:
+        db_session.session.add(AckHistory(
+            Hostname=hostname, Service_Name=service, Action=action,
+            Actioned_At=datetime.fromtimestamp(base + offset, timezone.utc),
+            ActorUserID=actor, Comment=comment,
+        ))
+    db_session.session.commit()
+
+    with patch(_ALERTS_RANGE, return_value=events), patch(_NOTIFS_RANGE, return_value=[]):
+        listed = logged_in_client.get("/api/system/history/alerts?preset=24h")
+        acked = logged_in_client.get("/api/system/history/alerts?preset=24h&ack_filter=acknowledged")
+        unacked = logged_in_client.get("/api/system/history/alerts?preset=24h&ack_filter=unacknowledged")
+        details = {}
+        for event in events:
+            response = logged_in_client.get("/api/system/history/alerts/detail", query_string={
+                "hostname": hostname, "timestamp": event["timestamp"],
+                "new_state": event["state"], **({"service": service} if service else {}),
+            })
+            assert response.status_code == 200
+            details[event["timestamp"] - base] = response.get_json()["data"]
+
+    assert listed.status_code == acked.status_code == unacked.status_code == 200
+    flags = {item["timestamp"] - base: item["acknowledged"] for item in listed.get_json()["data"]["items"]}
+    assert flags == {10: True, 20: True, 40: False, 50: True, 70: False, 80: True, 110: False}
+    assert {item["timestamp"] - base for item in acked.get_json()["data"]["items"]} == {10, 20, 50, 80}
+    assert {item["timestamp"] - base for item in unacked.get_json()["data"]["items"]} == {40, 70, 110}
+    assert details[10]["ack"]["comment"] == "first"
+    assert details[10]["ack"]["acknowledged_by"] == f"{admin_user.First_Name} {admin_user.Last_Name}"
+    assert details[20]["ack"]["comment"] == "first"
+    assert details[50]["ack"]["comment"] == "second"
+    assert details[50]["ack"]["acknowledged_by"] == "Other Operator"
+    assert details[80]["ack"]["comment"] == "third"
+    for offset in (40, 70, 110):
+        assert details[offset]["acknowledged"] is False
+        assert details[offset]["ack"] is None
 
 
 # ==========================================================
