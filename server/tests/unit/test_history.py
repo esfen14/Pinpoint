@@ -182,6 +182,49 @@ def test_link_host_and_no_match(logged_in_client, db_session):
         assert response.get_json()['data']['linked_alert'] is None
 
 
+@pytest.mark.parametrize("service,healthy,problem,escalated", [
+    (None, "UP", "DOWN", "UNREACHABLE"),
+    ("http", "OK", "WARNING", "CRITICAL"),
+])
+def test_archive_timeline_across_window_and_detail(logged_in_client, db_session,
+                                                    service, healthy, problem, escalated):
+    base = 1_700_000_000
+    rows = [
+        {"hostname": "h", "service_description": service, "timestamp": base + offset,
+         "state": state, "state_type": "hard", "plugin_output": state}
+        for offset, state in [(10, healthy), (20, problem), (40, escalated),
+                              (70, healthy), (90, problem), (100, healthy)]
+    ]
+    # The archive may omit both last_state and duration_seconds. A stale
+    # duration on the recovery must not override the first problem detection.
+    rows[3]["duration_seconds"] = 30
+    def archive(start, end, hostname=None, service=None):
+        return [r for r in rows if start <= r["timestamp"] <= end]
+
+    with patch(_ALERTS_RANGE, side_effect=archive), patch(_NOTIFS_RANGE, return_value=[]), \
+            patch("app.api.system.history.resolve_time_range", return_value=(base + 40, base + 100)):
+        listed = logged_in_client.get("/api/system/history/alerts", query_string={
+            "sort_by": "duration_seconds", "order": "desc"})
+        details = {}
+        for offset, state in [(40, escalated), (70, healthy), (100, healthy)]:
+            response = logged_in_client.get("/api/system/history/alerts/detail", query_string={
+                "hostname": "h", "timestamp": base + offset, "new_state": state,
+                **({"service": service} if service else {}),
+            })
+            assert response.status_code == 200
+            details[offset] = response.get_json()["data"]
+    assert listed.status_code == 200
+    items = {item["timestamp"] - base: item for item in listed.get_json()["data"]["items"]}
+    assert set(items) == {40, 70, 90, 100}
+    assert (items[40]["previous_state"], items[40]["duration_seconds"]) == (problem, 20)
+    assert (items[70]["previous_state"], items[70]["duration_seconds"]) == (escalated, 30)
+    assert (items[100]["previous_state"], items[100]["duration_seconds"]) == (problem, 10)
+    assert (details[40]["previous_state"], details[40]["duration_seconds"]) == (problem, 20)
+    assert (details[70]["previous_state"], details[70]["duration_seconds"],
+            details[70]["recovery_duration"]) == (escalated, 30, 50)
+    assert details[100]["recovery_duration"] == 10
+
+
 # ==========================================================
 # Auth / permission guards
 # ==========================================================
@@ -450,7 +493,9 @@ def test_alert_column_sort_and_timestamp_ties(logged_in_client, db_session, key,
     values = [i[field] for i in items]
     assert values == sorted(values, key=lambda v: v.lower() if isinstance(v, str) else v or "" if v is None else v,
                             reverse=order == "desc")
-    assert [i["timestamp"] for i in items if i["timestamp"] in (100, 300)] == [300, 100]
+    matching = [i for i in items if i["timestamp"] in (100, 300)]
+    if matching[0][field] == matching[1][field]:
+        assert [i["timestamp"] for i in matching] == [300, 100]
 
 
 # ==========================================================
