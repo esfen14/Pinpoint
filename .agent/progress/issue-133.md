@@ -8,11 +8,11 @@ Status: in-progress
 Copied from issue sections E, F, H. Tick only with observed evidence.
 
 ### E — Acceptance
-- [x] Recovered service removes active acknowledgement and writes exactly one actorless AUTO_RESOLVED row (isolated `test_status.py`; live not run).
+- [x] Recovered service removes active acknowledgement and writes exactly one actorless AUTO_RESOLVED row (isolated `test_status.py`; live counts in two service lifecycle runs).
 - [x] Repeated poll writes no further row (`test_status.py`).
 - [x] Failed or empty poll leaves acknowledgements intact (`test_status.py`).
 - [x] Still-failing item retains acknowledgement (`test_status.py`).
-- [x] Acknowledge, unacknowledge and history routes retain behavior (`test_dashboard.py`, `test_history.py`; live not run).
+- [x] Acknowledge, unacknowledge and history routes retain behavior (`test_dashboard.py`, `test_history.py`; live acknowledgement/history read tested; live unacknowledge not rerun).
 - [x] Audit table covers every History requirement with evidence and result (`docs/test-runs/2026-10-14-issue-133-history-audit/AUDIT.md`; source review only).
 - [x] Every page-only gap is fixed and tested (`HistoryPage.test.tsx`; backend-dependent gaps separately tracked).
 - [x] Every backend-dependent gap has a separate linked issue (audit links #141–#144).
@@ -54,7 +54,7 @@ Copied from issue sections E, F, H. Tick only with observed evidence.
 - [x] Deployment/migration steps documented if applicable: N/A; none required by change.
 - [x] PR references #133 (`Closes #133` in PR #145).
 - [x] PR describes implementation/testing (PR #145 body and verification comment).
-- [ ] Required CI checks pass on current head: previous head passed, but new live-spec/report head `dc628187` has no check conclusions yet.
+- [ ] Required CI checks pass on current head: earlier head passed, but latest head with new Playwright/report changes has no check conclusions yet.
 - [ ] Required reviewer approvals obtained: no reviews yet.
 - [x] Blocking review comments resolved: none currently present (PR #145 reviews/comments queried); recheck before completion.
 - [ ] All applicable acceptance criteria/deliverables complete: live G workflow and review pending.
@@ -84,7 +84,7 @@ Requirement coverage (section A problem, C changes, D guidelines, G testing, exc
 6. [x] With owner approval for VM Playwright in issue comment, inspect current lab ownership/deployment and run targeted live acknowledge → recover → history and real-event History browser checks using `scripts/vmlab` and `scripts/playwright-lab`; add a focused `client/e2e/` spec only if the existing runner cannot prove the workflow; record sanitized `docs/test-runs/<date>-issue-133-live/REPORT.md` and index, update evidence/PR, verify stages. Do not reset/provision the VM without separate explicit approval.
 7. [x] With renewed Playwright approval and user's reported manual path, expand `client/e2e/issue-133.lab.spec.ts` for additional read-only real-event History interactions and restricted permission guard; use `scripts/playwright-lab`, preserve the existing VM state and test data, record a new sanitized `docs/test-runs/<date>-issue-133-expanded/REPORT.md` and index, run frontend/docs verification, and update PR evidence. Do not convert user-reported behavior into agent-observed pass or claim all requirement gaps closed.
 8. [x] With user's new request to test more, inspect History source and available real events; add focused Playwright coverage for live pagination and controlled read-only error display (intercept History list response, never alter VM data) in `client/e2e/issue-133.lab.spec.ts`. Run under `scripts/playwright-lab`, verify frontend, record a new sanitized `docs/test-runs/` report/index and PR evidence. Do not claim database/CGI failures from intercepted browser responses.
-9. [ ] Recheck reliability in a bounded, non-destructive lab run: verify repeated poll idempotence and still-failing acknowledgement retention with one reversible target fault, restoring it in a `finally`-style cleanup; use existing lab helpers and record distinct real observations in a new sanitized run. No VM reset, credential changes or simulated Nagios outage. Run `scripts/verify.sh all`, update PR evidence and leave human review/CI boxes unticked unless observed.
+9. [x] Recheck reliability in a bounded, non-destructive lab run: verify repeated poll idempotence and still-failing acknowledgement retention with one reversible target fault, restoring it in a `finally`-style cleanup; use existing lab helpers and record distinct real observations in a new sanitized run. No VM reset, credential changes or simulated Nagios outage. Run `scripts/verify.sh all`, update PR evidence and leave human review/CI boxes unticked unless observed.
 
 ## Round log
 
@@ -105,13 +105,14 @@ Requirement coverage (section A problem, C changes, D guidelines, G testing, exc
 | resumed | Checked issue comments, PR current head/checks/reviews, and pre-existing uncommitted progress edit. No new answer to human-review blocker; preserved draft PR. | `scripts/verify.sh docs`; `gh pr view 145 --json headRefOid,isDraft,reviewDecision,statusCheckRollup,reviews` | green docs; no CI check conclusions and no reviews on head `39509824`. Latest issue comment approves Playwright only, not review or sign-off. |
 | resumed | User confirmed manual path suffices, requests more tests, and has no code-change feedback; expanded plan for bounded pagination/error and reversible reliability checks. | `scripts/verify.sh docs`; `gh issue view 133 --json title,body,comments`; `git pull --ff-only` | green docs, issue retains finish condition and VM/Playwright approval; no new issue comment about manual decision (chat-only). |
 | 9 | Added browser-only intercepted pagination/error-retry test and sanitized report/index; existing VM has only 24 alert events, so actual backend page two is unverified. | `scripts/playwright-lab --project issue-133-live`; `scripts/verify.sh frontend`; `scripts/verify.sh docs` | First real-page assertion failed correctly (24 rows); first fixture failed due real empty page-two body. Corrected fixture; full project 3/3, frontend/docs green. |
+| 10 | Reversible web01 SSH fault to retain ack across two scheduler polls, then recovery and later count query; documented constrained evidence and restored SSH. | bounded private lab probe; `scripts/vmlab targets up`; `scripts/vmlab targets fix web01 ssh`; `scripts/verify.sh all > /tmp/opencode/issue-133-more-all.log 2>&1; result=$?; grep -E 'passed,|Test Files|Tests  |problems|verify: all' /tmp/opencode/issue-133-more-all.log | tail -10; exit "$result"` | Still-failing active 1/auto 1 after 145s; recovery active 0/auto 2; later count same. Probe timed out after restoration before final print; follow-up read confirmed service OK. All-stage verification green (2382 backend/14 skipped, 518 frontend, 26 lint warnings/0 errors). |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh docs`
-- Result (first failing lines, or "green"): green — `verify: docs OK`. Expanded admin Playwright project 3/3, frontend green with 26 lint warnings/0 errors. Real appliance has 24 alert events; browser-only fixture proved page controls/error/retry but not backend page two or CGI outage.
-- Hypothesis: Additional read-only UI flows work. Bounded live acknowledgement poll reliability remains; full live backend pagination/CGI outage, fresh install, current-head CI and human PR review remain unverified. #141–#144 remain tracked backend gaps. Keep PR draft.
-- Next action (one specific step, not "continue"): Inspect existing `scripts/vmlab targets` and current lab state, then perform one reversible still-failing acknowledgement plus repeated-poll idempotence check with guaranteed service restoration, recording counts only.
+- Last check run (exact command): `scripts/verify.sh all > /tmp/opencode/issue-133-more-all.log 2>&1; result=$?; grep -E 'passed,|Test Files|Tests  |problems|verify: all' /tmp/opencode/issue-133-more-all.log | tail -10; exit "$result"`
+- Result (first failing lines, or "green"): green — 2382 backend passed, 14 skipped; 518 frontend passed; 26 lint warnings, 0 errors; `verify: all OK`. Browser project 3/3. Live poll retention and post-recovery idempotence observed, with harness timeout after restoration; later read-only count confirmed stable result.
+- Hypothesis: Issue flows tested with bounded live evidence. Actual backend page two/CGI outage and load benchmark remain unverified; current-head CI and human PR review remain outstanding. #141–#144 are tracked backend gaps. Keep PR draft.
+- Next action (one specific step, not "continue"): Checkpoint report/progress, post sanitized PR evidence and check current-head CI/review; ask reviewer to decide whether further full backend pagination/CGI outage or load testing is required before final approval.
 
 ## Decisions and notes
 
