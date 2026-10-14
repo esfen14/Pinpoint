@@ -1,7 +1,7 @@
 # Issue #133: Clear acknowledgements on recovery and audit History
 
 Branch: `issue-133-clear-ack-recovery-audit-history`
-Status: in-progress
+Status: blocked
 
 ## Finish condition
 
@@ -42,7 +42,7 @@ Copied from issue sections E, F, H. Tick only with observed evidence.
 - [x] Required automated tests added or updated (`test_status.py`, `HistoryPage.test.tsx`).
 - [x] All applicable automated tests pass (`scripts/verify.sh all`: 2382 backend passed/14 skipped, 518 frontend passed; targeted Playwright 2 passed).
 - [x] Relevant integration and regression tests pass: isolated suites and targeted VM/Playwright run passed (report); no claim of all possible live edge cases.
-- [x] Test results/evidence attached to PR ([local verification](https://github.com/esfen14/Pinpoint/pull/145#issuecomment-6150729909), [live report/results](https://github.com/esfen14/Pinpoint/pull/145#issuecomment-6158903980)); full local log not uploaded.
+- [x] Test results/evidence attached to PR ([local verification](https://github.com/esfen14/Pinpoint/pull/145#issuecomment-6150729909), [live recovery](https://github.com/esfen14/Pinpoint/pull/145#issuecomment-6158903980), [expanded browser](https://github.com/esfen14/Pinpoint/pull/145#issuecomment-6159179113)); full local log not uploaded.
 - [x] Inputs/config validated for changed logic (fresh status checks; no new config; isolated tests).
 - [x] Authorization enforced where required (existing route guards unchanged; `test_dashboard.py`, `test_history.py`, `PageAccess.test.tsx`).
 - [x] Sensitive data securely handled (source review: no new logging/secret persistence in changed logic).
@@ -100,13 +100,14 @@ Requirement coverage (section A problem, C changes, D guidelines, G testing, exc
 | 7 | Reverified whole branch and posted live report/results on draft PR; inspected current PR checks/reviews. | `scripts/verify.sh all > /tmp/opencode/issue-133-all-live.log 2>&1; result=$?; grep -E 'passed,|Test Files|Tests  |problems|verify: all' /tmp/opencode/issue-133-all-live.log | tail -10; exit "$result"`; `gh pr view 145 --json ...` | green local all: 2382 backend/14 skipped, 518 frontend, 26 lint warnings/0 errors. Current PR head has no CI conclusions yet and no reviews. |
 | resumed | Owner reported the four-step manual History path worked and approved expanded Playwright in issue comment; added step 7 for read-only coverage. | `scripts/verify.sh all > /tmp/opencode/issue-133-all-live.log 2>&1; result=$?; grep -E 'passed,|Test Files|Tests  |problems|verify: all' /tmp/opencode/issue-133-all-live.log | tail -10; exit "$result"` | green local all: 2382 backend/14 skipped, 518 frontend, 26 lint warnings/0 errors. Draft PR current head has no CI checks or reviews. |
 | 8 | Expanded real-event browser assertions and restricted History guard; wrote separate sanitized run and index. | `scripts/playwright-lab --project issue-133-live`; `scripts/playwright-lab --project issue-133-restricted`; `scripts/verify.sh frontend`; `scripts/verify.sh docs` | Admin 2/2; first restricted setup failed due stale disposable fixture, reset via `scripts/vmlab setup-restricted`, rerun restricted 2/2; frontend/docs green. No application defect observed. |
+| resumed | Checked issue comments, PR current head/checks/reviews, and pre-existing uncommitted progress edit. No new answer to human-review blocker; preserved draft PR. | `scripts/verify.sh docs`; `gh pr view 145 --json headRefOid,isDraft,reviewDecision,statusCheckRollup,reviews` | green docs; no CI check conclusions and no reviews on head `39509824`. Latest issue comment approves Playwright only, not review or sign-off. |
 
 ## State for the next session
 
 - Last check run (exact command): `scripts/verify.sh docs`
-- Result (first failing lines, or "green"): green — `verify: docs OK`. Preceded by expanded admin Playwright 2/2, restricted Playwright 2/2 (after recreating disposable Staff fixture), frontend verification green with 26 lint warnings/0 errors. New report `docs/test-runs/2026-10-14-issue-133-expanded/REPORT.md` distinguishes owner-reported manual path.
+- Result (first failing lines, or "green"): green — `verify: docs OK`. PR head `39509824` has no CI check conclusions or reviews. Previous expanded admin Playwright 2/2, restricted Playwright 2/2, frontend verification green with 26 lint warnings/0 errors. Report `docs/test-runs/2026-10-14-issue-133-expanded/REPORT.md` distinguishes owner-reported manual path.
 - Hypothesis: Additional real-event History and restricted permission paths work, but full live pagination/error injection, fresh-install/deployment evidence, remote CI on latest spec, performance, and human review remain outstanding. #141–#144 remain tracked backend gaps. Keep PR draft.
-- Next action (one specific step, not "continue"): Checkpoint expanded browser/report changes, post PR evidence link, and obtain current-head CI and human review evidence before reconsidering unchecked finish items.
+- Next action (one specific step, not "continue"): Ask a human reviewer to inspect PR #145 and decide if the owner-reported manual path plus targeted Playwright coverage is sufficient; obtain current-head CI conclusions before reconsidering unchecked finish items.
 
 ## Decisions and notes
 
