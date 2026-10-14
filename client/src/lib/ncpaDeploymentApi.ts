@@ -5,6 +5,7 @@ import {
   fromRawDevice,
   fromRawRun,
   fromRawRunsPage,
+  type CleanupResult,
   type CredentialCheckResult,
   type DeploymentRun,
   type DeviceCredentials,
@@ -59,6 +60,14 @@ export async function startDeployment(entries: DeviceCredentials[]): Promise<Sta
     credentialsBody(entries),
   )
   return { runId: data.run_id, started: data.started, rejected: data.rejected }
+}
+
+export function cleanupDeployment(
+  deviceId: number, username: string, password: string, removeAccount: boolean,
+): Promise<CleanupResult> {
+  return apiPost<CleanupResult>(`${BASE}/${deviceId}/cleanup`, {
+    username, password, remove_account: removeAccount,
+  })
 }
 
 export function stopDeployment(): Promise<unknown> {
