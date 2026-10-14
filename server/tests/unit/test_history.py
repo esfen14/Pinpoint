@@ -550,6 +550,58 @@ def test_acknowledgement_belongs_only_to_its_problem_episode(logged_in_client, d
         assert details[offset]["ack"] is None
 
 
+def test_episode_boundaries_across_list_window_and_targets(logged_in_client, db_session):
+    from app.system_models import AckHistory, AckAction
+
+    base = 1_700_000_000
+    events = [
+        {"hostname": host, "service_description": service, "timestamp": base + offset,
+         "state": state, "state_type": "hard", "plugin_output": state}
+        for host, service, offset, state in [
+            ("h", None, 10, "DOWN"), ("h", "http", 11, "CRITICAL"),
+            ("h", None, 30, "DOWN"), ("h", "http", 31, "OK"),
+            ("h", None, 50, "UP"), ("h", None, 60, "DOWN"),
+        ]
+    ]
+    for host, service, offset, action, comment in [
+        ("h", None, 20, AckAction.ACKNOWLEDGED, "old host"),
+        ("h", None, 25, AckAction.AUTO_RESOLVED, None),
+        ("h", "http", 22, AckAction.ACKNOWLEDGED, "service only"),
+    ]:
+        db_session.session.add(AckHistory(
+            Hostname=host, Service_Name=service, Action=action,
+            Actioned_At=datetime.fromtimestamp(base + offset, timezone.utc),
+            Comment=comment,
+        ))
+    db_session.session.commit()
+
+    # Nagios returns a bounded list, but the annotation needs the earlier
+    # transitions and the AUTO_RESOLVED boundary, not only visible rows.
+    def archive(start, end, **filters):
+        result = [e for e in events if start <= e["timestamp"] <= end]
+        if filters.get("hostname"):
+            result = [e for e in result if e["hostname"] == filters["hostname"]]
+        if filters.get("service"):
+            result = [e for e in result if e["service_description"] == filters["service"]]
+        if start != 0 and end - start > 5:
+            return [e for e in result if e["timestamp"] >= base + 30 or e["service_description"] == "http"]
+        return result
+
+    with patch(_ALERTS_RANGE, side_effect=archive), patch(_NOTIFS_RANGE, return_value=[]), \
+            patch("app.api.system.history.resolve_time_range", return_value=(base + 30, base + 100)):
+        listed = logged_in_client.get("/api/system/history/alerts?preset=24h")
+        detail = logged_in_client.get("/api/system/history/alerts/detail",
+                                      query_string={"hostname": "h", "timestamp": base + 30, "new_state": "DOWN"})
+    assert listed.status_code == 200
+    flags = {(i["service_name"], i["timestamp"] - base): i["acknowledged"]
+             for i in listed.get_json()["data"]["items"]}
+    assert flags[(None, 30)] is False
+    assert flags[(None, 60)] is False
+    assert flags[("http", 31)] is False
+    assert detail.status_code == 200
+    assert detail.get_json()["data"]["ack"] is None
+
+
 # ==========================================================
 # GET /api/system/history/notifications
 # ==========================================================
