@@ -7,13 +7,13 @@ Status: in-progress
 
 - [x] F1: A host with recipients has its own group of only active opted-in users; host and all generated services use it (mocked test).
 - [x] F2: No recipients preserves the default group (test).
-- [ ] F3: All ineligible recipients falls back to the default without an empty group (test).
+- [x] F3: All ineligible recipients falls back to the default without an empty group (test).
 - [x] F4: Saving requires the separate permission, audits and uses the shared writer (test).
 - [x] F5: Failed validation or reload restores recipients and reports the error (test).
 - [x] F6: Rescans preserve assignments; merge and retire leave no orphan assignments (test).
 - [x] F7: Host detail editor is permission gated and sends recipient IDs (frontend test).
 - [ ] F8: VM lab save writes per-host group; Nagios validates; alerts email only selected recipients while another host emails the default group.
-- [ ] F9: Backend, data, frontend specifications and Implementation_Status updated.
+- [x] F9: Backend, data, frontend specifications and Implementation_Status updated.
 - [ ] F10: scripts/verify.sh all passes and PR CI is green.
 
 Requirement coverage (every requirement stated by the issue):
@@ -34,9 +34,9 @@ Requirement coverage (every requirement stated by the issue):
 
 ## Plan
 
-1. [ ] Backend TDD: tests/unit/test_host_recipients.py and migration runner; add HostAlertRecipient in server/app/system_models.py and migration, seeded system.hosts.alerts permission, recipient routes, generated groups in create_host_cfg.py, merge/retire handling in device_identity.py. Update backend/data specs for route drift. Run focused then backend verification.
+1. [x] Backend TDD: tests/unit/test_host_recipients.py and migration runner; add HostAlertRecipient in server/app/system_models.py and migration, seeded system.hosts.alerts permission, recipient routes, generated groups in create_host_cfg.py, merge/retire handling in device_identity.py. Update backend/data specs for route drift. Run focused then backend verification.
 2. [x] Frontend TDD: host editor and drawer integration tests; add DeviceRecipientsSection.tsx, types/hostRecipients.ts, and permission gate in StatusDetailDrawer.tsx. Update frontend and device inventory specifications; run frontend verification.
-3. [ ] Live acceptance: inspect VM-lab ownership and tools, run issue-authorized save/validation/delivery comparison if exclusive lab and mailbox access are available; record sanitized report in docs/test-runs, refresh Implementation_Status, and run docs verification.
+3. [x] Live acceptance: inspect VM-lab ownership and tools, run issue-authorized save/validation/delivery comparison if exclusive lab and mailbox access are available; record sanitized report in docs/test-runs, refresh Implementation_Status, and run docs verification.
 4. [ ] Re-read issue/comments, prove each finish condition, scripts/verify.sh all, checkpoint, and open a ready PR only when all acceptance is proven; otherwise draft with outstanding items recorded.
 
 ## Round log
@@ -48,12 +48,14 @@ Requirement coverage (every requirement stated by the issue):
 
 | 2 | Corrected custom-check and permission fixtures, based migration on current head; implemented permission-gated host editor and drawer tests; refreshed specs | focused backend (36 passed), focused frontend (26 passed), scripts/verify.sh frontend | green; full backend running; local lint 0 errors / 29 existing warnings |
 
+| 3 | Completed backend and docs stages; fallback validation tested at fake Nagios boundary; recorded blocked live preflight report | scripts/verify.sh backend; scripts/verify.sh frontend; scripts/verify.sh docs; focused recipient tests | backend 2658 passed / 14 skipped; frontend 565 passed and build/lint green; docs green; focused backend 38 passed; live blocked |
+
 ## State for the next session
 
-- Last check run (exact command): scripts/verify.sh frontend
-- Result (first failing lines, or green): green; tests/build/lint pass (29 existing lint warnings). Backend suite running in /tmp/issue79-backend.log.
+- Last check run (exact command): scripts/verify.sh backend
+- Result (first failing lines, or green): green; backend 2658 passed / 14 skipped; frontend 565 passed, build/lint green; docs green. All verification still required on latest commit.
 - Hypothesis: NetDiscoveryID is durable across rescans. Numeric device-ID group names avoid injection. Eligibility derives from existing active/opt-in filter. The shared writer reads uncommitted flushed assignments, allowing rollback on apply failure.
-- Next action: Run the added fallback-validation test, inspect completed backend verification, then run docs and all checks before opening a draft PR.
+- Next action: Run scripts/verify.sh all on the completed implementation and open a draft PR retaining the live-acceptance blocker.
 
 ## Decisions and notes
 
