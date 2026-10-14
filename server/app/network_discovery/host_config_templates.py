@@ -218,13 +218,17 @@ def create_notification_commands():
 
 def create_contact(contact):
     commands = notification_command_names()
+    # Only the HTML commands are written. Without them the contact inherits
+    # Nagios's stock commands from its template, so the file is unchanged.
+    lines = ("" if commands is STOCK_NOTIFY_COMMANDS else
+             f"\n    service_notification_commands   {commands['service']}"
+             f"\n    host_notification_commands      {commands['host']}")
     return _load_template("contact.cfg.tpl").format(
         contact_name=contact["contact_name"],
         use=contact["use"],
         alias=contact["full_name"],
         email_address=contact["email_address"],
-        service_command=commands["service"],
-        host_command=commands["host"],
+        notification_commands=lines,
     )
 
 def create_contact_template(contact_template):

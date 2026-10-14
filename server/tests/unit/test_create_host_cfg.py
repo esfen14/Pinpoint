@@ -570,7 +570,8 @@ class TestCreateHostCfgFile:
         with patched_config(app, HOST_CONFIG_DIR=tmp_path):
             cfg_text = _create_host_cfg_file(discovered).read_text()
 
-        command_names = re.findall(r"command_name\s+(\S+)", cfg_text)
+        # The alert-email commands are written when the notification script is usable (Linux paths); they are not check commands.
+        command_names = [n for n in re.findall(r"command_name\s+(\S+)", cfg_text) if not n.startswith("pinpoint_notify_")]
         assert sorted(command_names) == ["pinpoint_nd_snmp", "pinpoint_nd_ssh"]
         assert "$USER1$/check_snmp -H $HOSTADDRESS$" in cfg_text
         assert "snmp-devices" not in cfg_text
@@ -622,7 +623,7 @@ class TestCreateHostCfgFile:
             cfg_text = _create_host_cfg_file(discovered).read_text()
 
         assert re.search(r"host_name\s+quiet-host", cfg_text)
-        assert "define command" not in cfg_text
+        assert [n for n in re.findall(r"command_name\s+(\S+)", cfg_text) if not n.startswith("pinpoint_notify_")] == []
         assert "define service" not in cfg_text
 
 
@@ -912,8 +913,9 @@ class TestAlertContacts:
         text = self._generate(app, plugin_config, tmp_path)
 
         assert "pinpoint_notify" not in text
-        assert re.search(r"service_notification_commands\s+notify-service-by-email", text)
-        assert re.search(r"host_notification_commands\s+notify-host-by-email", text)
+        # No explicit lines: the contact inherits the stock commands from its template.
+        assert "service_notification_commands" not in text
+        assert "host_notification_commands" not in text
 
 
 class TestNotificationScriptPath:
