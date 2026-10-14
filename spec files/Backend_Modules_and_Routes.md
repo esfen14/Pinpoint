@@ -201,8 +201,16 @@ column: alerts `timestamp|type|hostname|service_name|previous_state|new_state|st
 (with legacy `duration` alias); notifications `timestamp|type|hostname|service_name|state|contact|method|message`.
 `order=asc|desc` selects the primary direction; ties sort by timestamp desc.
 Unknown sort keys continue to default to timestamp. List output/message sort
-uses the truncated value. See `Alerts_Notifications_History_Requirements.md`
-§§3.3–3.4 and 4.3–4.4.
+uses the truncated value. Nagios list and detail rows expose `event_id` (UNIX
+second plus digest of normalized archive fields); linked notifications/alerts in
+detail responses carry the target `event_id`. Both list routes accept `event_id`
+for a single-second exact lookup, overriding time range and filters; malformed
+IDs return 400, missing IDs yield an empty page. Detail routes also accept
+`event_id` to distinguish same-second rows (alongside legacy host/service/time
+parameters). Pinpoint scan records retain
+`id` instead. Links match host, service and state to the most recent preceding
+alert within five minutes. See `Alerts_Notifications_History_Requirements.md`
+§§3.3–3.4, 4.3–4.4 and 5.4.
 
 The route implementation exists, but `system.history` is not currently present
 in the seed permission list. This is tracked in `Implementation_Status.md`.

@@ -99,6 +99,89 @@ FAKE_NOTIFICATIONS = [
 ]
 
 
+def test_exact_event_locator_and_links(logged_in_client, db_session):
+    alerts = [
+        {"hostname": "webserver", "service_description": "http-80-TCP", "state": state,
+         "timestamp": ts, "state_type": "hard", "plugin_output": state}
+        for ts, state in [(1700001000, "CRITICAL"), (1700001080, "OK"), (1700001100, "CRITICAL")]
+    ]
+    notifications = [
+        {"hostname": "webserver", "service_description": "http-80-TCP", "timestamp": ts,
+         "notification_reason": "CRITICAL", "contact": contact, "output": contact}
+        for ts, contact in [(1700001010, "alice"), (1700001110, "bob")]
+    ]
+
+    def fetch(rows):
+        def selected(start, end, hostname=None, service=None):
+            return [row for row in rows if start <= row["timestamp"] <= end
+                    and (not hostname or row["hostname"] == hostname)
+                    and (not service or row["service_description"] == service)]
+        return selected
+
+    with patch(_ALERTS_RANGE, side_effect=fetch(alerts)), patch(_NOTIFS_RANGE, side_effect=fetch(notifications)):
+        detail = logged_in_client.get('/api/system/history/notifications/detail', query_string={
+            'hostname': 'webserver', 'service': 'http-80-TCP', 'timestamp': 1700001110,
+        }).get_json()['data']
+        assert detail['linked_alert']['timestamp'] == 1700001100
+        assert detail['linked_alert']['event_id']
+        assert detail['event_id']
+        for route, event_id in [('alerts', detail['linked_alert']['event_id']),
+                                ('notifications', detail['event_id'])]:
+            response = logged_in_client.get(f'/api/system/history/{route}',
+                                            query_string={'event_id': event_id, 'preset': '24h'})
+            assert response.status_code == 200
+            assert response.get_json()['data']['items'][0]['event_id'] == event_id
+            assert response.get_json()['data']['total'] == 1
+        alert_detail = logged_in_client.get('/api/system/history/alerts/detail', query_string={
+            'hostname': 'webserver', 'service': 'http-80-TCP', 'timestamp': 1700001100,
+            'new_state': 'CRITICAL',
+        }).get_json()['data']
+        assert [n['event_id'] for n in alert_detail['linked_notifications']] == [detail['event_id']]
+        assert logged_in_client.get('/api/system/history/alerts',
+                                    query_string={'event_id': '1700001100:' + '0' * 64}).get_json()['data']['total'] == 0
+        assert logged_in_client.get('/api/system/history/alerts',
+                                    query_string={'event_id': 'bad'}).status_code == 400
+
+
+def test_same_second_details_select_exact_event(logged_in_client, db_session):
+    alerts = [{**FAKE_ALERTS[0], 'timestamp': 1700001000, 'plugin_output': output}
+              for output in ('first', 'second')]
+    notifs = [{**FAKE_NOTIFICATIONS[0], 'timestamp': 1700001010, 'contact': contact}
+              for contact in ('alice', 'bob')]
+    from app.api.system.history import event_id
+    from app.nagios.notifications import normalize_alert, normalize_notification
+    for route, rows, normalizer, kind, state in [
+        ('alerts', alerts, normalize_alert, 'alert', {'new_state': 'CRITICAL'}),
+        ('notifications', notifs, normalize_notification, 'notification', {}),
+    ]:
+        target = event_id(normalizer(rows[1]), kind)
+        archive = _ALERTS_RANGE if route == 'alerts' else _NOTIFS_RANGE
+        with patch(archive, return_value=rows), patch(_ALERTS_RANGE if route == 'notifications' else _NOTIFS_RANGE, return_value=[]):
+            response = logged_in_client.get(f'/api/system/history/{route}/detail', query_string={
+                'hostname': 'webserver', 'service': 'http-80-TCP', 'timestamp': rows[1]['timestamp'],
+                'event_id': target, **state,
+            })
+        assert response.status_code == 200
+        assert response.get_json()['data']['event_id'] == target
+
+
+def test_link_host_and_no_match(logged_in_client, db_session):
+    host = {'hostname': 'dbserver', 'timestamp': 1700002000, 'state': 'DOWN', 'state_type': 'hard'}
+    notifs = [{'hostname': 'dbserver', 'timestamp': 1700002010,
+               'notification_reason': 'DOWN', 'contact': 'ops'},
+              {'hostname': 'dbserver', 'service_description': 'disk', 'timestamp': 1700002011,
+               'notification_reason': 'DOWN', 'contact': 'ops'}]
+    with patch(_ALERTS_RANGE, return_value=[host]), patch(_NOTIFS_RANGE, return_value=notifs):
+        response = logged_in_client.get('/api/system/history/notifications/detail', query_string={
+            'hostname': 'dbserver', 'timestamp': 1700002010,
+        })
+        assert response.get_json()['data']['linked_alert']['event_id']
+        response = logged_in_client.get('/api/system/history/notifications/detail', query_string={
+            'hostname': 'dbserver', 'service': 'disk', 'timestamp': 1700002011,
+        })
+        assert response.get_json()['data']['linked_alert'] is None
+
+
 # ==========================================================
 # Auth / permission guards
 # ==========================================================
@@ -925,7 +1008,7 @@ class TestNotificationsHistoryDetail:
 
     def test_linked_alert_present_when_nearby(self, logged_in_client, db_session):
         notif = self._base_notif()
-        nearby_alert = {**FAKE_ALERTS[0], "timestamp": notif["timestamp"] + 30}
+        nearby_alert = {**FAKE_ALERTS[0], "timestamp": notif["timestamp"] - 30}
         with patch(_NOTIFS_RANGE, return_value=[notif]):
             with patch(_ALERTS_RANGE, return_value=[nearby_alert]):
                 resp = logged_in_client.get(

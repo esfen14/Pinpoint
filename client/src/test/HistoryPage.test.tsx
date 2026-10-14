@@ -18,15 +18,15 @@ vi.mock('../lib/api', async () => ({
   apiGet: (path: string) => apiGet(path),
 }))
 const alert = {
-  timestamp: 1790000000, type: 'service', hostname: 'web', service_name: 'HTTP',
+  event_id: '1790000000:alert-id', timestamp: 1790000000, type: 'service', hostname: 'web', service_name: 'HTTP',
   previous_state: 'OK', new_state: 'CRITICAL', state_type: 'hard', duration_seconds: 60,
   plugin_output: 'Failure', acknowledged: true,
 }
 const nagios = {
-  timestamp: 1790000020, source: 'nagios', type: 'service', hostname: 'web', service_name: 'HTTP',
+  event_id: '1790000020:notification-id', timestamp: 1790000020, source: 'nagios', type: 'service', hostname: 'web', service_name: 'HTTP',
   state: 'CRITICAL', contact: 'admin', method: 'email', message: 'Failure',
 }
-const pinpoint = { ...nagios, id: 4, source: 'pinpoint', type: 'scan', hostname: 'Pinpoint',
+const pinpoint = { ...nagios, event_id: undefined, id: 4, source: 'pinpoint', type: 'scan', hostname: 'Pinpoint',
   service_name: 'Network scan', contact: '', method: '', state: 'SUCCESS', message: 'Finished' }
 const page = (items: unknown[], pages = 1) => ({ items, page: 1, per_page: 25, total: items.length, pages })
 function renderPage() {
@@ -43,10 +43,10 @@ beforeEach(() => {
   apiGet.mockImplementation((path: string) => {
     if (path.includes('/alerts/detail')) return Promise.resolve({ ...alert, plugin_output: 'Full failure',
       ack: { acknowledged_by: 'Alice', acknowledged_at: '2026-09-20T00:00:00Z', comment: 'Investigating' },
-      recovery_duration: null, linked_notifications: [{ timestamp: nagios.timestamp, contact: 'admin', state: 'CRITICAL', message: 'Failure' }] })
+      recovery_duration: null, linked_notifications: [{ event_id: nagios.event_id, timestamp: nagios.timestamp, contact: 'admin', state: 'CRITICAL', message: 'Failure' }] })
     if (path.includes('/notifications/detail')) return Promise.resolve({ ...nagios, contacts: ['admin'],
-      linked_alert: { timestamp: alert.timestamp, new_state: 'CRITICAL', prev_state: 'OK' }, message: 'Full message' })
-    if (path.includes('/notifications?')) return Promise.resolve(page([nagios, pinpoint]))
+      linked_alert: { event_id: alert.event_id, timestamp: alert.timestamp, new_state: 'CRITICAL', prev_state: 'OK' }, message: 'Full message' })
+    if (path.includes('/notifications?')) return Promise.resolve(page(query(path).has('event_id') ? [nagios] : [nagios, pinpoint]))
     return Promise.resolve(page([alert]))
   })
 })
@@ -84,7 +84,9 @@ describe('HistoryPage', () => {
     expect(await screen.findByText('Full failure')).toBeInTheDocument()
     expect(screen.getByText(/Acknowledged by/)).toHaveTextContent('Alice')
     await user.click(screen.getByRole('button', { name: /View notification/ }))
-    await waitFor(() => expect(apiGet.mock.lastCall![0]).toContain('/history/notifications?'))
+    await waitFor(() => expect(apiGet.mock.calls.some(([path]) => path.includes('/notifications?') && query(path).get('event_id') === nagios.event_id)).toBe(true))
+    expect(query(apiGet.mock.calls.find(([path]) => path.includes('/notifications?') && query(path).has('event_id'))![0]).get('preset')).toBeNull()
+    expect(await screen.findByText('Full message')).toBeInTheDocument()
   })
 
   it('shows Nagios and Pinpoint events, source filter, and exact linked alert', async () => {
@@ -99,8 +101,9 @@ describe('HistoryPage', () => {
     await user.click(screen.getByText('admin').closest('tr')!)
     expect(await screen.findByText('Full message')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'View in Alerts History' }))
-    await waitFor(() => expect(apiGet.mock.lastCall![0]).toContain('/history/alerts?'))
-    expect(query(apiGet.mock.lastCall![0]).get('hostname')).toBe('web')
+    await waitFor(() => expect(apiGet.mock.calls.some(([path]) => path.includes('/alerts?') && query(path).get('event_id') === alert.event_id)).toBe(true))
+    expect(query(apiGet.mock.calls.find(([path]) => path.includes('/alerts?') && query(path).has('event_id'))![0]).get('preset')).toBeNull()
+    expect(await screen.findByText('Full failure')).toBeInTheDocument()
   })
 
   it('shows empty and error states and allows retry', async () => {

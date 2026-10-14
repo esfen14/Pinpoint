@@ -33,6 +33,8 @@ GET /system/history/notifications/detail
 
 from datetime import datetime, timezone, timedelta
 import re
+import hashlib
+import json
 
 import sqlalchemy as sa
 from flask import request, current_app
@@ -130,6 +132,30 @@ def normalize_nagios_list(raw):
     if isinstance(raw, dict):
         return list(raw.values())
     return list(raw) if raw else []
+
+
+def event_id(event, kind):
+    """Build a deterministic locator from canonical Nagios archive fields."""
+    fields = (["hostname", "service_description", "timestamp", "state", "state_type", "plugin_output"]
+              if kind == "alert" else
+              ["hostname", "servicedesc", "timestamp", "state", "contact", "notificationmethod", "output"])
+    payload = json.dumps([event.get(f) for f in fields], separators=(",", ":"), ensure_ascii=False)
+    return f"{event['timestamp']}:{hashlib.sha256((kind + payload).encode()).hexdigest()}"
+
+
+def locator_range(value):
+    """Validate an event ID and return single-second archive query bounds."""
+    match = re.fullmatch(r"([1-9]\d{0,11}):[0-9a-f]{64}", value)
+    return (int(match.group(1)), int(match.group(1))) if match else None
+
+
+def related_alert(notification, alerts):
+    """Find the latest preceding same-target, same-state alert in five minutes."""
+    matches = [a for a in alerts if a['hostname'] == notification['hostname']
+               and a.get('service_description') == notification.get('servicedesc')
+               and a['state'] == notification['state']
+               and 0 <= notification['timestamp'] - a['timestamp'] <= 300]
+    return max(matches, key=lambda a: a['timestamp'], default=None)
 
 
 def ack_actions(hostname=None, service_name=None):
@@ -293,6 +319,9 @@ def alerts_history():
         order      = request.args.get("order", default="desc", type=str).lower()
         page       = request.args.get("page", default=1, type=int)
         per_page   = request.args.get("per_page", default=25, type=int)
+        locator    = request.args.get("event_id", default="", type=str)
+        if locator and locator_range(locator) is None:
+            return error("Invalid event_id.", 400)
 
         if page < 1:
             return error("page must be greater than 0.", 400)
@@ -303,9 +332,9 @@ def alerts_history():
         if ack_filter not in ("all", "acknowledged", "unacknowledged"):
             return error("ack_filter must be 'all', 'acknowledged', or 'unacknowledged'.", 400)
 
-        start_ts, end_ts = resolve_time_range(
+        start_ts, end_ts = (locator_range(locator) if locator else resolve_time_range(
             preset or None, start_date or None, end_date or None
-        )
+        ))
         if start_ts is None:
             return error(
                 "Invalid time range. Use a preset (1h, 6h, 24h, 7d, 30d) "
@@ -322,6 +351,8 @@ def alerts_history():
             return error("Failed to retrieve alert history from Nagios.", 502)
 
         alerts = fill_previous_states([normalize_alert(a) for a in normalize_nagios_list(raw)])
+        if locator:
+            alerts = [a for a in alerts if event_id(a, 'alert') == locator]
 
         # Include earlier transitions so an episode beginning before the selected
         # window is not confused with an acknowledgement from a prior episode.
@@ -344,20 +375,21 @@ def alerts_history():
             output      = alert.get("plugin_output") or ""
 
             # Apply filters
-            if type_f and alert_type != type_f:
+            if not locator and type_f and alert_type != type_f:
                 continue
-            if new_state_f and new_state != new_state_f:
+            if not locator and new_state_f and new_state != new_state_f:
                 continue
-            if state_type_f and state_type != state_type_f:
+            if not locator and state_type_f and state_type != state_type_f:
                 continue
 
             is_acked = ((hostname, service), timestamp, new_state) in ack_map
-            if ack_filter == "acknowledged" and not is_acked:
+            if not locator and ack_filter == "acknowledged" and not is_acked:
                 continue
-            if ack_filter == "unacknowledged" and is_acked:
+            if not locator and ack_filter == "unacknowledged" and is_acked:
                 continue
 
             items.append({
+                "event_id":     event_id(alert, "alert"),
                 "timestamp":    timestamp,
                 "type":         alert_type,
                 "hostname":     hostname,
@@ -407,6 +439,9 @@ def alerts_history_detail():
         timestamp = request.args.get("timestamp", default=0, type=int)
         new_state = request.args.get("new_state", default="", type=str).upper()
         service   = request.args.get("service", default="", type=str) or None
+        locator   = request.args.get("event_id", default="", type=str)
+        if locator and locator_range(locator) is None:
+            return error("Invalid event_id.", 400)
 
         if not hostname:
             return error("hostname is required.", 400)
@@ -426,12 +461,14 @@ def alerts_history_detail():
             return error("Failed to retrieve alert detail from Nagios.", 502)
 
         alerts = [normalize_alert(a) for a in normalize_nagios_list(raw)]
+        alerts = [a for a in alerts if a['hostname'] == hostname and a['service_description'] == service]
 
         # Find the specific event — match on timestamp and new_state.
         alert = next(
             (a for a in alerts
              if a.get("timestamp") == timestamp
-             and (a.get("state") or "").upper() == new_state),
+             and (a.get("state") or "").upper() == new_state
+             and (not locator or event_id(a, 'alert') == locator)),
             None
         )
 
@@ -466,15 +503,24 @@ def alerts_history_detail():
         )
         linked_notifications = []
         if notif_raw:
-            for notif in normalize_nagios_list(notif_raw):
+            nearby = [normalize_notification(n) for n in normalize_nagios_list(notif_raw)]
+            alert_raw = request_alerts_range(timestamp - 300, timestamp + 300,
+                                             hostname=hostname, service=service)
+            nearby_alerts = ([normalize_alert(a) for a in normalize_nagios_list(alert_raw)]
+                             if alert_raw else [])
+            for notif in nearby:
+                if related_alert(notif, nearby_alerts) != alert:
+                    continue
                 linked_notifications.append({
-                    "timestamp": notif.get("timestamp"),
-                    "contact":   notif.get("contact"),
-                    "state":     (notif.get("notification_reason") or notif.get("state") or "").upper(),
-                    "message":   (notif.get("output") or "")[:200],
+                    "event_id": event_id(notif, 'notification'),
+                    "timestamp": notif['timestamp'],
+                    "contact": notif['contact'],
+                    "state": notif['state'],
+                    "message": notif['output'][:200],
                 })
 
         return success({
+            "event_id":           event_id(alert, "alert"),
             "hostname":           hostname,
             "service_name":       service,
             "timestamp":          timestamp,
@@ -538,6 +584,9 @@ def notifications_history():
         order      = request.args.get("order", default="desc", type=str).lower()
         page       = request.args.get("page", default=1, type=int)
         per_page   = request.args.get("per_page", default=25, type=int)
+        locator    = request.args.get("event_id", default="", type=str)
+        if locator and locator_range(locator) is None:
+            return error("Invalid event_id.", 400)
 
         if page < 1:
             return error("page must be greater than 0.", 400)
@@ -545,12 +594,14 @@ def notifications_history():
             return error(f"per_page must be one of: {sorted(_VALID_PER_PAGE)}.", 400)
         if order not in ("asc", "desc"):
             return error("order must be 'asc' or 'desc'.", 400)
+        if locator and source_f == SOURCE_PINPOINT:
+            return error("event_id locates Nagios notifications only.", 400)
         if source_f not in ("", SOURCE_NAGIOS, SOURCE_PINPOINT):
             return error("source must be 'nagios' or 'pinpoint'.", 400)
 
-        start_ts, end_ts = resolve_time_range(
+        start_ts, end_ts = (locator_range(locator) if locator else resolve_time_range(
             preset or None, start_date or None, end_date or None
-        )
+        ))
         if start_ts is None:
             return error(
                 "Invalid time range. Use a preset (1h, 6h, 24h, 7d, 30d) "
@@ -574,6 +625,8 @@ def notifications_history():
         items = []
         for notif in notifications:
             notif     = normalize_notification(notif)
+            if locator and event_id(notif, 'notification') != locator:
+                continue
             hostname  = notif["hostname"]
             service   = notif["servicedesc"]
             notif_type= "service" if service else "host"
@@ -583,15 +636,16 @@ def notifications_history():
             message   = notif["output"]
             method    = notif["notificationmethod"]
 
-            if type_f and notif_type != type_f:
+            if not locator and type_f and notif_type != type_f:
                 continue
-            if state_f and state != state_f:
+            if not locator and state_f and state != state_f:
                 continue
-            if contact_f and contact_f not in contact.lower():
+            if not locator and contact_f and contact_f not in contact.lower():
                 continue
 
             items.append({
                 "source":       SOURCE_NAGIOS,
+                "event_id":     event_id(notif, "notification"),
                 "timestamp":    timestamp,
                 "type":         notif_type,
                 "hostname":     hostname,
@@ -602,7 +656,7 @@ def notifications_history():
                 "message":      message[:200],
             })
 
-        if source_f != SOURCE_NAGIOS and not (type_f or hostname_f or service_f or contact_f):
+        if not locator and source_f != SOURCE_NAGIOS and not (type_f or hostname_f or service_f or contact_f):
             for event in get_scan_events(start_ts, end_ts):
                 if state_f and event["state"] != state_f:
                     continue
@@ -677,6 +731,9 @@ def notifications_history_detail():
                 "linked_alert": None,
             })
 
+        locator = request.args.get("event_id", default="", type=str)
+        if locator and locator_range(locator) is None:
+            return error("Invalid event_id.", 400)
         if not hostname:
             return error("hostname is required.", 400)
         if not timestamp:
@@ -693,11 +750,13 @@ def notifications_history_detail():
             return error("Failed to retrieve notification detail from Nagios.", 502)
 
         notifications = [normalize_notification(n) for n in normalize_nagios_list(raw)]
+        notifications = [n for n in notifications if n['hostname'] == hostname and n['servicedesc'] == service]
 
         # Find the specific notification by timestamp (normalized to seconds,
         # the same value the list sent).
         notif = next(
-            (n for n in notifications if n.get("timestamp") == timestamp),
+            (n for n in notifications if n.get("timestamp") == timestamp
+             and (not locator or event_id(n, 'notification') == locator)),
             None
         )
 
@@ -721,20 +780,18 @@ def notifications_history_detail():
         linked_alert = None
         if alert_raw:
             alerts = [normalize_alert(a) for a in normalize_nagios_list(alert_raw)]
-            if alerts:
-                # Take the closest alert to this notification's timestamp.
-                alerts.sort(
-                    key=lambda a: abs((a.get("timestamp") or 0) - timestamp)
-                )
-                a = alerts[0]
+            a = related_alert(notif, alerts)
+            if a:
                 linked_alert = {
-                    "timestamp":  a.get("timestamp"),
-                    "new_state":  (a.get("state") or "").upper(),
-                    "prev_state": (a.get("last_state") or "").upper(),
+                    "event_id": event_id(a, 'alert'),
+                    "timestamp": a['timestamp'],
+                    "new_state": a['state'],
+                    "prev_state": a['last_state'],
                 }
 
         return success({
             "source":       SOURCE_NAGIOS,
+            "event_id":     event_id(notif, "notification"),
             "hostname":     hostname,
             "service_name": service,
             "timestamp":    timestamp,
