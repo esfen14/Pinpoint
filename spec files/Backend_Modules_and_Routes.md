@@ -204,7 +204,9 @@ uses the truncated value. Nagios list and detail rows expose `event_id` (UNIX
 second plus digest of normalized archive fields); linked notifications/alerts in
 detail responses carry the target `event_id`. Both list routes accept `event_id`
 for a single-second exact lookup, overriding time range and filters; malformed
-IDs return 400, missing IDs yield an empty page. Pinpoint scan records retain
+IDs return 400, missing IDs yield an empty page. Detail routes also accept
+`event_id` to distinguish same-second rows (alongside legacy host/service/time
+parameters). Pinpoint scan records retain
 `id` instead. Links match host, service and state to the most recent preceding
 alert within five minutes. See `Alerts_Notifications_History_Requirements.md`
 §§3.3–3.4, 4.3–4.4 and 5.4.

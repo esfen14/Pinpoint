@@ -375,17 +375,17 @@ def alerts_history():
             output      = alert.get("plugin_output") or ""
 
             # Apply filters
-            if type_f and alert_type != type_f:
+            if not locator and type_f and alert_type != type_f:
                 continue
-            if new_state_f and new_state != new_state_f:
+            if not locator and new_state_f and new_state != new_state_f:
                 continue
-            if state_type_f and state_type != state_type_f:
+            if not locator and state_type_f and state_type != state_type_f:
                 continue
 
             is_acked = ((hostname, service), timestamp, new_state) in ack_map
-            if ack_filter == "acknowledged" and not is_acked:
+            if not locator and ack_filter == "acknowledged" and not is_acked:
                 continue
-            if ack_filter == "unacknowledged" and is_acked:
+            if not locator and ack_filter == "unacknowledged" and is_acked:
                 continue
 
             items.append({
@@ -439,6 +439,9 @@ def alerts_history_detail():
         timestamp = request.args.get("timestamp", default=0, type=int)
         new_state = request.args.get("new_state", default="", type=str).upper()
         service   = request.args.get("service", default="", type=str) or None
+        locator   = request.args.get("event_id", default="", type=str)
+        if locator and locator_range(locator) is None:
+            return error("Invalid event_id.", 400)
 
         if not hostname:
             return error("hostname is required.", 400)
@@ -464,7 +467,8 @@ def alerts_history_detail():
         alert = next(
             (a for a in alerts
              if a.get("timestamp") == timestamp
-             and (a.get("state") or "").upper() == new_state),
+             and (a.get("state") or "").upper() == new_state
+             and (not locator or event_id(a, 'alert') == locator)),
             None
         )
 
@@ -632,11 +636,11 @@ def notifications_history():
             message   = notif["output"]
             method    = notif["notificationmethod"]
 
-            if type_f and notif_type != type_f:
+            if not locator and type_f and notif_type != type_f:
                 continue
-            if state_f and state != state_f:
+            if not locator and state_f and state != state_f:
                 continue
-            if contact_f and contact_f not in contact.lower():
+            if not locator and contact_f and contact_f not in contact.lower():
                 continue
 
             items.append({
@@ -727,6 +731,9 @@ def notifications_history_detail():
                 "linked_alert": None,
             })
 
+        locator = request.args.get("event_id", default="", type=str)
+        if locator and locator_range(locator) is None:
+            return error("Invalid event_id.", 400)
         if not hostname:
             return error("hostname is required.", 400)
         if not timestamp:
@@ -748,7 +755,8 @@ def notifications_history_detail():
         # Find the specific notification by timestamp (normalized to seconds,
         # the same value the list sent).
         notif = next(
-            (n for n in notifications if n.get("timestamp") == timestamp),
+            (n for n in notifications if n.get("timestamp") == timestamp
+             and (not locator or event_id(n, 'notification') == locator)),
             None
         )
 

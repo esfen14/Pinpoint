@@ -198,10 +198,11 @@ function buildQuery(filters: Filters, tab: HistoryTab, page: number, perPage: nu
 }
 
 function detailQuery(
-  event: { hostname: string; service_name: string | null; timestamp: number; source?: string; id?: number },
+  event: { hostname: string; service_name: string | null; timestamp: number; event_id?: string; source?: string; id?: number },
   newState?: string
 ) {
   const p = new URLSearchParams({ hostname: event.hostname, timestamp: String(event.timestamp) })
+  if (event.event_id) p.set('event_id', event.event_id)
   if (event.source === 'pinpoint') {
     p.set('source', 'pinpoint')
     p.set('id', String(event.id ?? 0))

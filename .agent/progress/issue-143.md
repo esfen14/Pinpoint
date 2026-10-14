@@ -5,9 +5,9 @@ Status: in-progress
 
 ## Finish condition
 
-- [ ] History API returns stable event identifiers or unambiguous link metadata for related alert/notification events.
-- [ ] List routes support an exact event locator (or equivalent) so cross-tab navigation selects/opens the correct event, including outside the default 24h range.
-- [ ] Tests cover multiple nearby events, host/service and no match; frontend link updated; specs updated.
+- [x] History API returns stable event identifiers or unambiguous link metadata for related alert/notification events.
+- [x] List routes support an exact event locator (or equivalent) so cross-tab navigation selects/opens the correct event, including outside the default 24h range.
+- [x] Tests cover multiple nearby events, host/service and no match; frontend link updated; specs updated.
 
 Requirement coverage:
 
@@ -36,10 +36,10 @@ Requirement coverage:
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh docs`
-- Result (first failing lines, or "green"): green
-- Hypothesis: All requirements now have isolated proof; re-read issue and run final checks.
-- Next action (one specific step, not "continue"): Re-read issue #143 and run focused backend and frontend checks for finish condition.
+- Last check run (exact command): `cd server && .venv/bin/python -m pytest tests/unit/test_history.py -q && cd .. && scripts/verify.sh all > /tmp/issue143-final.log 2>&1; result=$?; tail -5 /tmp/issue143-final.log; exit $result`
+- Result (first failing lines, or "green"): green: 134 focused, verify all OK (28 lint warnings)
+- Hypothesis: All finish items proven; ready for PR.
+- Next action (one specific step, not "continue"): Remove progress file and open PR.
 
 ## Decisions and notes
 

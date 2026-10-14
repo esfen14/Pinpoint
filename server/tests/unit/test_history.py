@@ -143,6 +143,28 @@ def test_exact_event_locator_and_links(logged_in_client, db_session):
                                     query_string={'event_id': 'bad'}).status_code == 400
 
 
+def test_same_second_details_select_exact_event(logged_in_client, db_session):
+    alerts = [{**FAKE_ALERTS[0], 'timestamp': 1700001000, 'plugin_output': output}
+              for output in ('first', 'second')]
+    notifs = [{**FAKE_NOTIFICATIONS[0], 'timestamp': 1700001010, 'contact': contact}
+              for contact in ('alice', 'bob')]
+    from app.api.system.history import event_id
+    from app.nagios.notifications import normalize_alert, normalize_notification
+    for route, rows, normalizer, kind, state in [
+        ('alerts', alerts, normalize_alert, 'alert', {'new_state': 'CRITICAL'}),
+        ('notifications', notifs, normalize_notification, 'notification', {}),
+    ]:
+        target = event_id(normalizer(rows[1]), kind)
+        archive = _ALERTS_RANGE if route == 'alerts' else _NOTIFS_RANGE
+        with patch(archive, return_value=rows), patch(_ALERTS_RANGE if route == 'notifications' else _NOTIFS_RANGE, return_value=[]):
+            response = logged_in_client.get(f'/api/system/history/{route}/detail', query_string={
+                'hostname': 'webserver', 'service': 'http-80-TCP', 'timestamp': rows[1]['timestamp'],
+                'event_id': target, **state,
+            })
+        assert response.status_code == 200
+        assert response.get_json()['data']['event_id'] == target
+
+
 def test_link_host_and_no_match(logged_in_client, db_session):
     host = {'hostname': 'dbserver', 'timestamp': 1700002000, 'state': 'DOWN', 'state_type': 'hard'}
     notifs = [{'hostname': 'dbserver', 'timestamp': 1700002010,

@@ -245,7 +245,9 @@ service and state within five minutes; alerts link only notifications assigned
 to that transition. No link is offered without a match. Either list API accepts
 `event_id` to retrieve only that exact event, regardless of preset/custom range
 or pagination filters; an invalid ID returns 400 and a missing event returns an
-empty list. The page switches tabs and expands the located row. Pinpoint scan
+empty list. Detail routes accept `event_id` alongside legacy target/time
+parameters to distinguish same-second events. The page switches tabs and
+expands the located row. Pinpoint scan
 notifications continue to use their database `id`, not a Nagios `event_id`. Identical
 archive records with identical canonical fields cannot be distinguished without
 an upstream unique identifier.
