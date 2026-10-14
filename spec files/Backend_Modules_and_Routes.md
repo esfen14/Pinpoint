@@ -111,7 +111,7 @@ The `system_bp` root makes these paths `/api/system`.
 | Method and path | Permission | Purpose |
 |---|---|---|
 | `GET /api/system` | Login | Return singleton system settings |
-| `PUT /api/system` | Login, field-level settings permissions | Save the full settings object with optimistic version handling; `checkInterval` accepts 1/2/5/10/15 minutes with `settings.system`, regenerates the Nagios config through the shared writer and rolls back on apply failure (422 with message) |
+| `PUT /api/system` | Login, field-level settings permissions | Save the full settings object with optimistic version handling; `checkInterval` accepts 1/2/5/10/15 minutes, `retryInterval` 1 to 10 minutes (never longer than the check interval in effect after the save) and `maxCheckAttempts` 1 to 10, all with `settings.system` (400 for a bad value; the two retry fields are optional in the body and keep their saved value when omitted); `flapDetectionEnabled` (bool), `flapLowThreshold` and `flapHighThreshold` (0 to 100 percent or `null` for Nagios's own value, low below high, 400 otherwise) are optional in the body too and need `settings.system`; any change to one of these regenerates the Nagios config through the shared writer and rolls back on apply failure (422 with message) |
 
 Security and system setting fields are restricted with `settings.security` and
 `settings.system`; personal fields are handled by `/api/user/preferences`.
@@ -161,13 +161,14 @@ each route's docstring.
 | `GET /api/system/network-health/cpu` | `system.network_health` | CPU utilization trend for one host with an NCPA CPU check (`hostname` optional) |
 | `GET /api/system/network-health/connections` | `system.network_health` | TCP connection counts by state on the Nagios/Pinpoint server, read from `/proc/net/tcp`; `available` is false without `/proc` |
 | `GET /api/system/network-health/insights` | `system.network_health` | Plain-language observations from the latest snapshot, most severe first |
+| `GET /api/system/network-health/flapping` | `system.network_health` | Hosts and services flagged as flapping in the last `hours` (1, 6, 24 default or 168; 400 otherwise): per item the number of flagged snapshots, first and last flagged time, whether it is flapping now and its current state, plus `global_flap_detection_enabled` (`null` until Nagios has reported). Counted from 60-second snapshots, so fast flaps can be missed; paused and retired devices are left out |
 | `GET /api/system/network-health/plugin-trends` | `system.network_health` | One entry per plugin enabled in Plugin Manager: state counts, current values and averaged trends for time and percentage metrics |
 
 ### `app/api/system/network_hosts.py`
 
 | Method and path | Permission | Purpose |
 |---|---|---|
-| `GET /api/system/network-health/hosts` | `system.network_health` | Paginated/filterable latest host snapshot; each item carries `device_id` (the discovered device behind the Nagios host name, `null` for a host with no device record such as `localhost`) and `ip_address` (that device's current IP, `null` in the same case), and `monitoring_state` / `monitored` (the device's monitoring label and whether Nagios fully checks it; both `null` in the same case). Optional `monitoring` filter: `all`, `not_monitored`, `monitored`, `missing`, `address_unknown`, `paused`, `retired` or `merged` (400 otherwise); a host with no device counts as monitored |
+| `GET /api/system/network-health/hosts` | `system.network_health` | Paginated/filterable latest host snapshot; each item carries `device_id` (the discovered device behind the Nagios host name, `null` for a host with no device record such as `localhost`) and `ip_address` (that device's current IP, `null` in the same case), and `monitoring_state` / `monitored` (the device's monitoring label and whether Nagios fully checks it; both `null` in the same case). Optional `flapping=true` lists only flapping hosts (`false`, `all` or empty lists everything, 400 otherwise). Optional `monitoring` filter: `all`, `not_monitored`, `monitored`, `missing`, `address_unknown`, `paused`, `retired` or `merged` (400 otherwise); a host with no device counts as monitored |
 | `GET /api/system/network-health/hosts/<hostname>/detail` | `system.network_health` | Host detail panel data, including `device_id`, `monitoring_state` and `monitored` |
 | `POST /api/system/network-health/hosts/<hostname>/recheck` | `system.recheck` | Check Now: force a Nagios host check. 429 inside the 10 s per-target limit (`data.retry_after`), 404 not in the latest snapshot, 409 paused/retired/merged, 503 command pipe unavailable. Audited |
 | `POST /api/system/network-health/hosts/acknowledge` | `system.acknowledge_alerts` | Acknowledge a host alert. Response data adds `nagios_synced` and `nagios_message` |
@@ -177,7 +178,7 @@ each route's docstring.
 
 | Method and path | Permission | Purpose |
 |---|---|---|
-| `GET /api/system/network-health/services` | `system.network_health` | Paginated/filterable latest service snapshot |
+| `GET /api/system/network-health/services` | `system.network_health` | Paginated/filterable latest service snapshot; optional `flapping=true` lists only flapping services (`false`, `all` or empty lists everything, 400 otherwise) |
 | `GET /api/system/network-health/services/<hostname>/<path:service_name>/detail` | `system.network_health` | Service detail panel data |
 | `POST /api/system/network-health/services/<hostname>/<path:service_name>/recheck` | `system.recheck` | Check Now for a service; same responses as the host route |
 | `POST /api/system/network-health/services/acknowledge` | `system.acknowledge_alerts` | Acknowledge a service alert. Response data adds `nagios_synced` and `nagios_message` |

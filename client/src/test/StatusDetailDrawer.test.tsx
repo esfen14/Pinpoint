@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { StatusDetailDrawer } from '../components/device-inventory/StatusDetailDrawer'
 
@@ -93,5 +93,94 @@ describe('StatusDetailDrawer Ports section', () => {
     render(<StatusDetailDrawer hostname="web-01" onClose={() => {}} />)
     await screen.findByText(/Ports section/)
     expect(api.apiGet).toHaveBeenCalledWith('/api/system/network-health/hosts/web-01/detail')
+  })
+})
+
+
+describe('StatusDetailDrawer flap history', () => {
+  function flapResponse(items: unknown[], globalEnabled: boolean | null = true) {
+    return { hours: 24, global_flap_detection_enabled: globalEnabled, items }
+  }
+
+  function flapItem(overrides: Record<string, unknown> = {}) {
+    return {
+      type: 'host',
+      hostname: 'web-01',
+      service: null,
+      snapshots_flagged: 7,
+      first_flagged: '2026-10-05T08:00:00+00:00',
+      last_flagged: '2026-10-05T09:00:00+00:00',
+      currently_flapping: true,
+      current_state: 'up',
+      ...overrides,
+    }
+  }
+
+  function serve(flap: unknown) {
+    api.apiGet.mockImplementation((path: string) =>
+      Promise.resolve(path.startsWith('/api/system/network-health/flapping') ? flap : detail()))
+  }
+
+  const flapCalls = () => api.apiGet.mock.calls.map(([path]) => String(path)).filter((p) => p.includes('/flapping'))
+
+  it('lists how often the host was flagged in the chosen window', async () => {
+    serve(flapResponse([flapItem(), flapItem({ hostname: 'other', snapshots_flagged: 99 })]))
+    render(<StatusDetailDrawer hostname="web-01" onClose={() => {}} />)
+
+    expect(await screen.findByRole('heading', { name: 'Flap history' })).toBeInTheDocument()
+    expect(await screen.findByText(/Flagged as flapping in 7 checks/)).toBeInTheDocument()
+    expect(screen.getByText(/Flapping now/)).toBeInTheDocument()
+    expect(screen.queryByText(/99/)).not.toBeInTheDocument()
+    expect(flapCalls()[0]).toBe('/api/system/network-health/flapping?hours=24')
+  })
+
+  it('asks again when the window changes', async () => {
+    serve(flapResponse([flapItem()]))
+    render(<StatusDetailDrawer hostname="web-01" onClose={() => {}} />)
+    await screen.findByText(/Flagged as flapping in 7 checks/)
+
+    fireEvent.change(screen.getByLabelText('Flap history window'), { target: { value: '168' } })
+
+    await waitFor(() => expect(flapCalls().at(-1)).toBe('/api/system/network-health/flapping?hours=168'))
+  })
+
+  it('shows an empty state when it has not flapped', async () => {
+    serve(flapResponse([flapItem({ hostname: 'other' })]))
+    render(<StatusDetailDrawer hostname="web-01" onClose={() => {}} />)
+
+    expect(await screen.findByText(/Not flagged as flapping/)).toBeInTheDocument()
+  })
+
+  it('shows an error when the history cannot be loaded', async () => {
+    api.apiGet.mockImplementation((path: string) =>
+      path.includes('/flapping') ? Promise.reject(new Error('boom')) : Promise.resolve(detail()))
+    render(<StatusDetailDrawer hostname="web-01" onClose={() => {}} />)
+
+    expect(await screen.findByText(/boom/)).toBeInTheDocument()
+  })
+
+  it('warns when Nagios has flap detection switched off globally', async () => {
+    serve(flapResponse([], false))
+    render(<StatusDetailDrawer hostname="web-01" onClose={() => {}} />)
+
+    expect(await screen.findByText(/switched off in Nagios/i)).toBeInTheDocument()
+  })
+
+  it('does not warn when flap detection is on', async () => {
+    serve(flapResponse([flapItem()], true))
+    render(<StatusDetailDrawer hostname="web-01" onClose={() => {}} />)
+    await screen.findByText(/Flagged as flapping/)
+
+    expect(screen.queryByText(/switched off in Nagios/i)).not.toBeInTheDocument()
+  })
+
+  it('is left out without the network health permission', async () => {
+    permissions.granted = new Set(['system.hosts'])
+    serve(flapResponse([flapItem()]))
+    render(<StatusDetailDrawer hostname="web-01" onClose={() => {}} />)
+
+    await screen.findByRole('heading', { name: 'Timestamps' })
+    expect(screen.queryByRole('heading', { name: 'Flap history' })).not.toBeInTheDocument()
+    expect(flapCalls()).toHaveLength(0)
   })
 })

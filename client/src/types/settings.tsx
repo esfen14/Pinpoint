@@ -41,6 +41,12 @@ export interface SystemSettings {
   dashboardRefreshRate: number
   scanFrequency: number
   checkInterval: number
+  retryInterval: number
+  maxCheckAttempts: number
+  flapDetectionEnabled: boolean
+  // Percent of state change, or null to use the value in Nagios's own config.
+  flapLowThreshold: number | null
+  flapHighThreshold: number | null
   dashboardLayout: DashboardLayout
 
   // Notifications
