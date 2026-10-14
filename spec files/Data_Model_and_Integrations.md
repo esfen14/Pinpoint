@@ -30,7 +30,7 @@ acknowledgements belong in `system.db` even though they relate to Nagios alerts.
   with `Reviewed_At`/`Reviewed_By`), `NCPADeploymentResult` (one row per device
   per run), `NCPADeployment` (each device's latest agent state),
   `NCPADevicePartition`.
-- Settings: singleton `SystemSettings`, one-per-user `UserPreferences`.
+- Settings: singleton `SystemSettings`, singleton `NotificationPolicy` (`NOTIFICATION_POLICY`, Id 1, migration `143c48cd6663`), one-per-user `UserPreferences`. `NotificationPolicy` stores weekday/HH:MM quiet windows as JSON, host/service option strings, a 0–1440-minute renotify interval, `Version`, and `Updated_By`; the migration seeds the historical 24x7/default-options/30-minute policy and removes the table on downgrade.
 - Notifications/alerts: `NotificationCursor`, `AlertAcknowledgement`,
   append-only `AckHistory`.
 
@@ -185,6 +185,26 @@ corresponding performance rows are also skipped on repeated polls. A host status
 or pending is logged as an error and that host is skipped for that poll; the rest of
 the poll continues.
 
+`app/nagios/commands.py` is the only writer of the Nagios external command pipe
+(`Config.NAGIOS_COMMAND_FILE`, env `NAGIOS_COMMAND_FILE`, default
+`/usr/local/nagios/var/rw/nagios.cmd`; the service user must be in group
+`nagios`). The CGI route is not used: `cgi.cfg` authorizes commands only for
+`nagiosadmin`, which has no password. The allowlist is closed, one function per
+command: acknowledge/remove acknowledgement (host, service), forced check (host,
+service) and schedule downtime (host, service; for the maintenance-window
+work). Each line is `[epoch] COMMAND;args`, built only after validation: host,
+service and author may not contain newline, CR, NUL or `;`; a comment may not
+contain newline, CR or NUL (400 at the route) and has `;` replaced by `,`, is cut
+to 255 characters and logged at INFO only to 40; a line may not exceed 4096 bytes
+(one atomic pipe write); and the host or service must be in the latest snapshot
+(paused, retired and merged devices are not). The pipe is checked to be a FIFO and
+opened `O_NONBLOCK`, so a stopped Nagios fails at once and a full pipe gives up
+after 2 s; every function returns a typed result (`invalid`, `unknown_target`,
+`unavailable`, `timeout`) instead of raising. Failures of acknowledgement sync are
+written to the audit log. Acknowledgements are sent as normal (not sticky),
+matching `AcknowledgementType.NORMACK`. This path is injection-sensitive
+(Engineering Standards, Sensitive modules).
+
 `app/nagios/notifications.py` reads `archivejson.cgi` for durable alert and
 notification event ranges.
 
@@ -212,6 +232,7 @@ different purpose.
 | Check interval (`checkInterval`) | System-wide 1, 2, 5 (default), 10 or 15 minutes. Nagios checks generated hosts and services at this cadence (`interval_length=60` seconds must hold on the appliance). The system administrator changes it on Settings → System; the shared config writer validates, backs up and reloads `hosts.cfg`, and a failed apply rolls the settings change back. Stock `localhost.cfg` objects are not rewritten. |
 | Retry interval (`retryInterval`) and Maximum check attempts (`maxCheckAttempts`) | System-wide `SystemSettings.Retry_Interval` (1 to 10 minutes, default 1, never longer than the check interval) and `Max_Check_Attempts` (1 to 10, default 3; migration `b7d3f1a9c8e5`). They are written as `retry_interval` and `max_check_attempts` into every generated service and host, and the number of failures before a problem becomes HARD, and so when alerts are sent, follows them. The defaults reproduce the previous generated config exactly; a host gets an explicit `retry_interval` line only when the value is not the default 1. Same Settings → System page, permission and apply-and-rollback flow as the Check interval. There is no per-device override. |
 | Flap detection (`flapDetectionEnabled`, `flapLowThreshold`, `flapHighThreshold`) | `SystemSettings.Flap_Detection_Enabled` (default on), `Flap_Low_Threshold` and `Flap_High_Threshold` (percent of state change, 0 to 100, empty by default; migration `c5e2a8f4d716`). Defaults write nothing extra, so default generated config is unchanged and Nagios's global values (5 and 20 on the lab appliance) apply. Custom thresholds are written as `low_flap_threshold` and `high_flap_threshold`; turning detection off writes only `flap_detection_enabled 0`. The change goes through the shared config writer and a rejected config rolls the settings back. The global `enable_flap_detection` and its thresholds in `nagios.cfg` belong to the installer. |
+| Notification policy | A separate system-wide singleton controls the generated host/service notification periods, contact periods/options, state options, and renotify interval. Quiet windows use **Nagios server local time**, not each user's display zone; allowed spans are rendered as the complement in a fixed `pinpoint_notify` timeperiod in `hosts.cfg`. No quiet windows emit no new period; historical default output is preserved. Custom contacts inherit a non-registering `pinpoint-contact` template rather than rewriting stock `generic-contact`. Saving validates the candidate with Nagios, rolls back database changes on failed apply, and respects the system audit setting. Stock `localhost.cfg` and check cadence are unchanged. |
 | Data polling frequency | Pinpoint reads Nagios CGI status every 60 seconds, fixed and independent of discovery and checks. Unchanged `Last_Check` does not add another host/service or performance row. |
 | Dashboard Refresh Rate | Per-user browser fetch, Manual/1/5/15 minutes, independent of the other schedules; its hint shows the Check interval and 60-second poll. |
 
@@ -415,9 +436,13 @@ appear in logs, API responses, or persisted Nagios snapshot check commands.
   `service = null` identifies a host alert.
 - A comment is required when acknowledging.
 - Acknowledgement and manual unacknowledgement append `AckHistory` records.
-- When an alert resolves to UP/OK, the active acknowledgement must be removed
-  and an `AUTO_RESOLVED` history row written. The model contract exists, but the
-  polling cleanup is not currently wired; see `Implementation_Status.md`.
+- On a completed nonempty Nagios status poll, a fresh UP/OK check for an acknowledged
+  host/service removes its active acknowledgement and appends one actorless
+  `AUTO_RESOLVED` history row in a single transaction. Missing or stale checks,
+  absent targets, empty/failed polls and still-failing targets retain their records;
+  subsequent polls do not duplicate the history event. Freshness uses the configured
+  check interval plus 90 seconds for polling/jitter. The poller fetches all service
+  lists before reconciling so a later CGI failure cannot partially clear records.
 
 ## Migrations
 

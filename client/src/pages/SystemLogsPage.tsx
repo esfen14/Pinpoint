@@ -7,6 +7,7 @@ import { exportRows } from '../utils/exportData'
 import { ExportMenu } from '../components/shared/ExportMenu'
 import { apiGet, errorMessage } from '../lib/api'
 import { LOG_ENDPOINTS, type LogCategory, type LogEntry, type LogListResponse, type SkippedService } from '../types/log'
+import { Pagination } from '../components/shared/Pagination'
 
 const PER_PAGE = 10
 
@@ -208,24 +209,7 @@ export function SystemLogsPage() {
             {/* Pagination */}
             <div className="flex items-center justify-between px-4 text-sm text-[var(--text-muted)]">
               <span>Page {page} of {meta.pages} · {meta.total} logs total</span>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={!meta.hasPrev}
-                  className="rounded-lg px-3 py-1 hover:bg-[var(--hover)] disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Previous
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPage((p) => p + 1)}
-                  disabled={!meta.hasNext}
-                  className="rounded-lg px-3 py-1 hover:bg-[var(--hover)] disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Next
-                </button>
-              </div>
+              <Pagination page={page} pageCount={meta.pages} onPageChange={setPage} variant="themed" />
             </div>
           </div>
 

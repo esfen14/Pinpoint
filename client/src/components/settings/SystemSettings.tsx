@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 
 import { SettingsCard } from './SettingsCard'
+import { NotificationPolicySettings } from './NotificationPolicySettings'
 import { SettingsSelect } from './SettingsSelect'
 import { SettingsToggle } from './SettingsToggle'
 import { SettingsActions } from './SettingsActions'
@@ -266,6 +267,8 @@ export function SystemSettings() {
         
       </SettingsCard>
 
+      <NotificationPolicySettings />
+
       <SettingsCard
         title="Flap detection"
         description="Nagios marks a host or service as flapping when it keeps switching between states, and holds back its alerts until it settles."
@@ -298,16 +301,10 @@ export function SystemSettings() {
         </div>
 
         {flapError && (
-          <p role="alert" className="mt-4 text-sm text-red-500">{flapError}</p>
+          <p role="alert" data-testid="flap-error" className="mt-4 text-sm text-red-500">{flapError}</p>
         )}
 
-        <SettingsActions
-          hasChanges={hasUnsavedChanges}
-          onSave={saveUnlessInvalid}
-          onDiscard={discardChanges}
-          isSaving={isSaving}
-          saveError={saveError}
-        />
+        <p className="mt-4 text-xs text-[var(--text-muted)]">Saved with the other system settings above.</p>
       </SettingsCard>
 
       <SettingsCard

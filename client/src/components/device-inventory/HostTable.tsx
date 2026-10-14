@@ -9,6 +9,7 @@ import {
   type MonitoringFilter,
 } from './monitoringState'
 import { useDisplayTime } from '../../hooks/useDisplayTime'
+import { Pagination } from '../shared/Pagination'
 
 type HostTableProps = {
   hosts: Host[]
@@ -76,8 +77,6 @@ export function HostTable({
   page,
   pageCount,
   total,
-  hasNext,
-  hasPrev,
   onPageChange,
   onAcknowledge,
   onUnacknowledge,
@@ -291,29 +290,7 @@ export function HostTable({
           Page {page} of {pageCount} · {total} hosts total
         </span>
 
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => onPageChange(page - 1)}
-            disabled={!hasPrev}
-            className="rounded-lg px-3 py-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-white/10"
-          >
-            Previous
-          </button>
-
-          <span className="rounded-lg bg-white border border-gray-200 px-3 py-1 text-gray-900 shadow-sm dark:bg-white/10 dark:text-white dark:border-transparent">
-            {page}
-          </span>
-
-          <button
-            type="button"
-            onClick={() => onPageChange(page + 1)}
-            disabled={!hasNext}
-            className="rounded-lg px-3 py-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-white/10"
-          >
-            Next
-          </button>
-        </div>
+        <Pagination page={page} pageCount={pageCount} onPageChange={onPageChange} />
       </div>
     </div>
   )

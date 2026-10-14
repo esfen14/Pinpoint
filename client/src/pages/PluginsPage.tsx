@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { AlertTriangle, Boxes, CheckCircle2, /* PackagePlus, */ Puzzle, RefreshCcw } from 'lucide-react'
 import { PageHeader } from '../components/shared/PageHeader'
 import { SummaryStatCard } from '../components/shared/SummaryStatCard'
+import type { PluginGroup } from '../components/plugin-manager/pluginGroups'
 import { PluginInventoryTable } from '../components/plugin-manager/PluginInventoryTable'
 import { PluginDetailsDrawer } from '../components/plugin-manager/PluginDetailsDrawer'
 // import { AddCustomPluginModal } from '../components/plugin-manager/AddCustomPluginModal'
@@ -17,6 +18,7 @@ export function PluginsPage() {
   const [typeFilter, setTypeFilter] = useState<'All' | PluginType>('All')
   const [statusFilter, setStatusFilter] = useState<'All' | PluginStatus | 'Failed'>('All')
   const [showFilter, setShowFilter] = useState(false)
+  const [group, setGroup] = useState<'All' | PluginGroup>('All')
   const [sortAsc, setSortAsc] = useState(true)
   const [page, setPage] = useState(1)
 
@@ -44,7 +46,7 @@ export function PluginsPage() {
 
   useEffect(() => {
     setPage(1)
-  }, [typeFilter, statusFilter, sortAsc])
+  }, [typeFilter, statusFilter, group, sortAsc])
 
   const loadInventory = useCallback(async () => {
     setIsLoading(true)
@@ -58,6 +60,7 @@ export function PluginsPage() {
         search: debouncedQuery,
         type: typeFilter === 'All' ? undefined : typeFilter,
         status: statusFilter === 'All' ? undefined : statusFilter,
+        group: group === 'All' ? undefined : group,
       })
       setPlugins(data.items)
       setListMeta({ pages: data.pages, total: data.total, hasNext: data.has_next, hasPrev: data.has_prev })
@@ -66,7 +69,7 @@ export function PluginsPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [page, sortAsc, debouncedQuery, typeFilter, statusFilter])
+  }, [page, sortAsc, debouncedQuery, typeFilter, statusFilter, group])
 
   const loadSummary = useCallback(async () => {
     try {
@@ -213,6 +216,8 @@ export function PluginsPage() {
         onTypeFilterChange={(t) => { setTypeFilter(t); setShowFilter(false) }}
         statusFilter={statusFilter}
         onStatusFilterChange={(s) => { setStatusFilter(s); setShowFilter(false) }}
+        group={group}
+        onGroupChange={setGroup}
         showFilter={showFilter}
         onToggleFilter={() => setShowFilter((v) => !v)}
         sortAsc={sortAsc}

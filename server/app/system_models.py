@@ -807,6 +807,24 @@ class SystemSettings(db.Model):
         }
 
 
+class NotificationPolicy(db.Model):
+    """System-wide notification timing for generated Nagios objects (Id=1)."""
+
+    __tablename__ = "NOTIFICATION_POLICY"
+
+    Id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    Quiet_Hours: so.Mapped[list] = so.mapped_column(sa.JSON(), default=list)
+    Host_Options: so.Mapped[str] = so.mapped_column(sa.String(20), default="d,u,r,f,s")
+    Service_Options: so.Mapped[str] = so.mapped_column(sa.String(20), default="w,u,c,r,f,s")
+    Renotify_Interval: so.Mapped[int] = so.mapped_column(sa.Integer(), default=30)
+    Version: so.Mapped[int] = so.mapped_column(sa.Integer(), default=1)
+    Updated_At: so.Mapped[datetime] = so.mapped_column(
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+    Updated_By: so.Mapped[Optional[int]] = so.mapped_column(sa.ForeignKey(User.UserID), index=True)
+
+
 class DiscoverySettings(db.Model):
     # Table Name
     __tablename__ = "DISCOVERY_SETTINGS"

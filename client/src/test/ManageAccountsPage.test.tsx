@@ -67,7 +67,11 @@ const ACCOUNTS = [
   account(5, 'Marco', 'Gomez', 'Suspended', 'Viewer'),
 ]
 
-const ROLES = [{ id: 1, name: 'Admin' }, { id: 2, name: 'Viewer' }]
+const ROLES = [
+  { id: 1, name: 'Admin', preserves_bootstrap_admin_access: true },
+  { id: 2, name: 'Viewer', preserves_bootstrap_admin_access: false },
+  { id: 3, name: 'Backup Admin', preserves_bootstrap_admin_access: true },
+]
 
 let accountsResponse: unknown
 let passwordRequests: unknown[] = []
@@ -203,6 +207,22 @@ describe('ManageAccountsPage', () => {
       'title',
       'The super admin account cannot be suspended or made inactive.',
     )
+  })
+
+  it('explains and disables unsafe role choices for the bootstrap administrator', async () => {
+    const user = userEvent.setup()
+    await renderLoaded()
+
+    const superAdminRow = screen.getByText('Marie Santos').closest('tr') as HTMLElement
+    await user.click(within(superAdminRow).getByTitle('Edit'))
+
+    expect(
+      screen.getByText(
+        'The bootstrap administrator must keep a role that can manage accounts and roles.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'Viewer' })).toBeDisabled()
+    expect(screen.getByRole('option', { name: 'Backup Admin' })).toBeEnabled()
   })
 
   it('shows an error banner when loading fails', async () => {

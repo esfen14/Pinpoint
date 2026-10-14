@@ -21,15 +21,15 @@ requests use `src/lib/api.ts`; Plugin Manager wrappers live in
 | `/dashboard` | `DashboardPage` | `system.dashboard` | Connected to dashboard, trends, service, and acknowledgement APIs |
 | `/network-health` | `NetworkHealthPage` | `system.network_health` | Connected to summary and trends APIs; detailed host/service UI is supplied elsewhere |
 | `/device-inventory` | `DeviceInventoryPage` | `system.network_health` | Connected to the latest-host endpoints and acknowledgement API. The host table has an IP Address column (`—` for a host with no discovered device). The host drawer also shows a Ports section (see `Device_Inventory_Requirements.md`) for users with `system.hosts` when the host has a `device_id`; actions need `system.hosts.edit`. The host table has a Monitoring column and filter, and the drawer a Monitoring section with Pause / Resume (`Device_Inventory_Requirements.md` §12) |
-| `/history` | `HistoryPage` | `system.history` | Connected to the alert and notification history list and detail routes (`/api/system/history/...`); sidebar entry "History". Not audited against `Alerts_Notifications_History_Requirements.md` |
+| `/history` | `HistoryPage` | `system.history` | Connected to the alert and notification history list and detail routes (`/api/system/history/...`); sidebar entry "History". Audited against `Alerts_Notifications_History_Requirements.md` in `docs/test-runs/2026-10-14-issue-133-history-audit/AUDIT.md`; supported sorting controls and cross-tab links are present, with backend-dependent gaps tracked in #141–#144 |
 | `/system-status` | `SystemStatusPage` | `system.network_health` | The **System Status** page (sidebar label “System Status”): a service-status table with OK / Warning / Unknown / Critical counts, search, state filter, sort, paging and acknowledgement. It is a supported page. The network *topology view* is excluded from the release. |
-| `/plugins` | `PluginsPage` | `plugin.view` | Connected to Plugin Manager inventory (with a Monitoring column and a banner while no plugin is enabled), plugin details with an enable confirmation that previews what will be monitored, the plugin's monitored services with live status and per-device stop/resume, scanning, and mutation APIs. There is no Currently Running tab and devices are never picked by hand |
+| `/plugins` | `PluginsPage` | `plugin.view` | Connected to Plugin Manager inventory (category tabs All / Network Services / Device Availability / Network Protocols / Servers / Application / Other, filtered by the `group` query parameter so paging stays per tab; a Monitoring column and a banner while no plugin is enabled), plugin details with an enable confirmation that previews what will be monitored, the plugin's monitored services with live status and per-device stop/resume, scanning, and mutation APIs. There is no Currently Running tab (the tabs are categories only) and devices are never picked by hand |
 | `/ncpa-deployment` | `NcpaDeploymentPage` | `system.deploy.ncpa` | Warns, through `useNcpaPluginState`, when `check_ncpa` is not enabled in Plugin Manager (the agent's checks are monitored only while it is). Connected to the NCPA deployment routes: device list, deploy wizard (host-key trust, login checks, start), live run banner, Deployment History tab and run review drawer (`?tab=history&run=<id>`) |
 | `/reports` | `ReportsPage` | `system.report` | Connected for host availability and network-services views; backend exposes additional report routes |
 | `/system-logs` | `SystemLogsPage` | `system.logs` | Connected to five log categories |
-| `/accounts` | `ManageAccountsPage` | `account.view` | Connected to account/role APIs. The table shows each user's Email Alerts (On/Off); the add and edit forms show a "Send this user email alerts" checkbox only with `account.alerts`, and a failed Nagios apply is shown as a notice. The first account is marked by the account API as `is_super_admin`; its edit form keeps Status Active and disables the status selector while leaving other fields editable |
-| `/manage-roles` | `ManageRolesPage` | `role.view` | Connected to role and permission APIs |
-| `/settings` | `SettingsPage` | Any logged-in user; tabs are separately gated | Connected to system settings and user preferences. Tabs: General Settings, Security, System, Network Discovery and Plugins |
+| `/accounts` | `ManageAccountsPage` | `account.view` | Connected to account/role APIs. The table shows each user's Email Alerts (On/Off); the add and edit forms show a "Send this user email alerts" checkbox only with `account.alerts`, and a failed Nagios apply is shown as a notice. The first account is marked by the account API as `is_super_admin`; its edit form keeps Status Active, disables the status selector, explains that the bootstrap administrator must retain account/role administration, and disables role options whose `preserves_bootstrap_admin_access` value is false |
+| `/manage-roles` | `ManageRolesPage` | `role.view` | Connected to role and permission APIs. The built-in `Administrator` role shows every permission as read-only with an explanation, and its name cannot be edited. The bootstrap administrator's assigned role is marked as locked; its edit form disables the seven account/role administration permission controls and role deactivation, even when assigned to a different role |
+| `/settings` | `SettingsPage` | Any logged-in user; tabs are separately gated | Connected to system settings and user preferences. Tabs: General Settings, Security, System, Network Discovery, Plugins and Email; the System tab includes the notification-policy card |
 | `/` | Redirect | — | Redirects to `/login` |
 | unmatched path | Redirect | — | Redirects to `/login` |
 
@@ -41,7 +41,7 @@ This is usability protection only; backend permission checks remain mandatory.
 
 The Settings page is generally available to logged-in users. Its Security,
 System, Network Discovery, Plugins and Email tabs require `settings.security`,
-`settings.system`, `settings.discovery`, `settings.plugins` and `settings.email`, respectively.
+`settings.system`, `settings.discovery`, `settings.plugins` and `settings.email`, respectively. General's `notifications` toggle only shows/hides the header bell; it does not stop email or change Nagios' `enable_notifications`. The System tab's `NotificationPolicySettings` card is visible only with `settings.system` and reads/writes `/api/system/notification-policy` through `lib/notificationPolicyApi.ts` and `types/notificationPolicy.ts`. Quiet-hour weekdays and 24-hour times are interpreted in Nagios server local time. The card validates time format, order, overlap, options and interval; 409 offers a reload and 400/422 display the server's message.
 
 `AdminLayout` replaces the whole shell with a blocking window while the account
 is flagged: `FirstRunSetup` when `needsSetup` (bootstrap administrator: current
@@ -74,7 +74,7 @@ When adding a page:
 | `components/manage-accounts/` | Account management table/UI |
 | `components/settings/` | General, security, and system settings controls; the Network Discovery tab edits networks, scan ports and one Port → Service table per protocol (NCPA's port fixed, each entry showing the check it leads to); the Plugins tab (`PluginSettings`) shows one editable table per installed plugin: SNMP OIDs (description, OID) once `check_snmp` is installed and NCPA metrics (description, metric path, optional warning, critical, units, query args) once `check_ncpa` is installed. Cells edit in place, Add appends an empty row, rows can be removed, Reset restores the `config.py` defaults; each table warns when its plugin is not Enabled/Active and that a new or renamed description starts a new Nagios service; the Email tab (`EmailSettings`) edits the Gmail account notification mail uses: a locked Gmail preset (`smtp.gmail.com`, 587, STARTTLS), the Gmail address, a sender that follows it (warning when changed, because Gmail rewrites From), an "App password" field (`xxxx xxxx xxxx xxxx`, sent exactly as typed, write-only, blank keeps the saved one) with help text and a new-tab link to `https://myaccount.google.com/apppasswords`, and a "Send test email" card that shows a plain-language message for each failure (rejected login, blocked port, unknown host) with a technical explanation and the server's own response under "Details" |
 | `components/layout/` | Authenticated application shell and global session/access behavior |
-| `components/shared/` | Reusable headers, summary cards, export menu, alerts sidebar, and rescan modal |
+| `components/shared/` | Reusable headers, summary cards, export menu, alerts sidebar, rescan modal, and `Pagination` (Previous, page numbers, Next: every page up to four, otherwise `1 2 3 … last`, sliding to `1 … 4 5 6 … last` and `1 … last-2 last-1 last`; used by every paginated table) |
 
 ## Contexts, hooks, types, and utilities
 
@@ -108,3 +108,14 @@ When adding a page:
   when connecting a feature.
 - Service names in URL paths must be encoded, and backend routes must retain the
   Flask `path` converter because names may contain `/`.
+
+## Nagios command channel UI
+
+- `components/shared/CheckNowButton.tsx`: **Check now** in the host and service views of
+  `StatusDetailDrawer`. Shown only with `system.recheck`; shows Requesting…, a
+  success line, the server's error, and a countdown from the 429 `retry_after`
+  (default 10 s) during which it is disabled.
+- `components/shared/NagiosSyncNotice.tsx` with `types/nagiosSync.ts`: every acknowledge
+  and unacknowledge call (Dashboard, Device Inventory, System Status, the drawer)
+  reads `nagios_synced` from the response and shows a dismissible notice when it
+  is false; nothing is shown when it is true or absent.

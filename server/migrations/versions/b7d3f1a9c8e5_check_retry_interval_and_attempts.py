@@ -1,13 +1,13 @@
 """add system-wide Nagios retry interval and maximum check attempts
 
 Revision ID: b7d3f1a9c8e5
-Revises: a4c8e1f6d392
+Revises: 143c48cd6663
 """
 from alembic import op
 import sqlalchemy as sa
 
 revision = 'b7d3f1a9c8e5'
-down_revision = 'a4c8e1f6d392'
+down_revision = '143c48cd6663'
 branch_labels = None
 depends_on = None
 

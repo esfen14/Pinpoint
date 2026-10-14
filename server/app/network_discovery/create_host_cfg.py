@@ -480,6 +480,13 @@ def _create_host_cfg_file(discovered_hosts, skipped=None):
 
     host_config.append(_add_space(4))
 
+    # A custom notification timeperiod belongs in this same candidate file so
+    # Nagios validates it together with every object that references it.
+    timeperiod = create_notification_timeperiod()
+    if timeperiod:
+        host_config.append(timeperiod)
+        host_config.append(_add_space(4))
+
     host_config.append(
         f"""
 
@@ -502,10 +509,18 @@ def _create_host_cfg_file(discovered_hosts, skipped=None):
     # is written and hosts and services get no contact_groups line.
     contact_group_name = "system_users" if users else ""
 
+    # Defaults keep the historical file byte-for-byte. A custom policy must
+    # explicitly override the stock generic-contact template inherited by users.
+    policy = notification_policy()
+    if policy.Quiet_Hours or policy.Host_Options != "d,u,r,f,s" or policy.Service_Options != "w,u,c,r,f,s":
+        host_config.append(create_contact_template("pinpoint-contact"))
+        host_config.append(_add_space(4))
+
     for user in users:
         user_information = {
             "contact_name": str(user.Email),
-            "use": "generic-contact",
+            "use": ("pinpoint-contact" if policy.Quiet_Hours or policy.Host_Options != "d,u,r,f,s"
+                    or policy.Service_Options != "w,u,c,r,f,s" else "generic-contact"),
             "full_name": str(user.First_Name + " " + user.Last_Name),
             "email_address": str(user.Email)
         }

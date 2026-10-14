@@ -21,6 +21,11 @@ The history page answers questions like:
 This page is for **browsing and investigation**. Export and report generation
 are handled separately by the existing reports system and are not defined here.
 
+The source audit for issue #133 is recorded in
+[`docs/test-runs/2026-10-14-issue-133-history-audit/AUDIT.md`](../docs/test-runs/2026-10-14-issue-133-history-audit/AUDIT.md).
+It distinguishes page-only improvements from backend-dependent gaps; it is not
+live-appliance acceptance evidence.
+
 ---
 
 ## Definitions
@@ -30,7 +35,7 @@ are handled separately by the existing reports system and are not defined here.
 | **Alert event** | A recorded state change for a host or service (e.g., OK → CRITICAL, DOWN → UP). Each transition is one event. |
 | **Active alert** | A host or service currently in a problem state. Also visible on the Dashboard (§1.6 of Display_Requirements). |
 | **Notification event** | A Nagios-generated contact event (email, SMS, etc.) sent on a state change. Stored separately from alert state. |
-| **Acknowledgement record** | A record created when a user acknowledges an alert (see §4 of Display_Requirements). Stored in the `ACK_HISTORY` table in `system_models.py` (main DB). |
+| **Acknowledgement record** | A record created when a user acknowledges an alert (see §4 of Display_Requirements). Stored in the `ACK_HISTORY` table in `system_models.py` (main DB). The acknowledgement is also sent to Nagios (Display_Requirements §4.1); a failed Nagios sync is recorded in the audit log, not in `ACK_HISTORY`. |
 
 ---
 
@@ -87,13 +92,26 @@ chronological record of every transition.
 | Plugin output | Nagios plugin output at time of event, truncated |
 | Acknowledged | Badge if this alert event was acknowledged at any point while active |
 
+A problem episode starts at a host/service problem transition and ends on its
+UP/OK recovery. Subsequent non-OK transitions for that target remain in the
+same episode unless an `AUTO_RESOLVED` acknowledgement action marks a recovery
+missing from the archive window. `ACKNOWLEDGED` actions within that episode
+mark its problem events, including earlier problem transitions while active;
+`UNACKNOWLEDGED` removes the live acknowledgement but does not erase that
+historical badge. A later episode starts unacknowledged. Recovery rows are not
+problem events and do not inherit the badge. Both the badge and the
+acknowledgement filter use these episode bounds, even when the selected time
+range begins after the episode's first transition. Host and service episodes
+are separate targets.
+
 ### 3.2 Row Expansion — Alert Detail
 
 When a row is selected or expanded, show:
 
 - Full plugin output (untruncated)
-- If the event was acknowledged (query `ACK_HISTORY` in `system_models.py`
-  for rows matching this hostname + service where `Action = ACKNOWLEDGED`):
+- If this problem event was acknowledged during its active episode (match
+  `ACK_HISTORY` by hostname + service and the episode's time bounds, not by
+  target alone):
   - Acknowledging user's name (join `ActorUserID` → `USER` table)
   - Acknowledgement timestamp (`Actioned_At`)
   - Acknowledgement comment (`Comment`)

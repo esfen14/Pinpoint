@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { ArrowUpDown, Filter, Search, Edit } from 'lucide-react'
 import type { User } from '../../types/user'
 import { useDisplayTime } from '../../hooks/useDisplayTime'
+import { Pagination } from '../shared/Pagination'
 
 type UserTableProps = { users: User[]; title: string; onEdit: (user: User) => void }
 
@@ -166,27 +167,7 @@ export function UserTable({ users, title, onEdit }: UserTableProps) {
           Showing {filtered.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}
           –{Math.min(currentPage * PAGE_SIZE, filtered.length)} of {filtered.length} users
         </span>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={currentPage <= 1}
-            className="rounded-lg px-3 py-1 hover:bg-[var(--hover)] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Previous
-          </button>
-          <span className="rounded-lg bg-white border border-gray-200 px-3 py-1 text-gray-900 shadow-sm dark:bg-white/10 dark:text-white dark:border-transparent">
-            {currentPage} / {pageCount}
-          </span>
-          <button
-            type="button"
-            onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
-            disabled={currentPage >= pageCount}
-            className="rounded-lg px-3 py-1 hover:bg-[var(--hover)] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
+        <Pagination page={currentPage} pageCount={pageCount} onPageChange={setPage} variant="themed" />
       </div>
     </div>
   )

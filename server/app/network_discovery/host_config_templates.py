@@ -1,7 +1,46 @@
 from pathlib import Path
 
 from app import db
-from app.system_models import SystemSettings
+from app.system_models import NotificationPolicy, SystemSettings
+
+NOTIFICATION_PERIOD = "pinpoint_notify"
+WEEKDAYS = ("sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday")
+
+
+def notification_policy():
+    """Read the saved policy or use backward-compatible defaults before migration."""
+    return db.session.get(NotificationPolicy, 1) or NotificationPolicy(
+        Id=1, Quiet_Hours=[], Host_Options="d,u,r,f,s", Service_Options="w,u,c,r,f,s",
+        Renotify_Interval=30,
+    )
+
+
+def notification_period(policy):
+    """Use the built-in period unless a saved quiet window needs a custom one."""
+    return NOTIFICATION_PERIOD if policy.Quiet_Hours else "24x7"
+
+
+def create_notification_timeperiod(policy=None):
+    """Render allowed minutes as each weekday's quiet-window complement."""
+    policy = policy or notification_policy()
+    if not policy.Quiet_Hours:
+        return ""
+    lines = []
+    for day in WEEKDAYS:
+        quiet = sorted((window["start"], window["end"]) for window in policy.Quiet_Hours
+                       if window["weekday"] == day)
+        allowed = []
+        cursor = "00:00"
+        for start, end in quiet:
+            if cursor < start:
+                allowed.append(f"{cursor}-{start}")
+            cursor = end
+        if cursor < "24:00":
+            allowed.append(f"{cursor}-24:00")
+        if allowed:
+            lines.append(f"    {day:<32}{','.join(allowed)}")
+    return _load_template("timeperiod.cfg.tpl").format(name=NOTIFICATION_PERIOD, days="\n".join(lines))
+
 
 
 def check_interval():
@@ -90,6 +129,7 @@ def create_host(host):
     # Hosts have never had an explicit retry_interval; write one only when it
     # differs from the default, so default output stays exactly as it was.
     retry_line = "" if retry_interval == DEFAULT_RETRY_INTERVAL else "\n    retry_interval                  %d" % retry_interval
+    policy = notification_policy()
     rendered = _load_template("host.cfg.tpl").format(
         host_name=host["host_name"],
         alias=host["alias"],
@@ -98,6 +138,10 @@ def create_host(host):
         check_interval=check_interval(),
         max_check_attempts=max_attempts,
         retry_interval_line=retry_line,
+        renotify_interval=policy.Renotify_Interval,
+        period=notification_period(policy),
+        notification_options=(f"\n    notification_options            {policy.Host_Options}"
+                              if policy.Host_Options != "d,u,r,f,s" else ""),
     )
     rendered = _drop_empty_contact_groups(rendered)
     rendered = add_flap_lines(rendered)
@@ -107,6 +151,12 @@ def create_host(host):
     
 def create_service(service, service_command):
     retry_interval, max_attempts = check_timing()
+    policy = notification_policy()
+    fields = (f"\n    notification_period         {notification_period(policy)}"
+              f"\n    notification_options        {policy.Service_Options}"
+              f"\n    notification_interval       {policy.Renotify_Interval}"
+              if policy.Quiet_Hours or policy.Service_Options != "w,u,c,r,f,s" or policy.Renotify_Interval != 30
+              else "")
     rendered = _load_template("service.cfg.tpl").format(
         host_name=service["host_name"],
         service_name=service["service_name"],
@@ -115,6 +165,7 @@ def create_service(service, service_command):
         check_interval=check_interval(),
         retry_interval=retry_interval,
         max_check_attempts=max_attempts,
+        notification_fields=fields,
     )
     rendered = _drop_empty_contact_groups(rendered)
     rendered = add_flap_lines(rendered)
@@ -131,8 +182,13 @@ def create_contact(contact):
     )
 
 def create_contact_template(contact_template):
+    policy = notification_policy()
     return _load_template("contact_template.cfg.tpl").format(
-        template_name=contact_template
+        template_name=contact_template,
+        register=("\n    register                        0" if contact_template == "pinpoint-contact" else ""),
+        period=notification_period(policy),
+        host_options=policy.Host_Options,
+        service_options=policy.Service_Options,
     )
     
 def create_hostgroup(hostgroup):

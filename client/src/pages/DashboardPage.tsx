@@ -14,6 +14,8 @@ import { formatDateTime } from '../utils/formatDateTime'
 import { trendBuckets } from '../utils/trendHours'
 import { fromPluginsResponse, type PluginGroup, type PluginsApiResponse } from '../types/networkHealth'
 import { apiDelete, apiGet, apiPost, errorMessage } from '../lib/api'
+import { NagiosSyncNotice } from '../components/shared/NagiosSyncNotice'
+import { nagiosSyncNotice, type NagiosSyncResult } from '../types/nagiosSync'
 import {
   fromAlertRecord,
   fromDashboardStatusResponse,
@@ -43,6 +45,7 @@ export function DashboardPage() {
 
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [syncNotice, setSyncNotice] = useState<string | null>(null)
   const [ackTarget, setAckTarget] = useState<AlertRow | null>(null)
   const [ackAllOpen, setAckAllOpen] = useState(false)
   const [notifications, setNotifications] = useState<DashboardNotification[] | null>(null)
@@ -109,12 +112,13 @@ export function DashboardPage() {
 
   async function acknowledgeAlert(alert: AlertRow, comment: string) {
     try {
-      await apiPost('/api/system/dashboard/alerts/acknowledge', {
+      const result = await apiPost<NagiosSyncResult>('/api/system/dashboard/alerts/acknowledge', {
         hostname: alert.hostname,
         service_name: alert.serviceName,
         comment,
       })
       setAckTarget(null)
+      setSyncNotice(nagiosSyncNotice(result))
       await loadAll()
     } catch (err) {
       setLoadError(errorMessage(err, 'Unable to acknowledge alert.'))
@@ -123,13 +127,14 @@ export function DashboardPage() {
 
   async function acknowledgeAllAlerts(comment: string) {
     try {
-      await apiPost('/api/system/dashboard/alerts/acknowledge-all', {
+      const result = await apiPost<NagiosSyncResult>('/api/system/dashboard/alerts/acknowledge-all', {
         comment,
         alerts: alerts
           .filter((alert) => !alert.ack)
           .map((alert) => ({ hostname: alert.hostname, service_name: alert.serviceName })),
       })
       setAckAllOpen(false)
+      setSyncNotice(nagiosSyncNotice(result))
       await loadAll()
     } catch (err) {
       setLoadError(errorMessage(err, 'Unable to acknowledge alerts.'))
@@ -138,10 +143,11 @@ export function DashboardPage() {
 
   async function unacknowledgeAlert(alert: AlertRow) {
     try {
-      await apiDelete('/api/system/dashboard/alerts/acknowledge', {
+      const result = await apiDelete<NagiosSyncResult>('/api/system/dashboard/alerts/acknowledge', {
         hostname: alert.hostname,
         service_name: alert.serviceName,
       })
+      setSyncNotice(nagiosSyncNotice(result))
       await loadAll()
     } catch (err) {
       setLoadError(errorMessage(err, 'Unable to remove acknowledgement.'))
@@ -184,6 +190,8 @@ export function DashboardPage() {
               </div>
             </div>
           </div>
+
+          <NagiosSyncNotice message={syncNotice} onDismiss={() => setSyncNotice(null)} />
 
           {loadError && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300">
