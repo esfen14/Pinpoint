@@ -4,6 +4,8 @@ import { PageHeader } from '../components/shared/PageHeader'
 import { SummaryStatCard } from '../components/shared/SummaryStatCard'
 import { ServiceStatusTable } from '../components/system-status/ServiceStatusTable'
 import { apiDelete, apiGet, apiPost, errorMessage } from '../lib/api'
+import { NagiosSyncNotice } from '../components/shared/NagiosSyncNotice'
+import { nagiosSyncNotice, type NagiosSyncResult } from '../types/nagiosSync'
 import { fromServiceRecord, type ServiceListResponse, type ServiceRow, type ServiceState } from '../types/service'
 
 const PER_PAGE = 10
@@ -32,6 +34,7 @@ export function SystemStatusPage() {
   const [counts, setCounts] = useState<ServiceCounts>({ total: 0, ok: 0, warning: 0, critical: 0, unknown: 0 })
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [syncNotice, setSyncNotice] = useState<string | null>(null)
   const [ackTarget, setAckTarget] = useState<ServiceRow | null>(null)
 
   useEffect(() => {
@@ -90,12 +93,13 @@ export function SystemStatusPage() {
 
   async function acknowledgeService(service: ServiceRow, comment: string) {
     try {
-      await apiPost('/api/system/network-health/services/acknowledge', {
+      const result = await apiPost<NagiosSyncResult>('/api/system/network-health/services/acknowledge', {
         hostname: service.hostname,
         service_name: service.service,
         comment,
       })
       setAckTarget(null)
+      setSyncNotice(nagiosSyncNotice(result))
       await Promise.all([loadServices(), loadCounts()])
     } catch (err) {
       setLoadError(errorMessage(err, 'Unable to acknowledge service.'))
@@ -104,10 +108,11 @@ export function SystemStatusPage() {
 
   async function unacknowledgeService(service: ServiceRow) {
     try {
-      await apiDelete('/api/system/network-health/services/acknowledge', {
+      const result = await apiDelete<NagiosSyncResult>('/api/system/network-health/services/acknowledge', {
         hostname: service.hostname,
         service_name: service.service,
       })
+      setSyncNotice(nagiosSyncNotice(result))
       await loadServices()
     } catch (err) {
       setLoadError(errorMessage(err, 'Unable to remove acknowledgement.'))
@@ -123,6 +128,8 @@ export function SystemStatusPage() {
           highlight="Overview"
           description="Live status of hosts and monitored services across your network."
         />
+
+        <NagiosSyncNotice message={syncNotice} onDismiss={() => setSyncNotice(null)} />
 
         {loadError && (
           <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300">

@@ -35,7 +35,7 @@ live-appliance acceptance evidence.
 | **Alert event** | A recorded state change for a host or service (e.g., OK → CRITICAL, DOWN → UP). Each transition is one event. |
 | **Active alert** | A host or service currently in a problem state. Also visible on the Dashboard (§1.6 of Display_Requirements). |
 | **Notification event** | A Nagios-generated contact event (email, SMS, etc.) sent on a state change. Stored separately from alert state. |
-| **Acknowledgement record** | A record created when a user acknowledges an alert (see §4 of Display_Requirements). Stored in the `ACK_HISTORY` table in `system_models.py` (main DB). |
+| **Acknowledgement record** | A record created when a user acknowledges an alert (see §4 of Display_Requirements). Stored in the `ACK_HISTORY` table in `system_models.py` (main DB). The acknowledgement is also sent to Nagios (Display_Requirements §4.1); a failed Nagios sync is recorded in the audit log, not in `ACK_HISTORY`. |
 
 ---
 
