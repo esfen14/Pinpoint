@@ -149,5 +149,8 @@ time skip unsupported paths individually; unreachable inventories defer the adde
 with a retry reason and preserve established checks. Settings → Plugins offers a guided exact process-count row
 for review before saving. Existing saved tables are unchanged until reset.
 NCPA 3.5.0 capability probes found no load-average node, so that default remains
-unavailable. Application/Nagios acceptance and final CI evidence remain pending;
-see [the probe report](../docs/test-runs/2026-10-14-issue-128-ncpa-probe/REPORT.md).
+unavailable. Two-target Docker acceptance observed all six defaults and the exact process
+check OK, omitted an unsupported path with persisted skipped reasons, and
+measured small-lab Nagios load. Installation, independent-host scale and browser
+walkthrough remain unverified; see [the service report](../docs/test-runs/2026-10-14-issue-128-ncpa-services/REPORT.md)
+and [the capability report](../docs/test-runs/2026-10-14-issue-128-ncpa-probe/REPORT.md).
