@@ -72,7 +72,7 @@ def desired_services():
     if not enabled_plugins:
         return []
 
-    facts = load_host_plugin_facts()
+    facts = load_host_plugin_facts(probe_ncpa="check_ncpa" in enabled_plugins)
     app_config = plugin_config()
     desired = []
     for hosts in _load_monitored_hosts().values():
@@ -122,7 +122,7 @@ def preview_enable(plugin_name):
             "plugin_name": resolve_plugin_name(port.Service_Name, transport_for(protocol)),
         }
 
-    facts = load_host_plugin_facts()
+    facts = load_host_plugin_facts(probe_ncpa="check_ncpa" in enabled_plugins)
     app_config = plugin_config()
     services = 0
     devices = set()

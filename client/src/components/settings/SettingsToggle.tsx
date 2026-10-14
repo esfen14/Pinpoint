@@ -29,6 +29,7 @@ export function SettingsToggle({
         <button
           type="button"
           role="switch"
+          aria-label={label}
           aria-checked={enabled}
           onClick={() => onChange(!enabled)}
           className={`

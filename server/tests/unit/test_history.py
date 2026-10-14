@@ -14,6 +14,7 @@ are mocked in all tests so no live Nagios instance is needed.
 """
 
 import pytest
+from datetime import datetime, timezone
 from unittest.mock import patch
 
 # Patch targets inside history.py
@@ -98,6 +99,132 @@ FAKE_NOTIFICATIONS = [
 ]
 
 
+def test_exact_event_locator_and_links(logged_in_client, db_session):
+    alerts = [
+        {"hostname": "webserver", "service_description": "http-80-TCP", "state": state,
+         "timestamp": ts, "state_type": "hard", "plugin_output": state}
+        for ts, state in [(1700001000, "CRITICAL"), (1700001080, "OK"), (1700001100, "CRITICAL")]
+    ]
+    notifications = [
+        {"hostname": "webserver", "service_description": "http-80-TCP", "timestamp": ts,
+         "notification_reason": "CRITICAL", "contact": contact, "output": contact}
+        for ts, contact in [(1700001010, "alice"), (1700001110, "bob")]
+    ]
+
+    def fetch(rows):
+        def selected(start, end, hostname=None, service=None):
+            return [row for row in rows if start <= row["timestamp"] <= end
+                    and (not hostname or row["hostname"] == hostname)
+                    and (not service or row["service_description"] == service)]
+        return selected
+
+    with patch(_ALERTS_RANGE, side_effect=fetch(alerts)), patch(_NOTIFS_RANGE, side_effect=fetch(notifications)):
+        detail = logged_in_client.get('/api/system/history/notifications/detail', query_string={
+            'hostname': 'webserver', 'service': 'http-80-TCP', 'timestamp': 1700001110,
+        }).get_json()['data']
+        assert detail['linked_alert']['timestamp'] == 1700001100
+        assert detail['linked_alert']['event_id']
+        assert detail['event_id']
+        for route, event_id in [('alerts', detail['linked_alert']['event_id']),
+                                ('notifications', detail['event_id'])]:
+            response = logged_in_client.get(f'/api/system/history/{route}',
+                                            query_string={'event_id': event_id, 'preset': '24h'})
+            assert response.status_code == 200
+            assert response.get_json()['data']['items'][0]['event_id'] == event_id
+            assert response.get_json()['data']['total'] == 1
+        alert_detail = logged_in_client.get('/api/system/history/alerts/detail', query_string={
+            'hostname': 'webserver', 'service': 'http-80-TCP', 'timestamp': 1700001100,
+            'new_state': 'CRITICAL',
+        }).get_json()['data']
+        assert [n['event_id'] for n in alert_detail['linked_notifications']] == [detail['event_id']]
+        assert logged_in_client.get('/api/system/history/alerts',
+                                    query_string={'event_id': '1700001100:' + '0' * 64}).get_json()['data']['total'] == 0
+        assert logged_in_client.get('/api/system/history/alerts',
+                                    query_string={'event_id': 'bad'}).status_code == 400
+
+
+def test_same_second_details_select_exact_event(logged_in_client, db_session):
+    alerts = [{**FAKE_ALERTS[0], 'timestamp': 1700001000, 'plugin_output': output}
+              for output in ('first', 'second')]
+    notifs = [{**FAKE_NOTIFICATIONS[0], 'timestamp': 1700001010, 'contact': contact}
+              for contact in ('alice', 'bob')]
+    from app.api.system.history import event_id
+    from app.nagios.notifications import normalize_alert, normalize_notification
+    for route, rows, normalizer, kind, state in [
+        ('alerts', alerts, normalize_alert, 'alert', {'new_state': 'CRITICAL'}),
+        ('notifications', notifs, normalize_notification, 'notification', {}),
+    ]:
+        target = event_id(normalizer(rows[1]), kind)
+        archive = _ALERTS_RANGE if route == 'alerts' else _NOTIFS_RANGE
+        with patch(archive, return_value=rows), patch(_ALERTS_RANGE if route == 'notifications' else _NOTIFS_RANGE, return_value=[]):
+            response = logged_in_client.get(f'/api/system/history/{route}/detail', query_string={
+                'hostname': 'webserver', 'service': 'http-80-TCP', 'timestamp': rows[1]['timestamp'],
+                'event_id': target, **state,
+            })
+        assert response.status_code == 200
+        assert response.get_json()['data']['event_id'] == target
+
+
+def test_link_host_and_no_match(logged_in_client, db_session):
+    host = {'hostname': 'dbserver', 'timestamp': 1700002000, 'state': 'DOWN', 'state_type': 'hard'}
+    notifs = [{'hostname': 'dbserver', 'timestamp': 1700002010,
+               'notification_reason': 'DOWN', 'contact': 'ops'},
+              {'hostname': 'dbserver', 'service_description': 'disk', 'timestamp': 1700002011,
+               'notification_reason': 'DOWN', 'contact': 'ops'}]
+    with patch(_ALERTS_RANGE, return_value=[host]), patch(_NOTIFS_RANGE, return_value=notifs):
+        response = logged_in_client.get('/api/system/history/notifications/detail', query_string={
+            'hostname': 'dbserver', 'timestamp': 1700002010,
+        })
+        assert response.get_json()['data']['linked_alert']['event_id']
+        response = logged_in_client.get('/api/system/history/notifications/detail', query_string={
+            'hostname': 'dbserver', 'service': 'disk', 'timestamp': 1700002011,
+        })
+        assert response.get_json()['data']['linked_alert'] is None
+
+
+@pytest.mark.parametrize("service,healthy,problem,escalated", [
+    (None, "UP", "DOWN", "UNREACHABLE"),
+    ("http", "OK", "WARNING", "CRITICAL"),
+])
+def test_archive_timeline_across_window_and_detail(logged_in_client, db_session,
+                                                    service, healthy, problem, escalated):
+    base = 1_700_000_000
+    rows = [
+        {"hostname": "h", "service_description": service, "timestamp": base + offset,
+         "state": state, "state_type": "hard", "plugin_output": state}
+        for offset, state in [(10, healthy), (20, problem), (40, escalated),
+                              (70, healthy), (90, problem), (100, healthy)]
+    ]
+    # The archive may omit both last_state and duration_seconds. A stale
+    # duration on the recovery must not override the first problem detection.
+    rows[3]["duration_seconds"] = 30
+    def archive(start, end, hostname=None, service=None):
+        return [r for r in rows if start <= r["timestamp"] <= end]
+
+    with patch(_ALERTS_RANGE, side_effect=archive), patch(_NOTIFS_RANGE, return_value=[]), \
+            patch("app.api.system.history.resolve_time_range", return_value=(base + 40, base + 100)):
+        listed = logged_in_client.get("/api/system/history/alerts", query_string={
+            "sort_by": "duration_seconds", "order": "desc"})
+        details = {}
+        for offset, state in [(40, escalated), (70, healthy), (100, healthy)]:
+            response = logged_in_client.get("/api/system/history/alerts/detail", query_string={
+                "hostname": "h", "timestamp": base + offset, "new_state": state,
+                **({"service": service} if service else {}),
+            })
+            assert response.status_code == 200
+            details[offset] = response.get_json()["data"]
+    assert listed.status_code == 200
+    items = {item["timestamp"] - base: item for item in listed.get_json()["data"]["items"]}
+    assert set(items) == {40, 70, 90, 100}
+    assert (items[40]["previous_state"], items[40]["duration_seconds"]) == (problem, 20)
+    assert (items[70]["previous_state"], items[70]["duration_seconds"]) == (escalated, 30)
+    assert (items[100]["previous_state"], items[100]["duration_seconds"]) == (problem, 10)
+    assert (details[40]["previous_state"], details[40]["duration_seconds"]) == (problem, 20)
+    assert (details[70]["previous_state"], details[70]["duration_seconds"],
+            details[70]["recovery_duration"]) == (escalated, 30, 50)
+    assert details[100]["recovery_duration"] == 10
+
+
 # ==========================================================
 # Auth / permission guards
 # ==========================================================
@@ -117,6 +244,35 @@ class TestHistoryAuthGuards:
     @pytest.mark.parametrize("url", READ_ENDPOINTS)
     def test_requires_permission(self, limited_client, db_session, url):
         assert limited_client.get(url).status_code == 403
+
+
+# ==========================================================
+# Shared list range contract
+# ==========================================================
+
+@pytest.mark.parametrize("route,archive", [
+    ("alerts", _ALERTS_RANGE), ("notifications", _NOTIFS_RANGE),
+])
+def test_custom_datetime_bounds_use_utc_inclusive_seconds(logged_in_client, db_session, route, archive):
+    params = {"start_date": "2024-01-01T08:00:00+08:00",
+              "end_date": "2024-01-01T02:00:00Z"}
+    with patch(archive, return_value=[]) as fetch:
+        response = logged_in_client.get(f"/api/system/history/{route}", query_string=params)
+    assert response.status_code == 200
+    assert any(call.args[:2] == (1704067200, 1704074400) for call in fetch.call_args_list)
+
+
+@pytest.mark.parametrize("route", ["alerts", "notifications"])
+@pytest.mark.parametrize("params", [
+    {"start_date": "2024-01-01T00:00:00Z"},
+    {"end_date": "2024-01-01T00:00:00Z"},
+    {"start_date": "2024-01-01T00:00:00", "end_date": "2024-01-02T00:00:00Z"},
+    {"start_date": "2024-01-02T00:00:00Z", "end_date": "2024-01-01T00:00:00Z"},
+    {"start_date": "2024-02-30", "end_date": "2024-03-01"},
+    {"start_date": "2024-01-01T00:00:00Z", "end_date": "2024-01-01"},
+])
+def test_invalid_custom_bounds_rejected(logged_in_client, db_session, route, params):
+    assert logged_in_client.get(f"/api/system/history/{route}", query_string=params).status_code == 400
 
 
 # ==========================================================
@@ -322,6 +478,26 @@ class TestAlertsHistory:
         assert len(item["plugin_output"]) == 200
 
 
+@pytest.mark.parametrize("key", ["type", "hostname", "service_name", "previous_state",
+                                      "new_state", "state_type", "duration_seconds", "plugin_output", "duration"])
+@pytest.mark.parametrize("order", ["asc", "desc"])
+def test_alert_column_sort_and_timestamp_ties(logged_in_client, db_session, key, order):
+    rows = [{**FAKE_ALERTS[0], "timestamp": 100},
+            {**FAKE_ALERTS[0], "timestamp": 300},
+            {**FAKE_ALERTS[1], "timestamp": 200, "state_type": "soft"}]
+    with patch(_ALERTS_RANGE, return_value=rows):
+        response = logged_in_client.get("/api/system/history/alerts", query_string={"sort_by": key, "order": order})
+    assert response.status_code == 200
+    items = response.get_json()["data"]["items"]
+    field = "duration_seconds" if key == "duration" else key
+    values = [i[field] for i in items]
+    assert values == sorted(values, key=lambda v: v.lower() if isinstance(v, str) else v or "" if v is None else v,
+                            reverse=order == "desc")
+    matching = [i for i in items if i["timestamp"] in (100, 300)]
+    if matching[0][field] == matching[1][field]:
+        assert [i["timestamp"] for i in matching] == [300, 100]
+
+
 # ==========================================================
 # GET /api/system/history/alerts/detail
 # ==========================================================
@@ -479,6 +655,130 @@ class TestAlertsHistoryDetail:
 
 
 # ==========================================================
+# Acknowledgement episode association (list, filter, detail)
+# ==========================================================
+
+@pytest.mark.parametrize("service", [None, "http-80-TCP"])
+def test_acknowledgement_belongs_only_to_its_problem_episode(logged_in_client, db_session, admin_user, service):
+    from app.system_models import AckHistory, AckAction, User, UserStatus
+
+    hostname = "webserver"
+    healthy = "OK" if service else "UP"
+    problem = "CRITICAL" if service else "DOWN"
+    base = 1_700_000_000
+    events = [
+        {"hostname": hostname, "service_description": service, "timestamp": base + offset,
+         "state": state, "last_state": previous, "state_type": "hard", "plugin_output": state}
+        for offset, state, previous in [
+            (10, problem, healthy), (20, "WARNING" if service else "UNREACHABLE", problem),
+            (40, healthy, problem), (50, problem, healthy), (70, healthy, problem),
+            (80, problem, healthy), (110, healthy, problem),
+        ]
+    ]
+    other = User(First_Name="Other", Last_Name="Operator", Email="other@example.com",
+                 Status=UserStatus.ACTIVE, RoleID=admin_user.RoleID)
+    other.set_password("temporary")
+    db_session.session.add(other)
+    db_session.session.flush()
+    for offset, action, actor, comment in [
+        (25, AckAction.ACKNOWLEDGED, admin_user.UserID, "first"),
+        (41, AckAction.AUTO_RESOLVED, None, None),
+        (60, AckAction.ACKNOWLEDGED, other.UserID, "second"),
+        (65, AckAction.UNACKNOWLEDGED, other.UserID, None),
+        (71, AckAction.AUTO_RESOLVED, None, None),
+        (90, AckAction.ACKNOWLEDGED, other.UserID, "third"),
+        (111, AckAction.AUTO_RESOLVED, None, None),
+    ]:
+        db_session.session.add(AckHistory(
+            Hostname=hostname, Service_Name=service, Action=action,
+            Actioned_At=datetime.fromtimestamp(base + offset, timezone.utc),
+            ActorUserID=actor, Comment=comment,
+        ))
+    db_session.session.commit()
+
+    with patch(_ALERTS_RANGE, return_value=events), patch(_NOTIFS_RANGE, return_value=[]):
+        listed = logged_in_client.get("/api/system/history/alerts?preset=24h")
+        acked = logged_in_client.get("/api/system/history/alerts?preset=24h&ack_filter=acknowledged")
+        unacked = logged_in_client.get("/api/system/history/alerts?preset=24h&ack_filter=unacknowledged")
+        details = {}
+        for event in events:
+            response = logged_in_client.get("/api/system/history/alerts/detail", query_string={
+                "hostname": hostname, "timestamp": event["timestamp"],
+                "new_state": event["state"], **({"service": service} if service else {}),
+            })
+            assert response.status_code == 200
+            details[event["timestamp"] - base] = response.get_json()["data"]
+
+    assert listed.status_code == acked.status_code == unacked.status_code == 200
+    flags = {item["timestamp"] - base: item["acknowledged"] for item in listed.get_json()["data"]["items"]}
+    assert flags == {10: True, 20: True, 40: False, 50: True, 70: False, 80: True, 110: False}
+    assert {item["timestamp"] - base for item in acked.get_json()["data"]["items"]} == {10, 20, 50, 80}
+    assert {item["timestamp"] - base for item in unacked.get_json()["data"]["items"]} == {40, 70, 110}
+    assert details[10]["ack"]["comment"] == "first"
+    assert details[10]["ack"]["acknowledged_by"] == f"{admin_user.First_Name} {admin_user.Last_Name}"
+    assert details[20]["ack"]["comment"] == "first"
+    assert details[50]["ack"]["comment"] == "second"
+    assert details[50]["ack"]["acknowledged_by"] == "Other Operator"
+    assert details[80]["ack"]["comment"] == "third"
+    for offset in (40, 70, 110):
+        assert details[offset]["acknowledged"] is False
+        assert details[offset]["ack"] is None
+
+
+def test_episode_boundaries_across_list_window_and_targets(logged_in_client, db_session):
+    from app.system_models import AckHistory, AckAction
+
+    base = 1_700_000_000
+    events = [
+        {"hostname": host, "service_description": service, "timestamp": base + offset,
+         "state": state, "state_type": "hard", "plugin_output": state}
+        for host, service, offset, state in [
+            ("h", None, 10, "DOWN"), ("h", "http", 11, "CRITICAL"),
+            ("h", None, 30, "DOWN"), ("h", "http", 31, "OK"),
+            ("h", None, 50, "UP"), ("h", None, 60, "DOWN"),
+        ]
+    ]
+    for host, service, offset, action, comment in [
+        ("h", None, 20, AckAction.ACKNOWLEDGED, "old host"),
+        ("h", None, 25, AckAction.AUTO_RESOLVED, None),
+        ("h", None, 40, AckAction.ACKNOWLEDGED, "new host"),
+        ("h", "http", 22, AckAction.ACKNOWLEDGED, "service only"),
+    ]:
+        db_session.session.add(AckHistory(
+            Hostname=host, Service_Name=service, Action=action,
+            Actioned_At=datetime.fromtimestamp(base + offset, timezone.utc),
+            Comment=comment,
+        ))
+    db_session.session.commit()
+
+    # Nagios returns a bounded list, but the annotation needs the earlier
+    # transitions and the AUTO_RESOLVED boundary, not only visible rows.
+    def archive(start, end, **filters):
+        result = [e for e in events if start <= e["timestamp"] <= end]
+        if filters.get("hostname"):
+            result = [e for e in result if e["hostname"] == filters["hostname"]]
+        if filters.get("service"):
+            result = [e for e in result if e["service_description"] == filters["service"]]
+        if start != 0 and end - start > 5:
+            return [e for e in result if e["timestamp"] >= base + 30 or e["service_description"] == "http"]
+        return result
+
+    with patch(_ALERTS_RANGE, side_effect=archive), patch(_NOTIFS_RANGE, return_value=[]), \
+            patch("app.api.system.history.resolve_time_range", return_value=(base + 30, base + 100)):
+        listed = logged_in_client.get("/api/system/history/alerts?preset=24h")
+        detail = logged_in_client.get("/api/system/history/alerts/detail",
+                                      query_string={"hostname": "h", "timestamp": base + 30, "new_state": "DOWN"})
+    assert listed.status_code == 200
+    flags = {(i["service_name"], i["timestamp"] - base): i["acknowledged"]
+             for i in listed.get_json()["data"]["items"]}
+    assert flags[(None, 30)] is True
+    assert flags[(None, 60)] is False
+    assert flags[("http", 31)] is False
+    assert detail.status_code == 200
+    assert detail.get_json()["data"]["ack"]["comment"] == "new host"
+
+
+# ==========================================================
 # GET /api/system/history/notifications
 # ==========================================================
 
@@ -610,6 +910,21 @@ class TestNotificationsHistory:
             assert key in data
 
 
+@pytest.mark.parametrize("key", ["type", "hostname", "service_name", "state", "contact", "method", "message"])
+@pytest.mark.parametrize("order", ["asc", "desc"])
+def test_notification_column_sort_and_timestamp_ties(logged_in_client, db_session, key, order):
+    rows = [{**FAKE_NOTIFICATIONS[0], "timestamp": 100},
+            {**FAKE_NOTIFICATIONS[0], "timestamp": 300},
+            {**FAKE_NOTIFICATIONS[1], "timestamp": 200}]
+    with patch(_NOTIFS_RANGE, return_value=rows):
+        response = logged_in_client.get("/api/system/history/notifications", query_string={"sort_by": key, "order": order, "source": "nagios"})
+    assert response.status_code == 200
+    items = response.get_json()["data"]["items"]
+    values = [i[key] for i in items]
+    assert values == sorted(values, key=lambda v: v.lower() if isinstance(v, str) else "", reverse=order == "desc")
+    assert [i["timestamp"] for i in items if i["timestamp"] in (100, 300)] == [300, 100]
+
+
 # ==========================================================
 # GET /api/system/history/notifications/detail
 # ==========================================================
@@ -738,7 +1053,7 @@ class TestNotificationsHistoryDetail:
 
     def test_linked_alert_present_when_nearby(self, logged_in_client, db_session):
         notif = self._base_notif()
-        nearby_alert = {**FAKE_ALERTS[0], "timestamp": notif["timestamp"] + 30}
+        nearby_alert = {**FAKE_ALERTS[0], "timestamp": notif["timestamp"] - 30}
         with patch(_NOTIFS_RANGE, return_value=[notif]):
             with patch(_ALERTS_RANGE, return_value=[nearby_alert]):
                 resp = logged_in_client.get(

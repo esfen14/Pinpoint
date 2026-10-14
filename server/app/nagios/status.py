@@ -3,6 +3,9 @@ from flask import current_app
 import sqlalchemy as sa
 from app import db
 from app.history_models import *
+from app.system_models import AlertAcknowledgement, AckAction, SystemSettings
+from datetime import timedelta
+from app.api.system.dashboard import _new_ack_history
 from datetime import datetime, timezone
 from app.nagios.version import latest, last_checked
 from app.api.helper import convert_host_state_type_enum, convert_plugin_status_type_enum, convert_acknowledgement_type_enum, convert_connection_state_type_enum, convert_service_state_type_enum, convert_to_UTC, parse_perf_token
@@ -234,6 +237,37 @@ def get_check_commands(object_url, auth):
     return check_commands
 
 
+def _resolve_recovered_acks(host_states, service_states):
+    """Retire fresh UP/OK acknowledgements and append history in one transaction.
+
+    Only objects observed in this completed poll are candidates. A missing or old
+    Last_Check never provides evidence of recovery, even if its state says OK.
+    """
+    settings = db.session.get(SystemSettings, 1)
+    check_minutes = settings.Check_Interval if settings else 5
+    cutoff = datetime.now(timezone.utc) - timedelta(minutes=check_minutes, seconds=90)
+    acks = db.session.scalars(sa.select(AlertAcknowledgement)).all()
+    now = datetime.now(timezone.utc)
+    try:
+        for ack in acks:
+            state = (host_states.get(ack.Hostname) if ack.Service_Name is None
+                     else service_states.get((ack.Hostname, ack.Service_Name)))
+            if state is None:
+                continue
+            status, last_check = state
+            if not last_check or last_check < cutoff or status != ("up" if ack.Service_Name is None else "ok"):
+                continue
+            db.session.delete(ack)
+            db.session.add(_new_ack_history(
+                ack.Hostname, ack.Service_Name, AckAction.AUTO_RESOLVED, now,
+                system_action=True,
+            ))
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("Failed to auto-resolve acknowledgements")
+
+
 def get_status():
     NAGIOS_URL = current_app.config['NAGIOS_STATUS_URL']
     OBJECT_URL = current_app.config['NAGIOS_OBJECT_URL']
@@ -277,30 +311,36 @@ def get_status():
         hostlist = data['data']['hostlist']
 
         check_commands = get_check_commands(OBJECT_URL, (USERNAME, PASSWORD))
-        
+        host_states = {}
+        service_states = {}
+
+        # Fetch the entire status snapshot before resolving anything. A later
+        # CGI failure must not partially retire acknowledgements.
+        service_lists = {}
+        for hostname in hostlist:
+            serviceParams = {
+                "query": "servicelist", "hostname": hostname,
+                "formatoptions": "enumerate", "details": "true",
+            }
+            response = requests.get(NAGIOS_URL, params=serviceParams,
+                                    auth=(USERNAME, PASSWORD), timeout=10)
+            response.raise_for_status()
+            service_lists[hostname] = response.json()['data']['servicelist'].get(hostname, {})
+
         for hostname, host_data in hostlist.items():
             
             insert_host_status_data(host_data)
+            host_states[hostname] = (str(host_data.get('status', '')).lower(),
+                                     convert_to_UTC(host_data.get('last_check')))
 
-            serviceParams = {
-                "query": "servicelist",
-                "hostname": hostname,
-                "formatoptions": "enumerate",
-                "details": "true"    
-            }
-
-            response = requests.get(
-                NAGIOS_URL,
-                params=serviceParams,
-                auth=(USERNAME, PASSWORD),
-                timeout=10
-            )
-            data = response.json()
-
-            servicelist = data['data']['servicelist'].get(hostname, {})
-
-            for service, service_data in servicelist.items():
+            for service, service_data in service_lists[hostname].items():
                 service_data = {**service_data, 'check_command': check_commands.get((hostname, service))}
                 insert_service_status_data(hostname, service, service_data)
+                service_states[(hostname, service)] = (
+                    str(service_data.get('status', '')).lower(),
+                    convert_to_UTC(service_data.get('last_check')),
+                )
+        if hostlist:
+            _resolve_recovered_acks(host_states, service_states)
     except requests.RequestException as e:
         current_app.logger.error("Failed to request Nagios status: %s", e)
