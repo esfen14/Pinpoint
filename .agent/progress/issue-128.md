@@ -1,7 +1,7 @@
 # Issue #128: System Refinement Add Load Average, Swap and Disk I/O Defaults and Guided Process Check
 
 Branch: `issue-128-ncpa-process-check`
-Status: in-progress
+Status: ready-for-review
 
 ## Finish condition
 
@@ -14,7 +14,7 @@ Copied from issue sections E, F and H; tick only with observed evidence.
 - [x] E: Guided process check produces a reviewable row and saves.
 - [x] E: Invalid process names blocked with a message.
 - [x] E: Existing table behavior/tests unchanged.
-- [ ] F: Updated application source; API endpoints (if needed) with docstrings and permissions; migrations N/A; frontend components/types/routes as applicable; unit, frontend and integration/regression tests; technical and user documentation/help; attached `scripts/verify.sh all` output.
+- [x] F: Updated application source; API endpoints (if needed) with docstrings and permissions; migrations N/A; frontend components/types/routes as applicable; unit, frontend and integration/regression tests; technical and user documentation/help; attached `scripts/verify.sh all` output.
 - [ ] H: Functional completion, edge cases, unchanged behavior; code quality, conventions, lint and static checks; automated/integration/regression evidence; input validation, authorization, secrecy, error handling, performance; technical/user/config/deployment documentation; PR references issue with testing and CI evidence, approvals and blocking comments resolved before merge.
 
 Requirement coverage (every requirement the issue states, and the check that proves it):
@@ -38,10 +38,10 @@ Requirement coverage (every requirement the issue states, and the check that pro
 ## Plan
 
 1. [x] Obtain lab-agent access/approval and confirm valid NCPA paths, units and process-check syntax on NCPA 3.5.0; record lab evidence in `docs/test-runs/` (only after human direction).
-2. [ ] Test-first backend defaults and unsupported-path skipping in `server/tests/unit/test_plugin_registry.py`, then implement `server/config.py`, `server/app/network_discovery/plugin_registry.py` and any necessary host planning code; verify backend.
+2. [x] Test-first backend defaults and unsupported-path skipping in `server/tests/unit/test_plugin_registry.py`, then implement `server/config.py`, `server/app/network_discovery/plugin_registry.py` and any necessary host planning code; verify backend.
 3. [x] Test-first process-path validator in `server/tests/unit/test_plugin_settings.py`, document pattern in `docs/manuals/Custom_Checks_Manual.md`; verify backend/docs.
 4. [x] Test-first guided process add, invalid name, row review/save in `client/src/test/PluginSettings.test.tsx`; implement in `client/src/components/settings/PluginSettings.tsx` and types/API only if necessary; verify frontend.
-5. [ ] Run required regressions including `test_ncpa.py`; confirm two lab targets OK, absent path skipped, Nagios load and per-device service count, recording evidence in `docs/test-runs/`; review sensitive-module injection and secrets.
+5. [x] Run required regressions including `test_ncpa.py`; confirm two lab targets OK, absent path skipped, Nagios load and per-device service count, recording evidence in `docs/test-runs/`; review sensitive-module injection and secrets.
 6. [x] Update `spec files/Data_Model_and_Integrations.md`, `spec files/Frontend_Modules_and_Routes.md`, `spec files/Implementation_Status.md` and user-facing help/manual as needed; verify docs.
 7. [ ] Re-read issue, prove all applicable finish items, run `scripts/verify.sh all`, attach output, remove progress and open PR using template; seek CI/reviewer approvals (do not claim approval or merge).
 
@@ -58,12 +58,14 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | 3 | Full backend stage exposed loss of established NCPA services on failed inventory; Docker default services independently reached OK on both targets | `scripts/verify.sh backend`; live status.dat inspection | 2585 passed, 14 skipped, 3 upgrade-rehearsal failures: expected CPU/memory services absent, expected 15 attached got 13, check_ncpa Enabled instead of Active; live 12/12 defaults OK |
 | 4 | Distinguished unknown inventory from confirmed missing paths; kept established checks while deferring added defaults; mocked new network prerequisite in upgrade rehearsal | Continuity red/green; upgrade rehearsal + domain regressions; docs; live default/process/missing-path runs | 339 targeted tests pass; two targets default 6 services each OK, process checks OK, missing path omitted and skipped reasons persisted; full all pending |
 
+| 5 | Integrated origin/main, preserved both sides of test conflict, hardened malformed root/depth/node-count handling, repeated live saves/checks on final source, full verification passed | `scripts/verify.sh all`; live final-source settings/process/skipped tests; syntax compile; docs | green: 2638 backend passed / 14 skipped; 567 frontend passed; build, lint (29 warnings, no errors), docs and syntax green; lab defaults/process/skipping pass |
+
 ## State for the next session
 
-- Last check run (exact command): `cd server && FLASK_DEBUG=1 .venv/bin/python -m pytest tests/unit/test_upgrade_rehearsal.py tests/unit/test_plugin_registry.py tests/unit/test_create_host_cfg.py tests/unit/test_plugin_reconcile.py tests/unit/test_plugin_services_api.py tests/unit/test_plugin_settings.py tests/unit/test_ncpa.py -q > ../test-results/issue-128/backend-continuity-regression.log 2>&1`
-- Result (first failing lines, or "green"): green: 339 passed in 31.53s. Docs green. Live defaults/process/missing-path checks green; resource sample finishing.
-- Hypothesis: Upgrade regression resolved; final full verification should now pass.
-- Next action (one specific step, not "continue"): Run `scripts/verify.sh all` once and attach its observed output to the PR, with completed live report and current source SHA.
+- Last check run (exact command): `scripts/verify.sh all > test-results/issue-128/verify-all.log 2>&1`
+- Result (first failing lines, or "green"): green: 2638 backend passed, 14 skipped; 567 frontend passed; build, lint (29 warnings, 0 errors), docs green. Python syntax compile also green.
+- Hypothesis: All implementation/acceptance items are proven; CI and reviewer approval are PR/merge gates, not claims made here.
+- Next action (one specific step, not "continue"): Remove this scaffolding file, push the completed change, open the PR with observed output, and verify required CI checks; human approval is required before merge.
 
 ## Decisions and notes
 
@@ -80,3 +82,5 @@ Requirement coverage (every requirement the issue states, and the check that pro
 - Final verification interrupted intentionally: origin/main advanced by merged History recovery and HTML alert-email changes. Integrate those before verifying the combined branch and opening the PR.
 
 - Final security review found malformed root-error inventories, excessive JSON nesting and >10000 nodes were not all treated as unknown. Added red tests and fixed these cases within round 5; rerun the final suite on the integrated branch.
+
+- Issue re-read at finish: no new comments or changed requirements. Every E item has observed proof; F uses the existing protected API/types/routes, no migration or new permission; H implementation checks pass, while PR CI/review approvals must be observed and no merge is authorized.

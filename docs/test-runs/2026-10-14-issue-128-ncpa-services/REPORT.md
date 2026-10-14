@@ -3,11 +3,11 @@
 | | |
 |---|---|
 | Date | 2026-10-14 |
-| Commit tested | `fa728583` for initial defaults/process/load; `f00926f7` synced for final settings/skipping/process repeat (same successful-inventory behavior, plus continuity fix) |
+| Commit tested | `fa728583` for initial defaults/process/load; `f00926f7`, integrated `714f4f03` and final hardened `ba4451ce` synced for settings/skipping/process repeats |
 | Plan | Issue [#128](https://github.com/esfen14/Pinpoint/issues/128), sections E and G |
 | Tester | Codex |
 | Environment | Fresh Docker lab Ubuntu 22.04, Nagios Core 4.5.11/plugins 2.4.12; two NCPA 3.5.0 runtime targets on documented isolated network `10.78.0.0/24`; fresh seeded database |
-| Raw evidence | Local git-ignored `test-results/issue-128/`: `live-seed.log`, `live-default-states.json`, `live-process-states.json`, `live-settings-skips.log`, `live-load.json`, `live-final-settings.log`, `live-final-states.log` |
+| Raw evidence | Local git-ignored `test-results/issue-128/`: `live-seed.log`, `live-default-states.json`, `live-process-states.json`, `live-settings-skips.log`, `live-load.json`, `live-final-settings.log`, `live-final-states.log`, `live-merged-settings.log`, `live-merged-states.log`, `live-hardened-settings.log`, `live-hardened-states.log` |
 
 ## Result
 
