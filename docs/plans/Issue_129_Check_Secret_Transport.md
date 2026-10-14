@@ -19,9 +19,14 @@ credential input and can expose secrets through process inspection.
 
 ## Compatibility findings
 
-These are source inspections, not installed-appliance passes. The read-only
-appliance inspection failed: SSH on the configured loopback port refused the
-connection. No VM was started, reset, synced or modified.
+Compatibility evidence is installed help and source inspection; no actual check
+result or process-secrecy acceptance is claimed. The earlier inspection found the appliance stopped. On 2026-10-14 the existing
+QA appliance was started for inspection; no application sync, reset, migration
+or live config replacement was performed. Installed help confirms NCPA has no
+credential file/stdin option, check_nt and check_mysql_query advertise extra-opts,
+check_radius is absent, and check_disk_smb has no secure password input.
+The ownership probe created and removed one empty private temporary file: as
+`pinpoint`, preserving the original nagios owner with fchown was denied.
 
 | Plugin | Inspected credential input | Implementation direction |
 |---|---|---|
@@ -62,6 +67,30 @@ The `--extra-opts` capability is build-dependent; plugin name alone is not proof
 6. Update the five owning specs, Help text and administrator storage/upgrade
    instructions only for implemented and verified behavior. Run `verify.sh all`,
    then the authorized VM cases and sanitized report before requesting review.
+
+## Implemented config safeguards
+
+Secret substitution now targets only declared secret fields. Owned key/slot
+metadata persists across regenerations; external slots are reserved, removing a
+device from generated hosts frees its slot, and empty desired sets clear secrets.
+Unsafe permissions, malformed blocks and collisions are rejected before writing.
+Missing or failed resource writes stop candidate publication. All three generation
+entry points snapshot resources in memory under the shared lock and restore on
+failure or cancellation; resource-only changes trigger validate/apply. Apply
+restores both files before a rollback reload and sets live hosts.cfg to 0640.
+These safeguards do not implement secure plugin credential transport.
+
+## Required installer handoff
+
+A scoped mechanism must atomically update only the configured resource file while
+preserving nagios:nagios and 0660, and support restoring its previous bytes. A
+possible contract is a root-owned helper accepting resource content only through
+stdin, with an exact executable sudoers grant to pinpoint, a fixed allowlisted
+destination, strict block/value validation, private sibling temporary files and
+no secret-bearing logs/output. It must not accept arbitrary paths, arbitrary
+commands, chown targets or broad directory privileges. Both failed apply and
+rollback must be tested with the actual service user. This is a proposal for the
+separate installer repository, not an implemented application integration.
 
 ## External blockers
 

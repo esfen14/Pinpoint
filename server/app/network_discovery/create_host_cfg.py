@@ -18,6 +18,7 @@ from app.network_discovery.host_config_templates import *
 from app.network_discovery.service_name_migration import migrate_legacy_service_history
 from app.network_discovery.plugin_registry import (
     GENERIC_PLUGIN_FOR_TRANSPORT,
+    PLUGIN_DEFINITIONS,
     PluginConfigurationError,
     Transport,
     build_service_checks,
@@ -237,7 +238,7 @@ def collect_ncpa_secrets(plugin_facts):
     return secrets
 
 
-def collect_custom_check_secrets():
+def collect_custom_check_secrets(device_ids=None):
     """
     Collect all custom-check passwords from the database into
     {macro_key: plaintext}.  Each key is "custom_check:{config_id}:{field_name}".
@@ -253,6 +254,8 @@ def collect_custom_check_secrets():
         sa.select(PluginConfiguration).where(PluginConfiguration.Origin == PluginConfigurationOrigin.CUSTOM)
     ).all()
     for row in rows:
+        if device_ids is not None and row.NetDiscoveryID is not None and row.NetDiscoveryID not in device_ids:
+            continue
         data = row.Configuration_Data or {}
         if data.get("paused"):
             continue
@@ -286,15 +289,43 @@ def build_secret_substitution_map(slot_map, ncpa_secrets, custom_secrets):
 
 
 def apply_secret_substitutions(command, substitution_map):
+    """Replace only complete secret arguments in a validated Nagios command.
+
+    Required fields occupy their definition's positional argument; optional
+    fields are single-quoted flag/value pairs in its last argument. Public
+    arguments remain unchanged even when they match a secret's text. This
+    protects configuration literals; process secrecy requires a separate
+    supported credential transport.
     """
-    Replace every plaintext secret in *command* with its "$USERn$" macro.
-    Returns the command string with all substitutions applied.  The original
-    check_command has already been validated by resolve_plugin_command, so
-    each plaintext value is a safe string; substitution is exact (str.replace).
-    """
-    for plaintext, macro in substitution_map.items():
-        command = command.replace(plaintext, macro)
-    return command
+    parts = command.split("!")
+    definition = PLUGIN_DEFINITIONS["ncpa"]
+    if parts[0] == definition.command_name:
+        secret_names = {"token"}
+    else:
+        plugin_name = custom_checks.plugin_for_custom_command(parts[0])
+        if plugin_name is None:
+            return command
+        definition = custom_checks.CUSTOM_DEFINITIONS[plugin_name]
+        secret_names = set(custom_checks.secret_names(plugin_name))
+
+    for index, (_flag, name) in enumerate(definition.arguments, start=1):
+        if name in secret_names and index < len(parts):
+            parts[index] = substitution_map.get(parts[index], parts[index])
+
+    optional_index = len(definition.arguments) + 1
+    if optional_index < len(parts):
+        for name in secret_names:
+            flag = definition.options.get(name)
+            if flag is None:
+                continue
+            pattern = re.compile(r"(?<!\S)(" + re.escape(flag) + r" )'([^']*)'(?=\s|$)")
+
+            def replace_secret(match):
+                value = substitution_map.get(match.group(2), match.group(2))
+                return f"{match.group(1)}'{value}'"
+
+            parts[optional_index] = pattern.sub(replace_secret, parts[optional_index])
+    return "!".join(parts)
 
 
 def plan_plugin_services(plugin_name, service_label, port, transport, facts, overrides, app_config):
@@ -700,11 +731,23 @@ def _create_host_cfg_file(discovered_hosts, skipped=None):
     # Only secrets that have an active deployment / check reach this code path.
     NAGIOS_RESOURCE_CFG = Path(current_app.config.get("NAGIOS_RESOURCE_CFG",
                                                        "/usr/local/nagios/etc/resource.cfg"))
-    ncpa_secrets = collect_ncpa_secrets(plugin_facts)
-    custom_secrets = collect_custom_check_secrets()
+    desired_device_ids = {
+        host["data"].get("net_discovery_id")
+        for hosts in discovered_hosts.values() for host in hosts.values()
+    }
+    ncpa_secrets = collect_ncpa_secrets({
+        device_id: facts for device_id, facts in plugin_facts.items()
+        if device_id in desired_device_ids
+    })
+    custom_secrets = collect_custom_check_secrets(desired_device_ids)
     all_secrets = {**ncpa_secrets, **custom_secrets}
     try:
-        slot_map = resource_macros.allocate(all_secrets)
+        existing_slots = resource_macros.read_slot_assignments(NAGIOS_RESOURCE_CFG)
+        existing_slots = resource_macros.reclaim(set(existing_slots) - set(all_secrets), existing_slots)
+        slot_map = resource_macros.allocate(
+            all_secrets, existing=existing_slots,
+            reserved=resource_macros.read_reserved_slots(NAGIOS_RESOURCE_CFG),
+        )
     except resource_macros.ResourceMacroLimitError as exc:
         # The limit is very unlikely in practice (255 slots), but refuse
         # clearly rather than writing a broken config.
@@ -895,37 +938,18 @@ def _create_host_cfg_file(discovered_hosts, skipped=None):
         host_config.append(custom_checks.render_command_definition(plugin_name))
         host_config.append(_add_space(2))
 
-    with open(cfg_path, "w") as f:
-        # remember to f.write("string") here after you're done with discovering devices
-        f.write("".join(host_config))
-    # Set mode 0640: Nagios (group) can read; others cannot, so tokens and
-    # passwords in check_command arguments are not world-readable even before
-    # the macro migration is complete.
-    try:
-        os.chmod(cfg_path, 0o640)
-    except OSError as exc:
-        current_app.logger.warning("Could not set mode 0640 on %s: %s", cfg_path, exc)
+    # Publish resource values before the candidate, and never continue with
+    # undefined references after a missing file or failed resource write.
+    if slot_map and not NAGIOS_RESOURCE_CFG.exists():
+        raise FileNotFoundError("Nagios resource file is missing; host configuration was not generated.")
+    if slot_map or resource_macros.read_resource_block(NAGIOS_RESOURCE_CFG):
+        resource_macros.write_resource_block(NAGIOS_RESOURCE_CFG, slot_map, all_secrets)
 
-    # Write NCPA tokens and custom-check passwords to the PinPoint-owned block
-    # in resource.cfg so they are never stored in hosts.cfg.  Only write when
-    # there are secrets to store; leave resource.cfg untouched otherwise.
-    if slot_map and NAGIOS_RESOURCE_CFG.exists():
-        values = {**ncpa_secrets, **custom_secrets}
-        try:
-            resource_macros.write_resource_block(NAGIOS_RESOURCE_CFG, slot_map, values)
-        except OSError as exc:
-            # Non-fatal: hosts.cfg was already written with macro references.
-            # Nagios will use an empty string for the unexpanded macro until
-            # resource.cfg is fixed.  Log without including secret values.
-            current_app.logger.error(
-                "Could not write resource macro block to %s: %s", NAGIOS_RESOURCE_CFG, exc
-            )
-    elif slot_map:
-        current_app.logger.warning(
-            "Resource macro slots allocated but %s does not exist; "
-            "check_commands in hosts.cfg contain $USERn$ references that cannot "
-            "be expanded.  Create resource.cfg and regenerate.", NAGIOS_RESOURCE_CFG,
-        )
+    # Set permissions on the private candidate before its bytes are written.
+    fd = os.open(cfg_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o640)
+    with os.fdopen(fd, "w") as stream:
+        os.fchmod(stream.fileno(), 0o640)
+        stream.write("".join(host_config))
 
     return cfg_path
 
@@ -1329,7 +1353,7 @@ def _validate_config(cfg_path):
     finally:
         temp_cfg_path.unlink(missing_ok=True)
 
-def _apply_new_host_cfg(cfg_path):
+def _apply_new_host_cfg(cfg_path, rollback_resources=None):
     """
     Applies a validated candidate host config as the new live Nagios config.
 
@@ -1353,45 +1377,46 @@ def _apply_new_host_cfg(cfg_path):
     """
     NAGIOS_HOST_CFG = current_app.config['NAGIOS_HOST_CFG']
     try:
+        original_mode = Path(NAGIOS_HOST_CFG).stat().st_mode & 0o777
         backup_path = _backup_running_host_cfg()
     except Exception as e:
         return False, f"Failed to back up current config, aborting apply: {e}"
 
+    reload_attempted = False
     try:
+        # Metadata is not copied from the candidate: preserve the live owner
+        # and group, and explicitly restrict read access to Nagios's group.
         shutil.copyfile(cfg_path, NAGIOS_HOST_CFG)
-    except Exception as e:
-        return False, f"Failed to copy new config into place: {e}"
-
-    try:
+        os.chmod(NAGIOS_HOST_CFG, 0o640)
+        reload_attempted = True
         result = subprocess.run(
             ["sudo", "-n", "systemctl", "reload", "nagios"],
-            capture_output=True,
-            text=True,
-            timeout=30
+            capture_output=True, text=True, timeout=30,
         )
-
         if result.returncode != 0:
-            raise RuntimeError(
-                f"reload exited with code {result.returncode}: "
-                f"{result.stdout}{result.stderr}".strip()
-            )
-
-    except Exception as e:
-        # Reload failed (nonzero exit, timeout, or could not run) — roll back
-        # to the last known-good config so Nagios never keeps running on a
-        # broken/half-applied file
-        current_app.logger.error(f"Nagios reload failed: {e}")
-        shutil.copyfile(backup_path, NAGIOS_HOST_CFG)
-        # Bring the daemon back in line with the restored file.
+            # Reload output may contain expanded commands or credentials.
+            raise RuntimeError("Nagios reload rejected the configuration.")
+    except Exception:
+        current_app.logger.error("Nagios configuration apply failed; restoring previous files.")
         try:
-            subprocess.run(["sudo", "-n", "systemctl", "reload", "nagios"],
-                           capture_output=True, text=True, timeout=30)
-        except Exception as reload_error:
-            current_app.logger.error(f"Nagios reload after rollback failed: {reload_error}")
-        return False, (
-            f"Failed to reload Nagios after applying new config. "
-            f"Rolled back to backup at {backup_path}. Error: {e}"
-        )
+            if rollback_resources is not None:
+                rollback_resources()
+            shutil.copyfile(backup_path, NAGIOS_HOST_CFG)
+            os.chmod(NAGIOS_HOST_CFG, original_mode)
+        except Exception:
+            current_app.logger.error("Nagios configuration rollback failed.")
+            return False, "Config apply failed and rollback could not restore the previous files."
+        if reload_attempted:
+            try:
+                rollback_reload = subprocess.run(
+                    ["sudo", "-n", "systemctl", "reload", "nagios"],
+                    capture_output=True, text=True, timeout=30,
+                )
+                if rollback_reload.returncode != 0:
+                    current_app.logger.error("Nagios reload after rollback failed.")
+            except Exception:
+                current_app.logger.error("Nagios reload after rollback failed.")
+        return False, "Failed to apply Nagios configuration. Rolled back to the previous files."
 
     try:
         migrate_legacy_service_history(_last_generated_names)
@@ -1635,7 +1660,7 @@ def discover_network_create_hosts(app, user_id, stop_event):
                 return
             
             # One writer at a time: load -> generate -> validate -> apply.
-            with config_write_lock:
+            with config_write_lock, resource_config_transaction() as resources:
                 system_hosts = _load_monitored_hosts(network_discovery_id, PROGRESS_WEIGHT[5])
 
                 if stop_event.is_set():
@@ -1656,7 +1681,7 @@ def discover_network_create_hosts(app, user_id, stop_event):
 
                 # Nothing really changed (same hosts, services and contacts):
                 # leave Nagios alone instead of validating and reloading.
-                if config_unchanged(new_cfg):
+                if config_unchanged(new_cfg) and not resources.changed():
                     new_cfg.unlink(missing_ok=True)
                     update_network_discovery_status(
                         network_discovery_id,
@@ -1686,9 +1711,10 @@ def discover_network_create_hosts(app, user_id, stop_event):
                     return
             
                 if is_valid:
-                    applied, apply_message = _apply_new_host_cfg(new_cfg)
+                    applied, apply_message = _apply_new_host_cfg(new_cfg, rollback_resources=resources.rollback)
 
                     if applied:
+                        resources.commit()
                         update_network_discovery_status(
                             network_discovery_id,
                             DiscoveryStatus.SUCCESS,
@@ -1789,7 +1815,7 @@ def add_ncpa_port(app, successful_device, ncpa_deployment_status_id, stop_event)
             # Reload the monitored hosts from the database so the newly added
             # port is reflected in the generated config
             # One writer at a time: load -> generate -> validate -> apply.
-            with config_write_lock:
+            with config_write_lock, resource_config_transaction() as resources:
                 system_hosts = _load_monitored_hosts()
                 update_ncpa_deployment_status(
                     ncpa_deployment_status_id,
@@ -1849,9 +1875,10 @@ def add_ncpa_port(app, successful_device, ncpa_deployment_status_id, stop_event)
                 # hosts.cfg, copies the new one into place, reloads Nagios, and
                 # rolls back automatically if the reload fails
                 if is_valid:
-                    applied, apply_message = _apply_new_host_cfg(new_cfg)
+                    applied, apply_message = _apply_new_host_cfg(new_cfg, rollback_resources=resources.rollback)
 
                     if applied:
+                        resources.commit()
                         update_ncpa_deployment_status(
                             ncpa_deployment_status_id,
                             DeploymentStatus.SUCCESS,
@@ -1895,71 +1922,40 @@ def add_ncpa_port(app, successful_device, ncpa_deployment_status_id, stop_event)
                 str(e)
             )
 
+def resource_config_transaction():
+    """Snapshot the configured resource file for a config-lock-protected writer."""
+    return resource_macros.ResourceTransaction(current_app.config["NAGIOS_RESOURCE_CFG"])
+
+
 def regenerate_and_apply_config_status():
+    """Rebuild, validate and apply monitored configuration under the writer lock.
+
+    Return applied, unchanged or failed with a safe message. Resource bytes are
+    captured before generation and restored on any generation, validation or
+    apply failure. Changed resources require a reload even if hosts.cfg matches.
+    This function reads the database; the apply helper may migrate service names.
     """
-    Rebuild hosts.cfg from the database and, if it really changed, validate
-    and apply it. The single entry point for everything that is not a full
-    scan: NCPA relocation, user edits (merge, retire, port changes) and the
-    plugin reconciler.
-
-    Runs under config_write_lock so it cannot interleave with discovery or
-    add_ncpa_port(). Returns (status, message) where status is "applied" (a new
-    config is live), "unchanged" (nothing differed, Nagios was not reloaded) or
-    "failed" (validation or apply failed and the running config is intact).
-    Does not touch the database session beyond reading.
-
-    resource.cfg is backed up before hosts.cfg is generated (so macros are
-    written atomically with the config) and restored when validation fails so
-    the running config and resource file are always consistent.
-    """
-    NAGIOS_RESOURCE_CFG = Path(current_app.config.get(
-        "NAGIOS_RESOURCE_CFG", "/usr/local/nagios/etc/resource.cfg"
-    ))
-    with config_write_lock:
-        # Back up resource.cfg before generating the new hosts.cfg so we can
-        # roll back the macro block if validation fails.
-        resource_backup = None
-        if NAGIOS_RESOURCE_CFG.exists():
-            resource_backup = NAGIOS_RESOURCE_CFG.parent / (NAGIOS_RESOURCE_CFG.name + ".pinpoint_bak")
-            try:
-                shutil.copy2(str(NAGIOS_RESOURCE_CFG), str(resource_backup))
-            except OSError as exc:
-                current_app.logger.warning(
-                    "Could not back up %s before regenerating; rollback will be skipped: %s",
-                    NAGIOS_RESOURCE_CFG, exc,
-                )
-                resource_backup = None
-
-        new_cfg = _create_host_cfg_file(_load_monitored_hosts())
-
-        if config_unchanged(new_cfg):
+    new_cfg = None
+    try:
+        with config_write_lock, resource_config_transaction() as resources:
+            new_cfg = _create_host_cfg_file(_load_monitored_hosts())
+            if config_unchanged(new_cfg) and not resources.changed():
+                return "unchanged", "Host configuration unchanged; Nagios was not reloaded."
+            is_valid, result = _validate_config(new_cfg)
+            if not is_valid:
+                return "failed", f"Config failed to validate: {result}"
+            applied, message = _apply_new_host_cfg(new_cfg, rollback_resources=resources.rollback)
+            if applied:
+                resources.commit()
+            return ("applied" if applied else "failed"), message
+    except resource_macros.ResourceMacroLimitError as exc:
+        return "failed", str(exc)
+    except Exception:
+        current_app.logger.error("Could not regenerate Nagios configuration or restore its resource file.")
+        return "failed", "Could not generate or apply Nagios configuration; check resource-file access and server logs."
+    finally:
+        if new_cfg is not None:
             new_cfg.unlink(missing_ok=True)
-            if resource_backup:
-                resource_backup.unlink(missing_ok=True)
-            return "unchanged", "Host configuration unchanged; Nagios was not reloaded."
-
-        is_valid, result = _validate_config(new_cfg)
-        if not is_valid:
-            new_cfg.unlink(missing_ok=True)
-            # Restore resource.cfg so macro slots are consistent with hosts.cfg.
-            if resource_backup and resource_backup.exists():
-                try:
-                    resource_macros.restore_resource_cfg(resource_backup, NAGIOS_RESOURCE_CFG)
-                    current_app.logger.info(
-                        "Restored resource.cfg from backup after failed validation."
-                    )
-                except OSError as exc:
-                    current_app.logger.error(
-                        "Could not restore resource.cfg after failed validation: %s", exc
-                    )
-            if resource_backup:
-                resource_backup.unlink(missing_ok=True)
-            return "failed", f"Config failed to validate: {result}"
-
-        if resource_backup:
-            resource_backup.unlink(missing_ok=True)
-        applied, message = _apply_new_host_cfg(new_cfg)
-        return ("applied" if applied else "failed"), message
 
 
 def regenerate_and_apply_config():

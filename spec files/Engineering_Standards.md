@@ -120,6 +120,10 @@ injection and secret-exposure review.
   Nagios resource macros expand before execution; use a verified credential file
   or stdin input rather than an expanded macro passed to a password/token flag.
   Do not claim an unsupported plugin meets this requirement.
+- Resource-file writes must preserve ownership and permissions and reject
+  unsafe other-user access. Every config generation entry point must restore
+  resource bytes on failure or cancellation; a failed snapshot or write must
+  stop application. Restore both resources and hosts before a rollback reload.
 
 ## Frontend rules
 

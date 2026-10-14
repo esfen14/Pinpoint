@@ -39,6 +39,16 @@ from pathlib import Path
 
 import pytest
 
+@pytest.fixture(autouse=True)
+def private_resource_umask():
+    """Model the appliance's group-only resource permissions for test files."""
+    previous = os.umask(0o007)
+    try:
+        yield
+    finally:
+        os.umask(previous)
+
+
 # ── Module import ─────────────────────────────────────────────────────────────
 # This will raise ImportError (collected as ERROR by pytest) until the module
 # exists, which is the desired "failing" state for issue #129.
@@ -730,3 +740,155 @@ class TestHostCfgMacroIntegration:
             f"Literal password '{SECRET_PASSWORD}' found in hosts.cfg — "
             "passwords must be stored in resource.cfg as $USERn$ macros."
         )
+
+
+class TestSecretArgumentSubstitution:
+    """A secret matching public argument text must only replace its own field."""
+
+    def test_ncpa_token_matching_metric_leaves_metric_unchanged(self):
+        from app.network_discovery.create_host_cfg import apply_secret_substitutions
+        command = "pinpoint_nd_ncpa!5693!cpu!cpu/percent!"
+        assert apply_secret_substitutions(command, {"cpu": "$USER2$"}) == (
+            "pinpoint_nd_ncpa!5693!$USER2$!cpu/percent!"
+        )
+
+    def test_ncpa_token_matching_port_leaves_port_unchanged(self):
+        from app.network_discovery.create_host_cfg import apply_secret_substitutions
+        command = "pinpoint_nd_ncpa!5693!5693!cpu/percent!"
+        assert apply_secret_substitutions(command, {"5693": "$USER2$"}) == (
+            "pinpoint_nd_ncpa!5693!$USER2$!cpu/percent!"
+        )
+
+    def test_custom_required_password_leaves_matching_username_unchanged(self):
+        from app.network_discovery.create_host_cfg import apply_secret_substitutions
+        command = "pinpoint_custom_check_radius!probe!probe!/etc/radius.conf!"
+        assert apply_secret_substitutions(command, {"probe": "$USER3$"}) == (
+            "pinpoint_custom_check_radius!probe!$USER3$!/etc/radius.conf!"
+        )
+
+    def test_custom_optional_password_leaves_query_and_username_unchanged(self):
+        from app.network_discovery.create_host_cfg import apply_secret_substitutions
+        command = "pinpoint_custom_check_mysql_query!SELECT cpu!10!20!-u 'cpu' -p 'cpu'"
+        assert apply_secret_substitutions(command, {"cpu": "$USER4$"}) == (
+            "pinpoint_custom_check_mysql_query!SELECT cpu!10!20!-u 'cpu' -p '$USER4$'"
+        )
+
+    def test_overlapping_secret_values_do_not_replace_substrings(self):
+        from app.network_discovery.create_host_cfg import apply_secret_substitutions
+        command = "pinpoint_nd_ncpa!5693!longer-token!cpu/percent!"
+        assert apply_secret_substitutions(command, {"token": "$USER2$", "longer-token": "$USER3$"}) == (
+            "pinpoint_nd_ncpa!5693!$USER3$!cpu/percent!"
+        )
+
+    def test_unrelated_check_with_matching_public_argument_is_unchanged(self):
+        from app.network_discovery.create_host_cfg import apply_secret_substitutions
+        command = "pinpoint_custom_check_by_ssh!/bin/true!-l 'cpu'"
+        assert apply_secret_substitutions(command, {"cpu": "$USER2$"}) == command
+
+
+class TestPersistentSlots:
+    def test_owned_keys_survive_file_roundtrip_and_removed_keys_free_slots(self, tmp_path):
+        from app.network_discovery import resource_macros
+        cfg = tmp_path / "resource.cfg"
+        cfg.write_text("$USER1$=/plugins\n$USER2$=external\n")
+        cfg.chmod(0o660)
+        first = resource_macros.allocate(
+            {"ncpa_token:1": "one", "ncpa_token:2": "two"},
+            reserved=resource_macros.read_reserved_slots(cfg),
+        )
+        resource_macros.write_resource_block(cfg, first, {"ncpa_token:1": "one", "ncpa_token:2": "two"})
+        stored = resource_macros.read_slot_assignments(cfg)
+        assert stored == first
+        retained = resource_macros.reclaim(["ncpa_token:1"], stored)
+        next_slots = resource_macros.allocate(
+            {"ncpa_token:2": "changed", "ncpa_token:3": "three"}, existing=retained,
+            reserved=resource_macros.read_reserved_slots(cfg),
+        )
+        assert next_slots["ncpa_token:2"] == first["ncpa_token:2"]
+        assert next_slots["ncpa_token:3"] == first["ncpa_token:1"]
+        assert "$USER2$" not in next_slots.values()
+
+    def test_malformed_owned_block_is_rejected_without_removing_footer(self, tmp_path):
+        cfg = tmp_path / "resource.cfg"
+        original = "# BEGIN PINPOINT\n$USER2$=old\n# unrelated footer\n"
+        cfg.write_text(original)
+        cfg.chmod(0o660)
+        with pytest.raises(ValueError, match="block"):
+            write_resource_block(cfg, {"t": "$USER2$"}, {"t": "synthetic"})
+        assert cfg.read_text() == original
+
+    def test_external_slot_collision_is_rejected_without_changes(self, tmp_path):
+        cfg = tmp_path / "resource.cfg"
+        original = "$USER2$=external\n"
+        cfg.write_text(original)
+        cfg.chmod(0o660)
+        with pytest.raises(ValueError, match="slot"):
+            write_resource_block(cfg, {"t": "$USER2$"}, {"t": "synthetic"})
+        assert cfg.read_text() == original
+
+    def test_world_readable_resource_file_is_rejected(self, tmp_path):
+        cfg = tmp_path / "resource.cfg"
+        cfg.write_text("# original\n")
+        cfg.chmod(0o664)
+        with pytest.raises(ValueError, match="permission"):
+            write_resource_block(cfg, {"t": "$USER2$"}, {"t": "synthetic"})
+        assert cfg.read_text() == "# original\n"
+
+
+class TestMacroGenerationFailure:
+    def test_missing_resource_file_prevents_candidate_publication(self, app, db_session, tmp_path, monkeypatch):
+        from app.network_discovery import create_host_cfg
+        monkeypatch.setattr(create_host_cfg, "collect_ncpa_secrets", lambda _facts: {"ncpa_token:1": "synthetic"})
+        with _patched_config(app, HOST_CONFIG_DIR=tmp_path / "gen", NAGIOS_RESOURCE_CFG=tmp_path / "missing.cfg"):
+            with pytest.raises(FileNotFoundError):
+                _create_host_cfg_file({})
+        assert not list((tmp_path / "gen").glob("*.cfg"))
+
+    def test_failed_resource_write_prevents_candidate_publication(self, app, db_session, tmp_path, monkeypatch):
+        from app.network_discovery import create_host_cfg, resource_macros
+        cfg = tmp_path / "resource.cfg"
+        cfg.write_text("# original\n")
+        cfg.chmod(0o660)
+        monkeypatch.setattr(create_host_cfg, "collect_ncpa_secrets", lambda _facts: {"ncpa_token:1": "synthetic"})
+        def fail_write(*_args):
+            raise PermissionError("synthetic failure")
+        monkeypatch.setattr(resource_macros, "write_resource_block", fail_write)
+        with _patched_config(app, HOST_CONFIG_DIR=tmp_path / "gen", NAGIOS_RESOURCE_CFG=cfg):
+            with pytest.raises(PermissionError):
+                _create_host_cfg_file({})
+        assert not list((tmp_path / "gen").glob("*.cfg"))
+
+    def test_removing_last_secret_clears_owned_block(self, app, db_session, tmp_path):
+        cfg = tmp_path / "resource.cfg"
+        cfg.write_text("$USER1$=/plugins\n# BEGIN PINPOINT\n$USER2$=old\n# END PINPOINT\n")
+        cfg.chmod(0o660)
+        with _patched_config(app, HOST_CONFIG_DIR=tmp_path / "gen", NAGIOS_RESOURCE_CFG=cfg):
+            _create_host_cfg_file({})
+        assert read_resource_block(cfg) == {}
+        assert "$USER1$=/plugins" in cfg.read_text()
+
+
+@pytest.mark.usefixtures("all_monitoring_plugins")
+def test_removing_device_from_generated_hosts_reclaims_its_actual_slot(app, db_session, admin_user, tmp_path):
+    from app.network_discovery import resource_macros
+    first = _make_device(db_session, admin_user, "first", "10.0.0.51")
+    second = _make_device(db_session, admin_user, "second", "10.0.0.52")
+    _make_ncpa_deployment(db_session, first, "first-synthetic")
+    _make_ncpa_deployment(db_session, second, "second-synthetic")
+    db_session.session.commit()
+    hosts = {"10.0.0.0/24": {
+        "10.0.0.51": _make_host_entry("first", tcp={"5693": "ncpa"}, net_discovery_id=first.NetDiscoveryID),
+        "10.0.0.52": _make_host_entry("second", tcp={"5693": "ncpa"}, net_discovery_id=second.NetDiscoveryID),
+    }}
+    resource = tmp_path / "resource.cfg"
+    resource.write_text("$USER1$=/plugins\n")
+    resource.chmod(0o660)
+    with _patched_config(app, HOST_CONFIG_DIR=tmp_path / "gen", NAGIOS_RESOURCE_CFG=resource):
+        _create_host_cfg_file(hosts)
+        before = resource_macros.read_slot_assignments(resource)
+        del hosts["10.0.0.0/24"]["10.0.0.51"]
+        _create_host_cfg_file(hosts)
+        after = resource_macros.read_slot_assignments(resource)
+    assert f"ncpa_token:{first.NetDiscoveryID}" not in after
+    assert after[f"ncpa_token:{second.NetDiscoveryID}"] == before[f"ncpa_token:{second.NetDiscoveryID}"]
+    assert "first-synthetic" not in resource.read_text()

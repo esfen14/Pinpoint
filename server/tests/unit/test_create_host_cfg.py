@@ -968,6 +968,7 @@ class TestResourceMacroIntegration:
 
         resource_cfg = tmp_path / "resource.cfg"
         resource_cfg.write_text("$USER1$=/usr/local/nagios/libexec\n")
+        resource_cfg.chmod(0o660)
 
         with patched_config(
             app,
@@ -1038,6 +1039,7 @@ class TestResourceMacroIntegration:
         }
         resource_cfg = tmp_path / "resource.cfg"
         resource_cfg.write_text("$USER1$=/usr/local/nagios/libexec\n")
+        resource_cfg.chmod(0o660)
 
         with patched_config(
             app,
