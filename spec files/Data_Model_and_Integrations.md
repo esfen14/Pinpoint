@@ -433,10 +433,14 @@ appear in logs, API responses, or persisted Nagios snapshot check commands.
 - One active Pinpoint acknowledgement is allowed per `(hostname, service)`;
   `service = null` identifies a host alert.
 - A comment is required when acknowledging.
-- Acknowledgement and manual unacknowledgement append `AckHistory` records, then are sent to Nagios through `app/nagios/commands.py`; a Nagios failure never undoes the local record.
-- When an alert resolves to UP/OK, the active acknowledgement must be removed
-  and an `AUTO_RESOLVED` history row written. The model contract exists, but the
-  polling cleanup is not currently wired; see `Implementation_Status.md`.
+- Acknowledgement and manual unacknowledgement append `AckHistory` records.
+- On a completed nonempty Nagios status poll, a fresh UP/OK check for an acknowledged
+  host/service removes its active acknowledgement and appends one actorless
+  `AUTO_RESOLVED` history row in a single transaction. Missing or stale checks,
+  absent targets, empty/failed polls and still-failing targets retain their records;
+  subsequent polls do not duplicate the history event. Freshness uses the configured
+  check interval plus 90 seconds for polling/jitter. The poller fetches all service
+  lists before reconciling so a later CGI failure cannot partially clear records.
 
 ## Migrations
 

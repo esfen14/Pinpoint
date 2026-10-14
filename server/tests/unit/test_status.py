@@ -9,6 +9,9 @@ statusjson.cgi, so it is looked up from objectjson.cgi's servicelist.
 Nagios is never contacted — requests.get is patched.
 """
 from unittest.mock import MagicMock, patch
+from datetime import datetime, timezone, timedelta
+
+import pytest
 
 import requests
 import sqlalchemy as sa
@@ -20,6 +23,7 @@ from app.nagios.status import (
     insert_programstatus_data,
     insert_service_status_data,
 )
+from app.system_models import AlertAcknowledgement, AckHistory, AckAction
 from app.history_models import (
     HostPerfData,
     HostStatus,
@@ -347,3 +351,116 @@ class TestPendingHosts:
         ready = self.host_row(db_session, "ready-host")
         assert ready is not None
         assert ready.Current_State == HostStateType.UP
+
+
+class TestPollAckResolution:
+    """Only a complete, fresh Nagios poll can retire an active Pinpoint ack."""
+
+    def ack(self, db_session, user_id, hostname=HOSTNAME, service=None):
+        row = AlertAcknowledgement(
+            Hostname=hostname, Service_Name=service, Comment="Investigating",
+            AcknowledgedBy=user_id, Acknowledged_At=datetime.now(timezone.utc) - timedelta(minutes=5),
+        )
+        db_session.session.add(row)
+        db_session.session.commit()
+        return row
+
+    def poll(self, app, hosts=None, services=None, fail_query=None):
+        checked = int(datetime.now(timezone.utc).timestamp() * 1000)
+        if hosts is None:
+            hosts = {HOSTNAME: host_payload(last_check=checked, last_update=checked)}
+        if services is None:
+            services = {HOSTNAME: {"PING": service_payload(last_check=checked, last_update=checked)}}
+
+        def fake_get(url, params=None, **kwargs):
+            query = params["query"]
+            if query == fail_query:
+                raise requests.ConnectionError("Nagios unavailable")
+            if query == "programstatus":
+                return json_response({"data": {"programstatus": {"version": "4.5.0", "program_start": 1_790_418_000_000}}})
+            if query == "hostlist":
+                return json_response({"data": {"hostlist": hosts}})
+            if url == OBJECT_URL:
+                return json_response(object_servicelist({}))
+            return json_response({"data": {"servicelist": services}})
+
+        with patch.dict(app.config, {"NAGIOS_OBJECT_URL": OBJECT_URL}), \
+                patch("app.nagios.status.requests.get", side_effect=fake_get):
+            get_status()
+
+    def rows(self, db_session):
+        return db_session.session.scalars(sa.select(AckHistory).order_by(AckHistory.AckHistoryID)).all()
+
+    @pytest.mark.parametrize("service", [None, "PING"])
+    def test_recovery_clears_one_ack_without_actor_and_repeat_is_idempotent(
+        self, app, db_session, admin_user, service
+    ):
+        self.ack(db_session, admin_user.UserID, service=service)
+        self.poll(app)
+        assert db_session.session.scalars(sa.select(AlertAcknowledgement)).all() == []
+        rows = self.rows(db_session)
+        assert len(rows) == 1
+        assert (rows[0].Hostname, rows[0].Service_Name, rows[0].Action, rows[0].ActorUserID) == (
+            HOSTNAME, service, AckAction.AUTO_RESOLVED, None
+        )
+        self.poll(app)
+        assert len(self.rows(db_session)) == 1
+
+    def test_still_failing_service_and_host_are_kept(self, app, db_session, admin_user):
+        self.ack(db_session, admin_user.UserID)
+        self.ack(db_session, admin_user.UserID, service="PING")
+        checked = int(datetime.now(timezone.utc).timestamp() * 1000)
+        self.poll(app, hosts={HOSTNAME: host_payload(status="down", last_check=checked)},
+                  services={HOSTNAME: {"PING": service_payload(status="critical", last_check=checked)}})
+        assert len(db_session.session.scalars(sa.select(AlertAcknowledgement)).all()) == 2
+        assert self.rows(db_session) == []
+
+    @pytest.mark.parametrize("fail_query", ["programstatus", "hostlist", "servicelist"])
+    def test_failed_poll_does_not_clear(self, app, db_session, admin_user, fail_query):
+        self.ack(db_session, admin_user.UserID, service="PING")
+        self.poll(app, fail_query=fail_query)
+        assert len(db_session.session.scalars(sa.select(AlertAcknowledgement)).all()) == 1
+        assert self.rows(db_session) == []
+
+    def test_empty_poll_and_deleted_target_are_ignored(self, app, db_session, admin_user):
+        self.ack(db_session, admin_user.UserID, hostname="deleted", service="PING")
+        self.ack(db_session, admin_user.UserID, service="PING")
+        self.poll(app, hosts={}, services={})
+        self.poll(app)
+        remaining = db_session.session.scalars(sa.select(AlertAcknowledgement)).all()
+        assert [(row.Hostname, row.Service_Name) for row in remaining] == [("deleted", "PING")]
+        assert len(self.rows(db_session)) == 1
+
+    def test_stale_check_cannot_clear_ack(self, app, db_session, admin_user):
+        self.ack(db_session, admin_user.UserID, service="PING")
+        stale = int((datetime.now(timezone.utc) - timedelta(hours=2)).timestamp() * 1000)
+        self.poll(app, services={HOSTNAME: {"PING": service_payload(last_check=stale, last_update=stale)}})
+        assert len(db_session.session.scalars(sa.select(AlertAcknowledgement)).all()) == 1
+        assert self.rows(db_session) == []
+
+    def test_unchecked_recovery_never_clears_ack(self, app, db_session, admin_user):
+        self.ack(db_session, admin_user.UserID, service="PING")
+        self.poll(app, services={HOSTNAME: {"PING": service_payload(last_check=None)}})
+        assert len(db_session.session.scalars(sa.select(AlertAcknowledgement)).all()) == 1
+        assert self.rows(db_session) == []
+
+    def test_re_failure_after_recovery_can_be_acknowledged_again(self, app, db_session, admin_user):
+        self.ack(db_session, admin_user.UserID, service="PING")
+        self.poll(app)
+        checked = int(datetime.now(timezone.utc).timestamp() * 1000) + 1000
+        self.poll(app, services={HOSTNAME: {"PING": service_payload(status="critical", last_check=checked)}})
+        self.ack(db_session, admin_user.UserID, service="PING")
+        assert len(self.rows(db_session)) == 1
+        assert len(db_session.session.scalars(sa.select(AlertAcknowledgement)).all()) == 1
+
+    def test_history_commit_failure_rolls_back_deletion(self, app, db_session, admin_user):
+        self.ack(db_session, admin_user.UserID, service="PING")
+        real_commit = db_session.session.commit
+
+        def fail_commit():
+            raise RuntimeError("commit failed")
+
+        with patch.object(db_session.session, "commit", side_effect=fail_commit):
+            self.poll(app)
+        assert len(db_session.session.scalars(sa.select(AlertAcknowledgement)).all()) == 1
+        assert self.rows(db_session) == []

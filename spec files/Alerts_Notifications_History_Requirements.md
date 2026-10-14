@@ -21,6 +21,11 @@ The history page answers questions like:
 This page is for **browsing and investigation**. Export and report generation
 are handled separately by the existing reports system and are not defined here.
 
+The source audit for issue #133 is recorded in
+[`docs/test-runs/2026-10-14-issue-133-history-audit/AUDIT.md`](../docs/test-runs/2026-10-14-issue-133-history-audit/AUDIT.md).
+It distinguishes page-only improvements from backend-dependent gaps; it is not
+live-appliance acceptance evidence.
+
 ---
 
 ## Definitions
