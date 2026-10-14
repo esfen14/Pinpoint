@@ -1,7 +1,7 @@
 # Issue #79: Choose which users receive email alerts for each host
 
 Branch: `issue-79-host-alert-recipients`
-Status: in-progress
+Status: blocked
 
 ## Finish condition
 
@@ -14,7 +14,7 @@ Status: in-progress
 - [x] F7: Host detail editor is permission gated and sends recipient IDs (frontend test).
 - [ ] F8: VM lab save writes per-host group; Nagios validates; alerts email only selected recipients while another host emails the default group.
 - [x] F9: Backend, data, frontend specifications and Implementation_Status updated.
-- [x] F10: scripts/verify.sh all passes and PR CI is green.
+- [ ] F10: scripts/verify.sh all passes and PR CI is green.
 
 Requirement coverage (every requirement stated by the issue):
 
@@ -63,12 +63,14 @@ Requirement coverage (every requirement stated by the issue):
 
 | Live 2 | Worker-ready fallback repeat, live rescan, real validation rejection, injected reload rejection and actual permission guard; sanitized initial/follow-up reports; own lab removed | resume.py; failures.py; scripts/verify.sh all; Docker project-scoped down | 7 further passes (14 distinct passes across both phases); resumed all green (2660 backend / 14 skipped; 565 frontend); original VM/inbox acceptance still pending |
 
+| VM/browser 2026-10-15 | Preserved inherited VM, installed branch cleanly, real Nagios groups/default/ineligible validation, real host DOWN/service CRITICAL MIME routing, live rescan, and new administrator/restricted Playwright tests | scripts/playwright-lab --project issue-79-live --project issue-79-restricted; temporary VM drivers; scripts/verify.sh all | Browser 4 passed on final repeat; VM config/routing/rescan/fallback passed; external inbox proof unavailable. Initial auth/subject matcher assumptions fixed; original failures retained in report. |
+
 ## State for the next session
 
-- Last check run (exact command): scripts/verify.sh all > test-results/issue79-resume-all.log 2>&1
-- Result (first failing lines, or green): green; 2660 backend passed / 14 skipped, 565 frontend passed, docs/build/lint green. Live Docker evidence: 14 distinct passing cases across the initial and follow-up reports; one initial immediate post-HUP fallback capture failed, then a settled UP/DOWN retry captured all 28 expected recipients. Cause of the initial capture gap remains undiagnosed.
-- Hypothesis: Docker proves actual core group selection and MIME recipient routing; VM/systemd and external SMTP/inbox are separate evidence, and the original finish condition still explicitly requires them.
-- Next action: Provide exclusive VM lab and controlled inbox access, then run the original F8 acceptance. The user explicitly retained VM/inbox acceptance and requested leaving PR #160 draft. Reuse the committed Docker evidence; do not replace F8 or repeat already-proven checks unnecessarily. Check the final metadata CI rerun before any ready-for-review transition.
+- Last check run (exact command): scripts/verify.sh all > test-results/issue79-final-all.log 2>&1
+- Result (first failing lines, or green): green: final scripts/verify.sh all passed (2660 backend / 14 skipped; 565 frontend; docs/build/lint, 29 existing lint warnings); focused recipient backend 38 passed; final live Playwright 4 passed; browser scaffold safety 8 passed. Latest checkpoint CI remains to be observed.
+- Hypothesis: The former VM availability blocker is resolved. Actual VM API save, Nagios validation and host/service MIME capture prove routing, but cannot prove external SMTP acceptance or actual inbox receipt. No application defect observed. F8 remains unchecked.
+- Next action: Check final checkpoint CI, resolve lab-control/recovery issue #162, then supply controlled selected/default recipient mailboxes and complete actual inbox delivery comparison before making PR #160 ready. User input for mailbox addresses is pending; do not substitute local capture for inbox proof.
 
 ## Decisions and notes
 
@@ -79,7 +81,7 @@ Requirement coverage (every requirement stated by the issue):
 - Preserve #80 behavior when there are no globally eligible contacts: omit contact_groups and never write an empty group.
 - Keep current checkout untouched. Worktree: /tmp/Pinpoint-issue-79.
 
-- VM acceptance cannot run: scripts/vmlab status reports VBoxManage not found; user confirms only Docker exists here. docker ps initially reports socket permission denied; inspect sudo Docker access before declaring Docker blocked. Keep VM/inbox finish condition unticked and PR draft.
+- Historical 2026-10-14 VM preflight: scripts/vmlab status reported VBoxManage not found; user confirms only Docker exists here. docker ps initially reports socket permission denied; inspect sudo Docker access before declaring Docker blocked. Keep VM/inbox finish condition unticked and PR draft.
 
 - Docker preflight: docker ps denied at /var/run/docker.sock; sudo -n docker ps requires interactive authentication. No Docker or VM mutation performed. User confirms Docker is the only lab technology here. Live acceptance needs an accessible lab and inbox evidence.
 - Injection and secret-exposure review: group names derive only from integer device IDs; PUT rejects booleans, strings, duplicates, unknown IDs and extra fields before config generation. New group members reuse previously validated contact emails; no request text enters commands or paths; no new secrets are read, logged or returned.
@@ -99,3 +101,10 @@ Requirement coverage (every requirement stated by the issue):
 - User decision after reviewing Docker evidence: "Keep the original acceptance; leave the PR draft." F8 stays unticked; no issue acceptance edits or PR readiness change are authorized. Full local all verification and previous code CI passed; CI reruns automatically for these final report/progress-only checkpoints.
 
 - 2026-10-15 preflight: inherited appliance uses issue-129 service override and a database stamped with revision 7db78f308ee5, absent from this branch. No migration stamping or cross-branch workaround used. Restore point `issue79-before-20261015` preserves the inherited state. Use documented fresh branch installation from os-nagios-ready for attributable acceptance.
+
+- 2026-10-15 current evidence: docs/test-runs/2026-10-15-issue-79-vm-browser/REPORT.md. App commit 3d6471dc installed via installer 697869e. New browser projects issue-79-live and issue-79-restricted use private administrator/reader setup; reader needs system.network_health and system.hosts without system.hosts.alerts. Browser fixture addresses are synthetic; all mail captured privately at sendmail. No external email sent.
+- Snapshot reliability FAILED final verification: two VBoxSVC processes exist, and the SSH endpoint did not revert with the reported snapshot restore. Neither issue79 snapshot is a verified backup of the endpoint. Original service/DB/sendmail restored directly; test checkout retained at /opt/pinpoint/issue79-tested-20261015. Private test login state is /tmp/issue79-private; original private state directory was not changed. Actual sendmail was restored directly after the test. Do not start further lab trials until VirtualBox ownership/control is resolved.
+
+- Recovery limitation requiring owner input: inactive original checkout at 1ca2c75 had pre-existing edits in server/app/api/system/dashboard.py and server/app/nagios/status.py; initial sync overwrote their bytes before the wrong-instance snapshot problem was found. Seventeen other previously clean tracked files restored from original HEAD. The original active issue-129 checkout c9f8e26 and its DB remain intact. Asked owner for original two-file source/backup; exact restoration cannot be claimed. Report V1 is Fail, linked to #79.
+
+- Lab recovery tracked as https://github.com/esfen14/Pinpoint/issues/162 after searching existing issues. Original active issue-129 service and database, sendmail, generated config and frontend restored directly. Inactive checkout two-file original edits remain unrecovered; no further VM mutations.

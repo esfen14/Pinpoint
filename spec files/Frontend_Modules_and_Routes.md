@@ -134,3 +134,5 @@ inputs are disabled during save. Retired/merged devices are read-only. A rejecte
 save retains the editable choice for retry and displays the server's message.
 This editor does not require account-management permission and does not change
 any user's global email setting.
+
+Live browser coverage for host recipients is opt-in through `scripts/playwright-lab --project issue-79-live --project issue-79-restricted`. The tests save through the real recipient API/Nagios writer, reopen the drawer to verify persistence, clear the choices to verify default fallback, restore the original assignments, and verify that the restricted reader sees no editor and receives 403 for recipient reads/writes. They require two eligible lab accounts and discovered lab targets.
