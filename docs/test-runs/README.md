@@ -48,6 +48,8 @@ table while you test, not afterward.
 
 | Run | Kind | Commit | Result | Report |
 |---|---|---|---|---|
+| [2026-10-14 issue-79-docker-repeat](2026-10-14-issue-79-docker-repeat/REPORT.md) | Isolated Docker, real Nagios routing and rollback | `a60e5aba` app source | Partial: 7 follow-up passes (14 across both runs); VM/inbox unverified; earlier capture failure retained | [REPORT.md](2026-10-14-issue-79-docker-repeat/REPORT.md) |
+| [2026-10-14 issue-79-docker-initial](2026-10-14-issue-79-docker-initial/REPORT.md) | Initial Docker host/service comparison and fallback attempt | `a60e5aba` app source | Partial: 7 pass, immediate post-reload capture fails, 2 blocked | [REPORT.md](2026-10-14-issue-79-docker-initial/REPORT.md) |
 | [2026-10-14 issue-79-preflight](2026-10-14-issue-79-preflight/REPORT.md) | Live acceptance prerequisites only | `3b2dcc02` | Blocked: no VirtualBox; Docker socket denied; no live product pass | [REPORT.md](2026-10-14-issue-79-preflight/REPORT.md) |
 | [2026-10-14 issue-141-docker-history](2026-10-14-issue-141-docker-history/REPORT.md) | Docker Nagios host acknowledgement/recovery/reproblem | `43c1be42` | Partial: host list/filter/detail pass; service and manual-unacknowledge not run | [REPORT.md](2026-10-14-issue-141-docker-history/REPORT.md) |
 | [2026-10-14 issue-133-owner-path-recheck](2026-10-14-issue-133-owner-path-recheck/REPORT.md) | Existing VM, independent real-event owner History path repeat | app `4dd006e3` synced; harness base `93b8361e` plus test assertion | Pass for exact filtered CRITICAL/recovery/detail/Refresh path; no PR approval implied | [REPORT.md](2026-10-14-issue-133-owner-path-recheck/REPORT.md) |

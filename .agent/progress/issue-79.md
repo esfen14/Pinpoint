@@ -1,7 +1,7 @@
 # Issue #79: Choose which users receive email alerts for each host
 
 Branch: `issue-79-host-alert-recipients`
-Status: in-progress
+Status: blocked
 
 ## Finish condition
 
@@ -39,7 +39,7 @@ Requirement coverage (every requirement stated by the issue):
 3. [x] Live acceptance: inspect VM-lab ownership and tools, run issue-authorized save/validation/delivery comparison if exclusive lab and mailbox access are available; record sanitized report in docs/test-runs, refresh Implementation_Status, and run docs verification.
 4. [x] Re-read issue/comments, prove each finish condition, scripts/verify.sh all, checkpoint, and open a ready PR only when all acceptance is proven; otherwise draft with outstanding items recorded.
 
-5. [ ] Docker acceptance supplement: own temporary compose project with cached images; API recipient saves, actual Nagios validation, captured host/service notifications for selected/default/fallback recipients, scoped cleanup, and new sanitized report.
+5. [x] Docker acceptance supplement: own temporary compose project with cached images; API recipient saves, actual Nagios validation, captured host/service notifications for selected/default/fallback recipients, scoped cleanup, and new sanitized report.
 
 ## Round log
 
@@ -58,12 +58,14 @@ Requirement coverage (every requirement stated by the issue):
 
 | Live 1 | Own Docker appliance: real private/default group validation and host/service mail routing; ineligible-group fallback syntax valid | python3 -u /tmp/pinpoint-issue79-live/verify.py | 7 cases passed; fallback mail capture timed out (Nagios logged dispatch during HUP worker registration, no capture). Full resumed all and CI green. |
 
+| Live 2 | Worker-ready fallback repeat, live rescan, real validation rejection, injected reload rejection and actual permission guard; sanitized initial/follow-up reports; own lab removed | resume.py; failures.py; scripts/verify.sh all; Docker project-scoped down | 7 further passes (14 distinct passes across both phases); resumed all green (2660 backend / 14 skipped; 565 frontend); original VM/inbox acceptance still pending |
+
 ## State for the next session
 
-- Last check run (exact command): python3 -u /tmp/pinpoint-issue79-live/verify.py > /tmp/pinpoint-issue79-live/verify.log 2>&1
-- Result (first failing lines, or green): 7 Docker cases passed; RuntimeError: host-fallback: expected 28 recipient(s), saw 0. Nagios logged fallback HOST NOTIFICATION events at the same second its replacement workers registered after HUP. Resumed scripts/verify.sh all and all CI jobs passed.
-- Hypothesis: The harness sent the next passive result immediately after reload, before replacement notification workers were available. Repeat the alert after worker registration, with a fresh UP/DOWN transition and distinct capture marker.
-- Next action: Repeat the fallback notification after reload settles, then verify scoped rescan and validation/reload rollback in the isolated lab; record all observations and retain VM/inbox distinction.
+- Last check run (exact command): scripts/verify.sh all > test-results/issue79-resume-all.log 2>&1
+- Result (first failing lines, or green): green; 2660 backend passed / 14 skipped, 565 frontend passed, docs/build/lint green. Live Docker evidence: 14 distinct passing cases across the initial and follow-up reports; one initial immediate post-HUP fallback capture failed, then a settled UP/DOWN retry captured all 28 expected recipients. Cause of the initial capture gap remains undiagnosed.
+- Hypothesis: Docker proves actual core group selection and MIME recipient routing; VM/systemd and external SMTP/inbox are separate evidence, and the original finish condition still explicitly requires them.
+- Next action: Decide whether the original issue's VM/inbox finish condition should be replaced by the observed Docker/local-capture evidence; if not, provide the original lab/inbox acceptance. PR #160 remains draft until that requirement is resolved. Use the committed reports and existing 14 passing Docker checks rather than starting over.
 
 ## Decisions and notes
 
@@ -86,3 +88,7 @@ Requirement coverage (every requirement stated by the issue):
 - The last session round includes only progress/report metadata after the verified implementation; no code changes after scripts/verify.sh all. Watch final-checkpoint PR CI before reporting status.
 
 - Resumed 2026-10-14: user added paeng to docker group; use sg docker for refreshed supplementary group access. Existing pinpoint-lab and issue-128 containers are left untouched. Own project uses the documented isolated 10.77.0.0/28 range and two targets. Compose and test mail capture artifacts are temporary and uncommitted. Re-running the previous all command into test-results/issue79-resume-all.log as required for resume.
+
+- Docker reports: docs/test-runs/2026-10-14-issue-79-docker-initial/REPORT.md (7 passes, 1 failed immediate capture); docs/test-runs/2026-10-14-issue-79-docker-repeat/REPORT.md (7 follow-up passes). Eight copied source files matched commit a60e5aba. Raw evidence and temporary drivers are in ignored test-results/issue79-docker/.
+- Own project pinpoint-issue79 was removed after collecting evidence, including its containers and networks. Existing pinpoint-lab and issue-128 containers remained running and were not modified. Docker is now usable through sg docker; the old preflight report remains historical.
+- A scope clarification was asked after concrete Docker verification: accept Docker/local capture as a replacement for the explicit VM/inbox requirement, or keep the original requirement and draft. Until an explicit answer, retain the original finish condition; do not tick F8.
