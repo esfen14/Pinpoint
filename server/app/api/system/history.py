@@ -146,35 +146,36 @@ def build_ack_map(alerts, actions):
         actions = actions_by_target[target]
         episodes = []
         current = []
+        auto_resolutions = [int(action.Actioned_At.replace(tzinfo=timezone.utc).timestamp())
+                            for action in actions if action.Action == AckAction.AUTO_RESOLVED]
         for event in events:
+            timestamp = event.get("timestamp") or 0
+            if current:
+                closed = next((boundary for boundary in auto_resolutions
+                               if current[0]["timestamp"] <= boundary <= timestamp), None)
+                if closed is not None:
+                    episodes.append((current, closed))
+                    current = []
             if (event.get("state") or "").upper() in ("OK", "UP"):
                 if current:
-                    episodes.append((current, event["timestamp"]))
+                    episodes.append((current, timestamp))
                     current = []
             else:
                 current.append(event)
         if current:
-            episodes.append((current, None))
+            end = next((boundary for boundary in auto_resolutions
+                        if boundary >= current[0]["timestamp"]), None)
+            episodes.append((current, end))
 
-        for episode, recovery_at in episodes:
+        for episode, end in episodes:
             start = episode[0]["timestamp"]
-            end = recovery_at
-            # AUTO_RESOLVED can bound an episode even when a Nagios recovery
-            # transition is missing from the fetched archive window.
-            for action in actions:
-                action_at = int(action.Actioned_At.replace(tzinfo=timezone.utc).timestamp())
-                if action_at >= start and action.Action == AckAction.AUTO_RESOLVED:
-                    if end is None or action_at < end:
-                        end = action_at
-                    break
             acknowledgements = [action for action in actions
                                 if action.Action == AckAction.ACKNOWLEDGED
                                 and start <= int(action.Actioned_At.replace(tzinfo=timezone.utc).timestamp())
                                 and (end is None or int(action.Actioned_At.replace(tzinfo=timezone.utc).timestamp()) < end)]
             if acknowledgements:
                 for event in episode:
-                    if end is None or event["timestamp"] < end:
-                        result[(target, event["timestamp"], event.get("state"))] = acknowledgements[-1]
+                    result[(target, event["timestamp"], event.get("state"))] = acknowledgements[-1]
     return result
 
 

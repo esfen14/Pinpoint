@@ -22,7 +22,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 1. [x] Add failing episode-specific list/filter/detail tests in `server/tests/unit/test_history.py`; implement episode association in `server/app/api/system/history.py`; verify focused file and `scripts/verify.sh backend`.
 2. [x] Add regression coverage for window boundaries and same-target mixed host/service actions in `server/tests/unit/test_history.py`; adjust `server/app/api/system/history.py` only if needed; verify focused file and `scripts/verify.sh backend`.
-3. [ ] Update `spec files/Alerts_Notifications_History_Requirements.md`, `spec files/Implementation_Status.md` for the behavior/gap and verify `scripts/verify.sh docs` (then finish checks).
+3. [x] Update `spec files/Alerts_Notifications_History_Requirements.md`, `spec files/Implementation_Status.md` for the behavior/gap and verify `scripts/verify.sh docs` (then finish checks).
 
 ## Round log
 
@@ -32,13 +32,14 @@ One row per loop round, newest last.
 |---|---|---|---|
 | 1 | Added host/service cycle tests and episode-aware list/filter/detail association | `.venv/bin/python -m pytest tests/unit/test_history.py -q` (server); `scripts/verify.sh backend` | Initial 2 failures on recovery badge; now 84 passed; backend 2439 passed, 14 skipped |
 | 2 | Added bounded-window and cross-target regression | `.venv/bin/python -m pytest tests/unit/test_history.py -q` (server); `scripts/verify.sh backend` | 85 passed; backend 2440 passed, 14 skipped |
+| 3 | Exercised AUTO_RESOLVED boundary followed by a new problem without a visible recovery, then updated history spec/status | `.venv/bin/python -m pytest tests/unit/test_history.py -q` (server); `scripts/verify.sh docs` | Initial failure on new episode; now 85 passed, docs green |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh backend`
-- Result (first failing lines, or "green"): green (2439 passed, 14 skipped)
-- Hypothesis: Complete-archive association now passes host/service cycles and bounded-window regression; specs still describe target-only matching.
-- Next action (one specific step, not "continue"): Update `spec files/Alerts_Notifications_History_Requirements.md` and `spec files/Implementation_Status.md`.
+- Last check run (exact command): `scripts/verify.sh docs`
+- Result (first failing lines, or "green"): green
+- Hypothesis: Requirements and code now align; finish re-read and full verification remain.
+- Next action (one specific step, not "continue"): Re-read issue #141 and prove each requirement in the finish section.
 
 ## Decisions and notes
 

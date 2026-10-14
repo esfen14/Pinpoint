@@ -92,13 +92,26 @@ chronological record of every transition.
 | Plugin output | Nagios plugin output at time of event, truncated |
 | Acknowledged | Badge if this alert event was acknowledged at any point while active |
 
+A problem episode starts at a host/service problem transition and ends on its
+UP/OK recovery. Subsequent non-OK transitions for that target remain in the
+same episode unless an `AUTO_RESOLVED` acknowledgement action marks a recovery
+missing from the archive window. `ACKNOWLEDGED` actions within that episode
+mark its problem events, including earlier problem transitions while active;
+`UNACKNOWLEDGED` removes the live acknowledgement but does not erase that
+historical badge. A later episode starts unacknowledged. Recovery rows are not
+problem events and do not inherit the badge. Both the badge and the
+acknowledgement filter use these episode bounds, even when the selected time
+range begins after the episode's first transition. Host and service episodes
+are separate targets.
+
 ### 3.2 Row Expansion — Alert Detail
 
 When a row is selected or expanded, show:
 
 - Full plugin output (untruncated)
-- If the event was acknowledged (query `ACK_HISTORY` in `system_models.py`
-  for rows matching this hostname + service where `Action = ACKNOWLEDGED`):
+- If this problem event was acknowledged during its active episode (match
+  `ACK_HISTORY` by hostname + service and the episode's time bounds, not by
+  target alone):
   - Acknowledging user's name (join `ActorUserID` → `USER` table)
   - Acknowledgement timestamp (`Actioned_At`)
   - Acknowledgement comment (`Comment`)

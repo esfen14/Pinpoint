@@ -566,6 +566,7 @@ def test_episode_boundaries_across_list_window_and_targets(logged_in_client, db_
     for host, service, offset, action, comment in [
         ("h", None, 20, AckAction.ACKNOWLEDGED, "old host"),
         ("h", None, 25, AckAction.AUTO_RESOLVED, None),
+        ("h", None, 40, AckAction.ACKNOWLEDGED, "new host"),
         ("h", "http", 22, AckAction.ACKNOWLEDGED, "service only"),
     ]:
         db_session.session.add(AckHistory(
@@ -595,11 +596,11 @@ def test_episode_boundaries_across_list_window_and_targets(logged_in_client, db_
     assert listed.status_code == 200
     flags = {(i["service_name"], i["timestamp"] - base): i["acknowledged"]
              for i in listed.get_json()["data"]["items"]}
-    assert flags[(None, 30)] is False
+    assert flags[(None, 30)] is True
     assert flags[(None, 60)] is False
     assert flags[("http", 31)] is False
     assert detail.status_code == 200
-    assert detail.get_json()["data"]["ack"] is None
+    assert detail.get_json()["data"]["ack"]["comment"] == "new host"
 
 
 # ==========================================================
