@@ -458,7 +458,7 @@ class TestNcpaAndInventory:
         reconcile = self.run_add_ncpa_port(app, admin_user, device, applied=False)
         reconcile.assert_not_called()
 
-    def test_the_ncpa_service_exists_only_while_check_ncpa_is_enabled(self, app, db_session, admin_user, status, writer):
+    def test_the_ncpa_service_exists_only_while_check_ncpa_is_enabled(self, app, db_session, admin_user, status, writer, ncpa_inventory):
         from app.system_models import AgentStatus, NCPADeployment
         device = new_device(status, tcp={22: "ssh"})
         db_session.session.add(NCPADeployment(
@@ -624,7 +624,7 @@ class TestContinuityWhenTheInventoryIsFirstCreated:
 
 
 class TestPluginStoredWithScriptExtension:
-    def test_check_ncpa_py_gates_the_ncpa_service(self, app, db_session, admin_user, status, writer):
+    def test_check_ncpa_py_gates_the_ncpa_service(self, app, db_session, admin_user, status, writer, ncpa_inventory):
         from app.system_models import AgentStatus, NCPADeployment
         from app.network_discovery.port_lifecycle import enabled_plugin_names, mark_ncpa_port
         device = new_device(status, tcp={22: "ssh"})
