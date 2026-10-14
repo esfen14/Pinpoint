@@ -37,7 +37,7 @@ Copied from issue sections E, F and H; tick only with observed proof.
 - [ ] Integration/regression workflow tests from section G. (live lab workflows pending authorized run)
 - [x] Updated Data Model, Backend, Frontend, Engineering Standards and Implementation Status specs. (all five files updated and docs verification passed)
 - [x] Updated Help text and Admin secrets-storage note. (`CustomCheckDialog`, Custom Checks manual and NCPA Deployment manual; security limitations stated)
-- [ ] verify.sh all output attached to PR and sanitized docs/test-runs/ report.
+- [x] verify.sh all output attached to PR and sanitized docs/test-runs/ report. (draft PR #161 includes verification output and links the committed sanitized report)
 
 ### H. Definition of done
 - [ ] All mandatory acceptance criteria satisfied. (lab items pending)
@@ -51,7 +51,7 @@ Copied from issue sections E, F and H; tick only with observed proof.
 - [x] Required automated tests added/updated. (resource macro and transaction regression tests; 3 integration tests; 4 existing tests updated)
 - [x] Applicable automated tests pass. (`87e00907`: full all gate, 2674 backend passed/14 skipped and 554 frontend passed; `61ebb946`: 2 strengthened equivalence tests passed)
 - [ ] Relevant integration/regression tests pass. (live lab pending)
-- [ ] Test/verification evidence attached to PR.
+- [x] Test/verification evidence attached to PR. (draft PR #161 includes full-gate and 332-test macro regression output)
 - [x] User inputs and configuration validated. (NAGIOS_RESOURCE_CFG from env; slot limit enforced before any write)
 - [x] Authorization enforced. (cleanup route: `require_permission("system.deploy.ncpa")` + `login_required`)
 - [ ] Sensitive data handled securely. (tokens/passwords not in logs, not in responses, not in hosts.cfg; resource.cfg mode 0640)
@@ -61,8 +61,8 @@ Copied from issue sections E, F and H; tick only with observed proof.
 - [x] User docs updated. (Help text and both administrator manuals updated)
 - [x] New config parameters documented. (`NAGIOS_RESOURCE_CFG` in README production settings; docs environment-drift check passed)
 - [ ] Deployment/migration steps documented.
-- [ ] PR references #129.
-- [ ] PR describes implementation and tests.
+- [x] PR references #129. (draft PR #161)
+- [x] PR describes implementation and tests. (draft PR #161 describes the fixes, tests and remaining blockers)
 - [ ] Required CI checks pass.
 - [ ] Required reviewer approvals obtained.
 - [ ] Blocking review comments resolved.
@@ -87,9 +87,9 @@ Requirement coverage (each issue requirement maps to E/F/H; proof pending):
 1. [x] Port tracking: tests in `server/tests/unit/test_ncpa.py`, `test_ncpa_deployment_runs.py`, `test_ncpa_identity.py`, `test_port_lifecycle.py`, `test_create_host_cfg.py`, migration tests; model `server/app/system_models.py`, migration `server/migrations/versions/`, deployment `server/app/ncpa_deployment/ncpa_deployment.py`, discovery `server/app/network_discovery/{plugin_registry,ncpa_relocation,identity_probes,port_lifecycle,create_host_cfg}.py`.
 2. [x] Cleanup backend: tests in `server/tests/unit/test_ncpa_deployment_runs.py`, `test_ncpa_command_logging.py`, `test_ncpa.py`; `server/app/api/system/ncpa_deployment.py`, `server/app/ncpa_deployment/ncpa_deployment.py`, activity/status integration. Explicit injection/secret review before touching these sensitive modules.
 3. [x] Cleanup UI: tests under `client/src/test/NcpaDeploymentPage.test.tsx` and `NcpaDeployWizard.test.tsx`; `client/src/pages/NcpaDeploymentPage.tsx`, `client/src/components/ncpa-deployment/`, `client/src/lib/ncpaDeploymentApi.ts`, `client/src/types/ncpaDeployment.ts`.
-4. [ ] Macro secrets: tests `server/tests/unit/{test_create_host_cfg,test_custom_checks,test_ncpa,test_status}.py` and new resource-macro tests; `server/app/network_discovery/{resource_macros,create_host_cfg,plugin_registry,custom_checks}.py`, deployment/integration permissions contract. Review injection, process exposure and resource-file ownership with a person before code.
+4. [ ] Macro secrets (automated tests pass; process secrecy and installed ownership support remain incomplete): tests `server/tests/unit/{test_create_host_cfg,test_custom_checks,test_ncpa,test_status}.py` and new resource-macro tests; `server/app/network_discovery/{resource_macros,create_host_cfg,plugin_registry,custom_checks}.py`, deployment/integration permissions contract. Review injection, process exposure and resource-file ownership with a person before code.
 5. [x] Document new behavior, security/installer assumptions, user Help and upgrade guidance in `spec files/{Data_Model_and_Integrations,Backend_Modules_and_Routes,Frontend_Modules_and_Routes,Engineering_Standards,Implementation_Status}.md`, appropriate Help/Admin manual, README if configuration changes; run docs verification.
-6. [ ] Re-read issue and prove every E/F/H item; run `scripts/verify.sh all`, record output and sanitized lab evidence in `docs/test-runs/`, finish PR template and request review. No live tests/labs without explicit authorization under workflow hard limits.
+6. [ ] Finish (draft PR #161 opened; acceptance/live/review blockers remain): re-read issue and prove every E/F/H item; run `scripts/verify.sh all`, record output and sanitized lab evidence in `docs/test-runs/`, finish PR template and request review. No live tests/labs without explicit authorization under workflow hard limits.
 
 ## Round log
 
@@ -109,13 +109,14 @@ Requirement coverage (each issue requirement maps to E/F/H; proof pending):
 | 12 (local) | Added in-memory resource transactions to regeneration, discovery and post-deployment flows; restore on cancellation/exception/apply failure; reload resource-only changes; apply mode 0640 to live hosts and restore both files before rollback reload. Updated specs, manuals and Help text. | focused latest host/custom/resource/transaction suite; backend stage; docs; final all stage | 275 focused passed; backend stage 2667 passed/14 skipped; docs green; full all gate green (2674 backend/554 frontend, build/lint passed). |
 | 13 (local compatibility) | Started existing stopped QA appliance and inspected installed help/metadata; created/removed empty private sibling as pinpoint to test ownership preservation. No app sync, reset, migration, discovery, deployment, cleanup or live resource write. | installed plugin help/version; service-user fchown probe | NCPA 1.2.4 no secure input; check_nt/mysql_query extra-opts present; SMB 2.4.12 none; radius absent; resource nagios:nagios 0660, fchown denied. Installer blocker confirmed. |
 | 14 (local) | Full all gate passed; strengthened genuine encrypted-password rendering and NCPA effective-command equivalence tests; recorded immutable sanitized compatibility report. | `scripts/verify.sh all`; targeted equivalence tests on `61ebb946`; docs gate | all green on `87e00907`: 2674 backend/14 skipped, 554 frontend, build/lint; equivalence 2 passed. Process secrecy, installed ownership updates, remaining lab cases, CI and review remain incomplete. |
+| 15 (macro retest) | Ran all seven macro/config/NCPA/snapshot regression modules and re-read issue #129; opened draft PR #161 with all-gate, equivalence and fresh macro-test evidence. | seven-module pytest command with JUnit; GitHub issue/PR read; CI watch | 332 passed; issue unchanged, OPEN/no comments; draft PR #161 created. Macro and final-plan completion remain unchecked because process-secret transport, installed ownership and live/review acceptance are incomplete. |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh all > /tmp/issue-129-all-verification.log 2>&1`
-- Result (first failing lines, or "green"): green on `87e00907`: 2674 backend passed, 14 skipped; 554 frontend passed; build/lint passed (0 errors, 29 warnings). Subsequent test-only equivalence strengthening on `61ebb946`: 2 passed; application source unchanged.
-- Hypothesis: Known substitution, persistence, reclamation and rollback defects are repaired locally. Process-secrecy transport remains unimplemented. Installed NCPA 1.2.4 and SMB 2.4.12 lack secure credential inputs; check_nt/check_mysql_query advertise extra-opts, check_radius is absent. The real pinpoint user cannot fchown an atomic resource candidate to nagios, so a scoped installer mechanism is required before production use.
-- Next action (one specific step, not "continue"): Obtain owner confirmation before pushing the local checkpoints and separately authorize the scoped installer ownership helper; implement supported secure credential transport/adapter and rerun skipped lab acceptance cases.
+- Last check run (exact command): `cd server && .venv/bin/python -m pytest tests/unit/test_resource_macros.py tests/unit/test_create_host_cfg.py tests/unit/test_custom_checks.py tests/unit/test_custom_checks_config_structure.py tests/unit/test_ncpa.py tests/unit/test_status.py tests/unit/test_device_config.py -q --junitxml=../test-results/issue-129/macro-secrets-retest.xml`
+- Result (first failing lines, or "green"): green, 332 passed in 26.88 s on `fd5f0f62`. Draft PR #161 opened with test evidence; CI watch running. Prior all gate remains green on `87e00907`, with subsequent equivalence assertions separately verified.
+- Hypothesis: Macro tests prove configuration/snapshot behavior and rollback, not process-list secrecy or installed ownership compatibility. These remain actual implementation blockers; no checkbox claiming full macro completion or all acceptance can be ticked. Installer helper scope has not been approved.
+- Next action (one specific step, not "continue"): Observe PR #161 CI results, then implement secure plugin credential transport and obtain separate installer-helper authorization before the remaining live cases and ready-for-review transition.
 
 ## Decisions and notes
 
@@ -144,4 +145,6 @@ Requirement coverage (each issue requirement maps to E/F/H; proof pending):
 - The earlier "VM inspection refused" note is superseded: VirtualBox showed no running guests and the QA appliance in aborted state. Owner-approved usage allowed starting the existing guest; no snapshots or installed application state were replaced. Guest is left running for continued inspection. Host had >8 GB available RAM and 58 GB free disk before starting its 4 GB guest.
 - Injection/secret review for local fixes: no secret in command execution argv was introduced; substitution is limited to complete known secret fields; file destinations still derive only from configured paths. Atomic temp files start private; unsafe world/other permissions and malformed/colliding slots fail before writes. Snapshot contents stay in memory; failure logs do not include raw reload output. Process-argument secrecy is still unchecked because adapter/input work is outstanding.
 
-- Local checkpoints `87e00907` (config safeguards/docs) and `61ebb946` (effective command proof) have not been pushed. Report: docs/test-runs/2026-10-14-issue-129-resource-compatibility/REPORT.md; raw output is git-ignored under test-results/issue-129/. Stop is now concrete installer contract/plugin transport work, not an unresolved process-secrecy choice. Ask before pushing, as the owner requested.
+- The owner approved pushing `87e00907`, `61ebb946` and `fd5f0f62`; all three were pushed to issue-129-ncpa-hardening. Further pushes still need confirmation. Report: docs/test-runs/2026-10-14-issue-129-resource-compatibility/REPORT.md; raw output is git-ignored under test-results/issue-129/. Stop is now concrete installer contract/plugin transport work, not an unresolved process-secrecy choice. Ask before pushing, as the owner requested.
+
+- Current owner request: run macro-secret tests, then work the last plan checkbox. Ran the seven relevant modules (332 passed) and re-read the live issue (OPEN, no new comments). Draft PR #161: https://github.com/esfen14/Pinpoint/pull/161. It explicitly retains process-secrecy, installer compatibility and live-case blockers. No installer mutation or extra push was authorized by this request. This progress update is local only pending push confirmation.
