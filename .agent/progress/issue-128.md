@@ -78,3 +78,5 @@ Requirement coverage (every requirement the issue states, and the check that pro
 - Sensitive-module review: fixed IP-only HTTPS inventory URL, query parameters instead of shell execution, no redirects, bounded time/body/traversal/cache, sanitized failure reasons; no agent values or token in logs/response. Existing command validation and shared Nagios pre-apply/rollback writer retained.
 
 - Final verification interrupted intentionally: origin/main advanced by merged History recovery and HTML alert-email changes. Integrate those before verifying the combined branch and opening the PR.
+
+- Final security review found malformed root-error inventories, excessive JSON nesting and >10000 nodes were not all treated as unknown. Added red tests and fixed these cases within round 5; rerun the final suite on the integrated branch.

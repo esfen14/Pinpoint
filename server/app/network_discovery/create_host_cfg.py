@@ -143,12 +143,12 @@ def probe_ncpa_paths(address, port, token):
                 if len(content) > 2 * 1024 * 1024:
                     raise ValueError("Agent inventory exceeds the size limit.")
             root = json.loads(content).get("root")
-            if not isinstance(root, dict):
+            if not isinstance(root, dict) or "error" in root:
                 raise ValueError("Invalid agent inventory.")
             confirmed = True
             pending = [("", root)]
             # Bound traversal and depth of an untrusted agent's response.
-            while pending and len(paths) < 10000:
+            while pending:
                 prefix, node = pending.pop()
                 if not isinstance(node, dict) or "error" in node:
                     continue
@@ -156,14 +156,18 @@ def probe_ncpa_paths(address, port, token):
                     if not isinstance(name, str) or name == "error":
                         continue
                     path = f"{prefix}/{name}" if prefix else name
-                    if len(path) > 200 or path.count("/") > 10:
+                    if path.count("/") > 10:
+                        raise ValueError("Agent inventory exceeds the depth limit.")
+                    if len(path) > 200:
                         continue
                     if isinstance(value, dict) and "error" in value:
                         continue
                     paths.add(path)
+                    if len(paths) > 10000:
+                        raise ValueError("Agent inventory exceeds the node limit.")
                     if isinstance(value, dict):
                         pending.append((path, value))
-    except (requests.RequestException, ValueError, TypeError, AttributeError):
+    except (requests.RequestException, ValueError, TypeError, AttributeError, RecursionError):
         paths.clear()
         confirmed = False
     finally:
@@ -187,7 +191,8 @@ def load_host_plugin_facts(probe_ncpa=False):
 
     Devices without a deployed token are left out, so their NCPA port falls
     back to a plain TCP check. If a device has several deployments, the most
-    recent one wins. Read-only; does not touch the session.
+    recent one wins. With probe_ncpa=True, add confirmed API paths from a
+    cached inventory request per agent. Read-only; does not touch the session.
     """
     deployments = db.session.scalars(
         sa.select(NCPADeployment)

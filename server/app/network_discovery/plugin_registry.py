@@ -144,7 +144,9 @@ def ncpa_checks(variables):
     a list of {"metric": ..., "path": ...} dicts. A path containing
     "{partition}" expands to one service per entry in variables["partitions"]
     (discovered during NCPA installation); if no partitions are known, the
-    entry's "fallback_path" is used as a single service instead.
+    entry's "fallback_path" is used as a single service instead. Confirmed
+    unavailable paths carry a skip_reason; an unverified inventory defers the
+    added defaults while preserving established checks.
     """
     metrics = variables.get("metrics") or []
     partitions = variables.get("partitions") or []

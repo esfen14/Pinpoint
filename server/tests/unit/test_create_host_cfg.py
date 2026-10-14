@@ -983,6 +983,7 @@ class TestNcpaPathVerification:
         (302, {'root': {'cpu': {'percent': []}}}),
         (200, {'error': {'message': 'private-token'}}),
         (200, {'root': 'invalid'}),
+        (200, {'root': {'error': {'message': 'private-token'}}}),
     ])
     def test_agent_errors_are_not_treated_as_supported(self, monkeypatch, status, body):
         import json
@@ -1005,3 +1006,24 @@ class TestNcpaPathVerification:
         module.ncpa_path_cache.clear()
         assert module.probe_ncpa_paths('10.78.0.2', 5693, 'test-token') is None
         response.close.assert_called_once()
+
+
+    def test_excessive_json_nesting_is_an_unverified_inventory(self, monkeypatch):
+        from unittest.mock import Mock
+        from app.network_discovery import create_host_cfg as module
+        response = Mock(status_code=200)
+        response.iter_content.return_value = [b'{"root":' + b'{"n":' * 1200 + b'0' + b'}' * 1200 + b'}']
+        monkeypatch.setattr(module.requests, 'get', Mock(return_value=response))
+        module.ncpa_path_cache.clear()
+        assert module.probe_ncpa_paths('10.78.0.2', 5693, 'test-token') is None
+        response.close.assert_called_once()
+
+    def test_excessive_node_count_is_unverified_instead_of_a_partial_inventory(self, monkeypatch):
+        import json
+        from unittest.mock import Mock
+        from app.network_discovery import create_host_cfg as module
+        response = Mock(status_code=200)
+        response.iter_content.return_value = [json.dumps({'root': {str(i): [] for i in range(10001)}}).encode()]
+        monkeypatch.setattr(module.requests, 'get', Mock(return_value=response))
+        module.ncpa_path_cache.clear()
+        assert module.probe_ncpa_paths('10.78.0.2', 5693, 'test-token') is None
