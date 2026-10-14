@@ -575,6 +575,22 @@ class TestCreateHostCfgFile:
         assert all(cmd.startswith("pinpoint_nd_snmp!") for cmd in services["host-a"].values())
         assert all(cmd.startswith("pinpoint_nd_ncpa!5693!tokenB!") for cmd in services["host-b"].values())
 
+    def test_backfilled_port_preserves_existing_ncpa_config(self, app, db_session, admin_user, plugin_config, tmp_path):
+        device = make_device(db_session, admin_user, "existing", "10.0.0.12")
+        deployment = make_ncpa_deployment(db_session, device, "tokenB", ["sda1"])
+        db_session.session.commit()
+        discovered = {"10.0.0.0/24": {
+            "10.0.0.12": make_host("existing", tcp={"5693": "ncpa"}, net_discovery_id=device.NetDiscoveryID)
+        }}
+        with patched_config(app, HOST_CONFIG_DIR=tmp_path):
+            before = _create_host_cfg_file(discovered).read_text()
+            deployment.Port = int(app.config["NCPA_PORT"])
+            db_session.session.commit()
+            after = _create_host_cfg_file(discovered).read_text()
+        assert re.sub(r"# generated at .*", "# generated at <time>", before) == re.sub(
+            r"# generated at .*", "# generated at <time>", after
+        )
+
     def test_commands_defined_once_for_used_plugins_only(self, app, db_session, admin_user, plugin_config, tmp_path):
         discovered = {
             "10.0.0.0/24": {
