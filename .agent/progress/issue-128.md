@@ -60,12 +60,14 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 | 2 | Added confirmed defaults, cached bounded path probe, per-metric skipped reasons, guided process form and owning docs; unit HTTP probes mocked | Backend focused/regressions; process API; `scripts/verify.sh frontend`; `scripts/verify.sh docs`; backend stage running | 257 backend regressions and 58 settings tests pass; 34 targeted/567 full frontend tests pass; build/lint green (warnings); docs green; backend stage pending |
 
+| 3 | Full backend stage exposed loss of established NCPA services on failed inventory; Docker default services independently reached OK on both targets | `scripts/verify.sh backend`; live status.dat inspection | 2585 passed, 14 skipped, 3 upgrade-rehearsal failures: expected CPU/memory services absent, expected 15 attached got 13, check_ncpa Enabled instead of Active; live 12/12 defaults OK |
+
 ## State for the next session
 
 - Last check run (exact command): `scripts/verify.sh backend > test-results/issue-128/backend-stage.log 2>&1`
-- Result (first failing lines, or "green"): Still running; targeted regressions green (257), settings tests green (58); frontend stage and docs green.
-- Hypothesis: New behavior passes isolated tests; full backend verification and generated live Nagios services still require evidence.
-- Next action (one specific step, not "continue"): Sync this checkpoint into the Docker appliance, attach the two NCPA agents to the isolated lab network, and verify generated metrics and absent-path skipping.
+- Result (first failing lines, or "green"): 3 failed, 2585 passed, 14 skipped. `test_upgrade_rehearsal.py`: missing ncpa-cpu/ncpa-memory services; attached count 13 instead of 15; check_ncpa not Active.
+- Hypothesis: Failed inventory was treated as confirmed absence and removes established checks. Preserve prior behavior on unknown inventory while keeping new defaults off until confirmed.
+- Next action (one specific step, not "continue"): Add a failed-inventory continuity regression, distinguish unavailable inventory from confirmed missing paths, and rerun upgrade rehearsal then full verification.
 
 ## Decisions and notes
 
