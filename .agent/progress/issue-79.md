@@ -1,7 +1,7 @@
 # Issue #79: Choose which users receive email alerts for each host
 
 Branch: `issue-79-host-alert-recipients`
-Status: blocked
+Status: in-progress
 
 ## Finish condition
 
@@ -41,10 +41,13 @@ Requirement coverage (every requirement stated by the issue):
 
 5. [x] Docker acceptance supplement: own temporary compose project with cached images; API recipient saves, actual Nagios validation, captured host/service notifications for selected/default/fallback recipients, scoped cleanup, and new sanitized report.
 
+6. [ ] Resume on available VM: preserve inherited appliance state; sync issue branch and migrate; run real browser recipient save/reload/default/permission checks and Nagios delivery comparison; record report, restore lab and run all verification. Keep F8 pending until inbox evidence exists.
+
 ## Round log
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| Resume 2026-10-15 | Current issue and draft #160 re-read; CI green; VirtualBox now available, appliance started; inherited source modifications found and will be preserved before sync | scripts/vmlab status; scripts/vmlab up; remote git status | VM and Nagios active; prior all run interrupted and must be rerun |
 | Intake | Required docs and source inspected; isolated worktree; prerequisite checked | gh issue view 80 and gh pr list --state merged --search 80 | #80 merged and VM verification documented |
 | 1 | Added backend model/migration, recipient API, shared-writer groups and lifecycle handling with tests | cd server && .venv/bin/python -m pytest tests/unit/test_host_recipients.py -q | 34 passed, 2 failed: custom-check test used unsupported ssh plugin; permission-delete fixture hit write-only ORM relationship |
 
@@ -94,3 +97,5 @@ Requirement coverage (every requirement stated by the issue):
 - A scope clarification was asked after concrete Docker verification: accept Docker/local capture as a replacement for the explicit VM/inbox requirement, or keep the original requirement and draft. Until an explicit answer, retain the original finish condition; do not tick F8.
 
 - User decision after reviewing Docker evidence: "Keep the original acceptance; leave the PR draft." F8 stays unticked; no issue acceptance edits or PR readiness change are authorized. Full local all verification and previous code CI passed; CI reruns automatically for these final report/progress-only checkpoints.
+
+- 2026-10-15 preflight: inherited appliance uses issue-129 service override and a database stamped with revision 7db78f308ee5, absent from this branch. No migration stamping or cross-branch workaround used. Restore point `issue79-before-20261015` preserves the inherited state. Use documented fresh branch installation from os-nagios-ready for attributable acceptance.
