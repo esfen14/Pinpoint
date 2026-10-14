@@ -1,7 +1,7 @@
 # Issue #79: Choose which users receive email alerts for each host
 
 Branch: `issue-79-host-alert-recipients`
-Status: blocked
+Status: in-progress
 
 ## Finish condition
 
@@ -39,6 +39,8 @@ Requirement coverage (every requirement stated by the issue):
 3. [x] Live acceptance: inspect VM-lab ownership and tools, run issue-authorized save/validation/delivery comparison if exclusive lab and mailbox access are available; record sanitized report in docs/test-runs, refresh Implementation_Status, and run docs verification.
 4. [x] Re-read issue/comments, prove each finish condition, scripts/verify.sh all, checkpoint, and open a ready PR only when all acceptance is proven; otherwise draft with outstanding items recorded.
 
+5. [ ] Docker acceptance supplement: own temporary compose project with cached images; API recipient saves, actual Nagios validation, captured host/service notifications for selected/default/fallback recipients, scoped cleanup, and new sanitized report.
+
 ## Round log
 
 | Round | Change made | Check run | Result |
@@ -52,12 +54,14 @@ Requirement coverage (every requirement stated by the issue):
 
 | 4 | Re-read unchanged issue/comments, ran all verification, opened draft #160, recorded live blocker | scripts/verify.sh all; gh pr checks 160 | green: 2660 backend passed / 14 skipped; 565 frontend passed; build/lint/docs green; all 3 CI jobs passed on aa273270; only live acceptance remains |
 
+| Resume | User requested continuation; group membership refreshed using sg docker; discovered shared lab and chose separate three-container lab | id; id paeng; sg docker -c docker ps | Docker group exists on account but not inherited by session; sg docker grants legitimate group access |
+
 ## State for the next session
 
 - Last check run (exact command): scripts/verify.sh all > /tmp/issue79-all.log 2>&1
 - Result (first failing lines, or green): green; backend 2660 passed / 14 skipped; frontend 565 passed; docs, build and lint pass (0 errors / 29 warnings). Logs copied to ignored test-results/issue79-*.log. PR docs/backend/frontend CI passed on code commit aa273270; final metadata checkpoint triggers the same checks again.
 - Hypothesis: NetDiscoveryID is durable across rescans. Numeric device-ID group names avoid injection. Eligibility derives from existing active/opt-in filter. The shared writer reads uncommitted flushed assignments, allowing rollback on apply failure.
-- Next action: Provide exclusive access to a VM lab with configured mail transport and controlled test inboxes; run F8 (save, nagios -v, selected-versus-default delivery comparison), record evidence, then remove the progress file and mark draft PR #160 ready only after acceptance and CI pass.
+- Next action: Start isolated Docker lab pinpoint-issue79 at port 8079, discover only 10.77.0.0/28, save per-host recipients, validate real Nagios config and compare notifications via local mail capture; keep VM/inbox distinction explicit.
 
 ## Decisions and notes
 
@@ -78,3 +82,5 @@ Requirement coverage (every requirement stated by the issue):
 - Draft PR: https://github.com/esfen14/Pinpoint/pull/160. F1-F7 and F9-F10 are proven by the named isolated tests, specs and all verification; F8 remains blocked. No services, containers, network devices or mailboxes were modified in this environment.
 - Final acceptance report: docs/test-runs/2026-10-14-issue-79-preflight/REPORT.md; blocked prerequisites only, no real Nagios or email pass claimed.
 - The last session round includes only progress/report metadata after the verified implementation; no code changes after scripts/verify.sh all. Watch final-checkpoint PR CI before reporting status.
+
+- Resumed 2026-10-14: user added paeng to docker group; use sg docker for refreshed supplementary group access. Existing pinpoint-lab and issue-128 containers are left untouched. Own project uses the documented isolated 10.77.0.0/28 range and two targets. Compose and test mail capture artifacts are temporary and uncommitted. Re-running the previous all command into test-results/issue79-resume-all.log as required for resume.
