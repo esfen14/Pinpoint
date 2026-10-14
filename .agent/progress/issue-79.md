@@ -65,7 +65,7 @@ Requirement coverage (every requirement stated by the issue):
 - Last check run (exact command): scripts/verify.sh all > test-results/issue79-resume-all.log 2>&1
 - Result (first failing lines, or green): green; 2660 backend passed / 14 skipped, 565 frontend passed, docs/build/lint green. Live Docker evidence: 14 distinct passing cases across the initial and follow-up reports; one initial immediate post-HUP fallback capture failed, then a settled UP/DOWN retry captured all 28 expected recipients. Cause of the initial capture gap remains undiagnosed.
 - Hypothesis: Docker proves actual core group selection and MIME recipient routing; VM/systemd and external SMTP/inbox are separate evidence, and the original finish condition still explicitly requires them.
-- Next action: Decide whether the original issue's VM/inbox finish condition should be replaced by the observed Docker/local-capture evidence; if not, provide the original lab/inbox acceptance. PR #160 remains draft until that requirement is resolved. Use the committed reports and existing 14 passing Docker checks rather than starting over.
+- Next action: Provide exclusive VM lab and controlled inbox access, then run the original F8 acceptance. The user explicitly retained VM/inbox acceptance and requested leaving PR #160 draft. Reuse the committed Docker evidence; do not replace F8 or repeat already-proven checks unnecessarily. Check the final metadata CI rerun before any ready-for-review transition.
 
 ## Decisions and notes
 
@@ -92,3 +92,5 @@ Requirement coverage (every requirement stated by the issue):
 - Docker reports: docs/test-runs/2026-10-14-issue-79-docker-initial/REPORT.md (7 passes, 1 failed immediate capture); docs/test-runs/2026-10-14-issue-79-docker-repeat/REPORT.md (7 follow-up passes). Eight copied source files matched commit a60e5aba. Raw evidence and temporary drivers are in ignored test-results/issue79-docker/.
 - Own project pinpoint-issue79 was removed after collecting evidence, including its containers and networks. Existing pinpoint-lab and issue-128 containers remained running and were not modified. Docker is now usable through sg docker; the old preflight report remains historical.
 - A scope clarification was asked after concrete Docker verification: accept Docker/local capture as a replacement for the explicit VM/inbox requirement, or keep the original requirement and draft. Until an explicit answer, retain the original finish condition; do not tick F8.
+
+- User decision after reviewing Docker evidence: "Keep the original acceptance; leave the PR draft." F8 stays unticked; no issue acceptance edits or PR readiness change are authorized. Full local all verification and previous code CI passed; CI reruns automatically for these final report/progress-only checkpoints.
