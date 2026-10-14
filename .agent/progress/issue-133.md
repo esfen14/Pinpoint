@@ -1,7 +1,7 @@
 # Issue #133: Clear acknowledgements on recovery and audit History
 
 Branch: `issue-133-clear-ack-recovery-audit-history`
-Status: in-progress
+Status: blocked
 
 ## Finish condition
 
@@ -42,7 +42,7 @@ Copied from issue sections E, F, H. Tick only with observed evidence.
 - [x] Required automated tests added or updated (`test_status.py`, `HistoryPage.test.tsx`).
 - [x] All applicable automated tests pass (`scripts/verify.sh all`: 2382 backend passed/14 skipped, 518 frontend passed; latest focused Playwright project 4/4 passed).
 - [x] Relevant integration and regression tests pass: isolated suites and targeted VM/Playwright run passed (report); no claim of all possible live edge cases.
-- [x] Test results/evidence attached to PR ([local verification](https://github.com/esfen14/Pinpoint/pull/145#issuecomment-6150729909), [live recovery](https://github.com/esfen14/Pinpoint/pull/145#issuecomment-6158903980), [expanded browser](https://github.com/esfen14/Pinpoint/pull/145#issuecomment-6159179113)); full local log not uploaded.
+- [x] Test results/evidence attached to PR ([local verification](https://github.com/esfen14/Pinpoint/pull/145#issuecomment-6150729909), [live recovery](https://github.com/esfen14/Pinpoint/pull/145#issuecomment-6158903980), [expanded browser](https://github.com/esfen14/Pinpoint/pull/145#issuecomment-6159179113), [owner path recheck](https://github.com/esfen14/Pinpoint/pull/145#issuecomment-6159864635)); full local log not uploaded.
 - [x] Inputs/config validated for changed logic (fresh status checks; no new config; isolated tests).
 - [x] Authorization enforced where required (existing route guards unchanged; `test_dashboard.py`, `test_history.py`, `PageAccess.test.tsx`).
 - [x] Sensitive data securely handled (source review: no new logging/secret persistence in changed logic).
@@ -57,7 +57,7 @@ Copied from issue sections E, F, H. Tick only with observed evidence.
 - [ ] Required CI checks pass on current head: earlier head passed, but latest head with new Playwright/report changes has no check conclusions yet.
 - [ ] Required reviewer approvals obtained: no reviews yet.
 - [x] Blocking review comments resolved: none currently present (PR #145 reviews/comments queried); recheck before completion.
-- [ ] All applicable acceptance criteria/deliverables complete for merge: G manual path accepted by owner in chat and targeted live flow passed; outstanding scope decisions, current-head CI, defect triage and formal review remain.
+- [ ] All applicable acceptance criteria/deliverables complete for merge: G manual path accepted and independently rechecked; module scope resolved by owner. Current-head CI and formal review/critical-defect assessment remain.
 
 Requirement coverage (section A problem, C changes, D guidelines, G testing, exclusions and E/F/H):
 
@@ -110,13 +110,14 @@ Requirement coverage (section A problem, C changes, D guidelines, G testing, exc
 | resumed | User requested Definition-of-Done clarity; updated issue #133 section H with evidence-linked checked/open boxes, limitations and explicit reviewer decisions; reconciled progress unchecked items. | `scripts/verify.sh all > /tmp/opencode/issue-133-more-all.log 2>&1; result=$?; grep -E 'passed,|Test Files|Tests  |problems|verify: all' /tmp/opencode/issue-133-more-all.log | tail -10; exit "$result"`; `gh issue view 133 --json body` | Local all green (2382 backend/14 skipped, 518 frontend, 26 lint warnings); issue H now has 21 checked and 6 open items. No PR approval or current-head CI result claimed. |
 | resumed | Owner accepted focused VM coverage and no further load benchmark, reported no major defects, and requested exact manual-path double-check; added step 10 rather than inferring formal PR approval. | `scripts/verify.sh docs`; `gh pr view 145 --json ...` | docs green; draft PR has no current-head CI checks or reviews. |
 | 11 | Added exact owner-path Playwright assertion for real filtered CRITICAL/recovery transitions, expanded detail/timestamp and Refresh; recorded separate agent-observed report/index. | `scripts/playwright-lab --project issue-133-live -g 'owner History path'`; `scripts/playwright-lab --project issue-133-live`; `scripts/verify.sh frontend`; `scripts/verify.sh docs` | Initial ambiguous CRITICAL-row selector yielded a false assertion; refined to transition into CRITICAL. Focused 2/2, full project 4/4, frontend/docs green. |
+| 12 | Updated issue H with owner's accepted module scope and independent recheck; posted PR evidence. | `gh issue view 133 --json body`; `gh pr view 145 --json headRefOid,isDraft,reviewDecision,statusCheckRollup,reviews` | Issue H now four open merge boxes; draft PR current head has no CI conclusions or reviews. No formal review implied by chat. |
 
 ## State for the next session
 
 - Last check run (exact command): `scripts/verify.sh docs`
-- Result (first failing lines, or "green"): green — `verify: docs OK`. Agent-observed exact owner History path focused Playwright 2/2, full project 4/4, frontend green (26 lint warnings/0 errors). Report `docs/test-runs/2026-10-14-issue-133-owner-path-recheck/REPORT.md` distinguishes this from owner-reported manual pass.
-- Hypothesis: Focused module coverage and bounded reliability satisfy owner's clarified scope; real backend page two/CGI outage/load/clean install remain unrun but not newly required by issue G. Current-head CI and formal human PR review remain outstanding. #141–#144 are tracked backend gaps. Keep PR draft.
-- Next action (one specific step, not "continue"): Update issue #133 section H with owner's scope decisions and independent path evidence, post PR report link, then obtain final-head CI and formal review before merge readiness.
+- Result (first failing lines, or "green"): green — `verify: docs OK`. Agent-observed exact owner History path focused Playwright 2/2, full project 4/4, frontend green (26 lint warnings/0 errors). Issue H now has four open merge boxes. PR still draft with no CI conclusions or reviews on inspected head.
+- Hypothesis: Focused module coverage and bounded reliability satisfy owner's clarified scope; real backend page two/CGI outage/load/clean install remain unrun but not newly required by issue G. Issue H has four open merge boxes: critical-defect assessment, final-head CI, formal review, final reconciliation. #141–#144 tracked separately. Keep PR draft.
+- Next action (one specific step, not "continue"): Obtain formal PR review of #145 and critical-defect assessment, then move to final reviewable head, run/observe docs/backend/frontend CI, and reconcile issue H/progress before marking ready.
 
 ## Decisions and notes
 
@@ -130,6 +131,7 @@ Requirement coverage (section A problem, C changes, D guidelines, G testing, exc
 - User confirmed in chat that their manual History path plus targeted Playwright coverage satisfies the manual page-walk requirement, requested more live testing, and reported no desired code changes. This is not GitHub reviewer approval or a blanket deployment sign-off. Expanded plan steps 8–9 address live pagination/error display and bounded reliability; keep the appliance intact.
 - User reported in chat that their manual History path (filter host/service, see CRITICAL/recovery, expand detail, Refresh) worked. This is owner-reported, not agent-observed; record it separately from Playwright evidence. User approved further Playwright in chat and in https://github.com/esfen14/Pinpoint/issues/133#issuecomment-6159056949. This changes the plan: step 7 expands read-only coverage on the existing authorized VM. Human review approval and deployment/reliability sign-off remain unobserved. Current draft PR head has no check conclusions.
 - Owner authorized resetting disposable lab admin password in https://github.com/esfen14/Pinpoint/issues/133#issuecomment-6158705038. `flask recover-bootstrap-admin` succeeded with a private temporary password; the normal authenticated change-password route completed the forced change. Corrected the private lab admin email from the uniquely identified bootstrap account (the old state email mismatched); values were never printed. Targeted live evidence in `docs/test-runs/2026-10-14-issue-133-live/REPORT.md` with caveat: synced source on preserved issue #113 VM DB, not a clean #133 install; VM Git HEAD remains old despite matching source/build hashes.
+- Agent independently rechecked the owner's exact History path (real CRITICAL and CRITICAL→OK, expanded detail/timestamp/recovery duration, Refresh) using focused Playwright; 2/2 passed, full project 4/4. New sanitized report `docs/test-runs/2026-10-14-issue-133-owner-path-recheck/REPORT.md`; PR evidence https://github.com/esfen14/Pinpoint/pull/145#issuecomment-6159864635. Issue H updated to four open merge boxes (formal review/critical defects, final-head CI, final reconciliation). PR remains draft with no review or CI conclusions at head `25ba1fb1` when queried.
 - Owner's latest chat decision: focused VM tests suffice for this module, no major defects identified by owner, and load/soak is not needed; owner requested independent double-check of the exact manual History path. The owner did not provide formal GitHub PR approval; keep that distinct. No new fault injection/clean-install testing needed under this decision. CI is to be checked after all other conditions are met.
 - User asked to update the Definition of Done; issue #133 section H now reflects evidence-linked 21 checked/6 open boxes and explicitly distinguishes owner-reported manual acceptance, browser-intercepted page-two/error checks, unrun clean install/CGI outage/load, and formal PR review. This is an issue-body update, not new product code or a blanket waiver. Verify the final PR head separately.
 - Additional evidence posted at https://github.com/esfen14/Pinpoint/pull/145#issuecomment-6159572769. Current head `02f3d308` still has no CI conclusions or review approvals when queried; user did not grant a PR review approval by saying there were no code changes desired. Actual backend page two/CGI outage and load benchmark require a human scope decision before attempting invasive setup or marking reliability satisfied.
