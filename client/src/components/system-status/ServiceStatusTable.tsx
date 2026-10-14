@@ -11,8 +11,9 @@ type ServiceStatusTableProps = {
   onQueryChange: (query: string) => void
   stateFilter: 'All' | ServiceState
   onStateFilterChange: (state: 'All' | ServiceState) => void
-  flappingOnly: boolean
-  onFlappingOnlyChange: (flappingOnly: boolean) => void
+  // The "Flapping only" filter is shown only when the page supplies the handler.
+  flappingOnly?: boolean
+  onFlappingOnlyChange?: (flappingOnly: boolean) => void
   showFilter: boolean
   onToggleFilter: () => void
   sortAsc: boolean
@@ -142,7 +143,7 @@ export function ServiceStatusTable({
   onQueryChange,
   stateFilter,
   onStateFilterChange,
-  flappingOnly,
+  flappingOnly = false,
   onFlappingOnlyChange,
   showFilter,
   onToggleFilter,
@@ -210,6 +211,7 @@ export function ServiceStatusTable({
                     {s}
                   </button>
                 ))}
+                {onFlappingOnlyChange && (<>
                 <span className="mt-1 block px-2 py-1 text-xs font-medium text-gray-400">Flapping</span>
                 <button
                   onClick={() => onFlappingOnlyChange(!flappingOnly)}
@@ -222,6 +224,7 @@ export function ServiceStatusTable({
                 >
                   Flapping only
                 </button>
+                </>)}
               </div>
             )}
           </div>
