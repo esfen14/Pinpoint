@@ -20,10 +20,10 @@ Copied from issue sections E, F and H; tick only with observed proof.
 - [x] Healthy deployed device has no cleanup action. (`NcpaDeploymentPage` cleanup interaction test)
 - [x] Credentials cleared after request. (`TestCleanup` route finally; frontend interaction asserts cleared fields)
 - [x] Existing wizard and page tests pass unchanged. (`scripts/verify.sh frontend`: 554 passed)
-- [ ] No NCPA token/custom-check password in hosts.cfg, process list or snapshot. (`test_ncpa_token_absent_from_hosts_cfg`, `test_custom_check_password_absent_from_hosts_cfg`, `test_the_command_in_hosts_cfg_uses_the_decrypted_password` updated; `test_the_whole_file_is_consistent` updated; backend 2644 passed)
-- [ ] NCPA services have same lab results as before. (four direct real web01 checks matched stock OK states/performance series as nagios; complete generated-config services under main Nagios are pending)
+- [x] No NCPA token/custom-check password in hosts.cfg, process list or snapshot. (supported NCPA/native transport and real parent/child process regressions pass in the 2766-test all gate; installed main Nagios NCPA argv, hosts, CGI snapshots and logs pass; password-bearing SMB is refused before publication under the owner-approved unsupported-plugin policy)
+- [x] NCPA services have same lab results as before. (four direct stock/adapter comparisons passed; generated web01 CPU, memory and root-disk services returned OK with performance data under main Nagios on c9f8e263)
 - [x] resource.cfg content outside owned block, owner and mode preserved. (installed restricted helper and actual application client as pinpoint: outside bytes, nagios:nagios 0660, Nagios validation and exact rollback passed)
-- [ ] hosts.cfg mode 0640 and readable by Nagios. (candidate and live mode unit tests pass; current-build readability on installed Nagios remains unverified)
+- [x] hosts.cfg mode 0640 and readable by Nagios. (actual service-user config application set live 0640; nagios user readability and three main-daemon checks passed)
 - [x] Device removal reclaims macro slot; limit errors without invalid config. (`test_removing_device_from_generated_hosts_reclaims_its_actual_slot`, persistent slot/external slot tests, and limit tests pass; over-limit generation changes no resource file)
 - [x] Failed validation restores resource.cfg and hosts.cfg. (`TestResourceConfigTransaction` and `test_every_config_flow_restores_resources_on_failure` cover generation, validation, apply, exceptions and cancellation; the real apply helper restores both files before rollback reload)
 
@@ -43,27 +43,27 @@ Copied from issue sections E, F and H; tick only with observed proof.
 - [ ] All mandatory acceptance criteria satisfied. (lab items pending)
 - [ ] Required functionality works as specified. (all unit/integration tests passing; 2644 passed)
 - [ ] No unintentional regressions. (backend 2644 passed/14 skipped; frontend 554 passed)
-- [ ] Applicable edge cases handled. (limit error, missing resource.cfg graceful warning, rollback on validation failure, slot stability, reclaim)
+- [x] Applicable edge cases handled. (limit error, missing resource.cfg refusal, actual validation rollback, slot stability/reclaim, malformed external slots, helper failure and unsupported secret transport all covered by passing tests)
 - [x] Existing architectural patterns followed. (resource_macros uses same config/app_context pattern; substitution at write time, not in registry)
 - [x] No unnecessary duplicate functionality. (no parallel macro system; reuses existing plugin_registry validation)
 - [x] Relevant lint/static analysis passes. (`verify.sh all`: build and lint succeeded, 0 errors / 29 warnings)
 - [ ] No unresolved critical defects.
 - [x] Required automated tests added/updated. (resource macro and transaction regression tests; 3 integration tests; 4 existing tests updated)
-- [x] Applicable automated tests pass. (`87e00907`: full all gate, 2674 backend passed/14 skipped and 554 frontend passed; `61ebb946`: 2 strengthened equivalence tests passed)
+- [x] Applicable automated tests pass. (`c9f8e263`: current full all gate, 2766 backend passed/14 skipped and 554 frontend passed; docs/build/lint green)
 - [ ] Relevant integration/regression tests pass. (live lab pending)
 - [x] Test/verification evidence attached to PR. (draft PR #161 includes full-gate and 332-test macro regression output)
 - [x] User inputs and configuration validated. (NAGIOS_RESOURCE_CFG from env; slot limit enforced before any write)
 - [x] Authorization enforced. (cleanup route: `require_permission("system.deploy.ncpa")` + `login_required`)
-- [ ] Sensitive data handled securely. (supported check inputs and argv tests pass; resource.cfg nagios:nagios 0660; final full generated-config acceptance and explicit SMB compatibility blocker remain)
-- [ ] Errors handled safely. (ResourceMacroLimitError raised before write; OSError on chmod/write caught and logged; rollback on validation failure)
+- [x] Sensitive data handled securely. (supported check inputs and parent/child argv regressions pass; actual resource.cfg nagios:nagios 0660; main-engine argv/config/log/snapshot secrecy pass; unsupported SMB passwords are refused)
+- [x] Errors handled safely. (limit and permissions fail before publication; adapter/helper diagnostics suppress secrets; real Nagios validation rejection restores original files; automated reload/cancellation/failure tests pass)
 - [x] Performance/reliability requirements met. (secrets collected once per generate call; no per-host queries)
 - [x] Technical docs updated. (owning five specs updated)
 - [x] User docs updated. (Help text and both administrator manuals updated)
 - [x] New config parameters documented. (`NAGIOS_RESOURCE_CFG` in README production settings; docs environment-drift check passed)
-- [ ] Deployment/migration steps documented.
+- [x] Deployment/migration steps documented. (paired helper-first installation, protected resources and application multi-bind upgrade are documented; installed upgrade exercised in the main-daemon report)
 - [x] PR references #129. (draft PR #161)
 - [x] PR describes implementation and tests. (draft PR #161 describes the fixes, tests and remaining blockers)
-- [ ] Required CI checks pass. (all three passed for pushed d1d60627; new helper integration remains local pending push)
+- [x] Required CI checks pass. (docs/backend/frontend passed for published c9f8e263; new documentation checkpoint still needs authorized push and its own CI)
 - [ ] Required reviewer approvals obtained.
 - [ ] Blocking review comments resolved.
 - [ ] All applicable acceptance and deliverables complete.
@@ -87,7 +87,7 @@ Requirement coverage (each issue requirement maps to E/F/H; proof pending):
 1. [x] Port tracking: tests in `server/tests/unit/test_ncpa.py`, `test_ncpa_deployment_runs.py`, `test_ncpa_identity.py`, `test_port_lifecycle.py`, `test_create_host_cfg.py`, migration tests; model `server/app/system_models.py`, migration `server/migrations/versions/`, deployment `server/app/ncpa_deployment/ncpa_deployment.py`, discovery `server/app/network_discovery/{plugin_registry,ncpa_relocation,identity_probes,port_lifecycle,create_host_cfg}.py`.
 2. [x] Cleanup backend: tests in `server/tests/unit/test_ncpa_deployment_runs.py`, `test_ncpa_command_logging.py`, `test_ncpa.py`; `server/app/api/system/ncpa_deployment.py`, `server/app/ncpa_deployment/ncpa_deployment.py`, activity/status integration. Explicit injection/secret review before touching these sensitive modules.
 3. [x] Cleanup UI: tests under `client/src/test/NcpaDeploymentPage.test.tsx` and `NcpaDeployWizard.test.tsx`; `client/src/pages/NcpaDeploymentPage.tsx`, `client/src/components/ncpa-deployment/`, `client/src/lib/ncpaDeploymentApi.ts`, `client/src/types/ncpaDeployment.ts`.
-4. [ ] Macro secrets (NCPA/native adapters and process tests pass; installed helper writes/rollback pass; full generated-config apply/reload remains incomplete): tests `server/tests/unit/{test_create_host_cfg,test_custom_checks,test_ncpa,test_status}.py` and new resource-macro/adapter tests; `server/app/network_discovery/{resource_macros,create_host_cfg,plugin_registry,custom_checks}.py`, `server/scripts/pinpoint_check_{ncpa,native}.py`, separate installer helper and deployment permissions contract. Review injection, process exposure and resource-file ownership with a person before code.
+4. [x] Macro secrets (supported NCPA/native adapters and process tests pass; installed helper and complete generated-config apply/reload/readability/main-engine/snapshot/validation rollback pass; unsupported SMB passwords explicitly refused): tests `server/tests/unit/{test_create_host_cfg,test_custom_checks,test_ncpa,test_status}.py` and new resource-macro/adapter tests; `server/app/network_discovery/{resource_macros,create_host_cfg,plugin_registry,custom_checks}.py`, `server/scripts/pinpoint_check_{ncpa,native}.py`, separate installer helper and deployment permissions contract. Review injection, process exposure and resource-file ownership with a person before code.
 5. [x] Document new behavior, security/installer assumptions, user Help and upgrade guidance in `spec files/{Data_Model_and_Integrations,Backend_Modules_and_Routes,Frontend_Modules_and_Routes,Engineering_Standards,Implementation_Status}.md`, appropriate Help/Admin manual, README if configuration changes; run docs verification.
 6. [ ] Finish (draft PR #161 opened; acceptance/live/review blockers remain): re-read issue and prove every E/F/H item; run `scripts/verify.sh all`, record output and sanitized lab evidence in `docs/test-runs/`, finish PR template and request review. No live tests/labs without explicit authorization under workflow hard limits.
 
@@ -125,12 +125,14 @@ Requirement coverage (each issue requirement maps to E/F/H; proof pending):
 | 26 | Installed only root-owned helper/exact no-argument sudo grant on the authorized QA appliance. Ran new resource client as actual pinpoint service user with a standalone dependency constant; all filesystem/subprocess operations real. | service-user writer, owned/outside bytes and metadata, Nagios preflight, transaction success/failure rollback, privilege refusal | All passed. Resource restored byte-for-byte and metadata unchanged. Helper/sudoers remain installed; running Flask source/database untouched. |
 | 27 | Initial live parity preflight found no NCPA service definitions and stopped target VMs. Started only existing web01 (512 MiB; host available RAM >6 GiB), then compared stored deployed token/partition metrics using stock in-process baseline and protected adapter as nagios, inspecting process arguments. | four real CPU/virtual/swap/disk checks; full verify all; docs | Four checks stock/adapter OK with matching performance series and no token argv; resources restored. Full gate: 2766 backend/14 skipped, 554 frontend, build/lint passed. Full generated-config apply/reload is still pending. |
 
+| 28 (published/resumed) | Published authorized app checkpoints and installer fork/draft PR #7. Preserved dirty guest source by serving detached c9f8e263 from a separate guest worktree; backed up both DBs privately, migrated both binds and synced permissions. Generated through real authenticated routes and applied/reloaded under the main Nagios daemon. | Full all gate; forced main web01 CPU/memory/root-disk checks; process argv, file/log/CGI history, actual-binary rejection and helper rollback | All gate green (2766 backend/554 frontend). Three services OK with perfdata; secret-free observed argv/snapshots/logs; live hosts 0640/readable. Real invalid candidate rejected with exact resource/metadata restoration and unchanged live hosts. Macro plan checked; final issue/live cleanup/alternate-port/reviews remain open. |
+
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh all > test-results/issue-129/helper-integration-verify-all.log 2>&1`
-- Result (first failing lines, or "green"): green: 2766 backend passed/14 skipped; 554 frontend passed; build/lint/docs passed (0 errors/29 warnings). Installed helper client write/validation/exact success/failure rollback and restricted privileges passed as pinpoint. Four real web01 NCPA adapter checks as nagios matched stock OK states/performance series and had no token argv. All three remote CI checks passed on d1d60627; helper integration is local.
-- Hypothesis: Supported credential transport and ownership-preserving default-path updates now work. The remaining macro gap is applying the complete current generated config under the main Nagios service (including upgrade/migration, live hosts 0640/readability, final engine results and snapshot/log evidence). SMB is explicitly refused because its child credential input is unsupported; no insecure fallback or silent dropping is introduced.
-- Next action (one specific step, not "continue"): Prepare the paired application/installer upgrade on the authorized QA appliance and run complete generated-config validation/apply/reload plus main Nagios process/result/readability/snapshot cases; request confirmation before any application or installer push.
+- Last check run (exact command): `scripts/verify.sh all > test-results/issue-129/main-daemon-resume-verify.log 2>&1`; installed acceptance scripts recorded in the main-daemon report.
+- Result: green: 2766 backend passed/14 skipped; 554 frontend passed; build/lint/docs passed (0 errors/29 warnings). Published c9f8e263 CI green. Real current-build generation/apply/reload, hosts 0640/readability, three main Nagios NCPA OK results/performance data, observed credential-free argv, CGI history, log checks and real-binary validation rejection/resource rollback passed.
+- Hypothesis: Macro implementation is complete for the supported transport and explicit unsupported-plugin refusal authorized by the owner. Final issue completion still requires the section G non-default-port and intentional failed-install/cleanup live journeys, any remaining native endpoint parity, paired installer review and human approvals. ISO build was not run.
+- Next action: Complete the remaining issue #129 live non-default-port and failed-install/cleanup journeys on the authorized lab; ask before pushing the new evidence checkpoint. Keep both PRs draft until the full finish condition and reviews hold.
 
 ## Decisions and notes
 
@@ -179,3 +181,6 @@ Requirement coverage (each issue requirement maps to E/F/H; proof pending):
 - Resource ownership acceptance is now checked with observed installed service-user proof. Macro plan/final completion remain unchecked specifically for the complete generated-config apply/reload/readability/engine acceptance, not for missing implementation of the helper.
 
 - Application checkpoint ea0a4284 is local; focused committed-source helper/resource/config tests 113 passed. Immutable helper integration report records the exact evidence and remaining main-daemon apply/readability gap. Installer origin lorraine-pangilinan/PinPoint-Installer reports push permission false for this account; publishing it requires an approved fork/draft PR or owner handoff. No push attempted. New helper/privilege source on QA appliance matches installer15c27d1. Temporary acceptance files/bytecode removed.
+
+- Published app ea0a4284/c9f8e263 and installer fork branch b166953 with owner authorization. Application PR #161 CI is green; installer draft PR #7: https://github.com/lorraine-pangilinan/PinPoint-Installer/pull/7. No merges performed.
+- Guest original checkout remains at 1ca2c75 with the two prior tracked edits and untracked client/.npm preserved. Current Gunicorn serves clean detached c9f8e263 at /opt/pinpoint/issue-129-acceptance/server via 129-acceptance.conf systemd WorkingDirectory drop-in; shared databases are migrated to 7db78f308ee5. Root-private pre-upgrade backups are /var/backups/pinpoint/issue129-pre-upgrade/. Helper remains installed. Notifications were suppressed during forced checks and restored to the original enabled value afterward. Both services are active; appliance/web01 remain running. No target reprovision or snapshot reset. Temporary acceptance scripts removed. New evidence is local and needs fresh push confirmation.

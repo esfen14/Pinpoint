@@ -1,6 +1,6 @@
 # Issue #129: check secret transport
 
-Status: implementation incomplete; owner chose process secrecy on 2026-10-14.
+Status: supported credential transport implemented and main NCPA engine acceptance passed; owner chose process secrecy with explicit unsupported-plugin refusal on 2026-10-14.
 
 ## Required behavior
 
@@ -28,7 +28,7 @@ and [Engineering Standards](../../spec%20files/Engineering_Standards.md).
 
 | Plugin | Inspected credential input | Implementation direction |
 |---|---|---|
-| `check_ncpa.py` | Upstream 1.2.5 accepts the token through `-t`/`--token`; its option parser has no credential file/stdin option. | Implemented unprivileged in-process adapter for inspected 1.2.4/1.2.5 clients; bare slot identifiers in generated services. Automated process tests and installed 1.2.4 mocked parity pass. Four real web01 metrics matched stock OK results and performance series as nagios with token-free argv. Full generated-config engine acceptance remains pending. |
+| `check_ncpa.py` | Upstream 1.2.5 accepts the token through `-t`/`--token`; its option parser has no credential file/stdin option. | Implemented unprivileged in-process adapter for inspected 1.2.4/1.2.5 clients; bare slot identifiers in generated services. Automated process tests and installed 1.2.4 mocked parity pass. Four real web01 metrics matched stock OK results and performance series as nagios with token-free argv. Full generated-config main Nagios CPU/memory/root-disk checks, argv secrecy and snapshots passed on c9f8e263. |
 | `check_nt`, `check_radius`, `check_mysql_query` | Native C plugins may support compiled-in `--extra-opts`, which reads named INI sections. | Implemented extra-options stdin adapter with a runtime help capability check. Required/optional password arguments become bare slot identifiers. Parent/child process tests pass; installed check_nt accepted synthetic stdin authentication and returned expected uptime/performance data. Radius is absent from the current appliance; remaining live parity is pending. |
 | `check_disk_smb` | The 2.4.12 Perl script accepts a password argument and passes it to a child `smbclient` command. Its SMB configuration flag is not a password-file input. | Password-bearing config generation is explicitly refused before publication. No silent dropping, pausing or insecure fallback; secure parent/child input remains an external blocker. |
 
@@ -55,7 +55,7 @@ The `--extra-opts` capability is build-dependent; plugin name alone is not proof
    live destination, not only in the generated temporary file. The atomic writer
    now uses a private unique temporary file and copies existing metadata, refusing
    replacement if ownership cannot be retained. Installer privilege compatibility
-   remains unverified; do not grant broad chown or directory-write access here.
+   is proven by installed helper tests; do not grant broad chown or directory-write access here.
 5. Use one transaction for resources, any extra-options credential files and
    hosts.cfg across regeneration, discovery and post-deployment config paths.
    Back up before changing any resource; restore on generation, validation, copy
@@ -76,7 +76,7 @@ Missing or failed resource writes stop candidate publication. All three generati
 entry points snapshot resources in memory under the shared lock and restore on
 failure or cancellation; resource-only changes trigger validate/apply. Apply
 restores both files before a rollback reload and sets live hosts.cfg to 0640.
-The NCPA and native adapters now implement credential transport using protected resource reads and in-memory/stdin inputs. Tests preserve public arguments and inspect actual running process argv. Full live engine acceptance remains pending.
+The NCPA and native adapters now implement credential transport using protected resource reads and in-memory/stdin inputs. Tests preserve public arguments and inspect actual running process argv. Installed generated NCPA services passed main Nagios checks; native endpoint parity remains limited to the installed synthetic check_nt run and automated adapter tests.
 
 ## Required installer handoff
 
@@ -96,12 +96,9 @@ checks pass. Application writes and rollback now invoke it for the foreign-owned
 default resource path. It is installed on the QA appliance with an exact no-argument
 sudo grant; service-user writes, outside-byte/metadata preservation, validation,
 rollback and rejected arbitrary path/argument/command probes passed. The new
-application integration and installer changes remain local pending push approval.
+application integration is published in [app PR #161](https://github.com/esfen14/Pinpoint/pull/161), and the installer branch is published in [draft PR #7](https://github.com/lorraine-pangilinan/PinPoint-Installer/pull/7).
 
 ## External blockers
 
 SMB still needs supported child credential transport. NCPA uses the in-process adapter; unsupported client versions fail safely. The paired installer extension is required for default-path ownership-preserving
-updates. Full generated-config apply/reload and remaining live engine acceptance
-still need verification. Record the deployed plugin
-versions, resource metadata and process-list evidence on the available lab before
-claiming acceptance. The current macro integration is not ready to deploy.
+updates. Full generated-config apply/reload, live 0640/readability, main NCPA results, argv/snapshot/log secrecy and actual-binary validation rollback passed; see [the main-daemon report](../test-runs/2026-10-15-issue-129-main-daemon/REPORT.md). The complete issue remains draft for remaining live port/cleanup journeys and paired reviews. No production or ISO-build sign-off is implied.
