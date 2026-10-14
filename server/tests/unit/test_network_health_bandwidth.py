@@ -24,11 +24,15 @@ IN_SERVICE = "snmp-if2_in_octets-161-udp"
 OUT_SERVICE = "snmp-if2_out_octets-161-udp"
 
 
-def seed_counter(service, hostname, readings, now=None):
-    """Store (minutes ago, octets) readings as check results of a service."""
+def seed_counter(service, hostname, readings, now=None, check_lag=0):
+    """
+    Store (minutes ago, octets) readings as check results of a service. check_lag is how many
+    seconds before the stored time Nagios actually read the counter (Last_Check).
+    """
     now = now or datetime.now(timezone.utc)
     for minutes_ago, octets in readings:
         status = _make_service(db, hostname=hostname, service=service, ts=now - timedelta(minutes=minutes_ago))
+        status.Last_Check = status.Timestamp - timedelta(seconds=check_lag)
         _make_service_perf(db, status, "if2", octets, "c")
     db.session.commit()
 
@@ -147,6 +151,26 @@ class TestRates:
         data = logged_in_client.get(f"{BASE}?hostname=switch&interface=2&hours=1").get_json()["data"]
 
         assert data["status"] == "insufficient_data" and data["latest"] is None
+
+
+class TestSampleTime:
+
+    def test_rates_use_the_time_nagios_read_the_counter_not_the_time_it_was_stored(self, logged_in_client, db_session):
+        # Stored every 60 s, but the counter was read every 50 s (lab: Pinpoint polls Nagios every
+        # minute, Nagios checks every 50 s). 5,625,000 octets per 50 s is exactly 900 kbit/s;
+        # dividing by the 60 s storage gap would give 750 kbit/s.
+        now = datetime.now(timezone.utc)
+        for service in (IN_SERVICE, OUT_SERVICE):
+            for step in range(5):
+                status = _make_service(db, hostname="switch", service=service, ts=now - timedelta(minutes=5 - step))
+                status.Last_Check = now - timedelta(seconds=(5 - step) * 50 + 100)
+                _make_service_perf(db, status, "if2", step * 5_625_000, "c")
+        db.session.commit()
+
+        data = logged_in_client.get(f"{BASE}?hostname=switch&interface=2&hours=1").get_json()["data"]
+
+        assert data["latest"]["in_bps"] == pytest.approx(900_000, rel=0.001)
+        assert data["latest"]["out_bps"] == pytest.approx(900_000, rel=0.001)
 
 
 class TestInsufficientData:

@@ -184,7 +184,7 @@ function RowTable({ config, rows, savedMetrics, onChange }: RowTableProps) {
       <div className="overflow-x-auto rounded-xl border border-[var(--border)]">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-[var(--border)] text-left text-xs text-[var(--text-muted)]">
+            <tr className="border-b border-[var(--border)] text-left text-sm text-[var(--text-muted)]">
               {config.columns.map((column) => (
                 <th key={column.key} className="px-3 py-2 font-medium">
                   {column.label}
@@ -197,7 +197,7 @@ function RowTable({ config, rows, savedMetrics, onChange }: RowTableProps) {
           <tbody>
             {rows.length === 0 && (
               <tr>
-                <td colSpan={config.columns.length + 1} className="px-3 py-3 text-xs text-[var(--text-muted)]">
+                <td colSpan={config.columns.length + 1} className="px-3 py-3 text-sm text-[var(--text-muted)]">
                   No {config.noun}s. Add at least one.
                 </td>
               </tr>
@@ -211,7 +211,7 @@ function RowTable({ config, rows, savedMetrics, onChange }: RowTableProps) {
                       value={row[column.key]}
                       placeholder={column.placeholder}
                       onChange={(e) => update(index, column.key, e.target.value)}
-                      className={`${inputClass} font-mono text-xs`}
+                      className={`${inputClass} font-mono text-sm`}
                     />
                   </td>
                 ))}
@@ -240,9 +240,9 @@ function RowTable({ config, rows, savedMetrics, onChange }: RowTableProps) {
         <Plus size={15} /> Add {config.noun}
       </button>
 
-      {config.note && <p className="mt-3 text-xs text-[var(--text-muted)]">{config.note}</p>}
+      {config.note && <p className="mt-3 text-sm text-[var(--text-muted)]">{config.note}</p>}
       {renamed && (
-        <p className="mt-3 text-xs text-amber-600 dark:text-amber-300">
+        <p className="mt-3 text-sm text-amber-600 dark:text-amber-300">
           A new or renamed description creates a new Nagios service on every {config.target}; a removed or
           renamed one stops its service, and that service&apos;s history is not carried over.
         </p>
@@ -280,7 +280,7 @@ function BandwidthHelper({ rows, onChange }: { rows: PluginSettingsRow[]; onChan
   return (
     <div className="mb-5 rounded-xl border border-[var(--border)] bg-[var(--card-alt)] p-4">
       <p className="text-sm font-medium text-[var(--text)]">Show bandwidth on Network Health</p>
-      <p className="mt-1 text-xs text-[var(--text-muted)]">
+      <p className="mt-1 text-sm text-[var(--text-muted)]">
         This tells the system to watch how much data goes in and out of your computers. Type the name of the network
         connection they use (on most Linux computers it is <span className="font-mono">eth0</span> or <span className="font-mono">ens18</span>),
         then press the button and Save. The Bandwidth card fills in after the next check.
@@ -291,7 +291,7 @@ function BandwidthHelper({ rows, onChange }: { rows: PluginSettingsRow[]; onChan
           value={connection}
           onChange={(e) => { setConnection(e.target.value); setProblem(null) }}
           placeholder="e.g. eth0"
-          className={`${inputClass} max-w-[200px] font-mono text-xs`}
+          className={`${inputClass} max-w-[200px] font-mono text-sm`}
         />
         <button
           type="button"
@@ -301,9 +301,9 @@ function BandwidthHelper({ rows, onChange }: { rows: PluginSettingsRow[]; onChan
           <Plus size={15} /> {added ? 'Update bandwidth rows' : 'Add bandwidth rows'}
         </button>
       </div>
-      {problem && <p className="mt-2 text-xs text-red-500">{problem}</p>}
+      {problem && <p className="mt-2 text-sm text-red-500">{problem}</p>}
       {added && !problem && (
-        <p className="mt-2 text-xs text-[var(--text-muted)]">
+        <p className="mt-2 text-sm text-[var(--text-muted)]">
           Bandwidth rows are in the table below. Press Save to start watching.
         </p>
       )}
@@ -372,7 +372,7 @@ function PluginSection({ config, section, onSaved }: PluginSectionProps) {
       />
 
       {notice && (
-        <p className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-600 dark:text-amber-400">
+        <p className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-600 dark:text-amber-400">
           {notice}
         </p>
       )}

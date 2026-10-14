@@ -49,6 +49,12 @@ function reading(overrides: Partial<Bandwidth> = {}): Bandwidth {
   }
 }
 
+// The device and interface choosers are dropdowns like the time range: a button that opens a list.
+function choose(control: string, option: string) {
+  fireEvent.click(screen.getByRole('button', { name: control }))
+  fireEvent.click(screen.getByRole('option', { name: option }))
+}
+
 function renderCard() {
   return render(<MemoryRouter><BandwidthCard /></MemoryRouter>)
 }
@@ -70,7 +76,7 @@ describe('states of the card', () => {
     renderCard()
 
     expect(await screen.findByText(/No SNMP device is monitored yet/)).toBeInTheDocument()
-    expect(screen.queryByLabelText('Device')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Device' })).not.toBeInTheDocument()
     expect(api.getBandwidth).not.toHaveBeenCalled()
   })
 
@@ -90,7 +96,7 @@ describe('states of the card', () => {
     expect(await screen.findByText('Boom.')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
 
-    expect(await screen.findByLabelText('Device')).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'Device' })).toBeInTheDocument()
   })
 
   it('shows a server error for the rates instead of a chart', async () => {
@@ -130,28 +136,30 @@ describe('choosing what to show', () => {
 
     await screen.findByTestId('line-chart')
     expect(api.getBandwidth).toHaveBeenCalledWith('switch-a', 2, 24)
-    expect(screen.getByLabelText('Device')).toHaveValue('switch-a')
-    expect(screen.getByLabelText('Interface')).toHaveValue('2')
+    expect(screen.getByRole('button', { name: 'Device' })).toHaveTextContent('switch-a')
+    expect(screen.getByRole('button', { name: 'Interface' })).toHaveTextContent('eth0')
   })
 
   it('lists the interfaces of the chosen device and loads the one picked', async () => {
     renderCard()
     await screen.findByTestId('line-chart')
 
-    fireEvent.change(screen.getByLabelText('Interface'), { target: { value: '5' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Interface' }))
+    expect(screen.getAllByRole('option').map((o) => o.textContent)).toEqual(['eth0', 'eth1'])
+    fireEvent.click(screen.getByRole('option', { name: 'eth1' }))
 
     await waitFor(() => expect(api.getBandwidth).toHaveBeenLastCalledWith('switch-a', 5, 24))
-    expect(screen.getByRole('option', { name: 'eth1' })).toBeInTheDocument()
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
   })
 
   it('switching device switches to its first interface', async () => {
     renderCard()
     await screen.findByTestId('line-chart')
 
-    fireEvent.change(screen.getByLabelText('Device'), { target: { value: 'router-b' } })
+    choose('Device', 'router-b')
 
     await waitFor(() => expect(api.getBandwidth).toHaveBeenLastCalledWith('router-b', 1, 24))
-    expect(screen.getByLabelText('Interface')).toHaveValue('1')
+    expect(screen.getByRole('button', { name: 'Interface' })).toHaveTextContent('wan')
   })
 
   it('offers only the ranges the server accepts and reloads on a change', async () => {
@@ -218,9 +226,21 @@ describe('the chart', () => {
     expect(screen.queryByText('Link speed')).not.toBeInTheDocument()
   })
 
-  it('explains the card in plain language', async () => {
+  it('has a short description', async () => {
     renderCard()
     await screen.findByTestId('line-chart')
-    expect(screen.getByText(/Shows how much data an interface sends and receives/)).toBeInTheDocument()
+    expect(screen.getByText('Data sent and received by an interface. Add interfaces in Device Inventory.')).toBeInTheDocument()
+  })
+
+  it('reports the reading on screen, and null while there is none', async () => {
+    const onReading = vi.fn()
+    render(<MemoryRouter><BandwidthCard onReading={onReading} /></MemoryRouter>)
+
+    await screen.findByTestId('line-chart')
+    expect(onReading).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'ok', hostname: 'switch-a' }))
+
+    api.getBandwidth.mockReturnValue(new Promise(() => {}))
+    choose('Device', 'router-b')
+    await waitFor(() => expect(onReading).toHaveBeenLastCalledWith(null))
   })
 })

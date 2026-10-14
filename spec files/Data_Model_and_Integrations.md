@@ -302,7 +302,9 @@ Bandwidth is computed from stored samples; the Nagios checks are not changed.
   (`refresh_interfaces_after_scan()`: best effort, at most 64 devices and 120 s per scan; a device that
   does not answer is skipped).
 - **Rate calculation** (`app/bandwidth.py`). `rate = (counter now - counter before) * 8 / seconds`
-  between consecutive samples of a service's first perf-data value. A decrease is a counter wrap when
+  between consecutive samples of a service's first perf-data value. A sample's time is the Nagios
+  `Last_Check` (when the counter was read), not the stored `Timestamp`: the two differ by up to a
+  polling interval, which skewed rates by 17% in the lab. A decrease is a counter wrap when
   the wrapped difference is a believable rate (width detected from the data: above 2**32 means a
   64-bit counter), otherwise a restart, and that interval is left out; a believable rate is at most
   110% of the link speed when known, else 100 Gbit/s. Samples more than 30 minutes apart are not

@@ -6,11 +6,9 @@ import { getBandwidth, getBandwidthChoices } from '../../lib/bandwidthApi'
 import type { Bandwidth, BandwidthDevice } from '../../types/bandwidth'
 import { formatBandwidth, formatLinkSpeed } from '../../utils/formatBandwidth'
 import { BANDWIDTH_HOURS_OPTIONS, type TrendHours } from '../../utils/trendHours'
+import { DropdownSelect } from '../shared/DropdownSelect'
 import { BandwidthChart } from './BandwidthChart'
 import { TimeRangeSelect } from './TimeRangeSelect'
-
-const SELECT_CLASS =
-  'rounded-xl bg-[var(--card-alt)] border border-[var(--border)] px-3 py-2 text-sm text-[var(--text)] hover:bg-[var(--hover)]'
 
 type Choices = { devices: BandwidthDevice[] | null; error: string | null }
 // What the chart area shows for the current device, interface and range.
@@ -20,7 +18,13 @@ type Reading = { key: string; data: Bandwidth | null; error: string | null }
 // an SNMP device. The device and interface lists come from GET /network-health/bandwidth/interfaces and
 // the rates from GET /network-health/bandwidth; the server computes them from the stored octet counters.
 // It loads its own data, so a failure here never blanks the rest of the page.
-export function BandwidthCard() {
+type BandwidthCardProps = {
+  // Called with the reading on screen (null while loading, on an error or with nothing chosen), so the
+  // page can show the same interface in its side widget.
+  onReading?: (reading: Bandwidth | null) => void
+}
+
+export function BandwidthCard({ onReading }: BandwidthCardProps = {}) {
   const [choices, setChoices] = useState<Choices>({ devices: null, error: null })
   const [choicesKey, setChoicesKey] = useState(0)
   const [hostname, setHostname] = useState<string | null>(null)
@@ -80,6 +84,10 @@ export function BandwidthCard() {
 
   const current = reading && reading.key === requestKey ? reading : null
   const data = current?.data ?? null
+  useEffect(() => {
+    onReading?.(data)
+  }, [data, onReading])
+
   const hasPoints = !!data && [...data.inPoints, ...data.outPoints].some((point) => point.bps != null)
   const speed = formatLinkSpeed(data?.interface.speedBps ?? selected?.speedBps)
 
@@ -169,7 +177,7 @@ export function BandwidthCard() {
   const ready = !!choices.devices && choices.devices.length > 0
 
   return (
-    <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 shadow-sm">
+    <div id="interface-bandwidth" className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-5 shadow-sm">
       <div className="mb-1 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h3 className="text-lg font-semibold text-[var(--text)]">{title}</h3>
@@ -178,29 +186,24 @@ export function BandwidthCard() {
         {ready && (
           <div className="flex flex-wrap items-center gap-2">
             <TimeRangeSelect hours={hours} onChange={setHours} options={BANDWIDTH_HOURS_OPTIONS} />
-            <select aria-label="Device" value={hostname ?? ''} onChange={(e) => chooseDevice(e.target.value)} className={SELECT_CLASS}>
-              {choices.devices!.map((d) => (
-                <option key={d.hostname} value={d.hostname}>{d.hostname}</option>
-              ))}
-            </select>
-            <select
-              aria-label="Interface"
-              value={ifIndex ?? ''}
-              onChange={(e) => setIfIndex(Number(e.target.value))}
+            <DropdownSelect
+              label="Device"
+              value={hostname}
+              options={choices.devices!.map((d) => ({ value: d.hostname, label: d.hostname }))}
+              onChange={chooseDevice}
+            />
+            <DropdownSelect
+              label="Interface"
+              value={ifIndex}
+              options={(device?.interfaces ?? []).map((i) => ({ value: i.ifIndex, label: i.name }))}
+              onChange={setIfIndex}
               disabled={!device || device.interfaces.length === 0}
-              className={SELECT_CLASS}
-            >
-              {(device?.interfaces ?? []).map((i) => (
-                <option key={i.ifIndex} value={i.ifIndex}>{i.name}</option>
-              ))}
-            </select>
+            />
           </div>
         )}
       </div>
       <p className="mb-4 text-xs text-[var(--text-muted)]">
-        Shows how much data an interface sends and receives, calculated from SNMP counter readings. Pick a device and interface; add
-        interfaces from the device's details in Device Inventory. Gaps in the line mean no valid reading, for example while the device
-        was restarted.
+        Data sent and received by an interface. Add interfaces in Device Inventory.
       </p>
       {body}
     </div>

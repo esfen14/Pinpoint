@@ -925,10 +925,18 @@ def octet_service_names(hostname, if_index):
 def counter_samples(hostname, service, start):
     """
     Return [(timestamp, octets)] for one service since `start`, oldest first: the first perf-data
-    value of each stored check result.
+    value of each stored check result. The time of a sample is when Nagios last ran the check
+    (Last_Check), not when Pinpoint stored the row: the two differ by up to a polling interval,
+    and a rate divides by the time between the counter readings, so the stored time would skew it
+    (by 17% when Nagios checks every 50 s and Pinpoint polls every 60 s). Rows without a Last_Check
+    use the stored time.
     """
     rows = db.session.execute(
-        sa.select(ServiceStatus.ServiceStatusID, ServiceStatus.Timestamp, ServicePerfData.Measured_Value)
+        sa.select(
+            ServiceStatus.ServiceStatusID,
+            sa.func.coalesce(ServiceStatus.Last_Check, ServiceStatus.Timestamp),
+            ServicePerfData.Measured_Value,
+        )
         .join(ServicePerfData, ServicePerfData.ServiceStatusID == ServiceStatus.ServiceStatusID)
         .where(
             ServiceStatus.Hostname == hostname,
@@ -940,11 +948,13 @@ def counter_samples(hostname, service, start):
 
     samples = []
     seen = set()
-    for status_id, timestamp, value in rows:
+    for status_id, checked_at, value in rows:
         if status_id in seen:
             continue
         seen.add(status_id)
-        samples.append((timestamp, value))
+        if isinstance(checked_at, str):
+            checked_at = datetime.fromisoformat(checked_at)
+        samples.append((checked_at, value))
     return samples
 
 

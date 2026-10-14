@@ -20,6 +20,8 @@ import { useSystemSettings } from '../contexts/SystemSettingsContext'
 import { useNetworkProfile } from '../hooks/useNetworkProfile'
 import { useNetworkRescan } from '../hooks/useNetworkRescan'
 import { apiGet, errorMessage } from '../lib/api'
+import type { Bandwidth } from '../types/bandwidth'
+import { bandwidthScale } from '../utils/formatBandwidth'
 import { fromTrendsResponse, type TrendPoint, type TrendsResponse } from '../types/dashboard'
 import {
   fromConnectionsResponse,
@@ -106,6 +108,8 @@ export function NetworkHealthPage() {
   const [hostCpu, setHostCpu] = useState<Widget<HostCpu>>(EMPTY_WIDGET)
   // null = let the server pick (the Nagios server, else the first NCPA host).
   const [cpuHost, setCpuHost] = useState<string | null>(null)
+  // The interface on screen in the Interface Bandwidth card; feeds the Bandwidth widget when NCPA does not.
+  const [snmpBandwidth, setSnmpBandwidth] = useState<Bandwidth | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
 
@@ -259,6 +263,20 @@ export function NetworkHealthPage() {
       : null
   const bandwidthChange = changeLabel(
     bandwidthLatest == null ? null : latestAndChange(bandwidthTotal.map((v) => ({ bucketStart: '', avgValue: v, unit: null }))).changePct,
+  )
+
+  // Without NCPA bandwidth, the widget shows the interface chosen in the Interface Bandwidth card:
+  // in + out of its latest reading, the sum per slice as the sparkline, and the change over the range.
+  const snmpTotals = (snmpBandwidth?.inPoints ?? []).map((p, i) =>
+    p.bps == null && snmpBandwidth?.outPoints[i]?.bps == null ? null : (p.bps ?? 0) + (snmpBandwidth?.outPoints[i]?.bps ?? 0),
+  )
+  const snmpLatest = snmpBandwidth?.latest
+    ? (snmpBandwidth.latest.inBps ?? 0) + (snmpBandwidth.latest.outBps ?? 0)
+    : null
+  const useSnmpBandwidth = !trends?.bandwidth.configured && snmpBandwidth?.status === 'ok' && snmpLatest != null
+  const snmpScale = bandwidthScale(Math.max(0, ...snmpTotals.map((v) => v ?? 0)))
+  const snmpChange = changeLabel(
+    latestAndChange(snmpTotals.map((v) => ({ bucketStart: '', avgValue: v, unit: null }))).changePct,
   )
 
   const rtaChange = changeLabel(rta.changePct)
@@ -416,7 +434,7 @@ export function NetworkHealthPage() {
                 onHoursChange={setCpuHours}
                 onHostChange={setCpuHost}
               />
-              <BandwidthCard />
+              <BandwidthCard onReading={setSnmpBandwidth} />
               <CpuLoadChart
                 load={cpuLoad ?? { configured: false, load1: [], load5: [], load15: [] }}
                 hours={loadHours}
@@ -457,13 +475,27 @@ export function NetworkHealthPage() {
 
               <SparklineMetricCard
                 title="Bandwidth"
-                value={bandwidthLatest != null ? bandwidthLatest.toFixed(2) : '—'}
-                unit={bandwidthLatest != null ? 'Mbps' : ''}
-                change={trends?.bandwidth.configured ? bandwidthChange.text : 'Not configured'}
-                changeType={trends?.bandwidth.configured ? bandwidthChange.type : 'neutral'}
-                sparklineData={bandwidthTotal}
+                value={
+                  useSnmpBandwidth
+                    ? (snmpLatest! / snmpScale.divisor).toFixed(2)
+                    : bandwidthLatest != null ? bandwidthLatest.toFixed(2) : '—'
+                }
+                unit={useSnmpBandwidth ? snmpScale.unit : bandwidthLatest != null ? 'Mbps' : ''}
+                change={
+                  useSnmpBandwidth ? snmpChange.text : trends?.bandwidth.configured ? bandwidthChange.text : 'Not configured'
+                }
+                changeType={
+                  useSnmpBandwidth ? snmpChange.type : trends?.bandwidth.configured ? bandwidthChange.type : 'neutral'
+                }
+                sparklineData={
+                  useSnmpBandwidth ? snmpTotals.map((v) => (v ?? 0) / snmpScale.divisor) : bandwidthTotal
+                }
                 sparklineColor="#38BDF8"
-                onClick={() => setOpenMetric('bandwidth')}
+                onClick={
+                  useSnmpBandwidth
+                    ? () => document.getElementById('interface-bandwidth')?.scrollIntoView({ behavior: 'smooth' })
+                    : () => setOpenMetric('bandwidth')
+                }
               />
 
               <TrendStatCard

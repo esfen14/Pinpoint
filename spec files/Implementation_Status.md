@@ -47,9 +47,9 @@ the normative behavior in the requirement specifications.
   `DeviceInterface` rows, in/out octet Nagios services per monitored interface, the rate calculator
   (`app/bandwidth.py`: 32/64-bit wrap, restart, gap, insufficient data), the bandwidth routes, the
   Network Health Interface Bandwidth card and the drawer's Interfaces section. Unit, API, migration
-  and frontend tests pass; **not yet verified against a lab device with a traffic generator** (no
-  report in `docs/test-runs/`; the plan is `iperf3` between two lab hosts, comparing the charted
-  rate with the generator's). SNMP v3 is out of scope (#14). Interface discovery needs `snmpwalk`
+  and frontend tests pass. Docker-lab run (`docs/test-runs/2026-10-14-issue-13-bandwidth-docker-lab/`):
+  discovery, monitoring, Nagios validation and a rate within 5% of `ping` traffic observed; **`iperf3`,
+  a fast link, counter wrap on a live device and the browser UI are not yet verified**. SNMP v3 is out of scope (#14). Interface discovery needs `snmpwalk`
   on the server (net-snmp-utils / snmp), which `check_snmp` already needs.
 - Network discovery start/stop/status and Nagios host/service config generation. The reconciliation engine is designed to isolate potential identity conflicts for operator review (creating `DeviceReviewItem` records) rather than silently merging them. This prevents unintended record modification during subnet changes or cloned-identity events (see `device_identity.py`). Duplicates arising from these conflicts persist as `Address Unknown` until manually resolved (Merge/Retire) in the UI through the Devices Inventory "Needs Review" list.
 - NCPA eligibility, SSH fingerprint trust (approved key only), login checks,

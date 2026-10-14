@@ -1009,7 +1009,7 @@ needs two readings, and the server refuses windows other than 1, 6, 24 and 168 h
 
 **Display:** the latest In and Out rate, the share of the link in use and the link speed (the last
 two only when the interface speed is known), and a line chart with an In line and an Out line.
-The unit is chosen once for the whole chart from its largest value (bit/s, kbit/s, Mbit/s, Gbit/s,
+The device and interface choosers are the same button-and-list dropdown as the time range. The unit is chosen once for the whole chart from its largest value (bit/s, kbit/s, Mbit/s, Gbit/s,
 Tbit/s, steps of 1000) and named on the vertical axis; the horizontal axis shows time in the
 configured time zone. A gap in a line means no valid reading in that slice (device restarted,
 monitoring paused); gaps are never drawn as zero.
@@ -1019,7 +1019,13 @@ and the server's message for the rates; no SNMP device ("No SNMP device is monit
 devices but no monitored interface (points to Device Inventory); insufficient data (fewer than two
 readings in the range); no data in the selected window.
 
-**Help text** on the card explains what is shown, where interfaces are added and what a gap means.
+**Help text:** one short line under the title: what is shown and where interfaces are added.
+
+**Side Bandwidth widget.** The Bandwidth stat card in the right-hand column keeps its NCPA figure
+when NCPA bandwidth is configured. Otherwise it follows the interface on screen in this card: in + out
+of the latest reading (unit scaled as above), the per-slice sum as its sparkline and the change over the
+range; clicking it scrolls to this card. With no reading (no device, no interface, insufficient data,
+error) it shows "Not configured".
 
 **Source:** `GET /api/system/network-health/bandwidth/interfaces` and `GET
 /api/system/network-health/bandwidth`; the rates are computed from the stored SNMP octet
