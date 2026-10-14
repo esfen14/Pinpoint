@@ -52,6 +52,8 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | resumed | Checked issue and branch after Docker lab approval; inspected lab instructions | `docker info --format '{{.ServerVersion}}'` | Cannot run: `/bin/bash: line 1: docker: command not found` |
 | resumed | Re-ran last check; Docker CLI is now available but daemon access denied; issue has no new comment addressing blocker | `docker info --format '{{.ServerVersion}}'` | `permission denied while trying to connect to the docker API at unix:///var/run/docker.sock` |
 
+| resumed | Re-read issue #128 and progress; no new comments resolving lab access; re-ran last check | `docker info --format '{{.ServerVersion}}'` | `permission denied while trying to connect to the docker API at unix:///var/run/docker.sock` (exit 1); remains blocked |
+
 ## State for the next session
 
 - Last check run (exact command): `docker info --format '{{.ServerVersion}}'`
