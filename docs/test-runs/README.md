@@ -48,6 +48,7 @@ table while you test, not afterward.
 
 | Run | Kind | Commit | Result | Report |
 |---|---|---|---|---|
+| [2026-10-14 issue-129-credential-transport](2026-10-14-issue-129-credential-transport/REPORT.md) | NCPA/native argv transport, installed synthetic compatibility and isolated installer helper | app `7f531562`, installer `faca298` | Partial: local tests pass; application helper invocation and full live acceptance pending | [REPORT.md](2026-10-14-issue-129-credential-transport/REPORT.md) |
 | [2026-10-14 issue-129-macro-retest](2026-10-14-issue-129-macro-retest/REPORT.md) | Macro/config/snapshot regressions, main merge and synthetic process diagnostic | `fd5f0f62`, `4a784b83` | Partial: all gate passes; synthetic process-secrecy criterion fails; CI awaits merge push | [REPORT.md](2026-10-14-issue-129-macro-retest/REPORT.md) |
 | [2026-10-14 issue-129-resource-compatibility](2026-10-14-issue-129-resource-compatibility/REPORT.md) | Local config regression/full verification and installed plugin/ownership inspection | `87e00907`, `61ebb946` | Partial: local checks pass; secure transport and installer ownership mechanism block live sign-off | [REPORT.md](2026-10-14-issue-129-resource-compatibility/REPORT.md) |
 | [2026-10-14 issue-141-docker-history](2026-10-14-issue-141-docker-history/REPORT.md) | Docker Nagios host acknowledgement/recovery/reproblem | `43c1be42` | Partial: host list/filter/detail pass; service and manual-unacknowledge not run | [REPORT.md](2026-10-14-issue-141-docker-history/REPORT.md) |
