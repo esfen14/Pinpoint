@@ -6,6 +6,11 @@ import re
 import subprocess
 import shutil
 import threading
+import time
+from collections import OrderedDict
+
+import requests
+import json
 
 from app.network_discovery.network_discovery import discover_network
 from app.network_discovery.device_identity import nagios_host_name, reconcile_scan
@@ -98,7 +103,77 @@ GENERATED_AT_LINE = re.compile(r"^\s*#\s+generated at .*$", re.MULTILINE)
 # gather each host's inputs (discovered ports, system facts, overrides) and
 # turn the registry's output into uniquely named services.
 
-def load_host_plugin_facts():
+ncpa_path_cache = OrderedDict()
+ncpa_path_cache_lock = threading.Lock()
+
+
+def probe_ncpa_paths(address, port, token):
+    """Fetch agent node names with a bounded timeout; cache no values or secrets.
+
+    One inventory request replaces per-metric requests at configuration time.
+    Successful results live for 60 seconds, failures for 5, at most 256 agents.
+    Invalid targets and failures return an empty set without logging exceptions.
+    """
+    try:
+        address = str(ipaddress.ip_address(address))
+        port = int(port)
+        if not 1 <= port <= 65535:
+            return frozenset()
+    except (ValueError, TypeError):
+        return frozenset()
+    key = (address, port, hashlib.sha256(str(token).encode()).digest())
+    now = time.monotonic()
+    with ncpa_path_cache_lock:
+        cached = ncpa_path_cache.get(key)
+        if cached and cached[0] > now:
+            return cached[1]
+    paths = set()
+    response = None
+    try:
+        host = f"[{address}]" if ":" in address else address
+        response = requests.get(
+            f"https://{host}:{port}/api", params={"token": token},
+            timeout=(1, 2), verify=False, allow_redirects=False, stream=True,
+        )
+        if response.status_code == 200:
+            content = bytearray()
+            for chunk in response.iter_content(chunk_size=65536):
+                content.extend(chunk)
+                if len(content) > 2 * 1024 * 1024:
+                    raise ValueError("Agent inventory exceeds the size limit.")
+            root = json.loads(content).get("root")
+            pending = [("", root)] if isinstance(root, dict) else []
+            # Bound traversal and depth of an untrusted agent's response.
+            while pending and len(paths) < 10000:
+                prefix, node = pending.pop()
+                if not isinstance(node, dict) or "error" in node:
+                    continue
+                for name, value in node.items():
+                    if not isinstance(name, str) or name == "error":
+                        continue
+                    path = f"{prefix}/{name}" if prefix else name
+                    if len(path) > 200 or path.count("/") > 10:
+                        continue
+                    if isinstance(value, dict) and "error" in value:
+                        continue
+                    paths.add(path)
+                    if isinstance(value, dict):
+                        pending.append((path, value))
+    except (requests.RequestException, ValueError, TypeError, AttributeError):
+        paths.clear()
+    finally:
+        if response is not None:
+            response.close()
+    result = frozenset(paths)
+    with ncpa_path_cache_lock:
+        ncpa_path_cache[key] = (now + (60 if paths else 5), result)
+        ncpa_path_cache.move_to_end(key)
+        while len(ncpa_path_cache) > 256:
+            ncpa_path_cache.popitem(last=False)
+    return result
+
+
+def load_host_plugin_facts(probe_ncpa=False):
     """
     Return plugin variables that come from the system itself rather than
     from configuration, keyed by NetDiscoveryID and then plugin name — for
@@ -128,6 +203,17 @@ def load_host_plugin_facts():
             "token": deployment.Token,
             "partitions": partitions_by_deployment.get(deployment.NCPADeployID, []),
         }
+    if probe_ncpa:
+        devices = {device.NetDiscoveryID: device for device in db.session.scalars(
+            sa.select(NetworkDiscovery).where(NetworkDiscovery.NetDiscoveryID.in_(facts))
+        ).all()} if facts else {}
+        for device_id, device_facts in facts.items():
+            device = devices.get(device_id)
+            if device is not None:
+                ncpa = device_facts["ncpa"]
+                ncpa["available_paths"] = probe_ncpa_paths(
+                    device.IP_Address, current_app.config["NCPA_PORT"], ncpa["token"],
+                )
     return facts
 
 
@@ -216,7 +302,7 @@ def warn_if_world_readable(path):
         pass
 
 
-def plan_plugin_services(plugin_name, service_label, port, transport, facts, overrides, app_config):
+def plan_plugin_services(plugin_name, service_label, port, transport, facts, overrides, app_config, on_skip=None):
     """
     Resolve one discovered port into the services plugin_name produces for
     it — one per metric for multi-check plugins such as SNMP and NCPA.
@@ -236,6 +322,10 @@ def plan_plugin_services(plugin_name, service_label, port, transport, facts, ove
 
     planned = []
     for check, service_variables in build_service_checks(plugin_name, variables):
+        if check.skip_reason:
+            if on_skip is not None:
+                on_skip(check.skip_reason)
+            continue
         name_parts = [service_label]
         if check.metric:
             name_parts.append(sanitize_name_part(check.metric))
@@ -385,7 +475,8 @@ def plan_host_services(host_data, facts, app_config, skipped=None, enabled_plugi
 
             try:
                 planned.extend(plan_plugin_services(
-                    plugin_name, service_label, port, transport, host_facts, overrides, app_config
+                    plugin_name, service_label, port, transport, host_facts, overrides, app_config,
+                    on_skip=lambda reason: skip(discovered_name, port, transport, reason),
                 ))
                 continue
             except PluginConfigurationError as e:
@@ -603,8 +694,8 @@ def _create_host_cfg_file(discovered_hosts, skipped=None):
 
     # System-derived plugin variables (e.g. NCPA tokens and partitions),
     # fetched once for all hosts rather than once per host.
-    plugin_facts = load_host_plugin_facts()
     enabled_plugins = enabled_plugin_names()
+    plugin_facts = load_host_plugin_facts(probe_ncpa="check_ncpa" in enabled_plugins)
     # Checks administrators added by hand for plugins discovery cannot drive.
     custom_by_device = load_custom_checks()
     server_checks = load_server_checks()

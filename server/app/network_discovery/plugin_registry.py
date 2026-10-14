@@ -105,6 +105,7 @@ class ServiceCheck:
     layered on top of the plugin's resolved variables for this service only.
     """
     metric: Optional[str]
+    skip_reason: Optional[str] = None
     variables: dict = field(default_factory=dict)
 
 
@@ -172,6 +173,14 @@ def ncpa_checks(variables):
                 ))
         elif fallback_path:
             checks.append(ServiceCheck(metric=metric, variables={**per_service, "metric_path": fallback_path}))
+    available = variables.get("available_paths")
+    if available is not None:
+        checks = [ServiceCheck(
+            metric=check.metric, variables=check.variables,
+            skip_reason=None if check.variables["metric_path"] in available else
+                (f"NCPA metric {sanitize_name_part(check.metric)}: the agent does not provide this path." if available else
+                 f"NCPA metric {sanitize_name_part(check.metric)}: agent paths could not be verified; retry when the agent is reachable."),
+        ) for check in checks]
     return checks
 
 

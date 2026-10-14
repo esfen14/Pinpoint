@@ -39,10 +39,10 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 1. [x] Obtain lab-agent access/approval and confirm valid NCPA paths, units and process-check syntax on NCPA 3.5.0; record lab evidence in `docs/test-runs/` (only after human direction).
 2. [ ] Test-first backend defaults and unsupported-path skipping in `server/tests/test_plugin_registry.py` (locate actual test paths), then implement `server/config.py`, `server/app/network_discovery/plugin_registry.py` and any necessary host planning code; verify backend.
-3. [ ] Test-first process-path validator in `server/tests/test_plugin_settings.py` (locate actual path), document pattern in `docs/manuals/Custom_Checks_Manual.md`; verify backend/docs.
-4. [ ] Test-first guided process add, invalid name, row review/save in `client/src/test/PluginSettings.test.tsx`; implement in `client/src/components/settings/PluginSettings.tsx` and types/API only if necessary; verify frontend.
+3. [x] Test-first process-path validator in `server/tests/test_plugin_settings.py` (locate actual path), document pattern in `docs/manuals/Custom_Checks_Manual.md`; verify backend/docs.
+4. [x] Test-first guided process add, invalid name, row review/save in `client/src/test/PluginSettings.test.tsx`; implement in `client/src/components/settings/PluginSettings.tsx` and types/API only if necessary; verify frontend.
 5. [ ] Run required regressions including `test_ncpa.py`; confirm two lab targets OK, absent path skipped, Nagios load and per-device service count, recording evidence in `docs/test-runs/`; review sensitive-module injection and secrets.
-6. [ ] Update `spec files/Data_Model_and_Integrations.md`, `spec files/Frontend_Modules_and_Routes.md`, `spec files/Implementation_Status.md` and user-facing help/manual as needed; verify docs.
+6. [x] Update `spec files/Data_Model_and_Integrations.md`, `spec files/Frontend_Modules_and_Routes.md`, `spec files/Implementation_Status.md` and user-facing help/manual as needed; verify docs.
 7. [ ] Re-read issue, prove all applicable finish items, run `scripts/verify.sh all`, attach output, remove progress and open PR using template; seek CI/reviewer approvals (do not claim approval or merge).
 
 ## Round log
@@ -58,12 +58,14 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 | 1 | Probed official NCPA 3.5.0 on two network-disabled containers; documented supported paths and absent load nodes | Direct authenticated API probes; `scripts/verify.sh docs` | Probe passed for swap, disk counters and exact process count; load not available; docs check below |
 
+| 2 | Added confirmed defaults, cached bounded path probe, per-metric skipped reasons, guided process form and owning docs; unit HTTP probes mocked | Backend focused/regressions; process API; `scripts/verify.sh frontend`; `scripts/verify.sh docs`; backend stage running | 257 backend regressions and 58 settings tests pass; 34 targeted/567 full frontend tests pass; build/lint green (warnings); docs green; backend stage pending |
+
 ## State for the next session
 
-- Last check run (exact command): `sg docker -c "docker info --format '{{.ServerVersion}}'"`
-- Result (first failing lines, or "green"): green: Docker 29.9.0.
-- Hypothesis: Account membership is fixed; the agent inherited old groups, so use `sg docker` for lab commands.
-- Next action (one specific step, not "continue"): Add failing backend tests for confirmed defaults and per-metric skipping.
+- Last check run (exact command): `scripts/verify.sh backend > test-results/issue-128/backend-stage.log 2>&1`
+- Result (first failing lines, or "green"): Still running; targeted regressions green (257), settings tests green (58); frontend stage and docs green.
+- Hypothesis: New behavior passes isolated tests; full backend verification and generated live Nagios services still require evidence.
+- Next action (one specific step, not "continue"): Sync this checkpoint into the Docker appliance, attach the two NCPA agents to the isolated lab network, and verify generated metrics and absent-path skipping.
 
 ## Decisions and notes
 
@@ -74,3 +76,5 @@ Requirement coverage (every requirement the issue states, and the check that pro
 - Docker access blocker resolved on user retry via `sg docker`; existing Docker lab authorization remains applicable.
 
 - Confirmed API paths justify swap and sda read/write defaults; no load-average path exists on the probed version, so omit it per issue C.2. Disk device paths are editable and skipped where absent.
+
+- Sensitive-module review: fixed IP-only HTTPS inventory URL, query parameters instead of shell execution, no redirects, bounded time/body/traversal/cache, sanitized failure reasons; no agent values or token in logs/response. Existing command validation and shared Nagios pre-apply/rollback writer retained.

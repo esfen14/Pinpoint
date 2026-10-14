@@ -525,7 +525,7 @@ class TestStopAndResume:
         _, ssh = attached
         assert logged_in_client.post(f"/api/plugin/{ssh.PluginID}/services/stop", json=body).status_code == 400
 
-    def test_the_ncpa_port_of_a_deployed_agent_cannot_be_stopped(self, logged_in_client, db_session, admin_user, status, writer):
+    def test_the_ncpa_port_of_a_deployed_agent_cannot_be_stopped(self, logged_in_client, db_session, admin_user, status, writer, ncpa_inventory):
         from app.network_discovery.port_lifecycle import mark_ncpa_port
         from app.system_models import AgentStatus, NCPADeployment
         device = new_device(status, tcp={22: "ssh"})

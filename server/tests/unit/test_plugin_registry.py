@@ -358,3 +358,30 @@ class TestScriptExtensionNormalization:
     def test_the_ncpa_command_keeps_the_real_filename(self):
         assert PLUGIN_DEFINITIONS["ncpa"].check_plugin == "check_ncpa"
         assert "$USER1$/check_ncpa.py " in PLUGIN_DEFINITIONS["ncpa"].command_line
+
+
+class TestConfirmedNcpaDefaults:
+    def test_preserves_the_three_original_entries_and_adds_confirmed_metrics(self):
+        from config import Config
+        assert Config.NCPA_METRICS[:3] == [
+            {"metric": "cpu", "path": "cpu/percent", "warning": "50", "critical": "80", "queryargs": "aggregate=avg"},
+            {"metric": "memory", "path": "memory/virtual/percent", "warning": "50", "critical": "80", "units": "Gi"},
+            {"metric": "disk", "path": "disk/logical/{partition}/used_percent", "warning": "70", "critical": "95"},
+        ]
+        variables = resolve_plugin_variables('ncpa', {
+            'NCPA_METRICS': Config.NCPA_METRICS, 'NCPA_PORT': '5693',
+        }, discovered={'token': 'test-token', 'partitions': ['|']})
+        checks = build_service_checks('ncpa', variables)
+        assert [check.metric for check, _ in checks] == ['cpu', 'memory', 'disk_root', 'swap', 'disk_read', 'disk_write']
+        assert checks[3][1]['metric_path'] == 'memory/swap/percent'
+        assert checks[4][1]['queryargs'] == 'delta=1'
+        assert checks[4][1]['units'] == 'Mi'
+
+    def test_marks_only_unsupported_paths_as_skipped(self):
+        from app.network_discovery.plugin_registry import ncpa_checks
+        checks = ncpa_checks({'metrics': [
+            {'metric': 'cpu', 'path': 'cpu/percent'},
+            {'metric': 'missing', 'path': 'cpu/missing'},
+        ], 'available_paths': frozenset({'cpu/percent'})})
+        assert checks[0].skip_reason is None
+        assert checks[1].skip_reason == 'NCPA metric missing: the agent does not provide this path.'

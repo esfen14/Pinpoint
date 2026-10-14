@@ -91,7 +91,7 @@ const NCPA_TABLE: TableConfig = {
   noun: 'metric',
   target: 'NCPA host',
   note:
-    'A path containing {partition} becomes one service per disk partition found when NCPA was installed (e.g. disk_root, disk_boot).',
+    'A path containing {partition} becomes one service per disk partition found when NCPA was installed (e.g. disk_root, disk_boot). Defaults also check swap usage and disk read/write rates on sda (MiB/s, warning 100, critical 200). Change the disk path and thresholds to suit your host. Unsupported paths are skipped; rescan after an agent becomes reachable. NCPA 3.5.0 has no confirmed load-average path.',
   columns: [
     descriptionColumn,
     {
@@ -311,6 +311,84 @@ function BandwidthHelper({ rows, onChange }: { rows: PluginSettingsRow[]; onChan
   )
 }
 
+// Generate a draft using NCPA's exact process-name filter; saving remains explicit.
+function ProcessHelper({ rows, onChange, disabled }: {
+  rows: PluginSettingsRow[]
+  onChange: (rows: PluginSettingsRow[]) => void
+  disabled: boolean
+}) {
+  const [name, setName] = useState('')
+  const [count, setCount] = useState('1')
+  const [problem, setProblem] = useState<string | null>(null)
+  const [generatedMetric, setGeneratedMetric] = useState<string | null>(null)
+
+  const add = () => {
+    const process = name.trim()
+    if (!/^[A-Za-z0-9_][A-Za-z0-9_.-]{0,23}$/.test(process)) {
+      setProblem('Process name must start with a letter, number or underscore and use only letters, numbers, dots, dashes or underscores (24 characters at most).')
+      return
+    }
+    if (!/^\d+$/.test(count) || Number(count) > 1000000) {
+      setProblem('Expected count must be a whole number from 0 to 1000000.')
+      return
+    }
+    const metric = `process_${process.toLowerCase().replace(/[.-]/g, '_')}`
+    if (rows.some((row) => row.metric.trim() === metric)) {
+      setProblem(`A row named "${metric}" already exists. Edit that row or choose another process name.`)
+      return
+    }
+    if (rows.length >= MAX_ROWS) {
+      setProblem(`At most ${MAX_ROWS} metrics are allowed.`)
+      return
+    }
+    const expected = String(Number(count))
+    onChange([...rows, {
+      metric, path: 'processes', queryargs: `name=${process}`,
+      warning: `${expected}:${expected}`, critical: `${expected}:${expected}`, units: '',
+    }])
+    setProblem(null)
+    setGeneratedMetric(metric)
+  }
+
+  return (
+    <div className="mb-5 rounded-xl border border-[var(--border)] bg-[var(--card-alt)] p-4">
+      <p className="text-sm font-medium text-[var(--text)]">Watch a process</p>
+      <p className="mt-1 text-xs text-[var(--text-muted)]">
+        Enter the exact process name as shown by the agent and the number you expect on every NCPA host.
+        A different count raises a Critical alert. Names are case sensitive. A count of zero checks that a process stays stopped.
+      </p>
+      <div className="mt-3 flex flex-wrap items-end gap-3">
+        <label className="text-xs text-[var(--text-muted)]">
+          Process name
+          <input
+            value={name} placeholder="e.g. sshd" disabled={disabled}
+            onChange={(event) => { setName(event.target.value); setProblem(null) }}
+            className={`${inputClass} mt-1 max-w-[220px] font-mono text-xs`}
+          />
+        </label>
+        <label className="text-xs text-[var(--text-muted)]">
+          Expected process count
+          <input
+            type="number" min="0" max="1000000" step="1" value={count} disabled={disabled}
+            onChange={(event) => { setCount(event.target.value); setProblem(null) }}
+            className={`${inputClass} mt-1 max-w-[160px] text-xs`}
+          />
+        </label>
+        <button
+          type="button" onClick={add} disabled={disabled || rows.length >= MAX_ROWS}
+          className="flex items-center gap-1.5 rounded-xl border border-[var(--border)] px-3 py-2 text-sm text-[var(--text)] hover:bg-[var(--hover)] disabled:opacity-40"
+        >
+          <Plus size={15} /> Add process check
+        </button>
+      </div>
+      {problem && <p role="alert" className="mt-2 text-xs text-red-500">{problem}</p>}
+      {generatedMetric && rows.some((row) => row.metric === generatedMetric) && !problem && (
+        <p className="mt-2 text-xs text-[var(--text-muted)]">Review the generated row in the table below before saving.</p>
+      )}
+    </div>
+  )
+}
+
 interface PluginSectionProps {
   config: TableConfig
   section: PluginSettingsSection
@@ -361,7 +439,10 @@ function PluginSection({ config, section, onSaved }: PluginSectionProps) {
       )}
 
       {config.plugin === 'ncpa' && (
-        <BandwidthHelper rows={draft} onChange={(rows) => { setDraft(rows); setSaveError(null) }} />
+        <>
+          <BandwidthHelper rows={draft} onChange={(rows) => { setDraft(rows); setSaveError(null) }} />
+          <ProcessHelper rows={draft} onChange={(rows) => { setDraft(rows); setSaveError(null) }} disabled={isSaving} />
+        </>
       )}
 
       <RowTable
