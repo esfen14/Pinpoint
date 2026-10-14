@@ -56,12 +56,14 @@ Requirement coverage (every requirement stated by the issue):
 
 | Resume | User requested continuation; group membership refreshed using sg docker; discovered shared lab and chose separate three-container lab | id; id paeng; sg docker -c docker ps | Docker group exists on account but not inherited by session; sg docker grants legitimate group access |
 
+| Live 1 | Own Docker appliance: real private/default group validation and host/service mail routing; ineligible-group fallback syntax valid | python3 -u /tmp/pinpoint-issue79-live/verify.py | 7 cases passed; fallback mail capture timed out (Nagios logged dispatch during HUP worker registration, no capture). Full resumed all and CI green. |
+
 ## State for the next session
 
-- Last check run (exact command): scripts/verify.sh all > /tmp/issue79-all.log 2>&1
-- Result (first failing lines, or green): green; backend 2660 passed / 14 skipped; frontend 565 passed; docs, build and lint pass (0 errors / 29 warnings). Logs copied to ignored test-results/issue79-*.log. PR docs/backend/frontend CI passed on code commit aa273270; final metadata checkpoint triggers the same checks again.
-- Hypothesis: NetDiscoveryID is durable across rescans. Numeric device-ID group names avoid injection. Eligibility derives from existing active/opt-in filter. The shared writer reads uncommitted flushed assignments, allowing rollback on apply failure.
-- Next action: Start isolated Docker lab pinpoint-issue79 at port 8079, discover only 10.77.0.0/28, save per-host recipients, validate real Nagios config and compare notifications via local mail capture; keep VM/inbox distinction explicit.
+- Last check run (exact command): python3 -u /tmp/pinpoint-issue79-live/verify.py > /tmp/pinpoint-issue79-live/verify.log 2>&1
+- Result (first failing lines, or green): 7 Docker cases passed; RuntimeError: host-fallback: expected 28 recipient(s), saw 0. Nagios logged fallback HOST NOTIFICATION events at the same second its replacement workers registered after HUP. Resumed scripts/verify.sh all and all CI jobs passed.
+- Hypothesis: The harness sent the next passive result immediately after reload, before replacement notification workers were available. Repeat the alert after worker registration, with a fresh UP/DOWN transition and distinct capture marker.
+- Next action: Repeat the fallback notification after reload settles, then verify scoped rescan and validation/reload rollback in the isolated lab; record all observations and retain VM/inbox distinction.
 
 ## Decisions and notes
 
