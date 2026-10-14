@@ -393,7 +393,19 @@ class TestSshProbe:
 
 class TestCollectIdentifiers:
 
-    def test_probes_only_the_ports_that_are_open(self, app):
+    def test_uses_stored_port_for_known_agent(self, db_session, admin_user):
+        device = make_ncpa_device(db_session, admin_user, state=None)
+        deployment = db.session.scalar(sa.select(NCPADeployment).where(
+            NCPADeployment.NetworkDiscoveryID == device.NetDiscoveryID,
+            NCPADeployment.Token.is_not(None)))
+        deployment.Port = 5864
+        db.session.commit()
+        with patch.object(identity_probes, "tls_certificate_fingerprint", return_value=CERT_1) as probe:
+            found = identity_probes.collect_identifiers(device.IP_Address, {"5864": {}})
+        assert (IdentifierKind.NCPA_CERT, CERT_1) in found
+        probe.assert_called_once_with(device.IP_Address, "5864")
+
+    def test_probes_only_the_ports_that_are_open(self, app, db_session):
         with app.app_context(), \
              patch.object(identity_probes, "tls_certificate_fingerprint", return_value=CERT_1) as tls, \
              patch.object(identity_probes, "ssh_host_key_fingerprint", return_value=SSH_1) as ssh_probe:

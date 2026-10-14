@@ -96,13 +96,14 @@ Requirement coverage (each issue requirement maps to E/F/H; proof pending):
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 1 (partial) | Added nullable Port model, generated/reviewed multi-bind migration with deployed-row backfill, fallback and protection/planning tests; remaining port consumers not yet wired | `cd server && .venv/bin/python -m pytest tests/unit/test_ncpa.py tests/unit/test_port_lifecycle.py tests/unit/test_create_host_cfg.py tests/unit/test_ncpa_identity.py tests/unit/test_ncpa_deployment_runs.py -q`; `scripts/verify.sh backend` | Focused 211 passed; backend printed 2581 passed/14 skipped but shell timed out at 300 s after pytest output. Step 1 remains unticked. |
+| 2 (partial) | Added alternate-port identity probe test and lookup, preserved standard-port no-extra-query path; updated legacy probe fixture to use database | `cd server && .venv/bin/python -m pytest tests/unit/test_ncpa_identity.py::TestCollectIdentifiers -q` | 5 passed; step 1 remains unticked pending relocation, reachability and migration roundtrip. |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh backend`
-- Result (first failing lines, or "green"): pytest printed `2581 passed, 14 skipped in 297.68s`; tool timed out after 300 s, so stage exit status is unconfirmed.
-- Hypothesis: Port resolution and protection pass, but probe, relocation and migration roundtrip still need tests/wiring; backend stage needs longer timeout.
-- Next action (one specific step, not "continue"): Add a non-default-port reachability probe test to `server/tests/unit/test_ncpa_identity.py`, run it failing, then wire the stored port through the probes.
+- Last check run (exact command): `cd server && .venv/bin/python -m pytest tests/unit/test_ncpa_identity.py::TestCollectIdentifiers -q`
+- Result (first failing lines, or "green"): green, 5 passed.
+- Hypothesis: Identity probe recognizes a known device on its alternate port; reachability, relocation and migration roundtrip still need work.
+- Next action (one specific step, not "continue"): Add a failing non-default-port reachability probe test to `server/tests/unit/test_ncpa_identity.py`, then pass stored port through deployment reachability.
 
 ## Decisions and notes
 
