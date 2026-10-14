@@ -121,6 +121,35 @@ class TestHistoryAuthGuards:
 
 
 # ==========================================================
+# Shared list range contract
+# ==========================================================
+
+@pytest.mark.parametrize("route,archive", [
+    ("alerts", _ALERTS_RANGE), ("notifications", _NOTIFS_RANGE),
+])
+def test_custom_datetime_bounds_use_utc_inclusive_seconds(logged_in_client, db_session, route, archive):
+    params = {"start_date": "2024-01-01T08:00:00+08:00",
+              "end_date": "2024-01-01T02:00:00Z"}
+    with patch(archive, return_value=[]) as fetch:
+        response = logged_in_client.get(f"/api/system/history/{route}", query_string=params)
+    assert response.status_code == 200
+    assert any(call.args[:2] == (1704067200, 1704074400) for call in fetch.call_args_list)
+
+
+@pytest.mark.parametrize("route", ["alerts", "notifications"])
+@pytest.mark.parametrize("params", [
+    {"start_date": "2024-01-01T00:00:00Z"},
+    {"end_date": "2024-01-01T00:00:00Z"},
+    {"start_date": "2024-01-01T00:00:00", "end_date": "2024-01-02T00:00:00Z"},
+    {"start_date": "2024-01-02T00:00:00Z", "end_date": "2024-01-01T00:00:00Z"},
+    {"start_date": "2024-02-30", "end_date": "2024-03-01"},
+    {"start_date": "2024-01-01T00:00:00Z", "end_date": "2024-01-01"},
+])
+def test_invalid_custom_bounds_rejected(logged_in_client, db_session, route, params):
+    assert logged_in_client.get(f"/api/system/history/{route}", query_string=params).status_code == 400
+
+
+# ==========================================================
 # GET /api/system/history/alerts
 # ==========================================================
 
@@ -321,6 +350,24 @@ class TestAlertsHistory:
             resp = logged_in_client.get("/api/system/history/alerts?preset=24h")
         item = resp.get_json()["data"]["items"][0]
         assert len(item["plugin_output"]) == 200
+
+
+@pytest.mark.parametrize("key", ["type", "hostname", "service_name", "previous_state",
+                                      "new_state", "state_type", "duration_seconds", "plugin_output", "duration"])
+@pytest.mark.parametrize("order", ["asc", "desc"])
+def test_alert_column_sort_and_timestamp_ties(logged_in_client, db_session, key, order):
+    rows = [{**FAKE_ALERTS[0], "timestamp": 100},
+            {**FAKE_ALERTS[0], "timestamp": 300},
+            {**FAKE_ALERTS[1], "timestamp": 200, "state_type": "soft"}]
+    with patch(_ALERTS_RANGE, return_value=rows):
+        response = logged_in_client.get("/api/system/history/alerts", query_string={"sort_by": key, "order": order})
+    assert response.status_code == 200
+    items = response.get_json()["data"]["items"]
+    field = "duration_seconds" if key == "duration" else key
+    values = [i[field] for i in items]
+    assert values == sorted(values, key=lambda v: v.lower() if isinstance(v, str) else v or "" if v is None else v,
+                            reverse=order == "desc")
+    assert [i["timestamp"] for i in items if i["timestamp"] in (100, 300)] == [300, 100]
 
 
 # ==========================================================
@@ -733,6 +780,21 @@ class TestNotificationsHistory:
         data = resp.get_json()["data"]
         for key in ("page", "per_page", "total", "pages", "has_next", "has_prev"):
             assert key in data
+
+
+@pytest.mark.parametrize("key", ["type", "hostname", "service_name", "state", "contact", "method", "message"])
+@pytest.mark.parametrize("order", ["asc", "desc"])
+def test_notification_column_sort_and_timestamp_ties(logged_in_client, db_session, key, order):
+    rows = [{**FAKE_NOTIFICATIONS[0], "timestamp": 100},
+            {**FAKE_NOTIFICATIONS[0], "timestamp": 300},
+            {**FAKE_NOTIFICATIONS[1], "timestamp": 200}]
+    with patch(_NOTIFS_RANGE, return_value=rows):
+        response = logged_in_client.get("/api/system/history/notifications", query_string={"sort_by": key, "order": order, "source": "nagios"})
+    assert response.status_code == 200
+    items = response.get_json()["data"]["items"]
+    values = [i[key] for i in items]
+    assert values == sorted(values, key=lambda v: v.lower() if isinstance(v, str) else "", reverse=order == "desc")
+    assert [i["timestamp"] for i in items if i["timestamp"] in (100, 300)] == [300, 100]
 
 
 # ==========================================================

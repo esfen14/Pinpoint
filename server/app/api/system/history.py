@@ -32,6 +32,7 @@ GET /system/history/notifications/detail
 """
 
 from datetime import datetime, timezone, timedelta
+import re
 
 import sqlalchemy as sa
 from flask import request, current_app
@@ -81,7 +82,9 @@ def resolve_time_range(preset, start_date, end_date):
 
     If preset is given it takes priority over start_date/end_date.
     Preset values: "1h", "6h", "24h", "7d", "30d".
-    For a custom range, pass start_date and end_date as YYYY-MM-DD strings.
+    Custom bounds are either two YYYY-MM-DD dates (server-local full days,
+    for backward compatibility) or two ISO 8601 date-times with explicit UTC
+    offsets (Z or ±HH:MM). Date-time bounds are inclusive to the second.
     Returns (None, None) if the inputs are invalid.
     """
     now = int(datetime.now(timezone.utc).timestamp())
@@ -93,10 +96,24 @@ def resolve_time_range(preset, start_date, end_date):
         start_ts = now - hours * 3600
         return start_ts, now
 
-    if start_date and end_date:
+    if start_date or end_date:
+        if not (start_date and end_date):
+            return None, None
+        if re.fullmatch(r"\d{4}-\d{2}-\d{2}", start_date) and re.fullmatch(r"\d{4}-\d{2}-\d{2}", end_date):
+            try:
+                return get_range_custom(start_date, end_date)
+            except ValueError:
+                return None, None
+        pattern = r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:Z|[+-]\d{2}:\d{2})"
+        if not (re.fullmatch(pattern, start_date) and re.fullmatch(pattern, end_date)):
+            return None, None
         try:
-            return get_range_custom(start_date, end_date)
-        except ValueError:
+            start = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
+            end = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
+            if start > end:
+                return None, None
+            return int(start.timestamp()), int(end.timestamp())
+        except (ValueError, OverflowError):
             return None, None
 
     # Default: last 24 hours
@@ -198,6 +215,18 @@ def serialize_ack(ack_row):
     }
 
 
+def sort_history_items(items, sort_by, order, columns, aliases=None):
+    """Sort list rows by a column, breaking equal values by newest timestamp."""
+    field = (aliases or {}).get(sort_by, sort_by)
+    if field not in columns:
+        field = "timestamp"
+    if field != "timestamp":
+        items.sort(key=lambda item: item["timestamp"], reverse=True)
+    items.sort(key=lambda item: (item[field] or "").casefold() if field not in
+               ("timestamp", "duration_seconds", "acknowledged") else item[field],
+               reverse=order == "desc")
+
+
 def paginate_list(items, page, per_page):
     """
     Slice a list into a page and return it with pagination metadata.
@@ -237,8 +266,8 @@ def alerts_history():
 
     Query params:
         preset      — time range shortcut: 1h | 6h | 24h | 7d | 30d
-        start_date  — YYYY-MM-DD (used when preset is absent)
-        end_date    — YYYY-MM-DD (used when preset is absent)
+        start_date  — YYYY-MM-DD or offset-aware ISO 8601 date-time
+        end_date    — same format as start_date (used without preset)
         type        — host | service (omit for all)
         hostname    — filter to one host
         service     — filter to one service
@@ -341,15 +370,10 @@ def alerts_history():
                 "acknowledged": is_acked,
             })
 
-        # Sort
-        _sort_keys = {
-            "timestamp": lambda a: a["timestamp"],
-            "hostname":  lambda a: a["hostname"].lower(),
-            "new_state": lambda a: a["new_state"],
-            "duration":  lambda a: a["duration_seconds"],
-        }
-        key_fn = _sort_keys.get(sort_by, _sort_keys["timestamp"])
-        items.sort(key=key_fn, reverse=(order == "desc"))
+        sort_history_items(items, sort_by, order, {
+            "timestamp", "type", "hostname", "service_name", "previous_state",
+            "new_state", "state_type", "duration_seconds", "plugin_output", "acknowledged",
+        }, {"duration": "duration_seconds"})
 
         result = paginate_list(items, page, per_page)
         return success(result)
@@ -488,8 +512,8 @@ def notifications_history():
 
     Query params:
         preset      — time range shortcut: 1h | 6h | 24h | 7d | 30d
-        start_date  — YYYY-MM-DD (used when preset is absent)
-        end_date    — YYYY-MM-DD (used when preset is absent)
+        start_date  — YYYY-MM-DD or offset-aware ISO 8601 date-time
+        end_date    — same format as start_date (used without preset)
         type        — host | service (omit for all)
         hostname    — filter to one host
         service     — filter to one service
@@ -595,13 +619,10 @@ def notifications_history():
                     "message":      event["message"][:200],
                 })
 
-        _sort_keys = {
-            "timestamp": lambda n: n["timestamp"],
-            "hostname":  lambda n: n["hostname"].lower(),
-            "state":     lambda n: n["state"],
-        }
-        key_fn = _sort_keys.get(sort_by, _sort_keys["timestamp"])
-        items.sort(key=key_fn, reverse=(order == "desc"))
+        sort_history_items(items, sort_by, order, {
+            "timestamp", "type", "hostname", "service_name", "state", "contact",
+            "method", "message",
+        })
 
         if nagios_unavailable and not items:
             return error("Failed to retrieve notification history from Nagios.", 502)
