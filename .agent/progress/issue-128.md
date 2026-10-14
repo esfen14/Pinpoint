@@ -49,17 +49,17 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| resumed | Checked issue and branch after Docker lab approval; inspected lab instructions | `docker info --format '{{.ServerVersion}}'` | Cannot run: `/bin/bash: line 1: docker: command not found` |
 
 ## State for the next session
 
-- Last check run (exact command): `gh issue view 128 --json title,body,comments,state,url`
-- Result (first failing lines, or "green"): green; issue expressly requires live agent probes and two-target lab verification.
-- Hypothesis: valid NCPA 3.5.0 paths and units cannot be safely inferred without the lab agent; workflow requires human direction for live network devices.
-- Next action (one specific step, not "continue"): Ask the maintainer for authorization/access or sanitized probe output from two NCPA 3.5.0 lab agents, including load/swap/disk I/O paths, units and process queryargs; also configure the repository's Git author identity so the plan can be checkpointed.
+- Last check run (exact command): `docker info --format '{{.ServerVersion}}'`
+- Result (first failing lines, or "green"): `/bin/bash: line 1: docker: command not found` (exit 127).
+- Hypothesis: Docker CLI/runtime is not available in this execution environment, so approved Docker lab cannot be started here.
+- Next action (one specific step, not "continue"): Provide a Docker-enabled execution environment with two NCPA 3.5.0 targets, or supply sanitized probe results (paths, units, process queryargs) and two-target Nagios verification evidence.
 
 ## Decisions and notes
 
 - Issue's finish condition covers the stated requirements by E, F and H; database migrations are explicitly N/A; new endpoints are only applicable if implementation needs them.
 - `spec files/Engineering_Standards.md` marks `app/network_discovery/` sensitive. Before changing it, review injection, secrets and Nagios pre-apply validation.
-- No agent access or live probe results have been supplied. Workflow §4 requires blocking when the fix needs a live Nagios or network device; do not guess API paths or assert lab success.
-- Plan checkpoint attempted with `scripts/agent_checkpoint.sh 128 'plan'`; failed because Git author name/email are not configured (`fatal: unable to auto-detect email address`). The progress file is staged but not committed or pushed.
+- User approved Docker lab usage; Git author identity has been configured and the plan was committed/pushed in df6e4afc. However this environment has no Docker executable (`docker: command not found`). `docs/manuals/Local_Lab.md` also notes the Docker targets cannot test NCPA installation because they lack init; a suitable two-agent lab is still needed. No agent probes or lab claims have been made.
