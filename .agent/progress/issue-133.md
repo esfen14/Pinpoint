@@ -1,7 +1,7 @@
 # Issue #133: Clear acknowledgements on recovery and audit History
 
 Branch: `issue-133-clear-ack-recovery-audit-history`
-Status: blocked
+Status: in-progress
 
 ## Finish condition
 
@@ -108,6 +108,6 @@ Requirement coverage (section A problem, C changes, D guidelines, G testing, exc
 - Specs: Display_Requirements.md §4.9; Data_Model_and_Integrations.md §§Nagios integration, Alert acknowledgement lifecycle; Alerts_Notifications_History_Requirements.md §§1–5. Implementation_Status.md identifies both gaps.
 - Section G explicitly calls for live lab and manual walk, but no lab action will be implied by isolated tests. If unavailable, report honestly and use a draft PR.
 - CI docs/backend/frontend checks succeeded on PR head `18ca01f3`; no human reviews or comments were present when queried. Recheck CI for this progress-only checkpoint and review state before completion.
-- Owner approved VM with Playwright for remaining functionality in issue comment https://github.com/esfen14/Pinpoint/issues/133#issuecomment-6157312406. This answers the prior blocker and justifies plan step 6. It does not explicitly authorize destructive `fresh`/`provision --force`. Existing snapshot stamp differs from current installer base-step hash; inspect running deployment before any sync and avoid reset.
+- Owner approved VM with Playwright for remaining functionality in issue comment https://github.com/esfen14/Pinpoint/issues/133#issuecomment-6157312406 and added https://github.com/esfen14/Pinpoint/issues/133#issuecomment-6158650087: "Use of the VM is authorized." This answers the lab-use blocker and justifies plan step 6. It does not explicitly authorize destructive `fresh`/`provision --force`. Existing snapshot stamp differs from current installer base-step hash; avoid reset.
 - Owner confirmed current host fingerprint from VM console in https://github.com/esfen14/Pinpoint/issues/133#issuecomment-6158435300 and authorized local password use to install public key in https://github.com/esfen14/Pinpoint/issues/133#issuecomment-6158612514. Password was supplied only through a temporary askpass helper (removed on exit), not echoed; key-based SSH now succeeds with checking enabled. Appliance has issue #113 application commit `1ca2c757`, not #133. Pause before sync/reset to avoid overwriting another issue's lab state without exclusive ownership confirmation.
 - Draft PR: https://github.com/esfen14/Pinpoint/pull/145. `gh pr edit` hits deprecated projectCards GraphQL; body updated via `gh api PATCH`. Backend gaps #141–#144 are tracked out of scope. Local full verification log is `/tmp/opencode/issue-133-all.log`; result excerpts are posted in a PR comment, but the full log is not uploaded.
