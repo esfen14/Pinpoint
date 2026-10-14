@@ -1,7 +1,7 @@
 # Issue #133: Clear acknowledgements on recovery and audit History
 
 Branch: `issue-133-clear-ack-recovery-audit-history`
-Status: in-progress
+Status: blocked
 
 ## Finish condition
 
@@ -94,13 +94,14 @@ Requirement coverage (section A problem, C changes, D guidelines, G testing, exc
 | 5 | Re-read issue/comments; checked full local CI-equivalent suite; no further code changes | `scripts/verify.sh all > /tmp/opencode/issue-133-all.log 2>&1; tail -30 /tmp/opencode/issue-133-all.log` | green — verify: all OK; 26 lint warnings, zero errors |
 | resumed | Re-read issue and comments; reconciled finish condition with source audit, PR and CI. First check timed out at 120 seconds; reran with 600-second timeout. | `scripts/verify.sh all > /tmp/opencode/issue-133-all.log 2>&1; result=$?; tail -40 /tmp/opencode/issue-133-all.log; exit "$result"` | green — 2382 backend passed/14 skipped; 518 frontend passed; 26 lint warnings/0 errors. CI docs/backend/frontend success on PR head. Live lab/manual walk and human review remain blocked. |
 | resumed | Owner issue comment approved VM + Playwright for remaining functionality; added live-verification plan step, not previously available. Existing VM running; five targets up; base snapshot stamp is stale against newer installer base steps. | `scripts/verify.sh all > /tmp/opencode/issue-133-all.log 2>&1; result=$?; tail -40 /tmp/opencode/issue-133-all.log; exit "$result"`; `scripts/vmlab status`; `scripts/vmlab targets up` | green local all; VM running with `os-nagios-ready` snapshot but installer base-step stamp warning. No reset or provision. |
+| resumed | Owner authorized VM use; synced #133 server/client without reset, checked matching hashes, attempted Playwright admin smoke. | `scripts/playwright-lab --project admin`; private HTTP login probe | Red: Playwright admin login remains `/login`; private stored admin credential returns HTTP 401. Existing database preserved; no History acceptance run. |
 
 ## State for the next session
 
-- Last check run (exact command): `ssh -i "$HOME/.local/share/pinpoint-vmlab/id_ed25519" -p 2250 -o BatchMode=yes -o StrictHostKeyChecking=yes lab@127.0.0.1 'git -c safe.directory=/opt/pinpoint/Network-Diagnosis-System -C /opt/pinpoint/Network-Diagnosis-System rev-parse HEAD; git -c safe.directory=/opt/pinpoint/Network-Diagnosis-System -C /opt/pinpoint/Network-Diagnosis-System branch --show-current'`
-- Result (first failing lines, or "green"): green SSH authentication, but deployed application is `1ca2c757` on `issue-113-notification-policy`, not issue #133. `pinpoint-gunicorn` and Nagios active. No app deployment or live test yet.
-- Hypothesis: owner-authorized password recovery succeeded; the running VM still has another issue's installation and state. Need exclusive control confirmation before overwriting that installation with #133; no reset/provision authorized.
-- Next action (one specific step, not "continue"): Ask owner to confirm exclusive use and permission to replace the issue #113 application on the running VM with #133 via non-reset `scripts/vmlab sync --client` (preserves database), then run a targeted live test and sanitize results.
+- Last check run (exact command): `scripts/playwright-lab --project admin`
+- Result (first failing lines, or "green"): failed `auth.setup.ts:15` — expected `/dashboard`, remained `/login` (0 passed, 1 failed, 1 skipped). A separate login API probe using the private stored admin state returned HTTP 401 (response withheld). `scripts/vmlab setup-admin` only said login already set up; bootstrap credential and setup-pending markers on appliance absent. No live History workflow ran.
+- Hypothesis: preserved issue #113 VM database uses a different administrator password than the local private state file. Sync of #133 server/client succeeded (SHA-256 of `status.py` and built index matched), but did not replace the database or credentials. Need authorized non-destructive credential recovery or explicitly approved reset; do not guess passwords or bypass login.
+- Next action (one specific step, not "continue"): Ask owner to authorize resetting only the lab administrator password to a new private value through the VM's supported account-recovery path while preserving database, or explicitly approve `scripts/vmlab fresh` if they prefer a destructive clean install.
 
 ## Decisions and notes
 
@@ -110,4 +111,5 @@ Requirement coverage (section A problem, C changes, D guidelines, G testing, exc
 - CI docs/backend/frontend checks succeeded on PR head `18ca01f3`; no human reviews or comments were present when queried. Recheck CI for this progress-only checkpoint and review state before completion.
 - Owner approved VM with Playwright for remaining functionality in issue comment https://github.com/esfen14/Pinpoint/issues/133#issuecomment-6157312406 and added https://github.com/esfen14/Pinpoint/issues/133#issuecomment-6158650087: "Use of the VM is authorized." This answers the lab-use blocker and justifies plan step 6. It does not explicitly authorize destructive `fresh`/`provision --force`. Existing snapshot stamp differs from current installer base-step hash; avoid reset.
 - Owner confirmed current host fingerprint from VM console in https://github.com/esfen14/Pinpoint/issues/133#issuecomment-6158435300 and authorized local password use to install public key in https://github.com/esfen14/Pinpoint/issues/133#issuecomment-6158612514. Password was supplied only through a temporary askpass helper (removed on exit), not echoed; key-based SSH now succeeds with checking enabled. Appliance has issue #113 application commit `1ca2c757`, not #133. Pause before sync/reset to avoid overwriting another issue's lab state without exclusive ownership confirmation.
+- Owner additionally authorized VM use in https://github.com/esfen14/Pinpoint/issues/133#issuecomment-6158650087. Ran `scripts/vmlab sync --client` on existing VM (no reset); current source and built HTML hashes matched VM after sync. Playwright admin setup failed at login, and private local credential also received API HTTP 401. Current preserved database credentials are out of sync; no live acceptance behavior observed. Need a person for authorized credential recovery or explicit destructive reset.
 - Draft PR: https://github.com/esfen14/Pinpoint/pull/145. `gh pr edit` hits deprecated projectCards GraphQL; body updated via `gh api PATCH`. Backend gaps #141–#144 are tracked out of scope. Local full verification log is `/tmp/opencode/issue-133-all.log`; result excerpts are posted in a PR comment, but the full log is not uploaded.
