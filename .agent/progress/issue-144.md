@@ -1,7 +1,7 @@
 # Issue #144: History backend recovery duration and previous state
 
 Branch: `issue-144-history-recovery`
-Status: in-progress
+Status: ready-for-review
 
 ## Finish condition
 
@@ -29,14 +29,15 @@ One row per loop round, newest last.
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
-| 1 | Added host/service boundary and multi-transition regressions; derived archive timeline fields for list/detail; updated owning specs and gap inventory | `cd server && .venv/bin/python -m pytest tests/unit/test_history.py -q`; `scripts/verify.sh docs` | 136 passed; docs green; backend/all running |
+| 1 | Added host/service boundary and multi-transition regressions; derived archive timeline fields for list/detail; updated owning specs and gap inventory | `cd server && .venv/bin/python -m pytest tests/unit/test_history.py -q`; `scripts/verify.sh docs` | 136 passed; docs green |
+| 2 | Re-read issue and checked all requirements against regression and specs | `scripts/verify.sh all`; `cd server && .venv/bin/python -m pytest tests/unit/test_history.py -q` | all green; 136 passed |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh docs`
-- Result (first failing lines, or "green"): green
-- Hypothesis: backend and full CI stages should pass; focused tests and docs are green.
-- Next action (one specific step, not "continue"): Confirm `scripts/verify.sh backend` and `scripts/verify.sh all` results, then finish PR.
+- Last check run (exact command): `cd server && .venv/bin/python -m pytest tests/unit/test_history.py -q`
+- Result (first failing lines, or "green"): green (136 passed); `scripts/verify.sh all` green
+- Hypothesis: Finish condition is proven by isolated tests and full verification.
+- Next action (one specific step, not "continue"): Remove progress file and open PR.
 
 ## Decisions and notes
 
