@@ -97,7 +97,12 @@ def test_the_whole_file_is_consistent(app, db_session, status, tmp_path, plain_a
 
     for command in blocks(text, "command"):
         line = field(command, "command_line")
-        assert line.startswith("$USER1$/check_")
+        if field(command, "command_name") == "pinpoint_custom_check_radius":
+            assert "pinpoint_check_native.py" in line
+            assert "--resource-slot '$ARG2$'" in line
+            assert "-p '$ARG2$'" not in line
+        else:
+            assert line.startswith("$USER1$/check_")
         for placeholder in re.findall(r"\$ARG(\d+)\$", line):
             assert int(placeholder) >= 1
         if field(command, "command_name").startswith("pinpoint_custom_check_apt"):
@@ -105,5 +110,6 @@ def test_the_whole_file_is_consistent(app, db_session, status, tmp_path, plain_a
         if field(command, "command_name") in ("pinpoint_custom_check_by_ssh", "pinpoint_custom_check_ping"):
             assert "-H $HOSTADDRESS$" in line
     assert "Lab-Pw_1" not in text  # Password replaced by $USERn$ macro in resource.cfg (issue #129)
-    assert "$USER" in text  # At least one $USERn$ macro reference must be present for the password
+    assert re.search(r"pinpoint_custom_check_radius!probe!USER[0-9]+!", text)
+    assert not re.search(r"pinpoint_custom_check_radius!probe!\$USER", text)
     assert "localhost.cfg" not in text

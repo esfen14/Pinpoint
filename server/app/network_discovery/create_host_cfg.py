@@ -22,6 +22,7 @@ from app.network_discovery.plugin_registry import (
     PluginConfigurationError,
     Transport,
     build_service_checks,
+    COMMAND_TEMPLATE,
     find_plugin_by_name_or_alias,
     plugin_for_definition,
     render_command_definition,
@@ -294,8 +295,8 @@ def apply_secret_substitutions(command, substitution_map):
     Required fields occupy their definition's positional argument; optional
     fields are single-quoted flag/value pairs in its last argument. Public
     arguments remain unchanged even when they match a secret's text. This
-    protects configuration literals; process secrecy requires a separate
-    supported credential transport.
+    protects configuration literals. NCPA uses a bare USERn identifier so
+    Nagios cannot expand the token before the in-process adapter reads it.
     """
     parts = command.split("!")
     definition = PLUGIN_DEFINITIONS["ncpa"]
@@ -308,9 +309,20 @@ def apply_secret_substitutions(command, substitution_map):
         definition = custom_checks.CUSTOM_DEFINITIONS[plugin_name]
         secret_names = set(custom_checks.secret_names(plugin_name))
 
+    secure_native = definition.check_plugin in {"check_nt", "check_radius", "check_mysql_query"}
+
+    def resource_reference(value):
+        """Resolve a credential to its identifier, refusing unsupported transport."""
+        macro = substitution_map.get(value)
+        if definition.check_plugin == "check_disk_smb":
+            raise PluginConfigurationError("check_disk_smb lacks a secure credential input for its child process.")
+        if macro is None or not re.fullmatch(r"\$USER[0-9]+\$", macro):
+            raise PluginConfigurationError("Check requires a protected resource slot.")
+        return macro.strip("$") if definition.name == "ncpa" or secure_native else macro
+
     for index, (_flag, name) in enumerate(definition.arguments, start=1):
         if name in secret_names and index < len(parts):
-            parts[index] = substitution_map.get(parts[index], parts[index])
+            parts[index] = resource_reference(parts[index])
 
     optional_index = len(definition.arguments) + 1
     if optional_index < len(parts):
@@ -321,11 +333,43 @@ def apply_secret_substitutions(command, substitution_map):
             pattern = re.compile(r"(?<!\S)(" + re.escape(flag) + r" )'([^']*)'(?=\s|$)")
 
             def replace_secret(match):
-                value = substitution_map.get(match.group(2), match.group(2))
-                return f"{match.group(1)}'{value}'"
+                value = resource_reference(match.group(2))
+                option = "--resource-slot " if secure_native else match.group(1)
+                return f"{option}'{value}'"
 
             parts[optional_index] = pattern.sub(replace_secret, parts[optional_index])
     return "!".join(parts)
+
+
+def render_ncpa_resource_command(resource_path):
+    """Render the unprivileged NCPA adapter with paths safe for Nagios and shell."""
+    script = Path(__file__).resolve().parents[2] / "scripts" / "pinpoint_check_ncpa.py"
+    paths = (str(script), str(resource_path))
+    if not script.is_file() or any(not re.fullmatch(r"/[A-Za-z0-9_./-]+", path) for path in paths):
+        raise PluginConfigurationError("Protected NCPA check paths are missing or unsafe.")
+    return COMMAND_TEMPLATE.format(
+        command_name=PLUGIN_DEFINITIONS["ncpa"].command_name,
+        command_line=(f"/usr/bin/python3 -I {script} --resource-file {resource_path} "
+                      "--plugin $USER1$/check_ncpa.py --resource-slot '$ARG2$' "
+                      "-H $HOSTADDRESS$ -P '$ARG1$' -M '$ARG3$' $ARG4$"),
+    )
+
+
+def render_native_resource_command(plugin_name, resource_path):
+    """Render native password checks through verified extra-options stdin."""
+    definition = custom_checks.CUSTOM_DEFINITIONS[plugin_name]
+    script = Path(__file__).resolve().parents[2] / "scripts" / "pinpoint_check_native.py"
+    paths = (str(script), str(resource_path))
+    if not script.is_file() or any(not re.fullmatch(r"/[A-Za-z0-9_./-]+", path) for path in paths):
+        raise PluginConfigurationError("Protected native check paths are missing or unsafe.")
+    executable = f"$USER1$/{definition.executable or definition.check_plugin}"
+    line = definition.command_line.replace(
+        executable, f"/usr/bin/python3 -I {script} --resource-file {resource_path} --plugin {executable}", 1,
+    )
+    for index, (flag, name) in enumerate(definition.arguments, start=1):
+        if name in custom_checks.secret_names(plugin_name):
+            line = line.replace(f"{flag} '$ARG{index}$'", f"--resource-slot '$ARG{index}$'")
+    return COMMAND_TEMPLATE.format(command_name=definition.command_name, command_line=line)
 
 
 def plan_plugin_services(plugin_name, service_label, port, transport, facts, overrides, app_config):
@@ -936,11 +980,14 @@ def _create_host_cfg_file(discovered_hosts, skipped=None):
     )
 
     for plugin_name in sorted(used_plugins):
-        host_config.append(render_command_definition(plugin_name))
+        host_config.append(render_ncpa_resource_command(NAGIOS_RESOURCE_CFG)
+                           if plugin_name == "ncpa" else render_command_definition(plugin_name))
         host_config.append(_add_space(2))
 
     for plugin_name in sorted(used_custom_plugins):
-        host_config.append(custom_checks.render_command_definition(plugin_name))
+        host_config.append(render_native_resource_command(plugin_name, NAGIOS_RESOURCE_CFG)
+                           if plugin_name in {"check_nt", "check_radius", "check_mysql_query"}
+                           else custom_checks.render_command_definition(plugin_name))
         host_config.append(_add_space(2))
 
     # Publish resource values before the candidate, and never continue with

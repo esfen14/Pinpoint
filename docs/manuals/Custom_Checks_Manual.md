@@ -47,7 +47,7 @@ that discovery found, and these have none.
    reading section 7.
 4. **Check secret-file access.** In the issue #129 build, passwords use the protected Nagios resource file
    (section 7); the host file contains macro references and uses mode 0640. The resource writer must preserve
-   `nagios:nagios` ownership and mode 0660. Installer compatibility and process secrecy remain incomplete;
+   `nagios:nagios` ownership and mode 0660. Installed ownership compatibility and full live acceptance remain incomplete;
    do not deploy this unfinished build as a completed security fix.
 5. **Check the Nagios server can reach what you will check:** a device on the network, the SSH key you will
    name, or the files and devices of the Nagios server itself.
@@ -198,11 +198,13 @@ How it is handled:
 - **Changing a check:** leave the box blank to keep the stored password. Type a new one to replace it. An
   optional password has a "Remove the stored …" box; a required one cannot be removed.
 - **Generated resource storage (issue #129 build).** Decrypted passwords go in the managed block of
-  `NAGIOS_RESOURCE_CFG` (default `/usr/local/nagios/etc/resource.cfg`); `hosts.cfg` contains USER macro
-  references. The resource file must retain `nagios:nagios` ownership and mode 0660. The writer refuses
+  `NAGIOS_RESOURCE_CFG` (default `/usr/local/nagios/etc/resource.cfg`); `hosts.cfg` contains bare USER slot
+  identifiers. The resource file must retain `nagios:nagios` ownership and mode 0660. The writer refuses
   other-user access or an update that cannot retain ownership. A failed config change restores previous
-  resources and host configuration. **Macros still expand into process arguments:** process secrecy and
-  compatible installed writes remain unfinished; see [the transport plan](../plans/Issue_129_Check_Secret_Transport.md).
+  resources and host configuration. Supported native checks receive the password through
+  extra-options stdin after verifying installed support. Password-bearing SMB checks are refused because
+  this plugin lacks secure child credential input. Compatible installed writes and full live acceptance
+  remain unfinished; see [the transport plan](../plans/Issue_129_Check_Secret_Transport.md).
 
 If the key changes:
 

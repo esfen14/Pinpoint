@@ -812,8 +812,10 @@ class TestPasswordRoutes:
         assert generated is not None, "The password-bearing service must actually be rendered."
         protected = generated.group(1).strip()
         values = read_resource_block(app.config["NAGIOS_RESOURCE_CFG"])
-        expanded = re.sub(r"\$USER([0-9]+)\$", lambda match: values[int(match.group(1))], protected)
+        expanded = re.sub(r"(?<=!)USER([0-9]+)(?=!)", lambda match: values[int(match.group(1))], protected)
         assert expanded == command
+        assert "--resource-slot '$ARG2$'" in text
+        assert "-p '$ARG2$'" not in text
         assert PASSWORD in values.values()
 
     def test_changing_a_check_keeps_the_password_when_it_is_left_blank(self, logged_in_client, db_session, status, writer):

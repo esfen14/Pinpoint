@@ -162,7 +162,7 @@ export function CustomCheckDialog({ pluginName, fields, target, check, isSaving,
         {fields.some((field) => field.secret) && (
           <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
             Passwords are stored encrypted and are never shown again. Nagios reads them from its protected resource file.
-            This build can still expose them in check process arguments.
+            Supported checks receive passwords through protected inputs. Password-based SMB checks cannot be applied with this plugin version.
           </p>
         )}
 

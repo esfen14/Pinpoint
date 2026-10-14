@@ -104,8 +104,10 @@ Plugin lifecycle and active monitoring are separate:
   other catalog plugin its reason for not taking one. A password field is stored encrypted in
   `Configuration_Data["secrets"]` (`app/secrets_store.py`, Fernet, key from `PINPOINT_SECRETS_KEY` or
   `SECRET_KEY`), never returned by the API, and decrypted only during config generation. It is stored
-  in the protected resource file and referenced by a managed USER macro in `hosts.cfg`. Macro expansion
-  still exposes plugin process arguments; process secrecy remains unfinished under issue #129. Merging a device moves its custom
+  in the protected resource file and referenced by a bare USER slot identifier in `hosts.cfg`.
+  `server/scripts/pinpoint_check_native.py` supplies passwords to `check_nt`, `check_radius` and
+  `check_mysql_query` using extra-options stdin after verifying installed help support. Password-bearing
+  SMB generation is refused because its child process lacks secure credential transport. Merging a device moves its custom
   checks to the target, dropping one whose name the target already has.
 - **Server checks** are custom checks with no device (`NetDiscoveryID` empty) for the plugins in
   `SERVER_CHECK_FIELDS` (`check_apt`, `check_uptime`, `check_sensors`, `check_ide_smart`,
@@ -467,8 +469,18 @@ resource bytes in memory before generation under `config_write_lock`. Generation
 validation, apply failure or cancellation restores the original bytes; failed
 application restores both files before reloading the old configuration. Resource
 changes require validation/reload even when normalized hosts.cfg is unchanged.
-No secret backup file is left on disk. Process-list secrecy and installed
-ownership-compatible updates remain incomplete; see
+No secret backup file is left on disk. Generated NCPA commands run
+`server/scripts/pinpoint_check_ncpa.py` under `/usr/bin/python3 -I`, passing a bare
+USERn identifier instead of an expanded macro. The adapter reads the private owned
+slot and supplies the token to the inspected NCPA 1.2.4/1.2.5 client's options in
+memory, executing it in the same process. Unsupported versions, malformed resources,
+credential/diagnostic flags and credential-bearing output fail with safe UNKNOWN
+results. Public metric/options, plugin output, performance data and return codes
+are retained. Native custom checks use verified extra-options stdin; passwords
+with surrounding whitespace are refused rather than altered by the INI parser.
+No adapter is privileged or imports Flask. Automated parent/child process tests
+pass, but full live Nagios acceptance and installed ownership-compatible updates
+remain incomplete; see
 [the issue #129 transport plan](../docs/plans/Issue_129_Check_Secret_Transport.md).
 
 ## Alert acknowledgement lifecycle

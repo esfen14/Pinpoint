@@ -46,7 +46,7 @@ fixed `PINPOINT_SECRETS_KEY` or `SECRET_KEY`. Do not change that key without a
 recovery plan. NCPA tokens remain in `NCPADeployment.Token` on the system bind.
 During generation, check secrets are written to the owned block of
 `NAGIOS_RESOURCE_CFG` (default `/usr/local/nagios/etc/resource.cfg`). Host config
-contains USER macro references; Nagios history snapshots retain command names
+contains bare USER slot identifiers; Nagios history snapshots retain command names
 without arguments. Do not publish resource files or raw check transcripts.
 
 The resource file must retain `nagios:nagios` ownership and mode 0660. The generated
@@ -56,8 +56,9 @@ ordinary group write permission is insufficient. The current writer refuses
 unsafe permissions or an update that cannot preserve ownership. Config generation
 and application restore previous resources on failure or cancellation.
 
-Nagios expands macros into the plugin's arguments. The current NCPA/SMB plugins
-need a secure credential input or reviewed adapter; some C plugins support
-`--extra-opts`. Until that work and the required lab cases are complete, process
-secrecy is not achieved. The implementation and installer handoff are tracked in
+NCPA 1.2.4/1.2.5 runs through an adapter that reads the resource slot and supplies
+the token in memory, without a child process. Supported native custom checks read
+passwords through extra-options stdin. Password-based SMB generation is refused
+because the plugin exposes child credentials. Automated process tests pass;
+installed ownership updates and full live Nagios parity remain unverified. The implementation and installer handoff are tracked in
 [the transport plan](../plans/Issue_129_Check_Secret_Transport.md).

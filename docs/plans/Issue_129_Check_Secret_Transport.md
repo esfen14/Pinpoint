@@ -28,9 +28,9 @@ and [Engineering Standards](../../spec%20files/Engineering_Standards.md).
 
 | Plugin | Inspected credential input | Implementation direction |
 |---|---|---|
-| `check_ncpa.py` | Upstream 1.2.5 accepts the token through `-t`/`--token`; its option parser has no credential file/stdin option. | Block deployment of the secret transport until an owner-supported plugin extension or a reviewed adapter can consume the resource slot without exposing a child process argument. |
-| `check_nt`, `check_radius`, `check_mysql_query` | Native C plugins may support compiled-in `--extra-opts`, which reads named INI sections. | Verify the installed executable's help and real process arguments before enabling this transport. Keep passwords out of both required arguments and the final optional-argument bundle. |
-| `check_disk_smb` | The 2.4.12 Perl script accepts a password argument and passes it to a child `smbclient` command. Its SMB configuration flag is not a password-file input. | Explicitly blocked pending a supported secure credential input for both parent and child. Do not silently drop or pause existing checks. |
+| `check_ncpa.py` | Upstream 1.2.5 accepts the token through `-t`/`--token`; its option parser has no credential file/stdin option. | Implemented unprivileged in-process adapter for inspected 1.2.4/1.2.5 clients; bare slot identifiers in generated services. Automated process tests pass and installed 1.2.4 mocked output/performance/exit parity passes. Full live Nagios parity remains pending. |
+| `check_nt`, `check_radius`, `check_mysql_query` | Native C plugins may support compiled-in `--extra-opts`, which reads named INI sections. | Implemented extra-options stdin adapter with a runtime help capability check. Required/optional password arguments become bare slot identifiers. Parent/child process tests pass; installed check_nt accepted synthetic stdin authentication and returned expected uptime/performance data. Radius is absent from the current appliance; remaining live parity is pending. |
+| `check_disk_smb` | The 2.4.12 Perl script accepts a password argument and passes it to a child `smbclient` command. Its SMB configuration flag is not a password-file input. | Password-bearing config generation is explicitly refused before publication. No silent dropping, pausing or insecure fallback; secure parent/child input remains an external blocker. |
 
 Sources: [NCPA client](https://github.com/NagiosEnterprises/ncpa/blob/master/client/check_ncpa.py),
 [Nagios Plugins Extra-Opts](https://nagios-plugins.org/doc/extra-opts.html),
@@ -76,7 +76,7 @@ Missing or failed resource writes stop candidate publication. All three generati
 entry points snapshot resources in memory under the shared lock and restore on
 failure or cancellation; resource-only changes trigger validate/apply. Apply
 restores both files before a rollback reload and sets live hosts.cfg to 0640.
-These safeguards do not implement secure plugin credential transport.
+The NCPA and native adapters now implement credential transport using protected resource reads and in-memory/stdin inputs. Tests preserve public arguments and inspect actual running process argv. Full live engine acceptance remains pending.
 
 ## Required installer handoff
 
@@ -90,12 +90,14 @@ block; the caller cannot supply replacement contents for other owners' lines.
 The helper and its interpreter must be root-owned and must not import mutable
 application code while privileged. It must not accept arbitrary paths, arbitrary
 commands, chown targets or broad directory privileges. Both failed apply and
-rollback must be tested with the actual service user. This is a proposal for the
-separate installer repository, not an implemented application integration.
+rollback must be tested with the actual service user. A helper and installer packaging/sudoers changes now exist locally on the separate
+installer branch `issue-129-resource-helper`; five isolated tests and shell syntax
+checks pass. Application invocation and installed service-user acceptance remain
+pending. Neither branch's new implementation has been pushed or installed.
 
 ## External blockers
 
-NCPA and SMB need supported credential transport. Existing installer ownership
+SMB still needs supported child credential transport. NCPA uses the in-process adapter; unsupported client versions fail safely. Existing installer ownership
 and directory permissions must support atomic resource replacement without
 changing the installer contract in this repository. Record the deployed plugin
 versions, resource metadata and process-list evidence on the available lab before

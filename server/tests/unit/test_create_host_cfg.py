@@ -574,7 +574,7 @@ class TestCreateHostCfgFile:
 
         assert all(cmd.startswith("pinpoint_nd_snmp!") for cmd in services["host-a"].values())
         # With resource macros, the NCPA token is replaced by a $USERn$ reference.
-        assert all(cmd.startswith("pinpoint_nd_ncpa!5693!$USER") for cmd in services["host-b"].values())
+        assert all(cmd.startswith("pinpoint_nd_ncpa!5693!USER") for cmd in services["host-b"].values())
         assert all("tokenB" not in cmd for cmd in services["host-b"].values())
 
     def test_backfilled_port_preserves_existing_ncpa_config(self, app, db_session, admin_user, plugin_config, tmp_path):
@@ -1049,18 +1049,18 @@ class TestResourceMacroIntegration:
             "It must be replaced with a $USERn$ macro."
         )
 
-    def test_ncpa_command_uses_user_macro(
+    def test_ncpa_command_uses_unexpanded_resource_slot(
         self, app, db_session, admin_user, tmp_path
     ):
-        """The NCPA check_command must reference a $USERn$ macro, not the token."""
+        """The NCPA check_command must pass an unexpanded resource identifier."""
         hosts_cfg_text, _ = self._generate(app, db_session, admin_user, tmp_path)
         ncpa_commands = re.findall(
             r"check_command\s+(pinpoint_nd_ncpa\S+)", hosts_cfg_text
         )
         assert ncpa_commands, "No NCPA check_command lines found in hosts.cfg"
         for cmd in ncpa_commands:
-            assert "$USER" in cmd, (
-                f"check_command '{cmd}' does not use a $USERn$ macro — "
+            assert "!USER" in cmd and "$USER" not in cmd, (
+                f"check_command '{cmd}' does not use a bare resource identifier — "
                 "the token must be stored in resource.cfg."
             )
 

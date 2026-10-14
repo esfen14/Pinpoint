@@ -659,10 +659,10 @@ class TestHostCfgMacroIntegration:
             "it must be replaced with a $USERn$ macro reference."
         )
 
-    def test_ncpa_command_uses_user_macro(
+    def test_ncpa_command_uses_unexpanded_resource_slot(
         self, app, db_session, admin_user, _plugin_config, tmp_path
     ):
-        """The check_command for an NCPA service must contain a $USERn$ macro."""
+        """The NCPA service must pass a slot identifier without macro expansion."""
         hosts_cfg_text, _ = self._generate_cfg(
             app, db_session, admin_user, _plugin_config, tmp_path
         )
@@ -672,8 +672,8 @@ class TestHostCfgMacroIntegration:
         )
         assert ncpa_commands, "No NCPA check_command lines found in hosts.cfg"
         for cmd in ncpa_commands:
-            assert "$USER" in cmd, (
-                f"check_command '{cmd}' does not contain a $USERn$ macro — "
+            assert "!USER" in cmd and "$USER" not in cmd, (
+                f"check_command '{cmd}' does not contain a bare resource slot — "
                 "token must be substituted with a resource macro."
             )
 
@@ -749,35 +749,35 @@ class TestSecretArgumentSubstitution:
         from app.network_discovery.create_host_cfg import apply_secret_substitutions
         command = "pinpoint_nd_ncpa!5693!cpu!cpu/percent!"
         assert apply_secret_substitutions(command, {"cpu": "$USER2$"}) == (
-            "pinpoint_nd_ncpa!5693!$USER2$!cpu/percent!"
+            "pinpoint_nd_ncpa!5693!USER2!cpu/percent!"
         )
 
     def test_ncpa_token_matching_port_leaves_port_unchanged(self):
         from app.network_discovery.create_host_cfg import apply_secret_substitutions
         command = "pinpoint_nd_ncpa!5693!5693!cpu/percent!"
         assert apply_secret_substitutions(command, {"5693": "$USER2$"}) == (
-            "pinpoint_nd_ncpa!5693!$USER2$!cpu/percent!"
+            "pinpoint_nd_ncpa!5693!USER2!cpu/percent!"
         )
 
     def test_custom_required_password_leaves_matching_username_unchanged(self):
         from app.network_discovery.create_host_cfg import apply_secret_substitutions
         command = "pinpoint_custom_check_radius!probe!probe!/etc/radius.conf!"
         assert apply_secret_substitutions(command, {"probe": "$USER3$"}) == (
-            "pinpoint_custom_check_radius!probe!$USER3$!/etc/radius.conf!"
+            "pinpoint_custom_check_radius!probe!USER3!/etc/radius.conf!"
         )
 
     def test_custom_optional_password_leaves_query_and_username_unchanged(self):
         from app.network_discovery.create_host_cfg import apply_secret_substitutions
         command = "pinpoint_custom_check_mysql_query!SELECT cpu!10!20!-u 'cpu' -p 'cpu'"
         assert apply_secret_substitutions(command, {"cpu": "$USER4$"}) == (
-            "pinpoint_custom_check_mysql_query!SELECT cpu!10!20!-u 'cpu' -p '$USER4$'"
+            "pinpoint_custom_check_mysql_query!SELECT cpu!10!20!-u 'cpu' --resource-slot 'USER4'"
         )
 
     def test_overlapping_secret_values_do_not_replace_substrings(self):
         from app.network_discovery.create_host_cfg import apply_secret_substitutions
         command = "pinpoint_nd_ncpa!5693!longer-token!cpu/percent!"
         assert apply_secret_substitutions(command, {"token": "$USER2$", "longer-token": "$USER3$"}) == (
-            "pinpoint_nd_ncpa!5693!$USER3$!cpu/percent!"
+            "pinpoint_nd_ncpa!5693!USER3!cpu/percent!"
         )
 
     def test_unrelated_check_with_matching_public_argument_is_unchanged(self):
@@ -895,13 +895,16 @@ def test_removing_device_from_generated_hosts_reclaims_its_actual_slot(app, db_s
 
 
 @pytest.mark.usefixtures("all_monitoring_plugins")
-def test_ncpa_macro_expansion_preserves_effective_metric_commands(app, db_session, admin_user, tmp_path):
+def test_ncpa_resource_lookup_preserves_effective_metric_commands(app, db_session, admin_user, tmp_path):
     generator = TestHostCfgMacroIntegration()
     host_text, _resource_text = generator._generate_cfg(app, db_session, admin_user, app.config, tmp_path)
+    assert "pinpoint_check_ncpa.py" in host_text
+    assert "--resource-slot '$ARG2$'" in host_text
+    assert "-t '$ARG2$'" not in host_text
     values = read_resource_block(tmp_path / "resource.cfg")
     commands = _re.findall(r"check_command\s+(pinpoint_nd_ncpa[^\n]+)", host_text)
     expanded = {
-        _re.sub(r"\$USER([0-9]+)\$", lambda match: values[int(match.group(1))], command.strip())
+        _re.sub(r"(?<=!)USER([0-9]+)(?=!)", lambda match: values[int(match.group(1))], command.strip())
         for command in commands
     }
     assert expanded == {
