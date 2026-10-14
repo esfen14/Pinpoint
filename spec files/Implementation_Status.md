@@ -26,8 +26,13 @@ the normative behavior in the requirement specifications.
   Its name is fixed to preserve the role's built-in identity, and role management
   displays all its permission controls read-only with an explanation.
 - Singleton system settings with personal/system separation and optimistic
-  version conflict handling. The system Check interval (1/2/5/10/15 minutes)
-  generates host and service check intervals through the shared Nagios writer;
+  version conflict handling. The system Check interval (1/2/5/10/15 minutes),
+  Retry interval (1 to 10 minutes) and Maximum check attempts (1 to 10)
+  generate host and service check timing through the shared Nagios writer;
+  Flap detection (on/off and optional low/high thresholds) is also written
+  through it, with a Flapping-only filter on the host and service tables and a
+  flap history (from 60-second snapshots, so fast flaps can be missed) in the
+  detail drawer;
   unchanged Nagios `Last_Check` results are not stored again. Plugin status text,
   stale fallback and the per-user browser-refresh hint use the setting. Fresh
   appliance cadence, backup and validation/reload rollback were verified in
@@ -86,7 +91,7 @@ the normative behavior in the requirement specifications.
 
 | Area | Current state | Required direction |
 |---|---|---|
-| History frontend audit | `/history` is routed and permission-guarded; its source audit against `Alerts_Notifications_History_Requirements.md` is in `docs/test-runs/2026-10-14-issue-133-history-audit/AUDIT.md`. It supports sorting for API-supported columns and cross-tab target navigation. Episode-specific acknowledgement now bounds list/filter/detail annotations by Nagios problem/recovery transitions and ACK_HISTORY actions (#141). Backend gaps remain: custom time/complete sort (#142), exact event linking (#143), and prior-state/recovery duration (#144). No live appliance walk has been recorded | Complete #141–#144 and verify manually on a lab appliance |
+| History frontend audit | `/history` is routed and permission-guarded; its source audit against `Alerts_Notifications_History_Requirements.md` is in `docs/test-runs/2026-10-14-issue-133-history-audit/AUDIT.md`. It supports sorting for API-supported columns and cross-tab target navigation. Episode-specific acknowledgement now bounds list/filter/detail annotations by Nagios problem/recovery transitions and ACK_HISTORY actions (#141). The list API now supports validated offset-aware custom date/time bounds and all-column sorting with timestamp-desc ties (#142); the page still needs to wire its picker and remaining columns to those options. Exact event linking now uses deterministic archive event locators in list/detail responses and cross-tab row expansion outside the default range (#143; indistinguishable duplicate archive records still require upstream identity). Prior-state and recovery duration derive from the archive timeline, including transitions before the selected list range (#144); when no earlier archive record exists, onset cannot be inferred. No live appliance walk has been recorded | Wire the history UI to #142, complete #144 and verify manually on a lab appliance |
 | Auto-resolved acknowledgements | A completed Nagios status poll clears active acknowledgements for fresh UP/OK checks and appends actorless AUTO_RESOLVED history in one transaction; missing/stale/failed checks retain them. Isolated tests pass; live lab recovery not yet verified | Verify acknowledge → recover → history on a lab appliance |
 | Per-host alert recipients | Every contact is in one `system_users` group used by all hosts and services | Choose recipients per host (#79), after #80 is verified on the VM lab |
 | Discovery stop permission | Stop route checks `network.discovery`; seed data defines `system.discover` | Standardize the route on the seeded permission or deliberately introduce/seed the alternate permission |

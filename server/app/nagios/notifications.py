@@ -241,19 +241,31 @@ def normalize_alert(raw: dict) -> dict:
 
 
 def fill_previous_states(alerts: list) -> list:
-    """
-    archivejson does not say what state an alert came from. Give every
-    normalized alert that has no last_state the state of the previous alert
-    for the same host/service in this list; the first alert of each object in
-    the list stays empty (its earlier state is outside the window). Returns
-    the same list.
+    """Annotate normalized transitions with prior state and elapsed prior-state time.
+
+    A recovery also carries the elapsed time since the first problem event in
+    its episode. When the archive has no earlier transition, retain supplied
+    metadata rather than inventing a start time. Mutates and returns alerts.
     """
     latest = {}
+    problem_start = {}
     for alert in sorted(alerts, key=lambda a: a.get("timestamp") or 0):
         key = (alert.get("hostname"), alert.get("service_description"))
-        if not alert.get("last_state") and key in latest:
-            alert["last_state"] = latest[key]
-        latest[key] = alert.get("state") or ""
+        previous = latest.get(key)
+        timestamp = alert.get("timestamp") or 0
+        state = (alert.get("state") or "").upper()
+        healthy = "OK" if key[1] else "UP"
+        if previous is not None:
+            alert["last_state"] = previous["state"]
+            alert["duration_seconds"] = max(0, timestamp - previous["timestamp"])
+        if state == healthy:
+            if key in problem_start:
+                alert["recovery_duration"] = max(0, timestamp - problem_start.pop(key))
+            else:
+                alert["recovery_duration"] = alert.get("duration_seconds") or 0
+        elif key not in problem_start:
+            problem_start[key] = timestamp
+        latest[key] = {"state": state, "timestamp": timestamp}
     return alerts
 
 

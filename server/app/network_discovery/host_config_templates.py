@@ -48,6 +48,18 @@ def check_interval():
     row = db.session.get(SystemSettings, 1)
     return row.Check_Interval if row else 5
 
+
+DEFAULT_RETRY_INTERVAL = 1
+DEFAULT_MAX_CHECK_ATTEMPTS = 3
+
+
+def check_timing():
+    """(retry_interval, max_check_attempts) in effect; the values the config always used when nothing is saved."""
+    row = db.session.get(SystemSettings, 1)
+    if row is None:
+        return DEFAULT_RETRY_INTERVAL, DEFAULT_MAX_CHECK_ATTEMPTS
+    return row.Retry_Interval, row.Max_Check_Attempts
+
 _template_cache = {}
 
 def _load_template(name):
@@ -73,6 +85,36 @@ def add_inactive_lines(rendered, note):
     ]
     return "\n".join(lines)
 
+def flap_settings():
+    """(enabled, low, high) flap detection settings in effect; detection on with Nagios's own thresholds when nothing is saved."""
+    row = db.session.get(SystemSettings, 1)
+    if row is None:
+        return True, None, None
+    return row.Flap_Detection_Enabled, row.Flap_Low_Threshold, row.Flap_High_Threshold
+
+
+def add_flap_lines(rendered):
+    """
+    Append the saved flap detection settings to a rendered host/service object,
+    just before its closing brace. Nothing is added for the defaults (detection
+    on, no thresholds), so default output is unchanged. When detection is off
+    only `flap_detection_enabled 0` is written; the thresholds would be ignored.
+    """
+    enabled, low, high = flap_settings()
+    extra = []
+    if not enabled:
+        extra.append("    flap_detection_enabled          0")
+    else:
+        if low is not None:
+            extra.append("    low_flap_threshold              %g" % low)
+        if high is not None:
+            extra.append("    high_flap_threshold             %g" % high)
+    if not extra:
+        return rendered
+    body = rendered.rstrip()
+    assert body.endswith("}")
+    return "\n".join([body[:-1].rstrip(), *extra, "}"])
+
 def _drop_empty_contact_groups(rendered):
     """Remove a blank contact_groups line (no eligible alert contact exists)."""
     kept = []
@@ -84,6 +126,10 @@ def _drop_empty_contact_groups(rendered):
 
 
 def create_host(host):
+    retry_interval, max_attempts = check_timing()
+    # Hosts have never had an explicit retry_interval; write one only when it
+    # differs from the default, so default output stays exactly as it was.
+    retry_line = "" if retry_interval == DEFAULT_RETRY_INTERVAL else "\n    retry_interval                  %d" % retry_interval
     policy = notification_policy()
     rendered = _load_template("host.cfg.tpl").format(
         host_name=host["host_name"],
@@ -91,17 +137,21 @@ def create_host(host):
         address=host["address"],
         contact_groups=host["contact_groups"],
         check_interval=check_interval(),
+        max_check_attempts=max_attempts,
+        retry_interval_line=retry_line,
         renotify_interval=policy.Renotify_Interval,
         period=notification_period(policy),
         notification_options=(f"\n    notification_options            {policy.Host_Options}"
                               if policy.Host_Options != "d,u,r,f,s" else ""),
     )
     rendered = _drop_empty_contact_groups(rendered)
+    rendered = add_flap_lines(rendered)
     if host.get("active_checks_enabled") is False:
         rendered = add_inactive_lines(rendered, host.get("notes") or "Address unknown")
     return rendered
     
 def create_service(service, service_command):
+    retry_interval, max_attempts = check_timing()
     policy = notification_policy()
     fields = (f"\n    notification_period         {notification_period(policy)}"
               f"\n    notification_options        {policy.Service_Options}"
@@ -114,9 +164,12 @@ def create_service(service, service_command):
         command=service_command,
         contact_groups=service["contact_groups"],
         check_interval=check_interval(),
+        retry_interval=retry_interval,
+        max_check_attempts=max_attempts,
         notification_fields=fields,
     )
     rendered = _drop_empty_contact_groups(rendered)
+    rendered = add_flap_lines(rendered)
     if service.get("active_checks_enabled") is False:
         rendered = add_inactive_lines(rendered, service.get("notes") or "Address unknown")
     return rendered

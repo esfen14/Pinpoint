@@ -100,6 +100,8 @@ def list_hosts():
         search          — partial match on hostname
         state           — UP | DOWN | UNREACHABLE
         ack_filter      — all (default) | acknowledged | unacknowledged
+        flapping        — true lists only hosts Nagios flags as flapping;
+                          false or empty lists everything (default)
         monitoring      — all (default) | not_monitored | monitored | missing |
                           address_unknown | paused | retired | merged. A host
                           with no device record counts as monitored.
@@ -135,6 +137,7 @@ def list_hosts():
         state_arg  = request.args.get("state", default="", type=str).upper()
         ack_filter = request.args.get("ack_filter", default="all", type=str).lower()
         monitoring_filter = request.args.get("monitoring", default="all", type=str).lower()
+        flapping = request.args.get("flapping", default="", type=str).lower()
 
         if page < 1:
             return error("Page must be greater than 0.", 400)
@@ -144,6 +147,8 @@ def list_hosts():
             return error("order must be 'asc' or 'desc'.", 400)
         if ack_filter not in ("all", "acknowledged", "unacknowledged"):
             return error("ack_filter must be 'all', 'acknowledged', or 'unacknowledged'.", 400)
+        if flapping not in ("", "all", "true", "false"):
+            return error("flapping must be 'true' or 'false'.", 400)
 
         if monitoring_filter not in ("all", "not_monitored", *MONITORING_STATES):
             return error(
@@ -191,6 +196,9 @@ def list_hosts():
                 query = query.where(HostStatus.Current_State == state_enum)
             except KeyError:
                 return error(f"Invalid state: {state_arg}. Must be UP, DOWN, or UNREACHABLE.", 400)
+
+        if flapping == "true":
+            query = query.where(HostStatus.Is_Flapping.is_(True))
 
         if monitoring_filter != "all":
             query = _filter_by_monitoring(query, monitoring_filter)
