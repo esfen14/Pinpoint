@@ -23,7 +23,7 @@ Requirement coverage:
 ## Plan
 
 1. [x] Test and implement event identity, related-event matching and exact locator in `server/tests/unit/test_history.py`, `server/app/api/system/history.py`.
-2. [ ] Test and implement exact cross-tab navigation in `client/src/pages/HistoryPage.test.tsx`, `client/src/pages/HistoryPage.tsx`.
+2. [x] Test and implement exact cross-tab navigation in `client/src/test/HistoryPage.test.tsx`, `client/src/pages/HistoryPage.tsx`.
 3. [ ] Update `spec files/Alerts_Notifications_History_Requirements.md`, `spec files/Backend_Modules_and_Routes.md`, `spec files/Frontend_Modules_and_Routes.md`, `spec files/Implementation_Status.md` and verify docs.
 
 ## Round log
@@ -31,13 +31,14 @@ Requirement coverage:
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 1 | Deterministic Nagios event IDs, precise list locator, state/target-aware related links; backend tests | `cd server && .venv/bin/python -m pytest tests/unit/test_history.py -q && cd .. && scripts/verify.sh backend` | green: 133 passed; 2488 passed, 14 skipped |
+| 2 | Cross-tab locator load and automatic expansion; frontend tests | `cd client && npm run test -- src/test/HistoryPage.test.tsx && npm run build && cd .. && scripts/verify.sh frontend` | green: 5 focused, 527 frontend; lint warnings only |
 
 ## State for the next session
 
-- Last check run (exact command): `cd server && .venv/bin/python -m pytest tests/unit/test_history.py -q && cd .. && scripts/verify.sh backend`
-- Result (first failing lines, or "green"): green (133 focused, 2488 backend; 14 skipped)
-- Hypothesis: Client must pass event_id to locator list then expand returned row without stale detail.
-- Next action (one specific step, not "continue"): Add frontend navigation regression test before updating HistoryPage.
+- Last check run (exact command): `cd client && npm run test -- src/test/HistoryPage.test.tsx && npm run build && cd .. && scripts/verify.sh frontend`
+- Result (first failing lines, or "green"): green (5 focused, 527 frontend; lint warnings only)
+- Hypothesis: Document locator semantics and distinguish #143 from remaining #144 gap.
+- Next action (one specific step, not "continue"): Update owning specification, route catalog, frontend catalog and Implementation_Status.
 
 ## Decisions and notes
 
