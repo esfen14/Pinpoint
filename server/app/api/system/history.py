@@ -215,6 +215,18 @@ def serialize_ack(ack_row):
     }
 
 
+def sort_history_items(items, sort_by, order, columns, aliases=None):
+    """Sort list rows by a column, breaking equal values by newest timestamp."""
+    field = (aliases or {}).get(sort_by, sort_by)
+    if field not in columns:
+        field = "timestamp"
+    if field != "timestamp":
+        items.sort(key=lambda item: item["timestamp"], reverse=True)
+    items.sort(key=lambda item: (item[field] or "").casefold() if field not in
+               ("timestamp", "duration_seconds", "acknowledged") else item[field],
+               reverse=order == "desc")
+
+
 def paginate_list(items, page, per_page):
     """
     Slice a list into a page and return it with pagination metadata.
@@ -358,15 +370,10 @@ def alerts_history():
                 "acknowledged": is_acked,
             })
 
-        # Sort
-        _sort_keys = {
-            "timestamp": lambda a: a["timestamp"],
-            "hostname":  lambda a: a["hostname"].lower(),
-            "new_state": lambda a: a["new_state"],
-            "duration":  lambda a: a["duration_seconds"],
-        }
-        key_fn = _sort_keys.get(sort_by, _sort_keys["timestamp"])
-        items.sort(key=key_fn, reverse=(order == "desc"))
+        sort_history_items(items, sort_by, order, {
+            "timestamp", "type", "hostname", "service_name", "previous_state",
+            "new_state", "state_type", "duration_seconds", "plugin_output", "acknowledged",
+        }, {"duration": "duration_seconds"})
 
         result = paginate_list(items, page, per_page)
         return success(result)
@@ -612,13 +619,10 @@ def notifications_history():
                     "message":      event["message"][:200],
                 })
 
-        _sort_keys = {
-            "timestamp": lambda n: n["timestamp"],
-            "hostname":  lambda n: n["hostname"].lower(),
-            "state":     lambda n: n["state"],
-        }
-        key_fn = _sort_keys.get(sort_by, _sort_keys["timestamp"])
-        items.sort(key=key_fn, reverse=(order == "desc"))
+        sort_history_items(items, sort_by, order, {
+            "timestamp", "type", "hostname", "service_name", "state", "contact",
+            "method", "message",
+        })
 
         if nagios_unavailable and not items:
             return error("Failed to retrieve notification history from Nagios.", 502)
