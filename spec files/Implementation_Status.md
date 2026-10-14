@@ -26,8 +26,13 @@ the normative behavior in the requirement specifications.
   Its name is fixed to preserve the role's built-in identity, and role management
   displays all its permission controls read-only with an explanation.
 - Singleton system settings with personal/system separation and optimistic
-  version conflict handling. The system Check interval (1/2/5/10/15 minutes)
-  generates host and service check intervals through the shared Nagios writer;
+  version conflict handling. The system Check interval (1/2/5/10/15 minutes),
+  Retry interval (1 to 10 minutes) and Maximum check attempts (1 to 10)
+  generate host and service check timing through the shared Nagios writer;
+  Flap detection (on/off and optional low/high thresholds) is also written
+  through it, with a Flapping-only filter on the host and service tables and a
+  flap history (from 60-second snapshots, so fast flaps can be missed) in the
+  detail drawer;
   unchanged Nagios `Last_Check` results are not stored again. Plugin status text,
   stale fallback and the per-user browser-refresh hint use the setting. Fresh
   appliance cadence, backup and validation/reload rollback were verified in
@@ -51,6 +56,7 @@ the normative behavior in the requirement specifications.
   discovery, monitoring, Nagios validation and a rate within 5% of `ping` traffic observed; **`iperf3`,
   a fast link, counter wrap on a live device and the browser UI are not yet verified**. SNMP v3 is out of scope (#14). Interface discovery needs `snmpwalk`
   on the server (net-snmp-utils / snmp), which `check_snmp` already needs.
+- Alert email is formatted HTML with a plain-text part (dark layout, state colour and wording, parsed packet-loss figure, UTC detection time), built by `server/scripts/pinpoint_notify_email.py` through generated `pinpoint_notify_*_html` commands; contacts fall back to the stock plain-text commands when the script is unavailable. Verified on a lab appliance by sending a Nagios custom notification (2026-10-13). Gaps: recovery, acknowledgement and warning layouts are covered by unit tests and a browser render but not yet seen in a mail client; the script runs from the application directory (owned by `pinpoint`), not a root-owned path.
 - Network discovery start/stop/status and Nagios host/service config generation. The reconciliation engine is designed to isolate potential identity conflicts for operator review (creating `DeviceReviewItem` records) rather than silently merging them. This prevents unintended record modification during subnet changes or cloned-identity events (see `device_identity.py`). Duplicates arising from these conflicts persist as `Address Unknown` until manually resolved (Merge/Retire) in the UI through the Devices Inventory "Needs Review" list.
 - NCPA eligibility, SSH fingerprint trust (approved key only), login checks,
   deployment with per-device outcomes, cancellation, status, run history and
@@ -93,9 +99,8 @@ the normative behavior in the requirement specifications.
 
 | Area | Current state | Required direction |
 |---|---|---|
-| History frontend | `/history` is routed to `HistoryPage` with a sidebar entry and the `system.history` client permission, and calls the list and detail routes. It has not been audited against `Alerts_Notifications_History_Requirements.md` | Audit the page against the requirements and fix gaps |
-| Nagios command channel lab verification | Code and tests exist; the Nagios `Acknowledgement_Type` change, notification stop and the forced-check result sooner than the scheduled interval have not been observed on a lab appliance | Run the lab steps from the issue and record a sanitized report in `docs/test-runs/` from `TEMPLATE.md`. The downtime command exists in the module but no route uses it (maintenance windows are separate work) |
-| Auto-resolved acknowledgements | `AckAction.AUTO_RESOLVED` and model contract exist; status polling does not clean resolved active acknowledgements | On UP/OK transition, delete the active acknowledgement and append an AUTO_RESOLVED history record |
+| History frontend audit | `/history` is routed and permission-guarded; its source audit against `Alerts_Notifications_History_Requirements.md` is in `docs/test-runs/2026-10-14-issue-133-history-audit/AUDIT.md`. It supports sorting for API-supported columns and cross-tab target navigation. Episode-specific acknowledgement now bounds list/filter/detail annotations by Nagios problem/recovery transitions and ACK_HISTORY actions (#141). The list API now supports validated offset-aware custom date/time bounds and all-column sorting with timestamp-desc ties (#142); the page still needs to wire its picker and remaining columns to those options. Exact event linking now uses deterministic archive event locators in list/detail responses and cross-tab row expansion outside the default range (#143; indistinguishable duplicate archive records still require upstream identity). Prior-state and recovery duration derive from the archive timeline, including transitions before the selected list range (#144); when no earlier archive record exists, onset cannot be inferred. No live appliance walk has been recorded | Wire the history UI to #142, complete #144 and verify manually on a lab appliance |
+| Auto-resolved acknowledgements | A completed Nagios status poll clears active acknowledgements for fresh UP/OK checks and appends actorless AUTO_RESOLVED history in one transaction; missing/stale/failed checks retain them. Isolated tests pass; live lab recovery not yet verified | Verify acknowledge → recover → history on a lab appliance |
 | Per-host alert recipients | Every contact is in one `system_users` group used by all hosts and services | Choose recipients per host (#79), after #80 is verified on the VM lab |
 | Discovery stop permission | Stop route checks `network.discovery`; seed data defines `system.discover` | Standardize the route on the seeded permission or deliberately introduce/seed the alternate permission |
 | Email alerts and password recovery | Nagios contacts are built from user emails, but nothing configures a mail transport or SMTP relay, so no notification email is sent. The login page's “Forgot Password?” button has no handler and the server has no recovery route (the only reset is an administrator resetting a password). The first-login setup that replaces the installer's placeholder email is #61 (open); mail transport is the installer repository's work; the application-side design is the draft `SMTP_Admin_Email_Plan.md` on branch `docs/smtp-admin-email-plan` (not merged) | Land #61, the installer mail transport and the SMTP settings, then design password recovery on top |
@@ -143,3 +148,18 @@ When completing an item above, update this file in the same change. When a new
 route, page, model, or workflow lands, also update its owning architecture or
 catalog specification. Do not preserve stale “not built” notes after the code is
 implemented.
+
+
+## NCPA metric refinements (#128)
+
+The default metric table preserves CPU, memory and per-partition disk and adds
+swap percent and sda read/write rates. Agent inventory probes at configuration
+time skip unsupported paths individually; unreachable inventories defer the added defaults
+with a retry reason and preserve established checks. Settings → Plugins offers a guided exact process-count row
+for review before saving. Existing saved tables are unchanged until reset.
+NCPA 3.5.0 capability probes found no load-average node, so that default remains
+unavailable. Two-target Docker acceptance observed all six defaults and the exact process
+check OK, omitted an unsupported path with persisted skipped reasons, and
+measured small-lab Nagios load. Installation, independent-host scale and browser
+walkthrough remain unverified; see [the service report](../docs/test-runs/2026-10-14-issue-128-ncpa-services/REPORT.md)
+and [the capability report](../docs/test-runs/2026-10-14-issue-128-ncpa-probe/REPORT.md).

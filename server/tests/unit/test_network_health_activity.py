@@ -9,6 +9,7 @@ Routes tested:
   GET /api/system/network-health/cpu
   GET /api/system/network-health/connections    (/proc/net/tcp faked)
   GET /api/system/network-health/insights
+  GET /api/system/network-health/flapping
 """
 
 from unittest.mock import patch
@@ -21,7 +22,7 @@ from app.history_models import HostStateType, ServiceStateType
 from tests.support.seed_helpers import (
     _ts,
     _make_host, _make_host_perf,
-    _make_service, _make_service_perf,
+    _make_service, _make_service_perf, _make_program_status,
     NCPA_CPU_SERVICE,
 )
 
@@ -39,6 +40,7 @@ class TestActivityAuthGuards:
         "/api/system/network-health/cpu",
         "/api/system/network-health/connections",
         "/api/system/network-health/insights",
+        "/api/system/network-health/flapping",
     ]
 
     @pytest.mark.parametrize("url", ENDPOINTS)
@@ -417,3 +419,85 @@ class TestPluginTrends:
     @pytest.mark.parametrize("query", ["hours=12", "buckets=0"])
     def test_invalid_params(self, logged_in_client, db_session, query):
         assert logged_in_client.get(f"{self.URL}?{query}").status_code == 400
+
+
+# ==========================================================
+# GET /api/system/network-health/flapping
+# ==========================================================
+
+class TestFlapping:
+    URL = "/api/system/network-health/flapping"
+
+    def get(self, client, query=""):
+        return client.get(self.URL + query)
+
+    def seed_history(self, db_session):
+        """
+        host-a: flagged in 3 snapshots, latest one still flapping.
+        host-b: flagged in 1 snapshot two hours ago, steady now.
+        host-c: never flagged.
+        ssh service on host-a: flagged in 2 snapshots, steady now.
+        """
+        for minutes, flag in ((-50, True), (-30, True), (-1, True)):
+            _make_host(db_session, "host-a", is_flapping=flag, ts=_ts(minutes * 60))
+        _make_host(db_session, "host-b", is_flapping=True, ts=_ts(-7200))
+        _make_host(db_session, "host-b", is_flapping=False, ts=_ts(-60))
+        _make_host(db_session, "host-c", ts=_ts(-60))
+        _make_service(db_session, "host-a", "ssh-22-TCP", ServiceStateType.CRITICAL, is_flapping=True, ts=_ts(-1800))
+        _make_service(db_session, "host-a", "ssh-22-TCP", ServiceStateType.CRITICAL, is_flapping=True, ts=_ts(-1200))
+        _make_service(db_session, "host-a", "ssh-22-TCP", ServiceStateType.OK, is_flapping=False, ts=_ts(-60))
+        db_session.session.commit()
+
+    def test_lists_only_items_flagged_in_the_window(self, logged_in_client, db_session):
+        self.seed_history(db_session)
+        data = self.get(logged_in_client, "?hours=1").get_json()["data"]
+        assert data["hours"] == 1
+        names = [(i["type"], i["hostname"], i["service"]) for i in data["items"]]
+        assert names == [("host", "host-a", None), ("service", "host-a", "ssh-22-TCP")]
+
+    def test_counts_first_and_last_flagged_snapshot_and_current_state(self, logged_in_client, db_session):
+        self.seed_history(db_session)
+        items = self.get(logged_in_client, "?hours=1").get_json()["data"]["items"]
+        host, service = items
+        assert host["snapshots_flagged"] == 3
+        assert host["currently_flapping"] is True
+        assert host["current_state"] == "up"
+        assert host["first_flagged"] < host["last_flagged"]
+        assert host["first_flagged"].endswith("+00:00")
+        assert service["snapshots_flagged"] == 2
+        assert service["currently_flapping"] is False
+        assert service["current_state"] == "ok"
+
+    def test_a_longer_window_includes_older_flags_and_orders_current_first(self, logged_in_client, db_session):
+        self.seed_history(db_session)
+        items = self.get(logged_in_client, "?hours=6").get_json()["data"]["items"]
+        assert [i["hostname"] for i in items if i["type"] == "host"] == ["host-a", "host-b"]
+        # Currently flapping first, then the most flagged snapshots.
+        assert items[0]["hostname"] == "host-a" and items[0]["type"] == "host"
+        assert items[0]["currently_flapping"] is True
+        assert [i["snapshots_flagged"] for i in items[1:]] == sorted((i["snapshots_flagged"] for i in items[1:]), reverse=True)
+
+    def test_default_window_is_24_hours(self, logged_in_client, db_session):
+        assert self.get(logged_in_client).get_json()["data"]["hours"] == 24
+
+    def test_empty_history(self, logged_in_client, db_session):
+        data = self.get(logged_in_client).get_json()["data"]
+        assert data["items"] == []
+
+    @pytest.mark.parametrize("hours", ["0", "2", "5", "0.0833", "abc", "-1", "169"])
+    def test_only_the_standard_windows_are_allowed(self, logged_in_client, db_session, hours):
+        assert self.get(logged_in_client, f"?hours={hours}").status_code == 400
+
+    @pytest.mark.parametrize("hours", [1, 6, 24, 168])
+    def test_standard_windows_are_accepted(self, logged_in_client, db_session, hours):
+        assert self.get(logged_in_client, f"?hours={hours}").status_code == 200
+
+    def test_reports_whether_nagios_has_flap_detection_enabled(self, logged_in_client, db_session):
+        assert self.get(logged_in_client).get_json()["data"]["global_flap_detection_enabled"] is None
+        program = _make_program_status(db_session)
+        program.Enable_Flap_Detection = False
+        db_session.session.commit()
+        assert self.get(logged_in_client).get_json()["data"]["global_flap_detection_enabled"] is False
+        program.Enable_Flap_Detection = True
+        db_session.session.commit()
+        assert self.get(logged_in_client).get_json()["data"]["global_flap_detection_enabled"] is True

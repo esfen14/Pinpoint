@@ -152,7 +152,8 @@ c.close()
 with app.app_context():
     from app.api.plugin.reconcile import reconcile_plugin_monitoring
 
-    with patch("app.api.plugin.reconcile.regenerate_and_apply_config_status", return_value=("applied", "ok")):
+    with patch("app.api.plugin.reconcile.regenerate_and_apply_config_status", return_value=("applied", "ok")), \
+         patch("app.network_discovery.create_host_cfg.probe_ncpa_paths", return_value=None):
         first = reconcile_plugin_monitoring(None)
         second = reconcile_plugin_monitoring(None)
 report["first_reconcile"] = first

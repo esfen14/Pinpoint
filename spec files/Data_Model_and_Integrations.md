@@ -19,7 +19,7 @@ acknowledgements belong in `system.db` even though they relate to Nagios alerts.
 
 ### Default bind: identity, configuration, operations, and acknowledgement
 
-- Identity/access: `Permission`, `Role`, `RolePermission`, `PasswordResetRequest` (forgot-password requests; Pending until an admin resets or dismisses), `User` (`Must_Change_Password` forces a password change on a new account unless the create form unticks it, after reactivation, after an admin password reset, or after CLI bootstrap recovery; `Needs_Setup` is set only by `flask init-production` on the bootstrap administrator, whose installer email and password are placeholders, and is cleared by `POST /api/user/complete-setup`; migration `d3a9e6b2f741`). The recovery command finds that account by its uniquely earliest `Created_At`, not mutable email, `UserID`, or `Needs_Setup`; ties and no account fail without changes. Each active user is a Nagios contact named and addressed by `User.Email`, so an email change regenerates the config.
+- Identity/access: `Permission`, `Role`, `RolePermission`, `PasswordResetRequest` (forgot-password requests; Pending until an admin resets or dismisses), `User` (`Must_Change_Password` forces a password change on a new account unless the create form unticks it, after reactivation, after an admin password reset, or after CLI bootstrap recovery; `Needs_Setup` is set only by `flask init-production` on the bootstrap administrator, whose installer email and password are placeholders, and is cleared by `POST /api/user/complete-setup`; migration `d3a9e6b2f741`). The recovery command finds that account by its uniquely earliest `Created_At`, not mutable email, `UserID`, or `Needs_Setup`; ties and no account fail without changes. Each active user is a Nagios contact named and addressed by `User.Email`, so an email change regenerates the config. Alert email is formatted HTML: the generator (`host_config_templates.py`, `create_host_cfg.py`) writes two commands, `pinpoint_notify_host_html` and `pinpoint_notify_service_html`, that run `/usr/bin/python3 -I server/scripts/pinpoint_notify_email.py` (standard library only; arguments are `key=value` Nagios macros; every value is cleaned and HTML-escaped; sends through `/usr/sbin/sendmail`, which is msmtp). Each contact lists them as its host and service notification commands. If the script is missing, or its path holds a character outside `[A-Za-z0-9_./-]`, no commands are written and contacts keep Nagios's stock plain-text `notify-host-by-email` and `notify-service-by-email`.
 - Email settings: `SmtpSettings` (`SMTP_SETTINGS`), the singleton (`Id` 1) behind Settings -> Email: `Provider`, `Host`, `Port`, `Tls`, `Username`, `Sender` and `Password_Encrypted` (Fernet via `app/secrets_store.py`; never returned by the API), with `Version`/`Updated_By`. Saving also applies the settings to `/etc/msmtprc` through the installer's root helper `/usr/local/sbin/pinpoint-apply-smtp` (`sudo -n`, JSON on stdin: `host`, `port`, `tls`, `username`, `password`, `sender`). No row means no mail transport is configured.
 - Plugin settings: `PluginSettings` (`PLUGIN_SETTINGS`), one row per plugin definition (`Plugin_Name`, e.g. `snmp`) holding the variables saved from Settings -> Plugins in `Variables` (JSON), with `Version`/`Updated_By`. No row means the `config.py` defaults apply.
 - Device interfaces: `DeviceInterface` (`DEVICE_INTERFACE`, migration `b7d3f1a9c264`), one row per interface SNMP reports for a device (unique per `NetDiscoveryID` + `If_Index`): `Name`, `Speed_Bps` (null when unreported; `ifHighSpeed` is preferred over `ifSpeed`), `Admin_Status`, `Oper_Status`, `Monitored` (the administrator's choice, default false), `Present` (false once a refresh no longer finds a monitored interface) and `Last_Seen_At`. No rows means no change to the generated Nagios config.
@@ -46,7 +46,7 @@ a legacy inconsistency and must not be copied as a pattern.
 |---|---|
 | System general | `scanFrequency`, notification enablement, allowed export formats |
 | System security | session timeout, strong-password policy, failed-login monitoring, audit logging, security-check frequency |
-| System operations | `checkInterval` (Nagios-generated host and service checks, minutes), update frequency, maintenance mode, automatic backups, log retention, diagnostic-history retention |
+| System operations | `checkInterval` (Nagios-generated host and service checks, minutes), `retryInterval` and `maxCheckAttempts` (how soon a failing check is re-run and how many failures confirm a problem), `flapDetectionEnabled`, `flapLowThreshold` and `flapHighThreshold` (Nagios flap detection for generated hosts and services), update frequency, maintenance mode, automatic backups, log retention, diagnostic-history retention |
 | Per-user display | theme, time zone, date/time format, font, font size, dashboard layout, dashboard refresh rate |
 
 `SystemSettings` is row `Id=1` and carries a version/update audit stamp.
@@ -231,6 +231,8 @@ different purpose.
 |---|---|
 | Discovery Scan Frequency (`scanFrequency`) | Pinpoint automation scans for devices and ports; it does not execute Nagios checks or determine result freshness. |
 | Check interval (`checkInterval`) | System-wide 1, 2, 5 (default), 10 or 15 minutes. Nagios checks generated hosts and services at this cadence (`interval_length=60` seconds must hold on the appliance). The system administrator changes it on Settings → System; the shared config writer validates, backs up and reloads `hosts.cfg`, and a failed apply rolls the settings change back. Stock `localhost.cfg` objects are not rewritten. |
+| Retry interval (`retryInterval`) and Maximum check attempts (`maxCheckAttempts`) | System-wide `SystemSettings.Retry_Interval` (1 to 10 minutes, default 1, never longer than the check interval) and `Max_Check_Attempts` (1 to 10, default 3; migration `b7d3f1a9c8e5`). They are written as `retry_interval` and `max_check_attempts` into every generated service and host, and the number of failures before a problem becomes HARD, and so when alerts are sent, follows them. The defaults reproduce the previous generated config exactly; a host gets an explicit `retry_interval` line only when the value is not the default 1. Same Settings → System page, permission and apply-and-rollback flow as the Check interval. There is no per-device override. |
+| Flap detection (`flapDetectionEnabled`, `flapLowThreshold`, `flapHighThreshold`) | `SystemSettings.Flap_Detection_Enabled` (default on), `Flap_Low_Threshold` and `Flap_High_Threshold` (percent of state change, 0 to 100, empty by default; migration `c5e2a8f4d716`). Defaults write nothing extra, so default generated config is unchanged and Nagios's global values (5 and 20 on the lab appliance) apply. Custom thresholds are written as `low_flap_threshold` and `high_flap_threshold`; turning detection off writes only `flap_detection_enabled 0`. The change goes through the shared config writer and a rejected config rolls the settings back. The global `enable_flap_detection` and its thresholds in `nagios.cfg` belong to the installer. |
 | Notification policy | A separate system-wide singleton controls the generated host/service notification periods, contact periods/options, state options, and renotify interval. Quiet windows use **Nagios server local time**, not each user's display zone; allowed spans are rendered as the complement in a fixed `pinpoint_notify` timeperiod in `hosts.cfg`. No quiet windows emit no new period; historical default output is preserved. Custom contacts inherit a non-registering `pinpoint-contact` template rather than rewriting stock `generic-contact`. Saving validates the candidate with Nagios, rolls back database changes on failed apply, and respects the system audit setting. Stock `localhost.cfg` and check cadence are unchanged. |
 | Data polling frequency | Pinpoint reads Nagios CGI status every 60 seconds, fixed and independent of discovery and checks. Unchanged `Last_Check` does not add another host/service or performance row. |
 | Dashboard Refresh Rate | Per-user browser fetch, Manual/1/5/15 minutes, independent of the other schedules; its hint shows the Check interval and 60-second poll. |
@@ -416,7 +418,26 @@ answers) into `NCPADevicePartition.Name` (an NCPA node name such as `|` or
 `|data`, not an lsblk partition). Pseudo filesystems (`bpf`, `tmpfs`, ...) and
 the `|sys`, `|proc`, `|run`, `|dev` and `|boot|efi` trees are never recorded.
 The disk metric path is `disk/logical/{partition}/used_percent`; the path is
-stored raw and quoted once by the Nagios command template. If a metric cannot
+stored raw and quoted once by the Nagios command template. During config generation and plugin reconciliation, one authenticated API
+inventory request per agent confirms metric paths. Successful inventories are
+cached for 60 seconds, failures for 5 seconds, with at most 256 cache entries.
+Requests use connect/read timeouts of 1/2 seconds, refuse redirects, limit the
+response to 2 MiB and traverse at most 10,000 paths and depth 10. Unsupported
+paths are skipped individually through the existing skipped-service mechanism;
+failed inventories defer the three added defaults with a retry reason while preserving established checks. No probes run in the
+Nagios status poller. Read-only fact loading defaults to no probe.
+
+`NCPA_METRICS` preserves cpu, memory and per-partition disk and adds swap usage
+(`memory/swap/percent`, 50/80) and sda read/write rates
+(`disk/physical/sda/read_bytes`, `write_bytes`, Mi, `delta=1`, 100/200 MiB/s).
+Agents lacking sda skip these two defaults. Saved metric tables retain precedence
+and are not extended automatically on upgrade. With sda and P partitions, the
+default is 5 + P services instead of 2 + P. No load-average default is added:
+NCPA 3.5.0 on the tested agents has no such node. Process checks use path
+`processes`, queryargs `name=sshd`, and warning/critical `1:1` for an exact count.
+No endpoint, permission or database migration is added.
+
+If a plugin cannot
 be planned, the port falls back to the generic TCP check and the fallback is
 listed in the run's skipped services.
 
@@ -470,10 +491,14 @@ appear in logs, API responses, or persisted Nagios snapshot check commands.
 - One active Pinpoint acknowledgement is allowed per `(hostname, service)`;
   `service = null` identifies a host alert.
 - A comment is required when acknowledging.
-- Acknowledgement and manual unacknowledgement append `AckHistory` records, then are sent to Nagios through `app/nagios/commands.py`; a Nagios failure never undoes the local record.
-- When an alert resolves to UP/OK, the active acknowledgement must be removed
-  and an `AUTO_RESOLVED` history row written. The model contract exists, but the
-  polling cleanup is not currently wired; see `Implementation_Status.md`.
+- Acknowledgement and manual unacknowledgement append `AckHistory` records.
+- On a completed nonempty Nagios status poll, a fresh UP/OK check for an acknowledged
+  host/service removes its active acknowledgement and appends one actorless
+  `AUTO_RESOLVED` history row in a single transaction. Missing or stale checks,
+  absent targets, empty/failed polls and still-failing targets retain their records;
+  subsequent polls do not duplicate the history event. Freshness uses the configured
+  check interval plus 90 seconds for polling/jitter. The poller fetches all service
+  lists before reconciling so a later CGI failure cannot partially clear records.
 
 ## Migrations
 

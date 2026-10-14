@@ -105,6 +105,7 @@ class ServiceCheck:
     layered on top of the plugin's resolved variables for this service only.
     """
     metric: Optional[str]
+    skip_reason: Optional[str] = None
     variables: dict = field(default_factory=dict)
 
 
@@ -188,7 +189,9 @@ def ncpa_checks(variables):
     a list of {"metric": ..., "path": ...} dicts. A path containing
     "{partition}" expands to one service per entry in variables["partitions"]
     (discovered during NCPA installation); if no partitions are known, the
-    entry's "fallback_path" is used as a single service instead.
+    entry's "fallback_path" is used as a single service instead. Confirmed
+    unavailable paths carry a skip_reason; an unverified inventory defers the
+    added defaults while preserving established checks.
     """
     metrics = variables.get("metrics") or []
     partitions = variables.get("partitions") or []
@@ -217,6 +220,24 @@ def ncpa_checks(variables):
                 ))
         elif fallback_path:
             checks.append(ServiceCheck(metric=metric, variables={**per_service, "metric_path": fallback_path}))
+    available = variables.get("available_paths")
+    unverified = variables.get("paths_unverified", False)
+    if available is not None or unverified:
+        # Inventory failure is unknown, not proof that established paths vanished.
+        # Defer only the added defaults; a confirmed missing path skips any metric.
+        from config import Config
+        added_defaults = {(entry["metric"], entry["path"]) for entry in Config.NCPA_METRICS
+                          if entry["metric"] in {"swap", "disk_read", "disk_write"}}
+        verified = []
+        for check in checks:
+            path = check.variables["metric_path"]
+            reason = None
+            if unverified and (check.metric, path) in added_defaults:
+                reason = f"NCPA metric {sanitize_name_part(check.metric)}: agent paths could not be verified; retry when the agent is reachable."
+            elif available is not None and path not in available:
+                reason = f"NCPA metric {sanitize_name_part(check.metric)}: the agent does not provide this path."
+            verified.append(ServiceCheck(metric=check.metric, variables=check.variables, skip_reason=reason))
+        checks = verified
     return checks
 
 

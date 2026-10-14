@@ -264,6 +264,20 @@ def inactive_user(db_session, admin_role):
 
 
 @pytest.fixture()
+def plain_alert_email(monkeypatch):
+    """
+    Generate the Nagios config with Nagios's stock plain-text alert commands.
+
+    The HTML alert-email commands are written only when the notification script
+    path is a valid Linux path, so the config differs between Windows and Linux.
+    Tests that compare the whole generated file with a fixed expectation use this
+    to get the same output everywhere.
+    """
+    from app.network_discovery import host_config_templates
+    monkeypatch.setattr(host_config_templates, "notification_script_path", lambda: None)
+
+
+@pytest.fixture()
 def logged_in_client(client, db_session, admin_user):
     """
     A test client that is already logged in as admin_user.
@@ -294,3 +308,30 @@ def limited_client(client, db_session, regular_user):
         f"limited_client: login failed with {resp.status_code}: {resp.get_json()}"
     )
     return client
+
+
+@pytest.fixture
+def ncpa_inventory(monkeypatch, app, db_session):
+    """Mock agent inventory for tests concerned with planning, never the network.
+
+    Paths reflect the test's metric table and recorded partitions. Probe tests
+    mock HTTP directly instead and do not request this fixture.
+    """
+    from app.network_discovery import create_host_cfg
+    from app.system_models import NCPADevicePartition
+
+    def paths(address, port, token):
+        result = set()
+        partitions = [row.Name for row in db_session.session.query(NCPADevicePartition).all()]
+        for metric in app.config["NCPA_METRICS"]:
+            path = metric["path"]
+            if "{partition}" in path:
+                result.update(path.replace("{partition}", part) for part in partitions)
+                if metric.get("fallback_path"):
+                    result.add(metric["fallback_path"])
+            else:
+                result.add(path)
+        return frozenset(result)
+
+    monkeypatch.setattr(create_host_cfg, 'probe_ncpa_paths', paths)
+    return paths

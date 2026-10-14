@@ -228,3 +228,177 @@ describe('SystemSettingsProvider conflict handling', () => {
     expect(server.scanFrequency).toBe(3)
   })
 })
+
+describe('Check timing controls (retry interval and maximum check attempts)', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    server = { ...DEFAULT_SYSTEM_SETTINGS, version: 1 }
+    systemPuts = []
+    applyError = null
+    fetchMock.mockClear()
+    vi.stubGlobal('fetch', fetchMock)
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  // The labels are not linked to their selects, so find the select inside the label's block.
+  function selectFor(label: string) {
+    const block = screen.getByText(label).closest('div')
+    const select = block?.querySelector('select')
+    if (!select) throw new Error(`no select for ${label}`)
+    return select as HTMLSelectElement
+  }
+
+  async function renderControls() {
+    render(<SystemSettingsProvider><Probe /><SystemSettings /></SystemSettingsProvider>)
+    await waitFor(() => expect(api.isLoading).toBe(false))
+  }
+
+  it('defaults to the values the generated config always used', () => {
+    expect(DEFAULT_SYSTEM_SETTINGS.retryInterval).toBe(1)
+    expect(DEFAULT_SYSTEM_SETTINGS.maxCheckAttempts).toBe(3)
+  })
+
+  it('shows both controls with the saved values and explains the trade-off', async () => {
+    server.retryInterval = 2
+    server.maxCheckAttempts = 4
+    await renderControls()
+    expect(selectFor('Retry interval').value).toBe('2')
+    expect(selectFor('Maximum check attempts').value).toBe('4')
+    expect(screen.getByText(/slower alerts and fewer false alarms/i)).toBeInTheDocument()
+  })
+
+  it('saves both values as system settings', async () => {
+    await renderControls()
+    fireEvent.change(selectFor('Maximum check attempts'), { target: { value: '5' } })
+    fireEvent.change(selectFor('Retry interval'), { target: { value: '2' } })
+    await save()
+    expect(systemPuts[0].maxCheckAttempts).toBe(5)
+    expect(systemPuts[0].retryInterval).toBe(2)
+    expect(server.maxCheckAttempts).toBe(5)
+  })
+
+  it('only offers retry intervals that fit inside the check interval', async () => {
+    server.checkInterval = 2
+    await renderControls()
+    const values = Array.from(selectFor('Retry interval').options).map((option) => option.value)
+    expect(values).toEqual(['1', '2'])
+  })
+
+  it('lowers the retry interval when the check interval drops below it', async () => {
+    server.checkInterval = 10
+    server.retryInterval = 5
+    await renderControls()
+    fireEvent.change(selectFor('Check interval'), { target: { value: '2' } })
+    expect(api.settings.checkInterval).toBe(2)
+    expect(api.settings.retryInterval).toBe(2)
+    await save()
+    expect(systemPuts[0].retryInterval).toBe(2)
+  })
+
+  it('shows the server message when the Nagios config is rejected', async () => {
+    await renderControls()
+    applyError = 'Check settings could not be applied: Nagios reload failed'
+    fireEvent.change(selectFor('Maximum check attempts'), { target: { value: '6' } })
+    await save()
+    expect(screen.getByTestId('error')).toHaveTextContent('Nagios reload failed')
+  })
+})
+
+
+describe('Flap detection card', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    server = { ...DEFAULT_SYSTEM_SETTINGS, version: 1 }
+    systemPuts = []
+    applyError = null
+    fetchMock.mockClear()
+    vi.stubGlobal('fetch', fetchMock)
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  async function renderCard() {
+    render(<SystemSettingsProvider><Probe /><SystemSettings /></SystemSettingsProvider>)
+    await waitFor(() => expect(api.isLoading).toBe(false))
+  }
+
+  const toggle = () => screen.getByRole('switch', { name: /flap detection/i })
+  const lowInput = () => screen.getByLabelText('Low flap threshold') as HTMLInputElement
+  const highInput = () => screen.getByLabelText('High flap threshold') as HTMLInputElement
+  const saveButton = () => screen.getByRole('button', { name: /save changes/i })
+
+  it('defaults to detection on with Nagios thresholds', () => {
+    expect(DEFAULT_SYSTEM_SETTINGS.flapDetectionEnabled).toBe(true)
+    expect(DEFAULT_SYSTEM_SETTINGS.flapLowThreshold).toBeNull()
+    expect(DEFAULT_SYSTEM_SETTINGS.flapHighThreshold).toBeNull()
+  })
+
+  it('shows the saved values and explains the empty default', async () => {
+    server.flapLowThreshold = 10
+    server.flapHighThreshold = 30.5
+    await renderCard()
+    expect(toggle()).toHaveAttribute('aria-checked', 'true')
+    expect(lowInput().value).toBe('10')
+    expect(highInput().value).toBe('30.5')
+    expect(screen.getAllByText(/leave empty to use Nagios's own value/i)).toHaveLength(2)
+    expect(screen.getByText(/5% by default/)).toBeInTheDocument()
+    expect(screen.getByText(/20% by default/)).toBeInTheDocument()
+  })
+
+  it('saves thresholds as system settings', async () => {
+    await renderCard()
+    fireEvent.change(lowInput(), { target: { value: '10' } })
+    fireEvent.change(highInput(), { target: { value: '35' } })
+    await save()
+    expect(systemPuts[0].flapLowThreshold).toBe(10)
+    expect(systemPuts[0].flapHighThreshold).toBe(35)
+    expect(server.flapHighThreshold).toBe(35)
+  })
+
+  it('clearing a threshold goes back to the Nagios default', async () => {
+    server.flapLowThreshold = 10
+    await renderCard()
+    fireEvent.change(lowInput(), { target: { value: '' } })
+    await save()
+    expect(systemPuts[0].flapLowThreshold).toBeNull()
+  })
+
+  it('turns detection off and disables the threshold inputs', async () => {
+    await renderCard()
+    fireEvent.click(toggle())
+    expect(toggle()).toHaveAttribute('aria-checked', 'false')
+    expect(lowInput()).toBeDisabled()
+    expect(highInput()).toBeDisabled()
+    await save()
+    expect(systemPuts[0].flapDetectionEnabled).toBe(false)
+  })
+
+  it.each([
+    ['101', '', /from 0 to 100/i],
+    ['-1', '', /from 0 to 100/i],
+    ['abc', '', /from 0 to 100/i],
+    ['30', '30', /lower than the high/i],
+    ['40', '10', /lower than the high/i],
+  ])('blocks low %s / high %s with a message and does not save', async (low, high, message) => {
+    await renderCard()
+    fireEvent.change(lowInput(), { target: { value: low } })
+    fireEvent.change(highInput(), { target: { value: high } })
+    expect(screen.getByTestId('flap-error')).toHaveTextContent(message)
+    fireEvent.click(saveButton())
+    await act(async () => {})
+    expect(systemPuts).toHaveLength(0)
+  })
+
+  it('shows the Nagios message when the config is rejected', async () => {
+    await renderCard()
+    applyError = 'Check settings could not be applied: Nagios reload failed'
+    fireEvent.click(toggle())
+    await save()
+    expect(screen.getByTestId('error')).toHaveTextContent('Nagios reload failed')
+  })
+})

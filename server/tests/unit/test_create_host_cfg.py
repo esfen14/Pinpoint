@@ -499,7 +499,70 @@ class TestCreateHostCfgFile:
         assert re.search(r"check_interval\s+2\b", host_block)
         assert re.search(r"check_interval\s+2\b", service_block)
 
-    def test_each_host_gets_only_its_own_services(self, app, db_session, admin_user, plugin_config, tmp_path):
+    def _blocks(self, app, tmp_path):
+        discovered = {"10.0.0.0/24": {"10.0.0.11": make_host("host-a", tcp={"22": "ssh"})}}
+        with patched_config(app, HOST_CONFIG_DIR=tmp_path):
+            text = _create_host_cfg_file(discovered).read_text()
+        return (re.search(r"define host \{.*?\}", text, re.S).group(),
+                re.search(r"define service \{.*?\}", text, re.S).group())
+
+    def test_check_timing_defaults_reproduce_the_previous_config(self, app, db_session, plugin_config, tmp_path):
+        """No saved row, and a row with the defaults, must render exactly what was rendered before."""
+        host_block, service_block = self._blocks(app, tmp_path)
+        assert re.search(r"max_check_attempts\s+3\b", host_block)
+        assert re.search(r"max_check_attempts\s+3\b", service_block)
+        assert re.search(r"retry_interval\s+1\b", service_block)
+        assert "retry_interval" not in host_block
+
+        db_session.session.add(SystemSettings(Id=1))
+        db_session.session.commit()
+        assert self._blocks(app, tmp_path) == (host_block, service_block)
+
+    def test_retry_interval_and_max_attempts_are_rendered_on_hosts_and_services(self, app, db_session, plugin_config, tmp_path):
+        db_session.session.add(SystemSettings(Id=1, Check_Interval=10, Retry_Interval=4, Max_Check_Attempts=6))
+        db_session.session.commit()
+
+        host_block, service_block = self._blocks(app, tmp_path)
+
+        for block in (host_block, service_block):
+            assert re.search(r"max_check_attempts\s+6\b", block)
+            assert re.search(r"retry_interval\s+4\b", block)
+            assert len(re.findall(r"retry_interval", block)) == 1
+
+    def test_flap_defaults_render_nothing_extra(self, app, db_session, plugin_config, tmp_path):
+        """Detection on with no thresholds is what Nagios already does, so no flap line is written."""
+        db_session.session.add(SystemSettings(Id=1))
+        db_session.session.commit()
+
+        for block in self._blocks(app, tmp_path):
+            assert "flap" not in block
+
+    def test_flap_thresholds_are_rendered_on_hosts_and_services(self, app, db_session, plugin_config, tmp_path):
+        db_session.session.add(SystemSettings(Id=1, Flap_Low_Threshold=10, Flap_High_Threshold=30.5))
+        db_session.session.commit()
+
+        for block in self._blocks(app, tmp_path):
+            assert re.search(r"low_flap_threshold\s+10", block)
+            assert re.search(r"high_flap_threshold\s+30\.5", block)
+            assert "flap_detection_enabled" not in block
+
+    def test_a_single_flap_threshold_is_rendered_alone(self, app, db_session, plugin_config, tmp_path):
+        db_session.session.add(SystemSettings(Id=1, Flap_High_Threshold=40))
+        db_session.session.commit()
+
+        for block in self._blocks(app, tmp_path):
+            assert re.search(r"high_flap_threshold\s+40", block)
+            assert "low_flap_threshold" not in block
+
+    def test_disabled_flap_detection_is_written_and_drops_the_thresholds(self, app, db_session, plugin_config, tmp_path):
+        db_session.session.add(SystemSettings(Id=1, Flap_Detection_Enabled=False, Flap_Low_Threshold=10, Flap_High_Threshold=30))
+        db_session.session.commit()
+
+        for block in self._blocks(app, tmp_path):
+            assert re.search(r"flap_detection_enabled\s+0", block)
+            assert "_flap_threshold" not in block
+
+    def test_each_host_gets_only_its_own_services(self, app, db_session, admin_user, plugin_config, tmp_path, ncpa_inventory):
         ncpa_device = make_device(db_session, admin_user, "host-b", "10.0.0.12")
         make_ncpa_deployment(db_session, ncpa_device, "tokenB", ["sda1"])
         db_session.session.commit()
@@ -537,7 +600,8 @@ class TestCreateHostCfgFile:
         with patched_config(app, HOST_CONFIG_DIR=tmp_path):
             cfg_text = _create_host_cfg_file(discovered).read_text()
 
-        command_names = re.findall(r"command_name\s+(\S+)", cfg_text)
+        # The alert-email commands are written when the notification script is usable (Linux paths); they are not check commands.
+        command_names = [n for n in re.findall(r"command_name\s+(\S+)", cfg_text) if not n.startswith("pinpoint_notify_")]
         assert sorted(command_names) == ["pinpoint_nd_snmp", "pinpoint_nd_ssh"]
         assert "$USER1$/check_snmp -H $HOSTADDRESS$" in cfg_text
         assert "snmp-devices" not in cfg_text
@@ -589,7 +653,7 @@ class TestCreateHostCfgFile:
             cfg_text = _create_host_cfg_file(discovered).read_text()
 
         assert re.search(r"host_name\s+quiet-host", cfg_text)
-        assert "define command" not in cfg_text
+        assert [n for n in re.findall(r"command_name\s+(\S+)", cfg_text) if not n.startswith("pinpoint_notify_")] == []
         assert "define service" not in cfg_text
 
 
@@ -849,3 +913,147 @@ class TestAlertContacts:
         assert "define contactgroup" not in text
         assert "contact_groups" not in text
         assert "define host" in text and "define service" in text
+        assert "pinpoint_notify" not in text
+
+    def test_contacts_use_the_html_notification_commands(
+        self, app, db_session, admin_role, plugin_config, tmp_path, monkeypatch
+    ):
+        from app.network_discovery import host_config_templates as templates
+        monkeypatch.setattr(templates, "notification_script_path",
+                            lambda: "/opt/pinpoint/server/scripts/pinpoint_notify_email.py")
+        self._add_user(db_session, admin_role, "on@example.com")
+
+        text = self._generate(app, plugin_config, tmp_path)
+
+        assert re.search(r"command_name\s+pinpoint_notify_host_html", text)
+        assert re.search(r"command_name\s+pinpoint_notify_service_html", text)
+        assert ("/usr/bin/python3 -I /opt/pinpoint/server/scripts/pinpoint_notify_email.py service "
+                '"type=$NOTIFICATIONTYPE$"') in text
+        assert re.search(r"service_notification_commands\s+pinpoint_notify_service_html", text)
+        assert re.search(r"host_notification_commands\s+pinpoint_notify_host_html", text)
+        assert len(re.findall(r"command_name\s+pinpoint_notify_", text)) == 2
+
+    def test_contacts_keep_the_stock_commands_when_the_script_is_unavailable(
+        self, app, db_session, admin_role, plugin_config, tmp_path, monkeypatch
+    ):
+        from app.network_discovery import host_config_templates as templates
+        monkeypatch.setattr(templates, "notification_script_path", lambda: None)
+        self._add_user(db_session, admin_role, "on@example.com")
+
+        text = self._generate(app, plugin_config, tmp_path)
+
+        assert "pinpoint_notify" not in text
+        # No explicit lines: the contact inherits the stock commands from its template.
+        assert "service_notification_commands" not in text
+        assert "host_notification_commands" not in text
+
+
+class TestNotificationScriptPath:
+    def test_the_script_ships_with_the_application(self):
+        from pathlib import Path
+        from app.network_discovery import host_config_templates as templates
+        script = Path(templates.__file__).resolve().parents[2] / "scripts" / "pinpoint_notify_email.py"
+        assert script.is_file()
+
+    @pytest.mark.parametrize("path,safe", [
+        ("/opt/pinpoint/Network-Diagnosis-System/server/scripts/pinpoint_notify_email.py", True),
+        ("/opt/my app/x.py", False),
+        ('/opt/a"b/x.py', False),
+        ("/opt/a;b/x.py", False),
+        ("/opt/a$b/x.py", False),
+        ("relative/x.py", False),
+    ])
+    def test_only_plain_absolute_paths_are_written_into_nagios_config(self, path, safe):
+        from app.network_discovery import host_config_templates as templates
+        assert bool(templates._SAFE_COMMAND_PATH.match(path)) is safe
+
+
+
+
+class TestNcpaPathVerification:
+    def test_missing_metric_is_recorded_and_other_services_survive(self, app, plugin_config):
+        host = make_host('h', tcp={'5693': 'ncpa'})
+        facts = {host['data']['net_discovery_id']: {'ncpa': {
+            'token': 'test-token', 'partitions': [], 'available_paths': frozenset({'cpu/percent'}),
+        }}}
+        skipped = []
+        with app.app_context():
+            result = plan_host_services(host, facts, plugin_config, skipped)
+        assert [s['name'] for s in result] == ['ncpa-cpu-5693-tcp']
+        assert len(skipped) == 2
+        assert 'memory' in skipped[0]['reason']
+        assert all('test-token' not in str(s) for s in skipped)
+
+    def test_probe_is_bounded_and_does_not_follow_redirects(self, monkeypatch):
+        from unittest.mock import Mock
+        from app.network_discovery import create_host_cfg as module
+        response = Mock(status_code=200)
+        import json
+        response.iter_content.return_value = [json.dumps({'root': {'cpu': {'percent': []}, 'memory': {'swap': {'percent': [0, '%']}}}}).encode()]
+        get = Mock(return_value=response)
+        monkeypatch.setattr(module.requests, 'get', get)
+        module.ncpa_path_cache.clear()
+        assert module.probe_ncpa_paths('10.78.0.2', 5693, 'private-token') == frozenset({'cpu', 'cpu/percent', 'memory', 'memory/swap', 'memory/swap/percent'})
+        kwargs = get.call_args.kwargs
+        assert kwargs['timeout'] == (1, 2)
+        assert kwargs['allow_redirects'] is False
+        assert kwargs['params'] == {'token': 'private-token'}
+        module.probe_ncpa_paths('10.78.0.2', 5693, 'private-token')
+        assert get.call_count == 1
+
+    def test_probe_failure_has_no_secret_in_skipped_reason(self, monkeypatch):
+        from unittest.mock import Mock
+        from app.network_discovery import create_host_cfg as module
+        monkeypatch.setattr(module.requests, 'get', Mock(side_effect=module.requests.Timeout('secret-token')))
+        module.ncpa_path_cache.clear()
+        assert module.probe_ncpa_paths('10.78.0.2', 5693, 'secret-token') is None
+
+    @pytest.mark.parametrize('status,body', [
+        (500, {'root': {'cpu': {'percent': []}}}),
+        (302, {'root': {'cpu': {'percent': []}}}),
+        (200, {'error': {'message': 'private-token'}}),
+        (200, {'root': 'invalid'}),
+        (200, {'root': {'error': {'message': 'private-token'}}}),
+    ])
+    def test_agent_errors_are_not_treated_as_supported(self, monkeypatch, status, body):
+        import json
+        from unittest.mock import Mock
+        from app.network_discovery import create_host_cfg as module
+        response = Mock(status_code=status)
+        response.iter_content.return_value = [json.dumps(body).encode()]
+        get = Mock(return_value=response)
+        monkeypatch.setattr(module.requests, 'get', get)
+        module.ncpa_path_cache.clear()
+        assert module.probe_ncpa_paths('10.78.0.2', 5693, 'private-token') is None
+        response.close.assert_called_once()
+
+    def test_limits_response_size(self, monkeypatch):
+        from unittest.mock import Mock
+        from app.network_discovery import create_host_cfg as module
+        response = Mock(status_code=200)
+        response.iter_content.return_value = [b'x' * (2 * 1024 * 1024 + 1)]
+        monkeypatch.setattr(module.requests, 'get', Mock(return_value=response))
+        module.ncpa_path_cache.clear()
+        assert module.probe_ncpa_paths('10.78.0.2', 5693, 'test-token') is None
+        response.close.assert_called_once()
+
+
+    def test_excessive_json_nesting_is_an_unverified_inventory(self, monkeypatch):
+        from unittest.mock import Mock
+        from app.network_discovery import create_host_cfg as module
+        response = Mock(status_code=200)
+        response.iter_content.return_value = [b'{"root":' + b'{"n":' * 1200 + b'0' + b'}' * 1200 + b'}']
+        monkeypatch.setattr(module.requests, 'get', Mock(return_value=response))
+        module.ncpa_path_cache.clear()
+        assert module.probe_ncpa_paths('10.78.0.2', 5693, 'test-token') is None
+        response.close.assert_called_once()
+
+    def test_excessive_node_count_is_unverified_instead_of_a_partial_inventory(self, monkeypatch):
+        import json
+        from unittest.mock import Mock
+        from app.network_discovery import create_host_cfg as module
+        response = Mock(status_code=200)
+        response.iter_content.return_value = [json.dumps({'root': {str(i): [] for i in range(10001)}}).encode()]
+        monkeypatch.setattr(module.requests, 'get', Mock(return_value=response))
+        module.ncpa_path_cache.clear()
+        assert module.probe_ncpa_paths('10.78.0.2', 5693, 'test-token') is None

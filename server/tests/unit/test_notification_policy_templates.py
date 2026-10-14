@@ -12,7 +12,7 @@ HOST = {"host_name": "h", "alias": "alias", "address": "10.0.0.1", "contact_grou
 SERVICE = {"host_name": "h", "service_name": "ssh", "contact_groups": "system_users"}
 
 
-def test_default_full_config_matches_prechange_fixture(app, db_session, admin_user, tmp_path):
+def test_default_full_config_matches_prechange_fixture(app, db_session, admin_user, tmp_path, plain_alert_email):
     app.config['HOST_CONFIG_DIR'] = tmp_path
     admin_user.Receive_Email_Alerts = True
     db_session.session.flush()

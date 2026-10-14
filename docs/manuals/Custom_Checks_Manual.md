@@ -303,3 +303,65 @@ Some arguments to know:
   One `pinpoint_custom_<plugin>` command is defined per plugin in use.
 - **What it does not do:** Pinpoint does not edit `localhost.cfg` or `resource.cfg`, does not store SSH keys, and
   does not run a check anywhere but the Nagios server.
+
+
+## 11. NCPA host metrics and process checks
+
+Open **Settings → Plugins → NCPA Metrics** (permission `settings.plugins`).
+The table appears once `check_ncpa.py` is installed. Enable it in Plugin Manager
+and deploy the agent before expecting checks. Saved tables keep their contents
+on upgrade; **Reset to defaults** and review before saving to adopt new defaults.
+No database migration or new permission is needed for these metrics.
+
+| Default description | NCPA path | Warning / Critical | Units and query args |
+|---|---|---|---|
+| `cpu` | `cpu/percent` | 50 / 80 | `aggregate=avg` |
+| `memory` | `memory/virtual/percent` | 50 / 80 | Gi (percent node still returns %) |
+| `disk` | `disk/logical/{partition}/used_percent` | 70 / 95 | %; one service per recorded partition |
+| `swap` | `memory/swap/percent` | 50 / 80 | % used |
+| `disk_read` | `disk/physical/sda/read_bytes` | 100 / 200 | Mi; `delta=1` (MiB/s) |
+| `disk_write` | `disk/physical/sda/write_bytes` | 100 / 200 | Mi; `delta=1` (MiB/s) |
+
+The disk I/O defaults target `sda`, confirmed on the NCPA 3.5.0 lab. If your
+host uses another disk, change the paths in the table or use a host override.
+Adjust rate thresholds to your disk and workload: these are starting points,
+not a hardware limit. Rates are averages since the previous agent sample; allow
+another check to establish a rate. Both checks add services only when that path
+exists. With one recorded partition and `sda`, NCPA has **six** default services
+(previously three); in general it has `5 + partition count`. Without `sda`, the
+two I/O checks are skipped and there are `3 + partition count` services.
+
+NCPA 3.5.0 on the tested Linux agents exposes no load-average node. No remote
+load-average default is added; local Nagios `check_load` continues as before.
+The probe evidence is in [the NCPA capability report](../test-runs/2026-10-14-issue-128-ncpa-probe/REPORT.md).
+
+When configuration is applied, Pinpoint reads the agent's API inventory. A
+missing metric path creates a skipped-service reason instead of a failing
+Nagios service. An unreachable or invalid agent inventory defers the added defaults with a
+retry reason and preserves the established CPU, memory, disk and custom checks. After the agent becomes reachable or its
+configuration changes, rescan to rebuild the services. Successful inventories
+are cached for up to 60 seconds; failed probes for 5 seconds. A supported metric
+can still report Warning/Critical for its measured value.
+
+### Add a process check without writing a path
+
+1. Enter **Process name**, exactly as the agent reports it (case sensitive).
+   The guided form accepts up to 24 letters, numbers, dots, dashes or underscores;
+   the first character must be a letter, number or underscore.
+2. Enter **Expected process count**, a whole number from 0 to 1000000. For a daemon
+   expected to run once, use 1. Zero checks that a process remains stopped.
+3. Click **Add process check**. Review the generated row below, then **Save changes**.
+   Adding alone does not change Nagios. Discard removes an unsaved draft.
+
+For `sshd` with expected count 1, the generated row is:
+
+| Description | Metric path | Warning | Critical | Query args |
+|---|---|---|---|---|
+| `process_sshd` | `processes` | `1:1` | `1:1` | `name=sshd` |
+
+This uses NCPA's exact-name filter. A count outside the inclusive `1:1` range is
+Critical. Dots and dashes become underscores in the description, while the
+query preserves the original name and case. Duplicate descriptions are refused;
+edit the existing row instead. The ordinary table validators and server permission
+checks still apply. All hosts using this metric table receive the check; select a
+process and count appropriate for those hosts, or configure a per-host override.

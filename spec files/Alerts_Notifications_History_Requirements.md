@@ -21,6 +21,11 @@ The history page answers questions like:
 This page is for **browsing and investigation**. Export and report generation
 are handled separately by the existing reports system and are not defined here.
 
+The source audit for issue #133 is recorded in
+[`docs/test-runs/2026-10-14-issue-133-history-audit/AUDIT.md`](../docs/test-runs/2026-10-14-issue-133-history-audit/AUDIT.md).
+It distinguishes page-only improvements from backend-dependent gaps; it is not
+live-appliance acceptance evidence.
+
 ---
 
 ## Definitions
@@ -87,13 +92,33 @@ chronological record of every transition.
 | Plugin output | Nagios plugin output at time of event, truncated |
 | Acknowledged | Badge if this alert event was acknowledged at any point while active |
 
+The previous state and duration in previous state are derived from the preceding
+archive transition for the same host/service, even when it predates the selected
+list window. A recovery's detail shows the elapsed time from the first problem
+transition in that episode to the recovery, not merely the time since the last
+non-OK transition. When the archive has no earlier transition, supplied Nagios
+metadata is retained; an unknown start cannot be reconstructed.
+
+A problem episode starts at a host/service problem transition and ends on its
+UP/OK recovery. Subsequent non-OK transitions for that target remain in the
+same episode unless an `AUTO_RESOLVED` acknowledgement action marks a recovery
+missing from the archive window. `ACKNOWLEDGED` actions within that episode
+mark its problem events, including earlier problem transitions while active;
+`UNACKNOWLEDGED` removes the live acknowledgement but does not erase that
+historical badge. A later episode starts unacknowledged. Recovery rows are not
+problem events and do not inherit the badge. Both the badge and the
+acknowledgement filter use these episode bounds, even when the selected time
+range begins after the episode's first transition. Host and service episodes
+are separate targets.
+
 ### 3.2 Row Expansion — Alert Detail
 
 When a row is selected or expanded, show:
 
 - Full plugin output (untruncated)
-- If the event was acknowledged (query `ACK_HISTORY` in `system_models.py`
-  for rows matching this hostname + service where `Action = ACKNOWLEDGED`):
+- If this problem event was acknowledged during its active episode (match
+  `ACK_HISTORY` by hostname + service and the episode's time bounds, not by
+  target alone):
   - Acknowledging user's name (join `ActorUserID` → `USER` table)
   - Acknowledgement timestamp (`Actioned_At`)
   - Acknowledgement comment (`Comment`)
@@ -116,13 +141,25 @@ When a row is selected or expanded, show:
 | State type | All, Hard only, Soft only |
 
 All filters apply simultaneously. The table updates as filters change or on
-explicit apply, depending on implementation preference.
+explicit apply, depending on implementation preference. Both history list APIs
+accept `start_date` and `end_date` together as either `YYYY-MM-DD` (whole days
+in the server's local timezone, for compatibility) or ISO 8601 date-times
+`YYYY-MM-DDTHH:MM:SSZ` / `YYYY-MM-DDTHH:MM:SS±HH:MM` (explicit UTC offset).
+Date-time bounds include both endpoint seconds; mixed, missing, malformed or
+reversed bounds are rejected. A supplied valid preset overrides custom bounds;
+without either, the range defaults to the past 24 hours. The browser converts
+local picker values to offset-bearing date-times before submitting them.
 
 ### 3.4 Sorting
 
 Default sort: timestamp descending (most recent events first).
 
 The user can sort by any column. Secondary sort is always timestamp descending.
+Alerts API `sort_by` keys are `timestamp`, `type`, `hostname`, `service_name`,
+`previous_state`, `new_state`, `state_type`, `duration_seconds` (also `duration`
+for compatibility), `plugin_output`, and `acknowledged`. Sorting uses the
+truncated list output for the plugin-output column; blank service names sort
+as empty strings.
 
 ### 3.5 Pagination
 
@@ -174,6 +211,11 @@ When a row is selected or expanded, show:
 ### 4.4 Sorting and Pagination
 
 Same behavior as §3.4 and §3.5. Default sort: timestamp descending.
+Notifications API `sort_by` keys are `timestamp`, `type`, `hostname`,
+`service_name`, `state`, `contact`, `method`, and `message`. Sorting uses the
+truncated list message; blank service names sort as empty strings. Both routes
+apply the primary direction (`order=asc|desc`) and break primary ties by
+newest timestamp (except timestamp itself, which follows `order`).
 
 ---
 
@@ -203,7 +245,19 @@ Where a notification event corresponds to a known alert event (same host,
 same service, same time window), provide a link from the notification row
 to the related alert event row, and vice versa. This lets the user quickly
 answer "was a notification sent for this alert?" and "which alert triggered
-this notification?"
+this notification?" Nagios list and detail records include a deterministic `event_id`
+(timestamp and digest of canonical archive fields); detail links carry that ID.
+A related notification matches the latest preceding alert of the same host,
+service and state within five minutes; alerts link only notifications assigned
+to that transition. No link is offered without a match. Either list API accepts
+`event_id` to retrieve only that exact event, regardless of preset/custom range
+or pagination filters; an invalid ID returns 400 and a missing event returns an
+empty list. Detail routes accept `event_id` alongside legacy target/time
+parameters to distinguish same-second events. The page switches tabs and
+expands the located row. Pinpoint scan
+notifications continue to use their database `id`, not a Nagios `event_id`. Identical
+archive records with identical canonical fields cannot be distinguished without
+an upstream unique identifier.
 
 ---
 

@@ -572,6 +572,7 @@ navigate away) showing:
 | `search` | string | — | Partial match on hostname |
 | `state` | `UP` \| `DOWN` \| `UNREACHABLE` | — | Filter by state |
 | `ack_filter` | `all` \| `acknowledged` \| `unacknowledged` | `all` | Filter by ack state |
+| `flapping` | `true` \| `false` | — | `true` lists only flapping hosts (the "Flapping only" filter) |
 
 **API — `GET /system/network-health/hosts` response shape:**
 
@@ -711,6 +712,7 @@ When the user selects a service row, show:
 | `hostname` | string | — | Exact hostname filter (different from `search`) |
 | `state` | `OK` \| `WARNING` \| `CRITICAL` \| `UNKNOWN` | — | Filter by state |
 | `ack_filter` | `all` \| `acknowledged` \| `unacknowledged` | `all` | Filter by ack state |
+| `flapping` | `true` \| `false` | — | `true` lists only flapping services (the "Flapping only" filter) |
 
 **API — `GET /system/network-health/services` response shape:**
 
@@ -1116,9 +1118,13 @@ Settings → General shows the per-user Dashboard Refresh Rate (Manual/1/5/15
 minutes) with a dynamic hint showing the current Check interval and fixed
 60-second data poll. Changing browser refresh does not change Nagios checks,
 polling, or network discovery. Settings → System offers administrators the
-system-wide Check interval (1/2/5/10/15 minutes, default 5) for generated
-Nagios hosts and services; saving it validates and reloads Nagios or shows an
-error and restores the old value.
+system-wide Check interval (1/2/5/10/15 minutes, default 5), Retry interval (1 to
+10 minutes, default 1, only values up to the Check interval are offered, and
+lowering the Check interval lowers the Retry interval with it) and Maximum
+check attempts (1 to 10, default 3) for generated Nagios hosts and services;
+the help text explains that more attempts means slower alerts and fewer false
+alarms. Saving validates and reloads Nagios or shows an error and restores the
+old values. Below them, a Flap detection card has an on/off switch and Low and High flap threshold inputs (percent, 0 to 100; empty means Nagios's own value, shown as help text with the 5% and 20% defaults); invalid values are explained next to the inputs and are not sent.
 
 ### 3.2 Empty States and "Plugin Not Configured" States
 
@@ -1314,7 +1320,10 @@ Consistent with §3.3:
   resolution, the acknowledgement record is cleared automatically.
 - If a resolved alert re-enters a problem state, it starts unacknowledged.
   Previous acknowledgement history is retained in the Alerts & Notifications
-  History page and is not lost on resolution.
+  History page and is not lost on resolution. Pinpoint clears acknowledgements only
+  after a successful nonempty Nagios status poll reports a fresh UP/OK check for the
+  same target. A missing, stale or failed check never implies recovery; the deletion
+  and actorless `AUTO_RESOLVED` history append commit together.
 
 **Implementation note — data model:**
 Live acknowledgement state is stored in the `ALERT_ACKNOWLEDGEMENT` table

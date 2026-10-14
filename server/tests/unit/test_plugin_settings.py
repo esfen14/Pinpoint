@@ -340,3 +340,20 @@ class TestNcpaSettings:
         assert [service["metric"] for service in planned] == ["load", "disk_root", "disk_boot"]
         assert "cpu/percent" in planned[0]["check_command"] and "-q 'aggregate=avg'" in planned[0]["check_command"]
         assert "disk/logical/|boot/used_percent" in planned[2]["check_command"]
+
+
+class TestProcessCheckPattern:
+    def test_documented_exact_process_check_is_accepted(self):
+        row = {'metric': 'process_sshd', 'path': 'processes', 'queryargs': 'name=sshd',
+               'warning': '1:1', 'critical': '1:1'}
+        assert validate_ncpa_metrics([row]) == [row]
+
+    def test_guided_row_saves_through_existing_permission_guarded_endpoint(self, logged_in_client, db_session, writer):
+        add_plugin('check_ncpa.py')
+        row = {'metric': 'process_sshd', 'path': 'processes', 'queryargs': 'name=sshd',
+               'warning': '1:1', 'critical': '1:1', 'units': ''}
+        response = logged_in_client.put(NCPA_URL, json={'version': 0, 'metrics': [row]})
+        assert response.status_code == 200
+        saved = response.get_json()['data']['settings']['metrics'][0]
+        assert saved == {key: value for key, value in row.items() if value}
+        assert writer.called
