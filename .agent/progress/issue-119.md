@@ -56,6 +56,8 @@ Requirement coverage:
 | 4 | GET /system/network-health/flapping | pytest test_network_health_activity.py | red then 64 green |
 | 5 | Flap detection card (types, context, SystemSettings.tsx, SettingsToggle aria-label) | vitest SystemSettingsConflict | red then 24 green |
 | 6 | `flapping=true` query param on /network-health/hosts and /services (needed: lists are server-paginated) + Flapping only filter in both tables/pages | pytest hosts/services; vitest SystemStatusPage, DeviceInventoryPage | red then green |
+| 8 | specs updated (Backend, Data model, Display, Frontend, Implementation_Status) | verify.sh docs | green except known Windows test_qa_queue backslash failure |
+| 9 | full backend | scripts/verify.sh backend | 2410 pass, 1 known Windows failure (test_automation security check) |
 | 7 | FlapHistorySection in StatusDetailDrawer | vitest StatusDetailDrawer | red then 14 green; full vitest 522 green, tsc clean |
 
 ## State for the next session
@@ -63,7 +65,7 @@ Requirement coverage:
 - Last check run (exact command): cd client; npx vitest run
 - Result: 522 passed, tsc clean
 - Hypothesis: follow the #10 commit (5d0b5dd6) as the pattern
-- Next action: step 8: update spec files (Backend routes, Data model, Display, Frontend, Implementation_Status), run scripts/verify.sh docs, then verify.sh all. User opened the lab VM (100.64.242.33, password login, password NOT available to the agent): deploy branch there and run the lab test, record docs/test-runs report.
+- Next action: lab test. User will authorize SSH key ~/.ssh/pinpoint_vm.pub (comment claude-pinpoint-test) on raine@100.64.242.33. Then: scripts/vmlab-style sync of this branch to /opt/pinpoint/Network-Diagnosis-System, flask db upgrade, restart pinpoint-gunicorn, toggle flap settings, check hosts.cfg and /flapping, write docs/test-runs report (scripts/new_test_run.sh), then verify.sh all, delete progress file, open PR.
 
 ## Decisions and notes
 
