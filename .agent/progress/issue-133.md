@@ -1,7 +1,7 @@
 # Issue #133: Clear acknowledgements on recovery and audit History
 
 Branch: `issue-133-clear-ack-recovery-audit-history`
-Status: blocked
+Status: in-progress
 
 ## Finish condition
 
@@ -97,10 +97,10 @@ Requirement coverage (section A problem, C changes, D guidelines, G testing, exc
 
 ## State for the next session
 
-- Last check run (exact command): `ssh -i "$HOME/.local/share/pinpoint-vmlab/id_ed25519" -p 2250 -o BatchMode=yes -o StrictHostKeyChecking=accept-new lab@127.0.0.1 'git -C /opt/pinpoint/Network-Diagnosis-System rev-parse --short HEAD; systemctl is-active pinpoint-gunicorn nagios'`
-- Result (first failing lines, or "green"): failed: host ED25519 key was accepted into known_hosts after owner verified its fingerprint on the VM console, but `lab@127.0.0.1: Permission denied (publickey,password)`. No command ran on appliance. `scripts/vmlab status` still shows running VM and stale installer base stamp.
-- Hypothesis: the VM's `lab` account no longer accepts the local `~/.local/share/pinpoint-vmlab/id_ed25519` public key (`SHA256:n97cJAAs09pkesgmX65u96UIsfWMogD+mCoZZVPW/uM`), or the forwarded port maps to a different guest. No password will be guessed or logged.
-- Next action (one specific step, not "continue"): Ask lab owner to verify via VM console that `lab` has this public key in `~lab/.ssh/authorized_keys` and that port 2250 forwards to this guest; restore key access through the trusted console, then retry the exact SSH command.
+- Last check run (exact command): `ssh -i "$HOME/.local/share/pinpoint-vmlab/id_ed25519" -p 2250 -o BatchMode=yes -o StrictHostKeyChecking=yes lab@127.0.0.1 'git -c safe.directory=/opt/pinpoint/Network-Diagnosis-System -C /opt/pinpoint/Network-Diagnosis-System rev-parse HEAD; git -c safe.directory=/opt/pinpoint/Network-Diagnosis-System -C /opt/pinpoint/Network-Diagnosis-System branch --show-current'`
+- Result (first failing lines, or "green"): green SSH authentication, but deployed application is `1ca2c757` on `issue-113-notification-policy`, not issue #133. `pinpoint-gunicorn` and Nagios active. No app deployment or live test yet.
+- Hypothesis: owner-authorized password recovery succeeded; the running VM still has another issue's installation and state. Need exclusive control confirmation before overwriting that installation with #133; no reset/provision authorized.
+- Next action (one specific step, not "continue"): Confirm with owner whether `issue-113-notification-policy` running deployment may be replaced by #133 using non-reset `scripts/vmlab sync --client` (preserves database), then run a targeted live test and sanitize results.
 
 ## Decisions and notes
 
@@ -109,5 +109,5 @@ Requirement coverage (section A problem, C changes, D guidelines, G testing, exc
 - Section G explicitly calls for live lab and manual walk, but no lab action will be implied by isolated tests. If unavailable, report honestly and use a draft PR.
 - CI docs/backend/frontend checks succeeded on PR head `18ca01f3`; no human reviews or comments were present when queried. Recheck CI for this progress-only checkpoint and review state before completion.
 - Owner approved VM with Playwright for remaining functionality in issue comment https://github.com/esfen14/Pinpoint/issues/133#issuecomment-6157312406. This answers the prior blocker and justifies plan step 6. It does not explicitly authorize destructive `fresh`/`provision --force`. Existing snapshot stamp differs from current installer base-step hash; inspect running deployment before any sync and avoid reset.
-- Owner confirmed current host fingerprint from VM console in https://github.com/esfen14/Pinpoint/issues/133#issuecomment-6158435300. Retry with `StrictHostKeyChecking=accept-new` accepted the ED25519 host key, but authentication then failed (`Permission denied (publickey,password)`). Local public key fingerprint is `SHA256:n97cJAAs09pkesgmX65u96UIsfWMogD+mCoZZVPW/uM`. Ask owner to restore/verify authorized key and forward without sharing passwords; no live test or deploy was performed.
+- Owner confirmed current host fingerprint from VM console in https://github.com/esfen14/Pinpoint/issues/133#issuecomment-6158435300 and authorized local password use to install public key in https://github.com/esfen14/Pinpoint/issues/133#issuecomment-6158612514. Password was supplied only through a temporary askpass helper (removed on exit), not echoed; key-based SSH now succeeds with checking enabled. Appliance has issue #113 application commit `1ca2c757`, not #133. Pause before sync/reset to avoid overwriting another issue's lab state without exclusive ownership confirmation.
 - Draft PR: https://github.com/esfen14/Pinpoint/pull/145. `gh pr edit` hits deprecated projectCards GraphQL; body updated via `gh api PATCH`. Backend gaps #141–#144 are tracked out of scope. Local full verification log is `/tmp/opencode/issue-133-all.log`; result excerpts are posted in a PR comment, but the full log is not uploaded.
