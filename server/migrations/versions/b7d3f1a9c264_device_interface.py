@@ -6,7 +6,7 @@ With no rows nothing changes: the generated Nagios config is identical to before
 The downgrade drops the table. history.db is not touched.
 
 Revision ID: b7d3f1a9c264
-Revises: 143c48cd6663
+Revises: c5e2a8f4d716
 Create Date: 2026-10-14 09:00:00.000000
 
 """
@@ -16,7 +16,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'b7d3f1a9c264'
-down_revision = '143c48cd6663'
+down_revision = 'c5e2a8f4d716'
 branch_labels = None
 depends_on = None
 
