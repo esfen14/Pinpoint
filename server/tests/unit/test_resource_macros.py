@@ -892,3 +892,19 @@ def test_removing_device_from_generated_hosts_reclaims_its_actual_slot(app, db_s
     assert f"ncpa_token:{first.NetDiscoveryID}" not in after
     assert after[f"ncpa_token:{second.NetDiscoveryID}"] == before[f"ncpa_token:{second.NetDiscoveryID}"]
     assert "first-synthetic" not in resource.read_text()
+
+
+@pytest.mark.usefixtures("all_monitoring_plugins")
+def test_ncpa_macro_expansion_preserves_effective_metric_commands(app, db_session, admin_user, tmp_path):
+    generator = TestHostCfgMacroIntegration()
+    host_text, _resource_text = generator._generate_cfg(app, db_session, admin_user, app.config, tmp_path)
+    values = read_resource_block(tmp_path / "resource.cfg")
+    commands = _re.findall(r"check_command\s+(pinpoint_nd_ncpa[^\n]+)", host_text)
+    expanded = {
+        _re.sub(r"\$USER([0-9]+)\$", lambda match: values[int(match.group(1))], command.strip())
+        for command in commands
+    }
+    assert expanded == {
+        f"pinpoint_nd_ncpa!5693!{generator.SECRET_TOKEN}!cpu/percent!-w '50' -c '80'",
+        f"pinpoint_nd_ncpa!5693!{generator.SECRET_TOKEN}!memory/virtual/percent!-w '50' -c '80'",
+    }
