@@ -238,7 +238,17 @@ Where a notification event corresponds to a known alert event (same host,
 same service, same time window), provide a link from the notification row
 to the related alert event row, and vice versa. This lets the user quickly
 answer "was a notification sent for this alert?" and "which alert triggered
-this notification?"
+this notification?" Nagios list and detail records include a deterministic `event_id`
+(timestamp and digest of canonical archive fields); detail links carry that ID.
+A related notification matches the latest preceding alert of the same host,
+service and state within five minutes; alerts link only notifications assigned
+to that transition. No link is offered without a match. Either list API accepts
+`event_id` to retrieve only that exact event, regardless of preset/custom range
+or pagination filters; an invalid ID returns 400 and a missing event returns an
+empty list. The page switches tabs and expands the located row. Pinpoint scan
+notifications continue to use their database `id`, not a Nagios `event_id`. Identical
+archive records with identical canonical fields cannot be distinguished without
+an upstream unique identifier.
 
 ---
 
