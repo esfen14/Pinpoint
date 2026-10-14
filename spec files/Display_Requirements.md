@@ -997,6 +997,38 @@ visual grouping and health indicator matter more than column alignment here.
 
 ---
 
+### 2.5.1 Interface Bandwidth
+
+A card showing how much data one interface of an SNMP device sends and receives. It is
+separate from the network-wide Bandwidth stat card in the metrics column.
+
+**Controls:** a Device selector, an Interface selector (the interfaces monitored on that device,
+plus the default interface 3 when the device has the default check) and the time range control
+with 1 hour, 6 hours, 24 hours (default) and 7 days. The 5-minute range is not offered: a rate
+needs two readings, and the server refuses windows other than 1, 6, 24 and 168 hours.
+
+**Display:** the latest In and Out rate, the share of the link in use and the link speed (the last
+two only when the interface speed is known), and a line chart with an In line and an Out line.
+The unit is chosen once for the whole chart from its largest value (bit/s, kbit/s, Mbit/s, Gbit/s,
+Tbit/s, steps of 1000) and named on the vertical axis; the horizontal axis shows time in the
+configured time zone. A gap in a line means no valid reading in that slice (device restarted,
+monitoring paused); gaps are never drawn as zero.
+
+**States** (each a message, never a broken chart): loading; a server error with Retry for the lists
+and the server's message for the rates; no SNMP device ("No SNMP device is monitored yet"); SNMP
+devices but no monitored interface (points to Device Inventory); insufficient data (fewer than two
+readings in the range); no data in the selected window.
+
+**Help text** on the card explains what is shown, where interfaces are added and what a gap means.
+
+**Source:** `GET /api/system/network-health/bandwidth/interfaces` and `GET
+/api/system/network-health/bandwidth`; the rates are computed from the stored SNMP octet
+counters (see `Data_Model_and_Integrations.md`, Interface bandwidth). Interfaces are chosen in
+Device Inventory (the drawer's Interfaces section) and need `system.hosts.edit`; viewing the card
+needs `system.network_health`.
+
+---
+
 ### 2.6 Performance Data Label Reference
 
 When displaying performance data in host and service detail panels (§2.2,

@@ -162,6 +162,8 @@ each route's docstring.
 | `GET /api/system/network-health/connections` | `system.network_health` | TCP connection counts by state on the Nagios/Pinpoint server, read from `/proc/net/tcp`; `available` is false without `/proc` |
 | `GET /api/system/network-health/insights` | `system.network_health` | Plain-language observations from the latest snapshot, most severe first |
 | `GET /api/system/network-health/plugin-trends` | `system.network_health` | One entry per plugin enabled in Plugin Manager: state counts, current values and averaged trends for time and percentage metrics |
+| `GET /api/system/network-health/bandwidth/interfaces` | `system.network_health` | The devices the bandwidth card can chart: every device with SNMP monitored, each with its monitored interfaces (`if_index`, `name`, `speed_bps`) plus the default interface 3 when the device has the default `lan_in_octets` service |
+| `GET /api/system/network-health/bandwidth` | `system.network_health` | In and out bandwidth (bit/s) of one interface: `hostname` and `interface` (ifIndex) required, `hours` 1, 6, 24 (default) or 168 (anything else, including the 5-minute window or an unreadable value, is 400), `buckets` 1 to 168 (default 48). Rates are computed by `app/bandwidth.py` from the stored octet counters of the interface's `snmp-if<N>_in_octets-<port>-udp` and `..._out_octets...` services (interface 3 falls back to the default `snmp-lan_in_octets-...` / `lan_out_octets` services). Returns `status` (`ok`, or `insufficient_data` when neither direction has two valid samples), `in_points` / `out_points` (`bucket_start`, `bps` or `null` for a gap), the `interface` (`if_index`, `name`, `speed_bps`) and `latest` (`in_bps`, `out_bps`, and `*_utilisation_pct` only when the link speed is known). 404 when the host has no bandwidth service for that interface |
 
 ### `app/api/system/network_hosts.py`
 
@@ -254,6 +256,19 @@ only, STARTTLS on port 587). Logic is in `app/smtp_settings.py`.
 | `PUT /api/system/hosts/<id>/ports/<proto>/<port>` | `system.hosts.edit` | Body `{"state"?, "service_name"?, "acknowledge_mismatch"?, "unpin"?}`: change a port's state, pin its service on this device (never renamed by a scan; a monitored port's plugin is re-frozen), acknowledge a port flagged "not used as intended" (accepts the service nmap found; 400 if the port is not flagged), `unpin: true` lets scans decide the service again (a Suggested, Ignored or Archived port returns to the service the last scan saw; a Monitored or Missing port keeps its service and its Nagios service; refused with 400 for a port that is not pinned or for the NCPA port of a deployed agent; never changes state or hold), or add a port by hand (`state` MONITORED plus `service_name`); response includes `identified_by`, `expected_service_name`, `mismatch_acknowledged`, `promotion_held` and `pinned`, plus `config_applied` (a new config went live), `config_ok` (false only when the change was saved but Nagios was not brought up to date) and `config_message`. Setting `state` to SUGGESTED holds the port (no plugin promotes it); MONITORED releases it |
 | `GET /api/system/discover/review` | `system.discover` | Unresolved review items, including `SERVICE_CHANGED` |
 | `POST /api/system/discover/review/<id>/resolve` | `system.hosts.edit` | Mark a review item as dealt with |
+
+### `app/api/system/device_interfaces.py`
+
+The interfaces an SNMP device reports and which of them are monitored for bandwidth
+(Device Inventory drawer). Choosing an interface changes the generated Nagios config, so a
+change is saved, written to the activity log and applied through `apply_config_change()` (the
+shared writer: validated with the Nagios binary, rolled back if rejected).
+
+| Method and path | Permission | Purpose |
+|---|---|---|
+| `GET /api/system/hosts/<id>/interfaces` | `system.hosts` | The stored interface list: `device`, `snmp` (SNMP is monitored on the device), `max_monitored` (16) and `interfaces` (`if_index`, `name`, `speed_bps`, `admin_status`, `oper_status`, `monitored`, `present`, `last_seen_at`) |
+| `POST /api/system/hosts/<id>/interfaces/refresh` | `system.hosts.edit` | Read the list from the device over SNMP (`snmpwalk`, 20 s limit) and store it: new interfaces are added unmonitored, known ones updated with the monitoring choice kept, vanished ones removed unless monitored (kept with `present` false). 400 when SNMP is not monitored on the device, 502 with a plain-language reason when the device cannot be read; the community is never in the message. Same body as the list route |
+| `PUT /api/system/hosts/<id>/interfaces/<if_index>` | `system.hosts.edit` | Body `{"monitored": true/false}` (400 for anything else): start or stop monitoring one interface. 404 for an interface not in the list, 400 when SNMP is not monitored, the device no longer reports the interface, or 16 are already monitored. Response is the list body plus `config_applied`, `config_ok` (false only when the change was saved but Nagios was not brought up to date) and `config_message` |
 
 ### `app/api/system/ncpa_deployment.py`
 

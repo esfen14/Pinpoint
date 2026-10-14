@@ -16,6 +16,7 @@ from app.network_discovery.plugin_registry import (
     Transport,
     build_service_checks,
     get_plugin_definition,
+    interface_metrics,
     plugin_for_command,
     render_command_definition,
     resolve_plugin_command,
@@ -222,6 +223,48 @@ class TestSnmpChecks:
         checks = build_service_checks("snmp", variables)
         assert len(checks) == 1
         assert checks[0][1]["oid"] == "1.3.6.1.4.1.2021.11.9.0"
+
+    def test_no_interfaces_leaves_the_services_unchanged(self):
+        def commands(discovered):
+            variables = resolve_plugin_variables("snmp", SNMP_CONFIG, discovered=discovered)
+            return [
+                (check.metric, resolve_plugin_command("snmp", service_variables, Transport.UDP))
+                for check, service_variables in build_service_checks("snmp", variables)
+            ]
+
+        plain = commands({"port": "161"})
+        assert len(plain) == 3
+        for empty in ([], None):
+            assert commands({"port": "161", "interfaces": empty}) == plain
+
+    def test_each_interface_adds_an_in_and_an_out_service(self):
+        variables = resolve_plugin_variables(
+            "snmp", SNMP_CONFIG, discovered={"port": "161", "interfaces": [5, 2]},
+        )
+        checks = build_service_checks("snmp", variables)
+
+        assert [check.metric for check, _ in checks] == [
+            "uptime", "memory_total", "lan_status",
+            "if2_in_octets", "if2_out_octets", "if5_in_octets", "if5_out_octets",
+        ]
+        commands = [resolve_plugin_command("snmp", v, Transport.UDP) for check, v in checks if check.metric.startswith("if5")]
+        assert commands == [
+            "pinpoint_nd_snmp!161!public!1.3.6.1.2.1.2.2.1.10.5!",
+            "pinpoint_nd_snmp!161!public!1.3.6.1.2.1.2.2.1.16.5!",
+        ]
+
+    def test_duplicate_interfaces_are_one(self):
+        variables = resolve_plugin_variables("snmp", SNMP_CONFIG, discovered={"interfaces": [4, 4]})
+        assert [c.metric for c, _ in build_service_checks("snmp", variables)][-2:] == ["if4_in_octets", "if4_out_octets"]
+
+    @pytest.mark.parametrize("interfaces", ["3", [0], [-1], ["3"], [True], [1.5], list(range(1, 18))])
+    def test_bad_interfaces_are_refused(self, interfaces):
+        variables = resolve_plugin_variables("snmp", SNMP_CONFIG, discovered={"interfaces": interfaces})
+        with pytest.raises(PluginConfigurationError):
+            build_service_checks("snmp", variables)
+
+    def test_metric_names(self):
+        assert interface_metrics(12) == ("if12_in_octets", "if12_out_octets")
 
     def test_per_service_variables_do_not_leak_between_services(self):
         variables = resolve_plugin_variables("snmp", SNMP_CONFIG)

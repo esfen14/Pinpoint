@@ -43,6 +43,14 @@ the normative behavior in the requirement specifications.
 - Header notification feed with per-user unread cursor.
 - Nagios command channel (`app/nagios/commands.py`, `NAGIOS_COMMAND_FILE`): acknowledgements and unacknowledgements are sent to Nagios (`nagios_synced` in the response, notice in the UI), and **Check now** (`system.recheck`, 10 s per-target limit) forces a host or service check. Covered by unit and API tests against a temporary FIFO; **not yet verified on a live Nagios appliance** (no lab report in `docs/test-runs/`; run `flask sync-permissions` after deploying to add `system.recheck`).
 - Per-user email alert setting (`User.Receive_Email_Alerts`, permission `account.alerts`): only Active opted-in users become Nagios contacts, and account changes that affect a contact rebuild the Nagios config (#80). Verified on the VM lab: contacts follow account changes without a scan, and host and service notifications reach only opted-in users (#80).
+- Interface bandwidth: SNMP interface discovery (`snmpwalk`, on demand and after a scan), per-device
+  `DeviceInterface` rows, in/out octet Nagios services per monitored interface, the rate calculator
+  (`app/bandwidth.py`: 32/64-bit wrap, restart, gap, insufficient data), the bandwidth routes, the
+  Network Health Interface Bandwidth card and the drawer's Interfaces section. Unit, API, migration
+  and frontend tests pass; **not yet verified against a lab device with a traffic generator** (no
+  report in `docs/test-runs/`; the plan is `iperf3` between two lab hosts, comparing the charted
+  rate with the generator's). SNMP v3 is out of scope (#14). Interface discovery needs `snmpwalk`
+  on the server (net-snmp-utils / snmp), which `check_snmp` already needs.
 - Network discovery start/stop/status and Nagios host/service config generation. The reconciliation engine is designed to isolate potential identity conflicts for operator review (creating `DeviceReviewItem` records) rather than silently merging them. This prevents unintended record modification during subnet changes or cloned-identity events (see `device_identity.py`). Duplicates arising from these conflicts persist as `Address Unknown` until manually resolved (Merge/Retire) in the UI through the Devices Inventory "Needs Review" list.
 - NCPA eligibility, SSH fingerprint trust (approved key only), login checks,
   deployment with per-device outcomes, cancellation, status, run history and

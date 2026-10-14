@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { MonitorOff, MonitorSmartphone, RefreshCw, Timer, WifiOff } from 'lucide-react'
 import { ActiveConnectionsCard } from '../components/network-health/ActiveConnectionsCard'
+import { BandwidthCard } from '../components/network-health/BandwidthCard'
 import { AddedPluginsSection } from '../components/network-health/AddedPluginsSection'
 import { CpuLoadChart } from '../components/network-health/CpuLoadChart'
 import { CpuUtilizationChart } from '../components/network-health/CpuUtilizationChart'
@@ -415,6 +416,7 @@ export function NetworkHealthPage() {
                 onHoursChange={setCpuHours}
                 onHostChange={setCpuHost}
               />
+              <BandwidthCard />
               <CpuLoadChart
                 load={cpuLoad ?? { configured: false, load1: [], load5: [], load15: [] }}
                 hours={loadHours}

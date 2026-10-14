@@ -44,11 +44,13 @@ from app.system_models import \
     NCPADevicePartition, \
     AgentStatus, \
     DeviceState, \
+    DeviceInterface, \
     PortState
 from app.logging import create_network_discovery_status, update_network_discovery_status, calculate_progress, create_skipped_service_logs
 from app.logging.deployment_history import update_ncpa_deployment_status
 from app.system_models import DiscoveryStatus, DeploymentStatus, NetworkDiscoveryStatus, ServiceIdentification
 from app.network_discovery.discovery_settings import get_port_services, ncpa_port_key
+from app.network_discovery.interface_discovery import refresh_interfaces_after_scan
 from app.network_discovery.plugin_settings import plugin_config
 from app.network_discovery import custom_checks
 from app.secrets_store import SecretsError
@@ -107,7 +109,8 @@ def load_host_plugin_facts():
 
     Devices without a deployed token are left out, so their NCPA port falls
     back to a plain TCP check. If a device has several deployments, the most
-    recent one wins. Read-only; does not touch the session.
+    recent one wins. A device with monitored interfaces also gets
+    {"snmp": {"interfaces": [ifIndex, ...]}}. Read-only; does not touch the session.
     """
     deployments = db.session.scalars(
         sa.select(NCPADeployment)
@@ -128,6 +131,16 @@ def load_host_plugin_facts():
             "token": deployment.Token,
             "partitions": partitions_by_deployment.get(deployment.NCPADeployID, []),
         }
+
+    # Interfaces an administrator chose to monitor become in/out octet services of the device's
+    # SNMP port. A device with none keeps exactly the services it has today.
+    monitored_interfaces = db.session.execute(
+        sa.select(DeviceInterface.NetDiscoveryID, DeviceInterface.If_Index)
+        .where(DeviceInterface.Monitored.is_(True))
+        .order_by(DeviceInterface.NetDiscoveryID, DeviceInterface.If_Index)
+    ).all()
+    for device_id, if_index in monitored_interfaces:
+        facts.setdefault(device_id, {}).setdefault("snmp", {}).setdefault("interfaces", []).append(if_index)
     return facts
 
 
@@ -1500,6 +1513,13 @@ def discover_network_create_hosts(app, user_id, stop_event):
             
             # Save it to the database
             _save_discovered_hosts(discovered_hosts, network_discovery_id, PROGRESS_WEIGHT[4])
+
+            # Keep each SNMP device's interface list current (best effort, bounded).
+            try:
+                refresh_interfaces_after_scan()
+            except Exception:
+                db.session.rollback()
+                app.logger.exception("Could not refresh device interfaces after the scan.")
 
             if stop_event.is_set():
                 mark_discovery_interrupted(network_discovery_id)

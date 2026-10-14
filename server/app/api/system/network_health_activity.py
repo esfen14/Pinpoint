@@ -35,6 +35,13 @@ GET  /system/network-health/insights
 GET  /system/network-health/plugin-trends
     One entry per plugin added through the Plugin Manager: state counts,
     current values, and averaged trends for time / percentage metrics.
+
+GET  /system/network-health/bandwidth/interfaces
+    SNMP devices and the interfaces that can be charted.
+
+GET  /system/network-health/bandwidth
+    In and out bandwidth (bit/s) of one interface, computed from the stored
+    SNMP octet counters (app/bandwidth.py).
 """
 
 from collections import defaultdict
@@ -67,8 +74,11 @@ from app.api.system.statistics import (
     DISK_PLUGIN,
     _plugin_key,
 )
+from app.bandwidth import bucket_rates, counter_rates, max_rate_for_speed, utilisation_pct
 from app.network_discovery.custom_checks import plugin_for_custom_command
-from app.network_discovery.plugin_registry import normalize_plugin_name
+from app.network_discovery.device_identity import devices_by_host_name, nagios_host_name
+from app.network_discovery.interface_discovery import SNMP_PORT_FILTER
+from app.network_discovery.plugin_registry import interface_metrics, normalize_plugin_name
 from app.network_discovery.port_lifecycle import ENABLED_PLUGIN_STATES
 from app.history_models import (
     HostStateType,
@@ -78,6 +88,7 @@ from app.history_models import (
 )
 from app.nagios.notifications import request_host_availability_range
 from app.plugin_models import Plugin
+from app.system_models import DeviceInterface, DeviceState, NetworkDiscovery, Open_UDP_Services, PortState
 
 # Valid trend windows (hours) — same presets as /network-health/trends.
 VALID_HOURS = VALID_TREND_HOURS
@@ -867,4 +878,241 @@ def network_health_plugin_trends():
 
     except Exception:
         current_app.logger.exception("Unexpected error in GET /system/network-health/plugin-trends")
+        return error("An unexpected error occurred.", 500)
+
+
+# ==========================================================
+# BANDWIDTH
+# ==========================================================
+
+# Bandwidth windows (hours): the preset windows without the 5-minute one, which holds too few
+# check results to compute a rate from.
+BANDWIDTH_HOURS = {1, 6, 24, 168}
+
+# The interface the default lan_in_octets / lan_out_octets services (config.SNMP_OIDS) watch.
+DEFAULT_INTERFACE_INDEX = 3
+
+BANDWIDTH_DEFAULT_BUCKETS = 48
+
+
+def octet_service_names(hostname, if_index):
+    """
+    Return (in_service, out_service): the names of the Nagios services holding the in and out octet
+    counters of one interface of a host, or None for a direction that has none. A monitored
+    interface has "snmp-if<N>_in_octets-<port>-udp"; interface 3 also has the default
+    "snmp-lan_in_octets-<port>-udp" service, used when no service of its own exists.
+    """
+    names = db.session.scalars(
+        sa.select(ServiceStatus.Service).where(
+            ServiceStatus.Hostname == hostname,
+            ServiceStatus.Service.like("snmp-%"),
+        ).distinct().order_by(ServiceStatus.Service)
+    ).all()
+
+    in_metric, out_metric = interface_metrics(if_index)
+    found = []
+    for own, default in ((in_metric, "lan_in_octets"), (out_metric, "lan_out_octets")):
+        wanted = [own] + ([default] if if_index == DEFAULT_INTERFACE_INDEX else [])
+        match = None
+        for metric in wanted:
+            match = next((n for n in names if n.startswith(f"snmp-{metric}-")), None)
+            if match:
+                break
+        found.append(match)
+    return found[0], found[1]
+
+
+def counter_samples(hostname, service, start):
+    """
+    Return [(timestamp, octets)] for one service since `start`, oldest first: the first perf-data
+    value of each stored check result.
+    """
+    rows = db.session.execute(
+        sa.select(ServiceStatus.ServiceStatusID, ServiceStatus.Timestamp, ServicePerfData.Measured_Value)
+        .join(ServicePerfData, ServicePerfData.ServiceStatusID == ServiceStatus.ServiceStatusID)
+        .where(
+            ServiceStatus.Hostname == hostname,
+            ServiceStatus.Service == service,
+            ServiceStatus.Timestamp >= start,
+        )
+        .order_by(ServiceStatus.Timestamp.asc(), ServicePerfData.ServicePerfDataID.asc())
+    ).all()
+
+    samples = []
+    seen = set()
+    for status_id, timestamp, value in rows:
+        if status_id in seen:
+            continue
+        seen.add(status_id)
+        samples.append((timestamp, value))
+    return samples
+
+
+@system_bp.get("/network-health/bandwidth/interfaces")
+@login_required
+@require_permission("system.network_health")
+def network_health_bandwidth_interfaces():
+    """
+    The devices and interfaces the bandwidth card can chart. A device is listed when SNMP is
+    monitored on it; its interfaces are the ones chosen for monitoring in Device Inventory, plus
+    the default interface (3) when the device has the default lan_in_octets service.
+
+    Response shape:
+    {
+        "devices": [
+            {
+                "hostname": str,                  // Nagios host name, the "hostname" of /bandwidth
+                "interfaces": [ { "if_index": int, "name": str, "speed_bps": int | null } ]
+            }
+        ]
+    }
+    """
+    try:
+        devices = db.session.scalars(
+            sa.select(NetworkDiscovery).where(
+                NetworkDiscovery.Device_State.in_((DeviceState.ACTIVE, DeviceState.MISSING)),
+                NetworkDiscovery.NetDiscoveryID.in_(
+                    sa.select(Open_UDP_Services.NetDiscoveryID).where(
+                        SNMP_PORT_FILTER,
+                        Open_UDP_Services.Port_State.in_((PortState.MONITORED, PortState.MISSING)),
+                    )
+                ),
+            ).order_by(NetworkDiscovery.NetDiscoveryID)
+        ).all()
+
+        monitored = defaultdict(list)
+        for row in db.session.scalars(
+            sa.select(DeviceInterface).where(DeviceInterface.Monitored.is_(True)).order_by(DeviceInterface.If_Index)
+        ).all():
+            monitored[row.NetDiscoveryID].append(row)
+
+        with_default = set(db.session.scalars(
+            sa.select(ServiceStatus.Hostname).where(ServiceStatus.Service.like("snmp-lan_in_octets-%")).distinct()
+        ).all())
+
+        listed = []
+        for device in devices:
+            hostname = nagios_host_name(device)
+            interfaces = [
+                {"if_index": row.If_Index, "name": row.Name, "speed_bps": row.Speed_Bps}
+                for row in monitored[device.NetDiscoveryID]
+            ]
+            if hostname in with_default and all(i["if_index"] != DEFAULT_INTERFACE_INDEX for i in interfaces):
+                interfaces.insert(0, {"if_index": DEFAULT_INTERFACE_INDEX, "name": "Interface 3 (default check)", "speed_bps": None})
+            listed.append({"hostname": hostname, "interfaces": interfaces})
+        return success({"devices": listed})
+    except Exception:
+        current_app.logger.exception("Unexpected error in GET /system/network-health/bandwidth/interfaces")
+        return error("An unexpected error occurred.", 500)
+
+
+@system_bp.get("/network-health/bandwidth")
+@login_required
+@require_permission("system.network_health")
+def network_health_bandwidth():
+    """
+    In and out bandwidth (bit/s) of one interface of one SNMP device. The rates are computed from
+    the stored ifInOctets / ifOutOctets counter samples of the interface's two Nagios services
+    (app/bandwidth.py), so the checks themselves are untouched.
+
+    Query params:
+        hostname  — Nagios host name (required)
+        interface — ifIndex of the interface (required)
+        hours     — 1, 6, 24 (default) or 168; anything else is refused with 400
+        buckets   — number of points, 1 to 168 (default 48)
+
+    Response shape:
+    {
+        "hostname": str,
+        "interface": { "if_index": int, "name": str | null, "speed_bps": int | null },
+        "hours": int,
+        "status": "ok" | "insufficient_data",   // insufficient: fewer than two valid samples
+        "in_points":  [ { "bucket_start": iso, "bps": float | null } ],
+        "out_points": [ { "bucket_start": iso, "bps": float | null } ],
+        "latest": null | {
+            "timestamp": iso,
+            "in_bps": float | null, "out_bps": float | null,
+            "in_utilisation_pct": float | null,   // only when the interface speed is known
+            "out_utilisation_pct": float | null
+        }
+    }
+    404 when the host has no bandwidth service for that interface.
+    """
+    try:
+        hours = trend_hours(request.args.get("hours", 24))
+    except ValueError:
+        hours = None
+    buckets = request.args.get("buckets", default=BANDWIDTH_DEFAULT_BUCKETS, type=int)
+    hostname = (request.args.get("hostname") or "").strip()
+    if_index = request.args.get("interface", type=int)
+
+    if not hostname:
+        return error("hostname is required.", 400)
+    if if_index is None or if_index < 1:
+        return error("interface must be an interface index (a whole number).", 400)
+    if hours not in BANDWIDTH_HOURS:
+        return error(f"hours must be one of: {sorted(BANDWIDTH_HOURS)}.", 400)
+    if buckets is None or not 1 <= buckets <= 168:
+        return error("buckets must be between 1 and 168.", 400)
+
+    try:
+        in_service, out_service = octet_service_names(hostname, if_index)
+        if not in_service and not out_service:
+            return error("That interface is not monitored on this host.", 404)
+
+        name = None
+        speed = None
+        device = devices_by_host_name([hostname]).get(hostname)
+        if device is not None:
+            interface = db.session.scalar(
+                sa.select(DeviceInterface).where(
+                    DeviceInterface.NetDiscoveryID == device.NetDiscoveryID,
+                    DeviceInterface.If_Index == if_index,
+                )
+            )
+            if interface is not None:
+                name, speed = interface.Name, interface.Speed_Bps
+
+        end = datetime.now(timezone.utc)
+        start = end - timedelta(hours=hours)
+        max_rate = max_rate_for_speed(speed)
+
+        rates = {}
+        for direction, service in (("in", in_service), ("out", out_service)):
+            samples = counter_samples(hostname, service, start) if service else []
+            rates[direction] = counter_rates(samples, max_rate_bps=max_rate)
+
+        series = {}
+        for direction, direction_rates in rates.items():
+            series[direction] = [
+                {"bucket_start": utc_isoformat(point["bucket_start"]), "bps": point["bps"]}
+                for point in bucket_rates(direction_rates or [], start, end, buckets)
+            ]
+
+        usable = {direction: r for direction, r in rates.items() if r}
+        latest = None
+        if usable:
+            in_last = rates["in"][-1] if rates["in"] else None
+            out_last = rates["out"][-1] if rates["out"] else None
+            in_bps = in_last["bps"] if in_last else None
+            out_bps = out_last["bps"] if out_last else None
+            latest = {
+                "timestamp": utc_isoformat(max(r[-1]["timestamp"] for r in usable.values())),
+                "in_bps": in_bps,
+                "out_bps": out_bps,
+                "in_utilisation_pct": utilisation_pct(in_bps, speed),
+                "out_utilisation_pct": utilisation_pct(out_bps, speed),
+            }
+
+        return success({
+            "hostname": hostname,
+            "interface": {"if_index": if_index, "name": name, "speed_bps": speed},
+            "hours": hours,
+            "status": "ok" if usable else "insufficient_data",
+            "in_points": series["in"],
+            "out_points": series["out"],
+            "latest": latest,
+        })
+    except Exception:
+        current_app.logger.exception("Unexpected error in GET /system/network-health/bandwidth")
         return error("An unexpected error occurred.", 500)
