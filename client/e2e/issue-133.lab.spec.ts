@@ -49,3 +49,48 @@ test('issue 133: real History events can be filtered and inspected', async ({ pa
   await page.getByRole('button', { name: 'Clear filters' }).first().click()
   await expect(page.getByText(/Showing .* notifications/)).toBeVisible()
 })
+
+test('issue 133: browser pagination with intercepted totals and list failure recovery', async ({ page }) => {
+  // The preserved lab has fewer than 26 alert events. Simulate only pagination
+  // metadata with real returned rows; this does not verify backend page 2.
+  await page.route('**/api/system/history/alerts?*', async (route) => {
+    const upstream = await route.fetch()
+    const body = await upstream.json()
+    const url = new URL(route.request().url())
+    if (upstream.ok() && url.searchParams.get('per_page') === '25') {
+      const current = Number(url.searchParams.get('page') ?? 1)
+      // This fixture exercises page controls, not the backend count or identity.
+      body.data = { ...body.data, items: current === 1 ? body.data.items : [body.data.items[0]].filter(Boolean), page: current, pages: 2, total: 26 }
+      await route.fulfill({ response: upstream, json: body })
+    } else {
+      await route.fulfill({ response: upstream })
+    }
+  })
+  await page.goto('/history')
+  await expect(page.getByText('Showing 1–25 of 26 events')).toBeVisible()
+  await expect(page.getByRole('navigation', { name: 'Pagination' })).toBeVisible()
+  await page.getByRole('navigation', { name: 'Pagination' }).getByRole('button', { name: 'Next' }).click()
+  await expect(page.getByText('Showing 26–26 of 26 events')).toBeVisible()
+  await expect(page.getByRole('navigation', { name: 'Pagination' }).locator('[aria-current="page"]')).toHaveText('2')
+  await page.getByRole('navigation', { name: 'Pagination' }).getByRole('button', { name: 'Previous' }).click()
+  await expect(page.getByText('Showing 1–25 of 26 events')).toBeVisible()
+  await page.unrouteAll({ behavior: 'wait' })
+
+  let intercepted = false
+  await page.route('**/api/system/history/alerts?*', async (route) => {
+    if (!intercepted) {
+      intercepted = true
+      await route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ success: false, message: 'History temporarily unavailable.' }) })
+    } else {
+      await route.continue()
+    }
+  })
+  await page.getByRole('button', { name: 'Refresh' }).click()
+  await expect(page.getByText('History temporarily unavailable.')).toBeVisible()
+  expect(intercepted).toBe(true)
+  await page.getByRole('button', { name: 'Refresh' }).click()
+  await expect(page.getByText('History temporarily unavailable.')).toHaveCount(0)
+  await expect(page.getByText(/Showing 1–\d+ of \d+ events/)).toBeVisible()
+  await page.getByRole('combobox', { name: 'Rows per page' }).selectOption('50')
+  await expect(page.getByText(/Showing 1–\d+ of \d+ events/)).toBeVisible()
+})
