@@ -1,7 +1,7 @@
 # Issue #129: System Refinement Harden NCPA Deployment With Per-Device Port, Cleanup Action and Macro Secrets
 
 Branch: `issue-129-ncpa-hardening`
-Status: blocked
+Status: in-progress
 
 ## Finish condition
 
@@ -95,13 +95,14 @@ Requirement coverage (each issue requirement maps to E/F/H; proof pending):
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| 1 (partial) | Added nullable Port model, generated/reviewed multi-bind migration with deployed-row backfill, fallback and protection/planning tests; remaining port consumers not yet wired | `cd server && .venv/bin/python -m pytest tests/unit/test_ncpa.py tests/unit/test_port_lifecycle.py tests/unit/test_create_host_cfg.py tests/unit/test_ncpa_identity.py tests/unit/test_ncpa_deployment_runs.py -q`; `scripts/verify.sh backend` | Focused 211 passed; backend printed 2581 passed/14 skipped but shell timed out at 300 s after pytest output. Step 1 remains unticked. |
 
 ## State for the next session
 
-- Last check run (exact command): `docker compose -f lab/compose.yaml exec -T appliance sh -c 'echo OS:; . /etc/os-release; echo "$PRETTY_NAME"; echo Nagios:; /usr/local/nagios/bin/nagios --version | head -3; echo Runtime:; /opt/pinpoint/venv/bin/python --version; echo Services:; ps -eo comm | grep -E "nagios|gunicorn|supervisord|systemd" | sort -u; echo File metadata:; stat -c "%n %U:%G %a" /usr/local/nagios/etc/resource.cfg /usr/local/nagios/etc/objects/hosts.cfg'`
-- Result (first failing lines, or "green"): Ubuntu 22.04.5, Nagios Core 4.5.11, Python 3.14.8; supervisord, hosts.cfg 664, resource.cfg 660. VM inspection shows Ubuntu 22.04.5/Python 3.14.8/systemd, same file ownership/modes; direct Nagios binary execution denied to lab SSH user. VM base-step hash differs from installer checkout.
-- Hypothesis: Docker and VM share versions/file metadata but differ in init, targets, installer privileges and environment freshness; Docker cannot validate NCPA installs or systemd/sudo policy.
-- Next action (one specific step, not "continue"): Obtain owner approval of the sensitive cleanup/macro-writer design, migration, and installer privilege update before first port-tracking test; use VM for NCPA and privilege tests.
+- Last check run (exact command): `scripts/verify.sh backend`
+- Result (first failing lines, or "green"): pytest printed `2581 passed, 14 skipped in 297.68s`; tool timed out after 300 s, so stage exit status is unconfirmed.
+- Hypothesis: Port resolution and protection pass, but probe, relocation and migration roundtrip still need tests/wiring; backend stage needs longer timeout.
+- Next action (one specific step, not "continue"): Add a non-default-port reachability probe test to `server/tests/unit/test_ncpa_identity.py`, run it failing, then wire the stored port through the probes.
 
 ## Decisions and notes
 
@@ -110,3 +111,6 @@ Requirement coverage (each issue requirement maps to E/F/H; proof pending):
 - Existing `Data_Model_and_Integrations.md` describes a single configured NCPA port and literal custom-check passwords as current behavior; `Implementation_Status.md` identifies these as gaps, so these are intentional behavior changes, not silent drift.
 - Human review needed per `.agent/workflows/work-issue.md` §4: this change touches sensitive `app/network_discovery/`, `app/ncpa_deployment/` and command execution, requires migration of existing data, and may require installer privilege changes for atomic nagios-owned resource.cfg updates. Decide installer ownership/write mechanism and approve the privileged cleanup/macro and migration design; do not improvise privileged writes or claim live evidence.
 - Owner approved VM usage and requested comparing VM and Docker environments first. Read-only comparison: both running, Ubuntu 22.04.5, Python 3.14.8, `resource.cfg` nagios:nagios 660, `hosts.cfg` pinpoint:nagios 664. Docker Nagios reports 4.5.11; VM lab user cannot execute Nagios binary directly (`Permission denied`), so VM version not independently confirmed. Docker uses supervisord and shimmed sudo/systemctl; VM uses systemd and installer-built permissions. Docker targets use supervisord/no init and cannot test NCPA install. Docker network 10.78.0.0/24, VM targets 10.77.0.0/28. `scripts/vmlab status` warns VM base snapshot hash 11a026f00fff differs from current installer base hash b4dc27490318; do not replace a running VM snapshot without owner coordination. Use VM for NCPA cleanup and real permission verification, Docker only for config logic if needed. No lab mutated in this comparison.
+- On resumption, owner additionally approved sensitive cleanup, macro-writer and existing-data migration work. Review command construction and secret exposure explicitly; installer privileges remain a separate repository contract and must be reported if an external change is needed. VM usage is approved for this session.
+- `flask db upgrade --multidb` and `flask db migrate --multidb` are rejected by the installed Flask-Migrate CLI (no such option); `flask db upgrade` and `flask db migrate` invoke both bind branches via this repository's multi-bind env. Autogenerated migration contained only `NCPA_DEPLOYMENT.Port`; added a deployed-row backfill by hand after review. Generation used throwaway system DB and configured history bind, not production data.
+- Sensitive path review pending for cleanup/macro: no untrusted shell interpolation, no secret-bearing logs or responses, preserve fingerprint and Nagios validation. No VM tests performed yet.

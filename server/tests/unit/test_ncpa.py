@@ -62,6 +62,21 @@ def _make_ncpa_device(db_session, admin_user, trusted=False, ncpa_eligible=True)
     return device, creds
 
 
+def test_deployed_port_resolution_uses_stored_port_and_default(app, db_session, admin_user):
+    from app.ncpa_deployment.ncpa_deployment import deployed_ncpa_port
+
+    device, _ = _make_ncpa_device(db_session, admin_user)
+    deployment = NCPADeployment(NetworkDiscoveryID=device.NetDiscoveryID)
+    db_session.session.add(deployment)
+    db_session.session.commit()
+
+    with app.app_context():
+        assert deployed_ncpa_port(deployment) == int(app.config["NCPA_PORT"])
+        deployment.Port = 5864
+        db_session.session.commit()
+        assert deployed_ncpa_port(deployment) == 5864
+
+
 # ─── GET /api/system/deployment/ncpa/devices ──────────────────────────────────
 
 class TestNcpaEligibleDevices:

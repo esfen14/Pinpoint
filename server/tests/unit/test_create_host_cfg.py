@@ -433,6 +433,15 @@ class TestLoadHostPluginFacts:
             deployed.NetDiscoveryID: {"ncpa": {"token": "new-token", "partitions": ["nvme0n1p2"]}}
         }
 
+    def test_non_default_port_is_available_to_ncpa_planner(self, db_session, admin_user):
+        device = make_device(db_session, admin_user, "alternate", "10.0.0.8")
+        deployment = make_ncpa_deployment(db_session, device, "token", [])
+        deployment.Port = 5864
+        db_session.session.commit()
+
+        facts = load_host_plugin_facts()
+        assert facts[device.NetDiscoveryID]["ncpa"]["port"] == 5864
+
     def test_loaded_hosts_carry_id_and_overrides(self, db_session, admin_user):
         device = make_device(
             db_session, admin_user, "switch", "10.0.0.3",

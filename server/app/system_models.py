@@ -674,6 +674,7 @@ class NCPADeployment(db.Model):
     NCPADeployID: so.Mapped[int] = so.mapped_column(primary_key=True)
     Deployement_Method: so.Mapped[Optional[DeploymentMethod]] = so.mapped_column(sa.Enum(DeploymentMethod))
     Token: so.Mapped[Optional[str]] = so.mapped_column(sa.String(32))
+    Port: so.Mapped[Optional[int]] = so.mapped_column(sa.Integer)
     Agent_Status: so.Mapped[Optional[AgentStatus]] = so.mapped_column(sa.Enum(AgentStatus))
     Error: so.Mapped[Optional[str]] = so.mapped_column()
 

@@ -49,6 +49,11 @@ def ncpa_port():
     return port
 
 
+def deployed_ncpa_port(deployment):
+    """Use the port installed for this device, or the deployment-time default for legacy rows."""
+    return int(deployment.Port) if deployment is not None and deployment.Port else ncpa_port()
+
+
 def ssh_host_key_name(ip_address, ssh_port):
     """
     The name paramiko looks a host key up by: the bare address on port 22,

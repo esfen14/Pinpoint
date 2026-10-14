@@ -124,10 +124,13 @@ def load_host_plugin_facts():
 
     facts = {}
     for deployment in deployments:
-        facts.setdefault(deployment.NetworkDiscoveryID, {})["ncpa"] = {
+        ncpa_facts = {
             "token": deployment.Token,
             "partitions": partitions_by_deployment.get(deployment.NCPADeployID, []),
         }
+        if deployment.Port:
+            ncpa_facts["port"] = deployment.Port
+        facts.setdefault(deployment.NetworkDiscoveryID, {})["ncpa"] = ncpa_facts
     return facts
 
 
