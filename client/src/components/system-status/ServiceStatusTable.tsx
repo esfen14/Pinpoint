@@ -11,6 +11,8 @@ type ServiceStatusTableProps = {
   onQueryChange: (query: string) => void
   stateFilter: 'All' | ServiceState
   onStateFilterChange: (state: 'All' | ServiceState) => void
+  flappingOnly: boolean
+  onFlappingOnlyChange: (flappingOnly: boolean) => void
   showFilter: boolean
   onToggleFilter: () => void
   sortAsc: boolean
@@ -140,6 +142,8 @@ export function ServiceStatusTable({
   onQueryChange,
   stateFilter,
   onStateFilterChange,
+  flappingOnly,
+  onFlappingOnlyChange,
   showFilter,
   onToggleFilter,
   sortAsc,
@@ -180,8 +184,9 @@ export function ServiceStatusTable({
             <button
               type="button"
               onClick={onToggleFilter}
+              aria-label="Filter"
               className={`rounded-lg p-2 ${
-                showFilter || stateFilter !== 'All'
+                showFilter || stateFilter !== 'All' || flappingOnly
                   ? 'bg-gray-200 text-gray-900 dark:bg-white/20 dark:text-white'
                   : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-white'
               }`}
@@ -205,6 +210,18 @@ export function ServiceStatusTable({
                     {s}
                   </button>
                 ))}
+                <span className="mt-1 block px-2 py-1 text-xs font-medium text-gray-400">Flapping</span>
+                <button
+                  onClick={() => onFlappingOnlyChange(!flappingOnly)}
+                  aria-pressed={flappingOnly}
+                  className={`block w-full rounded-lg px-2 py-1.5 text-left text-sm ${
+                    flappingOnly
+                      ? 'bg-[#ffb100]/20 text-[#ffb100]'
+                      : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10'
+                  }`}
+                >
+                  Flapping only
+                </button>
               </div>
             )}
           </div>

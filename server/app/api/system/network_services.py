@@ -58,6 +58,8 @@ def list_services():
         hostname        — exact hostname filter
         state           — OK | WARNING | CRITICAL | UNKNOWN
         ack_filter      — all (default) | acknowledged | unacknowledged
+        flapping        — true lists only services Nagios flags as flapping;
+                          false or empty lists everything (default)
 
     Each item:
     {
@@ -87,6 +89,7 @@ def list_services():
         hostname_f = request.args.get("hostname", default="", type=str)
         state_arg  = request.args.get("state", default="", type=str).upper()
         ack_filter = request.args.get("ack_filter", default="all", type=str).lower()
+        flapping   = request.args.get("flapping", default="", type=str).lower()
 
         if page < 1:
             return error("page must be greater than 0.", 400)
@@ -98,6 +101,8 @@ def list_services():
             return error(
                 "ack_filter must be 'all', 'acknowledged', or 'unacknowledged'.", 400
             )
+        if flapping not in ("", "all", "true", "false"):
+            return error("flapping must be 'true' or 'false'.", 400)
 
         _sort_map = {
             "hostname":      ServiceStatus.Hostname,
@@ -143,6 +148,9 @@ def list_services():
 
         if hostname_f:
             query = query.where(ServiceStatus.Hostname == hostname_f)
+
+        if flapping == "true":
+            query = query.where(ServiceStatus.Is_Flapping.is_(True))
 
         if state_arg:
             try:

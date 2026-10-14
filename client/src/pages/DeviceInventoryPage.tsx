@@ -27,6 +27,7 @@ export function DeviceInventoryPage() {
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [stateFilter, setStateFilter] = useState<'All' | HostState>('All')
   const [monitoringFilter, setMonitoringFilter] = useState<MonitoringFilter>('monitored')
+  const [flappingOnly, setFlappingOnly] = useState(false)
   const [showFilter, setShowFilter] = useState(false)
   const [sortAsc, setSortAsc] = useState(true)
   const [page, setPage] = useState(1)
@@ -51,7 +52,7 @@ export function DeviceInventoryPage() {
 
   useEffect(() => {
     setPage(1)
-  }, [stateFilter, monitoringFilter, sortAsc])
+  }, [stateFilter, monitoringFilter, flappingOnly, sortAsc])
 
   async function loadHosts() {
     setIsLoading(true)
@@ -65,6 +66,7 @@ export function DeviceInventoryPage() {
         search: debouncedQuery,
         state: stateFilter === 'All' ? '' : stateFilter,
         monitoring: monitoringFilter === 'all' ? '' : monitoringFilter,
+        flapping: flappingOnly ? 'true' : '',
       })
       const data = await apiGet<HostListResponse>(`/api/system/network-health/hosts?${qs}`)
       setHosts(data.items.map(fromHostRecord))
@@ -92,7 +94,7 @@ export function DeviceInventoryPage() {
   useEffect(() => {
     loadHosts()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, debouncedQuery, stateFilter, monitoringFilter, sortAsc])
+  }, [page, debouncedQuery, stateFilter, monitoringFilter, flappingOnly, sortAsc])
 
   useEffect(() => {
     loadCounts()
@@ -180,6 +182,8 @@ export function DeviceInventoryPage() {
           onStateFilterChange={(s) => { setStateFilter(s); setShowFilter(false) }}
           monitoringFilter={monitoringFilter}
           onMonitoringFilterChange={(f) => { setMonitoringFilter(f); setShowFilter(false) }}
+          flappingOnly={flappingOnly}
+          onFlappingOnlyChange={(v) => { setFlappingOnly(v); setShowFilter(false) }}
           showFilter={showFilter}
           onToggleFilter={() => setShowFilter((v) => !v)}
           sortAsc={sortAsc}

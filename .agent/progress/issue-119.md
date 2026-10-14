@@ -40,9 +40,9 @@ Requirement coverage:
 2. [x] Templates: host.cfg.tpl, service.cfg.tpl, host_config_templates.py render flap lines only when non-default. Test: server/tests/unit/test_create_host_cfg.py
 3. [x] PUT /api/system: validate (0-100, low<high, both-or-neither?), apply via regenerate, 422 rollback. Files: server/app/api/system/settings.py, test_settings_permissions.py
 4. [x] GET /system/network-health/flapping?hours= with global_flap_detection_enabled. Files: network_health_activity.py, test_network_health_activity.py
-5. [ ] Frontend types/context + Flap detection card. Files: client/src/types/settings.tsx, SystemSettingsContext.tsx, SystemSettings.tsx, SystemSettingsConflict.test.tsx
-6. [ ] Flapping-only filters. Files: ServiceStatusTable.tsx, HostTable.tsx + tests
-7. [ ] Flap history in StatusDetailDrawer + types + test
+5. [x] Frontend types/context + Flap detection card. Files: client/src/types/settings.tsx, SystemSettingsContext.tsx, SystemSettings.tsx, SystemSettingsConflict.test.tsx
+6. [x] Flapping-only filters. Files: ServiceStatusTable.tsx, HostTable.tsx + tests
+7. [x] Flap history in StatusDetailDrawer + types + test
 8. [ ] Specs + Implementation_Status; verify.sh all; delete progress file; PR.
 
 ## Round log
@@ -54,15 +54,19 @@ Requirement coverage:
 | 2 | add_flap_lines in host_config_templates.py | pytest test_create_host_cfg.py | red then 57 green |
 | 3 | PUT /api/system flap validation + apply | pytest test_settings_permissions.py | red then 67 green |
 | 4 | GET /system/network-health/flapping | pytest test_network_health_activity.py | red then 64 green |
+| 5 | Flap detection card (types, context, SystemSettings.tsx, SettingsToggle aria-label) | vitest SystemSettingsConflict | red then 24 green |
+| 6 | `flapping=true` query param on /network-health/hosts and /services (needed: lists are server-paginated) + Flapping only filter in both tables/pages | pytest hosts/services; vitest SystemStatusPage, DeviceInventoryPage | red then green |
+| 7 | FlapHistorySection in StatusDetailDrawer | vitest StatusDetailDrawer | red then 14 green; full vitest 522 green, tsc clean |
 
 ## State for the next session
 
-- Last check run (exact command): cd server; python -m pytest tests/unit/test_network_health_activity.py -q
-- Result: 64 passed
+- Last check run (exact command): cd client; npx vitest run
+- Result: 522 passed, tsc clean
 - Hypothesis: follow the #10 commit (5d0b5dd6) as the pattern
-- Next action: step 5, write failing test in client/src/test/SystemSettingsConflict.test.tsx for the Flap detection card (types flapDetectionEnabled/flapLowThreshold/flapHighThreshold are already served by the API), then types/context/SystemSettings.tsx
+- Next action: step 8: update spec files (Backend routes, Data model, Display, Frontend, Implementation_Status), run scripts/verify.sh docs, then verify.sh all. User opened the lab VM (100.64.242.33, password login, password NOT available to the agent): deploy branch there and run the lab test, record docs/test-runs report.
 
 ## Decisions and notes
 
+- Added `flapping` query param to hosts/services list routes (not named in the issue) because lists are server-paginated; a client-side filter would be wrong.
 - Branch stacked on unmerged #10 commit; PR for #119 must merge after #123's PR (or include it).
 - `gh pr create` unavailable? gh works now (checked 2026-10-14).

@@ -195,6 +195,29 @@ class TestListHosts:
         assert "h1" not in hostnames
         assert "h2" in hostnames
 
+    def test_flapping_filter_lists_only_flapping_hosts_across_pages(self, logged_in_client, db_session):
+        for i in range(5):
+            _make_host(db_session, f"calm-{i}")
+        _make_host(db_session, "noisy-a", is_flapping=True)
+        _make_host(db_session, "noisy-b", is_flapping=True)
+        db_session.session.commit()
+        data = logged_in_client.get(
+            "/api/system/network-health/hosts?flapping=true&per_page=1"
+        ).get_json()["data"]
+        assert data["total"] == 2
+        assert all(h["is_flapping"] for h in data["items"])
+
+    @pytest.mark.parametrize("value", ["false", "all", ""])
+    def test_flapping_filter_off_lists_everything(self, logged_in_client, db_session, value):
+        _make_host(db_session, "calm")
+        _make_host(db_session, "noisy", is_flapping=True)
+        db_session.session.commit()
+        data = logged_in_client.get(f"/api/system/network-health/hosts?flapping={value}").get_json()["data"]
+        assert data["total"] == 2
+
+    def test_invalid_flapping_filter_returns_400(self, logged_in_client, db_session):
+        assert logged_in_client.get("/api/system/network-health/hosts?flapping=maybe").status_code == 400
+
     def test_ack_filter_acknowledged(self, logged_in_client, db_session):
         _make_host(db_session, "h1", HostStateType.DOWN)
         _make_host(db_session, "h2", HostStateType.DOWN)

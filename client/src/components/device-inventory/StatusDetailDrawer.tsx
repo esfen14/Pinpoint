@@ -5,6 +5,7 @@ import { apiDelete, apiGet, apiPost, errorMessage } from '../../lib/api'
 import { useCurrentUser } from '../../contexts/CurrentUserContext'
 import { DeviceMonitoringSection } from './DeviceMonitoringSection'
 import { DevicePortsSection } from './DevicePortsSection'
+import { FlapHistorySection } from './FlapHistorySection'
 import type { MonitoringState } from '../../types/host'
 import { useDisplayTime } from '../../hooks/useDisplayTime'
 
@@ -301,6 +302,8 @@ export function StatusDetailDrawer({ hostname, onClose, onMonitoringChanged }: P
                   </table>
                 )}
               </section>
+
+              {hasPermission('system.network_health') && (<FlapHistorySection hostname={hostname} service={service} />)}
 
               {!service && detail.services && (
                 <section>

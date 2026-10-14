@@ -23,6 +23,7 @@ export function SystemStatusPage() {
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [stateFilter, setStateFilter] = useState<'All' | ServiceState>('All')
+  const [flappingOnly, setFlappingOnly] = useState(false)
   const [showFilter, setShowFilter] = useState(false)
   const [sortAsc, setSortAsc] = useState(true)
   const [page, setPage] = useState(1)
@@ -44,7 +45,7 @@ export function SystemStatusPage() {
 
   useEffect(() => {
     setPage(1)
-  }, [stateFilter, sortAsc])
+  }, [stateFilter, flappingOnly, sortAsc])
 
   async function loadServices() {
     setIsLoading(true)
@@ -57,6 +58,7 @@ export function SystemStatusPage() {
         order: sortAsc ? 'asc' : 'desc',
         search: debouncedQuery,
         state: stateFilter === 'All' ? '' : stateFilter,
+        flapping: flappingOnly ? 'true' : '',
       })
       const data = await apiGet<ServiceListResponse>(`/api/system/network-health/services?${qs}`)
       setServices(data.items.map(fromServiceRecord))
@@ -80,7 +82,7 @@ export function SystemStatusPage() {
   useEffect(() => {
     loadServices()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, debouncedQuery, stateFilter, sortAsc])
+  }, [page, debouncedQuery, stateFilter, flappingOnly, sortAsc])
 
   useEffect(() => {
     loadCounts()
@@ -168,6 +170,8 @@ export function SystemStatusPage() {
           onQueryChange={setQuery}
           stateFilter={stateFilter}
           onStateFilterChange={(s) => { setStateFilter(s); setShowFilter(false) }}
+          flappingOnly={flappingOnly}
+          onFlappingOnlyChange={(v) => { setFlappingOnly(v); setShowFilter(false) }}
           showFilter={showFilter}
           onToggleFilter={() => setShowFilter((v) => !v)}
           sortAsc={sortAsc}
