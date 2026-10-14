@@ -134,13 +134,25 @@ When a row is selected or expanded, show:
 | State type | All, Hard only, Soft only |
 
 All filters apply simultaneously. The table updates as filters change or on
-explicit apply, depending on implementation preference.
+explicit apply, depending on implementation preference. Both history list APIs
+accept `start_date` and `end_date` together as either `YYYY-MM-DD` (whole days
+in the server's local timezone, for compatibility) or ISO 8601 date-times
+`YYYY-MM-DDTHH:MM:SSZ` / `YYYY-MM-DDTHH:MM:SS±HH:MM` (explicit UTC offset).
+Date-time bounds include both endpoint seconds; mixed, missing, malformed or
+reversed bounds are rejected. A supplied valid preset overrides custom bounds;
+without either, the range defaults to the past 24 hours. The browser converts
+local picker values to offset-bearing date-times before submitting them.
 
 ### 3.4 Sorting
 
 Default sort: timestamp descending (most recent events first).
 
 The user can sort by any column. Secondary sort is always timestamp descending.
+Alerts API `sort_by` keys are `timestamp`, `type`, `hostname`, `service_name`,
+`previous_state`, `new_state`, `state_type`, `duration_seconds` (also `duration`
+for compatibility), `plugin_output`, and `acknowledged`. Sorting uses the
+truncated list output for the plugin-output column; blank service names sort
+as empty strings.
 
 ### 3.5 Pagination
 
@@ -192,6 +204,11 @@ When a row is selected or expanded, show:
 ### 4.4 Sorting and Pagination
 
 Same behavior as §3.4 and §3.5. Default sort: timestamp descending.
+Notifications API `sort_by` keys are `timestamp`, `type`, `hostname`,
+`service_name`, `state`, `contact`, `method`, and `message`. Sorting uses the
+truncated list message; blank service names sort as empty strings. Both routes
+apply the primary direction (`order=asc|desc`) and break primary ties by
+newest timestamp (except timestamp itself, which follows `order`).
 
 ---
 

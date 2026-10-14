@@ -192,6 +192,17 @@ each route's docstring.
 | `GET /api/system/history/notifications` | `system.history` | Paginated notification events from Nagios and Pinpoint; every item has `source` (`nagios` or `pinpoint`), filterable with `source=`. Pinpoint items are finished network scans (`type: scan`, state SUCCESS/FAILED/CANCELLED) read from `NETWORK_DISCOVERY_STATUS`; host/service/contact/type filters exclude them |
 | `GET /api/system/history/notifications/detail` | `system.history` | Full detail for one notification event; Pinpoint events use `source=pinpoint&id=<DiscoveryStatusID>` |
 
+Both list routes support `preset=1h|6h|24h|7d|30d` (default 24h), or paired
+`start_date`/`end_date` as whole server-local `YYYY-MM-DD` days or inclusive
+ISO 8601 seconds with explicit timezone (`Z` or `±HH:MM`). Invalid or partial
+bounds return 400; a preset takes precedence. `sort_by` accepts every list
+column: alerts `timestamp|type|hostname|service_name|previous_state|new_state|state_type|duration_seconds|plugin_output|acknowledged`
+(with legacy `duration` alias); notifications `timestamp|type|hostname|service_name|state|contact|method|message`.
+`order=asc|desc` selects the primary direction; ties sort by timestamp desc.
+Unknown sort keys continue to default to timestamp. List output/message sort
+uses the truncated value. See `Alerts_Notifications_History_Requirements.md`
+§§3.3–3.4 and 4.3–4.4.
+
 The route implementation exists, but `system.history` is not currently present
 in the seed permission list. This is tracked in `Implementation_Status.md`.
 
