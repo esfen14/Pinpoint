@@ -5,8 +5,8 @@ Status: in-progress
 
 ## Finish condition
 
-- [ ] History list/detail derive or retrieve correct prior state and duration from first problem detection through recovery, including window-boundary events.
-- [ ] Tests cover missing Nagios duration/last_state, multi-transition episodes, and boundary windows; specs updated.
+- [x] History list/detail derive or retrieve correct prior state and duration from first problem detection through recovery, including window-boundary events.
+- [x] Tests cover missing Nagios duration/last_state, multi-transition episodes, and boundary windows; specs updated.
 
 Requirement coverage (every requirement the issue states, and the check that proves it):
 
@@ -19,9 +19,9 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 ## Plan
 
-1. [ ] Add failing list/detail and normalization regression tests for absent archive metadata, episode transitions and window boundaries in `server/tests/unit/test_history.py`.
-2. [ ] Derive previous state and episode duration from archive timeline in `server/app/nagios/notifications.py` and wire list/detail in `server/app/api/system/history.py`; run focused tests and `scripts/verify.sh backend`.
-3. [ ] Update `spec files/Alerts_Notifications_History_Requirements.md`, `spec files/Backend_Modules_and_Routes.md`, `spec files/Implementation_Status.md`; verify docs and all stages.
+1. [x] Add failing list/detail and normalization regression tests for absent archive metadata, episode transitions and window boundaries in `server/tests/unit/test_history.py`.
+2. [x] Derive previous state and episode duration from archive timeline in `server/app/nagios/notifications.py` and wire list/detail in `server/app/api/system/history.py`; run focused tests and `scripts/verify.sh backend`.
+3. [x] Update `spec files/Alerts_Notifications_History_Requirements.md`, `spec files/Backend_Modules_and_Routes.md`, `spec files/Implementation_Status.md`; verify docs and all stages.
 
 ## Round log
 
@@ -29,13 +29,14 @@ One row per loop round, newest last.
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| 1 | Added host/service boundary and multi-transition regressions; derived archive timeline fields for list/detail; updated owning specs and gap inventory | `cd server && .venv/bin/python -m pytest tests/unit/test_history.py -q`; `scripts/verify.sh docs` | 136 passed; docs green; backend/all running |
 
 ## State for the next session
 
-- Last check run (exact command): none
-- Result (first failing lines, or "green"): not yet run
-- Hypothesis: annotate all archive transitions through the event timestamp before selecting window rows; use supplied metadata only when no earlier event is available.
-- Next action (one specific step, not "continue"): Add failing list/detail regressions in `server/tests/unit/test_history.py`.
+- Last check run (exact command): `scripts/verify.sh docs`
+- Result (first failing lines, or "green"): green
+- Hypothesis: backend and full CI stages should pass; focused tests and docs are green.
+- Next action (one specific step, not "continue"): Confirm `scripts/verify.sh backend` and `scripts/verify.sh all` results, then finish PR.
 
 ## Decisions and notes
 

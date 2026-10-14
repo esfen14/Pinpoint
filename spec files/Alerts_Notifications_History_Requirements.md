@@ -92,6 +92,13 @@ chronological record of every transition.
 | Plugin output | Nagios plugin output at time of event, truncated |
 | Acknowledged | Badge if this alert event was acknowledged at any point while active |
 
+The previous state and duration in previous state are derived from the preceding
+archive transition for the same host/service, even when it predates the selected
+list window. A recovery's detail shows the elapsed time from the first problem
+transition in that episode to the recovery, not merely the time since the last
+non-OK transition. When the archive has no earlier transition, supplied Nagios
+metadata is retained; an unknown start cannot be reconstructed.
+
 A problem episode starts at a host/service problem transition and ends on its
 UP/OK recovery. Subsequent non-OK transitions for that target remain in the
 same episode unless an `AUTO_RESOLVED` acknowledgement action marks a recovery

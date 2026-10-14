@@ -193,6 +193,12 @@ each route's docstring.
 | `GET /api/system/history/notifications` | `system.history` | Paginated notification events from Nagios and Pinpoint; every item has `source` (`nagios` or `pinpoint`), filterable with `source=`. Pinpoint items are finished network scans (`type: scan`, state SUCCESS/FAILED/CANCELLED) read from `NETWORK_DISCOVERY_STATUS`; host/service/contact/type filters exclude them |
 | `GET /api/system/history/notifications/detail` | `system.history` | Full detail for one notification event; Pinpoint events use `source=pinpoint&id=<DiscoveryStatusID>` |
 
+Alert list and detail annotate prior state and time in that state from preceding
+archive transitions for the same target; recovery detail computes the full
+problem episode duration from first problem detection. List annotations include
+transitions before the selected window. Without an earlier archive transition,
+Nagios-provided metadata is retained rather than inventing an onset.
+
 Both list routes support `preset=1h|6h|24h|7d|30d` (default 24h), or paired
 `start_date`/`end_date` as whole server-local `YYYY-MM-DD` days or inclusive
 ISO 8601 seconds with explicit timezone (`Z` or `±HH:MM`). Invalid or partial
