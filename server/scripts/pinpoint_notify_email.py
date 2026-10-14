@@ -158,12 +158,26 @@ def packet_loss(output):
     return f"{number.rstrip('0').rstrip('.') if '.' in number else number}% Packet Loss"
 
 
+# Subject word for notification types whose state would be misleading on its own.
+SUBJECT_LABELS = {
+    "FLAPPINGSTART": "FLAPPING",
+    "FLAPPINGDISABLED": "FLAPPING",
+    "FLAPPINGSTOP": "STABLE",
+    "ACKNOWLEDGEMENT": "ACKNOWLEDGED",
+    "CUSTOM": "NOTICE",
+}
+
+
 def subject_for(kind, f):
     target = f["host"] if kind == "host" else f"{f['host']} / {f['service']}"
     state = f["state"].upper()
-    if f["type"].upper() == "RECOVERY":
+    kind_type = f["type"].upper()
+    if kind_type == "RECOVERY":
         return f"[PinPoint] RECOVERY: {target} is {state}"
-    return f"[PinPoint] {state}: {target}"
+    # Notifications that are not a problem say what they are about, because the
+    # state alone would read "UP" for a flapping host or a maintenance notice.
+    label = SUBJECT_LABELS.get(kind_type) or ("MAINTENANCE" if kind_type.startswith("DOWNTIME") else None)
+    return f"[PinPoint] {label or state}: {target}"
 
 
 # ---------------------------------------------------------------- rendering

@@ -172,3 +172,20 @@ def test_sendmail_failure_returns_3(monkeypatch):
         raise FileNotFoundError()
     monkeypatch.setattr(notify.subprocess, "run", boom)
     assert notify.main(SERVICE_ARGS) == 3
+
+
+@pytest.mark.parametrize("kind_type, expected", [
+    ("FLAPPINGSTART", "[PinPoint] FLAPPING: web01"),
+    ("FLAPPINGSTOP", "[PinPoint] STABLE: web01"),
+    ("ACKNOWLEDGEMENT", "[PinPoint] ACKNOWLEDGED: web01"),
+    ("DOWNTIMESTART", "[PinPoint] MAINTENANCE: web01"),
+    ("CUSTOM", "[PinPoint] NOTICE: web01"),
+])
+def test_subject_names_the_kind_of_notification_not_just_the_state(kind_type, expected):
+    args = ["host", f"type={kind_type}", "host=web01", "address=10.0.0.1", "state=UP", "output=PING OK", "to=admin@example.com"]
+    assert build(args)["Subject"] == expected
+
+
+def test_a_problem_subject_still_names_the_state():
+    args = ["host", "type=PROBLEM", "host=db01", "address=10.0.0.2", "state=DOWN", "output=x", "to=admin@example.com"]
+    assert build(args)["Subject"] == "[PinPoint] DOWN: db01"
