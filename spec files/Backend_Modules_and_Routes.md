@@ -21,7 +21,7 @@ The seed command currently defines these permissions:
 ```text
 role.edit, role.view, role.info, role.list
 account.view, account.edit, account.info, account.alerts
-system.discover, system.deploy.ncpa, system.hosts, system.hosts.edit, system.logs
+system.discover, system.deploy.ncpa, system.hosts, system.hosts.edit, system.hosts.alerts, system.logs
 system.report, system.notifications, system.services, system.network_health
 system.acknowledge_alerts, system.recheck, system.dashboard, system.history
 plugin.scan, plugin.view, plugin.enable, plugin.disable
@@ -394,3 +394,20 @@ update/custom-plugin modules.
 The Nagios server host is identified by the statistics module's `NAGIOS_HOST`
 constant (`localhost` for status snapshots). Do not confuse it with
 `Config.NAGIOS_HOST`, which is the network address used to construct CGI URLs.
+
+## Per-host email recipients (`app/api/system/host_recipients.py`)
+
+| Method and path | Permission | Purpose |
+|---|---|---|
+| `GET /api/system/hosts/<id>/recipients` | `system.hosts.alerts` | Read selected user IDs, user choices and current eligibility for the stable discovered device |
+| `PUT /api/system/hosts/<id>/recipients` | `system.hosts.alerts` | Replace recipients, apply through `regenerate_and_apply_config_status()`, audit and commit; 422 on validation/reload failure, restoring previous recipients |
+
+The permission is separate from `account.alerts` and `system.hosts.edit`. PUT
+requires JSON `{ "recipient_ids": [1, 2] }` (distinct positive existing user IDs;
+no other fields); empty selections restore the default group. GET and successful
+PUT return `recipient_ids`, `users` (`id`, `name`, `email`, `eligible`),
+`using_default` and `editable`. Inactive or opted-out users may be selected, but
+only Active opted-in users appear in the generated group. When none selected
+qualify, the default applies. Retired/merged devices are readable but not editable
+(409); a missing device returns 404. Read access intentionally includes the user
+choices needed by this editor without requiring account-management permissions.

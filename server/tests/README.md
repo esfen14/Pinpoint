@@ -316,3 +316,5 @@ inventory lookup, pending/stale checks, titlecase states and baseline inventory.
 The extended plan tracks reload rollback, NCPA deployment/path failures, missing
 installed permissions and lifecycle thresholds from the previous live report.
 No live outcome is implied by passing these isolated self-tests.
+
+`unit/test_host_recipients.py` covers permission-separated per-host recipients, generated groups for hosts and services, default/ineligible fallback, atomic saves and shared-writer validation/reload rollback, rescan/merge/retire ownership, permission synchronization, and a populated multi-bind migration round trip. Its subprocess runner is `support/host_recipients_migration_runner.py`; Nagios calls are mocked.

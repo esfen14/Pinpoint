@@ -21,3 +21,4 @@ from app.api.system import network_profile
 from app.api.system import plugin_settings
 from app.api.system import smtp_settings
 from app.api.system import notification_policy
+from app.api.system import host_recipients

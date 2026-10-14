@@ -45,12 +45,14 @@ Requirement coverage (every requirement stated by the issue):
 |---|---|---|---|
 | Intake | Required docs and source inspected; isolated worktree; prerequisite checked | gh issue view 80 and gh pr list --state merged --search 80 | #80 merged and VM verification documented |
 
+| 1 | Added backend model/migration, recipient API, shared-writer groups and lifecycle handling with tests | cd server && .venv/bin/python -m pytest tests/unit/test_host_recipients.py -q | 34 passed, 2 failed: custom-check test used unsupported ssh plugin; permission-delete fixture hit write-only ORM relationship |
+
 ## State for the next session
 
-- Last check run (exact command): git status --short
-- Result (first failing lines, or green): green; clean isolated worktree before plan creation.
+- Last check run (exact command): cd server && .venv/bin/python -m pytest tests/unit/test_host_recipients.py -q
+- Result (first failing lines, or green): 34 passed, 2 failed (KeyError: ssh; InvalidRequestError: Permission.RolePermission cannot load existing state on ORM delete).
 - Hypothesis: NetDiscoveryID is durable across rescans. Numeric device-ID group names avoid injection. Eligibility derives from existing active/opt-in filter. The shared writer reads uncommitted flushed assignments, allowing rollback on apply failure.
-- Next action: Add isolated backend recipient tests and confirm they fail before implementation.
+- Next action: Correct the two fixtures: use a custom-checkable plugin and SQL bulk permission deletion, then rerun focused and backend checks.
 
 ## Decisions and notes
 
@@ -60,3 +62,5 @@ Requirement coverage (every requirement stated by the issue):
 - Recipient rows use the stable device ID, never hostname/IP. Merge unions source and target selections, dropping duplicate source rows; retire removes assignments to the retired device. Users are not deleted and no user delete cascade is introduced.
 - Preserve #80 behavior when there are no globally eligible contacts: omit contact_groups and never write an empty group.
 - Keep current checkout untouched. Worktree: /tmp/Pinpoint-issue-79.
+
+- VM acceptance cannot run: scripts/vmlab status reports VBoxManage not found; user confirms only Docker exists here. docker ps initially reports socket permission denied; inspect sudo Docker access before declaring Docker blocked. Keep VM/inbox finish condition unticked and PR draft.

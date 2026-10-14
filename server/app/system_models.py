@@ -415,6 +415,19 @@ class NetworkDiscovery(db.Model):
     # Phase 10 (Plugin Manager): plugin configurations targeting this device.
     Plugin_Configurations: so.WriteOnlyMapped['PluginConfiguration'] = so.relationship(back_populates='Target_Device')
     
+class HostAlertRecipient(db.Model):
+    """A user selected for a stable device's alert email; eligibility stays on User."""
+
+    __tablename__ = "HOST_ALERT_RECIPIENT"
+
+    NetDiscoveryID: so.Mapped[int] = so.mapped_column(
+        sa.ForeignKey("NETWORK_DISCOVERY.NetDiscoveryID"), primary_key=True
+    )
+    UserID: so.Mapped[int] = so.mapped_column(
+        sa.ForeignKey("USER.UserID"), primary_key=True, index=True
+    )
+
+
 class DeviceIdentifier(db.Model):
     """
     One piece of evidence that identifies a device across IP changes (NCPA
