@@ -1,7 +1,7 @@
 # Issue #133: Clear acknowledgements on recovery and audit History
 
 Branch: `issue-133-clear-ack-recovery-audit-history`
-Status: in-progress
+Status: blocked
 
 ## Finish condition
 
@@ -103,7 +103,7 @@ Requirement coverage (section A problem, C changes, D guidelines, G testing, exc
 - Last check run (exact command): `scripts/verify.sh all > /tmp/opencode/issue-133-all-live.log 2>&1; result=$?; grep -E 'passed,|Test Files|Tests  |problems|verify: all' /tmp/opencode/issue-133-all-live.log | tail -10; exit "$result"`
 - Result (first failing lines, or "green"): green — 2382 backend passed, 14 skipped; 518 frontend passed; 0 lint errors/26 warnings; `verify: all OK`. Targeted Playwright 2 passed; report and PR evidence comment posted.
 - Hypothesis: Targeted live flow works on #133 source synced into a preserved VM database. Full manual requirement audit, fresh-install/deployment evidence, remote CI on new spec, performance, and human review remain outstanding; #141–#144 are tracked backend gaps. Keep PR draft.
-- Next action (one specific step, not "continue"): Observe PR #145 current-head docs/backend/frontend CI conclusions and request a human review; retain draft/progress file until remaining finish-condition evidence is supplied.
+- Next action (one specific step, not "continue"): Ask a human reviewer to inspect PR #145 and the live report, decide whether the targeted browser walk suffices for the manual G criterion, and obtain current-head CI conclusions before marking ready; retain draft/progress file.
 
 ## Decisions and notes
 
@@ -114,5 +114,6 @@ Requirement coverage (section A problem, C changes, D guidelines, G testing, exc
 - Owner approved VM with Playwright for remaining functionality in issue comment https://github.com/esfen14/Pinpoint/issues/133#issuecomment-6157312406 and added https://github.com/esfen14/Pinpoint/issues/133#issuecomment-6158650087: "Use of the VM is authorized." This answers the lab-use blocker and justifies plan step 6. It does not explicitly authorize destructive `fresh`/`provision --force`. Existing snapshot stamp differs from current installer base-step hash; avoid reset.
 - Owner confirmed current host fingerprint from VM console in https://github.com/esfen14/Pinpoint/issues/133#issuecomment-6158435300 and authorized local password use to install public key in https://github.com/esfen14/Pinpoint/issues/133#issuecomment-6158612514. Password was supplied only through a temporary askpass helper (removed on exit), not echoed; key-based SSH now succeeds with checking enabled. Appliance has issue #113 application commit `1ca2c757`, not #133. Pause before sync/reset to avoid overwriting another issue's lab state without exclusive ownership confirmation.
 - Owner additionally authorized VM use in https://github.com/esfen14/Pinpoint/issues/133#issuecomment-6158650087. Ran `scripts/vmlab sync --client` on existing VM (no reset); current source and built HTML hashes matched VM after sync. Playwright admin setup failed at login, and private local credential also received API HTTP 401. Current preserved database credentials are out of sync; no live acceptance behavior observed. Need a person for authorized credential recovery or explicit destructive reset.
+- Human decision still needed: Does the focused Playwright real-event walk satisfy G's "Manual: walk the page against a lab appliance" or should a person perform a broader manual pass? Review approval and deployment/reliability sign-off remain unobserved. CI checks on latest progress-only head have no conclusions yet.
 - Owner authorized resetting disposable lab admin password in https://github.com/esfen14/Pinpoint/issues/133#issuecomment-6158705038. `flask recover-bootstrap-admin` succeeded with a private temporary password; the normal authenticated change-password route completed the forced change. Corrected the private lab admin email from the uniquely identified bootstrap account (the old state email mismatched); values were never printed. Targeted live evidence in `docs/test-runs/2026-10-14-issue-133-live/REPORT.md` with caveat: synced source on preserved issue #113 VM DB, not a clean #133 install; VM Git HEAD remains old despite matching source/build hashes.
 - Draft PR: https://github.com/esfen14/Pinpoint/pull/145. `gh pr edit` hits deprecated projectCards GraphQL; body updated via `gh api PATCH`. Backend gaps #141–#144 are tracked out of scope. Local full verification log is `/tmp/opencode/issue-133-all.log`; result excerpts are posted in a PR comment, but the full log is not uploaded.
