@@ -1,7 +1,7 @@
 # Issue #79: Choose which users receive email alerts for each host
 
 Branch: `issue-79-host-alert-recipients`
-Status: in-progress
+Status: blocked
 
 ## Finish condition
 
@@ -14,7 +14,7 @@ Status: in-progress
 - [x] F7: Host detail editor is permission gated and sends recipient IDs (frontend test).
 - [ ] F8: VM lab save writes per-host group; Nagios validates; alerts email only selected recipients while another host emails the default group.
 - [x] F9: Backend, data, frontend specifications and Implementation_Status updated.
-- [ ] F10: scripts/verify.sh all passes and PR CI is green.
+- [x] F10: scripts/verify.sh all passes and PR CI is green.
 
 Requirement coverage (every requirement stated by the issue):
 
@@ -37,7 +37,7 @@ Requirement coverage (every requirement stated by the issue):
 1. [x] Backend TDD: tests/unit/test_host_recipients.py and migration runner; add HostAlertRecipient in server/app/system_models.py and migration, seeded system.hosts.alerts permission, recipient routes, generated groups in create_host_cfg.py, merge/retire handling in device_identity.py. Update backend/data specs for route drift. Run focused then backend verification.
 2. [x] Frontend TDD: host editor and drawer integration tests; add DeviceRecipientsSection.tsx, types/hostRecipients.ts, and permission gate in StatusDetailDrawer.tsx. Update frontend and device inventory specifications; run frontend verification.
 3. [x] Live acceptance: inspect VM-lab ownership and tools, run issue-authorized save/validation/delivery comparison if exclusive lab and mailbox access are available; record sanitized report in docs/test-runs, refresh Implementation_Status, and run docs verification.
-4. [ ] Re-read issue/comments, prove each finish condition, scripts/verify.sh all, checkpoint, and open a ready PR only when all acceptance is proven; otherwise draft with outstanding items recorded.
+4. [x] Re-read issue/comments, prove each finish condition, scripts/verify.sh all, checkpoint, and open a ready PR only when all acceptance is proven; otherwise draft with outstanding items recorded.
 
 ## Round log
 
@@ -50,12 +50,14 @@ Requirement coverage (every requirement stated by the issue):
 
 | 3 | Completed backend and docs stages; fallback validation tested at fake Nagios boundary; recorded blocked live preflight report | scripts/verify.sh backend; scripts/verify.sh frontend; scripts/verify.sh docs; focused recipient tests | backend 2658 passed / 14 skipped; frontend 565 passed and build/lint green; docs green; focused backend 38 passed; live blocked |
 
+| 4 | Re-read unchanged issue/comments, ran all verification, opened draft #160, recorded live blocker | scripts/verify.sh all; gh pr checks 160 | green: 2660 backend passed / 14 skipped; 565 frontend passed; build/lint/docs green; all 3 CI jobs passed on aa273270; only live acceptance remains |
+
 ## State for the next session
 
-- Last check run (exact command): scripts/verify.sh backend
-- Result (first failing lines, or green): green; backend 2658 passed / 14 skipped; frontend 565 passed, build/lint green; docs green. All verification still required on latest commit.
+- Last check run (exact command): scripts/verify.sh all > /tmp/issue79-all.log 2>&1
+- Result (first failing lines, or green): green; backend 2660 passed / 14 skipped; frontend 565 passed; docs, build and lint pass (0 errors / 29 warnings). Logs copied to ignored test-results/issue79-*.log. PR docs/backend/frontend CI passed on code commit aa273270; final metadata checkpoint triggers the same checks again.
 - Hypothesis: NetDiscoveryID is durable across rescans. Numeric device-ID group names avoid injection. Eligibility derives from existing active/opt-in filter. The shared writer reads uncommitted flushed assignments, allowing rollback on apply failure.
-- Next action: Run scripts/verify.sh all on the completed implementation and open a draft PR retaining the live-acceptance blocker.
+- Next action: Provide exclusive access to a VM lab with configured mail transport and controlled test inboxes; run F8 (save, nagios -v, selected-versus-default delivery comparison), record evidence, then remove the progress file and mark draft PR #160 ready only after acceptance and CI pass.
 
 ## Decisions and notes
 
@@ -72,3 +74,7 @@ Requirement coverage (every requirement stated by the issue):
 - Injection and secret-exposure review: group names derive only from integer device IDs; PUT rejects booleans, strings, duplicates, unknown IDs and extra fields before config generation. New group members reuse previously validated contact emails; no request text enters commands or paths; no new secrets are read, logged or returned.
 - TDD failures observed before implementation: missing HostAlertRecipient model; missing DeviceRecipientsSection module.
 - Backend fixture fixes: custom checks use supported check_ping; permission deletion uses explicit SQL bulk delete. Migration parent is c5e2a8f4d716 (current main head), avoiding an accidental second Alembic head.
+
+- Draft PR: https://github.com/esfen14/Pinpoint/pull/160. F1-F7 and F9-F10 are proven by the named isolated tests, specs and all verification; F8 remains blocked. No services, containers, network devices or mailboxes were modified in this environment.
+- Final acceptance report: docs/test-runs/2026-10-14-issue-79-preflight/REPORT.md; blocked prerequisites only, no real Nagios or email pass claimed.
+- The last session round includes only progress/report metadata after the verified implementation; no code changes after scripts/verify.sh all. Watch final-checkpoint PR CI before reporting status.

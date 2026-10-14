@@ -7,7 +7,7 @@
 | Plan | Issue [#79](https://github.com/esfen14/Pinpoint/issues/79), VM delivery finish condition |
 | Tester | Codex |
 | Environment | Linux development environment; user confirms Docker only; no accessible lab |
-| Raw evidence | Local, uncommitted `/tmp/issue79-backend.log`, `/tmp/issue79-frontend.log`, `/tmp/issue79-docs.log` |
+| Raw evidence | Local, ignored `test-results/issue79-all.log`, `test-results/issue79-backend.log`, `test-results/issue79-frontend.log`, `test-results/issue79-docs.log` |
 
 ## Result
 
