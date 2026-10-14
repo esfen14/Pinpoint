@@ -28,7 +28,7 @@ and [Engineering Standards](../../spec%20files/Engineering_Standards.md).
 
 | Plugin | Inspected credential input | Implementation direction |
 |---|---|---|
-| `check_ncpa.py` | Upstream 1.2.5 accepts the token through `-t`/`--token`; its option parser has no credential file/stdin option. | Implemented unprivileged in-process adapter for inspected 1.2.4/1.2.5 clients; bare slot identifiers in generated services. Automated process tests pass and installed 1.2.4 mocked output/performance/exit parity passes. Full live Nagios parity remains pending. |
+| `check_ncpa.py` | Upstream 1.2.5 accepts the token through `-t`/`--token`; its option parser has no credential file/stdin option. | Implemented unprivileged in-process adapter for inspected 1.2.4/1.2.5 clients; bare slot identifiers in generated services. Automated process tests and installed 1.2.4 mocked parity pass. Four real web01 metrics matched stock OK results and performance series as nagios with token-free argv. Full generated-config engine acceptance remains pending. |
 | `check_nt`, `check_radius`, `check_mysql_query` | Native C plugins may support compiled-in `--extra-opts`, which reads named INI sections. | Implemented extra-options stdin adapter with a runtime help capability check. Required/optional password arguments become bare slot identifiers. Parent/child process tests pass; installed check_nt accepted synthetic stdin authentication and returned expected uptime/performance data. Radius is absent from the current appliance; remaining live parity is pending. |
 | `check_disk_smb` | The 2.4.12 Perl script accepts a password argument and passes it to a child `smbclient` command. Its SMB configuration flag is not a password-file input. | Password-bearing config generation is explicitly refused before publication. No silent dropping, pausing or insecure fallback; secure parent/child input remains an external blocker. |
 
@@ -91,14 +91,17 @@ The helper and its interpreter must be root-owned and must not import mutable
 application code while privileged. It must not accept arbitrary paths, arbitrary
 commands, chown targets or broad directory privileges. Both failed apply and
 rollback must be tested with the actual service user. A helper and installer packaging/sudoers changes now exist locally on the separate
-installer branch `issue-129-resource-helper`; five isolated tests and shell syntax
-checks pass. Application invocation and installed service-user acceptance remain
-pending. Neither branch's new implementation has been pushed or installed.
+installer branch `issue-129-resource-helper`; seven isolated tests and shell syntax
+checks pass. Application writes and rollback now invoke it for the foreign-owned
+default resource path. It is installed on the QA appliance with an exact no-argument
+sudo grant; service-user writes, outside-byte/metadata preservation, validation,
+rollback and rejected arbitrary path/argument/command probes passed. The new
+application integration and installer changes remain local pending push approval.
 
 ## External blockers
 
-SMB still needs supported child credential transport. NCPA uses the in-process adapter; unsupported client versions fail safely. Existing installer ownership
-and directory permissions must support atomic resource replacement without
-changing the installer contract in this repository. Record the deployed plugin
+SMB still needs supported child credential transport. NCPA uses the in-process adapter; unsupported client versions fail safely. The paired installer extension is required for default-path ownership-preserving
+updates. Full generated-config apply/reload and remaining live engine acceptance
+still need verification. Record the deployed plugin
 versions, resource metadata and process-list evidence on the available lab before
 claiming acceptance. The current macro integration is not ready to deploy.

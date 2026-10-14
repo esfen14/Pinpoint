@@ -118,6 +118,7 @@ Basenames below live under `unit/`, except `integration/test_live_nagios.py`.
 | `test_plugin_registry.py` | Plugin resolution, variable validation, command rendering, SNMP checks, and NCPA checks |
 | `test_skipped_services.py` | Persistence and log presentation for discovered ports that cannot become monitored services |
 | `test_ncpa_resource_check.py`, `test_native_resource_check.py` | Unprivileged resource input, safe errors/output, supported plugin interfaces, actual parent/child process secrecy and unsupported SMB refusal |
+| `test_resource_helper_client.py` | Fixed helper command/stdin protocol, external-content guard, transaction rollback and sanitized missing/failed/timed-out helper calls |
 | `test_resource_macros.py` | Managed slot allocation/persistence/reclamation, external slots, malformed blocks, private atomic replacement, secret-field substitution and generation failures |
 | `test_device_config.py` | Device identity/config lifecycle, shared writer lock, resource transactions across regeneration/discovery/NCPA, cancellation, live mode and apply rollback |
 | `test_ncpa_command_logging.py` | Mocked SSH command logging: expected probe exits, ordinary and unexpected failures, stderr warnings, account/key creation and idempotency |

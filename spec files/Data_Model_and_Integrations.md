@@ -458,8 +458,16 @@ with a safe count/limit message. Malformed blocks or slot collisions are rejecte
 
 Resource replacement uses a unique private temporary file, retaining the existing
 owner, group and mode. Other-user permissions are refused. Production ownership
-must remain `nagios:nagios` with mode 0660; a process unable to retain ownership
-fails before replacement. A missing or unwritable required resource file prevents
+must remain `nagios:nagios` with mode 0660. When the application is not the owner,
+updates and rollback use `/usr/bin/sudo -n /usr/local/sbin/pinpoint-apply-resources`
+with no command arguments. Only the validated owned block (or null to remove it),
+an assertion of the fixed resource path and a digest of the external regions go
+on stdin; external replacement content never goes to the helper. The helper
+independently retains external bytes and metadata. Missing, rejected or timed-out
+helper calls fail safely without exposing stdout/stderr; successful calls require
+byte and metadata verification. This helper supports only the default resource
+path; a foreign-owned custom resource path is refused. A process-owned custom
+path still uses the direct atomic writer. A missing or unwritable required resource file prevents
 candidate publication. Generated and successfully applied live `hosts.cfg` use
 0640; the live owner/group are preserved. Secret substitution changes only the
 known password/token fields, not matching text in public arguments.
@@ -479,8 +487,10 @@ results. Public metric/options, plugin output, performance data and return codes
 are retained. Native custom checks use verified extra-options stdin; passwords
 with surrounding whitespace are refused rather than altered by the INI parser.
 No adapter is privileged or imports Flask. Automated parent/child process tests
-pass, but full live Nagios acceptance and installed ownership-compatible updates
-remain incomplete; see
+pass. Installed service-user writes, resource validation and exact rollback have
+also passed; four real NCPA adapter metrics matched the stock client as `nagios`.
+Applying/reloading the complete generated configuration and final live Nagios
+acceptance remain incomplete; see
 [the issue #129 transport plan](../docs/plans/Issue_129_Check_Secret_Transport.md).
 
 ## Alert acknowledgement lifecycle

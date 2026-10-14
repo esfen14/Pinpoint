@@ -47,7 +47,7 @@ that discovery found, and these have none.
    reading section 7.
 4. **Check secret-file access.** In the issue #129 build, passwords use the protected Nagios resource file
    (section 7); the host file contains macro references and uses mode 0640. The resource writer must preserve
-   `nagios:nagios` ownership and mode 0660. Installed ownership compatibility and full live acceptance remain incomplete;
+   `nagios:nagios` ownership and mode 0660. The default resource path requires the paired installer helper; full live generated-config acceptance remains incomplete;
    do not deploy this unfinished build as a completed security fix.
 5. **Check the Nagios server can reach what you will check:** a device on the network, the SSH key you will
    name, or the files and devices of the Nagios server itself.
@@ -203,8 +203,9 @@ How it is handled:
   other-user access or an update that cannot retain ownership. A failed config change restores previous
   resources and host configuration. Supported native checks receive the password through
   extra-options stdin after verifying installed support. Password-bearing SMB checks are refused because
-  this plugin lacks secure child credential input. Compatible installed writes and full live acceptance
-  remain unfinished; see [the transport plan](../plans/Issue_129_Check_Secret_Transport.md).
+  this plugin lacks secure child credential input. The default resource path uses the restricted installer helper for foreign-owned
+  updates and rollback; custom paths must be writable with preserved ownership by the
+  application itself. Full live generated-config acceptance remains unfinished; see [the transport plan](../plans/Issue_129_Check_Secret_Transport.md).
 
 If the key changes:
 

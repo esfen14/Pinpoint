@@ -1,14 +1,17 @@
 """Maintain protected Nagios resource slots and roll back failed config changes.
 
 USER1 belongs to the plugin directory. Owned keys use USER2 through USER256,
-excluding assignments outside the managed block. Macros protect configuration
-literals; supported credential inputs are still needed to protect process argv.
+excluding assignments outside the managed block. Check adapters consume slot
+identifiers without expanding credentials into process arguments. Foreign-owned
+production resources use the installer's restricted block writer on stdin.
 """
 
 import json
+import hashlib
 import os
 import re
 import stat
+import subprocess
 import tempfile
 from pathlib import Path
 
@@ -20,6 +23,9 @@ MAX_SLOTS = LAST_SLOT - FIRST_SLOT + 1
 _BLOCK_BEGIN = "# BEGIN PINPOINT"
 _BLOCK_END = "# END PINPOINT"
 _FILE_MODE = 0o660
+_HELPER_RESOURCE_PATH = "/usr/local/nagios/etc/resource.cfg"
+_HELPER_COMMAND = ["/usr/bin/sudo", "-n", "/usr/local/sbin/pinpoint-apply-resources"]
+_MAX_HELPER_BYTES = 1024 * 1024
 
 
 class ResourceMacroLimitError(ValueError):
@@ -122,9 +128,44 @@ def read_slot_assignments(path):
     return result
 
 
+def replace_using_resource_helper(path, contents, metadata):
+    """Send only an owned block on stdin to the fixed installer helper.
+
+    Compare both external regions first; rollback cannot overwrite another
+    owner's changes. The helper independently reads and checks their digest.
+    Suppress all subprocess output and verify bytes and metadata after success.
+    """
+    if str(path) != _HELPER_RESOURCE_PATH:
+        raise PermissionError("Ownership-preserving resource updates require the fixed installer destination.")
+    desired = contents.decode("utf-8")
+    before, _body, after = _extract_block(desired)
+    old_before, _old_body, old_after = _extract_block(read_text(path))
+    if (before, after) != (old_before, old_after):
+        raise ValueError("Resource update cannot change content outside the owned block.")
+    block = desired[len(before):len(desired) - len(after)] if _BLOCK_BEGIN in desired.splitlines() else None
+    digest = hashlib.sha256(json.dumps([before, after], separators=(",", ":")).encode()).hexdigest()
+    request = json.dumps({"resource_path": str(path), "outside_digest": digest, "block": block}).encode()
+    if len(request) > _MAX_HELPER_BYTES:
+        raise ValueError("Protected resource update exceeds the helper request limit.")
+    try:
+        result = subprocess.run(_HELPER_COMMAND, input=request, capture_output=True, timeout=10)
+    except (OSError, subprocess.TimeoutExpired):
+        raise OSError("Protected resource helper is unavailable or timed out; configuration was not applied.") from None
+    if result.returncode != 0:
+        raise OSError("Protected resource helper rejected the update; configuration was not applied.")
+    updated = path.stat()
+    if path.read_bytes() != contents or (updated.st_uid, updated.st_gid, stat.S_IMODE(updated.st_mode)) != (
+        metadata.st_uid, metadata.st_gid, stat.S_IMODE(metadata.st_mode),
+    ):
+        raise OSError("Protected resource helper did not preserve the requested bytes and metadata.")
+
+
 def atomic_write(path, contents, metadata=None):
     """Write bytes privately, preserve supplied metadata, then atomically replace."""
     path = Path(path)
+    if metadata is not None and os.geteuid() not in (0, metadata.st_uid):
+        replace_using_resource_helper(path, contents, metadata)
+        return
     fd, name = tempfile.mkstemp(prefix=".pinpoint-resource-", dir=path.parent)
     temp = Path(name)
     try:

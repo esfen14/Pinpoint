@@ -2,7 +2,7 @@
 
 The issue #129 build tracks each installed agent's listener port and adds explicit
 cleanup of failed deployment bootstrap artifacts. Process-secret transport and
-installer-compatible atomic resource updates are still unfinished; this build is
+full generated-config live acceptance remains unfinished; this build is
 not ready for production security sign-off.
 
 ## Deploy and track an agent
@@ -53,12 +53,16 @@ The resource file must retain `nagios:nagios` ownership and mode 0660. The gener
 and successfully applied live hosts file uses 0640 with its existing owner/group.
 Atomic updates require a supported ownership-preserving installer mechanism;
 ordinary group write permission is insufficient. The current writer refuses
-unsafe permissions or an update that cannot preserve ownership. Config generation
+unsafe permissions or an update that cannot preserve ownership. Install the restricted
+`pinpoint-apply-resources` helper from the paired installer branch before upgrading:
+it receives only the managed block on stdin and supports the default resource
+path. Foreign-owned custom resource paths are refused. Config generation
 and application restore previous resources on failure or cancellation.
 
 NCPA 1.2.4/1.2.5 runs through an adapter that reads the resource slot and supplies
 the token in memory, without a child process. Supported native custom checks read
 passwords through extra-options stdin. Password-based SMB generation is refused
 because the plugin exposes child credentials. Automated process tests pass;
-installed ownership updates and full live Nagios parity remain unverified. The implementation and installer handoff are tracked in
+installed ownership/rollback tests and four live adapter metric comparisons pass.
+Full generated-config application under the main Nagios service remains unverified. The implementation and installer handoff are tracked in
 [the transport plan](../plans/Issue_129_Check_Secret_Transport.md).
