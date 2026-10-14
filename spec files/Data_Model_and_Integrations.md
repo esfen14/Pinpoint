@@ -381,7 +381,26 @@ answers) into `NCPADevicePartition.Name` (an NCPA node name such as `|` or
 `|data`, not an lsblk partition). Pseudo filesystems (`bpf`, `tmpfs`, ...) and
 the `|sys`, `|proc`, `|run`, `|dev` and `|boot|efi` trees are never recorded.
 The disk metric path is `disk/logical/{partition}/used_percent`; the path is
-stored raw and quoted once by the Nagios command template. If a metric cannot
+stored raw and quoted once by the Nagios command template. During config generation and plugin reconciliation, one authenticated API
+inventory request per agent confirms metric paths. Successful inventories are
+cached for 60 seconds, failures for 5 seconds, with at most 256 cache entries.
+Requests use connect/read timeouts of 1/2 seconds, refuse redirects, limit the
+response to 2 MiB and traverse at most 10,000 paths and depth 10. Unsupported
+paths are skipped individually through the existing skipped-service mechanism;
+failed inventories defer the three added defaults with a retry reason while preserving established checks. No probes run in the
+Nagios status poller. Read-only fact loading defaults to no probe.
+
+`NCPA_METRICS` preserves cpu, memory and per-partition disk and adds swap usage
+(`memory/swap/percent`, 50/80) and sda read/write rates
+(`disk/physical/sda/read_bytes`, `write_bytes`, Mi, `delta=1`, 100/200 MiB/s).
+Agents lacking sda skip these two defaults. Saved metric tables retain precedence
+and are not extended automatically on upgrade. With sda and P partitions, the
+default is 5 + P services instead of 2 + P. No load-average default is added:
+NCPA 3.5.0 on the tested agents has no such node. Process checks use path
+`processes`, queryargs `name=sshd`, and warning/critical `1:1` for an exact count.
+No endpoint, permission or database migration is added.
+
+If a plugin cannot
 be planned, the port falls back to the generic TCP check and the fallback is
 listed in the run's skipped services.
 

@@ -70,7 +70,7 @@ Requirement coverage (every requirement stated by the issue):
 - Last check run (exact command): scripts/verify.sh all > test-results/issue79-final-all.log 2>&1
 - Result (first failing lines, or green): green: final scripts/verify.sh all passed (2660 backend / 14 skipped; 565 frontend; docs/build/lint, 29 existing lint warnings); focused recipient backend 38 passed; final live Playwright 4 passed; browser scaffold safety 8 passed. Latest checkpoint CI remains to be observed.
 - Hypothesis: The former VM availability blocker is resolved. Actual VM API save, Nagios validation and host/service MIME capture prove routing, but cannot prove external SMTP acceptance or actual inbox receipt. No application defect observed. F8 remains unchecked.
-- Next action: Check final checkpoint CI, resolve lab-control/recovery issue #162, then supply controlled selected/default recipient mailboxes and complete actual inbox delivery comparison before making PR #160 ready. User input for mailbox addresses is pending; do not substitute local capture for inbox proof.
+- Next action: Verify merge with current main and its CI, resolve lab-control/recovery issue #162, then supply controlled selected/default recipient mailboxes and complete actual inbox delivery comparison before making PR #160 ready. User input for mailbox addresses is pending; do not substitute local capture for inbox proof.
 
 ## Decisions and notes
 
@@ -108,3 +108,5 @@ Requirement coverage (every requirement stated by the issue):
 - Recovery limitation requiring owner input: inactive original checkout at 1ca2c75 had pre-existing edits in server/app/api/system/dashboard.py and server/app/nagios/status.py; initial sync overwrote their bytes before the wrong-instance snapshot problem was found. Seventeen other previously clean tracked files restored from original HEAD. The original active issue-129 checkout c9f8e26 and its DB remain intact. Asked owner for original two-file source/backup; exact restoration cannot be claimed. Report V1 is Fail, linked to #79.
 
 - Lab recovery tracked as https://github.com/esfen14/Pinpoint/issues/162 after searching existing issues. Original active issue-129 service and database, sendmail, generated config and frontend restored directly. Inactive checkout two-file original edits remain unrecovered; no further VM mutations.
+
+- Latest PR CI did not trigger because GitHub reported CONFLICTING after #128 merged into main. Merged origin/main (9ce590eb); only report-index conflict, resolved by retaining both sets of reports. No migration-head conflict. Incoming #128 NCPA generation changes are automatically merged; recipient-focused tests and full verification must be rerun. No post-merge live run is authorized until #162 is resolved; previous VM evidence remains attributed to 3d6471dc.
