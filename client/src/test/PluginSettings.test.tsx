@@ -308,3 +308,74 @@ describe('PluginSettings: NCPA', () => {
     expect(within(card('SNMP OIDs')).getByLabelText('OID 1')).toHaveValue('1.3.6.1.2.1.1.5.0')
   })
 })
+
+describe('PluginSettings: guided process checks', () => {
+  beforeEach(() => {
+    getPluginSettings.mockReset()
+    savePluginSettings.mockReset()
+  })
+
+  it('adds a reviewable exact process-count row and saves through the existing API', async () => {
+    await renderLoaded({}, { version: 4 })
+    const ncpaCard = within(card('NCPA Metrics'))
+    savePluginSettings.mockResolvedValue({ ...ncpa({ version: 5 }), config_ok: true })
+    fireEvent.change(ncpaCard.getByLabelText('Process name'), { target: { value: 'sshd' } })
+    fireEvent.change(ncpaCard.getByLabelText('Expected process count'), { target: { value: '2' } })
+    fireEvent.click(ncpaCard.getByRole('button', { name: 'Add process check' }))
+    expect(savePluginSettings).not.toHaveBeenCalled()
+    expect(ncpaCard.getByLabelText('Description 3')).toHaveValue('process_sshd')
+    expect(ncpaCard.getByLabelText('Metric path 3')).toHaveValue('processes')
+    expect(ncpaCard.getByLabelText('Query args 3')).toHaveValue('name=sshd')
+    expect(ncpaCard.getByLabelText('Warning 3')).toHaveValue('2:2')
+    expect(ncpaCard.getByLabelText('Critical 3')).toHaveValue('2:2')
+    expect(ncpaCard.getByText(/Review the generated row/)).toBeInTheDocument()
+    save('NCPA Metrics')
+    await waitFor(() => expect(savePluginSettings).toHaveBeenCalledWith('ncpa', 'metrics', expect.arrayContaining([
+      { metric: 'process_sshd', path: 'processes', queryargs: 'name=sshd', warning: '2:2', critical: '2:2', units: '' },
+    ]), 4))
+  })
+
+  it.each(['', 'bad name', 'sshd;reboot', '$(id)', 'a,b', 'a=b', 'a'.repeat(25)])('blocks invalid process name %s', async (value) => {
+    await renderLoaded()
+    const ncpaCard = within(card('NCPA Metrics'))
+    fireEvent.change(ncpaCard.getByLabelText('Process name'), { target: { value } })
+    fireEvent.click(ncpaCard.getByRole('button', { name: 'Add process check' }))
+    expect(ncpaCard.getByRole('alert')).toHaveTextContent(/Process name must/)
+    expect(ncpaCard.queryByLabelText('Description 3')).not.toBeInTheDocument()
+    expect(savePluginSettings).not.toHaveBeenCalled()
+  })
+
+  it.each(['', '-1', '1.5', '1000001'])('blocks invalid expected count %s', async (value) => {
+    await renderLoaded()
+    const ncpaCard = within(card('NCPA Metrics'))
+    fireEvent.change(ncpaCard.getByLabelText('Process name'), { target: { value: 'sshd' } })
+    fireEvent.change(ncpaCard.getByLabelText('Expected process count'), { target: { value } })
+    fireEvent.click(ncpaCard.getByRole('button', { name: 'Add process check' }))
+    expect(ncpaCard.getByRole('alert')).toHaveTextContent(/Expected count must/)
+    expect(ncpaCard.queryByLabelText('Description 3')).not.toBeInTheDocument()
+  })
+
+  it('preserves case in the exact filter, accepts zero, and rejects a duplicate without overwriting', async () => {
+    await renderLoaded()
+    const ncpaCard = within(card('NCPA Metrics'))
+    fireEvent.change(ncpaCard.getByLabelText('Process name'), { target: { value: 'My.Process-1' } })
+    fireEvent.change(ncpaCard.getByLabelText('Expected process count'), { target: { value: '0' } })
+    fireEvent.click(ncpaCard.getByRole('button', { name: 'Add process check' }))
+    expect(ncpaCard.getByLabelText('Description 3')).toHaveValue('process_my_process_1')
+    expect(ncpaCard.getByLabelText('Query args 3')).toHaveValue('name=My.Process-1')
+    expect(ncpaCard.getByLabelText('Critical 3')).toHaveValue('0:0')
+    fireEvent.click(ncpaCard.getByRole('button', { name: 'Add process check' }))
+    expect(ncpaCard.getByRole('alert')).toHaveTextContent(/already exists/)
+    expect(ncpaCard.queryByLabelText('Description 4')).not.toBeInTheDocument()
+  })
+
+  it('discards a generated row without saving it', async () => {
+    await renderLoaded()
+    const ncpaCard = within(card('NCPA Metrics'))
+    fireEvent.change(ncpaCard.getByLabelText('Process name'), { target: { value: 'sshd' } })
+    fireEvent.click(ncpaCard.getByRole('button', { name: 'Add process check' }))
+    fireEvent.click(ncpaCard.getByRole('button', { name: /discard changes/i }))
+    expect(ncpaCard.queryByLabelText('Description 3')).not.toBeInTheDocument()
+    expect(savePluginSettings).not.toHaveBeenCalled()
+  })
+})
