@@ -543,6 +543,18 @@ class TestFindDevicesToRelocate:
 
 class TestRelocate:
 
+    def test_alternate_port_is_swept_and_probed(self, db_session, admin_user, relocation):
+        device = make_ncpa_device(db_session, admin_user)
+        deployment = db.session.scalar(sa.select(NCPADeployment).where(
+            NCPADeployment.NetworkDiscoveryID == device.NetDiscoveryID,
+            NCPADeployment.Token.is_not(None)))
+        deployment.Port = 5864
+        db.session.commit()
+
+        assert ncpa_relocation.relocate_ncpa_devices() == [device.NetDiscoveryID]
+        relocation.sweep.assert_called_once_with(NET, 5864)
+        relocation.probe.assert_called_once_with("10.0.0.99", 5864)
+
     def test_down_device_is_found_at_its_new_address(self, db_session, admin_user, relocation):
         device = make_ncpa_device(db_session, admin_user)
         name = device.Nagios_Host_Name

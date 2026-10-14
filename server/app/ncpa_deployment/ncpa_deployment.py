@@ -899,7 +899,10 @@ def discover_disk_nodes(ip_address, token, port=None):
     "/"), not after lsblk partitions, so this is the only reliable source.
     Returns the node names in the agent's order.
     """
-    listing = _ncpa_get(ip_address, token, "disk/logical", port=port)
+    def get_node(path):
+        return _ncpa_get(ip_address, token, path) if port is None else _ncpa_get(ip_address, token, path, port=port)
+
+    listing = get_node("disk/logical")
     nodes = listing.get("logical") if isinstance(listing, dict) else None
     if not isinstance(nodes, dict):
         return []
@@ -908,7 +911,7 @@ def discover_disk_nodes(ip_address, token, port=None):
     for name, info in nodes.items():
         if not _is_monitorable_disk_node(name, info):
             continue
-        if _ncpa_get(ip_address, token, f"disk/logical/{name}/{DISK_PERCENT_LEAF}", port=port) is None:
+        if get_node(f"disk/logical/{name}/{DISK_PERCENT_LEAF}") is None:
             current_app.logger.info("NCPA disk node %r has no %s value; skipped.", name, DISK_PERCENT_LEAF)
             continue
         names.append(name)
