@@ -32,25 +32,25 @@ Copied from issue sections E, F and H; tick only with observed proof.
 - [x] API endpoint with docstring and permission check. (`TestCleanup.test_requires_login_and_permission`, route catalog)
 - [x] Multi-database reversible migration and sync-permissions note if applicable. (`7db78f308ee5_track_deployed_ncpa_port.py` with backfill and downgrade; no new permission added)
 - [x] Updated frontend components, types and routes. (`CleanupDialog`, table, page, typed API wrapper)
-- [x] Unit tests for modified logic. (`test_resource_macros.py` now 59 tests; `test_create_host_cfg.py` 3 new integration tests; updated `test_custom_checks.py`, `test_custom_checks_config_structure.py`; all in 2644 passed)
+- [x] Unit tests for modified logic. (resource/macro/helper/adapter/config/custom-check/migration/cleanup/security tests included in current 2766 passed backend gate)
 - [x] Frontend interaction tests under client/src/test/. (`NcpaDeploymentPage.test.tsx`)
-- [ ] Integration/regression workflow tests from section G. (live lab workflows pending authorized run)
+- [x] Integration/regression workflow tests from section G. (current full automated gate plus installed macro/upgrade acceptance and actual failed-install cleanup/non-default-port monitoring/probes/relocation journeys; see 2026-10-15 finish-journeys report)
 - [x] Updated Data Model, Backend, Frontend, Engineering Standards and Implementation Status specs. (all five files updated and docs verification passed)
 - [x] Updated Help text and Admin secrets-storage note. (`CustomCheckDialog`, Custom Checks manual and NCPA Deployment manual; security limitations stated)
 - [x] verify.sh all output attached to PR and sanitized docs/test-runs/ report. (draft PR #161 includes verification output and links the committed sanitized report)
 
 ### H. Definition of done
-- [ ] All mandatory acceptance criteria satisfied. (lab items pending)
-- [ ] Required functionality works as specified. (all unit/integration tests passing; 2644 passed)
-- [ ] No unintentional regressions. (backend 2644 passed/14 skipped; frontend 554 passed)
+- [x] All mandatory acceptance criteria satisfied. (E items proven by current full gate and installed main-daemon/finish-journeys reports; unsupported SMB refusal follows the owner-approved policy)
+- [x] Required functionality works as specified. (2766 backend/554 frontend tests and mandatory live journeys pass; supported credential transport and explicit unsupported-plugin refusal are documented)
+- [x] No unintentional regressions. (current full gate: 2766 backend/14 skipped, 554 frontend; original live listener/bootstrap/DB/config state restored after acceptance)
 - [x] Applicable edge cases handled. (limit error, missing resource.cfg refusal, actual validation rollback, slot stability/reclaim, malformed external slots, helper failure and unsupported secret transport all covered by passing tests)
 - [x] Existing architectural patterns followed. (resource_macros uses same config/app_context pattern; substitution at write time, not in registry)
 - [x] No unnecessary duplicate functionality. (no parallel macro system; reuses existing plugin_registry validation)
 - [x] Relevant lint/static analysis passes. (`verify.sh all`: build and lint succeeded, 0 errors / 29 warnings)
-- [ ] No unresolved critical defects.
+- [x] No unresolved critical defects. (none identified in current automated/live acceptance; initial SSH timeout disappeared on exact repeat, and listener readiness was corrected in the harness)
 - [x] Required automated tests added/updated. (resource macro and transaction regression tests; 3 integration tests; 4 existing tests updated)
 - [x] Applicable automated tests pass. (`c9f8e263`: current full all gate, 2766 backend passed/14 skipped and 554 frontend passed; docs/build/lint green)
-- [ ] Relevant integration/regression tests pass. (live lab pending)
+- [x] Relevant integration/regression tests pass. (real installed main NCPA/macro upgrade, actual failed-install cleanup and non-default-port monitoring/probe/relocation journeys pass)
 - [x] Test/verification evidence attached to PR. (draft PR #161 includes full-gate and 332-test macro regression output)
 - [x] User inputs and configuration validated. (NAGIOS_RESOURCE_CFG from env; slot limit enforced before any write)
 - [x] Authorization enforced. (cleanup route: `require_permission("system.deploy.ncpa")` + `login_required`)
@@ -63,24 +63,24 @@ Copied from issue sections E, F and H; tick only with observed proof.
 - [x] Deployment/migration steps documented. (paired helper-first installation, protected resources and application multi-bind upgrade are documented; installed upgrade exercised in the main-daemon report)
 - [x] PR references #129. (draft PR #161)
 - [x] PR describes implementation and tests. (draft PR #161 describes the fixes, tests and remaining blockers)
-- [x] Required CI checks pass. (docs/backend/frontend passed for published c9f8e263; new documentation checkpoint still needs authorized push and its own CI)
+- [x] Required CI checks pass. (docs/backend/frontend passed for published a119afa4; new documentation checkpoints remain local and need authorized publication/current-head CI)
 - [ ] Required reviewer approvals obtained.
-- [ ] Blocking review comments resolved.
+- [x] Blocking review comments resolved. (current app PR review-comment count zero; required approvals still absent on both PRs)
 - [ ] All applicable acceptance and deliverables complete.
 
 Requirement coverage (each issue requirement maps to E/F/H; proof pending):
 
 | Issue requirement | Finish-condition item | Proof (test or command) |
 |---|---|---|
-| A: global port, failed cleanup, UI gap, literal secrets | E: port, cleanup, UI, secrets | Port/migration ✓; cleanup unit ✓; cleanup UI ✓; macro secrets unit ✓; lab pending |
+| A: global port, failed cleanup, UI gap, literal secrets | E: port, cleanup, UI, secrets | Port/migration ✓; cleanup unit/live ✓; cleanup UI ✓; macro secrecy/main Nagios ✓ |
 | C Backend 1–4: port tracking/backfill, all consumers, protected mapping, re-port decision | E: existing config, non-default port, fallback, downgrade; H: config documented | `test_backfilled_port_preserves_existing_ncpa_config`, `test_alternate_listener_port_is_used_in_check`, migration tests ✓ |
 | C Backend 5–7: trusted cleanup, report, refusal, audit/status | E: cleanup removal/refusals/key/no credentials; F: endpoint | `TestCleanup` 25 tests ✓; credentials log test ✓ |
-| C Backend 8–12: macro writer, slots, modes, limit, rollback | E: secrecy/ownership/mode/slots/rollback; F: source, docs | `TestResourceMacroLimitError`, `TestReclaim`, `TestBlockOnlyEditing`, `TestWriteResourceBlock` ✓; token absent tests ✓; docs pending |
+| C Backend 8–12: macro writer, slots, modes, limit, rollback | E: secrecy/ownership/mode/slots/rollback; F: source, docs | `TestResourceMacroLimitError`, `TestReclaim`, `TestBlockOnlyEditing`, `TestWriteResourceBlock` ✓; token absent tests ✓; specs/helper/main-daemon proof ✓ |
 | C Frontend 1–3: action, results/status, credential clearing | E: UI action/visibility/clearing; F: frontend/tests | `NcpaDeploymentPage.test.tsx` 7 tests ✓ |
-| D: unchanged legacy output, security review, equivalent checks, snapshot stripping, validation, permissions, migration, reliability | E: legacy output/secrecy/result; H: security/quality/reliability | Regression: 2644 passed ✓; lab pending |
-| F: source, API, migration, tests, docs, lab report and verify output | F: corresponding deliverable checkboxes | Source/API/migration/unit tests ✓; docs/lab pending |
-| G: unit, regression, upgrade and live lab workflows | F: integration/regression and evidence; H: testing | Unit ✓; lab pending (requires authorized run) |
-| H: quality, review, CI and documentation | H: corresponding checkboxes | Code quality ✓; docs/CI/review pending |
+| D: unchanged legacy output, security review, equivalent checks, snapshot stripping, validation, permissions, migration, reliability | E: legacy output/secrecy/result; H: security/quality/reliability | Regression: 2766 passed ✓; required live journeys ✓ |
+| F: source, API, migration, tests, docs, lab report and verify output | F: corresponding deliverable checkboxes | Source/API/migration/unit/docs/live ✓ |
+| G: unit, regression, upgrade and live lab workflows | F: integration/regression and evidence; H: testing | Unit ✓; mandatory live journeys pass; reviews pending |
+| H: quality, review, CI and documentation | H: corresponding checkboxes | Code quality/docs/current published CI ✓; approvals pending |
 
 ## Plan
 
@@ -89,7 +89,7 @@ Requirement coverage (each issue requirement maps to E/F/H; proof pending):
 3. [x] Cleanup UI: tests under `client/src/test/NcpaDeploymentPage.test.tsx` and `NcpaDeployWizard.test.tsx`; `client/src/pages/NcpaDeploymentPage.tsx`, `client/src/components/ncpa-deployment/`, `client/src/lib/ncpaDeploymentApi.ts`, `client/src/types/ncpaDeployment.ts`.
 4. [x] Macro secrets (supported NCPA/native adapters and process tests pass; installed helper and complete generated-config apply/reload/readability/main-engine/snapshot/validation rollback pass; unsupported SMB passwords explicitly refused): tests `server/tests/unit/{test_create_host_cfg,test_custom_checks,test_ncpa,test_status}.py` and new resource-macro/adapter tests; `server/app/network_discovery/{resource_macros,create_host_cfg,plugin_registry,custom_checks}.py`, `server/scripts/pinpoint_check_{ncpa,native}.py`, separate installer helper and deployment permissions contract. Review injection, process exposure and resource-file ownership with a person before code.
 5. [x] Document new behavior, security/installer assumptions, user Help and upgrade guidance in `spec files/{Data_Model_and_Integrations,Backend_Modules_and_Routes,Frontend_Modules_and_Routes,Engineering_Standards,Implementation_Status}.md`, appropriate Help/Admin manual, README if configuration changes; run docs verification.
-6. [ ] Finish (draft PR #161 opened; acceptance/live/review blockers remain): re-read issue and prove every E/F/H item; run `scripts/verify.sh all`, record output and sanitized lab evidence in `docs/test-runs/`, finish PR template and request review. No live tests/labs without explicit authorization under workflow hard limits.
+6. [ ] Finish (mandatory automated/live acceptance passed; draft app PR #161 and installer PR #7 still need required human approvals and publication/current-head CI for new evidence): re-read issue and prove every E/F/H item; run `scripts/verify.sh all`, record output and sanitized lab evidence in `docs/test-runs/`, finish PR template and request review. No live tests/labs without explicit authorization under workflow hard limits.
 
 ## Round log
 
@@ -128,13 +128,14 @@ Requirement coverage (each issue requirement maps to E/F/H; proof pending):
 | 28 (published/resumed) | Published authorized app checkpoints and installer fork/draft PR #7. Preserved dirty guest source by serving detached c9f8e263 from a separate guest worktree; backed up both DBs privately, migrated both binds and synced permissions. Generated through real authenticated routes and applied/reloaded under the main Nagios daemon. | Full all gate; forced main web01 CPU/memory/root-disk checks; process argv, file/log/CGI history, actual-binary rejection and helper rollback | All gate green (2766 backend/554 frontend). Three services OK with perfdata; secret-free observed argv/snapshots/logs; live hosts 0640/readable. Real invalid candidate rejected with exact resource/metadata restoration and unchanged live hosts. Macro plan checked; final issue/live cleanup/alternate-port/reviews remain open. |
 
 | 29 (resumed/live cleanup) | Re-read issue and required workflow; current published CI passed. Actual admin start/bootstrap run was faulted with a root-owned exit-42 helper, then real cleanup route removed key/rule/helper while retaining the selected account. Original bootstrap bytes/metadata and deployment state restored. | Full all gate; exact cleanup repeat; route/status/remote filesystem checks | All gate green: 2766 backend/14 skipped, 554 frontend. Initial SSH command channel timed out before mutation; exact repeat passed the entire cleanup journey. Alternate-port fixture next stopped on immediate post-restart readiness; original config/DB restored, original listener later verified and notifications re-enabled. Add bounded readiness to the harness before retry; no application defect demonstrated. |
+| 30 (live alternate port) | Controlled existing listener/stored port moved to 5703 with default 5693 unchanged. Ran actual probes/protected port/identity and guarded /32 sweep; generated main checks; real stale-address DOWN/CGI snapshot triggered production candidate selection, 5703 certificate relocation/history and config reload. | Live alternate-port harness with bounded listener readiness; exact original-state restoration | All cases passed: three generated checks OK/perfdata, real relocation 10.77.0.8 -> 10.77.0.2, original listener/config/resource and affected DB rows restored. No product code change. Mandatory live journeys complete; new report/progress local pending push, human approvals absent. |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh all > test-results/issue-129/main-daemon-resume-verify.log 2>&1`; installed acceptance scripts recorded in the main-daemon report.
-- Result: green: 2766 backend passed/14 skipped; 554 frontend passed; build/lint/docs passed (0 errors/29 warnings). Published c9f8e263 CI green. Real current-build generation/apply/reload, hosts 0640/readability, three main Nagios NCPA OK results/performance data, observed credential-free argv, CGI history, log checks and real-binary validation rejection/resource rollback passed.
-- Hypothesis: Macro implementation is complete for the supported transport and explicit unsupported-plugin refusal authorized by the owner. Final issue completion still requires the section G non-default-port and intentional failed-install/cleanup live journeys, any remaining native endpoint parity, paired installer review and human approvals. ISO build was not run.
-- Next action: Retry the prepared alternate-port live harness with bounded listener startup readiness; cleanup journey has passed. Preserve exact restoration and notification state. New local checkpoints need push confirmation; keep both PRs draft while reviews are absent.
+- Last check run: `scripts/verify.sh all > test-results/issue-129/finish-resume-verify.log 2>&1`; installed `issue129-cleanup-live.py` exact repeat and `issue129-alternate-live.py` readiness run recorded in the finish-journeys report.
+- Result: green: 2766 backend passed/14 skipped; 554 frontend passed; build/lint/docs passed (0 errors/29 warnings). Published a119afa4 CI green. Real failed-install cleanup and non-default-port monitoring/probes/protected port/identity/sweep/relocation/history/config reload all pass. Original fixture state restored.
+- Hypothesis: Required implementation and mandatory automated/live acceptance are complete for the owner-approved supported transport/unsupported-plugin refusal. Additional native endpoints and ISO rebuild were not run and are not claimed. Required human approvals on application #161 and installer #7 remain absent, so final completion/merge is not claimed.
+- Next action: Ask for confirmation to push the new evidence checkpoints, verify their CI, then obtain required human application/installer reviews. Keep draft/progress tracking until the complete finish condition holds; do not merge PRs or claim approvals.
 
 ## Decisions and notes
 
@@ -188,3 +189,5 @@ Requirement coverage (each issue requirement maps to E/F/H; proof pending):
 - Guest original checkout remains at 1ca2c75 with the two prior tracked edits and untracked client/.npm preserved. Current Gunicorn serves clean detached c9f8e263 at /opt/pinpoint/issue-129-acceptance/server via 129-acceptance.conf systemd WorkingDirectory drop-in; shared databases are migrated to 7db78f308ee5. Root-private pre-upgrade backups are /var/backups/pinpoint/issue129-pre-upgrade/. Helper remains installed. Notifications were suppressed during forced checks and restored to the original enabled value afterward. Both services are active; appliance/web01 remain running. No target reprovision or snapshot reset. Temporary acceptance scripts removed. New evidence is local and needs fresh push confirmation.
 
 - Published evidence a119afa4 with owner approval; all application CI jobs passed. No app or installer reviews exist and app review-comment count is zero. Cleanup account removal was not selected for the existing deployed target; the optional removal branch remains covered by passing isolated tests. Target NCPA and deployment bootstrap state are preserved.
+
+- Current live run changed the listener manually as controlled setup rather than reinstalling packages. Real application monitoring/probes/relocation ran without mocking. Cleanup used actual start/background/bootstrap/fingerprint/SSH and a controlled remote-helper failure, then actual cleanup. Selected remove_account=false to retain the existing target account; true/skip branches remain covered by passing isolated tests. Exact restoration is recorded in docs/test-runs/2026-10-15-issue-129-finish-journeys/REPORT.md. App and installer approvals are absent; no new push authorized.
