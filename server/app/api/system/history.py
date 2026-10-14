@@ -350,16 +350,17 @@ def alerts_history():
         if raw is None:
             return error("Failed to retrieve alert history from Nagios.", 502)
 
-        alerts = fill_previous_states([normalize_alert(a) for a in normalize_nagios_list(raw)])
-        if locator:
-            alerts = [a for a in alerts if event_id(a, 'alert') == locator]
-
-        # Include earlier transitions so an episode beginning before the selected
-        # window is not confused with an acknowledgement from a prior episode.
+        alerts = [normalize_alert(a) for a in normalize_nagios_list(raw)]
+        # Fetch preceding transitions before selecting rows: the first visible
+        # event may be in the middle of a problem episode.
         episode_raw = request_alerts_range(0, end_ts)
         if episode_raw is None:
             return error("Failed to retrieve alert history from Nagios.", 502)
-        episode_alerts = [normalize_alert(a) for a in normalize_nagios_list(episode_raw)]
+        episode_alerts = fill_previous_states([normalize_alert(a) for a in normalize_nagios_list(episode_raw)])
+        timeline = {event_id(a, 'alert'): a for a in episode_alerts}
+        alerts = [timeline.get(event_id(a, 'alert'), a) for a in alerts]
+        if locator:
+            alerts = [a for a in alerts if event_id(a, 'alert') == locator]
         ack_map = build_ack_map(episode_alerts, ack_actions())
 
         items = []
@@ -475,24 +476,25 @@ def alerts_history_detail():
         if alert is None:
             return error("Alert event not found.", 404)
 
-        full_output  = alert.get("plugin_output") or ""
-        prev_state   = (alert.get("last_state") or "").upper()
-        state_type   = (alert.get("state_type") or "").lower()
-        duration     = alert.get("duration_seconds") or 0
-
-        # Load preceding transitions to identify the event's problem episode.
+        # Load preceding transitions to identify the event's prior state and
+        # problem episode, including episodes beginning before a list window.
         episode_raw = request_alerts_range(0, int(datetime.now(timezone.utc).timestamp()),
                                            hostname=hostname, service=service)
         if episode_raw is None:
             return error("Failed to retrieve alert detail from Nagios.", 502)
-        episode_alerts = [normalize_alert(a) for a in normalize_nagios_list(episode_raw)]
+        episode_alerts = fill_previous_states([normalize_alert(a) for a in normalize_nagios_list(episode_raw)])
+        alert = next((a for a in episode_alerts if event_id(a, 'alert') == event_id(alert, 'alert')), alert)
+        full_output  = alert.get("plugin_output") or ""
+        prev_state   = (alert.get("last_state") or "").upper()
+        state_type   = (alert.get("state_type") or "").lower()
+        duration     = alert.get("duration_seconds") or 0
         ack_map = build_ack_map(episode_alerts, ack_actions(hostname, service))
         ack = serialize_ack(ack_map.get(((hostname, service), timestamp, new_state)))
 
         # Recovery duration — meaningful when new state is OK or UP
         recovery_duration = None
         if new_state in ("OK", "UP"):
-            recovery_duration = duration
+            recovery_duration = alert.get("recovery_duration", duration)
 
         # Linked notifications — look for notifications in a ±5 minute window
         # around this alert's timestamp for the same host/service.
@@ -509,7 +511,8 @@ def alerts_history_detail():
             nearby_alerts = ([normalize_alert(a) for a in normalize_nagios_list(alert_raw)]
                              if alert_raw else [])
             for notif in nearby:
-                if related_alert(notif, nearby_alerts) != alert:
+                matched = related_alert(notif, nearby_alerts)
+                if matched is None or event_id(matched, 'alert') != event_id(alert, 'alert'):
                     continue
                 linked_notifications.append({
                     "event_id": event_id(notif, 'notification'),
