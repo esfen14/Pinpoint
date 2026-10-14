@@ -1,7 +1,7 @@
 # Issue #129: System Refinement Harden NCPA Deployment With Per-Device Port, Cleanup Action and Macro Secrets
 
 Branch: `issue-129-ncpa-hardening`
-Status: in-progress
+Status: blocked
 
 ## Finish condition
 
@@ -32,7 +32,7 @@ Copied from issue sections E, F and H; tick only with observed proof.
 - [x] API endpoint with docstring and permission check. (`TestCleanup.test_requires_login_and_permission`, route catalog)
 - [x] Multi-database reversible migration and sync-permissions note if applicable. (`7db78f308ee5_track_deployed_ncpa_port.py` with backfill and downgrade; no new permission added)
 - [x] Updated frontend components, types and routes. (`CleanupDialog`, table, page, typed API wrapper)
-- [x] Unit tests for modified logic. (`test_resource_macros.py` 42 tests; `test_create_host_cfg.py` 3 new integration tests; updated `test_custom_checks.py`, `test_custom_checks_config_structure.py`; all in 2644 passed)
+- [x] Unit tests for modified logic. (`test_resource_macros.py` now 59 tests; `test_create_host_cfg.py` 3 new integration tests; updated `test_custom_checks.py`, `test_custom_checks_config_structure.py`; all in 2644 passed)
 - [x] Frontend interaction tests under client/src/test/. (`NcpaDeploymentPage.test.tsx`)
 - [ ] Integration/regression workflow tests from section G. (live lab workflows pending authorized run)
 - [x] Updated Data Model, Backend, Frontend, Engineering Standards and Implementation Status specs. (all five files updated and docs verification passed)
@@ -46,10 +46,10 @@ Copied from issue sections E, F and H; tick only with observed proof.
 - [ ] Applicable edge cases handled. (limit error, missing resource.cfg graceful warning, rollback on validation failure, slot stability, reclaim)
 - [x] Existing architectural patterns followed. (resource_macros uses same config/app_context pattern; substitution at write time, not in registry)
 - [x] No unnecessary duplicate functionality. (no parallel macro system; reuses existing plugin_registry validation)
-- [ ] Relevant lint/static analysis passes. (verify.sh all pending)
+- [x] Relevant lint/static analysis passes. (`verify.sh all`: build and lint succeeded, 0 errors / 29 warnings)
 - [ ] No unresolved critical defects.
-- [x] Required automated tests added/updated. (42 new unit tests in test_resource_macros.py; 3 integration tests; 4 existing tests updated)
-- [x] Applicable automated tests pass. (2644 passed, 14 skipped)
+- [x] Required automated tests added/updated. (resource macro and transaction regression tests; 3 integration tests; 4 existing tests updated)
+- [x] Applicable automated tests pass. (`87e00907`: full all gate, 2674 backend passed/14 skipped and 554 frontend passed; `61ebb946`: 2 strengthened equivalence tests passed)
 - [ ] Relevant integration/regression tests pass. (live lab pending)
 - [ ] Test/verification evidence attached to PR.
 - [x] User inputs and configuration validated. (NAGIOS_RESOURCE_CFG from env; slot limit enforced before any write)
@@ -88,7 +88,7 @@ Requirement coverage (each issue requirement maps to E/F/H; proof pending):
 2. [x] Cleanup backend: tests in `server/tests/unit/test_ncpa_deployment_runs.py`, `test_ncpa_command_logging.py`, `test_ncpa.py`; `server/app/api/system/ncpa_deployment.py`, `server/app/ncpa_deployment/ncpa_deployment.py`, activity/status integration. Explicit injection/secret review before touching these sensitive modules.
 3. [x] Cleanup UI: tests under `client/src/test/NcpaDeploymentPage.test.tsx` and `NcpaDeployWizard.test.tsx`; `client/src/pages/NcpaDeploymentPage.tsx`, `client/src/components/ncpa-deployment/`, `client/src/lib/ncpaDeploymentApi.ts`, `client/src/types/ncpaDeployment.ts`.
 4. [ ] Macro secrets: tests `server/tests/unit/{test_create_host_cfg,test_custom_checks,test_ncpa,test_status}.py` and new resource-macro tests; `server/app/network_discovery/{resource_macros,create_host_cfg,plugin_registry,custom_checks}.py`, deployment/integration permissions contract. Review injection, process exposure and resource-file ownership with a person before code.
-5. [ ] Document new behavior, security/installer assumptions, user Help and upgrade guidance in `spec files/{Data_Model_and_Integrations,Backend_Modules_and_Routes,Frontend_Modules_and_Routes,Engineering_Standards,Implementation_Status}.md`, appropriate Help/Admin manual, README if configuration changes; run docs verification.
+5. [x] Document new behavior, security/installer assumptions, user Help and upgrade guidance in `spec files/{Data_Model_and_Integrations,Backend_Modules_and_Routes,Frontend_Modules_and_Routes,Engineering_Standards,Implementation_Status}.md`, appropriate Help/Admin manual, README if configuration changes; run docs verification.
 6. [ ] Re-read issue and prove every E/F/H item; run `scripts/verify.sh all`, record output and sanitized lab evidence in `docs/test-runs/`, finish PR template and request review. No live tests/labs without explicit authorization under workflow hard limits.
 
 ## Round log
@@ -106,15 +106,16 @@ Requirement coverage (each issue requirement maps to E/F/H; proof pending):
 | 9 | Implemented resource_macros.py (allocate/write_resource_block/read_resource_block/reclaim/restore_resource_cfg/ResourceMacroLimitError); wired collect_ncpa_secrets, collect_custom_check_secrets, build_secret_substitution_map, apply_secret_substitutions into create_host_cfg.py; NCPA token and custom-check passwords replaced by $USERn$ in hosts.cfg, written to resource.cfg block; hosts.cfg now written mode 0640; resource.cfg backed up and restored on validation failure; added NAGIOS_RESOURCE_CFG to config.py; fixed pre-existing `os` module shadow bug in for-loop; updated 4 test files to assert password absent. | `cd server && .venv/bin/python -m pytest tests/unit/test_resource_macros.py tests/unit/test_create_host_cfg.py tests/unit/test_custom_checks.py tests/unit/test_ncpa.py tests/unit/test_status.py -q` then full backend | Focused 270 passed; backend green: 2644 passed, 14 skipped. |
 | 10 (resumed/audit) | Re-read live issue and re-ran saved backend check; confirmed synthetic whole-string substitution corrupts non-secret metric paths and resource writer changes 0660 to 0640. Reopened macro plan step; corrected process-list security claim. Added failing metadata regression, fixed atomic writer to preserve owner/group/mode using private unique temp files and fail before replacement if ownership cannot be preserved. Documented NAGIOS_RESOURCE_CFG and macro limitation. | focused macro tests; host/custom regression; docs | 44 macro tests and 173 host/custom tests passed; docs passed. Full backend green outside sandbox: 2646 passed/14 skipped. Owner chose process secrecy; NCPA/SMB secure-input compatibility and installer metadata updates remain blockers. |
 | 11 (local) | Reproduced six public-argument substitution corruptions and replaced only declared secret fields. Added persistent key/slot metadata, excluded external slots, reclaimed absent devices/last secrets, rejected malformed blocks/unsafe modes/missing or failed writes before candidate publication, and isolated test resource paths. | focused host/custom/resource tests; actual removal regression | 223 passed before persistence work; focused final suite below proves all new behavior. No push authorized. |
-| 12 (local) | Added in-memory resource transactions to regeneration, discovery and post-deployment flows; restore on cancellation/exception/apply failure; reload resource-only changes; apply mode 0640 to live hosts and restore both files before rollback reload. Updated specs, manuals and Help text. | focused latest host/custom/resource/transaction suite; backend stage; docs; final all stage | 275 focused passed; backend stage 2667 passed/14 skipped; docs green; all running. |
+| 12 (local) | Added in-memory resource transactions to regeneration, discovery and post-deployment flows; restore on cancellation/exception/apply failure; reload resource-only changes; apply mode 0640 to live hosts and restore both files before rollback reload. Updated specs, manuals and Help text. | focused latest host/custom/resource/transaction suite; backend stage; docs; final all stage | 275 focused passed; backend stage 2667 passed/14 skipped; docs green; full all gate green (2674 backend/554 frontend, build/lint passed). |
 | 13 (local compatibility) | Started existing stopped QA appliance and inspected installed help/metadata; created/removed empty private sibling as pinpoint to test ownership preservation. No app sync, reset, migration, discovery, deployment, cleanup or live resource write. | installed plugin help/version; service-user fchown probe | NCPA 1.2.4 no secure input; check_nt/mysql_query extra-opts present; SMB 2.4.12 none; radius absent; resource nagios:nagios 0660, fchown denied. Installer blocker confirmed. |
+| 14 (local) | Full all gate passed; strengthened genuine encrypted-password rendering and NCPA effective-command equivalence tests; recorded immutable sanitized compatibility report. | `scripts/verify.sh all`; targeted equivalence tests on `61ebb946`; docs gate | all green on `87e00907`: 2674 backend/14 skipped, 554 frontend, build/lint; equivalence 2 passed. Process secrecy, installed ownership updates, remaining lab cases, CI and review remain incomplete. |
 
 ## State for the next session
 
 - Last check run (exact command): `scripts/verify.sh all > /tmp/issue-129-all-verification.log 2>&1`
-- Result (first failing lines, or "green"): running. Last backend stage green: 2667 passed, 14 skipped; latest focused host/custom/resource/transaction suite 275 passed, including added tests after that stage.
+- Result (first failing lines, or "green"): green on `87e00907`: 2674 backend passed, 14 skipped; 554 frontend passed; build/lint passed (0 errors, 29 warnings). Subsequent test-only equivalence strengthening on `61ebb946`: 2 passed; application source unchanged.
 - Hypothesis: Known substitution, persistence, reclamation and rollback defects are repaired locally. Process-secrecy transport remains unimplemented. Installed NCPA 1.2.4 and SMB 2.4.12 lack secure credential inputs; check_nt/check_mysql_query advertise extra-opts, check_radius is absent. The real pinpoint user cannot fchown an atomic resource candidate to nagios, so a scoped installer mechanism is required before production use.
-- Next action (one specific step, not "continue"): Finish verify.sh all, checkpoint locally with a sanitized compatibility report, and obtain push confirmation before publishing the changes; then resolve the separately scoped installer helper and secure plugin transport.
+- Next action (one specific step, not "continue"): Obtain owner confirmation before pushing the local checkpoints and separately authorize the scoped installer ownership helper; implement supported secure credential transport/adapter and rerun skipped lab acceptance cases.
 
 ## Decisions and notes
 
@@ -142,3 +143,5 @@ Requirement coverage (each issue requirement maps to E/F/H; proof pending):
 
 - The earlier "VM inspection refused" note is superseded: VirtualBox showed no running guests and the QA appliance in aborted state. Owner-approved usage allowed starting the existing guest; no snapshots or installed application state were replaced. Guest is left running for continued inspection. Host had >8 GB available RAM and 58 GB free disk before starting its 4 GB guest.
 - Injection/secret review for local fixes: no secret in command execution argv was introduced; substitution is limited to complete known secret fields; file destinations still derive only from configured paths. Atomic temp files start private; unsafe world/other permissions and malformed/colliding slots fail before writes. Snapshot contents stay in memory; failure logs do not include raw reload output. Process-argument secrecy is still unchecked because adapter/input work is outstanding.
+
+- Local checkpoints `87e00907` (config safeguards/docs) and `61ebb946` (effective command proof) have not been pushed. Report: docs/test-runs/2026-10-14-issue-129-resource-compatibility/REPORT.md; raw output is git-ignored under test-results/issue-129/. Stop is now concrete installer contract/plugin transport work, not an unresolved process-secrecy choice. Ask before pushing, as the owner requested.
