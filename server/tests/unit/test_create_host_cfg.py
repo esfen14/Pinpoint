@@ -212,6 +212,13 @@ class TestNcpaHost:
             "ncpa-disk_sdb1-5693-tcp": "pinpoint_nd_ncpa!5693!secrettoken!disk/logical/sdb1/percent!",
         }
 
+    def test_alternate_listener_port_is_used_in_check(self, app, plugin_config):
+        host = make_host("linux-alt", tcp={"5864": "ncpa"}, net_discovery_id=7)
+        facts = {7: {"ncpa": {"token": "secrettoken", "port": 5864, "partitions": []}}}
+        with app.app_context():
+            services = as_dict(build_host_services(host, facts, plugin_config))
+        assert services["ncpa-cpu-5864-tcp"].startswith("pinpoint_nd_ncpa!5864!secrettoken!")
+
     def test_without_deployed_token_falls_back_to_tcp(self, app, plugin_config):
         host = make_host("linux-x", tcp={"5693": "ncpa"}, net_discovery_id=8)
         with app.app_context():
