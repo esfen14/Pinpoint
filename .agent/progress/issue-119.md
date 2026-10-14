@@ -39,7 +39,7 @@ Requirement coverage:
 1. [x] Model + migration: SystemSettings Flap_Detection_Enabled (true), Flap_Low_Threshold, Flap_High_Threshold (nullable floats); extend to_dict. Files: server/app/system_models.py, new migration, server/tests/unit/test_flap_migration.py
 2. [x] Templates: host.cfg.tpl, service.cfg.tpl, host_config_templates.py render flap lines only when non-default. Test: server/tests/unit/test_create_host_cfg.py
 3. [x] PUT /api/system: validate (0-100, low<high, both-or-neither?), apply via regenerate, 422 rollback. Files: server/app/api/system/settings.py, test_settings_permissions.py
-4. [ ] GET /system/network-health/flapping?hours= with global_flap_detection_enabled. Files: network_health_activity.py, test_network_health_activity.py
+4. [x] GET /system/network-health/flapping?hours= with global_flap_detection_enabled. Files: network_health_activity.py, test_network_health_activity.py
 5. [ ] Frontend types/context + Flap detection card. Files: client/src/types/settings.tsx, SystemSettingsContext.tsx, SystemSettings.tsx, SystemSettingsConflict.test.tsx
 6. [ ] Flapping-only filters. Files: ServiceStatusTable.tsx, HostTable.tsx + tests
 7. [ ] Flap history in StatusDetailDrawer + types + test
@@ -53,13 +53,14 @@ Requirement coverage:
 | 1 | model + migration c5e2a8f4d716 | pytest test_flap_settings_migration.py | red (no migration) then green |
 | 2 | add_flap_lines in host_config_templates.py | pytest test_create_host_cfg.py | red then 57 green |
 | 3 | PUT /api/system flap validation + apply | pytest test_settings_permissions.py | red then 67 green |
+| 4 | GET /system/network-health/flapping | pytest test_network_health_activity.py | red then 64 green |
 
 ## State for the next session
 
-- Last check run (exact command): cd server; python -m pytest tests/unit/test_settings_permissions.py -q
-- Result: 67 passed
+- Last check run (exact command): cd server; python -m pytest tests/unit/test_network_health_activity.py -q
+- Result: 64 passed
 - Hypothesis: follow the #10 commit (5d0b5dd6) as the pattern
-- Next action: step 4, write failing tests for GET /system/network-health/flapping in server/tests/unit/test_network_health_activity.py
+- Next action: step 5, write failing test in client/src/test/SystemSettingsConflict.test.tsx for the Flap detection card (types flapDetectionEnabled/flapLowThreshold/flapHighThreshold are already served by the API), then types/context/SystemSettings.tsx
 
 ## Decisions and notes
 
