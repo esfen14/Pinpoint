@@ -788,13 +788,11 @@ def check_device_credentials(ip_address, ssh_port, fingerprint, username, passwo
             try: client.close()
             except Exception: pass
 
-def verify_ncpa_reachable(ip_address, token, timeout=5):
-    """
-    Verify that the Pinpoint server can reach NCPA and
-    that NCPA accepts the generated authentication token.
-    """
-
-    port = ncpa_port()
+def verify_ncpa_reachable(ip_address, token, timeout=5, port=None):
+    """Verify that an agent on its deployed (or configured) port accepts the token."""
+    port = ncpa_port() if port is None else int(port)
+    if not 1 <= port <= 65535:
+        raise ValueError("NCPA port must be between 1 and 65535.")
     url = f"https://{ip_address}:{port}/api"
 
     try:
@@ -834,12 +832,8 @@ def verify_ncpa_reachable(ip_address, token, timeout=5):
             "message": f"Unable to connect to NCPA on port {port}."
         }
 
-    except requests.RequestException as e:
-        current_app.logger.warning(
-            "NCPA reachability check failed for %s: %s",
-            ip_address,
-            e
-        )
+    except requests.RequestException:
+        current_app.logger.warning("NCPA reachability check failed for %s.", ip_address)
 
         return {
             "success": False,
@@ -859,11 +853,14 @@ EXCLUDED_NODE_PREFIXES = ("|sys", "|proc", "|run", "|dev", "|boot|efi")
 DISK_PERCENT_LEAF = "used_percent"
 
 
-def _ncpa_get(ip_address, token, path, timeout=5):
+def _ncpa_get(ip_address, token, path, timeout=5, port=None):
     """GET an NCPA API node (e.g. "disk/logical"); the decoded JSON, or None."""
+    port = ncpa_port() if port is None else int(port)
+    if not 1 <= port <= 65535:
+        raise ValueError("NCPA port must be between 1 and 65535.")
     try:
         response = requests.get(
-            f"https://{ip_address}:{ncpa_port()}/api/{path}",
+            f"https://{ip_address}:{port}/api/{path}",
             params={"token": token},
             verify=False,
             timeout=timeout,
@@ -894,7 +891,7 @@ def _is_monitorable_disk_node(name, info):
     return True
 
 
-def discover_disk_nodes(ip_address, token):
+def discover_disk_nodes(ip_address, token, port=None):
     """
     Ask the agent itself which logical disk nodes it serves (GET
     /api/disk/logical) and keep those that are real filesystems and whose
@@ -902,7 +899,7 @@ def discover_disk_nodes(ip_address, token):
     "/"), not after lsblk partitions, so this is the only reliable source.
     Returns the node names in the agent's order.
     """
-    listing = _ncpa_get(ip_address, token, "disk/logical")
+    listing = _ncpa_get(ip_address, token, "disk/logical", port=port)
     nodes = listing.get("logical") if isinstance(listing, dict) else None
     if not isinstance(nodes, dict):
         return []
@@ -911,7 +908,7 @@ def discover_disk_nodes(ip_address, token):
     for name, info in nodes.items():
         if not _is_monitorable_disk_node(name, info):
             continue
-        if _ncpa_get(ip_address, token, f"disk/logical/{name}/{DISK_PERCENT_LEAF}") is None:
+        if _ncpa_get(ip_address, token, f"disk/logical/{name}/{DISK_PERCENT_LEAF}", port=port) is None:
             current_app.logger.info("NCPA disk node %r has no %s value; skipped.", name, DISK_PERCENT_LEAF)
             continue
         names.append(name)
@@ -924,7 +921,10 @@ def refresh_ncpa_partitions(ncpa_deployment, ip_address):
     NCPADevicePartition rows (whose Name is the NCPA node name). Used after
     install and whenever disks change. Commits. Returns the stored names.
     """
-    names = discover_disk_nodes(ip_address, ncpa_deployment.Token)
+    if ncpa_deployment.Port:
+        names = discover_disk_nodes(ip_address, ncpa_deployment.Token, port=deployed_ncpa_port(ncpa_deployment))
+    else:
+        names = discover_disk_nodes(ip_address, ncpa_deployment.Token)
     db.session.execute(
         sa.delete(NCPADevicePartition).where(
             NCPADevicePartition.NCPADeployID == ncpa_deployment.NCPADeployID
@@ -1065,6 +1065,7 @@ def install_ncpa(device_id, ncpa_deployment_status_id, ip_address):
         ncpa_deployment.Deployement_Method = DeploymentMethod.AUTOMATIC
         ncpa_deployment.Agent_Status = AgentStatus.DEPLOYED
         ncpa_deployment.Token = token
+        ncpa_deployment.Port = ncpa_port()
         ncpa_deployment.Error = None
         ncpa_deployment.NCPADeploymentStatusID = (
             ncpa_deployment_status_id

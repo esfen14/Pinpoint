@@ -97,13 +97,14 @@ Requirement coverage (each issue requirement maps to E/F/H; proof pending):
 |---|---|---|---|
 | 1 (partial) | Added nullable Port model, generated/reviewed multi-bind migration with deployed-row backfill, fallback and protection/planning tests; remaining port consumers not yet wired | `cd server && .venv/bin/python -m pytest tests/unit/test_ncpa.py tests/unit/test_port_lifecycle.py tests/unit/test_create_host_cfg.py tests/unit/test_ncpa_identity.py tests/unit/test_ncpa_deployment_runs.py -q`; `scripts/verify.sh backend` | Focused 211 passed; backend printed 2581 passed/14 skipped but shell timed out at 300 s after pytest output. Step 1 remains unticked. |
 | 2 (partial) | Added alternate-port identity probe test and lookup, preserved standard-port no-extra-query path; updated legacy probe fixture to use database | `cd server && .venv/bin/python -m pytest tests/unit/test_ncpa_identity.py::TestCollectIdentifiers -q` | 5 passed; step 1 remains unticked pending relocation, reachability and migration roundtrip. |
+| 3 (partial) | Added explicit reachability/disk probe port tests, stored port at install, suppressed potentially secret-bearing request exception log | `cd server && .venv/bin/python -m pytest tests/unit/test_ncpa_identity.py::test_disk_probe_uses_stored_port tests/unit/test_ncpa_identity.py::test_reachability_uses_explicit_installed_port tests/unit/test_ncpa_identity.py::TestInstallNcpa -q`; focused install assertions | 8 passed; install port assertions 2 passed. Step 1 remains unticked. |
 
 ## State for the next session
 
-- Last check run (exact command): `cd server && .venv/bin/python -m pytest tests/unit/test_ncpa_identity.py::TestCollectIdentifiers -q`
-- Result (first failing lines, or "green"): green, 5 passed.
-- Hypothesis: Identity probe recognizes a known device on its alternate port; reachability, relocation and migration roundtrip still need work.
-- Next action (one specific step, not "continue"): Add a failing non-default-port reachability probe test to `server/tests/unit/test_ncpa_identity.py`, then pass stored port through deployment reachability.
+- Last check run (exact command): `cd server && .venv/bin/python -m pytest tests/unit/test_ncpa_identity.py::TestInstallNcpa::test_success_records_listener_port tests/unit/test_ncpa_identity.py::TestInstallNcpa::test_deployment_stores_identity_evidence -q`
+- Result (first failing lines, or "green"): green, 2 passed.
+- Hypothesis: Install records port and probes can accept explicit port; relocation and migration roundtrip still need work.
+- Next action (one specific step, not "continue"): Add a failing relocation test with a device on port 5864, then update sweep/probe to use its port.
 
 ## Decisions and notes
 

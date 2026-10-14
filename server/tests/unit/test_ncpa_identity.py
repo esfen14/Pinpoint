@@ -185,6 +185,27 @@ class TestStoreDeploymentIdentity:
         assert ncpa.store_deployment_identity(9999, {"machine_id": MACHINE_ID, "macs": []}, CERT_1) == []
 
 
+def test_disk_probe_uses_stored_port(app, db_session, admin_user):
+    device = make_ncpa_device(db_session, admin_user, state=None)
+    deployment = db.session.scalar(sa.select(NCPADeployment).where(
+        NCPADeployment.NetworkDiscoveryID == device.NetDiscoveryID,
+        NCPADeployment.Token.is_not(None)))
+    deployment.Port = 5864
+    db.session.commit()
+    with patch.object(ncpa.requests, "get") as get:
+        get.return_value.status_code = 200
+        get.return_value.json.return_value = {"logical": {}}
+        ncpa.refresh_ncpa_partitions(deployment, device.IP_Address)
+    assert get.call_args.args[0].startswith("https://10.0.0.5:5864/")
+
+
+def test_reachability_uses_explicit_installed_port(app):
+    with app.app_context(), patch.object(ncpa.requests, "get") as get:
+        get.return_value.status_code = 200
+        assert ncpa.verify_ncpa_reachable("10.0.0.5", "token", port=5864)["success"]
+    assert get.call_args.args[0] == "https://10.0.0.5:5864/api"
+
+
 class TestInstallNcpa:
     """install_ncpa() with SSH, the helper and NCPA reachability mocked."""
 
@@ -248,6 +269,17 @@ class TestInstallNcpa:
 
         token = run.call_args.args[1].split()[-1].strip("'")
         assert len(token) == 32 and int(token, 16) >= 0
+
+    def test_success_records_listener_port(self, db_session, admin_user):
+        device = make_linux_device(db_session, admin_user)
+        with patched_config(ncpa.current_app, NCPA_PORT="5864"):
+            ok, _run, probe = self.run_install(device)
+        assert ok
+        deployment = db.session.scalar(sa.select(NCPADeployment).where(
+            NCPADeployment.NetworkDiscoveryID == device.NetDiscoveryID,
+            NCPADeployment.Token.is_not(None)))
+        assert deployment.Port == 5864
+        probe.assert_called_once_with(device.IP_Address, 5864)
 
     def test_redeploy_reuses_the_existing_token(self, db_session, admin_user):
         device = make_linux_device(db_session, admin_user)
