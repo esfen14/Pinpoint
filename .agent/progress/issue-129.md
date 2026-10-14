@@ -1,7 +1,7 @@
 # Issue #129: System Refinement Harden NCPA Deployment With Per-Device Port, Cleanup Action and Macro Secrets
 
 Branch: `issue-129-ncpa-hardening`
-Status: in-progress
+Status: blocked
 
 ## Finish condition
 
@@ -101,7 +101,7 @@ Requirement coverage (each issue requirement maps to E/F/H; proof pending):
 - Last check run (exact command): `git fetch -q origin && git checkout -b issue-129-ncpa-hardening origin/main && cat AGENTS.md`
 - Result (first failing lines, or "green"): green
 - Hypothesis: Work requires the sensitive-module review and existing-data migration decision mandated by workflow stop conditions.
-- Next action (one specific step, not "continue"): Obtain human review/authorization for sensitive NCPA, discovery, config and migration design before writing tests or changing code.
+- Next action (one specific step, not "continue"): Ask the owner to approve the privileged resource.cfg writer/installer permission approach, existing-data migration and sensitive-module security review, then resume the first port-tracking test.
 
 ## Decisions and notes
 
