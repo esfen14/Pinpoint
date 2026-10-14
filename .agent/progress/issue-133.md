@@ -1,7 +1,7 @@
 # Issue #133: Clear acknowledgements on recovery and audit History
 
 Branch: `issue-133-clear-ack-recovery-audit-history`
-Status: blocked
+Status: in-progress
 
 ## Finish condition
 
@@ -40,9 +40,9 @@ Copied from issue sections E, F, H. Tick only with observed evidence.
 - [x] Relevant lint and static analysis pass (`scripts/verify.sh all`: 0 errors, 26 warnings).
 - [ ] No unresolved critical defects: live validation/review needed; #141–#144 are open backend History gaps.
 - [x] Required automated tests added or updated (`test_status.py`, `HistoryPage.test.tsx`).
-- [x] All applicable automated tests pass (`scripts/verify.sh all`: 2382 backend passed/14 skipped, 518 frontend passed).
+- [x] All applicable automated tests pass (`scripts/verify.sh all`: 2382 backend passed/14 skipped, 518 frontend passed; targeted Playwright 2 passed).
 - [x] Relevant integration and regression tests pass: isolated suites and targeted VM/Playwright run passed (report); no claim of all possible live edge cases.
-- [x] Test results/evidence attached to PR ([verification comment](https://github.com/esfen14/Pinpoint/pull/145#issuecomment-6150729909); full log not attached).
+- [x] Test results/evidence attached to PR ([local verification](https://github.com/esfen14/Pinpoint/pull/145#issuecomment-6150729909), [live report/results](https://github.com/esfen14/Pinpoint/pull/145#issuecomment-6158903980)); full local log not uploaded.
 - [x] Inputs/config validated for changed logic (fresh status checks; no new config; isolated tests).
 - [x] Authorization enforced where required (existing route guards unchanged; `test_dashboard.py`, `test_history.py`, `PageAccess.test.tsx`).
 - [x] Sensitive data securely handled (source review: no new logging/secret persistence in changed logic).
@@ -54,7 +54,7 @@ Copied from issue sections E, F, H. Tick only with observed evidence.
 - [x] Deployment/migration steps documented if applicable: N/A; none required by change.
 - [x] PR references #133 (`Closes #133` in PR #145).
 - [x] PR describes implementation/testing (PR #145 body and verification comment).
-- [x] Required CI checks pass (PR #145 head `18ca01f3`: docs/backend/frontend SUCCESS).
+- [ ] Required CI checks pass on current head: previous head passed, but new live-spec/report head `dc628187` has no check conclusions yet.
 - [ ] Required reviewer approvals obtained: no reviews yet.
 - [x] Blocking review comments resolved: none currently present (PR #145 reviews/comments queried); recheck before completion.
 - [ ] All applicable acceptance criteria/deliverables complete: live G workflow and review pending.
@@ -96,13 +96,14 @@ Requirement coverage (section A problem, C changes, D guidelines, G testing, exc
 | resumed | Owner issue comment approved VM + Playwright for remaining functionality; added live-verification plan step, not previously available. Existing VM running; five targets up; base snapshot stamp is stale against newer installer base steps. | `scripts/verify.sh all > /tmp/opencode/issue-133-all.log 2>&1; result=$?; tail -40 /tmp/opencode/issue-133-all.log; exit "$result"`; `scripts/vmlab status`; `scripts/vmlab targets up` | green local all; VM running with `os-nagios-ready` snapshot but installer base-step stamp warning. No reset or provision. |
 | resumed | Owner authorized VM use; synced #133 server/client without reset, checked matching hashes, attempted Playwright admin smoke. | `scripts/playwright-lab --project admin`; private HTTP login probe | Red: Playwright admin login remains `/login`; private stored admin credential returns HTTP 401. Existing database preserved; no History acceptance run. |
 | 6 | Owner authorized disposable admin reset; recovered bootstrap via supported CLI, completed forced change through API, ran real web01 SSH failure → ack → recovery and focused History Playwright walk; wrote sanitized report/index and isolated lab spec/config. | `scripts/playwright-lab --project issue-133-live`; `scripts/verify.sh frontend`; `scripts/verify.sh docs` | Initial live spec locator failed on hidden option; refined selector. Green: 2 Playwright passed, frontend/docs OK. DB observed active ack 0, one actorless AUTO_RESOLVED row, unchanged on recheck. |
+| 7 | Reverified whole branch and posted live report/results on draft PR; inspected current PR checks/reviews. | `scripts/verify.sh all > /tmp/opencode/issue-133-all-live.log 2>&1; result=$?; grep -E 'passed,|Test Files|Tests  |problems|verify: all' /tmp/opencode/issue-133-all-live.log | tail -10; exit "$result"`; `gh pr view 145 --json ...` | green local all: 2382 backend/14 skipped, 518 frontend, 26 lint warnings/0 errors. Current PR head has no CI conclusions yet and no reviews. |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh docs`
-- Result (first failing lines, or "green"): green — `verify: docs OK`. Preceded by `scripts/playwright-lab --project issue-133-live` (2 passed) and `scripts/verify.sh frontend` (green; 26 warnings, 0 errors). Live database count: active ack 0, exactly one actorless AUTO_RESOLVED row for the real recovered SSH service, unchanged on recheck.
+- Last check run (exact command): `scripts/verify.sh all > /tmp/opencode/issue-133-all-live.log 2>&1; result=$?; grep -E 'passed,|Test Files|Tests  |problems|verify: all' /tmp/opencode/issue-133-all-live.log | tail -10; exit "$result"`
+- Result (first failing lines, or "green"): green — 2382 backend passed, 14 skipped; 518 frontend passed; 0 lint errors/26 warnings; `verify: all OK`. Targeted Playwright 2 passed; report and PR evidence comment posted.
 - Hypothesis: Targeted live flow works on #133 source synced into a preserved VM database. Full manual requirement audit, fresh-install/deployment evidence, remote CI on new spec, performance, and human review remain outstanding; #141–#144 are tracked backend gaps. Keep PR draft.
-- Next action (one specific step, not "continue"): Re-run `scripts/verify.sh all` on the changed branch, attach sanitized live report link to draft PR, and check CI/reviewer state; leave unsupported finish-condition items unticked.
+- Next action (one specific step, not "continue"): Observe PR #145 current-head docs/backend/frontend CI conclusions and request a human review; retain draft/progress file until remaining finish-condition evidence is supplied.
 
 ## Decisions and notes
 
