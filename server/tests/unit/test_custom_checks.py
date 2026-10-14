@@ -801,7 +801,12 @@ class TestPasswordRoutes:
             text = _create_host_cfg_file(_load_monitored_hosts()).read_text()
         finally:
             app.config["HOST_CONFIG_DIR"] = original
-        assert f"pinpoint_custom_check_radius!probe!{PASSWORD}!" in text
+        # With resource macros the literal password is replaced by a $USERn$ reference in
+        # hosts.cfg; the password itself is written to resource.cfg instead.
+        assert PASSWORD not in text, (
+            f"Literal password found in hosts.cfg — it must be replaced with a $USERn$ macro."
+        )
+        assert "$USER" in text, "Expected a $USERn$ macro reference in the generated hosts.cfg."
 
     def test_changing_a_check_keeps_the_password_when_it_is_left_blank(self, logged_in_client, db_session, status, writer):
         from app import secrets_store

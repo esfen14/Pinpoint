@@ -51,6 +51,7 @@ from app.system_models import DiscoveryStatus, DeploymentStatus, NetworkDiscover
 from app.network_discovery.discovery_settings import get_port_services, ncpa_port_key
 from app.network_discovery.plugin_settings import plugin_config
 from app.network_discovery import custom_checks
+from app.network_discovery import resource_macros
 from app.secrets_store import SecretsError
 from app.plugin_models import PluginConfiguration, PluginConfigurationOrigin
 import socket
@@ -217,6 +218,83 @@ def warn_if_world_readable(path):
             )
     except OSError:
         pass
+
+
+def collect_ncpa_secrets(plugin_facts):
+    """
+    Collect all NCPA tokens from *plugin_facts* (as returned by
+    load_host_plugin_facts()) into a flat {macro_key: plaintext} dict.
+
+    Each key is "ncpa_token:{device_id}" so it is stable per deployment and
+    unique across devices.  Devices with no token are skipped — they fall back
+    to the generic TCP check already.
+    """
+    secrets = {}
+    for device_id, facts in plugin_facts.items():
+        token = facts.get("ncpa", {}).get("token")
+        if token:
+            secrets[f"ncpa_token:{device_id}"] = token
+    return secrets
+
+
+def collect_custom_check_secrets():
+    """
+    Collect all custom-check passwords from the database into
+    {macro_key: plaintext}.  Each key is "custom_check:{config_id}:{field_name}".
+
+    Only non-paused checks with at least one stored secret are included.
+    Read-only; does not touch the session.  Raises SecretsError if a stored
+    password cannot be decrypted (the check will already have been skipped by
+    load_custom_checks / load_server_checks, so this is informational only).
+    """
+    from app.secrets_store import decrypt
+    secrets = {}
+    rows = db.session.scalars(
+        sa.select(PluginConfiguration).where(PluginConfiguration.Origin == PluginConfigurationOrigin.CUSTOM)
+    ).all()
+    for row in rows:
+        data = row.Configuration_Data or {}
+        if data.get("paused"):
+            continue
+        for field_name, stored in (data.get("secrets") or {}).items():
+            try:
+                plaintext = decrypt(stored)
+                secrets[f"custom_check:{row.PluginConfigurationID}:{field_name}"] = plaintext
+            except SecretsError as exc:
+                current_app.logger.warning(
+                    "Could not decrypt secret for check %s field %s: %s",
+                    row.Nagios_Service_Name, field_name, exc,
+                )
+    return secrets
+
+
+def build_secret_substitution_map(slot_map, ncpa_secrets, custom_secrets):
+    """
+    Return {plaintext: "$USERn$"} from the slot allocations and collected
+    secrets, for use as a substitution table over generated check_command
+    strings.  Only values that were actually allocated a slot are included.
+
+    Secrets never appear in log messages; only the macro key is safe to log.
+    """
+    all_secrets = {**ncpa_secrets, **custom_secrets}
+    result = {}
+    for macro_key, macro in slot_map.items():
+        plaintext = all_secrets.get(macro_key)
+        if plaintext:
+            result[plaintext] = macro
+    return result
+
+
+def apply_secret_substitutions(command, substitution_map):
+    """
+    Replace every plaintext secret in *command* with its "$USERn$" macro.
+    Returns the command string with all substitutions applied.  The original
+    check_command has already been validated by resolve_plugin_command, so
+    each plaintext value is a safe string; substitution is exact (str.replace).
+    """
+    for plaintext, macro in substitution_map.items():
+        command = command.replace(plaintext, macro)
+    return command
 
 
 def plan_plugin_services(plugin_name, service_label, port, transport, facts, overrides, app_config):
@@ -615,6 +693,27 @@ def _create_host_cfg_file(discovered_hosts, skipped=None):
     # config.py with the plugin settings saved from Settings -> Plugins (e.g. SNMP OIDs) in place.
     app_config = plugin_config()
 
+    # ── Resource macros ────────────────────────────────────────────────────────
+    # Collect every secret that must NOT appear in hosts.cfg, allocate a
+    # $USERn$ slot for each, and build a substitution map {plaintext: macro}.
+    # The substitution is applied to every check_command string before writing.
+    # Only secrets that have an active deployment / check reach this code path.
+    NAGIOS_RESOURCE_CFG = Path(current_app.config.get("NAGIOS_RESOURCE_CFG",
+                                                       "/usr/local/nagios/etc/resource.cfg"))
+    ncpa_secrets = collect_ncpa_secrets(plugin_facts)
+    custom_secrets = collect_custom_check_secrets()
+    all_secrets = {**ncpa_secrets, **custom_secrets}
+    try:
+        slot_map = resource_macros.allocate(all_secrets)
+    except resource_macros.ResourceMacroLimitError as exc:
+        # The limit is very unlikely in practice (255 slots), but refuse
+        # clearly rather than writing a broken config.
+        current_app.logger.error(
+            "Cannot generate hosts.cfg: resource macro slot limit exceeded. %s", exc
+        )
+        raise
+    substitution_map = build_secret_substitution_map(slot_map, ncpa_secrets, custom_secrets)
+
     # Plugins actually used by at least one service - each needs its own
     # `define command` object, rendered once at the end of the file.
     used_plugins = set()
@@ -694,7 +793,7 @@ def _create_host_cfg_file(discovered_hosts, skipped=None):
                 if not active_checks:
                     service["active_checks_enabled"] = False
                     service["notes"] = inactive_note
-                host_config.append(create_service(service, command))
+                host_config.append(create_service(service, apply_secret_substitutions(command, substitution_map)))
                 host_config.append(_add_space(4))
 
             for service_name, command, plugin_name in host_services:
@@ -712,7 +811,7 @@ def _create_host_cfg_file(discovered_hosts, skipped=None):
                     service["notes"] = inactive_note
 
                 host_config.append(
-                    create_service(service,command)
+                    create_service(service, apply_secret_substitutions(command, substitution_map))
                 )
                 host_config.append(_add_space(4))
 
@@ -734,7 +833,7 @@ def _create_host_cfg_file(discovered_hosts, skipped=None):
                 "host_name": custom_checks.SERVER_HOST_NAME,
                 "service_name": service_name,
                 "contact_groups": contact_group_name,
-            }, command))
+            }, apply_secret_substitutions(command, substitution_map)))
             host_config.append(_add_space(4))
 
     host_config.append(
@@ -759,7 +858,7 @@ def _create_host_cfg_file(discovered_hosts, skipped=None):
         """
     )
 
-    for os, group_devices in hostgroups.items():
+    for os_group, group_devices in hostgroups.items():
 
         devices = group_devices["devices"]
 
@@ -767,8 +866,8 @@ def _create_host_cfg_file(discovered_hosts, skipped=None):
             continue
 
         host_group={
-            "group_name": os,
-            "alias_name": os,
+            "group_name": os_group,
+            "alias_name": os_group,
             "member_list": ",".join(devices)
         } 
         host_config.append(create_hostgroup(host_group))
@@ -799,8 +898,35 @@ def _create_host_cfg_file(discovered_hosts, skipped=None):
     with open(cfg_path, "w") as f:
         # remember to f.write("string") here after you're done with discovering devices
         f.write("".join(host_config))
-    if custom_checks_use_secrets():
-        warn_if_world_readable(cfg_path)
+    # Set mode 0640: Nagios (group) can read; others cannot, so tokens and
+    # passwords in check_command arguments are not world-readable even before
+    # the macro migration is complete.
+    try:
+        os.chmod(cfg_path, 0o640)
+    except OSError as exc:
+        current_app.logger.warning("Could not set mode 0640 on %s: %s", cfg_path, exc)
+
+    # Write NCPA tokens and custom-check passwords to the PinPoint-owned block
+    # in resource.cfg so they are never stored in hosts.cfg.  Only write when
+    # there are secrets to store; leave resource.cfg untouched otherwise.
+    if slot_map and NAGIOS_RESOURCE_CFG.exists():
+        values = {**ncpa_secrets, **custom_secrets}
+        try:
+            resource_macros.write_resource_block(NAGIOS_RESOURCE_CFG, slot_map, values)
+        except OSError as exc:
+            # Non-fatal: hosts.cfg was already written with macro references.
+            # Nagios will use an empty string for the unexpanded macro until
+            # resource.cfg is fixed.  Log without including secret values.
+            current_app.logger.error(
+                "Could not write resource macro block to %s: %s", NAGIOS_RESOURCE_CFG, exc
+            )
+    elif slot_map:
+        current_app.logger.warning(
+            "Resource macro slots allocated but %s does not exist; "
+            "check_commands in hosts.cfg contain $USERn$ references that cannot "
+            "be expanded.  Create resource.cfg and regenerate.", NAGIOS_RESOURCE_CFG,
+        )
+
     return cfg_path
 
 def local_interface_ips():
@@ -1781,18 +1907,57 @@ def regenerate_and_apply_config_status():
     config is live), "unchanged" (nothing differed, Nagios was not reloaded) or
     "failed" (validation or apply failed and the running config is intact).
     Does not touch the database session beyond reading.
+
+    resource.cfg is backed up before hosts.cfg is generated (so macros are
+    written atomically with the config) and restored when validation fails so
+    the running config and resource file are always consistent.
     """
+    NAGIOS_RESOURCE_CFG = Path(current_app.config.get(
+        "NAGIOS_RESOURCE_CFG", "/usr/local/nagios/etc/resource.cfg"
+    ))
     with config_write_lock:
+        # Back up resource.cfg before generating the new hosts.cfg so we can
+        # roll back the macro block if validation fails.
+        resource_backup = None
+        if NAGIOS_RESOURCE_CFG.exists():
+            resource_backup = NAGIOS_RESOURCE_CFG.parent / (NAGIOS_RESOURCE_CFG.name + ".pinpoint_bak")
+            try:
+                shutil.copy2(str(NAGIOS_RESOURCE_CFG), str(resource_backup))
+            except OSError as exc:
+                current_app.logger.warning(
+                    "Could not back up %s before regenerating; rollback will be skipped: %s",
+                    NAGIOS_RESOURCE_CFG, exc,
+                )
+                resource_backup = None
+
         new_cfg = _create_host_cfg_file(_load_monitored_hosts())
 
         if config_unchanged(new_cfg):
             new_cfg.unlink(missing_ok=True)
+            if resource_backup:
+                resource_backup.unlink(missing_ok=True)
             return "unchanged", "Host configuration unchanged; Nagios was not reloaded."
 
         is_valid, result = _validate_config(new_cfg)
         if not is_valid:
+            new_cfg.unlink(missing_ok=True)
+            # Restore resource.cfg so macro slots are consistent with hosts.cfg.
+            if resource_backup and resource_backup.exists():
+                try:
+                    resource_macros.restore_resource_cfg(resource_backup, NAGIOS_RESOURCE_CFG)
+                    current_app.logger.info(
+                        "Restored resource.cfg from backup after failed validation."
+                    )
+                except OSError as exc:
+                    current_app.logger.error(
+                        "Could not restore resource.cfg after failed validation: %s", exc
+                    )
+            if resource_backup:
+                resource_backup.unlink(missing_ok=True)
             return "failed", f"Config failed to validate: {result}"
 
+        if resource_backup:
+            resource_backup.unlink(missing_ok=True)
         applied, message = _apply_new_host_cfg(new_cfg)
         return ("applied" if applied else "failed"), message
 

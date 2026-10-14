@@ -116,6 +116,10 @@ injection and secret-exposure review.
 - Never log or return credentials, passwords, tokens, SNMP communities, private
   keys, or secret-bearing command arguments.
 - Preserve SSH fingerprint confirmation and Nagios pre-apply validation.
+- Check secrets must not appear in process arguments, including child processes.
+  Nagios resource macros expand before execution; use a verified credential file
+  or stdin input rather than an expanded macro passed to a password/token flag.
+  Do not claim an unsupported plugin meets this requirement.
 
 ## Frontend rules
 

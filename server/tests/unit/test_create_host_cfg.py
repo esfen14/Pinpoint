@@ -573,7 +573,9 @@ class TestCreateHostCfgFile:
         assert services["host-d"] == {"ntp-123-udp": "pinpoint_nd_ntp!123!"}
 
         assert all(cmd.startswith("pinpoint_nd_snmp!") for cmd in services["host-a"].values())
-        assert all(cmd.startswith("pinpoint_nd_ncpa!5693!tokenB!") for cmd in services["host-b"].values())
+        # With resource macros, the NCPA token is replaced by a $USERn$ reference.
+        assert all(cmd.startswith("pinpoint_nd_ncpa!5693!$USER") for cmd in services["host-b"].values())
+        assert all("tokenB" not in cmd for cmd in services["host-b"].values())
 
     def test_backfilled_port_preserves_existing_ncpa_config(self, app, db_session, admin_user, plugin_config, tmp_path):
         device = make_device(db_session, admin_user, "existing", "10.0.0.12")
@@ -914,3 +916,143 @@ class TestAlertContacts:
         assert "define contactgroup" not in text
         assert "contact_groups" not in text
         assert "define host" in text and "define service" in text
+
+
+# ==========================================================
+# RESOURCE MACRO INTEGRATION (issue #129)
+# Guarded: only collected when resource_macros exists.
+# ==========================================================
+
+@pytest.mark.usefixtures("all_monitoring_plugins")
+class TestResourceMacroIntegration:
+    """
+    After resource_macros.py is created and wired into create_host_cfg.py, the
+    generated hosts.cfg must not expose literal NCPA tokens or custom-check
+    passwords.  Until then, these tests are expected to fail at collection time
+    because the import inside each test method (via pytest.importorskip) will
+    skip the test — keeping the rest of the file green.
+
+    Once the module exists, the tests will be collected and will fail until
+    create_host_cfg.py is updated to call resource_macros.  That is the
+    desired red→green progression for issue #129.
+    """
+
+    _SECRET_TOKEN = "verysecrettoken99"
+    _NCPA_METRICS_LOCAL = [
+        {"metric": "cpu", "path": "cpu/percent", "warning": "50", "critical": "80"},
+    ]
+
+    def _generate(self, app, db_session, admin_user, tmp_path):
+        """
+        Helper: create one NCPA device, write a minimal resource.cfg, run
+        _create_host_cfg_file(), and return (hosts_cfg_text, resource_cfg_text).
+        """
+        resource_macros = pytest.importorskip(
+            "app.network_discovery.resource_macros",
+            reason="resource_macros.py not yet implemented (issue #129)",
+        )
+
+        device = make_device(db_session, admin_user, "ncpa-macro-host", "10.0.0.55")
+        make_ncpa_deployment(db_session, device, self._SECRET_TOKEN, [])
+        db_session.session.commit()
+
+        discovered = {
+            "10.0.0.0/24": {
+                "10.0.0.55": make_host(
+                    "ncpa-macro-host",
+                    tcp={"5693": "ncpa"},
+                    net_discovery_id=device.NetDiscoveryID,
+                )
+            }
+        }
+
+        resource_cfg = tmp_path / "resource.cfg"
+        resource_cfg.write_text("$USER1$=/usr/local/nagios/libexec\n")
+
+        with patched_config(
+            app,
+            HOST_CONFIG_DIR=tmp_path,
+            NAGIOS_RESOURCE_CFG=str(resource_cfg),
+            SNMP_OIDS=[],
+            SNMP_COMMUNITY_STRING="public",
+            SNMP_PORT="161",
+            NCPA_METRICS=self._NCPA_METRICS_LOCAL,
+            NCPA_PORT="5693",
+        ):
+            cfg_path = _create_host_cfg_file(discovered)
+
+        return cfg_path.read_text(), resource_cfg.read_text()
+
+    def test_ncpa_token_absent_from_hosts_cfg(
+        self, app, db_session, admin_user, tmp_path
+    ):
+        """Literal NCPA token must NOT appear anywhere in the generated hosts.cfg."""
+        hosts_cfg_text, _ = self._generate(app, db_session, admin_user, tmp_path)
+        assert self._SECRET_TOKEN not in hosts_cfg_text, (
+            f"Literal token '{self._SECRET_TOKEN}' found in hosts.cfg. "
+            "It must be replaced with a $USERn$ macro."
+        )
+
+    def test_ncpa_command_uses_user_macro(
+        self, app, db_session, admin_user, tmp_path
+    ):
+        """The NCPA check_command must reference a $USERn$ macro, not the token."""
+        hosts_cfg_text, _ = self._generate(app, db_session, admin_user, tmp_path)
+        ncpa_commands = re.findall(
+            r"check_command\s+(pinpoint_nd_ncpa\S+)", hosts_cfg_text
+        )
+        assert ncpa_commands, "No NCPA check_command lines found in hosts.cfg"
+        for cmd in ncpa_commands:
+            assert "$USER" in cmd, (
+                f"check_command '{cmd}' does not use a $USERn$ macro — "
+                "the token must be stored in resource.cfg."
+            )
+
+    def test_custom_check_password_absent_from_hosts_cfg(
+        self, app, db_session, admin_user, tmp_path
+    ):
+        """A custom-check credential must not appear literally in hosts.cfg."""
+        pytest.importorskip(
+            "app.network_discovery.resource_macros",
+            reason="resource_macros.py not yet implemented (issue #129)",
+        )
+
+        SECRET_PASSWORD = "SuperSecretDBPass!"
+        device = make_device(
+            db_session,
+            admin_user,
+            "db-macro-host",
+            "10.0.0.61",
+            plugin_variables={"mysql": {"user": "nagios", "password": SECRET_PASSWORD}},
+        )
+        db_session.session.commit()
+
+        discovered = {
+            "10.0.0.0/24": {
+                "10.0.0.61": make_host(
+                    "db-macro-host",
+                    tcp={"3306": "mysql"},
+                    net_discovery_id=device.NetDiscoveryID,
+                )
+            }
+        }
+        resource_cfg = tmp_path / "resource.cfg"
+        resource_cfg.write_text("$USER1$=/usr/local/nagios/libexec\n")
+
+        with patched_config(
+            app,
+            HOST_CONFIG_DIR=tmp_path,
+            NAGIOS_RESOURCE_CFG=str(resource_cfg),
+            SNMP_OIDS=[],
+            SNMP_COMMUNITY_STRING="public",
+            SNMP_PORT="161",
+            NCPA_METRICS=self._NCPA_METRICS_LOCAL,
+            NCPA_PORT="5693",
+        ):
+            cfg_path = _create_host_cfg_file(discovered)
+
+        hosts_cfg_text = cfg_path.read_text()
+        assert SECRET_PASSWORD not in hosts_cfg_text, (
+            f"Literal password '{SECRET_PASSWORD}' found in hosts.cfg. "
+            "Credentials must be stored in resource.cfg via $USERn$ macros."
+        )

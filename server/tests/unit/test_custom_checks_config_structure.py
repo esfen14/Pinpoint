@@ -104,5 +104,6 @@ def test_the_whole_file_is_consistent(app, db_session, status, tmp_path):
             assert "-H" not in line
         if field(command, "command_name") in ("pinpoint_custom_check_by_ssh", "pinpoint_custom_check_ping"):
             assert "-H $HOSTADDRESS$" in line
-    assert "Lab-Pw_1" in text  # Nagios needs it in the command: this is the documented trade-off
+    assert "Lab-Pw_1" not in text  # Password replaced by $USERn$ macro in resource.cfg (issue #129)
+    assert "$USER" in text  # At least one $USERn$ macro reference must be present for the password
     assert "localhost.cfg" not in text
