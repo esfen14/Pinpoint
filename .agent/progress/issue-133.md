@@ -33,12 +33,12 @@ Copied from issue sections E, F, H. Tick only with observed evidence.
 ### H — Definition of done
 - [x] All mandatory acceptance criteria satisfied by isolated tests, audit and targeted live service recovery; backend-dependent gaps tracked separately. Full manual History audit not claimed.
 - [x] Required functionality works on synced VM for one real service lifecycle and targeted browser History interactions; see live report.
-- [ ] Existing behavior not unintentionally broken in deployment: isolated regressions and targeted browser pass; full live regression breadth not observed.
+- [ ] Existing behavior not unintentionally broken in deployment: isolated regressions and targeted browser pass; broader deployed regression/clean-install scope needs reviewer decision.
 - [x] Applicable edge cases handled in isolated tests (stale/missing/failed/empty, deleted target, rollback, repeated poll).
 - [x] Code follows existing architecture and conventions (source diff; shared history builder).
 - [x] No unnecessary duplicate functionality (shared `_new_ack_history` used).
 - [x] Relevant lint and static analysis pass (`scripts/verify.sh all`: 0 errors, 26 warnings).
-- [ ] No unresolved critical defects: live validation/review needed; #141–#144 are open backend History gaps.
+- [ ] No unresolved critical defects: reviewer must classify open backend History gaps #141–#144 and any new findings before sign-off.
 - [x] Required automated tests added or updated (`test_status.py`, `HistoryPage.test.tsx`).
 - [x] All applicable automated tests pass (`scripts/verify.sh all`: 2382 backend passed/14 skipped, 518 frontend passed; targeted Playwright 2 passed).
 - [x] Relevant integration and regression tests pass: isolated suites and targeted VM/Playwright run passed (report); no claim of all possible live edge cases.
@@ -47,7 +47,7 @@ Copied from issue sections E, F, H. Tick only with observed evidence.
 - [x] Authorization enforced where required (existing route guards unchanged; `test_dashboard.py`, `test_history.py`, `PageAccess.test.tsx`).
 - [x] Sensitive data securely handled (source review: no new logging/secret persistence in changed logic).
 - [x] Errors controlled (poll failure/empty/stale and rollback tests).
-- [ ] Performance/reliability requirements met in deployment: one live recovery worked, but no timed/repeated load or extended reliability run.
+- [ ] Performance/reliability requirements met in deployment: bounded repeated-poll VM run passed; no scale/load benchmark or extended soak. Reviewer to accept this scope or specify measurable test.
 - [x] Technical documentation updated (five specification files and audit).
 - [x] User documentation updated if applicable: N/A; issue marks it N/A.
 - [x] New configuration parameters documented: N/A; none added.
@@ -57,7 +57,7 @@ Copied from issue sections E, F, H. Tick only with observed evidence.
 - [ ] Required CI checks pass on current head: earlier head passed, but latest head with new Playwright/report changes has no check conclusions yet.
 - [ ] Required reviewer approvals obtained: no reviews yet.
 - [x] Blocking review comments resolved: none currently present (PR #145 reviews/comments queried); recheck before completion.
-- [ ] All applicable acceptance criteria/deliverables complete: live G workflow and review pending.
+- [ ] All applicable acceptance criteria/deliverables complete for merge: G manual path accepted by owner in chat and targeted live flow passed; outstanding scope decisions, current-head CI, defect triage and formal review remain.
 
 Requirement coverage (section A problem, C changes, D guidelines, G testing, exclusions and E/F/H):
 
@@ -106,13 +106,14 @@ Requirement coverage (section A problem, C changes, D guidelines, G testing, exc
 | resumed | User confirmed manual path suffices, requests more tests, and has no code-change feedback; expanded plan for bounded pagination/error and reversible reliability checks. | `scripts/verify.sh docs`; `gh issue view 133 --json title,body,comments`; `git pull --ff-only` | green docs, issue retains finish condition and VM/Playwright approval; no new issue comment about manual decision (chat-only). |
 | 9 | Added browser-only intercepted pagination/error-retry test and sanitized report/index; existing VM has only 24 alert events, so actual backend page two is unverified. | `scripts/playwright-lab --project issue-133-live`; `scripts/verify.sh frontend`; `scripts/verify.sh docs` | First real-page assertion failed correctly (24 rows); first fixture failed due real empty page-two body. Corrected fixture; full project 3/3, frontend/docs green. |
 | 10 | Reversible web01 SSH fault to retain ack across two scheduler polls, then recovery and later count query; documented constrained evidence and restored SSH. | bounded private lab probe; `scripts/vmlab targets up`; `scripts/vmlab targets fix web01 ssh`; `scripts/verify.sh all > /tmp/opencode/issue-133-more-all.log 2>&1; result=$?; grep -E 'passed,|Test Files|Tests  |problems|verify: all' /tmp/opencode/issue-133-more-all.log | tail -10; exit "$result"` | Still-failing active 1/auto 1 after 145s; recovery active 0/auto 2; later count same. Probe timed out after restoration before final print; follow-up read confirmed service OK. All-stage verification green (2382 backend/14 skipped, 518 frontend, 26 lint warnings/0 errors). |
+| resumed | User requested Definition-of-Done clarity; updated issue #133 section H with evidence-linked checked/open boxes, limitations and explicit reviewer decisions; reconciled progress unchecked items. | `scripts/verify.sh all > /tmp/opencode/issue-133-more-all.log 2>&1; result=$?; grep -E 'passed,|Test Files|Tests  |problems|verify: all' /tmp/opencode/issue-133-more-all.log | tail -10; exit "$result"`; `gh issue view 133 --json body` | Local all green (2382 backend/14 skipped, 518 frontend, 26 lint warnings); issue H now has 21 checked and 6 open items. No PR approval or current-head CI result claimed. |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh all > /tmp/opencode/issue-133-more-all.log 2>&1; result=$?; grep -E 'passed,|Test Files|Tests  |problems|verify: all' /tmp/opencode/issue-133-more-all.log | tail -10; exit "$result"`
-- Result (first failing lines, or "green"): green — 2382 backend passed, 14 skipped; 518 frontend passed; 26 lint warnings, 0 errors; `verify: all OK`. Browser project 3/3. Live poll retention and post-recovery idempotence observed, with harness timeout after restoration; later read-only count confirmed stable result.
+- Last check run (exact command): `scripts/verify.sh docs`
+- Result (first failing lines, or "green"): green — `verify: docs OK`. Earlier in this session `scripts/verify.sh all` passed: 2382 backend/14 skipped, 518 frontend, 26 lint warnings/0 errors. Issue #133 section H now lists evidence and six unchecked merge conditions; no CI/review result claimed.
 - Hypothesis: Issue flows tested with bounded live evidence. Actual backend page two/CGI outage and load benchmark remain unverified; current-head CI and human PR review remain outstanding. #141–#144 are tracked backend gaps. Keep PR draft.
-- Next action (one specific step, not "continue"): Ask a human reviewer to inspect PR #145 and decide if actual backend page-two/CGI-outage/load or clean-install evidence is required; obtain CI conclusions on the latest head before marking ready.
+- Next action (one specific step, not "continue"): Have a human reviewer answer issue #133 section H's explicit scope/defect-triage questions (broader deployed regression, load/soak, backend page two/CGI outage, clean install), then obtain CI conclusions and a formal PR review before marking ready.
 
 ## Decisions and notes
 
@@ -126,5 +127,6 @@ Requirement coverage (section A problem, C changes, D guidelines, G testing, exc
 - User confirmed in chat that their manual History path plus targeted Playwright coverage satisfies the manual page-walk requirement, requested more live testing, and reported no desired code changes. This is not GitHub reviewer approval or a blanket deployment sign-off. Expanded plan steps 8–9 address live pagination/error display and bounded reliability; keep the appliance intact.
 - User reported in chat that their manual History path (filter host/service, see CRITICAL/recovery, expand detail, Refresh) worked. This is owner-reported, not agent-observed; record it separately from Playwright evidence. User approved further Playwright in chat and in https://github.com/esfen14/Pinpoint/issues/133#issuecomment-6159056949. This changes the plan: step 7 expands read-only coverage on the existing authorized VM. Human review approval and deployment/reliability sign-off remain unobserved. Current draft PR head has no check conclusions.
 - Owner authorized resetting disposable lab admin password in https://github.com/esfen14/Pinpoint/issues/133#issuecomment-6158705038. `flask recover-bootstrap-admin` succeeded with a private temporary password; the normal authenticated change-password route completed the forced change. Corrected the private lab admin email from the uniquely identified bootstrap account (the old state email mismatched); values were never printed. Targeted live evidence in `docs/test-runs/2026-10-14-issue-133-live/REPORT.md` with caveat: synced source on preserved issue #113 VM DB, not a clean #133 install; VM Git HEAD remains old despite matching source/build hashes.
+- User asked to update the Definition of Done; issue #133 section H now reflects evidence-linked 21 checked/6 open boxes and explicitly distinguishes owner-reported manual acceptance, browser-intercepted page-two/error checks, unrun clean install/CGI outage/load, and formal PR review. This is an issue-body update, not new product code or a blanket waiver. Verify the final PR head separately.
 - Additional evidence posted at https://github.com/esfen14/Pinpoint/pull/145#issuecomment-6159572769. Current head `02f3d308` still has no CI conclusions or review approvals when queried; user did not grant a PR review approval by saying there were no code changes desired. Actual backend page two/CGI outage and load benchmark require a human scope decision before attempting invasive setup or marking reliability satisfied.
 - Draft PR: https://github.com/esfen14/Pinpoint/pull/145. `gh pr edit` hits deprecated projectCards GraphQL; body updated via `gh api PATCH`. Backend gaps #141–#144 are tracked out of scope. Local full verification log is `/tmp/opencode/issue-133-all.log`; result excerpts are posted in a PR comment, but the full log is not uploaded.
