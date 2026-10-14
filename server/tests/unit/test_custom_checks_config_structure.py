@@ -55,7 +55,7 @@ def field(block, key):
     return match.group(1) if match else None
 
 
-def test_the_whole_file_is_consistent(app, db_session, status, tmp_path):
+def test_the_whole_file_is_consistent(app, db_session, status, tmp_path, plain_alert_email):
     device = run_scan(db, status, scan("10.0.0.5", mac=MAC_1, tcp={22: "ssh"}))[(NET, "10.0.0.5")]
     device.Nagios_Host_Name = "rack-01"
     add_check("check_by_ssh", "Disk test", {"command": "/bin/true", "user": "pinpoint-test"}, device)

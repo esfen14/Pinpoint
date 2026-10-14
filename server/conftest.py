@@ -273,6 +273,20 @@ def inactive_user(db_session, admin_role):
 
 
 @pytest.fixture()
+def plain_alert_email(monkeypatch):
+    """
+    Generate the Nagios config with Nagios's stock plain-text alert commands.
+
+    The HTML alert-email commands are written only when the notification script
+    path is a valid Linux path, so the config differs between Windows and Linux.
+    Tests that compare the whole generated file with a fixed expectation use this
+    to get the same output everywhere.
+    """
+    from app.network_discovery import host_config_templates
+    monkeypatch.setattr(host_config_templates, "notification_script_path", lambda: None)
+
+
+@pytest.fixture()
 def logged_in_client(client, db_session, admin_user):
     """
     A test client that is already logged in as admin_user.

@@ -626,6 +626,11 @@ def _create_host_cfg_file(discovered_hosts, skipped=None):
     policy = notification_policy()
     if policy.Quiet_Hours or policy.Host_Options != "d,u,r,f,s" or policy.Service_Options != "w,u,c,r,f,s":
         host_config.append(create_contact_template("pinpoint-contact"))
+    # The commands contacts use to send alert email (formatted HTML, or the
+    # stock plain-text ones when the script is unavailable).
+    notification_commands = create_notification_commands() if users else ""
+    if notification_commands:
+        host_config.append(notification_commands)
         host_config.append(_add_space(4))
 
     for user in users:
