@@ -1,7 +1,7 @@
 # Issue #128: System Refinement Add Load Average, Swap and Disk I/O Defaults and Guided Process Check
 
 Branch: `issue-128-ncpa-process-check`
-Status: blocked
+Status: in-progress
 
 ## Finish condition
 
@@ -54,15 +54,19 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 | resumed | Re-read issue #128 and progress; no new comments resolving lab access; re-ran last check | `docker info --format '{{.ServerVersion}}'` | `permission denied while trying to connect to the docker API at unix:///var/run/docker.sock` (exit 1); remains blocked |
 
+| resumed | User requested retry; refreshed group context reaches Docker daemon | `sg docker -c "docker info --format '{{.ServerVersion}}'"` | green: Docker 29.9.0 |
+
 ## State for the next session
 
-- Last check run (exact command): `docker info --format '{{.ServerVersion}}'`
-- Result (first failing lines, or "green"): `permission denied while trying to connect to the docker API at unix:///var/run/docker.sock` (exit 1).
-- Hypothesis: Docker CLI is now present but this user cannot access the daemon, so the approved lab cannot be started here.
-- Next action (one specific step, not "continue"): Grant this environment Docker daemon access for the approved lab with two NCPA 3.5.0 targets, or supply sanitized probe results (paths, units, process queryargs) and two-target Nagios verification evidence.
+- Last check run (exact command): `sg docker -c "docker info --format '{{.ServerVersion}}'"`
+- Result (first failing lines, or "green"): green: Docker 29.9.0.
+- Hypothesis: Account membership is fixed; the agent inherited old groups, so use `sg docker` for lab commands.
+- Next action (one specific step, not "continue"): Provision isolated Docker NCPA 3.5.0 agents and probe confirmed metric paths before changing defaults.
 
 ## Decisions and notes
 
 - Issue's finish condition covers the stated requirements by E, F and H; database migrations are explicitly N/A; new endpoints are only applicable if implementation needs them.
 - `spec files/Engineering_Standards.md` marks `app/network_discovery/` sensitive. Before changing it, review injection, secrets and Nagios pre-apply validation.
 - User approved Docker lab usage; Git author identity has been configured and the plan was committed/pushed in df6e4afc. Initially this environment had no Docker executable; on resume the CLI exists but Docker daemon access is denied. `docs/manuals/Local_Lab.md` also notes the Docker targets cannot test NCPA installation because they lack init; a suitable two-agent lab is still needed. No agent probes or lab claims have been made.
+
+- Docker access blocker resolved on user retry via `sg docker`; existing Docker lab authorization remains applicable.
