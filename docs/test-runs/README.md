@@ -48,6 +48,7 @@ table while you test, not afterward.
 
 | Run | Kind | Commit | Result | Report |
 |---|---|---|---|---|
+| 2026-10-14 issue-128-ncpa-probe | Two isolated NCPA 3.5.0 API probes | `c006935b` | Partial: agent capabilities only; application/Nagios pending | [REPORT.md](2026-10-14-issue-128-ncpa-probe/REPORT.md) |
 | [2026-10-14 issue-141-docker-history](2026-10-14-issue-141-docker-history/REPORT.md) | Docker Nagios host acknowledgement/recovery/reproblem | `43c1be42` | Partial: host list/filter/detail pass; service and manual-unacknowledge not run | [REPORT.md](2026-10-14-issue-141-docker-history/REPORT.md) |
 | [2026-10-14 issue-133-owner-path-recheck](2026-10-14-issue-133-owner-path-recheck/REPORT.md) | Existing VM, independent real-event owner History path repeat | app `4dd006e3` synced; harness base `93b8361e` plus test assertion | Pass for exact filtered CRITICAL/recovery/detail/Refresh path; no PR approval implied | [REPORT.md](2026-10-14-issue-133-owner-path-recheck/REPORT.md) |
 | [2026-10-14 issue-133-poll-reliability](2026-10-14-issue-133-poll-reliability/REPORT.md) | Existing VM reversible SSH fault, still-failing ack and repeat recovery poll | app `4dd006e3` synced, branch `30bd3676` before report | Partial: lifecycle/idempotence pass; no load or failed-CGI run | [REPORT.md](2026-10-14-issue-133-poll-reliability/REPORT.md) |

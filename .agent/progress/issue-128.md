@@ -37,7 +37,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 ## Plan
 
-1. [ ] Obtain lab-agent access/approval and confirm valid NCPA paths, units and process-check syntax on NCPA 3.5.0; record lab evidence in `docs/test-runs/` (only after human direction).
+1. [x] Obtain lab-agent access/approval and confirm valid NCPA paths, units and process-check syntax on NCPA 3.5.0; record lab evidence in `docs/test-runs/` (only after human direction).
 2. [ ] Test-first backend defaults and unsupported-path skipping in `server/tests/test_plugin_registry.py` (locate actual test paths), then implement `server/config.py`, `server/app/network_discovery/plugin_registry.py` and any necessary host planning code; verify backend.
 3. [ ] Test-first process-path validator in `server/tests/test_plugin_settings.py` (locate actual path), document pattern in `docs/manuals/Custom_Checks_Manual.md`; verify backend/docs.
 4. [ ] Test-first guided process add, invalid name, row review/save in `client/src/test/PluginSettings.test.tsx`; implement in `client/src/components/settings/PluginSettings.tsx` and types/API only if necessary; verify frontend.
@@ -56,12 +56,14 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 | resumed | User requested retry; refreshed group context reaches Docker daemon | `sg docker -c "docker info --format '{{.ServerVersion}}'"` | green: Docker 29.9.0 |
 
+| 1 | Probed official NCPA 3.5.0 on two network-disabled containers; documented supported paths and absent load nodes | Direct authenticated API probes; `scripts/verify.sh docs` | Probe passed for swap, disk counters and exact process count; load not available; docs check below |
+
 ## State for the next session
 
 - Last check run (exact command): `sg docker -c "docker info --format '{{.ServerVersion}}'"`
 - Result (first failing lines, or "green"): green: Docker 29.9.0.
 - Hypothesis: Account membership is fixed; the agent inherited old groups, so use `sg docker` for lab commands.
-- Next action (one specific step, not "continue"): Provision isolated Docker NCPA 3.5.0 agents and probe confirmed metric paths before changing defaults.
+- Next action (one specific step, not "continue"): Add failing backend tests for confirmed defaults and per-metric skipping.
 
 ## Decisions and notes
 
@@ -70,3 +72,5 @@ Requirement coverage (every requirement the issue states, and the check that pro
 - User approved Docker lab usage; Git author identity has been configured and the plan was committed/pushed in df6e4afc. Initially this environment had no Docker executable; on resume the CLI exists but Docker daemon access is denied. `docs/manuals/Local_Lab.md` also notes the Docker targets cannot test NCPA installation because they lack init; a suitable two-agent lab is still needed. No agent probes or lab claims have been made.
 
 - Docker access blocker resolved on user retry via `sg docker`; existing Docker lab authorization remains applicable.
+
+- Confirmed API paths justify swap and sda read/write defaults; no load-average path exists on the probed version, so omit it per issue C.2. Disk device paths are editable and skipped where absent.
