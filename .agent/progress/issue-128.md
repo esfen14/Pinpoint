@@ -50,16 +50,17 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | resumed | Checked issue and branch after Docker lab approval; inspected lab instructions | `docker info --format '{{.ServerVersion}}'` | Cannot run: `/bin/bash: line 1: docker: command not found` |
+| resumed | Re-ran last check; Docker CLI is now available but daemon access denied; issue has no new comment addressing blocker | `docker info --format '{{.ServerVersion}}'` | `permission denied while trying to connect to the docker API at unix:///var/run/docker.sock` |
 
 ## State for the next session
 
 - Last check run (exact command): `docker info --format '{{.ServerVersion}}'`
-- Result (first failing lines, or "green"): `/bin/bash: line 1: docker: command not found` (exit 127).
-- Hypothesis: Docker CLI/runtime is not available in this execution environment, so approved Docker lab cannot be started here.
-- Next action (one specific step, not "continue"): Provide a Docker-enabled execution environment with two NCPA 3.5.0 targets, or supply sanitized probe results (paths, units, process queryargs) and two-target Nagios verification evidence.
+- Result (first failing lines, or "green"): `permission denied while trying to connect to the docker API at unix:///var/run/docker.sock` (exit 1).
+- Hypothesis: Docker CLI is now present but this user cannot access the daemon, so the approved lab cannot be started here.
+- Next action (one specific step, not "continue"): Grant this environment Docker daemon access for the approved lab with two NCPA 3.5.0 targets, or supply sanitized probe results (paths, units, process queryargs) and two-target Nagios verification evidence.
 
 ## Decisions and notes
 
 - Issue's finish condition covers the stated requirements by E, F and H; database migrations are explicitly N/A; new endpoints are only applicable if implementation needs them.
 - `spec files/Engineering_Standards.md` marks `app/network_discovery/` sensitive. Before changing it, review injection, secrets and Nagios pre-apply validation.
-- User approved Docker lab usage; Git author identity has been configured and the plan was committed/pushed in df6e4afc. However this environment has no Docker executable (`docker: command not found`). `docs/manuals/Local_Lab.md` also notes the Docker targets cannot test NCPA installation because they lack init; a suitable two-agent lab is still needed. No agent probes or lab claims have been made.
+- User approved Docker lab usage; Git author identity has been configured and the plan was committed/pushed in df6e4afc. Initially this environment had no Docker executable; on resume the CLI exists but Docker daemon access is denied. `docs/manuals/Local_Lab.md` also notes the Docker targets cannot test NCPA installation because they lack init; a suitable two-agent lab is still needed. No agent probes or lab claims have been made.
