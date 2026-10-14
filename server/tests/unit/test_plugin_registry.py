@@ -385,3 +385,12 @@ class TestConfirmedNcpaDefaults:
         ], 'available_paths': frozenset({'cpu/percent'})})
         assert checks[0].skip_reason is None
         assert checks[1].skip_reason == 'NCPA metric missing: the agent does not provide this path.'
+
+    def test_unreachable_agent_keeps_established_checks_but_defers_new_defaults(self):
+        from config import Config
+        from app.network_discovery.plugin_registry import ncpa_checks
+        checks = ncpa_checks({'metrics': Config.NCPA_METRICS, 'partitions': ['|'],
+                              'available_paths': None, 'paths_unverified': True})
+        assert [check.metric for check in checks if check.skip_reason is None] == ['cpu', 'memory', 'disk_root']
+        assert [check.metric for check in checks if check.skip_reason] == ['swap', 'disk_read', 'disk_write']
+        assert all('could not be verified' in check.skip_reason for check in checks if check.skip_reason)

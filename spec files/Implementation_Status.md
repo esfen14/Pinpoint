@@ -145,8 +145,8 @@ implemented.
 
 The default metric table preserves CPU, memory and per-partition disk and adds
 swap percent and sda read/write rates. Agent inventory probes at configuration
-time skip unsupported paths individually; unreachable inventories skip metrics
-with a retry reason. Settings → Plugins offers a guided exact process-count row
+time skip unsupported paths individually; unreachable inventories defer the added defaults
+with a retry reason and preserve established checks. Settings → Plugins offers a guided exact process-count row
 for review before saving. Existing saved tables are unchanged until reset.
 NCPA 3.5.0 capability probes found no load-average node, so that default remains
 unavailable. Application/Nagios acceptance and final CI evidence remain pending;

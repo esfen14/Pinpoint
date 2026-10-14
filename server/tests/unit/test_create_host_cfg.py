@@ -920,7 +920,7 @@ class TestNcpaPathVerification:
         from app.network_discovery import create_host_cfg as module
         monkeypatch.setattr(module.requests, 'get', Mock(side_effect=module.requests.Timeout('secret-token')))
         module.ncpa_path_cache.clear()
-        assert module.probe_ncpa_paths('10.78.0.2', 5693, 'secret-token') == frozenset()
+        assert module.probe_ncpa_paths('10.78.0.2', 5693, 'secret-token') is None
 
     @pytest.mark.parametrize('status,body', [
         (500, {'root': {'cpu': {'percent': []}}}),
@@ -937,7 +937,7 @@ class TestNcpaPathVerification:
         get = Mock(return_value=response)
         monkeypatch.setattr(module.requests, 'get', get)
         module.ncpa_path_cache.clear()
-        assert module.probe_ncpa_paths('10.78.0.2', 5693, 'private-token') == frozenset()
+        assert module.probe_ncpa_paths('10.78.0.2', 5693, 'private-token') is None
         response.close.assert_called_once()
 
     def test_limits_response_size(self, monkeypatch):
@@ -947,5 +947,5 @@ class TestNcpaPathVerification:
         response.iter_content.return_value = [b'x' * (2 * 1024 * 1024 + 1)]
         monkeypatch.setattr(module.requests, 'get', Mock(return_value=response))
         module.ncpa_path_cache.clear()
-        assert module.probe_ncpa_paths('10.78.0.2', 5693, 'test-token') == frozenset()
+        assert module.probe_ncpa_paths('10.78.0.2', 5693, 'test-token') is None
         response.close.assert_called_once()

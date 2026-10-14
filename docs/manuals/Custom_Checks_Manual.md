@@ -337,8 +337,8 @@ The probe evidence is in [the NCPA capability report](../test-runs/2026-10-14-is
 
 When configuration is applied, Pinpoint reads the agent's API inventory. A
 missing metric path creates a skipped-service reason instead of a failing
-Nagios service. An unreachable or invalid agent inventory also leaves its
-metrics skipped, with a retry reason. After the agent becomes reachable or its
+Nagios service. An unreachable or invalid agent inventory defers the added defaults with a
+retry reason and preserves the established CPU, memory, disk and custom checks. After the agent becomes reachable or its
 configuration changes, rescan to rebuild the services. Successful inventories
 are cached for up to 60 seconds; failed probes for 5 seconds. A supported metric
 can still report Warning/Critical for its measured value.

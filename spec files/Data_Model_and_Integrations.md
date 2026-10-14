@@ -387,7 +387,7 @@ cached for 60 seconds, failures for 5 seconds, with at most 256 cache entries.
 Requests use connect/read timeouts of 1/2 seconds, refuse redirects, limit the
 response to 2 MiB and traverse at most 10,000 paths and depth 10. Unsupported
 paths are skipped individually through the existing skipped-service mechanism;
-failed inventories skip metrics with a retry reason. No probes run in the
+failed inventories defer the three added defaults with a retry reason while preserving established checks. No probes run in the
 Nagios status poller. Read-only fact loading defaults to no probe.
 
 `NCPA_METRICS` preserves cpu, memory and per-partition disk and adds swap usage

@@ -112,15 +112,15 @@ def probe_ncpa_paths(address, port, token):
 
     One inventory request replaces per-metric requests at configuration time.
     Successful results live for 60 seconds, failures for 5, at most 256 agents.
-    Invalid targets and failures return an empty set without logging exceptions.
+    Invalid targets and failures return None (unknown), without logging exceptions.
     """
     try:
         address = str(ipaddress.ip_address(address))
         port = int(port)
         if not 1 <= port <= 65535:
-            return frozenset()
+            return None
     except (ValueError, TypeError):
-        return frozenset()
+        return None
     key = (address, port, hashlib.sha256(str(token).encode()).digest())
     now = time.monotonic()
     with ncpa_path_cache_lock:
@@ -128,6 +128,7 @@ def probe_ncpa_paths(address, port, token):
         if cached and cached[0] > now:
             return cached[1]
     paths = set()
+    confirmed = False
     response = None
     try:
         host = f"[{address}]" if ":" in address else address
@@ -142,7 +143,10 @@ def probe_ncpa_paths(address, port, token):
                 if len(content) > 2 * 1024 * 1024:
                     raise ValueError("Agent inventory exceeds the size limit.")
             root = json.loads(content).get("root")
-            pending = [("", root)] if isinstance(root, dict) else []
+            if not isinstance(root, dict):
+                raise ValueError("Invalid agent inventory.")
+            confirmed = True
+            pending = [("", root)]
             # Bound traversal and depth of an untrusted agent's response.
             while pending and len(paths) < 10000:
                 prefix, node = pending.pop()
@@ -161,12 +165,13 @@ def probe_ncpa_paths(address, port, token):
                         pending.append((path, value))
     except (requests.RequestException, ValueError, TypeError, AttributeError):
         paths.clear()
+        confirmed = False
     finally:
         if response is not None:
             response.close()
-    result = frozenset(paths)
+    result = frozenset(paths) if confirmed else None
     with ncpa_path_cache_lock:
-        ncpa_path_cache[key] = (now + (60 if paths else 5), result)
+        ncpa_path_cache[key] = (now + (60 if confirmed else 5), result)
         ncpa_path_cache.move_to_end(key)
         while len(ncpa_path_cache) > 256:
             ncpa_path_cache.popitem(last=False)
@@ -214,6 +219,7 @@ def load_host_plugin_facts(probe_ncpa=False):
                 ncpa["available_paths"] = probe_ncpa_paths(
                     device.IP_Address, current_app.config["NCPA_PORT"], ncpa["token"],
                 )
+                ncpa["paths_unverified"] = ncpa["available_paths"] is None
     return facts
 
 
