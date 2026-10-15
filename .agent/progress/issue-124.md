@@ -95,10 +95,10 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 ## State for the next session
 
-- Last check run (exact command): gh pr view 178 --json statusCheckRollup,reviews,reviewDecision
-- Result (first failing lines, or "green"): local scripts/verify.sh all green: 3315 backend passed, 14 skipped; 696 frontend passed, build/lint green (31 warnings); docs/report checks green. CI on source commit 5f0a7ef8: docs/frontend green, backend still in progress at this checkpoint; final report publication will start a new CI run. Both PR review lists are empty.
-- Hypothesis: Implementation and scoped VM/browser acceptance are complete. Remaining finish items need observed final-head CI and human reviews; unrelated installer healthcheck mismatch is separately tracked in installer #9 and must not be fixed by widening permissions here.
-- Next action (one specific step, not "continue"): Inspect application PR #178 final-head CI and both PR reviews (#178 and installer #8); address only in-scope review requests, and remove this progress file only once workflow finish conditions are proven. Five implementation rounds have been used this session.
+- Last check run (exact command): git merge-tree --write-tree --name-only HEAD origin/main
+- Result (first failing lines, or "green"): exit 1; sole conflict is docs/test-runs/README.md. GitHub reports mergeable=false / mergeable_state=dirty. origin/main advanced from cc1305c6 to edb503620c272f432ed4196ee53e563f320fda26 during this task. No merge was applied to the worktree. Local full gate on issue source 5f0a7ef8 is green (3315 backend passed / 14 skipped, 696 frontend passed, build/lint green with 31 warnings); report docs gate is green. Final publication head has no CI because the PR conflicts; earlier source CI docs/frontend passed, backend was still running when inspected.
+- Hypothesis: Both branches added test-run index entries at the same location. Preserve both additions when merging latest origin/main, then reverify the resulting tree. This is an agent-resolvable documentation conflict, not a person-required blocker.
+- Next action (one specific step, not "continue"): Merge latest origin/main into issue-124-storage-and-nagios-log in this isolated checkout, resolve only docs/test-runs/README.md by preserving both run rows, run scripts/verify.sh all on the merged tree, checkpoint and verify final-head CI on PR #178; then obtain paired human reviews for #178 and installer #8. Five implementation rounds have been used this session.
 
 
 ## Decisions and notes
@@ -117,3 +117,5 @@ Requirement coverage (every requirement the issue states, and the check that pro
 - Paired draft PRs: https://github.com/esfen14/Pinpoint/pull/178 and https://github.com/lorraine-pangilinan/PinPoint-Installer/pull/8. Report: docs/test-runs/2026-10-15-issue-124-storage-logs/REPORT.md. All E/F items and applicable H quality/documentation/security items have observed proof in that report, tests and PR; final CI/human approval boxes remain unticked at checkpoint.
 - Full gate failure history is retained, not hidden: the initial run had an unchanged BandwidthCard callback timing failure; its exact 19-test retest and the final 696-test frontend suite pass without changing that file.
 - The exclusive VM was powered off after acceptance; shared QA appliance/targets were not modified. No ISO packaging/boot or seven elapsed days of retention is claimed. Installer #9 captures the pre-existing 664-versus-640 healthcheck mismatch (main already uses 640).
+
+- Final publication audit: GitHub did not schedule final-head checks because main advanced and the PR became conflicting. Closing/reopening preserved draft state but did not remove that conflict. Read-only merge-tree confirmed the sole conflict is the test-run index; all five owning specs auto-merge. No main merge, conflict edits or extra implementation round was performed after the workflow limit. The worktree remains clean apart from this checkpoint until it is saved.
