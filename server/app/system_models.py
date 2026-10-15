@@ -428,6 +428,26 @@ class HostAlertRecipient(db.Model):
     )
 
 
+class Escalation(db.Model):
+    """A notification-count range routed to an existing recipient group.
+
+    A null HostID scopes to all Nagios hosts/services; otherwise the stable
+    device ID follows address changes. Empty groups remain saved but inactive.
+    """
+    __tablename__ = "ESCALATION"
+    __table_args__ = (
+        sa.CheckConstraint('First_Notification >= 1 AND Last_Notification >= First_Notification AND Last_Notification <= 10000', name='ck_escalation_counts'),
+        sa.CheckConstraint('Interval_Minutes >= 0 AND Interval_Minutes <= 1440', name='ck_escalation_interval'),
+    )
+
+    EscalationID: so.Mapped[int] = so.mapped_column(primary_key=True)
+    First_Notification: so.Mapped[int] = so.mapped_column(sa.Integer)
+    Last_Notification: so.Mapped[int] = so.mapped_column(sa.Integer)
+    Interval_Minutes: so.Mapped[int] = so.mapped_column(sa.Integer)
+    Contact_Group: so.Mapped[str] = so.mapped_column(sa.String(80))
+    HostID: so.Mapped[Optional[int]] = so.mapped_column(sa.ForeignKey("NETWORK_DISCOVERY.NetDiscoveryID"), nullable=True)
+
+
 class DeviceIdentifier(db.Model):
     """
     One piece of evidence that identifies a device across IP changes (NCPA

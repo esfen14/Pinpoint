@@ -151,3 +151,29 @@ This editor does not require account-management permission and does not change
 any user's global email setting.
 
 Live browser coverage for host recipients is opt-in through `scripts/playwright-lab --project issue-79-live --project issue-79-restricted`. The tests save through the real recipient API/Nagios writer, reopen the drawer to verify persistence, clear the choices to verify default fallback, restore the original assignments, and verify that the restricted reader sees no editor and receives 403 for recipient reads/writes. They require two eligible lab accounts and discovered lab targets.
+
+### Escalation settings
+
+`SettingsPage` mounts `components/settings/EscalationSettings.tsx` after the
+existing System controls in Settings → System. Both that tab and the card require
+`settings.system`; the card makes no request when permission is absent.
+`lib/escalationApi.ts` uses the shared JSON client for `/api/system/escalations`
+CRUD; `types/escalation.ts` owns the wire contracts. No new tab, route or
+permission is added.
+
+The card lists group, all/device scope, first/last counts, interval, activity
+explanation and Edit/Delete actions. Its form supports create and edit, validates
+finite 1–10000 integer counts and 0–1440 integer minutes before saving, and shows
+server error messages including 400 and 422 without losing rejected drafts.
+Delete requires explicit confirmation. Loading, retry/reload, empty and success
+states are present; mutations disable controls while applying. No eligible group
+disables the form and explains Active/email-alert eligibility. Inactive saved
+ranges remain visible and removable. Help explains replacement recipients,
+notification counts, interval zero and existing quiet-hour/suppression behavior.
+
+The opt-in browser regression is `e2e/escalations.lab.spec.ts`, Playwright project
+`issue-116-live`. Set `ISSUE116_LAB_URL` to an exclusively owned test lab and
+`LAB_ADMIN_PASSWORD` for its administrator (optional `LAB_ADMIN_EMAIL`), then run
+`npx playwright test --project=issue-116-live` from `client/`. With no lab URL the
+test skips before any request; normal Vitest verification never runs live tests.
+Login screenshots, video and traces remain disabled.
