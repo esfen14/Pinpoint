@@ -274,8 +274,13 @@ This repository's side of the contract, all implemented as of 2026-10-08:
   (`POST /api/user/complete-setup`). The VM lab's `setup-admin` completes it.
 - `PINPOINT_SCHEDULER=1` only for the Gunicorn service.
 - The `pinpoint` account may write `hosts.cfg` and `plugin-services.cfg`, runs
-  `nagios -v`, and may `sudo systemctl reload nagios`; nothing else. Writing to
-  the plugin directory is intentionally not granted.
+  `nagios -v`, and may `sudo systemctl reload nagios`. The issue #129 installer
+  extension additionally grants only the root-owned `pinpoint-apply-resources`
+  helper with no arguments: validated owned-block data on stdin, fixed resource
+  destination, retained external content and nagios:nagios 0660 metadata. It has
+  been installed/tested on the QA appliance from the separate installer branch;
+  production upgrades require that installer extension before macro generation.
+  Writing to the plugin directory is intentionally not granted.
 
 A change that breaks any item above breaks every installed server on upgrade;
 raise it with the installer owners first. Installer code stays in its own

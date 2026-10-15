@@ -71,12 +71,15 @@ def find_devices_to_relocate():
     return [device for device in candidates if nagios_host_name(device) in down]
 
 
-def sweep_ncpa_port(network):
+def sweep_ncpa_port(network, port=None):
     """
     Fast scan of one network for hosts with the NCPA port open. Returns the
     set of responding IPv4 addresses. No service or OS detection.
     """
-    port = str(current_app.config["NCPA_PORT"])
+    port = int(current_app.config["NCPA_PORT"] if port is None else port)
+    if not 1 <= port <= 65535:
+        raise ValueError("NCPA port must be between 1 and 65535.")
+    port = str(port)
     nmap = nmap3.Nmap(path="/usr/local/bin/nmap-sudo")
     xmlroot = nmap.scan_command(network, f"-p {port} -n -T4", "--open")
 
@@ -155,24 +158,37 @@ def relocate_ncpa_devices():
         ).all():
             wanted[value] = device
 
-    port = current_app.config["NCPA_PORT"]
+    deployed_ports = dict(db.session.execute(
+        sa.select(NCPADeployment.NetworkDiscoveryID, NCPADeployment.Port)
+        .where(NCPADeployment.NetworkDiscoveryID.in_(device.NetDiscoveryID for device in candidates),
+               NCPADeployment.Token.is_not(None))
+        .order_by(NCPADeployment.NCPADeployID)
+    ).all())
+    default_port = int(current_app.config["NCPA_PORT"])
+    ports = {int(deployed_ports.get(device.NetDiscoveryID) or default_port) for device in candidates}
     moved = []
     for network in current_app.config["NETWORKS"]:
-        try:
-            responders = sweep_ncpa_port(network)
-        except Exception:
-            current_app.logger.exception("NCPA relocation sweep failed for %s", network)
-            continue
-
-        for ip in sorted(responders):
-            fingerprint = tls_certificate_fingerprint(ip, port)
-            device = wanted.get(fingerprint) if fingerprint else None
-            if device is None or device.NetDiscoveryID in moved:
+        for port in sorted(ports):
+            try:
+                if port == default_port:
+                    responders = sweep_ncpa_port(network)
+                else:
+                    responders = sweep_ncpa_port(network, port)
+            except Exception:
+                current_app.logger.exception("NCPA relocation sweep failed for %s on port %s", network, port)
                 continue
-            if device.IP_Address == ip:
-                continue  # still where we think it is; its failure is something else
-            move_device(device, ip, network)
-            moved.append(device.NetDiscoveryID)
+
+            for ip in sorted(responders):
+                fingerprint = tls_certificate_fingerprint(ip, port if port != default_port else current_app.config["NCPA_PORT"])
+                device = wanted.get(fingerprint) if fingerprint else None
+                if device is None or device.NetDiscoveryID in moved:
+                    continue
+                if int(deployed_ports.get(device.NetDiscoveryID) or default_port) != port:
+                    continue
+                if device.IP_Address == ip:
+                    continue
+                move_device(device, ip, network)
+                moved.append(device.NetDiscoveryID)
 
     if not moved:
         return []
