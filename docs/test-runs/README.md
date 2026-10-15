@@ -48,6 +48,7 @@ table while you test, not afterward.
 
 | Run | Kind | Commit | Result | Report |
 |---|---|---|---|---|
+| [2026-10-15 issue-117-main-sync](2026-10-15-issue-117-main-sync/REPORT.md) | Current-main integration, populated migration convergence and real browser/Nagios retest | `4981a70e` | Partial: 3338 backend/694 frontend/full gate and browser pass; final CI/review tracked on PR #174 | [REPORT.md](2026-10-15-issue-117-main-sync/REPORT.md) |
 | [2026-10-15 issue-117-live-browser](2026-10-15-issue-117-live-browser/REPORT.md) | Real browser/Flask/Nagios parent editing and drawer success regression | `b0a105e6` | Partial: seven cases pass; final pushed-tree CI/review tracked on PR #174 | [REPORT.md](2026-10-15-issue-117-live-browser/REPORT.md) |
 | [2026-10-15 issue-117-manual-topology](2026-10-15-issue-117-manual-topology/REPORT.md) | Real isolated routed single/redundant-parent Nagios and frontend fixture smoke | `051abed5` | Partial: default-retry feature cases/local gates pass; final CI/review pending; one-attempt caveat #173 | [REPORT.md](2026-10-15-issue-117-manual-topology/REPORT.md) |
 

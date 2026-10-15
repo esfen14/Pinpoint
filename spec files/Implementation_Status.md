@@ -17,6 +17,9 @@ browser/Flask/Nagios run verifies both editors, reload/cross-page persistence, c
 errors, read-only controls and direct 403; it also fixed an Inventory save-confirmation
 unmount regression. See [the live browser report](../docs/test-runs/2026-10-15-issue-117-live-browser/REPORT.md)
 and [the routed report](../docs/test-runs/2026-10-15-issue-117-manual-topology/REPORT.md).
+The current-main integration preserves escalation/remediation rendering and joins
+the published migration histories without rewriting them; populated upgrades from
+both old heads and a real browser/Nagios retest pass. See [the main-sync report](../docs/test-runs/2026-10-15-issue-117-main-sync/REPORT.md).
 CI and human review are tracked on the implementation PR. One-attempt settings can
 emit transient child DOWN notifications before UNREACHABLE; notification guarantees
 and any main-config change are a separate [decision #173](https://github.com/esfen14/Pinpoint/issues/173).
