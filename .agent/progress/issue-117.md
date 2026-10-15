@@ -1,7 +1,7 @@
 # Issue #117: Manual multiple-parent topology
 
 Branch: `issue-117-manual-topology`
-Status: in-progress
+Status: ready-for-review
 
 ## Finish condition
 
@@ -127,7 +127,7 @@ Requirement coverage (all issue sections):
 2. [x] Generate/review multi-bind migration in `server/migrations/versions/`; add populated round-trip test/runner in `server/tests/`; verify upgrade/downgrade and backend gate.
 3. [x] Add failing frontend editor/layout/topology tests under `client/src/test/`; implement shared parent editor/API/types, wire Inventory and existing React Flow prototype, routing/navigation/access, automatic hierarchy and device-only panels; update frontend/domain specs; verify frontend gate.
 4. [x] Record isolated live Nagios reachability/rollback evidence in `docs/test-runs/` using the template; update remaining specifications and local issue mirror; run docs/all verification and checkpoint.
-5. [ ] Re-read issue and prove acceptance; publish PR using `.github/pull_request_template.md`, monitor CI; keep draft/progress if live acceptance or human decisions remain outstanding.
+5. [x] Re-read issue and prove acceptance; publish PR using `.github/pull_request_template.md`, monitor CI; keep draft/progress if live acceptance or human decisions remain outstanding.
 
 ## Round log
 
@@ -137,14 +137,15 @@ Requirement coverage (all issue sections):
 | 2 | Added generated/reviewed migration and populated round trip; shared frontend editor, hierarchy, real-data topology, route/access wiring and specs; protected unsaved drafts during refresh | scripts/verify.sh frontend; scripts/verify.sh docs; focused parent proof | Frontend green (30 warnings, no errors); docs green; 35 latest parent tests pass. Stable full backend gate finishing. |
 | 3 | Full verification green; added real-writer deferred-commit compensation proof; browser fixture smoke verified real React Flow, fixed positions, editor and read-only; corrected applied/unchanged response flags | scripts/verify.sh all; parent/migration focus; browser fixture script | Green gates and 38 focused tests. Routed trials verify final reachability but max-attempts=1 can emit transient child DOWN; default 3-attempt trial pending. |
 | 4 | Real routed default-three-attempt HARD-state checks and notification dispatch passed; published sanitized report and documented separate one-attempt caveat in #173; reread unchanged issue | python3 /tmp/issue117-live.py; scripts/verify.sh docs; gh issue view 117 --json body,comments | Default-retry single/redundant paths, pause/merge/retire pass; 14 notification events, zero child DOWN in final trial. Docs green. |
+| 5 | Final review caught oversized positive IDs returning 500 from SQLite; added failing regression, bounded IDs to SQLite integer range and proved 400. Stable full gate passed; draft PR #174 published. | final all-stage gate; focused parent/migration proof; PR checks | Local gates green; final pushed-tree CI to be observed after checkpoint. Human review and #173 guarantee remain outstanding. |
 | intake | Reviewed issue scope and existing React Flow frontend; created isolated checkout | gh issue view 117 --json body,comments,title | Product decisions recorded; no implementation yet |
 
 ## State for the next session
 
-- Last check run (exact command): scripts/verify.sh all
-- Result: green (full output /tmp/issue117-all.log). Latest focused parent/migration proof is 38 passed in 7.86s. Browser fixture smoke passed (real React Flow, intercepted API).
+- Last check run (exact command): cd server && FLASK_DEBUG=1 .venv/bin/python -m pytest tests/unit/test_device_parents.py tests/unit/test_device_parent_migration.py -q
+- Result: Final focused parent/migration proof green at /tmp/issue117-last-parent-proof.log (39 passed). Full stable-tree gate /tmp/issue117-final-all.log passed 3040 backend / 14 skips and 653 frontend tests before the final oversized-ID guard. That guard was first proven red (500 from SQLite overflow) then fixed to return 400. Final pushed-tree CI is the remaining automated gate.
 - Hypothesis: Existing writer and Inventory modules can support this without a new dependency; use a relationship table and shared editor.
-- Next action: Open the implementation draft PR, run final stable all-stage verification and watch CI; retain progress until review/one-attempt notification guarantee is decided.
+- Next action: Watch final PR CI, then obtain human review of PR #174 and the notification-guarantee decision in #173; remove progress before making the PR ready, never merge.
 
 ## Decisions and notes
 
@@ -167,3 +168,6 @@ Requirement coverage (all issue sections):
 
 - Final live evidence: /tmp/issue117-live-a2ab65f9 and /tmp/issue117-live-active-checks.log, source 051abed5. Active physical checks were scheduled through Nagios FIFO and HARD/nonzero-check states required. See committed report for fixture/setup deviations and SMTP/browser limitations.
 - Finish re-read: issue body unchanged, no comments. All E acceptance behavior has unit/frontend/live proof as mapped above. Human review/approvals and final CI remain unchecked; no merge will be attempted.
+
+- PR: https://github.com/esfen14/Pinpoint/pull/174 (draft). Progress is intentionally retained because human review/approval and the separate #173 notification-guarantee decision are not agent-proven. Implementation steps and default-retry acceptance are complete; no required reviewer approval or universal single-attempt suppression is claimed. Session has reached five recorded rounds; no further speculative implementation in this session.
+- Final full run before the one-line oversized-ID guard: /tmp/issue117-final-all.log. The added guard had a red regression (1 failed / 7 passed invalid-ID cases), then the complete focused parent/migration proof passed. CI must verify the final source. No source migration or dependency changed during that full run.

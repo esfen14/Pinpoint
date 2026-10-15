@@ -44,7 +44,7 @@ def test_set_change_clear_and_omission(logged_in_client, devices, writer):
     assert parents(c)==[b.NetDiscoveryID]
     assert save(logged_in_client,c,[]).status_code==200 and parents(c)==[]
 
-@pytest.mark.parametrize('invalid',[None,'1',[True],[0],[-1],['1'],[99999]])
+@pytest.mark.parametrize('invalid',[None,'1',[True],[0],[-1],['1'],[99999],[2**100]])
 def test_invalid_ids(logged_in_client,devices,writer,invalid):
     assert save(logged_in_client,devices[0],invalid,display_name='Not saved').status_code==400
     assert devices[0].Display_Name is None

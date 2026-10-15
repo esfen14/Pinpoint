@@ -968,7 +968,7 @@ def validate_parent_graph(pairs):
 
 def validate_parent_ids(device, ids):
     """Validate a replacement parent set before mutating metadata or relationships."""
-    if (not isinstance(ids, list) or any(type(value) is not int or value <= 0 for value in ids)
+    if (not isinstance(ids, list) or any(type(value) is not int or not 0 < value <= 2**63 - 1 for value in ids)
             or len(set(ids)) != len(ids)):
         raise ValueError("parent_device_ids must be a list of distinct positive integers.")
     if device.Device_State in (DeviceState.RETIRED, DeviceState.MERGED):
