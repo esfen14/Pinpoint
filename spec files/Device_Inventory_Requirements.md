@@ -1,4 +1,4 @@
-# Device Inventory Requirements — Ports and Monitoring State
+# Device Inventory Requirements — Ports, Monitoring State and Identity Review
 **Detech-IT / 4D-G2 Capstone**
 **Status:** Approved by the owner with the answers to O1–O3 (2026-10-06): a **Remove pin** action and route are included. Built (backend and drawer); the browser check in light and dark mode is still to do on the lab.
 **Companion:** [`docs/plans/Device_Ports_UI_Plan.md`](../docs/plans/Device_Ports_UI_Plan.md) (how and in what order it is built)
@@ -12,9 +12,8 @@ shows and what an administrator can do in it. It is the requirement the plan ask
 the owner to approve before any code is written (`AGENTS.md`; the same rule is
 noted in `docs/plans/DHCP_Device_Identity_Plan.md` §11).
 
-`Display_Requirements.md` covers the Dashboard and Network Health. This file covers
-**only** the Ports section of the Device Inventory page. The rest of that page (the
-host table, its filters, the status drawer and acknowledgement) is unchanged.
+`Display_Requirements.md` covers the Dashboard and Network Health. This file covers device ports, monitoring state (§12), and identity review and
+manual merging (§13). Existing host status, filters and acknowledgement remain available.
 
 As in `Display_Requirements.md`, layout, colour and component details are left to the
 front-end developers. What is fixed here is the data shown, the grouping, the wording
@@ -238,8 +237,8 @@ line "Monitor them from each device's Ports list."
 
 ## 9. Out of scope
 
-The needs-review list and `SERVICE_CHANGED` items; device confidence badges, address
-history, merge, retire and static/DHCP marking; bulk actions;
+`SERVICE_CHANGED` resolution; standalone device confidence badges, retire and
+static/DHCP marking; bulk actions;
 pagination or a filter box for ports; any change to the Port → Service setting or to
 Plugin Manager beyond the one hint line in §7.
 
@@ -414,3 +413,60 @@ retired/merged states must be present. Hosts without a discovered-device record
 and service-detail views do not show the editor. Choices survive address/hostname
 changes and rescans; merges combine selections without duplicates; retiring
 removes that device's assignments. Pause preserves them.
+
+
+## 13. Device identity review and manual merging
+
+The **Needs Review (count)** section appears separately from the host table for
+users with `system.discover`, including when empty. It loads unresolved discovery
+reviews, counting only conflicts, identity changes, IP reuse, duplicate identities
+and static-address moves. `SERVICE_CHANGED` is excluded. Host search, monitoring
+filters and pagination never restrict these reviews.
+
+Each row shows a plain-language issue and reason, involved records' names and IPs,
+the detected time using display preferences, and **Review**. Loading, error with
+Retry, and empty ("No device identity issues need review.") states are explicit.
+A participating device's information drawer shows **This device needs identity
+review**, whose Review action opens the same comparison flow.
+
+Review opens a comparison drawer with the reason and candidate records side by
+side (stacked on narrow screens). Each shows stable device ID, Nagios host name,
+display name, current IP, monitoring state, identity confidence and available
+identifiers. Missing fields/evidence are labelled. Identity details require
+`system.hosts` and load when the comparison opens. Address history requires the
+same permission and loads only after **Load address history**, with loading,
+retryable error and no-history states. Opening, closing and cancellation perform
+no persistent write and never resolve a review.
+
+Merging also requires `system.hosts.edit`. Neither direction is preselected: the
+administrator chooses **Device record to keep** (target) and **Duplicate record
+to merge** (source). Two distinct records are required. Merged sources and retired
+or merged targets are excluded. Search discovered devices by name, IP or stable
+ID to add records when the candidates are insufficient; this uses application
+discovery records, including those outside the default Monitored filter, without
+requiring any Nagios snapshot. Up to 20 matches are shown, with a refinement hint
+when more match. Lookup errors allow repeating Search.
+
+Guidance explains that merging is appropriate only after verifying both records
+represent the same physical device; similar names and matching IPs are not proof.
+Keep the record with the intended monitoring settings and current address. An IP
+move discovery confidently recognizes continues updating the existing record
+without requiring a merge; matching rules are unchanged.
+
+**Review merge** opens confirmation containing both IDs, names and IPs. It says
+which record survives, that the target retains its current address, that the
+source becomes Merged and leaves monitoring, that target records take precedence
+where settings conflict, that historical monitoring snapshots remain under their
+original host names and are not transferred, and that no undo action is provided.
+Submission and dismissal are disabled while saving; a second submission is blocked.
+The existing merge route validates stale records and returns errors without
+losing the editable choices. A successful merge refreshes reviews, counts and
+inventory without a page reload. `config_ok: false` is shown explicitly as
+**Merge saved. Nagios configuration warning: {config_message}**; it is never
+presented as a failed merge or a reason to retry the merge.
+
+The comparison and confirmation support keyboard focus containment, Escape
+(except while saving), focus restoration, and both display themes. Identity
+rules, merge validation, Nagios config validation/application, snapshot ownership,
+retire controls, static/DHCP editing, port mismatch resolution and undo remain
+outside this change.

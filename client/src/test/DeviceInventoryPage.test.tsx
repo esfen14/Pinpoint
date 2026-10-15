@@ -8,6 +8,9 @@ vi.mock('../contexts/SystemSettingsContext', () => ({
   useSystemSettings: () => ({ settings: { theme: 'dark' } }),
 }))
 
+const access = vi.hoisted(() => ({ granted: new Set<string>() }))
+vi.mock('../contexts/CurrentUserContext', () => ({ useCurrentUser: () => ({ hasPermission: (p: string) => access.granted.has(p) }) }))
+
 const apiGet = vi.fn()
 const apiPost = vi.fn()
 const apiDelete = vi.fn()
@@ -56,6 +59,10 @@ function listResponse(items: unknown[], overrides: Record<string, unknown> = {})
 let tableResponse: unknown
 
 function routeApi(path: string) {
+  if (path === '/api/system/discover/review') return Promise.resolve({ items: [{
+    id: 12, kind: 'IP_REUSE', message: 'Address reused', created_at: '2026-10-15T00:00:00',
+    devices: [{ id: 42, nagios_host_name: 'outside-monitored', display_name: 'Duplicate outside filter', ip_address: '10.77.0.4', state: 'ADDRESS_UNKNOWN', monitoring_state: 'address_unknown' }],
+  }] })
   const params = new URLSearchParams(path.split('?')[1])
   // Summary-card counts use per_page=1; the table uses per_page=10. Without the monitored filter
   // the counts would include a paused host that last reported UP.
@@ -95,6 +102,7 @@ function row(hostname: string) {
 
 describe('DeviceInventoryPage', () => {
   beforeEach(() => {
+    access.granted = new Set()
     tableResponse = listResponse(HOSTS)
     apiGet.mockReset()
     apiPost.mockReset()
@@ -108,7 +116,18 @@ describe('DeviceInventoryPage', () => {
     vi.restoreAllMocks()
   })
 
-  it('shows the Host Inventory heading', async () => {
+  it('shows identity reviews independently of the default monitoring filter', async () => {
+    access.granted.add('system.discover')
+    await renderLoaded()
+    expect(await screen.findByRole('heading', { name: 'Needs Review (1)' })).toBeInTheDocument()
+    expect(screen.getByText(/Duplicate outside filter/)).toBeInTheDocument()
+    expect(tableCalls()[0].get('monitoring')).toBe('monitored')
+    await userEvent.click(screen.getByRole('button', { name: 'Filter' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Not monitored', exact: true }))
+    expect(screen.getByRole('heading', { name: 'Needs Review (1)' })).toBeInTheDocument()
+  })
+
+  it('shows the Host Inventory heading' , async () => {
     await renderLoaded()
     expect(screen.getByText('Host Inventory')).toBeInTheDocument()
     expect(screen.getAllByText('All Hosts').length).toBeGreaterThan(0)

@@ -177,3 +177,17 @@ The opt-in browser regression is `e2e/escalations.lab.spec.ts`, Playwright proje
 `npx playwright test --project=issue-116-live` from `client/`. With no lab URL the
 test skips before any request; normal Vitest verification never runs live tests.
 Login screenshots, video and traces remain disabled.
+
+
+## Device identity review
+
+`DeviceIdentityReviews` supplies the independent Needs Review table in
+`DeviceInventoryPage` and the participating-device notice in `StatusDetailDrawer`.
+Both require `system.discover` and open `IdentityReviewDrawer`, which loads
+identity evidence and address history on demand (`system.hosts`) and offers
+explicit source/target choices, discovered-record search and confirmation only
+with `system.hosts.edit` as well. `lib/deviceIdentityApi.ts` uses the shared API
+client for the existing review/evidence/merge routes and `/api/system/hosts/lookup`;
+`types/deviceIdentity.ts` owns the wire contracts and identity-kind filtering.
+See `Device_Inventory_Requirements.md` §13 for the permission, confirmation,
+keyboard, refresh and saved-configuration-warning requirements.

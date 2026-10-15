@@ -309,6 +309,7 @@ only, STARTTLS on port 587). Logic is in `app/smtp_settings.py`.
 
 | Method and path | Permission | Purpose |
 |---|---|---|
+| `GET /api/system/hosts/lookup` | `system.hosts` | Discovered-device picker, independent of Nagios snapshots and monitoring filters. Optional literal case-insensitive `search` (max 100 characters) matches display name, Nagios name, DNS name, IP or exact numeric ID. Returns up to 20 device summaries ordered by ID with `has_more`; merged records excluded, retired sources included |
 | `GET /api/system/hosts/<id>/addresses` | `system.hosts` | Address history of a device |
 | `GET /api/system/hosts/<id>/identifiers` | `system.hosts` | Identity evidence and confidence |
 | `PUT /api/system/hosts/<id>` | `system.hosts.edit` | Change display name and/or addressing mode |

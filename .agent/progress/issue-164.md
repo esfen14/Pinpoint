@@ -62,14 +62,15 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| 1 | Lookup, review table/drawer, notices, tests and documentation implemented | Focused backend: 152 pass; focused frontend: 48 pass; verify.sh docs: green; verify.sh frontend | Frontend build rejects two new Testing Library queries using unsupported exact option; backend full suite still running |
 | 0 | Intake and isolated worktree; requirement coverage and plan | gh issue view 164 --json body,comments | Requirements covered by E/F/H; reviewer approval remains a human finish requirement |
 
 ## State for the next session
 
-- Last check run (exact command): gh issue view 164 --json body,comments
-- Result (first failing lines, or "green"): green; no comments
-- Hypothesis: existing merge/evidence APIs can remain unchanged; discovered lookup must include nonmonitored records.
-- Next action (one specific step, not "continue"): Add and run failing discovered-device lookup regression tests.
+- Last check run (exact command): scripts/verify.sh frontend
+- Result (first failing lines, or "green"): TS2769: exact does not exist in ByRoleOptions (new test queries only). 48 focused frontend tests and 152 identity backend tests pass; docs green. Full backend running, output /tmp/issue-164-backend.log.
+- Hypothesis: string role names already match exactly; remove the unsupported test-only option.
+- Next action (one specific step, not "continue"): Remove exact from the two new Testing Library role queries and rerun frontend verification.
 
 ## Decisions and notes
 
@@ -77,3 +78,5 @@ Requirement coverage (every requirement the issue states, and the check that pro
 - Issue explicitly approves extending identity review UI and correcting stale specifications; no identity-matching, config-generation, migration, dependency or permission changes planned.
 - Browser/lab work is explicitly authorized by issue G; use isolated controlled records and preserve shared lab ownership boundaries.
 - Required reviewer approvals cannot be claimed by this agent; retain an honest unfinished checklist and draft PR if necessary.
+
+- Docker socket is denied and passwordless sudo unavailable in this process. Real-Nagios lab acceptance requires an accessible reserved lab; no lab has been mutated.
