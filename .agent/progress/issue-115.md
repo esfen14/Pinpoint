@@ -136,12 +136,14 @@ Requirement coverage (every requirement in A–H):
 | 1 | Implemented STARTTLS custom validation/API/helper and UI; added bounded failure reader and tests. Confirmed red before code: relay 31 failures; missing reader collection error; frontend 8 failures. | Focused backend: 89 passed; frontend: 38 passed; verify.sh frontend and docs green; verify.sh backend still running | Core source implemented; live checks blocked by infrastructure. Broad backend and final documentation pending. |
 | 2 | Documented STARTTLS-only scope, API/failure semantics and user workflow; matched custom password limit to helper (256) while retaining Gmail 200 limit; added boundary/rotation cases. | verify.sh backend: 2889 passed/14 skipped; verify.sh frontend green; verify.sh docs green; focused frontend 38 passed | Full initial stages green; final combined all verification pending after final source refinements. |
 
+| 3 | Fixed experimentally confirmed descriptor leak on a directory configured as log path; new regression failed with +5 open descriptors before fix and passed after. Replaced fdopen with explicit descriptor ownership/finally-close. | Focused backend including email alerts: 119 passed; prior combined run deliberately interrupted at pytest after review found the leak | Re-run combined checks on corrected source; no live product acceptance claimed. Draft PR #172 opened; GitHub reports no checks so far. |
+
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh docs > test-results/issue-115-docs.log 2>&1`
-- Result (first failing lines, or "green"): green. Full initial backend 2889 passed, 14 skipped; frontend build/tests/lint green.
-- Hypothesis: Final combined regression should pass; real appliance acceptance cannot be proven in this environment.
-- Next action (one specific step): Run scripts/verify.sh all against the final source and create a sanitized blocked-lab report and draft PR with the actual results.
+- Last check run (exact command): `FLASK_DEBUG=1 .venv/bin/python -m pytest tests/unit/test_mail_failures.py tests/unit/test_smtp_relays.py tests/unit/test_smtp_settings.py tests/unit/test_email_alerts.py -q` (from server)
+- Result (first failing lines, or "green"): green; 119 passed. Previous combined check was intentionally interrupted to include the descriptor-leak correction.
+- Hypothesis: Reader descriptor ownership is now safe for every unavailable/nonregular path; final combined tests must run against this correction.
+- Next action (one specific step): Run scripts/verify.sh all and attach its sanitized output to draft PR https://github.com/esfen14/Pinpoint/pull/172, then inspect CI and checkpoint pending live acceptance.
 
 ## Decisions and notes
 

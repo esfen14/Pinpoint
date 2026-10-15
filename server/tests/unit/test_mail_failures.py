@@ -91,3 +91,14 @@ def test_timeout_signal_and_nonregular_file(tmp_path):
     fifo = tmp_path / 'pipe'; os.mkfifo(fifo)
     assert read_mail_failure(fifo) is None
     assert read_mail_failure(tmp_path) is None
+
+
+def test_invalid_log_directory_does_not_leak_descriptors(tmp_path):
+    import os
+    from pathlib import Path
+    if not Path('/proc/self/fd').exists():
+        pytest.skip('Descriptor accounting needs Linux procfs')
+    before = len(os.listdir('/proc/self/fd'))
+    for _ in range(5):
+        assert read_mail_failure(tmp_path) is None
+    assert len(os.listdir('/proc/self/fd')) == before

@@ -23,17 +23,20 @@ def read_mail_failure(path):
     when the log is large or grows during the request. Ignore a partial first
     or last line and reopen each time so rotation needs no persistent cursor.
     """
+    fd = None
     try:
         fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK)
-        with os.fdopen(fd, 'rb') as handle:
-            info = os.fstat(handle.fileno())
-            if not stat.S_ISREG(info.st_mode):
-                return None
-            start = max(0, info.st_size - MAX_TAIL_BYTES)
-            handle.seek(start)
-            data = handle.read(MAX_TAIL_BYTES)
+        info = os.fstat(fd)
+        if not stat.S_ISREG(info.st_mode):
+            return None
+        start = max(0, info.st_size - MAX_TAIL_BYTES)
+        os.lseek(fd, start, os.SEEK_SET)
+        data = os.read(fd, MAX_TAIL_BYTES)
     except (OSError, ValueError, TypeError):
         return None
+    finally:
+        if fd is not None:
+            os.close(fd)
 
     if start:
         data = data.partition(b'\n')[2]
