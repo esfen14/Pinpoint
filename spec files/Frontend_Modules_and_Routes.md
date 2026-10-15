@@ -94,6 +94,17 @@ When adding a page:
 - `formatDateTime.ts` applies display preferences to timestamps. The Time Zone preference is a fixed UTC offset or `Browser` (the viewer's own zone). `parseServerDate` reads API timestamps that carry no offset as UTC. Components get formatters from `hooks/useDisplayTime.ts`; do not call `toLocaleString` for displayed times.
 - `exportData.ts` performs client-side exports and records export actions.
 
+## Polling settings
+
+Settings → System offers **Data polling interval** with exactly 30, 60, 120 and
+300 seconds, default 60. The tab requires `settings.system`; the backend enforces
+field permissions. `SystemSettingsContext` and `types/settings.tsx` carry
+`dataPollingInterval` as a shared system field through save, reload and conflicts.
+Settings → General explains the saved Nagios Check interval, saved Pinpoint Data
+polling interval and selected per-user Dashboard Refresh Rate (including Manual).
+Changing any of these schedules leaves the others, retry timing and discovery
+cadence alone. Save errors retain the draft and show the API message.
+
 ## Frontend rules
 
 - Use TypeScript; source components use `.tsx`, utilities use `.ts`.

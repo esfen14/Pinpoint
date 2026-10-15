@@ -31,7 +31,7 @@ the normative behavior in the requirement specifications.
   generate host and service check timing through the shared Nagios writer;
   Flap detection (on/off and optional low/high thresholds) is also written
   through it, with a Flapping-only filter on the host and service tables and a
-  flap history (from 60-second snapshots, so fast flaps can be missed) in the
+  flap history (from polling snapshots, 60 seconds by default, so fast flaps can be missed) in the
   detail drawer;
   unchanged Nagios `Last_Check` results are not stored again. Plugin status text,
   stale fallback and the per-user browser-refresh hint use the setting. Fresh
@@ -71,6 +71,11 @@ the normative behavior in the requirement specifications.
 - Plugin Manager scanning, inventory, running checks, summaries, details,
   dependencies, enable/disable, validation, custom upload, command overrides,
   updates/rollback, history, and target configuration.
+- Configurable Pinpoint Data polling interval (`dataPollingInterval`): 30/60/120/300
+  seconds, default 60, system permission, persisted with upgrade default migration.
+  Saves reschedule one existing job and restore its trigger/next run on failure;
+  disabled scheduling stays disabled and startup uses the saved interval. General
+  displays the actual saved check/poll and personal browser refresh schedules.
 - Scheduled Nagios polling, retention purges, backups, network scans, plugin
   update scans, and security validation.
 

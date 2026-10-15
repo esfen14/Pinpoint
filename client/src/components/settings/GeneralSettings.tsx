@@ -180,6 +180,7 @@ const exportOptions = [
 export function GeneralSettings() {
   const {
     settings,
+    savedSettings,
     updateSettings,
     saveSettings,
     discardChanges,
@@ -302,7 +303,7 @@ export function GeneralSettings() {
 
         <SettingsSelect
           label="Dashboard Refresh Rate"
-          description={`How often this browser refreshes Pinpoint data. Nagios checks every ${settings.checkInterval} minutes; Pinpoint polls Nagios every minute. This does not change either schedule.`}
+          description={`Nagios Check interval: ${savedSettings.checkInterval} minutes. Pinpoint Data polling interval: ${savedSettings.dataPollingInterval} seconds. Dashboard Refresh Rate: ${settings.dashboardRefreshRate === 0 ? 'Manual' : `${settings.dashboardRefreshRate} minutes`}. Browser refresh, data polling and Nagios checks use independent schedules.`}
           value={String(
             settings.dashboardRefreshRate
           )}

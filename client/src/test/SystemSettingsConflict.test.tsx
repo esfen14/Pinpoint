@@ -135,7 +135,7 @@ describe('SystemSettingsProvider conflict handling', () => {
   it('shows the dynamic refresh hint and system check interval without changing personal rate', async () => {
     server.checkInterval = 2
     render(<SystemSettingsProvider><GeneralSettings /><SystemSettings /></SystemSettingsProvider>)
-    await waitFor(() => expect(screen.getByText(/Nagios checks every 2 minutes/)).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByText(/Nagios Check interval: 2 minutes/)).toBeInTheDocument())
     expect(screen.getByText('Check interval')).toBeInTheDocument()
     expect(server.dashboardRefreshRate).toBe(5)
   })
@@ -151,7 +151,7 @@ describe('SystemSettingsProvider conflict handling', () => {
     await waitFor(() => expect(server.checkInterval).toBe(2))
 
     fireEvent.click(screen.getByRole('button', { name: 'General Settings tab' }))
-    expect(screen.getByText(/Nagios checks every 2 minutes/)).toBeInTheDocument()
+    expect(screen.getByText(/Nagios Check interval: 2 minutes/)).toBeInTheDocument()
     expect(screen.getByText('Dashboard Refresh Rate').parentElement?.querySelector('select')).toHaveValue('5')
   })
 
@@ -400,5 +400,58 @@ describe('Flap detection card', () => {
     fireEvent.click(toggle())
     await save()
     expect(screen.getByTestId('error')).toHaveTextContent('Nagios reload failed')
+  })
+})
+
+
+describe('Data polling interval', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    server = { ...DEFAULT_SYSTEM_SETTINGS, version: 1 }
+    systemPuts = []
+    applyError = null
+    fetchMock.mockClear()
+    vi.stubGlobal('fetch', fetchMock)
+  })
+  afterEach(() => vi.unstubAllGlobals())
+
+  function pollingSelect() {
+    return screen.getByText('Data polling interval').closest('div')!.querySelector('select')!
+  }
+
+  it('defaults to 60 seconds and offers exactly the supported options', async () => {
+    expect(DEFAULT_SYSTEM_SETTINGS.dataPollingInterval).toBe(60)
+    render(<SystemSettingsProvider><Probe /><SystemSettings /></SystemSettingsProvider>)
+    await waitFor(() => expect(api.isLoading).toBe(false))
+    expect(Array.from(pollingSelect().options).map(o => [o.value, o.textContent])).toEqual([
+      ['30', '30 seconds'], ['60', '60 seconds'], ['120', '120 seconds'], ['300', '300 seconds'],
+    ])
+  })
+
+  it('saves and reloads the interval independently of check and browser schedules', async () => {
+    render(<SystemSettingsProvider><Probe /><SettingsTabs /></SystemSettingsProvider>)
+    await waitFor(() => expect(api.isLoading).toBe(false))
+    fireEvent.change(pollingSelect(), { target: { value: '30' } })
+    await save()
+    expect(systemPuts[0].dataPollingInterval).toBe(30)
+    expect(server.checkInterval).toBe(5)
+    expect(server.dashboardRefreshRate).toBe(5)
+    await act(async () => api.refreshSettings())
+    expect(pollingSelect().value).toBe('30')
+    fireEvent.click(screen.getByText('General Settings tab'))
+    expect(screen.getByText(/Pinpoint Data polling interval: 30 seconds/)).toHaveTextContent('Nagios Check interval: 5 minutes')
+  })
+
+  it('describes saved schedules and the selected Manual browser refresh', async () => {
+    server.dataPollingInterval = 120
+    server.checkInterval = 10
+    server.dashboardRefreshRate = 0
+    render(<SystemSettingsProvider><Probe /><GeneralSettings /></SystemSettingsProvider>)
+    await waitFor(() => expect(api.isLoading).toBe(false))
+    act(() => api.updateSettings({ dataPollingInterval: 300 }))
+    const hint = screen.getByText(/Pinpoint Data polling interval: 120 seconds/)
+    expect(hint).toHaveTextContent('Nagios Check interval: 10 minutes')
+    expect(hint).toHaveTextContent('Dashboard Refresh Rate: Manual')
+    expect(server.dataPollingInterval).toBe(120)
   })
 })
