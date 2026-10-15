@@ -33,7 +33,8 @@ that decides to restart) and item 4 (the permission to restart).
 - Add the `pinpoint` service user to group `pinpoint`.
 - Install `server/scripts/pinpoint_event_handler.py` from the application as
   `/usr/local/sbin/pinpoint-event-handler`: `root:root`, mode `755`, not writable by the web user, no
-  import of mutable application code.
+  import of mutable application code. Set the mode explicitly (`install -m 755 -o root -g root`); the
+  source file is stored in Git as `100644`, so do not rely on the copied file's mode.
 - Keep `enable_event_handlers=1` in `nagios.cfg` and leave `illegal_macro_output_chars` at its default.
 - Upgrade: create the folder and file on existing appliances without touching other Nagios settings or
   the SMTP helper.
