@@ -1,11 +1,11 @@
 # Issue #120: System Implementation Add Allowlisted Event Handler Framework With Remediation Screen and Installer Support
 
 Branch: `issue-120-event-handler-framework`
-Status: blocked
+Status: in-progress
 <!-- Status is one of: in-progress | blocked | ready-for-review -->
 
-Plan issue #7. Blocked on a person: the project owner asked for the design to be reviewed before
-any code is written (sensitive module: Nagios config generation and an action-running path).
+Plan issue #7. Design approved by the project owner 2026-10-15 (answers recorded at the top of
+the design). Sensitive module: Nagios config generation and an action-running path.
 Design: `docs/plans/Event_Handler_Design.md`.
 
 ## Finish condition
@@ -45,8 +45,8 @@ Requirement coverage:
 
 ## Plan
 
-1. [ ] Design review: reviewer answers the five questions in Event_Handler_Design.md section 6 (docs/plans/Event_Handler_Design.md)
-2. [ ] Migration, models and action registry with tests (server/app/system_models.py, server/app/remediation_actions.py, new migration)
+1. [x] Design review: approved 2026-10-15 (docs/plans/Event_Handler_Design.md)
+2. [ ] Migration, models and action registry with tests, plus RemediationRun pruning in _purge_old_data (server/app/system_models.py, server/app/remediation_actions.py, server/app/scheduler.py, new migration)
 3. [ ] Handler script and consumer with tests (server/scripts/pinpoint_event_handler.py, server/app/remediation.py, server/app/scheduler.py)
 4. [ ] Config rendering with byte-identical proof (server/app/network_discovery/host_config_templates.py, create_host_cfg.py, templates)
 5. [ ] API routes and permission seeding (server/app/api/system/remediation.py, server/app/api/commands/seed.py)
@@ -64,12 +64,14 @@ Requirement coverage:
 - Last check run (exact command): none (no code written)
 - Result: -
 - Hypothesis: build order in the design is sound; the handler and consumer are the risky part
-- Next action: wait for the reviewer's answers to the five questions in docs/plans/Event_Handler_Design.md section 6, then start plan step 2 with a failing migration test
+- Next action: start plan step 2 with a failing migration test
 
 ## Decisions and notes
 
 - Owner decisions 2026-10-14: D1 narrow nagios group rights; D2 no remote restart; D3 handler at /usr/local/sbin with source here.
 - Owner instruction: whenever a fix needs the installer, leave an md file for the installer maintainer (as in PR #157).
 - Owner asked: review the design before writing code (sensitive module).
+- Review answers 2026-10-15: Q1-Q4 accepted; Q4 plus pruning RemediationRun with Diagnostic_History_Retention_Days (90) in this issue; Q5 test every threat row, lab run limited to security-relevant checks.
+- Note for the specs: service-uptime reports (/report/network-services, /device-services) are built from ServiceStatus snapshots, so Diagnostic_History_Retention_Days below 90 shortens last_90d reports. Consider a line in Implementation_Status.md (not part of #120).
 - Issue #120 text updated 2026-10-14 to match D1 and D3 (spool group pinpoint, handler in /usr/local/sbin).
 - Deviations from the issue wording are listed in the design for the reviewer: one file per event, two commands, two permissions, runs in history.db.

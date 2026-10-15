@@ -1,8 +1,15 @@
 # Event handler framework: design for review (GitHub #120, plan Issue #7)
 
-Status: **awaiting design review. No code has been written.** The project owner asked for the
+Status: **approved 2026-10-15; implementation may start.** The project owner asked for the
 design to be reviewed before any code touches the sensitive files (`app/network_discovery/`, and a
 new path that runs actions). Written for the reviewer and for the engineer who will build it.
+
+Review answers (section 6), 2026-10-15: Q1 accepted (one file per event). Q2 accepted (two
+commands). Q3 accepted (two permissions). Q4 accepted (`RemediationRun` in `history.db`), with
+one addition: `_purge_old_data` in `scheduler.py` also deletes `RemediationRun` rows older than
+`Diagnostic_History_Retention_Days` (default 90) in this issue, with a unit test, so the table is
+bounded from the start (it is an audit trail, not a source for network statistics). Q5: cover every
+threat row with a test, and keep the lab run to the security-relevant checks.
 
 Decisions already made by the project owner (2026-10-14): **D1** narrow the `nagios` group rights,
 **D2** leave remote restart out of the first release, **D3** the handler is
