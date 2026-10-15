@@ -1,7 +1,7 @@
 # Issue #116: Alert contact groups and Nagios escalations
 
 Branch: `issue-116-alert-escalations`
-Status: blocked
+Status: in-progress
 
 ## Finish condition
 
@@ -120,14 +120,14 @@ Requirement coverage:
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | Intake | Read workflow, issue/prerequisites/specifications and relevant writer/model/API/UI source; created isolated worktree; no application edits | gh issue view 79/113; git log -6 --oneline origin/main | #79 merged as e4130ccf (PR #160); #113 closed/merged. No existing #116 branch. |
-| Plan | Saved finish conditions and coverage; stopped at explicit sensitive-module approval boundary | python3 -I scripts/check_agent_progress.py | Pending below |
+| Plan | Saved finish conditions and coverage; stopped at explicit sensitive-module approval boundary | python3 -I scripts/check_agent_progress.py | green |
 
 ## State for the next session
 
 - Last check run (exact command): python3 -I scripts/check_agent_progress.py
 - Result (first failing lines, or "green"): green
 - Hypothesis: Prerequisites are satisfied; existing #79 group computation can supply escalation group choices and rendering. Implementation requires sensitive Nagios config changes, triggering the workflow's Needs a person stop.
-- Next action (one specific step, not "continue"): Obtain explicit approval for the planned sensitive Nagios configuration changes; then mark in-progress and begin backend failing tests in plan step 1.
+- Next action (one specific step, not "continue"): Collect the full backend stage result from /tmp/pinpoint-116-backend.log; then finish the isolated Docker two-contact trial.
 
 ## Decisions and notes
 
@@ -137,3 +137,11 @@ Requirement coverage:
 - Required approval comes from `.agent/workflows/work-issue.md` section 4: "the change touches a sensitive module (see spec files/Engineering_Standards.md)" requires stopping for a person. Engineering Standards classifies app/network_discovery/ as sensitive. Request authorization to implement the plan with explicit injection/secret review and preserved pre-apply validation.
 - The issue explicitly requests the live lab trial, so lab testing is already in task scope. Select a lab only after checking exclusive ownership; do not reuse approval comments from unrelated issues.
 - No tests, live checks, functionality or reviewer approvals claimed. No application code changed.
+
+- User explicitly authorized the sensitive configuration changes: "proceed with configuration changes" (2026-10-15). No further sensitive-module approval required for this plan.
+
+- Initial implementation checkpoint: backend/API/renderer tests failed first with missing routes (404 vs 403); focused backend + host/recipient/email regressions + migration now pass (184). Frontend tests failed first on missing component; focused frontend/access/layout checks pass (34). `scripts/verify.sh frontend` passes: 651 tests, build green, zero lint errors / 29 existing warnings. Full backend stage is still running; do not claim it passed yet.
+- Generated migration using Flask-Migrate's multi-bind environment against disposable databases upgraded to e79b7d3c2641; inspected autogeneration: only ESCALATION added on default bind, history upgrade/downgrade no-op.
+- Injection/secret review: group identifiers are system_users or generated numeric device names from the single recipient helper; API rejects arbitrary strings, scoped host IDs resolve to generated names and renderer rejects directive metacharacters. Count/interval inputs require exact integers (not bool), with database constraints too. No new shell commands, file destinations, network calls, secrets or log payloads are added. Shared pre-apply validation and config lock remain in place. Apply failures roll back choices; commit failure attempts to rebuild prior config.
+- Frontend work/checks ran while the independent full backend suite was pending; required specs updated with source so route drift stage passes. No failed check was weakened.
+- Docker access was explicitly authorized by the user and group membership granted. Fresh shells can access Docker through `sg docker -c ...` (the parent shell has stale groups). Created separate project pinpoint-issue116 on its own internal subnet and API port 18000 using cached lab images and this worktree's source mount. Existing pinpoint-lab and issue-128 containers are untouched. Lab is running, product acceptance not yet executed.

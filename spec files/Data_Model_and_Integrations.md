@@ -32,6 +32,7 @@ acknowledgements belong in `system.db` even though they relate to Nagios alerts.
   per run), `NCPADeployment` (each device's latest agent state),
   `NCPADevicePartition`.
 - Settings: singleton `SystemSettings`, singleton `NotificationPolicy` (`NOTIFICATION_POLICY`, Id 1, migration `143c48cd6663`), one-per-user `UserPreferences`. `NotificationPolicy` stores weekday/HH:MM quiet windows as JSON, host/service option strings, a 0–1440-minute renotify interval, `Version`, and `Updated_By`; the migration seeds the historical 24x7/default-options/30-minute policy and removes the table on downgrade.
+- Notification escalations: `Escalation` (`ESCALATION`, migration `cd74e5f8a2d5`) stores `First_Notification` and `Last_Notification` (1–10000, first no greater than last), `Interval_Minutes` (0–1440), `Contact_Group` (an existing generated recipient group) and nullable `HostID` (stable `NetworkDiscovery` foreign key; null scopes to all Nagios hosts and services). Database checks enforce numeric ranges. An empty table preserves generated config byte-for-byte. Upgrade creates only this default-bind table; downgrade drops it without changing recipient/device/history records. Deploy with the existing multi-bind `flask db upgrade`; no new permission or `sync-permissions` change is needed.
 - Notifications/alerts: `NotificationCursor`, `AlertAcknowledgement`,
   append-only `AckHistory`.
 
@@ -556,3 +557,30 @@ retirement deletes that device's choices. No assignments remain on the merged
 source or retired device. Pause preserves choices for resume.
 
 NCPA inventory probing considers only devices with NCPA facts; an SNMP-only device with monitored interfaces does not require an NCPA deployment merely because `check_ncpa` is enabled globally.
+
+### Escalation rendering and recipient ownership
+
+`network_discovery/recipient_groups.py` is the shared Active/opted-in eligibility
+calculation for the config writer and escalation options. It returns the existing
+`system_users` and per-device `pinpoint_host_<numeric ID>` groups; it introduces
+no new recipient model. Empty known groups remain available with zero members
+for explanations, but no empty group or dependent escalation is written.
+
+`host_config_templates.create_escalations()` renders host and service escalation
+templates into the same candidate file as contacts and hosts. Global scope uses
+fixed Nagios wildcards; device scope uses the current generated stable host name,
+rejecting config metacharacters. Scoped absent/paused/retired/merged hosts are
+omitted; a scoped host with no generated service receives only a host escalation.
+Groups referenced by escalations are emitted once even if their source device
+currently has no generated host. Account opt-out/deactivation triggers the
+existing shared config rebuild, which omits now-empty escalation groups and
+ranges without deleting their saved choices. They resume when members return.
+
+Nagios owns notification counting and suppression. During a matching range the
+escalation group replaces the normal recipients; overlapping ranges combine
+eligible escalation contacts and use Nagios's shortest interval. Normal contacts
+resume outside the range. Interval zero sends once during that range. The
+existing notification policy, quiet hours, acknowledgements and downtime still
+apply. Counts are finite in this interface (no special last-notification zero).
+All mutations go through `regenerate_and_apply_config_status()` with the shared
+config lock held through commit and rollback on validation or reload failure.

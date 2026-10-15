@@ -20,6 +20,7 @@ from app.network_discovery.port_lifecycle import (
     process_device_ports, promote_identified_ports,
 )
 from app.network_discovery.host_config_templates import *
+from app.network_discovery.recipient_groups import recipient_groups
 from app.network_discovery.service_name_migration import migrate_legacy_service_history
 from app.network_discovery.plugin_registry import (
     GENERIC_PLUGIN_FOR_TRANSPORT,
@@ -39,8 +40,6 @@ from app import db
 from flask import current_app
 import sqlalchemy as sa
 from app.system_models import \
-    User, \
-    UserStatus, \
     NetworkDiscovery, \
     Open_TCP_Services, \
     Open_UDP_Services, \
@@ -53,7 +52,7 @@ from app.system_models import \
     PortState
 from app.logging import create_network_discovery_status, update_network_discovery_status, calculate_progress, create_skipped_service_logs
 from app.logging.deployment_history import update_ncpa_deployment_status
-from app.system_models import DiscoveryStatus, DeploymentStatus, NetworkDiscoveryStatus, ServiceIdentification, HostAlertRecipient
+from app.system_models import DiscoveryStatus, DeploymentStatus, NetworkDiscoveryStatus, ServiceIdentification
 from app.network_discovery.discovery_settings import get_port_services, ncpa_port_key
 from app.network_discovery.interface_discovery import refresh_interfaces_after_scan
 from app.network_discovery.plugin_settings import plugin_config
@@ -614,12 +613,7 @@ def _create_host_cfg_file(discovered_hosts, skipped=None):
     )
 
     # Only active users who have email alerts on are contacts.
-    users = db.session.scalars(
-        sa.select(User).where(
-            User.Status == UserStatus.ACTIVE,
-            User.Receive_Email_Alerts.is_(True),
-        )
-    ).all()
+    users, alert_groups = recipient_groups()
 
     # Nagios rejects an empty contact group, so with no eligible user no group
     # is written and hosts and services get no contact_groups line.
@@ -684,14 +678,6 @@ def _create_host_cfg_file(discovered_hosts, skipped=None):
 
     # Load eligible per-device members once, using the same contacts written above.
     # Group names contain only our numeric device IDs, never request text.
-    recipients_by_device = {}
-    eligible_emails = {user.UserID: user.Email for user in users}
-    for recipient in db.session.scalars(
-        sa.select(HostAlertRecipient).order_by(HostAlertRecipient.NetDiscoveryID, HostAlertRecipient.UserID)
-    ):
-        email = eligible_emails.get(recipient.UserID)
-        if email is not None:
-            recipients_by_device.setdefault(recipient.NetDiscoveryID, []).append(email)
     written_recipient_groups = set()
 
     hostgroups = {
@@ -764,7 +750,7 @@ def _create_host_cfg_file(discovered_hosts, skipped=None):
             host["alias"] = "alias"
             host["address"] = ip
             device_id = host_data["data"].get("net_discovery_id")
-            members = recipients_by_device.get(device_id, [])
+            members = alert_groups.get(f"pinpoint_host_{device_id}", [])
             host_contact_group = contact_group_name
             if members:
                 host_contact_group = f"pinpoint_host_{device_id}"
@@ -879,6 +865,24 @@ def _create_host_cfg_file(discovered_hosts, skipped=None):
                 "contact_groups": contact_group_name,
             }, command))
             host_config.append(_add_space(4))
+
+    # Escalations may use a group belonging to another device, even when that
+    # device currently has no generated host. Write each referenced group once.
+    generated_hosts = {
+        data["data"].get("net_discovery_id"): data["data"]["hostname"]
+        for hosts in discovered_hosts.values() for data in hosts.values()
+    }
+    escalation_services = {hostname: generated_names.get(hostname) or custom_by_device.get(device_id)
+                           for device_id, hostname in generated_hosts.items()}
+    escalation_blocks, needed_groups = create_escalations(alert_groups, generated_hosts, escalation_services)
+    for group in sorted(needed_groups):
+        if group != "system_users" and int(group.removeprefix("pinpoint_host_")) not in written_recipient_groups:
+            host_config.append(create_contactgroup({"group_name": group, "alias_name": group,
+                                                    "member_list": ",".join(alert_groups[group])}))
+            host_config.append(_add_space(4))
+    for block in escalation_blocks:
+        host_config.append(block)
+        host_config.append(_add_space(4))
 
     host_config.append(
         f"""

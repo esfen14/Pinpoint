@@ -125,6 +125,27 @@ Security and system setting fields are restricted with `settings.security` and
 
 Both routes use the standard success/error envelopes. GET returns `quietHours` (weekday, `start`, `end` in 24-hour `HH:MM`), `hostOptions`, `serviceOptions`, `renotifyInterval`, `version` and `timeZone` (`Nagios server local time`). PUT accepts those editable fields plus the current integer `version`; `timeZone` is informational. Quiet windows cannot cross midnight or overlap on one weekday. The policy belongs to the default-bind singleton, and a successful save regenerates/validates/applies the shared Nagios candidate file before committing.
 
+### `app/api/system/escalations.py`
+
+| Method and path | Permission | Purpose |
+|---|---|---|
+| `GET /api/system/escalations` | `settings.system` | List saved ranges (`items`), existing recipient `groups` with `name`/`member_count`, and monitored device `hosts` with `id`/`name`; each range includes `active` and an inactivity `reason` |
+| `POST /api/system/escalations` | `settings.system` | Create and apply a notification escalation; 400 invalid fields/empty group, 422 failed Nagios validation or reload with database rollback |
+| `PUT /api/system/escalations/<id>` | `settings.system` | Replace and apply an escalation; same validation/rollback; 404 missing range |
+| `DELETE /api/system/escalations/<id>` | `settings.system` | Delete and apply an escalation; 404 missing range, 422 failed apply restores the saved range |
+
+POST/PUT require exactly `first_notification`, `last_notification`,
+`interval_minutes`, `contact_group`, `host_id`. Notification counts are integers
+from 1 to 10000, first no greater than last; interval is an integer from 0 to
+1440 minutes (0 sends once during the range). `contact_group` must be an existing
+nonempty group from the shared recipient calculation. `host_id` is a currently
+generated device ID, or `null` for all Nagios hosts and services. Responses use
+the standard envelope. Mutations hold the shared config lock through validation,
+apply and commit, log configuration changes when audit logging is enabled, and
+restore the previous database choices on failure. Existing ranges with empty
+groups or absent scoped hosts remain visible with an explanation and are omitted
+from generated configuration. No new permission is introduced.
+
 ### `app/api/system/dashboard.py`
 
 | Method and path | Permission | Purpose |
