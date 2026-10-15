@@ -13,10 +13,10 @@ User scope decision (2026-10-15): STARTTLS only. Implicit TLS and installer chan
 - [ ] **Part 2.1 (Installer):** Any other `tls` value, including a plain-text mode, is rejected with exit code 1 and no password in the message.
 - [ ] **Part 2.1 (Installer):** An existing appliance configured for STARTTLS keeps working after upgrade without re-entering the password.
 - [ ] **Part 2.1 (Installer):** File ownership and mode of `/etc/msmtprc` remain `root:nagios` and 0640.
-- [ ] **Part 2.2 (System):** A custom host, port and `starttls` can be saved, written through the helper and used for a test email.
+- [x] **Part 2.2 (System):** A custom host, port and `starttls` can be saved, written through the helper and used for a test email.
 - [x] **Part 2.2 (System):** An invalid host, port or TLS mode returns 400 with a message naming the field, and never reaches the helper.
 - [x] **Part 2.2 (System):** The Gmail settings and test email behave exactly as before.
-- [ ] **Part 2.2 (System):** After a notification fails because mail is not configured, the API reports a last-failure time and reason within one poll cycle. With no failures the field is empty.
+- [x] **Part 2.2 (System):** After a notification fails because mail is not configured, the API reports a last-failure time and reason within one poll cycle. With no failures the field is empty.
 - [x] **Part 2.2 (System):** A missing or unreadable `nagios.log` yields an empty indicator, not an error.
 - [x] **Part 2.2 (System):** No password appears in any response or log.
 - [x] **Part 2.3 (Web-Interface):** Choosing Gmail shows exactly the current form and saves the same request body as today.
@@ -33,10 +33,10 @@ User scope decision (2026-10-15): STARTTLS only. Implicit TLS and installer chan
 - [x] Updated frontend components, types and routes (paths in section C).
 - [x] Unit tests for new or modified logic.
 - [x] Frontend interaction tests under `client/src/test/`.
-- [ ] Integration or regression tests for the workflows in section G.
+- [x] Integration or regression tests for the workflows in section G.
 - [x] Updated technical documentation: `spec files/Data_Model_and_Integrations.md`, `spec files/Backend_Modules_and_Routes.md`, `spec files/Frontend_Modules_and_Routes.md`, and `spec files/Implementation_Status.md`.
 - [ ] Updated user-facing documentation: Installer release notes; Email settings help text and the user guide section on mail; Help text on the tab.
-- [ ] Evidence that the functionality works: `scripts/verify.sh all` output attached to the pull request; plus a sanitized lab report in `docs/test-runs/` using its `TEMPLATE.md`.
+- [x] Evidence that the functionality works: `scripts/verify.sh all` output attached to the pull request; plus a sanitized lab report in `docs/test-runs/` using its `TEMPLATE.md`.
 
 #### G. Testing and Verification
 
@@ -147,12 +147,14 @@ Requirement coverage (every requirement in A–H):
 
 | resumed | User explicitly authorized Docker access. Unix account is already listed in docker group; current process lacks refreshed supplementary group. `sg docker` succeeds. Existing shared lab remains untouched. | sg docker -c "docker ps --format '{{.Names}}'"; resumed verify.sh all running | Infrastructure blocker cleared for isolated Docker acceptance. |
 
+| resume-1 | Isolated Docker acceptance completed with real SMTP helper/sudo/msmtp and STARTTLS sink; actual Nagios host/service sends, forced failure in 0.33 s, service-user read and browser 31.7 s pass. User requested real inbox trial; credentials entered through UI only. | verify.sh all green: 3058 backend, 653 frontend; live harness logs and new report; lint green | Original live blocker resolved. External trial waiting on alternate sender setup after provider authentication succeeded but daily sending quota rejected DATA. |
+
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh all > test-results/issue-115-all-final-correction.log 2>&1`
-- Result (first failing lines, or "green"): green; 3058 backend passed / 14 skipped, 653 frontend passed, build/docs green, lint 0 errors / 29 warnings. This ran on a8a112a5 plus the error-redaction correction and its tests, committed with this progress checkpoint. Prior draft CI run 38705934980 passed all three jobs; final source push triggers a new run.
-- Hypothesis: Isolated implementation is complete and the log/error privacy guards are verified. Actual installed-helper/SMTP/Nagios behavior and service-user log access cannot be certified in this environment.
-- Next action (one specific step): Inspect the latest CI checks on draft PR #172, then use an accessible exclusively owned appliance to run the four skipped cases in docs/test-runs/2026-10-15-issue-115-starttls-preflight/REPORT.md and create a fresh report before review readiness.
+- Last check run (exact command): `scripts/verify.sh all > test-results/issue-115-resumed-all.log 2>&1`
+- Result (first failing lines, or "green"): green: 3058 backend / 14 skipped, 653 frontend, docs/build and lint green. Live browser corrected harness passed in 31.7 s. Latest published CI 38707800901 passed all jobs.
+- Hypothesis: Scoped STARTTLS functionality has real Docker proof. The additional owner inbox trial is blocked by the sending provider's daily quota, not authentication; owner is configuring another sender through the UI.
+- Next action (one specific step): Wait for the owner to finish the alternate sending account, then send the authorized test and labeled Nagios notification; request actual inbox confirmation without recording recipient/credentials publicly.
 
 ## Decisions and notes
 
@@ -176,3 +178,5 @@ Requirement coverage (every requirement in A–H):
 - Final correction review: only SMTP diagnostic details may contain a server echo and need credential replacement; fixed classification codes/messages must remain independent of password contents. New Gmail/custom regression cases prove this and existing Gmail tests still pass unchanged. No new behavior or scope beyond #115 was introduced.
 
 - Resume authorization: user says "I give permission to use docker access". This answers the blocker directly and takes precedence over requiring a new issue comment. Use sg docker to refresh the already-granted group, not sudo or socket permission changes. No additional approval needed for scoped live checks already required by #115.
+
+- Live scope ownership: only issue-115-smtp-appliance was created/changed. The shared lab and VM lab remain untouched. User explicitly requested real inbox tests and supplied a private recipient; keep all sender/recipient addresses and credentials out of committed reports. Provider quota/authentication setup attempts must remain distinct from delivery proof.

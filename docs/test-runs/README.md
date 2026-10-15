@@ -48,6 +48,7 @@ table while you test, not afterward.
 
 | Run | Kind | Commit | Result | Report |
 |---|---|---|---|---|
+| [2026-10-15 issue-115-starttls-docker](2026-10-15-issue-115-starttls-docker/REPORT.md) | Isolated real sudo/helper, STARTTLS sink, Nagios failures and browser | `6e14836e` app | Pass for Docker scope: 14 checks; external inbox trial separate | [REPORT.md](2026-10-15-issue-115-starttls-docker/REPORT.md) |
 | [2026-10-15 issue-115-starttls-preflight](2026-10-15-issue-115-starttls-preflight/REPORT.md) | SMTP/Nagios lab prerequisites | `899e7cd2` | Blocked: VirtualBox absent; Docker denied; no live product pass | [REPORT.md](2026-10-15-issue-115-starttls-preflight/REPORT.md) |
 | [2026-10-15 issue-129-polling-ci-repair](2026-10-15-issue-129-polling-ci-repair/REPORT.md) | Latest polling/NCPA migration convergence and regression repair | repair on `5bb6f7a0` | Partial:3002 backend/45 focused tests and docs pass; repair publication/CI pending | [REPORT.md](2026-10-15-issue-129-polling-ci-repair/REPORT.md) |
 | [2026-10-15 issue-129-review-readiness](2026-10-15-issue-129-review-readiness/REPORT.md) | Final local gate, migration convergence and current CI | `7c0bb631` | Pass for application review readiness; paired installer remains a separate deployment dependency | [REPORT.md](2026-10-15-issue-129-review-readiness/REPORT.md) |
