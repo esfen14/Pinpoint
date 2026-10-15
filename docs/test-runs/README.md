@@ -48,6 +48,7 @@ table while you test, not afterward.
 
 | Run | Kind | Commit | Result | Report |
 |---|---|---|---|---|
+| [2026-10-15 issue-122-maintenance-windows](2026-10-15-issue-122-maintenance-windows/REPORT.md) | Docker lab: maintenance window create, dispatch, downtime visible, notifications suppressed, cancel | `0883693c` plus uncommitted working tree | Partial: schedule, suppression and cancel pass on Nagios 4.5.11; restart, plugin services, failure state and browser UI not run | [REPORT.md](2026-10-15-issue-122-maintenance-windows/REPORT.md) |
 | [2026-10-14 issue-13-bandwidth-docker-lab](2026-10-14-issue-13-bandwidth-docker-lab/REPORT.md) | Docker lab: interface discovery, monitoring, Nagios validation and rate against ping traffic | `9252b105` plus uncommitted working tree | Partial: rate within 5% after a sample-time fix; `iperf3` and browser UI not run | [REPORT.md](2026-10-14-issue-13-bandwidth-docker-lab/REPORT.md) |
 | 2026-10-14 issue-128-ncpa-services | Two-target Docker NCPA metric/process/skipping and small-lab load | `fa728583` through `ba4451ce` | Pass for scoped checks; installation/scale/browser walkthrough skipped | [REPORT.md](2026-10-14-issue-128-ncpa-services/REPORT.md) |
 | 2026-10-14 issue-128-ncpa-probe | Two isolated NCPA 3.5.0 API probes | `c006935b` | Partial: agent capabilities only; application/Nagios pending | [REPORT.md](2026-10-14-issue-128-ncpa-probe/REPORT.md) |

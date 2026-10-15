@@ -40,6 +40,13 @@ describe('pageAccess', () => {
     expect(firstAccessiblePage(['system.deploy.ncpa'])).toBe('/ncpa-deployment')
   })
 
+  it('gates Maintenance on maintenance.manage', () => {
+    expect(PAGE_PERMISSIONS['/maintenance']).toBe('maintenance.manage')
+    expect(canAccessPage('/maintenance', ['maintenance.manage'])).toBe(true)
+    expect(canAccessPage('/maintenance', ['system.hosts.edit', 'system.network_health'])).toBe(false)
+    expect(firstAccessiblePage(['maintenance.manage'])).toBe('/maintenance')
+  })
+
   it('uses the System Status path and no longer recognizes topology', () => {
     expect(canAccessPage('/system-status', ['system.network_health'])).toBe(true)
     expect(canAccessPage('/system-status', [])).toBe(false)
@@ -73,6 +80,17 @@ describe('Sidebar', () => {
     expect(screen.queryByText('Manage Roles')).not.toBeInTheDocument()
     expect(screen.queryByText('System Logs')).not.toBeInTheDocument()
     expect(screen.queryByText('NCPA Deployment')).not.toBeInTheDocument()
+  })
+
+  it('shows Maintenance only with maintenance.manage', () => {
+    signIn(['system.dashboard'])
+    const { unmount } = render(<MemoryRouter><Sidebar /></MemoryRouter>)
+    expect(screen.queryByText('Maintenance')).not.toBeInTheDocument()
+    unmount()
+
+    signIn(['maintenance.manage'])
+    render(<MemoryRouter><Sidebar /></MemoryRouter>)
+    expect(screen.getByText('Maintenance')).toBeInTheDocument()
   })
 
   it('shows NCPA Deployment with the deploy permission', () => {

@@ -14,6 +14,7 @@ import { PluginsPage } from './pages/PluginsPage'
 import { NcpaDeploymentPage } from './pages/NcpaDeploymentPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { ManageRolesPage } from './pages/ManageRolesPage'
+import { MaintenancePage } from './pages/MaintenancePage'
 
 export default function App() {
   return (
@@ -80,6 +81,10 @@ export default function App() {
         <Route
           path="ncpa-deployment"
           element={<NcpaDeploymentPage />}
+        />
+        <Route
+          path="maintenance"
+          element={<MaintenancePage />}
         />
         <Route
           path="settings"

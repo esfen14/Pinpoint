@@ -32,6 +32,18 @@ def _relocate_ncpa_devices():
             current_app.logger.exception("Unexpected error during NCPA relocation")
 
 
+def _dispatch_maintenance_windows():
+    """Hand maintenance windows that are about to start to Nagios as scheduled downtime."""
+    from app.maintenance import dispatch_due_windows
+
+    with app.app_context():
+        try:
+            dispatch_due_windows()
+        except Exception:
+            db.session.rollback()
+            current_app.logger.exception("Unexpected error dispatching maintenance windows")
+
+
 def _purge_old_data():
     with app.app_context():
         try:
@@ -125,6 +137,14 @@ def init_scheduler():
         max_instances=1,
         coalesce=True,
         next_run_time=datetime.now(),
+    )
+    _scheduler.add_job(
+        _dispatch_maintenance_windows,
+        "interval",
+        seconds=POLL_INTERVAL_SECONDS,
+        id="maintenance_windows",
+        max_instances=1,
+        coalesce=True,
     )
     _scheduler.add_job(
         _purge_old_data,

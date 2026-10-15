@@ -199,19 +199,25 @@ export function SystemSettings() {
             onChange={(value) => updateSettings({ maxCheckAttempts: Number(value) })}
           />
 
-          <SettingsToggle
-            label="Maintenance Mode"
-            description="Pause scheduled scans and checks, and show a notice to all users"
-            enabled={
-              settings.maintenanceMode
-            }
-            onChange={(enabled) =>
-              updateSettings({
-                maintenanceMode:
-                  enabled,
-              })
-            }
-          />
+          <div>
+            <SettingsToggle
+              label="Maintenance Mode"
+              description="Pauses PinPoint's own scans, update checks and security checks, and shows a notice to all users. It does not silence alerts."
+              enabled={
+                settings.maintenanceMode
+              }
+              onChange={(enabled) =>
+                updateSettings({
+                  maintenanceMode:
+                    enabled,
+                })
+              }
+            />
+            <p className="mt-2 text-xs text-[var(--text-muted)]">
+              To silence alerts during planned work, schedule a{' '}
+              <a href="/maintenance" className="underline">maintenance window</a>.
+            </p>
+          </div>
 
           <SettingsToggle
             label="Automatic Backups"

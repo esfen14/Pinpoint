@@ -11,6 +11,7 @@ export const PAGE_PERMISSIONS: Record<string, string | null> = {
   '/system-status': 'system.network_health',
   '/plugins': 'plugin.view',
   '/ncpa-deployment': 'system.deploy.ncpa',
+  '/maintenance': 'maintenance.manage',
   '/history': 'system.history',
   '/reports': 'system.report',
   '/system-logs': 'system.logs',

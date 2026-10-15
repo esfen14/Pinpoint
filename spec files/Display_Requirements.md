@@ -1431,10 +1431,38 @@ All successful acknowledge operations return:
 
 The following are noted for future planning and are not defined here:
 
-- Scheduled downtime creation and management UI
+- Scheduled downtime creation outside maintenance windows (see section 6)
 - Notification contact and rule management UI
 - Dedicated Host Detail page (full per-host history view)
 - Dedicated Service Detail page (full per-service history view)
 - Report generation UI (already partially implemented separately)
 - Dedicated Alerts & Notifications History page (defined separately in
   `Alerts_Notifications_History_Requirements.md`)
+
+---
+
+## 6. Maintenance Windows
+
+The **Maintenance** page (`/maintenance`, permission `maintenance.manage`) schedules planned
+work as Nagios scheduled downtime, so alerts and notifications for the scope stop while the
+work is done. `Scheduled_Downtime_Depth` then becomes non-zero for the scope and the existing
+downtime indicators (host table, service overview, recent outages) show it.
+
+- **List:** devices (a device or "All monitored devices"), next occurrence, repeats (Once,
+  Every day, Every week), status (Scheduled, Cancelled, Completed) and reason. States: loading,
+  load error with retry, empty ("No maintenance windows yet").
+- **Create and edit:** device, repeat, start, end, optional end of repetition and a reason.
+  Times are typed and shown in the user's display time zone and stored as UTC. The form
+  rejects an end before the start, a window already over, a one-off longer than 30 days, a
+  daily or weekly window longer than its period, a repetition end more than 366 days ahead
+  and a blank or over-long reason, before calling the server; a server error keeps the form
+  open.
+- **Cancel:** two clicks ("Yes, cancel it" / "Keep it"). Cancelling removes pending and running
+  downtime. If Nagios could not be told, the window is still cancelled and a notice says that
+  Nagios was not updated.
+- **Failure:** an occurrence Nagios did not accept is retried up to 3 times and then shown as
+  Failed with the reason; while retrying it is shown as Retrying.
+- **Two kinds of maintenance:** the page says a window silences alerts and is not the System
+  settings' **Maintenance Mode**, which pauses only PinPoint's own scans and checks. That
+  switch's description, the banner shown while it is on, and this page each say so and link to
+  one another.

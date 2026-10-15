@@ -16,6 +16,7 @@ Commands (https://assets.nagios.com/downloads/nagioscore/docs/externalcmds/):
     schedule_forced_service_check(host, service)
     schedule_host_downtime(host, start, end, comment, author)
     schedule_service_downtime(host, service, start, end, comment, author)
+    cancel_downtime_by_host_name(host, comment)
 
 Acknowledgement type sent: NORMAL (sticky=1), matching AcknowledgementType.NORMACK
 in history_models.py. Nagios removes a normal acknowledgement when the state
@@ -294,6 +295,21 @@ def schedule_service_downtime(hostname, service, start, end, comment, author, ta
         "SCHEDULE_SVC_DOWNTIME",
         [hostname, service, start, end, 1, 0, 0, _wire_author(author), _wire_comment(comment)],
         _target_label(hostname, service), comment,
+    )
+
+
+def cancel_downtime_by_host_name(hostname, comment, targets=None) -> CommandResult:
+    """
+    Delete the host's and its services' downtime whose comment equals `comment`
+    (DEL_DOWNTIME_BY_HOST_NAME;host;;;comment, checked on Nagios 4.5.11). The comment is
+    required: with it blank Nagios would delete every downtime of the host.
+    """
+    bad = _comment_failure(comment) or _validate_target(hostname, None, targets)
+    if bad:
+        return bad
+    return _send(
+        "DEL_DOWNTIME_BY_HOST_NAME", [hostname, "", "", _wire_comment(comment)],
+        _target_label(hostname, None), comment,
     )
 
 

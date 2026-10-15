@@ -23,6 +23,7 @@ acknowledgements belong in `system.db` even though they relate to Nagios alerts.
 - Email settings: `SmtpSettings` (`SMTP_SETTINGS`), the singleton (`Id` 1) behind Settings -> Email: `Provider`, `Host`, `Port`, `Tls`, `Username`, `Sender` and `Password_Encrypted` (Fernet via `app/secrets_store.py`; never returned by the API), with `Version`/`Updated_By`. Saving also applies the settings to `/etc/msmtprc` through the installer's root helper `/usr/local/sbin/pinpoint-apply-smtp` (`sudo -n`, JSON on stdin: `host`, `port`, `tls`, `username`, `password`, `sender`). No row means no mail transport is configured.
 - Plugin settings: `PluginSettings` (`PLUGIN_SETTINGS`), one row per plugin definition (`Plugin_Name`, e.g. `snmp`) holding the variables saved from Settings -> Plugins in `Variables` (JSON), with `Version`/`Updated_By`. No row means the `config.py` defaults apply.
 - Device interfaces: `DeviceInterface` (`DEVICE_INTERFACE`, migration `b7d3f1a9c264`), one row per interface SNMP reports for a device (unique per `NetDiscoveryID` + `If_Index`): `Name`, `Speed_Bps` (null when unreported; `ifHighSpeed` is preferred over `ifSpeed`), `Admin_Status`, `Oper_Status`, `Monitored` (the administrator's choice, default false), `Present` (false once a refresh no longer finds a monitored interface) and `Last_Seen_At`. No rows means no change to the generated Nagios config.
+- Maintenance windows: `MaintenanceWindow` (`MAINTENANCE_WINDOW`, migration `a4c8e1b7d933`): `NetDiscoveryID` (a device, or null for every monitored device), `Start_At`/`End_At` (first occurrence, naive UTC), `Recurrence` (`none`, `daily`, `weekly`), `Recurrence_Until`, `Time_Zone` (IANA name the recurrence repeats in), `Comment`, `Status` (`active`, `cancelled`, `completed`), `Last_Occurrence_Sent`, `Created_By`/`Created_At`; and `MaintenanceOccurrence` (`MAINTENANCE_OCCURRENCE`), one row per occurrence handed to Nagios, unique per (`WindowID`, `Start_At`), with `Status` (`pending` while retrying, `sent`, `failed`, `cancelled`), `Attempts`, `Last_Error` and `Sent_At`. No rows means nothing changes. The downgrade drops both tables; run `flask sync-permissions` after upgrading to add `maintenance.manage` (Administrator only).
 - Network profile: singleton `NetworkProfile` (`Id=1`) holding the editable name, reference and detail rows of the Network Health info card.
 - Audit/logging: `ActivityLog`, `ConfigurationChanges`, `ExportLog`.
 - Discovery: `NetworkDiscoveryStatus`, `SkippedService`, `NetworkDiscovery`,
@@ -192,8 +193,10 @@ the poll continues.
 `nagios`). The CGI route is not used: `cgi.cfg` authorizes commands only for
 `nagiosadmin`, which has no password. The allowlist is closed, one function per
 command: acknowledge/remove acknowledgement (host, service), forced check (host,
-service) and schedule downtime (host, service; for the maintenance-window
-work). Each line is `[epoch] COMMAND;args`, built only after validation: host,
+service), schedule downtime (host, service) and cancel downtime by host name and
+comment (`DEL_DOWNTIME_BY_HOST_NAME;host;;;comment`, which removes the host's and its
+services' downtime with that exact comment; the comment is required, since a blank one
+would delete all of the host's downtime). Each line is `[epoch] COMMAND;args`, built only after validation: host,
 service and author may not contain newline, CR, NUL or `;`; a comment may not
 contain newline, CR or NUL (400 at the route) and has `;` replaced by `,`, is cut
 to 255 characters and logged at INFO only to 40; a line may not exceed 4096 bytes
@@ -249,6 +252,7 @@ are not part of that latency or the check freshness threshold.
 - Daily purging based on `Log_Retention_Days` and
   `Diagnostic_History_Retention_Days`.
 - Settings-driven automation checks every `AUTOMATION_CHECK_MINUTES`.
+- Maintenance window dispatch every 60 seconds (`maintenance_windows`, `app/maintenance.py`).
 
 `automation.py` can schedule database backups, network discovery, plugin update
 scans, and plugin security validation. Scheduled network discovery runs only if
@@ -256,6 +260,29 @@ at least one scan has already been recorded; a fresh installation waits for an
 administrator to trigger the first scan manually. Maintenance mode permits backups but
 stops the other automated operations. Jobs are attributed to an active user for
 audit purposes.
+
+## Maintenance windows and Nagios downtime
+
+`app/maintenance.py` turns a `MaintenanceWindow` into Nagios scheduled downtime through
+the command channel. The dispatcher runs every 60 seconds with the server's clock (the
+Nagios server's clock on an appliance). For each active window it finds the occurrence
+running now or next; when that starts within 10 minutes it claims a
+`MaintenanceOccurrence` row (committed before anything is sent, unique per window and
+start, so a restart or an overlapping run never schedules it twice) and sends
+`SCHEDULE_HOST_DOWNTIME` for each host in scope and `SCHEDULE_SVC_DOWNTIME` for each of
+its services in the latest snapshot, with a fixed start and end so Nagios ends the
+downtime itself. Host downtime alone does not raise a service's `Scheduled_Downtime_Depth`,
+hence the per-service commands. Every downtime carries the comment
+`PinPoint maintenance window <id> starting <epoch>`; cancelling or editing deletes by that
+comment, so only downtime PinPoint created for that occurrence is touched. A failed send
+(pipe unavailable, scope device paused or absent from Nagios) leaves the occurrence
+`pending` and is retried on the next runs, each retry first deleting what the earlier
+attempt left; after 3 attempts it is `failed` with the reason in `Last_Error`, shown on the
+Maintenance page and written to the activity log. A window with no occurrence left is
+marked `completed`. Daily and weekly windows repeat at the same local time in their
+`Time_Zone`, with the same length. `DEL_DOWNTIME_BY_HOST_NAME` was checked on the Docker
+lab's Nagios 4.5.11 (`docs/test-runs/2026-10-15-issue-122-maintenance-windows/REPORT.md`).
+This path is injection-sensitive: it only calls the closed functions in `commands.py`.
 
 ## Network discovery and Nagios configuration
 

@@ -24,6 +24,7 @@ account.view, account.edit, account.info, account.alerts
 system.discover, system.deploy.ncpa, system.hosts, system.hosts.edit, system.logs
 system.report, system.notifications, system.services, system.network_health
 system.acknowledge_alerts, system.recheck, system.dashboard, system.history
+maintenance.manage
 plugin.scan, plugin.view, plugin.enable, plugin.disable
 plugin.command_override, plugin.command_restore, plugin.validate
 plugin.custom_add, plugin.custom_check, plugin.update, plugin.update_rollback
@@ -124,6 +125,17 @@ Security and system setting fields are restricted with `settings.security` and
 | `PUT /api/system/notification-policy` | `settings.system` | Validate quiet-hour windows, host/service options, and renotify interval (0–1440 minutes); 400 on invalid fields, 409 on stale version, 422 with Nagios feedback on failed config apply, rolling back the database; audit changed fields when enabled |
 
 Both routes use the standard success/error envelopes. GET returns `quietHours` (weekday, `start`, `end` in 24-hour `HH:MM`), `hostOptions`, `serviceOptions`, `renotifyInterval`, `version` and `timeZone` (`Nagios server local time`). PUT accepts those editable fields plus the current integer `version`; `timeZone` is informational. Quiet windows cannot cross midnight or overlap on one weekday. The policy belongs to the default-bind singleton, and a successful save regenerates/validates/applies the shared Nagios candidate file before committing.
+
+### `app/api/system/maintenance.py`
+
+| Method and path | Permission | Purpose |
+|---|---|---|
+| `GET /api/system/maintenance/windows` | `maintenance.manage` | List windows (newest first, at most 200) with `nextOccurrence`, the five most recent occurrences (status, attempts, `error`) and `devices`, the monitored devices a window can be scoped to |
+| `POST /api/system/maintenance/windows` | `maintenance.manage` | Create a window (201). 400 when invalid: `startAt`/`endAt` need a UTC offset, end after start and in the future, `recurrence` none/daily/weekly, one-off at most 30 days, a recurring window no longer than its period, `recurrenceUntil` only for a recurring window and at most 366 days after the start, `timeZone` a known IANA name, `comment` 1–200 characters with no line break, `deviceId` null (all devices) or an existing device that is monitored. Audited |
+| `PUT /api/system/maintenance/windows/<id>` | `maintenance.manage` | Replace an active window with the same validation (400; 404 unknown; 400 when not active). Downtime already handed to Nagios for its unfinished occurrences is deleted first; the response adds `nagios_synced` / `nagios_message`. Audited |
+| `POST /api/system/maintenance/windows/<id>/cancel` | `maintenance.manage` | Cancel a window and delete its pending and running Nagios downtime (`nagios_synced` / `nagios_message` as above; the window is cancelled even when Nagios could not be told). 400 when already cancelled, 404 unknown. Audited |
+
+A window is Nagios scheduled downtime, not PinPoint's own Maintenance Mode (a `SystemSettings` flag that only pauses PinPoint's background jobs and is unchanged). Times are ISO 8601 in and out, stored as UTC; `timeZone` is only the zone a daily or weekly window repeats in, so it keeps its local time across a daylight-saving change. Nothing is sent to Nagios by these routes except the delete on edit and cancel; the scheduler job `maintenance_windows` (`app/maintenance.py`) schedules downtime shortly before each occurrence.
 
 ### `app/api/system/dashboard.py`
 

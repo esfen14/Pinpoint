@@ -42,6 +42,7 @@ PERMISSIONS = [
     "system.network_health",
     "system.acknowledge_alerts",
     "system.recheck",
+    "maintenance.manage",
     "system.dashboard",
     "system.history",
     "plugin.scan",

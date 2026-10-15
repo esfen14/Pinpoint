@@ -80,6 +80,25 @@ class TestCommandLines:
         assert pipe() == []
 
 
+class TestCancelDowntime:
+
+    def test_cancel_by_host_and_comment(self, pipe):
+        assert cmd.cancel_downtime_by_host_name("web-01", "PinPoint maintenance window 3 1000", TARGETS).ok
+        assert body(pipe()[0]) == "DEL_DOWNTIME_BY_HOST_NAME;web-01;;;PinPoint maintenance window 3 1000"
+
+    @pytest.mark.parametrize("comment", ["", "  ", "a\nSHUTDOWN", "a\0b"])
+    def test_cancel_needs_a_safe_comment(self, pipe, comment):
+        # An empty comment would delete every downtime of the host.
+        result = cmd.cancel_downtime_by_host_name("web-01", comment, TARGETS)
+        assert not result.ok and result.error == cmd.INVALID
+        assert pipe() == []
+
+    def test_cancel_unknown_host_is_refused(self, pipe):
+        result = cmd.cancel_downtime_by_host_name("nope", "tag", TARGETS)
+        assert not result.ok and result.error == cmd.UNKNOWN_TARGET
+        assert pipe() == []
+
+
 class TestInjection:
 
     @pytest.mark.parametrize("bad", ["a\nb", "a\rb", "a\0b"])
