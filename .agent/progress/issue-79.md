@@ -1,7 +1,7 @@
 # Issue #79: Choose which users receive email alerts for each host
 
 Branch: `issue-79-host-alert-recipients`
-Status: in-progress
+Status: blocked
 
 ## Finish condition
 
@@ -134,3 +134,5 @@ Requirement coverage (every requirement stated by the issue):
 - Current actual delivery run ID is retained privately in test-results/issue79-post165/delivery-window.json. Selected target 10.77.0.2 and default target 10.77.0.3 reached real HARD DOWN and SSH HARD CRITICAL. Exact recipient sets verified from Nagios events: selected mailbox only on selected host, both on default host. Twelve Gmail SMTP 250/EX_OK receipts verified (8 selected mailbox / 4 default-only mailbox including recovery). The initial service status assertion read a stale periodic status.dat; event log independently proves HARD states and dispatch. Finally cleanup restored runtime settings; subsequent verifier proves both UP/OK. Temporary driver now waits for publication; no redundant resend performed.
 - Rebuilt live rescan succeeded within the exact 10.77.0.0/28 network and explicit TCP/UDP ports, preserving exact stable recipient IDs. Ineligible-only selection generated valid default host/service groups, then original selection restored. Baseline app restored by removing only task drop-in and restoring exact Nginx/Nagios backups. Original system.db and static index hashes match predeployment; services active and original HEAD/source unchanged. New administrator login and configured SMTP verified on restored baseline; temporary selected account absent there. Private isolated trial DB remains retained, inactive.
 - New sanitized report: docs/test-runs/2026-10-15-issue-79-rebuilt-inbox/REPORT.md (11 pass / 1 inbox-confirmation blocked by #79). Owner asked to check both actual inboxes/Spam during Oct 15 03:14–03:18 UTC / 11:14–11:18 Manila, selected host dev-16a18e and default host dev-c61190. F8 stays unticked and PR stays draft until owner answers. No mailbox addresses or raw configs/evidence committed.
+
+- Checkpoint 766751b3 contains sanitized evidence only; PR description refreshed to the current rebuilt run. All code CI was green on 4ed80435; final documentation checkpoint CI is running. Only blocking input is owner confirmation of actual selected/default inbox comparison; do not resend mail or redeploy merely while awaiting that answer.
