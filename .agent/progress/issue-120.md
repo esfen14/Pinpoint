@@ -49,7 +49,7 @@ Requirement coverage:
 2. [x] Migration, models and action registry with tests, plus RemediationRun pruning in _purge_old_data (server/app/system_models.py, server/app/remediation_actions.py, server/app/scheduler.py, new migration)
 3. [x] Handler script and consumer with tests (server/scripts/pinpoint_event_handler.py, server/app/remediation.py, server/app/scheduler.py)
 4. [x] Config rendering with byte-identical proof (server/app/network_discovery/host_config_templates.py, create_host_cfg.py, templates)
-5. [ ] API routes and permission seeding (server/app/api/system/remediation.py, server/app/api/commands/seed.py)
+5. [x] API routes and permission seeding (server/app/api/system/remediation.py, server/app/api/commands/seed.py)
 6. [ ] Frontend page, route, navigation, tests (client/src/pages/RemediationPage.tsx, components/remediation/, App.tsx, Sidebar.tsx, pageAccess.ts)
 7. [ ] Specs and Implementation_Status; verify.sh; lab run and report; delete this file; PR ready
 
@@ -63,13 +63,14 @@ Requirement coverage:
 | 4 | Plan step 3, first half: handler server/scripts/pinpoint_event_handler.py; tests first (hostile args, state sets, flood limit, atomic write); tests caught '..' passing the character check, now rejected | pytest tests/unit/test_event_handler.py | 83 passed, 1 skipped (POSIX file mode, runs on Linux CI) |
 | 5 | Plan step 3, second half: consumer server/app/remediation.py, config REMEDIATION_SPOOL_DIR/OWNER, 15 s scheduler job, mark_interrupted at start; tests first (decisions, replay, crash, forged/malformed/oversize/symlink/owner, flood, redaction, name parity with handler). Dropped outcomes duplicate, discarded_malformed, skipped_disabled (cannot be stored as rows; design and migration updated) | pytest consumer, handler, actions, migration, scheduler tests | 166 passed, 2 skipped (symlink and POSIX mode tests: Linux CI must prove them) |
 | 6 | Plan step 4: config rendering in host_config_templates.py (handler_exists, event_handler_path, create_event_handler_commands, add_event_handler_lines), template event_handler_commands.cfg.tpl, commands emitted in create_host_cfg.py; tests first: no/disabled action or missing handler leaves output byte-identical, covered objects only, same matching as consumer, every macro single-quoted, unsafe path refused | pytest tests/unit/test_event_handler_config.py plus 18 related config test files | 18 new passed; related files 369 passed, 1 known Windows file-lock failure (test_notification_policy_migration, fails on clean checkout too) |
+| 7 | Plan step 5: API server/app/api/system/remediation.py (7 routes, per-field 400, 409, 422 rollback, run filters, audit log), permissions remediation.view/manage in seed.py and conftest, granted to Administrator by migration e4a7c1d9b305 (as b6e1d4a8c2f9 did for settings.email); test_upgrade_rehearsal expectations extended for the two new permissions; tests first | pytest test_remediation_api.py, test_remediation_migration.py, test_upgrade_rehearsal.py; full tests/unit | 63 API tests pass; full suite 2828 passed, 5 failed of which 2 were mine (upgrade rehearsal, now fixed) and 3 are Windows-only/known |
 
 ## State for the next session
 
-- Last check run (exact command): cd server; python -m pytest tests/unit/test_event_handler_config.py -q (and the config/template/notification test files)
-- Result: 18 passed; related 369 passed, 1 known Windows failure
+- Last check run (exact command): cd server; python -m pytest tests/unit/test_upgrade_rehearsal.py tests/unit/test_remediation_migration.py tests/unit/test_remediation_api.py -q
+- Result: green (full suite earlier: only known Windows failures remain)
 - Hypothesis: build order in the design is sound; the handler and consumer are the risky part
-- Next action: plan step 5, API: failing tests first for server/app/api/system/remediation.py (routes in design 3.6: action-types, actions CRUD with version/409, runs list with filters and pagination, run detail; remediation.view and remediation.manage permissions seeded in server/app/api/commands/seed.py; 403 without permission; 400 per-field errors; changes regenerate Nagios config via regenerate_and_apply_config_status() and a rejected config rolls back with 422; no secrets in responses). Read Backend_Modules_and_Routes.md and an existing route module such as notification policy first
+- Next action: plan step 6, frontend: failing vitest tests first for client/src/pages/RemediationPage.tsx and components/remediation/ (action list with enable switch and banner, form generated from /action-types with server errors shown per field from response data.fields, run log with filters and pagination and detail drawer, loading/empty/error/403 states), route in App.tsx, Sidebar.tsx, lib/pageAccess.ts (remediation.view), update PageAccess.test.tsx and App.test.tsx. Read Frontend_Modules_and_Routes.md and an existing page such as the notification policy tab first
 
 ## Decisions and notes
 

@@ -114,6 +114,8 @@ def all_monitoring_plugins(db_session):
 
 PERMISSION_NAMES = [
     "system.inventory",
+    "remediation.view",
+    "remediation.manage",
     "system.discover",
     "network.discovery",
     "role.edit",

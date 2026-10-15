@@ -58,3 +58,15 @@ def test_the_same_event_cannot_be_recorded_twice_for_one_action(report):
 def test_downgrade_removes_the_tables_and_upgrade_restores_them(report):
     assert report["tables_after_downgrade"] == []
     assert report["tables_after_reupgrade"] == ["REMEDIATION_ACTION", "REMEDIATION_RUN"]
+
+
+BOTH = ["remediation.manage", "remediation.view"]
+
+
+def test_upgrade_adds_both_permissions_and_grants_them_to_the_administrator(report):
+    assert report["permissions"] == {"existing": BOTH, "administrator": BOTH}
+
+
+def test_downgrade_removes_the_permissions_and_their_grants_and_upgrade_restores_them(report):
+    assert report["permissions_after_downgrade"] == {"existing": [], "administrator": []}
+    assert report["permissions_after_reupgrade"] == {"existing": BOTH, "administrator": BOTH}

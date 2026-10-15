@@ -1,4 +1,11 @@
-"""add the remediation action and run tables
+"""add the remediation action and run tables and the remediation permissions
+
+REMEDIATION_ACTION holds the admin-defined rules and REMEDIATION_RUN the log of what the event
+consumer decided. remediation.view (read the log and the rules) and remediation.manage (change the
+rules) are added and granted to the Administrator role, as `flask sync-permissions` would; the
+downgrade removes the tables, the permissions and their grants.
+
+history.db is not touched.
 
 Revision ID: e4a7c1d9b305
 Revises: c5e2a8f4d716
@@ -10,6 +17,8 @@ revision = 'e4a7c1d9b305'
 down_revision = 'c5e2a8f4d716'
 branch_labels = None
 depends_on = None
+
+PERMISSIONS = ('remediation.view', 'remediation.manage')
 
 
 def upgrade(engine_name):
@@ -72,8 +81,34 @@ def upgrade_():
         batch_op.create_index('ix_REMEDIATION_RUN_Received_At', ['Received_At'], unique=False)
         batch_op.create_index('ix_REMEDIATION_RUN_Outcome', ['Outcome'], unique=False)
 
+    bind = op.get_bind()
+    for name in PERMISSIONS:
+        exists = bind.execute(sa.text('SELECT 1 FROM PERMISSION WHERE Name = :name'), {"name": name}).fetchone()
+        if exists is None:
+            bind.execute(
+                sa.text('INSERT INTO PERMISSION (Name, Description) VALUES (:name, :description)'),
+                {"name": name, "description": f"Permission for {name}"},
+            )
+        bind.execute(
+            sa.text(
+                'INSERT INTO ROLE_PERMISSION (RoleID, PermissionID) '
+                'SELECT r.RoleID, p.PermissionID FROM ROLE r, PERMISSION p '
+                'WHERE r.Name = :role AND p.Name = :name AND NOT EXISTS ('
+                'SELECT 1 FROM ROLE_PERMISSION rp WHERE rp.RoleID = r.RoleID AND rp.PermissionID = p.PermissionID)'
+            ),
+            {"role": "Administrator", "name": name},
+        )
+
 
 def downgrade_():
+    bind = op.get_bind()
+    for name in PERMISSIONS:
+        bind.execute(
+            sa.text('DELETE FROM ROLE_PERMISSION WHERE PermissionID IN '
+                    '(SELECT PermissionID FROM PERMISSION WHERE Name = :name)'),
+            {"name": name},
+        )
+        bind.execute(sa.text('DELETE FROM PERMISSION WHERE Name = :name'), {"name": name})
     with op.batch_alter_table('REMEDIATION_RUN') as batch_op:
         batch_op.drop_index('ix_REMEDIATION_RUN_Outcome')
         batch_op.drop_index('ix_REMEDIATION_RUN_Received_At')

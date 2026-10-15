@@ -41,6 +41,30 @@ def columns(conn, table):
     return [row[1] for row in conn.execute(f"pragma table_info({table})")]
 
 
+def insert_administrator_role(conn):
+    """The Administrator role, filling every NOT NULL column that has no default."""
+    names, values = [], []
+    for _cid, name, ctype, notnull, default, pk in conn.execute("pragma table_info(ROLE)"):
+        if pk:
+            continue
+        if name == "Name":
+            names.append(name)
+            values.append("Administrator")
+        elif notnull and default is None:
+            names.append(name)
+            values.append(1 if "INT" in ctype.upper() or "BOOL" in ctype.upper() else "x")
+    conn.execute(f"insert into ROLE ({', '.join(names)}) values ({', '.join('?' * len(values))})", values)
+
+
+def permissions(conn):
+    """Remediation permissions that exist, and the ones the Administrator role holds."""
+    existing = sorted(r[0] for r in conn.execute("select Name from PERMISSION where Name like 'remediation.%'"))
+    granted = sorted(r[0] for r in conn.execute(
+        "select p.Name from ROLE_PERMISSION rp join PERMISSION p on p.PermissionID = rp.PermissionID"
+        " join ROLE r on r.RoleID = rp.RoleID where r.Name = 'Administrator' and p.Name like 'remediation.%'"))
+    return {"existing": existing, "administrator": granted}
+
+
 def insert_row(conn):
     """One action and one run, to prove the table accepts the documented columns."""
     conn.execute(
@@ -74,6 +98,8 @@ with app.app_context():
     flask_migrate.upgrade(directory="migrations", revision=BEFORE)
 c = sqlite3.connect(sysdb)
 report["tables_before"] = tables(c)
+insert_administrator_role(c)
+c.commit()
 c.close()
 
 with app.app_context():
@@ -81,6 +107,7 @@ with app.app_context():
 c = sqlite3.connect(sysdb)
 report["version"] = c.execute("select version_num from alembic_version").fetchall()
 report["tables_after"] = tables(c)
+report["permissions"] = permissions(c)
 report["action_columns"] = columns(c, "REMEDIATION_ACTION")
 report["run_columns"] = columns(c, "REMEDIATION_RUN")
 insert_row(c)
@@ -91,6 +118,7 @@ with app.app_context():
     flask_migrate.downgrade(directory="migrations", revision=BEFORE)
 c = sqlite3.connect(sysdb)
 report["tables_after_downgrade"] = tables(c)
+report["permissions_after_downgrade"] = permissions(c)
 c.close()
 
 with app.app_context():
@@ -98,6 +126,7 @@ with app.app_context():
 c = sqlite3.connect(sysdb)
 report["version_after_reupgrade"] = c.execute("select version_num from alembic_version").fetchall()
 report["tables_after_reupgrade"] = tables(c)
+report["permissions_after_reupgrade"] = permissions(c)
 c.close()
 
 print("REPORT_BEGIN")
