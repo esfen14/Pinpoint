@@ -1,10 +1,10 @@
 """
-Email settings (Settings -> Email): the Gmail account PinPoint's notification
+Email settings (Settings -> Email): the SMTP account PinPoint's notification
 mail is sent through.
 
 Saving sends the settings to the root helper (see app/smtp_settings.py), which
 writes /etc/msmtprc, and stores them in the SmtpSettings singleton in
-system.db. The helper's error text is returned as-is so the card can show it.
+system.db. The helper's error text is credential-redacted before the card shows it.
 The password is write-only: it is stored encrypted and no route returns it. All
 routes need the "settings.email" permission, which also controls the Email tab
 on the Settings page.
@@ -13,7 +13,7 @@ Routes
 ------
 GET  /system/smtp-settings
     Return the saved settings (with "passwordSet", never the password) and the
-    Gmail preset.
+    provider presets and the latest sanitized notification failure.
 
 PUT  /system/smtp-settings
     Validate the settings, apply them through the helper and save them.
@@ -31,7 +31,7 @@ from app.api.helper.database_access.permissions import require_permission
 from app.logging.configuration_changes import create_configuration_log
 from app.secrets_store import SecretsError, decrypt, encrypt
 from app.smtp_settings import (
-    GMAIL,
+    PRESETS,
     MailHelperError,
     SmtpSettingsError,
     get_smtp_row,
@@ -41,18 +41,25 @@ from app.smtp_settings import (
     validate_smtp_settings,
 )
 from app.system_models import SmtpSettings, SystemSettings
+from app.nagios.mail_failures import read_mail_failure
 
 
-LOGGED_FIELDS = (("Host", "host"), ("Port", "port"), ("Tls", "tls"), ("Username", "username"), ("Sender", "sender"))
+LOGGED_FIELDS = (("Provider", "provider"), ("Host", "host"), ("Port", "port"), ("Tls", "tls"), ("Username", "username"), ("Sender", "sender"))
 
 
 @system_bp.get('/smtp-settings')
 @login_required
 @require_permission('settings.email')
 def get_smtp_settings_route():
-    """Return the saved email settings (never the password) and the Gmail preset."""
+    """Return settings, provider presets and lastMailFailure (null or {time, reason}).
+
+    Failure time is ISO 8601 UTC. Reason is fixed text from a bounded current
+    Nagios log tail, never raw output. Unavailable logs yield null. Each GET
+    rereads the tail, so the next Email-tab poll sees new failures.
+    """
     try:
-        return success({"settings": get_smtp_settings(), "presets": {"gmail": GMAIL}})
+        return success({"settings": get_smtp_settings(), "presets": PRESETS,
+                        "lastMailFailure": read_mail_failure(current_app.config["NAGIOS_LOG_FILE"])})
     except Exception:
         current_app.logger.exception("An unexpected error occurred while fetching email settings.")
         return error("An unexpected error occurred.", 500)
@@ -65,7 +72,8 @@ def update_smtp_settings_route():
     """
     Validate, apply and save the email settings. The client sends the full
     object with the version it loaded; a stale version is rejected with 409.
-    Only Gmail over STARTTLS on port 587 is accepted. "password" is optional
+    Gmail uses its fixed STARTTLS preset; custom relays accept a helper-valid
+    host and integer port 1–65535, with STARTTLS only. "password" is optional
     once one is saved: leave it out or empty to keep it. It is used exactly as
     sent (never trimmed or stripped of spaces). The settings are saved only if
     the helper accepts them; its error text is returned as the message.
@@ -82,7 +90,7 @@ def update_smtp_settings_route():
         "password": "abcd efgh ijkl mnop"
     }
     """
-    data = request.get_json(silent=True)
+    data = request.get_json()
     err = validate_json_data(data)
     if err is not None:
         return err
@@ -125,7 +133,6 @@ def update_smtp_settings_route():
             setattr(row, column, values[key])
         if password_changed:
             changes.append(("password", "-", "changed"))
-        row.Provider = values["provider"]
         row.Password_Encrypted = encrypted
         row.Version += 1
         row.Updated_By = current_user.UserID
