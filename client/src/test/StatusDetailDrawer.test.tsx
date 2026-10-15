@@ -235,7 +235,7 @@ describe('identity review notice', () => {
     })
     render(<StatusDetailDrawer hostname="web-01" onClose={() => {}} />)
     expect(await screen.findByText('This device needs identity review')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Review', exact: true }))
+    fireEvent.click(screen.getByRole('button', { name: 'Review' }))
     expect(screen.getByRole('dialog', { name: 'Review device identity' })).toBeInTheDocument()
     expect(await screen.findByText('UNVERIFIED')).toBeInTheDocument()
   })

@@ -11,21 +11,24 @@ export function DeviceIdentityReviews({ onMerged, deviceId, reloadKey = 0 }: Pro
   const { hasPermission } = useCurrentUser()
   const canReview = hasPermission('system.discover')
   const { formatDateTime } = useDisplayTime()
-  const [items, setItems] = useState<IdentityReview[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [response, setResponse] = useState<{ key: string; items: IdentityReview[]; error: string | null } | null>(null)
   const [attempt, setAttempt] = useState(0)
   const [selected, setSelected] = useState<IdentityReview | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  const requestKey = `${attempt}:${reloadKey}`
+  const loading = response?.key !== requestKey
+  const items = response?.items ?? []
+  const error = loading ? null : response?.error
   useEffect(() => {
     if (!canReview) return
     let active = true
-    setLoading(true); setError(null)
-    getIdentityReviews().then(data => { if (active) setItems(identityReviews(data.items)) })
-      .catch(err => { if (active) setError(errorMessage(err, 'Unable to load identity reviews.')) })
-      .finally(() => { if (active) setLoading(false) })
+    getIdentityReviews().then(data => {
+      if (active) setResponse({ key: requestKey, items: identityReviews(data.items), error: null })
+    }).catch(err => {
+      if (active) setResponse({ key: requestKey, items: [], error: errorMessage(err, 'Unable to load identity reviews.') })
+    })
     return () => { active = false }
-  }, [canReview, attempt, reloadKey])
+  }, [canReview, requestKey])
   if (!canReview) return null
   const relevant = deviceId == null ? items : items.filter(item => item.devices.some(d => d.id === deviceId))
   if (deviceId != null && !loading && !error && !notice && relevant.length === 0) return null

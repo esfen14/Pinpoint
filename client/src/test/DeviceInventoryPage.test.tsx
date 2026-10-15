@@ -123,7 +123,7 @@ describe('DeviceInventoryPage', () => {
     expect(screen.getByText(/Duplicate outside filter/)).toBeInTheDocument()
     expect(tableCalls()[0].get('monitoring')).toBe('monitored')
     await userEvent.click(screen.getByRole('button', { name: 'Filter' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Not monitored', exact: true }))
+    await userEvent.click(screen.getByRole('button', { name: 'Not monitored' }))
     expect(screen.getByRole('heading', { name: 'Needs Review (1)' })).toBeInTheDocument()
   })
 

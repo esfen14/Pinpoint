@@ -52,8 +52,8 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 ## Plan
 
-1. [ ] Add lookup regression tests, implement bounded permission-protected discovered lookup in server/app/api/system/device_identity.py; update backend specification; run focused and backend verification.
-2. [ ] Add failing frontend interaction tests; implement typed contracts/helpers, review table and comparison/confirmation components in client/src/types/deviceIdentity.ts, lib/deviceIdentityApi.ts and components/device-inventory/; integrate DeviceInventoryPage.tsx and StatusDetailDrawer.tsx; run frontend verification.
+1. [x] Add lookup regression tests, implement bounded permission-protected discovered lookup in server/app/api/system/device_identity.py; update backend specification; run focused and backend verification.
+2. [x] Add failing frontend interaction tests; implement typed contracts/helpers, review table and comparison/confirmation components in client/src/types/deviceIdentity.ts, lib/deviceIdentityApi.ts and components/device-inventory/; integrate DeviceInventoryPage.tsx and StatusDetailDrawer.tsx; run frontend verification.
 3. [ ] Update Device_Inventory_Requirements.md, Frontend_Modules_and_Routes.md, Implementation_Status.md and docs/manuals/device identity guidance; verify docs and all.
 4. [ ] Run controlled browser/lab journey with duplicate outside Monitored, keyboard and themes; record sanitized docs/test-runs evidence and attach to PR.
 5. [ ] Re-read issue, prove finish conditions, open appropriate PR from template, inspect CI and review requirements.
@@ -62,15 +62,16 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| 2 | Fixed test query typing, added notice/filter integration and keyboard/address retry tests; new components lint cleanly | verify.sh backend; verify.sh frontend; verify.sh docs; focused comparison tests | Backend 3302 passed/14 skipped; frontend 699 passed, build/lint green; docs green; expanded comparison 15 passed |
 | 1 | Lookup, review table/drawer, notices, tests and documentation implemented | Focused backend: 152 pass; focused frontend: 48 pass; verify.sh docs: green; verify.sh frontend | Frontend build rejects two new Testing Library queries using unsupported exact option; backend full suite still running |
 | 0 | Intake and isolated worktree; requirement coverage and plan | gh issue view 164 --json body,comments | Requirements covered by E/F/H; reviewer approval remains a human finish requirement |
 
 ## State for the next session
 
-- Last check run (exact command): scripts/verify.sh frontend
-- Result (first failing lines, or "green"): TS2769: exact does not exist in ByRoleOptions (new test queries only). 48 focused frontend tests and 152 identity backend tests pass; docs green. Full backend running, output /tmp/issue-164-backend.log.
-- Hypothesis: string role names already match exactly; remove the unsupported test-only option.
-- Next action (one specific step, not "continue"): Remove exact from the two new Testing Library role queries and rerun frontend verification.
+- Last check run (exact command): cd client && npm test -- --run src/test/DeviceIdentityReview.test.tsx
+- Result (first failing lines, or "green"): green: 15 passed. Full backend 3302 passed/14 skipped, full frontend 699 passed with successful build/lint before two additional comparison tests; docs green. Logs /tmp/issue-164-{backend,frontend,docs,keyboard}.log.
+- Hypothesis: implementation and isolated regressions are sound; browser/Nagios acceptance requires Docker socket access.
+- Next action (one specific step, not "continue"): Add an opt-in browser journey and run verify.sh all while waiting for the user to restore Docker access.
 
 ## Decisions and notes
 
@@ -80,3 +81,5 @@ Requirement coverage (every requirement the issue states, and the check that pro
 - Required reviewer approvals cannot be claimed by this agent; retain an honest unfinished checklist and draft PR if necessary.
 
 - Docker socket is denied and passwordless sudo unavailable in this process. Real-Nagios lab acceptance requires an accessible reserved lab; no lab has been mutated.
+
+- User selected Docker labs for acceptance. Docker access restoration requested asynchronously; do not mutate the VM. scripts/vmlab preflight also reports VBoxManage not found.
