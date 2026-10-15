@@ -1,6 +1,10 @@
 # VM Lab Plan (faithful lane)
 
-Status: **control recovery and clean rebuild in progress ([#162](https://github.com/esfen14/Pinpoint/issues/162)); alerts and the `break` commands not yet run; NCPA run done (partial, #45).** Design agreed
+Status: **working; clean appliance/base/five-target rebuild and real SSH/HTTP
+snapshot restoration verified for [#162](https://github.com/esfen14/Pinpoint/issues/162).
+See the [rebuild report](../test-runs/2026-10-15-issue-162-snapshot-rebuild/REPORT.md).
+The setup-admin label mismatch is tracked in [#167](https://github.com/esfen14/Pinpoint/issues/167);
+the rebuilt appliance completed setup through the supported API.** Design agreed
 2026-10-08. The first end-to-end run passed (create, provision, fresh install of `main`,
 healthcheck 59/0, discovery and monitoring of five targets, sync); see
 [`docs/test-runs/2026-10-08-vm-lab-first-run/`](../test-runs/2026-10-08-vm-lab-first-run/REPORT.md). Feeds
@@ -93,7 +97,9 @@ preflight in `scripts/vmlab_preflight.py` requires:
   host procfs reject. Run on the host; a container/PID sandbox is not sufficient.
 
 Appliance/target mutation commands run this check before SSH/API/control actions;
-start and power-off paths recheck ownership at state boundaries. `create` requires
+each SSH/key-bootstrap action and the start/power-off paths recheck ownership
+at mutation/state boundaries. A failed recheck returns before SSH even when
+Bash invokes the helper in a conditional or fallback path. `create` requires
 an unused name/ports, a single controller and no same-user running VM processes.
 VirtualBox 7.2 does not include `SessionPID` in machine-readable metadata and its
 SUID VM processes protect `/proc/<pid>/fd`. Runtime NAT socket inspection provides
@@ -143,7 +149,11 @@ back up application data or establish a clean destination.
 See the [read-only recovery report](../test-runs/2026-10-15-issue-162-recovery/REPORT.md).
 The original inherited disks were retired with explicit owner approval after the
 owner accepted the overwritten edits as unrecoverable. The new appliance uses a
-new UUID and a blank disk; it contains no inherited application data.
+new UUID and a blank disk; it contains no inherited application data. The
+[endpoint marker trial and five-target smoke](../test-runs/2026-10-15-issue-162-snapshot-rebuild/REPORT.md)
+passed. Until #167 is fixed, a fresh-install setup requires the supported
+login/complete-setup API workflow if the helper does not recognize the installer
+label; stale host credential files alone do not prove setup is complete.
 
 If the appliance or snapshot is missing, recreate the lane with steps 1 through
 5 below.  This is a setup/recovery operation, not a QA case: obtain the lab

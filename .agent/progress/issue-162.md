@@ -1,7 +1,7 @@
 # Issue #162: VM control ownership and overwritten-edit recovery
 
 Branch: `issue-162-vm-control-recovery`
-Status: in-progress
+Status: ready-for-review
 
 ## Finish condition
 
@@ -9,7 +9,7 @@ Status: in-progress
 - [x] F2 Identify why separate VBoxSVC instances could control the same registered appliance UUID while SSH remained attached to the inherited process.
 - [x] F3 Before mutation, preflight proves the controlled VM process owns intended loopback SSH/web endpoints; fail closed on duplicate control/processes or ambiguous ownership.
 - [x] F4 Verify snapshot take/change/restore through an endpoint marker in a disposable lab without inherited application data.
-- [ ] F5 Record sanitized recovery evidence, update VM preflight documentation, and pass relevant verification.
+- [x] F5 Record sanitized recovery evidence, update VM preflight documentation, and pass relevant verification.
 
 Requirement coverage:
 
@@ -28,7 +28,7 @@ Requirement coverage:
 1. [x] Diagnose ownership and search recovery sources read-only; record sanitized evidence in docs/test-runs/2026-10-15-issue-162-recovery/REPORT.md.
 2. [x] Add failing isolated preflight tests, implement fail-closed identity checks in scripts/vmlab and an owning helper, validate narrow checks.
 3. [x] Perform disposable-only snapshot marker trial if ownership is proved; otherwise record exact blocker and preserve inherited processes.
-4. [ ] Update docs/plans/VM_Lab_Plan.md, spec files/Agent_Workflow_and_CI.md and spec files/Implementation_Status.md; verify finish conditions and scripts/verify.sh all; open PR with honest status.
+4. [x] Update docs/plans/VM_Lab_Plan.md, spec files/Agent_Workflow_and_CI.md and spec files/Implementation_Status.md; verify finish conditions and scripts/verify.sh all; open PR with honest status.
 
 ## Round log
 
@@ -47,12 +47,14 @@ Requirement coverage:
 
 | 5 | Recheck preflight immediately before SSH and key-bootstrap actions and forced power-off; regression proves a changed controller cannot fall through to SSH even in Bash conditional contexts | python3 -I scripts/test_vmlab_preflight.py; bash -n scripts/vmlab; scripts/vmlab preflight; scripts/verify.sh docs | 18 tests, syntax, live positive ownership and docs green; original full suites/CI green, final CI pending updated commit |
 
+| finish | Re-read unchanged issue requirements; finalized reports, index and owning specifications after health/smoke proof | scripts/verify.sh all; scripts/verify.sh docs; git diff --check | Final full verification green; 18 ownership tests green; all finish items proven |
+
 ## State for the next session
 
-- Last check run (exact command): scripts/vmlab smoke --discovery-timeout 600 --hosts-timeout 300
-- Result: green: 9 passed, 0 failed; discovery successfully applied hosts.cfg in 96 seconds; all five rebuilt targets monitored and Up. Snapshot SSH/HTTP marker proof passed; 60 health checks green; 18 isolated ownership tests green.
-- Hypothesis: All issue behavior and the requested working-lab rebuild are proven; finish-phase report/index/spec status and final CI remain.
-- Next action: Finalize the snapshot/rebuild report and owning specs; verify docs, remove progress scaffolding, update PR #165 and wait for final CI.
+- Last check run (exact command): scripts/verify.sh all
+- Result: green on the final implementation and documentation. Real SSH/HTTP marker restore, 9/9 discovery smoke and 60/60 final health checks passed. Latest implementation CI passed; final evidence/progress-removal commit CI remains to run.
+- Hypothesis: All finish conditions are proven; no implementation or lab work remains.
+- Next action: Delete this progress file, commit/push the final branch, update PR #165 from the template and mark ready after final CI passes.
 
 ## Decisions and notes
 

@@ -3,13 +3,21 @@
 | | |
 |---|---|
 | Date | 2026-10-15 (Asia/Manila) |
-| Guard/harness commit | `f15ff1ab` (implementation from `ec9e2517`; subsequent checkpoint contains progress only) |
+| Guard/harness commit | Marker trial at `f15ff1ab` (implementation `ec9e2517`); final SSH-boundary refinement at `10fcb05f` |
 | Application deployed | `82ba9ce9aefda8fbbad93ba500a9cacf23c56409` (`main`) |
 | Installer | Clean checkout `697869e`; existing deploy and privilege scripts |
 | Plan | [VM Lab Plan](../../plans/VM_Lab_Plan.md), [issue #162](https://github.com/esfen14/Pinpoint/issues/162) |
 | Tester | Codex; owner authorized deleting the old configured lab disks and rebuilding |
 | Environment | VirtualBox 7.2.14, new Ubuntu 22.04.5 appliance, new Ubuntu 24.04.5 target base and five targets; discovery restricted to `10.77.0.0/28` |
 | Raw evidence | Ignored `test-results/issue162/`: creation/provision/deploy logs, `snapshot-marker.log`, `snapshot-marker.json`, setup/scope/smoke/health logs |
+
+## Result
+
+**#162 requirements pass; replacement lab operational.** The snapshot marker
+was restored through both SSH and HTTP, the new appliance healthcheck passed,
+and a single scoped discovery smoke passed all nine checks with all five targets
+monitored and Up. A separate setup-helper compatibility failure was worked
+around through the supported API and is tracked in #167.
 
 ## Snapshot proof
 
@@ -50,6 +58,10 @@ retained separately from the OS-only base snapshot.
 | S7 Supported first-run API | Pass | Actual login and complete-setup APIs completed first-run setup; fresh credentials stored privately; one-time guest credential file removed. | |
 | S8 Discovery scope | Pass | Environment fallback and persisted settings restricted to the documented /28; explicit TCP service ports and UDP/161 confirmed before starting the only discovery run. | |
 
+| S9 Discovery/monitoring smoke | Pass | `scripts/vmlab smoke --discovery-timeout 600 --hosts-timeout 300`: 9 passed, 0 failed; discovery applied hosts.cfg in 96 seconds and all five target IPs appeared monitored and Up after their normal checks/polls. | |
+
+| S10 Final appliance health | Pass | Healthcheck repeated after setup, snapshot restoration and discovery: 60 passed, 0 warnings, 0 failed. | |
+
 ## Setup deviations
 
 The NodeSource download inside the guest was unusually slow. The same
@@ -67,9 +79,12 @@ the product's setup-admin parser was not changed in #162.
 ## Verification and limits
 
 `scripts/verify.sh all`: 2,777 backend passed / 14 skipped; 628 frontend passed;
-build/lint passed with 29 existing lint warnings. Seventeen focused ownership
-and mutation-gate tests pass. No live integration/e2e test suite was run.
-External SMTP/inbox acceptance for #79 is outside this recovery task.
+build/lint passed with 29 existing lint warnings. Eighteen focused ownership
+and mutation-gate tests pass, including changed control ownership between
+command entry and an SSH/key-bootstrap action. The full verification entry point and final docs stage were repeated after
+that boundary refinement; backend/frontend product code was unchanged. No live integration/e2e test suite was run.
+External SMTP/inbox acceptance for #79 is outside this recovery task. NCPA
+deployment and browser journeys were not repeated as part of the lab rebuild.
 The initiating actor that first replaced the old IPC pathname remains unknown;
 the split-listener mechanism and control/endpoint disagreement were observed.
 
