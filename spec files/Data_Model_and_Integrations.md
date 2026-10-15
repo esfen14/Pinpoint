@@ -337,6 +337,35 @@ Settings -> Plugins (`PluginSettings`, one row per plugin: `snmp`, `ncpa`);
 place of their `config.py` keys once per config build, for both `hosts.cfg` and the
 plugin reconciler. Per-host `Plugin_Variables` overrides still win.
 
+### SNMP version and v3 credentials (per device)
+
+`Plugin_Variables["snmp"]` may hold `protocol` (the `check_snmp -P` value: `1`, `2c`, `3`),
+`community`, and for version 3 `security_level` (`noAuthNoPriv`, `authNoPriv`, `authPriv`),
+`v3_user`, `auth_protocol` (`MD5`, `SHA`) and `priv_protocol` (`DES`, `AES`), written only through
+`device_plugin_variables.py`. The two passphrases are stored encrypted (`secrets_store`, Fernet) as
+`auth_password_enc` and `priv_password_enc`; no API returns them. No migration: the column and
+its JSON shape already existed, and a device without an override renders exactly as before.
+
+- **Version 1, 2c or none** use the `snmp` definition and `pinpoint_nd_snmp` unchanged.
+- **Version 3** selects `SNMP_V3_DEFINITION` (`plugin_registry.py`, command `pinpoint_nd_snmp_v3`,
+  outside `PLUGIN_DEFINITIONS` so no port resolves to it). It has no community argument, fixes `-P 3`
+  and renders `-L -U -a -x` from the variables. `validate_snmp_v3()` checks the fields the level needs;
+  a device missing one (or whose stored password can no longer be decrypted) has its SNMP port
+  skipped with a reason, never rendered without credentials.
+- **Passwords.** `load_host_plugin_facts()` decrypts them into memory; `collect_snmp_secrets()` keys
+  them `snmp_v3:<device>:<name>` for the resource-slot allocator, and `apply_secret_substitutions()`
+  replaces each `--auth-slot` / `--priv-slot` value with a bare `USERn` identifier. The command
+  definition runs `check_snmp` under `scripts/pinpoint_check_native.py`, which reads the slots from
+  the protected resource file and gives `check_snmp` the passphrases on stdin as `--extra-opts`.
+  `hosts.cfg` therefore holds no passphrase and neither does `check_snmp`'s own argument list.
+  **Limit:** `check_snmp` passes the passphrases to its `snmpget` helper in that helper's arguments
+  for the moment a check runs, so a local user could see them in the process list then. This is not
+  claimed to meet the "no secret in child processes" rule of Engineering Standards; closing it needs
+  a different SNMP client (see Implementation_Status).
+- **Slot limit.** v3 passphrases share the 255 resource slots with NCPA tokens and custom-check
+  passwords; exhaustion refuses generation with the existing safe message (422 from the API).
+- **Interface discovery** uses `snmpwalk -v2c`, so a v3 device reports "supports SNMP v1 and v2c only".
+
 ### Interface bandwidth
 
 Bandwidth is computed from stored samples; the Nagios checks are not changed.
