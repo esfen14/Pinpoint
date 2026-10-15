@@ -25,14 +25,14 @@ Status: in-progress
 - [x] Updated frontend and backend specifications where affected.
 - [x] Updated `Device_Inventory_Requirements.md` and corrected `Implementation_Status.md`.
 - [x] User-facing guidance explaining when merging is appropriate and which record to keep.
-- [ ] Verification output and sanitized browser/lab evidence attached to the pull request.
-- [ ] All acceptance criteria and required deliverables are complete.
+- [x] Verification output and sanitized browser/lab evidence attached to the pull request.
+- [x] All acceptance criteria and required deliverables are complete.
 - [x] Existing inventory, discovery and monitoring behavior passes regression checks.
 - [x] Authorization, validation and error handling are verified.
 - [ ] Automated checks and required CI checks pass.
 - [x] Browser/lab evidence confirms the complete merge journey.
 - [x] Technical and user-facing documentation is updated.
-- [ ] The pull request references this issue and describes implementation and verification.
+- [x] The pull request references this issue and describes implementation and verification.
 - [ ] Required reviewer approvals are obtained and blocking comments are resolved.
 
 Requirement coverage (every requirement the issue states, and the check that proves it):
@@ -50,6 +50,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | F7, G, H1–5: actual automated and browser evidence | F7, H1–5 | verify.sh all; docs/test-runs report; CI |
 | H7–8: linked PR, human review and resolved blocking comments | H7–8 | PR description, CI and reviewer status |
 
+
 ## Plan
 
 1. [x] Add lookup regression tests, implement bounded permission-protected discovered lookup in server/app/api/system/device_identity.py; update backend specification; run focused and backend verification.
@@ -62,6 +63,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| finish | Opened draft PR #176 and attached sanitized report / verification | gh pr view issue-164-identity-review --json number,url,isDraft,statusCheckRollup,reviewDecision | PR exists; docs/backend/frontend CI in progress; no reviewer approval |
 | 5 | Full local gate and restored Docker configuration | scripts/verify.sh all; restored reconcile; fixture verify; nagios -v | Green: 3302 backend passed/14 skipped; 701 frontend passed; build/lint successful (0 errors, 28 existing warnings); restored configuration passes with 0 Nagios errors/warnings |
 | 4 | Recreated own appliance and deliberately stopped its Nagios before merge | Playwright issue-164-live with ISSUE164_EXPECT_CONFIG_WARNING=1 | Green: 1 passed; config_ok false with saved merge, one POST, source Merged, target retained, reviews refreshed. Full gate still running |
 | 3 | Disposable Docker project; controlled reconciler fixtures; repeatable opt-in browser journey | Playwright issue-164-live twice (including real source snapshot + linked notice); fixture verify; nagios -v | Both browser runs pass; target address/port/review/config postconditions pass; Nagios 0 warnings/0 errors. Full verify.sh all still running |
@@ -72,10 +74,10 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 ## State for the next session
 
-- Last check run (exact command): scripts/verify.sh docs
-- Result (first failing lines, or "green"): green after sanitized report/status/manual updates. scripts/verify.sh all green: 3302 backend passed/14 skipped; 701 frontend passed, build and lint green. Three Docker browser runs passed; real Nagios postconditions/restore pass. Raw evidence /home/paeng/pinpoint-test-results/issue164/.
-- Hypothesis: implementation, local verification and lab acceptance are complete; publish report/PR and observe CI. Human approvals remain required by H8.
-- Next action (one specific step, not "continue"): Open a draft PR from the repository template linking the report, then observe required CI checks and update this progress file with its URL.
+- Last check run (exact command): gh pr view 176 --json number,url,isDraft,statusCheckRollup,reviewDecision
+- Result (first failing lines, or "green"): Draft PR https://github.com/esfen14/Pinpoint/pull/176; docs/backend/frontend CI running. Local all-stage check and 13-case report green; human approval not obtained.
+- Hypothesis: required CI will reproduce the local gate; all product/delivery conditions are proven, with H4 CI and H8 human review remaining.
+- Next action (one specific step, not "continue"): Observe docs/backend/frontend on the latest PR commit using gh pr checks 176; record their result without claiming human approval.
 
 ## Decisions and notes
 
@@ -92,3 +94,5 @@ Requirement coverage (every requirement the issue states, and the check that pro
 - Docker startup required disabling the opt-in scheduler before initial migrations; this is test provisioning only. Controlled observations perform no network scan. A forced real check supplies an address-unknown source snapshot for the notice journey. Raw screenshots: /home/paeng/pinpoint-test-results/issue164/{success,notice}.
 
 - Re-read issue #164 after lab tests: body unchanged, no comments. Every requirement has proof in the coverage table and sanitized report. No exclusion was implemented. Retain progress file and draft PR because H8 reviewer approval is outstanding; do not claim issue completion.
+
+- PR: https://github.com/esfen14/Pinpoint/pull/176 (draft; Closes #164). Evidence is attached by a branch-pinned link to the committed sanitized report.
