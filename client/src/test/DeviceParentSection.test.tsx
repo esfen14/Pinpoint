@@ -1,12 +1,13 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, expect, it, vi } from 'vitest'
+import type { TopologyData, TopologyDevice } from '../types/topology'
 import { DeviceParentSection } from '../components/device-inventory/DeviceParentSection'
 const api=vi.hoisted(()=>({get:vi.fn(),put:vi.fn(),edit:true}))
 vi.mock('../lib/topologyApi',()=>({getTopology:()=>api.get(),setDeviceParents:(...args:unknown[])=>api.put(...args)}))
 vi.mock('../contexts/CurrentUserContext',()=>({useCurrentUser:()=>({hasPermission:()=>api.edit})}))
-const node=(id:number,name:string,parents:number[]=[])=>({id,nagios_host_name:name,display_name:null,ip_address:null,os:null,last_seen_at:null,last_check:null,monitoring_state:'monitored',host_state:null,parent_device_ids:parents,editable:true})
-const data={devices:[node(1,'child'),node(2,'router-a'),node(3,'router-b')],edges:[],suggested_gateway_id:2}
+const node=(id:number,name:string,parents:number[]=[]):TopologyDevice=>({id,nagios_host_name:name,display_name:null,ip_address:null,os:null,last_seen_at:null,last_check:null,monitoring_state:'monitored',host_state:null,parent_device_ids:parents,editable:true})
+const data:TopologyData={devices:[node(1,'child'),node(2,'router-a'),node(3,'router-b')],edges:[],suggested_gateway_id:2}
 beforeEach(()=>{api.get.mockReset().mockResolvedValue(structuredClone(data));api.put.mockReset().mockResolvedValue({});api.edit=true})
 it('searches, sets multiple parents and clears them',async()=>{
  render(<DeviceParentSection deviceId={1}/>)
@@ -50,4 +51,11 @@ it('shows an empty choices state',async()=>{
  api.get.mockResolvedValue({...data,devices:[data.devices[0]],suggested_gateway_id:null})
  render(<DeviceParentSection deviceId={1}/>)
  expect(await screen.findByText('No parent devices available.')).toBeInTheDocument()
+})
+
+it('preserves an unsaved draft when topology refreshes',async()=>{
+ const {rerender}=render(<DeviceParentSection deviceId={1} topology={data}/>)
+ await userEvent.click(await screen.findByRole('checkbox',{name:/router-a/}))
+ rerender(<DeviceParentSection deviceId={1} topology={structuredClone(data)}/>)
+ await waitFor(()=>expect(screen.getByRole('checkbox',{name:/router-a/})).toBeChecked())
 })

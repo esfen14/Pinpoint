@@ -3,6 +3,8 @@ import { MemoryRouter, Outlet } from 'react-router-dom'
 import { describe, it, expect, vi } from 'vitest'
 import App from '../App'
 
+vi.mock('../pages/wagpakielaman', () => ({ TopologyPage: () => <div>Topology Page</div> }))
+
 // Mock heavy/problematic child pages so App routing tests stay focused
 vi.mock('../pages/DashboardPage', () => ({
   DashboardPage: () => <div>Dashboard Page</div>,
@@ -58,9 +60,9 @@ describe('App routing', () => {
     expect(screen.getByText('System Status Page')).toBeInTheDocument()
   })
 
-  it('does not register the former /topology route', () => {
+  it('registers topology separately from System Status', () => {
     renderApp('/topology')
-    expect(screen.getByText('Log In to your Account')).toBeInTheDocument()
+    expect(screen.getByText('Topology Page')).toBeInTheDocument()
     expect(screen.queryByText('System Status Page')).not.toBeInTheDocument()
   })
 

@@ -22,7 +22,8 @@ requests use `src/lib/api.ts`; Plugin Manager wrappers live in
 | `/network-health` | `NetworkHealthPage` | `system.network_health` | Connected to summary and trends APIs; detailed host/service UI is supplied elsewhere |
 | `/device-inventory` | `DeviceInventoryPage` | `system.network_health` | Connected to the latest-host endpoints and acknowledgement API. The host table has an IP Address column (`—` for a host with no discovered device). The host drawer also shows a Ports section (see `Device_Inventory_Requirements.md`) for users with `system.hosts` when the host has a `device_id`; actions need `system.hosts.edit`. The host table has a Monitoring column and filter, and the drawer a Monitoring section with Pause / Resume (`Device_Inventory_Requirements.md` §12) |
 | `/history` | `HistoryPage` | `system.history` | Connected to the alert and notification history list and detail routes (`/api/system/history/...`); sidebar entry "History". Audited against `Alerts_Notifications_History_Requirements.md` in `docs/test-runs/2026-10-14-issue-133-history-audit/AUDIT.md`; supported sorting controls are present and cross-tab links now use Nagios `event_id` locators to expand the exact row beyond the default 24h range (#143); remaining history gaps are tracked in #142 and #144 |
-| `/system-status` | `SystemStatusPage` | `system.network_health` | The **System Status** page (sidebar label “System Status”): a service-status table with OK / Warning / Unknown / Critical counts, search, state filter, sort, paging and acknowledgement. It is a supported page. The network *topology view* is excluded from the release. |
+| `/topology` | `TopologyPage` | `system.network_health` | Real backend inventory and configured parent edges from `/api/system/topology`; automatic hierarchy including disconnected devices and shared children, read-only positions, device/relationship selection panels. Parent editing uses `system.hosts.edit` |
+| `/system-status` | `SystemStatusPage` | `system.network_health` | The **System Status** page (sidebar label “System Status”): a service-status table with OK / Warning / Unknown / Critical counts, search, state filter, sort, paging and acknowledgement. It is a supported page. Topology is a separate supported page. |
 | `/plugins` | `PluginsPage` | `plugin.view` | Connected to Plugin Manager inventory (category tabs All / Network Services / Device Availability / Network Protocols / Servers / Application / Other, filtered by the `group` query parameter so paging stays per tab; a Monitoring column and a banner while no plugin is enabled), plugin details with an enable confirmation that previews what will be monitored, the plugin's monitored services with live status and per-device stop/resume, scanning, and mutation APIs. There is no Currently Running tab (the tabs are categories only) and devices are never picked by hand |
 | `/ncpa-deployment` | `NcpaDeploymentPage` | `system.deploy.ncpa` | Warns, through `useNcpaPluginState`, when `check_ncpa` is not enabled in Plugin Manager (the agent's checks are monitored only while it is). Connected to the NCPA deployment routes: device list, deploy wizard (host-key trust, login checks, start), live run banner, Deployment History tab and run review drawer (`?tab=history&run=<id>`). Trusted failed devices (not deployed/healthy devices) have a Clean up dialog: it accepts ephemeral SSH credentials, optionally removes the deployment account after artifact removal, shows each cleanup step and refreshes the list; fields clear after every request. |
 | `/reports` | `ReportsPage` | `system.report` | Connected for host availability and network-services views; backend exposes additional report routes |
@@ -149,3 +150,33 @@ This editor does not require account-management permission and does not change
 any user's global email setting.
 
 Live browser coverage for host recipients is opt-in through `scripts/playwright-lab --project issue-79-live --project issue-79-restricted`. The tests save through the real recipient API/Nagios writer, reopen the drawer to verify persistence, clear the choices to verify default fallback, restore the original assignments, and verify that the restricted reader sees no editor and receives 403 for recipient reads/writes. They require two eligible lab accounts and discovered lab targets.
+
+
+## Manual parent editor and topology
+
+`DeviceParentSection` is shared by the host-only `StatusDetailDrawer` (when a
+stable device ID exists) and the selected-device topology panel. It shows configured
+parents to readers, a searchable checkbox multi-select/clear-all/save to
+`system.hosts.edit`, an advisory suggested gateway, monitoring warnings for omitted
+parents, loading/retry/empty states and server validation/apply errors. A rejected
+save retains the draft; a successful save refreshes the graph/drawer. Retired and
+merged devices are read-only. Parent choices do not require access to the Ports or
+Interfaces sections.
+
+`lib/topologyApi.ts` uses the shared API client; `types/topology.ts` owns wire types.
+`lib/topologyLayout.ts` places each device once using iterative longest-path layers
+so a shared child appears below all its parents. Isolated roots and paused devices
+remain visible. React Flow retains pan/zoom/fit and device/edge/background selection;
+node dragging, handle connections, edge reconnection and the interactive layout
+control are disabled. Solid neutral edges mean an eligible configured parent;
+dashed amber edges explain omitted parents. Edge colors do not claim measured link
+health. The node labels distinguish missing checks/paused state from DOWN.
+
+Device selection shows available device identity/address/OS, monitoring status,
+last check/last seen and the shared parent editor. Connection selection names the
+parent/child and explains Nagios eligibility, with a button to select the child.
+No interface, power-state, utilization or traffic data is fabricated. Hosts without
+a discovery record remain visible but cannot edit parents. Refresh follows the
+shared Dashboard Refresh Rate (minutes, zero for Manual), plus an explicit Refresh
+button. The Topology route/sidebar/header and access guard remain separate from
+System Status. The page uses shared theme and timestamp preferences.

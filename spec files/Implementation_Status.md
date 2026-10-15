@@ -5,6 +5,16 @@
 This file reports what is present in the repository. It is not a substitute for
 the normative behavior in the requirement specifications.
 
+## Manual topology (#117)
+
+Manual multiple-parent relationships, graph validation and eligibility-aware Nagios
+rendering are implemented on the issue branch, with a reversible multi-bind
+migration. The existing React Flow prototype is wired to real inventory/status data,
+with a shared Inventory/Topology parent editor and automatic non-editable layout.
+Focused backend tests and migration round-trip pass; full verification, live
+reachability/notifications and CI evidence are still pending. No live acceptance is
+implied by mocked writer tests.
+
 ## Implemented backend areas
 
 - Session login/logout and current-user identity.
@@ -141,9 +151,9 @@ implemented; existing harness improvements do not satisfy full acceptance.
 
 ## Explicit exclusions
 
-- Backend network-topology computation is not part of the current release.
-- The frontend topology view is not a supported current-release page. Source may
-  remain dormant for future development.
+- Automatic topology/parent inference, physical interface mapping and topology
+  interface/traffic panels are excluded. Manual multiple-parent topology is in
+  scope; graph positions are automatic and cannot be edited.
 - Nagios' native UI is not a Pinpoint operator surface.
 - Plugin Manager does not install arbitrary agents or plugins on monitored
   devices; it manages plugins on the Pinpoint/Nagios server.

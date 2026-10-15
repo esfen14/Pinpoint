@@ -155,6 +155,7 @@ def apply_pending_parent_change(reconcile=False):
     if status == "failed":
         db.session.rollback()
         return error(f"Parent relationships could not be applied: {message}", 422)
+    db.session.info["parent_config_applied"] = status == "applied"
     if reconcile:
         from app.api.plugin.reconcile import set_plugin_states
         for row in added:
@@ -163,6 +164,18 @@ def apply_pending_parent_change(reconcile=False):
         db.session.flush()
         set_plugin_states()
     return None
+
+
+def rollback_parent_change():
+    """Undo pending data and compensate a successful reload if the route commit fails."""
+    applied = db.session.info.pop("parent_config_applied", False)
+    db.session.rollback()
+    if applied:
+        from app.network_discovery.create_host_cfg import regenerate_and_apply_config_status
+        status, _ = regenerate_and_apply_config_status(commit_history=False)
+        if status == "failed":
+            current_app.logger.error("Could not restore Nagios after a failed parent transaction.")
+        db.session.rollback()
 
 
 def serialize_device_summary(device):
@@ -369,9 +382,10 @@ def edit_device(id):
                     return problem
             create_user_log(current_user.UserID, f"Edited device {nagios_host_name(device)}")
             db.session.commit()
+            db.session.info.pop("parent_config_applied", None)
             return success({"device": serialize_device_summary(device)}, message="Device updated.")
     except Exception:
-        db.session.rollback()
+        rollback_parent_change()
         current_app.logger.exception("Could not update device.")
         return error("Unable to save device.", 500)
 
@@ -405,10 +419,11 @@ def retire_device(id):
                     return problem
             create_user_log(current_user.UserID, f"Retired device {nagios_host_name(device)}")
             db.session.commit()
+            db.session.info.pop("parent_config_applied", None)
 
             return success({"config_ok": True, "config_applied": True, "config_message": "Applied."} if changed_parents else apply_config_change(), message="Device retired.")
     except Exception:
-        db.session.rollback()
+        rollback_parent_change()
         current_app.logger.exception("Could not update device lifecycle.")
         return error("Unable to update device lifecycle.", 500)
 
@@ -626,10 +641,11 @@ def merge_device(id):
                     return problem
             create_user_log(current_user.UserID, f"Merged device {source_name} into {target_name}")
             db.session.commit()
+            db.session.info.pop("parent_config_applied", None)
 
             return success({"config_ok": True, "config_applied": True, "config_message": "Applied."} if changed_parents else apply_config_change(), message="Devices merged.")
     except Exception:
-        db.session.rollback()
+        rollback_parent_change()
         current_app.logger.exception("Could not update device lifecycle.")
         return error("Unable to update device lifecycle.", 500)
 

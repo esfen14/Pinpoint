@@ -134,6 +134,7 @@ Requirement coverage (all issue sections):
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 1 | Backend graph/model/API/rendering and generated migration; baseline tests fail as expected before implementation. Fixed an authorization test that reused the authenticated client fixture; 308 focused regressions and then 34 parent/migration proofs pass. | FLASK_DEBUG=1 .venv/bin/python -m pytest tests/unit/test_device_parents.py tests/unit/test_device_parent_migration.py -q | 34 passed; first full backend gate still running and contains the already-fixed test fixture failure |
+| 2 | Added generated/reviewed migration and populated round trip; shared frontend editor, hierarchy, real-data topology, route/access wiring and specs; protected unsaved drafts during refresh | scripts/verify.sh frontend; scripts/verify.sh docs; focused parent proof | Frontend green (30 warnings, no errors); docs green; 35 latest parent tests pass. Stable full backend gate finishing. |
 | intake | Reviewed issue scope and existing React Flow frontend; created isolated checkout | gh issue view 117 --json body,comments,title | Product decisions recorded; no implementation yet |
 
 ## State for the next session
@@ -141,7 +142,7 @@ Requirement coverage (all issue sections):
 - Last check run (exact command): cd server && FLASK_DEBUG=1 .venv/bin/python -m pytest tests/unit/test_device_parents.py tests/unit/test_device_parent_migration.py -q
 - Result: 34 passed in 6.23s. Broader focused regression: 308 passed in 39.12s. Initial full backend gate running at /tmp/issue117-backend-gate.log; it collected the old test-auth fixture before its correction.
 - Hypothesis: Existing writer and Inventory modules can support this without a new dependency; use a relationship table and shared editor.
-- Next action: Finish/re-run backend gate after correcting test-auth fixture, then implement frontend against the newly failing editor/topology tests.
+- Next action: Finish stable backend gate and run isolated routed Nagios acceptance per server/tests/plans/MANUAL_TOPOLOGY_ACCEPTANCE.md.
 
 ## Decisions and notes
 
@@ -153,3 +154,8 @@ Requirement coverage (all issue sections):
 
 - Migration generation: used private databases upgraded to a129f6d23901, flask_migrate.migrate with rev_id b117d9a2c041 (multi-bind environment). Reviewed generated operations: default-bind table/index/FKs/self-check only, no history changes.
 - Shared writer inspection found a legacy history commit inside successful apply; added opt-in deferred commit for parent transactions while preserving the existing default for all other callers. Lifecycle parent edits reuse sync_rows/desired_services/set_plugin_states without committing early.
+
+- Round 1 full gate completed: 3022 passed, 14 skipped, 3 failed. One was the corrected shared-client auth fixture; two were a migration-head collection race because generation happened during the gate (old HEAD constant versus new runner head). No production behavior or tests were weakened; rerunning from a stable tree.
+- Round 2: frontend first failed on missing editor/layout modules, then 82 focused tests passed. A malformed response guard allows unchanged drawer mocks to show a parent loading error rather than crash. Added a draft-preservation regression and minute-based shared refresh. Frontend gate passed once with only known lint/build warnings; revised code gate pending. Docs gate passed after matching the route-catalog parser's exact component-name cell.
+
+- Source security review: all parent names use full-match whitelist before directive rendering; request IDs never reach commands; no secrets added to API/data; existing Nagios and resource rollback retained. Graph validation/layout are iterative, no new application dependencies. Added compensating regeneration after rollback if audit/commit fails following an applied parent edit.

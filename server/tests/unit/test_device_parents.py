@@ -173,3 +173,21 @@ def test_host_routes_expose_parents(logged_in_client,db_session,devices):
     assert item['parent_device_ids']==[a.NetDiscoveryID]
     detail=logged_in_client.get(f'/api/system/network-health/hosts/{c.Hostname}/detail').json['data']
     assert detail['parent_device_ids']==[a.NetDiscoveryID]
+
+def test_audit_failure_compensates_applied_graph(logged_in_client,devices,writer):
+    c,a,b,_=devices;link(c,a)
+    with patch('app.api.system.device_identity.create_user_log',side_effect=RuntimeError('Cannot audit')):
+        r=save(logged_in_client,c,[b.NetDiscoveryID])
+    assert r.status_code==500 and parents(c)==[a.NetDiscoveryID]
+    assert writer.call_count==2
+
+def test_automatic_retirement_clears_children(app,db_session,devices):
+    from datetime import datetime,timedelta,timezone
+    from app.network_discovery.device_identity import update_unseen_devices
+    c,a,_,_=devices;link(c,a)
+    a.Device_State=DeviceState.MISSING
+    a.Last_Seen_At=datetime.now(timezone.utc)-timedelta(days=1000)
+    db.session.commit()
+    update_unseen_devices({d.NetDiscoveryID for d in devices if d!=a},{a.Network})
+    db.session.commit()
+    assert a.Device_State is DeviceState.RETIRED and parents(c)==[]

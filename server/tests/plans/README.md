@@ -33,6 +33,9 @@ links by case ID (its section 7 records the decision for each); none is retired.
   proposed changes to `e2e/network_discovery/` so the acceptance cases run without hand steps: drop the
   removed apply flow, add the new route calls, localhost/preview guards, scenario runner, permission
   matrix and traceability reporting. Nothing in it is implemented yet.
+- [Manual Topology Acceptance](MANUAL_TOPOLOGY_ACCEPTANCE.md): issue #117 manual
+  multiple-parent API/configuration, real isolated routed Nagios reachability, lifecycle
+  rollback and frontend regression checks.
 - [Historical test failures](historical/TEST_FAILURES.md): previous findings;
   historical counts are not the current collection inventory.
 
