@@ -8,13 +8,13 @@ downgrade removes the tables, the permissions and their grants.
 history.db is not touched.
 
 Revision ID: e4a7c1d9b305
-Revises: c5e2a8f4d716
+Revises: e79b7d3c2641
 """
 from alembic import op
 import sqlalchemy as sa
 
 revision = 'e4a7c1d9b305'
-down_revision = 'c5e2a8f4d716'
+down_revision = 'e79b7d3c2641'
 branch_labels = None
 depends_on = None
 
