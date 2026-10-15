@@ -15,6 +15,18 @@ class TestInitScheduler:
         assert scheduler._scheduler is None
 
 
+class TestMaintenanceJob:
+
+    def test_job_runs_the_dispatcher(self, app):
+        from unittest.mock import patch
+        with patch("app.maintenance.dispatch_due_windows", return_value=0) as dispatch:
+            scheduler._dispatch_maintenance_windows()
+        dispatch.assert_called_once_with()
+
+    def test_job_never_raises(self, app):
+        from unittest.mock import patch
+        with patch("app.maintenance.dispatch_due_windows", side_effect=RuntimeError("boom")):
+            scheduler._dispatch_maintenance_windows()
 class TestPurgeRemediationRuns:
     """_purge_old_data also bounds the remediation run log (an audit trail, not statistics)."""
 
@@ -54,3 +66,13 @@ class TestPurgeRemediationRuns:
         scheduler._purge_old_data()
 
         assert db_session.session.query(RemediationRun).count() == 0
+
+
+class TestPersistedPollInterval:
+
+    def test_defaults_when_the_database_has_no_tables_yet(self, app):
+        from unittest.mock import patch
+        import sqlalchemy as sa
+        error = sa.exc.OperationalError("SELECT", {}, Exception("no such table: SYSTEM_SETTINGS"))
+        with patch("app.scheduler.db.session.get", side_effect=error):
+            assert scheduler.persisted_poll_interval() == scheduler.DEFAULT_POLL_INTERVAL_SECONDS
