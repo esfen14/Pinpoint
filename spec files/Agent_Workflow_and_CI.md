@@ -128,6 +128,27 @@ Where results go is defined in [`docs/test-runs/README.md`](../docs/test-runs/RE
 | Local lab (fast lane) | Docker | `scripts/lab up`, `scripts/lab smoke`; see [`docs/manuals/Local_Lab.md`](../docs/manuals/Local_Lab.md). A real Nagios and five target servers on an isolated network; not the installer, systemd, DHCP or NCPA installs |
 | Real appliance and VM lab | Installer build, VirtualBox (this laptop) or libvirt (the retained lab) | `scripts/vmlab` with the `demo/` target VMs; plan in [`docs/plans/VM_Lab_Plan.md`](../docs/plans/VM_Lab_Plan.md). The snapshot holds Ubuntu + Nagios only, so it cannot go stale. The libvirt e2e harness in `server/tests/e2e/network_discovery/` is separate. Manual or scheduled, never on pull requests from forks |
 
+### VM control preflight
+
+Before VM-lab mutation, `scripts/vmlab preflight` must prove one same-user
+VirtualBox controller, agreement between appliance UUID and the unique VM process under that controller,
+and active runtime NAT forwarding sockets for both exclusive loopback listeners
+(guest SSH/22 and web/80). A supplied session PID must also agree.
+Powered-off state requires no remaining UUID process or endpoint listeners.
+Mutation commands enforce this check at entry and recheck before SSH/key
+bootstrap and start/power-off boundaries; inaccessible process identity, missing runtime forwarding evidence, duplicate
+controllers and ambiguous/transitional states fail closed. It is a Linux-host
+check; it cannot substitute for exclusive lab ownership. See
+[VM Lab Plan §4.0](../docs/plans/VM_Lab_Plan.md) for recovery and the disposable
+endpoint-marker snapshot trial. Never treat a snapshot command's success alone
+as proof that the endpoint is protected. The #162 owner accepted the lost edits as unrecoverable and authorized retirement
+of the old lab disks. Positive ownership proof passed on the newly created appliance;
+the original marker was restored through both actual SSH and HTTP endpoints,
+and the rebuilt five-target lab passed its scoped smoke test. See the
+[rebuild report](../docs/test-runs/2026-10-15-issue-162-snapshot-rebuild/REPORT.md).
+The separate setup-admin compatibility bug is tracked in #167; setup on the
+rebuilt appliance completed through the supported API.
+
 ### QA finding (qa-run) and agent loop safety constraints
 
 The `.agent/workflows/qa-run.md` workflow automates the execution of the QA test plan under strict parameters.
@@ -171,7 +192,7 @@ See `.agent/workflows/fix-found.md` for commands and written boundary checks.
 
 | Stage | Command | Notes |
 |---|---|---|
-| Docs | `scripts/verify.sh docs` | Agent progress files are well formed; relative links resolve; environment variables match the README table; browser routes match `App.tsx`, `pageAccess.ts` and the spec; traceability matrix matches test cases; fix-found queue and stop-rule contracts are present. Standard library only |
+| Docs | `scripts/verify.sh docs` | VM ownership safety regression tests pass; agent progress files are well formed; relative links resolve; environment variables match the README table; browser routes match `App.tsx`, `pageAccess.ts` and the spec; traceability matrix matches test cases; fix-found queue and stop-rule contracts are present. Standard library only |
 | Backend | `scripts/verify.sh backend` | Route and client-API drift checks, then `pytest tests/unit` in `server/` with `FLASK_DEBUG=1`; ~4 min, 2,167 passed / 14 skipped on 2026-10-08 |
 | Frontend | `scripts/verify.sh frontend` | `npm run test`, `npm run build`, `npm run lint` (errors fail; warnings do not) |
 | Everything | `scripts/verify.sh all` | Same stages as CI |

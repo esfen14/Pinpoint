@@ -48,6 +48,8 @@ table while you test, not afterward.
 
 | Run | Kind | Commit | Result | Report |
 |---|---|---|---|---|
+| [2026-10-15 issue-162-snapshot-rebuild](2026-10-15-issue-162-snapshot-rebuild/REPORT.md) | Blank-disk VM rebuild, real SSH/HTTP snapshot marker and scoped five-target smoke | guard `f15ff1ab` plus final boundary refinement; app `82ba9ce9`; installer `697869e` | #162 pass: endpoint restore, health and 9/9 smoke checks; separate setup helper finding #167 | [REPORT.md](2026-10-15-issue-162-snapshot-rebuild/REPORT.md) |
+| [2026-10-15 issue-162-recovery](2026-10-15-issue-162-recovery/REPORT.md) | VM control diagnosis, source comparison and owner-authorized retirement | `5fefa6a2`, `b22221eb` plus refinements | Partial recovery: lost edits accepted as unrecoverable; split IPC observed and old lab retired | [REPORT.md](2026-10-15-issue-162-recovery/REPORT.md) |
 | [2026-10-14 issue-13-bandwidth-docker-lab](2026-10-14-issue-13-bandwidth-docker-lab/REPORT.md) | Docker lab: interface discovery, monitoring, Nagios validation and rate against ping traffic | `9252b105` plus uncommitted working tree | Partial: rate within 5% after a sample-time fix; `iperf3` and browser UI not run | [REPORT.md](2026-10-14-issue-13-bandwidth-docker-lab/REPORT.md) |
 | 2026-10-14 issue-128-ncpa-services | Two-target Docker NCPA metric/process/skipping and small-lab load | `fa728583` through `ba4451ce` | Pass for scoped checks; installation/scale/browser walkthrough skipped | [REPORT.md](2026-10-14-issue-128-ncpa-services/REPORT.md) |
 | 2026-10-14 issue-128-ncpa-probe | Two isolated NCPA 3.5.0 API probes | `c006935b` | Partial: agent capabilities only; application/Nagios pending | [REPORT.md](2026-10-14-issue-128-ncpa-probe/REPORT.md) |
