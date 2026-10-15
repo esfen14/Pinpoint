@@ -66,3 +66,13 @@ class TestPurgeRemediationRuns:
         scheduler._purge_old_data()
 
         assert db_session.session.query(RemediationRun).count() == 0
+
+
+class TestPersistedPollInterval:
+
+    def test_defaults_when_the_database_has_no_tables_yet(self, app):
+        from unittest.mock import patch
+        import sqlalchemy as sa
+        error = sa.exc.OperationalError("SELECT", {}, Exception("no such table: SYSTEM_SETTINGS"))
+        with patch("app.scheduler.db.session.get", side_effect=error):
+            assert scheduler.persisted_poll_interval() == scheduler.DEFAULT_POLL_INTERVAL_SECONDS

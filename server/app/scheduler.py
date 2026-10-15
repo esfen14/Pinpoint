@@ -51,7 +51,12 @@ def persisted_poll_interval():
     from app.system_models import SystemSettings
 
     with app.app_context():
-        row = db.session.get(SystemSettings, 1)
+        try:
+            row = db.session.get(SystemSettings, 1)
+        except sa.exc.OperationalError:
+            # No tables yet: `flask db upgrade` imports the app on a fresh database.
+            db.session.rollback()
+            return DEFAULT_POLL_INTERVAL_SECONDS
         return row.Data_Polling_Interval if row is not None else DEFAULT_POLL_INTERVAL_SECONDS
 
 
