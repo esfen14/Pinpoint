@@ -12,6 +12,7 @@ import { SystemLogsPage } from './pages/SystemLogsPage'
 import { ManageAccountsPage } from './pages/ManageAccountsPage'
 import { PluginsPage } from './pages/PluginsPage'
 import { NcpaDeploymentPage } from './pages/NcpaDeploymentPage'
+import { RemediationPage } from './pages/RemediationPage'
 import { SettingsPage } from './pages/SettingsPage'
 import { ManageRolesPage } from './pages/ManageRolesPage'
 import { MaintenancePage } from './pages/MaintenancePage'
@@ -85,6 +86,10 @@ export default function App() {
         <Route
           path="maintenance"
           element={<MaintenancePage />}
+        />
+        <Route
+          path="remediation"
+          element={<RemediationPage />}
         />
         <Route
           path="settings"

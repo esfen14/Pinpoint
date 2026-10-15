@@ -33,6 +33,33 @@ export default defineConfig({
       dependencies: ['setup-admin'],
     },
     {
+      name: 'setup-issue-79-reader',
+      testMatch: /auth\.host-recipients\.setup\.ts/,
+    },
+    {
+      name: 'issue-116-live',
+      testMatch: /escalations\.lab\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'issue-79-live',
+      testMatch: /host-recipients\.lab\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: '.auth/admin.json',
+      },
+      dependencies: ['setup-admin'],
+    },
+    {
+      name: 'issue-79-restricted',
+      testMatch: /host-recipients\.restricted\.lab\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: '.auth/issue-79-reader.json',
+      },
+      dependencies: ['setup-issue-79-reader'],
+    },
+    {
       name: 'issue-133-live',
       testMatch: /issue-133\.lab\.spec\.ts/,
       use: {

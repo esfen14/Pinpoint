@@ -12,6 +12,7 @@ type Props = {
   onDeploySelected: () => void
   onVerify: (deviceId: number) => void
   onRetry: (deviceId: number) => void
+  onCleanup: (device: NcpaDevice) => void
 }
 
 const BUTTON_SM =
@@ -28,6 +29,7 @@ export function NcpaDevicesTable({
   onDeploySelected,
   onVerify,
   onRetry,
+  onCleanup,
 }: Props) {
   const [query, setQuery] = useState('')
   const q = query.trim().toLowerCase()
@@ -139,9 +141,14 @@ export function NcpaDevicesTable({
                         <KeyRound className="h-3.5 w-3.5" /> Verify
                       </button>
                     ) : d.agentStatus === 'Deployment Failed' ? (
-                      <button type="button" className={BUTTON_SM} disabled={isRunning} title={busyTitle} onClick={() => onRetry(d.id)}>
-                        <RotateCcw className="h-3.5 w-3.5" /> Retry
-                      </button>
+                      <span className="inline-flex gap-2">
+                        <button type="button" className={BUTTON_SM} disabled={isRunning} title={busyTitle} onClick={() => onRetry(d.id)}>
+                          <RotateCcw className="h-3.5 w-3.5" /> Retry
+                        </button>
+                        {d.trusted && <button type="button" className={BUTTON_SM} disabled={isRunning} title={busyTitle} onClick={() => onCleanup(d)}>
+                          Clean up
+                        </button>}
+                      </span>
                     ) : null}
                   </td>
                 </tr>

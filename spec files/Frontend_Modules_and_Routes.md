@@ -26,6 +26,8 @@ requests use `src/lib/api.ts`; Plugin Manager wrappers live in
 | `/plugins` | `PluginsPage` | `plugin.view` | Connected to Plugin Manager inventory (category tabs All / Network Services / Device Availability / Network Protocols / Servers / Application / Other, filtered by the `group` query parameter so paging stays per tab; a Monitoring column and a banner while no plugin is enabled), plugin details with an enable confirmation that previews what will be monitored, the plugin's monitored services with live status and per-device stop/resume, scanning, and mutation APIs. There is no Currently Running tab (the tabs are categories only) and devices are never picked by hand |
 | `/ncpa-deployment` | `NcpaDeploymentPage` | `system.deploy.ncpa` | Warns, through `useNcpaPluginState`, when `check_ncpa` is not enabled in Plugin Manager (the agent's checks are monitored only while it is). Connected to the NCPA deployment routes: device list, deploy wizard (host-key trust, login checks, start), live run banner, Deployment History tab and run review drawer (`?tab=history&run=<id>`) |
 | `/maintenance` | `MaintenancePage` | `maintenance.manage` | **Maintenance** (sidebar). Lists maintenance windows (devices, next occurrence, repeats, status, reason) with create, edit and a two-step cancel, through `lib/maintenanceApi.ts` and `types/maintenance.ts`. Times are typed and shown in the Time Zone setting (`useDisplayTime`, `utils/maintenanceTime.ts`) and sent as UTC; the form checks what the server checks. A failed or retrying occurrence is shown with its reason, and a `nagios_synced: false` result is shown as a notice. A note explains that a window silences alerts and links to Settings → System, where the Maintenance Mode switch and the global banner say it only pauses PinPoint's jobs and link back here |
+| `/ncpa-deployment` | `NcpaDeploymentPage` | `system.deploy.ncpa` | Warns, through `useNcpaPluginState`, when `check_ncpa` is not enabled in Plugin Manager (the agent's checks are monitored only while it is). Connected to the NCPA deployment routes: device list, deploy wizard (host-key trust, login checks, start), live run banner, Deployment History tab and run review drawer (`?tab=history&run=<id>`). Trusted failed devices (not deployed/healthy devices) have a Clean up dialog: it accepts ephemeral SSH credentials, optionally removes the deployment account after artifact removal, shows each cleanup step and refreshes the list; fields clear after every request. |
+| `/remediation` | `RemediationPage` | `remediation.view` | Connected to `/api/system/remediation/...`; sidebar entry "Remediation". An Actions tab (banner "Actions run automatically when a service reaches a hard failure", an enable switch per action, an add/edit form built from the action types with server messages shown against the right field, delete with confirmation; with only `remediation.view` the list is read-only) and a Run log tab (filters for action, outcome, host and dates, pagination, skipped runs show their reason, a drawer with the redacted output). Changes need `remediation.manage`; 409 offers a reload and 422 shows the Nagios message |
 | `/reports` | `ReportsPage` | `system.report` | Connected for host availability and network-services views; backend exposes additional report routes |
 | `/system-logs` | `SystemLogsPage` | `system.logs` | Connected to five log categories |
 | `/accounts` | `ManageAccountsPage` | `account.view` | Connected to account/role APIs. The table shows each user's Email Alerts (On/Off); the add and edit forms show a "Send this user email alerts" checkbox only with `account.alerts`, and a failed Nagios apply is shown as a notice. The first account is marked by the account API as `is_super_admin`; its edit form keeps Status Active, disables the status selector, explains that the bootstrap administrator must retain account/role administration, and disables role options whose `preserves_bootstrap_admin_access` value is false |
@@ -73,7 +75,9 @@ When adding a page:
 | `components/plugin-manager/` | Plugin inventory table, details drawer (enable preview dialog, "Not service-driven" state, attach notices), `PluginServicesSection` (paginated, searchable monitored services with status chips and Stop/Resume), `PluginCustomChecksSection` and `CustomCheckDialog` (a plugin's custom checks with Add, Change, Pause/Resume and Remove, shown only to `plugin.custom_check`, and only for plugins whose details report `custom_checks.supported`; password fields are masked, write-only and say where the password ends up; the drawer's "Not service-driven" note says why other plugins take none; for a plugin whose `custom_checks.target` is `server` the section is titled "Server checks" and the dialog has no device picker), and the disabled custom-upload modal |
 | `components/maintenance/` | Maintenance window form and table |
 | `components/ncpa-deployment/` | NCPA device table, deploy wizard, run banner, history table, run drawer, outcome badges and the header bell item |
+| `components/ncpa-deployment/` | NCPA device table, deploy wizard, `CleanupDialog` for trusted failed devices with ephemeral credentials and per-step results, run banner, history table, run drawer, outcome badges and the header bell item |
 | `components/plugins/` | Older installed/available plugin table components; do not assume these drive the current page |
+| `components/remediation/` | `ActionsTable` (the actions with their enable switch), `ActionFormDialog` (add and edit, per-field server errors, reload prompt on 409), `RunLog` (filters, table, pagination) and `RunDrawer` (one run with its output). Data comes from `lib/remediationApi.ts` and `types/remediation.ts` |
 | `components/reports/` | Host availability and network-services report tables |
 | `components/manage-accounts/` | Account management table/UI |
 | `components/settings/` | General, security, and system settings controls; the Network Discovery tab edits networks, scan ports and one Port → Service table per protocol (NCPA's port fixed, each entry showing the check it leads to); the Plugins tab (`PluginSettings`) shows one editable table per installed plugin: SNMP OIDs (description, OID) once `check_snmp` is installed and NCPA metrics (description, metric path, optional warning, critical, units, query args) once `check_ncpa` is installed. The NCPA table also offers Add process check: exact process name (24 safe characters) and expected count (0–1000000) produce a reviewable `processes` row with `name=<name>` query args and inclusive count thresholds; invalid names/counts and duplicate descriptions show an error, and the existing Save action persists the row. Help explains swap, editable sda disk-rate defaults, skipped paths and the load-average limitation. Cells edit in place, Add appends an empty row, rows can be removed, Reset restores the `config.py` defaults; each table warns when its plugin is not Enabled/Active and that a new or renamed description starts a new Nagios service; the Email tab (`EmailSettings`) edits the Gmail account notification mail uses: a locked Gmail preset (`smtp.gmail.com`, 587, STARTTLS), the Gmail address, a sender that follows it (warning when changed, because Gmail rewrites From), an "App password" field (`xxxx xxxx xxxx xxxx`, sent exactly as typed, write-only, blank keeps the saved one) with help text and a new-tab link to `https://myaccount.google.com/apppasswords`, and a "Send test email" card that shows a plain-language message for each failure (rejected login, blocked port, unknown host) with a technical explanation and the server's own response under "Details" |
@@ -95,6 +99,17 @@ When adding a page:
 - `types/` owns TypeScript API records, view models, and conversion functions.
 - `formatDateTime.ts` applies display preferences to timestamps. The Time Zone preference is a fixed UTC offset or `Browser` (the viewer's own zone). `parseServerDate` reads API timestamps that carry no offset as UTC. Components get formatters from `hooks/useDisplayTime.ts`; do not call `toLocaleString` for displayed times.
 - `exportData.ts` performs client-side exports and records export actions.
+
+## Polling settings
+
+Settings → System offers **Data polling interval** with exactly 30, 60, 120 and
+300 seconds, default 60. The tab requires `settings.system`; the backend enforces
+field permissions. `SystemSettingsContext` and `types/settings.tsx` carry
+`dataPollingInterval` as a shared system field through save, reload and conflicts.
+Settings → General explains the saved Nagios Check interval, saved Pinpoint Data
+polling interval and selected per-user Dashboard Refresh Rate (including Manual).
+Changing any of these schedules leaves the others, retry timing and discovery
+cadence alone. Save errors retain the draft and show the API message.
 
 ## Frontend rules
 
@@ -123,3 +138,46 @@ When adding a page:
   and unacknowledge call (Dashboard, Device Inventory, System Status, the drawer)
   reads `nagios_synced` from the response and shows a dismissible notice when it
   is false; nothing is shown when it is true or absent.
+
+## Host email recipient editor
+
+`DeviceRecipientsSection` in `components/device-inventory/` is mounted by
+`StatusDetailDrawer` only in the host view, for a discovered device, and only
+with `system.hosts.alerts`. It reads and replaces `/api/system/hosts/<id>/recipients`
+through the shared API client; `types/hostRecipients.ts` owns the wire contract.
+Each user choice shows name, email and eligibility; inactive/opted-out selections
+remain visible. Saving sends `{recipient_ids: number[]}`. Empty or entirely
+ineligible selections visibly explain the default group of all Active opted-in
+users. Loading, load-error Retry, no accounts, apply errors and success are shown;
+inputs are disabled during save. Retired/merged devices are read-only. A rejected
+save retains the editable choice for retry and displays the server's message.
+This editor does not require account-management permission and does not change
+any user's global email setting.
+
+Live browser coverage for host recipients is opt-in through `scripts/playwright-lab --project issue-79-live --project issue-79-restricted`. The tests save through the real recipient API/Nagios writer, reopen the drawer to verify persistence, clear the choices to verify default fallback, restore the original assignments, and verify that the restricted reader sees no editor and receives 403 for recipient reads/writes. They require two eligible lab accounts and discovered lab targets.
+
+### Escalation settings
+
+`SettingsPage` mounts `components/settings/EscalationSettings.tsx` after the
+existing System controls in Settings → System. Both that tab and the card require
+`settings.system`; the card makes no request when permission is absent.
+`lib/escalationApi.ts` uses the shared JSON client for `/api/system/escalations`
+CRUD; `types/escalation.ts` owns the wire contracts. No new tab, route or
+permission is added.
+
+The card lists group, all/device scope, first/last counts, interval, activity
+explanation and Edit/Delete actions. Its form supports create and edit, validates
+finite 1–10000 integer counts and 0–1440 integer minutes before saving, and shows
+server error messages including 400 and 422 without losing rejected drafts.
+Delete requires explicit confirmation. Loading, retry/reload, empty and success
+states are present; mutations disable controls while applying. No eligible group
+disables the form and explains Active/email-alert eligibility. Inactive saved
+ranges remain visible and removable. Help explains replacement recipients,
+notification counts, interval zero and existing quiet-hour/suppression behavior.
+
+The opt-in browser regression is `e2e/escalations.lab.spec.ts`, Playwright project
+`issue-116-live`. Set `ISSUE116_LAB_URL` to an exclusively owned test lab and
+`LAB_ADMIN_PASSWORD` for its administrator (optional `LAB_ADMIN_EMAIL`), then run
+`npx playwright test --project=issue-116-live` from `client/`. With no lab URL the
+test skips before any request; normal Vitest verification never runs live tests.
+Login screenshots, video and traces remain disabled.

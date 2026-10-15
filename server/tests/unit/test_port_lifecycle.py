@@ -17,6 +17,7 @@ from app.network_discovery.create_host_cfg import _load_monitored_hosts, build_h
 from app.network_discovery.port_lifecycle import (
     add_user_port,
     mark_ncpa_port,
+    device_ncpa_port,
     process_device_ports,
     promote_identified_ports,
     set_port_state,
@@ -296,6 +297,21 @@ class TestNcpaPort:
         port = tcp_port(device, 5693)
         assert port.Port_State is PortState.MONITORED
         assert port.Source is PortSource.NCPA
+
+    def test_non_default_deployed_port_is_protected(self, device):
+        deploy_ncpa_token(device)
+        deployment = db.session.scalar(sa.select(NCPADeployment).where(
+            NCPADeployment.NetworkDiscoveryID == device.NetDiscoveryID,
+            NCPADeployment.Token.is_not(None)).order_by(NCPADeployment.NCPADeployID.desc()))
+        deployment.Port = 5864
+        db.session.flush()
+        assert device_ncpa_port(device.NetDiscoveryID) == 5864
+        mark_ncpa_port(device.NetDiscoveryID)
+        db.session.commit()
+
+        assert tcp_port(device, 5864).Source is PortSource.NCPA
+        with pytest.raises(ValueError):
+            set_port_state(device.NetDiscoveryID, "tcp", 5864, PortState.IGNORED)
 
     def test_ncpa_port_can_be_demoted_without_a_token(self, device):
         mark_ncpa_port(device.NetDiscoveryID)

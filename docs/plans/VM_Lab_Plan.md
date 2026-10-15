@@ -1,6 +1,10 @@
 # VM Lab Plan (faithful lane)
 
-Status: **working; alerts and the `break` commands not yet run; NCPA run done (partial, #45).** Design agreed
+Status: **working; clean appliance/base/five-target rebuild and real SSH/HTTP
+snapshot restoration verified for [#162](https://github.com/esfen14/Pinpoint/issues/162).
+See the [rebuild report](../test-runs/2026-10-15-issue-162-snapshot-rebuild/REPORT.md).
+The setup-admin label mismatch is tracked in [#167](https://github.com/esfen14/Pinpoint/issues/167);
+the rebuilt appliance completed setup through the supported API.** Design agreed
 2026-10-08. The first end-to-end run passed (create, provision, fresh install of `main`,
 healthcheck 59/0, discovery and monitoring of five targets, sync); see
 [`docs/test-runs/2026-10-08-vm-lab-first-run/`](../test-runs/2026-10-08-vm-lab-first-run/REPORT.md). Feeds
@@ -64,7 +68,7 @@ installer repository for the setup steps.
 
 ### 4.0 Preflight and recovery
 
-Before a QA run, run `scripts/vmlab status`.  A usable faithful lane has all of
+Before a QA run, run `scripts/vmlab preflight`, then `scripts/vmlab status`.  A usable faithful lane has all of
 the following:
 
 - the configured appliance VM exists;
@@ -75,6 +79,81 @@ the following:
 - VirtualBox has enough free disk and RAM for one appliance plus the five
   targets; and
 - no other tester owns the appliance or targets.
+
+### Control and endpoint ownership (#162)
+
+`status`, a successful SSH login, and a successful snapshot command do not prove
+that the manager controls the VM serving the lab ports. The read-only Linux-host
+preflight in `scripts/vmlab_preflight.py` requires:
+
+- exactly one same-user `VBoxSVC` control process;
+- for a running appliance, exactly one VM process for its UUID, matching
+  the sole parent controller PID (and `SessionPID` when supplied by the version);
+- exactly one listener on each configured port, bound to `127.0.0.1`, plus active runtime `TCP[HOST_FORWARD]` sockets reported by that controlled
+  VM through `VBoxManage debugvm <vm> info nat0`, targeting guest SSH/22 and web/80
+  on the same guest (IPv6/wildcard host conflicts also reject);
+- for a powered-off appliance, no process for its UUID and no listener on either
+  lab port. Transitional states, unreadable process identity, missing/unsupported NAT output and unavailable
+  host procfs reject. Run on the host; a container/PID sandbox is not sufficient.
+
+Appliance/target mutation commands run this check before SSH/API/control actions;
+each SSH/key-bootstrap action and the start/power-off paths recheck ownership
+at mutation/state boundaries. A failed recheck returns before SSH even when
+Bash invokes the helper in a conditional or fallback path. `create` requires
+an unused name/ports, a single controller and no same-user running VM processes.
+VirtualBox 7.2 does not include `SessionPID` in machine-readable metadata and its
+SUID VM processes protect `/proc/<pid>/fd`. Runtime NAT socket inspection provides
+positive listener proof without weakening OS permissions or requiring sudo.
+These checks are observations, not a distributed lock: retain exclusive lab ownership
+and do not run concurrent VM/control commands.
+
+If preflight fails, do not start another copy, delete IPC sockets/locks, kill
+inherited processes, or retry snapshot/restore. Preserve all disks, checkouts and
+uncommitted changes. Inspect `ps` parent PIDs, `/proc/net/unix`, the selected
+`VBoxSVC.log` and both listener socket owners read-only. An administrator may need
+to inspect protected `/proc/<pid>/fd` metadata. Do not supply sudo passwords to an
+agent or put them in evidence. The owner must coordinate any shutdown of inherited
+sessions. Rebuilding a VM can provide a fresh lab, but cannot recover overwritten
+edits or repair a split host control context by itself.
+
+After control is coherent, prefer a separately named, newly created appliance
+with its own empty disk, state/config folder and unused loopback ports. Do not
+clone the inherited application disk for the snapshot trial. Before relying on
+snapshot protection, verify it through the actual endpoint. A fresh application
+install on the blank disk may be used to exercise HTTP as well as SSH:
+
+1. Prove ownership with preflight; record VM UUID, process identity, ports and
+   endpoint identity (for example guest machine-id or SSH host-key fingerprint).
+   Verify the web listener too.
+2. Write a random non-secret marker through SSH to a dedicated guest file and
+   flush it. If an HTTP service is installed, serve that file and read it through
+   HTTP too. Power off through the guarded lab command, require no remaining
+   UUID process/listeners, then take a uniquely named powered-off snapshot and
+   record its UUID. Restart through the guarded command.
+3. Change that marker through the same SSH endpoint and read it back through
+   each tested endpoint. Power off and restore only the disposable VM, then
+   restart it. Powered-off snapshots avoid a restored saved state, which the
+   current preflight intentionally rejects.
+4. Repeat preflight after restart (a new VM process PID is expected); read the marker
+   through the same endpoints and require its original value. Record both values,
+   endpoint/VM identity and observed result in a sanitized report. A reported
+   successful restore without the marker result is insufficient.
+5. Keep inherited disks until the owner explicitly resolves the lost edits;
+   an explicit owner-authorized retirement may remove them. Retain sanitized recovery evidence. The incident snapshots are not verified endpoint backups.
+
+Before any later sync, inspect the guest destination's Git status and the service
+WorkingDirectory. Preserve existing edits and choose an explicitly separate test
+checkout rather than overwriting inherited work. The ownership guard does not
+back up application data or establish a clean destination.
+
+See the [read-only recovery report](../test-runs/2026-10-15-issue-162-recovery/REPORT.md).
+The original inherited disks were retired with explicit owner approval after the
+owner accepted the overwritten edits as unrecoverable. The new appliance uses a
+new UUID and a blank disk; it contains no inherited application data. The
+[endpoint marker trial and five-target smoke](../test-runs/2026-10-15-issue-162-snapshot-rebuild/REPORT.md)
+passed. Until #167 is fixed, a fresh-install setup requires the supported
+login/complete-setup API workflow if the helper does not recognize the installer
+label; stale host credential files alone do not prove setup is complete.
 
 If the appliance or snapshot is missing, recreate the lane with steps 1 through
 5 below.  This is a setup/recovery operation, not a QA case: obtain the lab

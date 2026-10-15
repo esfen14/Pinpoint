@@ -7,7 +7,7 @@ tables. history.db is not touched. Run `flask sync-permissions` afterwards to ad
 maintenance.manage permission (granted to Administrator).
 
 Revision ID: a4c8e1b7d933
-Revises: b7d3f1a9c264
+Revises: 99f584ed8151
 Create Date: 2026-10-15 09:00:00.000000
 
 """
@@ -17,7 +17,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'a4c8e1b7d933'
-down_revision = 'b7d3f1a9c264'
+down_revision = '99f584ed8151'
 branch_labels = None
 depends_on = None
 

@@ -85,6 +85,7 @@ from app.system_models import (
     DeviceReviewItem,
     DeviceState,
     IdentifierKind,
+    HostAlertRecipient,
     NCPADeployment,
     NetworkDiscovery,
     PortState,
@@ -335,6 +336,7 @@ def retire_device(id):
     if device.Device_State in (DeviceState.RETIRED, DeviceState.MERGED):
         return error("Device is already retired or merged.", 400)
 
+    db.session.execute(sa.delete(HostAlertRecipient).where(HostAlertRecipient.NetDiscoveryID == id))
     device.Device_State = DeviceState.RETIRED
     close_address(device)
     create_user_log(current_user.UserID, f"Retired device {nagios_host_name(device)}")
@@ -440,6 +442,18 @@ def merge_device(id):
 
     source_name = nagios_host_name(source)
     target_name = nagios_host_name(target)
+
+    # Recipient choices follow the surviving device; duplicate choices collapse.
+    target_recipients = set(db.session.scalars(
+        sa.select(HostAlertRecipient.UserID).where(HostAlertRecipient.NetDiscoveryID == target_id)
+    ))
+    for row in db.session.scalars(
+        sa.select(HostAlertRecipient).where(HostAlertRecipient.NetDiscoveryID == id)
+    ).all():
+        if row.UserID in target_recipients:
+            db.session.delete(row)
+        else:
+            row.NetDiscoveryID = target_id
 
     # Identifiers: strong ones are unique, so they move as they are; a weak
     # one the target already has is dropped.

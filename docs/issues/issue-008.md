@@ -15,7 +15,7 @@
 **Plan reference:** Issue #8 in [`docs/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../NAGIOS_CORE_FEATURE_GAP_PLAN.md) §3. The number is a plan identifier, not a GitHub issue number.
 
 > **Blocked / conditional:** **Part 8.1 (System):** Waits for the event handler framework (Issue #7).  
-> **Part 8.2 (Installer):** Wait for the security review of Issue #7. The installer code location is not in this repository, *further investigation required*.  
+> **Part 8.2 (Installer):** Waits for the security review of Issue #7. The code location is known (installer repository, `setup/configure-pinpoint-privileges.sh`).  
 > **Part 8.3 (System):** Blocked by investigation. PinPoint has a deployment key and account on devices, but what the on-device sudo rule and helper allow was not verified, and an expanded rule on monitored devices is a security decision.
 
 #### A. Problem Description
@@ -65,7 +65,8 @@ Paths below were verified in the repository on 2026-10-13 unless marked *(propos
 
 1. **Part 8.2 (Installer):** Add a drop-in under `/etc/sudoers.d/` that allows `pinpoint` to run `systemctl restart` for each allowlisted unit as separate full command lines (no wildcards), validated with `visudo -c` during install.
 2. **Part 8.2 (Installer):** Keep the list identical to the list in Part 8.1's code and document where both must change together.
-3. **Part 8.2 (Installer):** Add upgrade handling and make sure a failed validation leaves the previous sudoers state in place.
+3. **Part 8.2 (Installer):** Follow the existing pattern in `setup/configure-pinpoint-privileges.sh` (installer repository): write the rule to a `mktemp` file, run `visudo -cf`, on failure delete the temp file and exit so the previous rule stays, otherwise `install -m 440 -o root -g root`. The script rewrites its own sudoers files on every run, which is the upgrade handling.
+4. **Part 8.2 (Installer):** Update the step 9 sudo check in the same script. It currently asserts that `systemctl restart`, `stop` and `start` are **not** allowed for `pinpoint`; it must still refuse every unit that is not allowlisted and accept the allowlisted ones, otherwise the installer fails its own verification.
 
 #### D. Implementation Guidelines
 

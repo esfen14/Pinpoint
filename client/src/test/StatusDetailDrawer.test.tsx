@@ -13,6 +13,10 @@ vi.mock('../contexts/CurrentUserContext', () => ({
   useCurrentUser: () => ({ user: null, isLoading: false, hasPermission: (name: string) => permissions.granted.has(name) }),
 }))
 
+vi.mock('../components/device-inventory/DeviceRecipientsSection', () => ({
+  DeviceRecipientsSection: ({ deviceId }: { deviceId: number }) => <div>Recipients editor for device {deviceId}</div>,
+}))
+
 // The section has its own tests; here it only shows that it was rendered, and for which device.
 vi.mock('../components/device-inventory/DevicePortsSection', () => ({
   DevicePortsSection: ({ deviceId, hostname }: { deviceId: number; hostname: string }) => (
@@ -182,5 +186,37 @@ describe('StatusDetailDrawer flap history', () => {
     await screen.findByRole('heading', { name: 'Timestamps' })
     expect(screen.queryByRole('heading', { name: 'Flap history' })).not.toBeInTheDocument()
     expect(flapCalls()).toHaveLength(0)
+  })
+})
+
+
+describe('StatusDetailDrawer recipients editor permission', () => {
+  it('shows the editor with the dedicated permission', async () => {
+    permissions.granted.add('system.hosts.alerts')
+    render(<StatusDetailDrawer hostname="web-01" onClose={() => {}} />)
+    expect(await screen.findByText('Recipients editor for device 4')).toBeInTheDocument()
+  })
+  it('does not show it with only account.alerts or host-edit permission', async () => {
+    permissions.granted.add('account.alerts')
+    permissions.granted.add('system.hosts.edit')
+    render(<StatusDetailDrawer hostname="web-01" onClose={() => {}} />)
+    await screen.findByRole('heading', { name: 'Timestamps' })
+    expect(screen.queryByText(/Recipients editor/)).not.toBeInTheDocument()
+  })
+  it('does not show it without a device record', async () => {
+    permissions.granted.add('system.hosts.alerts')
+    api.apiGet.mockResolvedValue(detail({ device_id: null }))
+    render(<StatusDetailDrawer hostname="localhost" onClose={() => {}} />)
+    await screen.findByRole('heading', { name: 'Timestamps' })
+    expect(screen.queryByText(/Recipients editor/)).not.toBeInTheDocument()
+  })
+  it('does not show it in a service view', async () => {
+    permissions.granted.add('system.hosts.alerts')
+    render(<StatusDetailDrawer hostname="web-01" onClose={() => {}} />)
+    await screen.findByText(/Recipients editor/)
+    api.apiGet.mockResolvedValue(detail({ service: 'ssh-22-tcp', services: undefined }))
+    fireEvent.click(screen.getByRole('button', { name: /ssh-22-tcp/ }))
+    await screen.findByText('web-01 / ssh-22-tcp')
+    expect(screen.queryByText(/Recipients editor/)).not.toBeInTheDocument()
   })
 })

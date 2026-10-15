@@ -217,3 +217,36 @@ describe('SettingsPage tabs', () => {
     expect(screen.queryByRole('button', { name: /network discovery/i })).not.toBeInTheDocument()
   })
 })
+
+describe('Remediation access', () => {
+  it('gates the page on remediation.view', () => {
+    expect(PAGE_PERMISSIONS['/remediation']).toBe('remediation.view')
+    expect(canAccessPage('/remediation', ['remediation.view'])).toBe(true)
+    expect(canAccessPage('/remediation', ['remediation.manage'])).toBe(false)
+    expect(canAccessPage('/remediation', [])).toBe(false)
+  })
+
+  it('shows Remediation in the sidebar only with the view permission', () => {
+    signIn(['remediation.view'])
+    const { unmount } = render(<MemoryRouter><Sidebar /></MemoryRouter>)
+    expect(screen.getByText('Remediation')).toBeInTheDocument()
+    unmount()
+    signIn(['system.dashboard'])
+    render(<MemoryRouter><Sidebar /></MemoryRouter>)
+    expect(screen.queryByText('Remediation')).not.toBeInTheDocument()
+  })
+
+  it('redirects a user without the permission away from the page', () => {
+    signIn(['plugin.view'])
+    render(
+      <MemoryRouter initialEntries={['/remediation']}>
+        <Routes>
+          {['/remediation', '/plugins'].map((route) => (
+            <Route key={route} path={route} element={<PageAccessGuard><div>Page {route}</div></PageAccessGuard>} />
+          ))}
+        </Routes>
+      </MemoryRouter>,
+    )
+    expect(screen.getByText('Page /plugins')).toBeInTheDocument()
+  })
+})

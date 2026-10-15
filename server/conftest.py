@@ -55,6 +55,15 @@ def app():
     yield flask_app
 
 
+@pytest.fixture(autouse=True)
+def isolated_resource_file(app, tmp_path_factory, monkeypatch):
+    """Keep generated secret resources inside a private per-test directory."""
+    path = tmp_path_factory.mktemp("nagios-resource") / "resource.cfg"
+    path.write_text("$USER1$=/usr/local/nagios/libexec\n")
+    path.chmod(0o660)
+    monkeypatch.setitem(app.config, "NAGIOS_RESOURCE_CFG", path)
+
+
 @pytest.fixture()
 def client(app):
     """A test client for the app."""
@@ -114,6 +123,8 @@ def all_monitoring_plugins(db_session):
 
 PERMISSION_NAMES = [
     "system.inventory",
+    "remediation.view",
+    "remediation.manage",
     "system.discover",
     "network.discovery",
     "role.edit",
@@ -127,6 +138,7 @@ PERMISSION_NAMES = [
     "system.deploy.ncpa",
     "system.hosts",
     "system.hosts.edit",
+    "system.hosts.alerts",
     # monitoring permissions
     "monitoring.alerts",
     "monitoring.notifications",

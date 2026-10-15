@@ -14,6 +14,7 @@ import {
   Users,
   Wrench,
   CalendarClock,
+  Zap,
 } from 'lucide-react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useCurrentUser } from '../../contexts/CurrentUserContext'
@@ -56,6 +57,11 @@ const navItems = [
     to: '/maintenance',
     label: 'Maintenance',
     icon: CalendarClock,
+  },
+  {
+    to: '/remediation',
+    label: 'Remediation',
+    icon: Zap,
   },
   {
     to: '/history',

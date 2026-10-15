@@ -49,6 +49,75 @@ def ncpa_port():
     return port
 
 
+def deployed_ncpa_port(deployment):
+    """Use the port installed for this device, or the deployment-time default for legacy rows."""
+    return int(deployment.Port) if deployment is not None and deployment.Port else ncpa_port()
+
+
+def cleanup_ncpa_bootstrap(ip_address, ssh_port, fingerprint, username, password, remove_account=False):
+    """Remove only Pinpoint's bootstrap key, sudo rule and helper via verified SSH.
+
+    Return safe per-step outcomes; never return command output or credentials.
+    A changed host key or failed login raises before any remote command runs.
+    """
+    import binascii
+
+    if not isinstance(remove_account, bool):
+        raise ValueError("remove_account must be a boolean.")
+    try:
+        with open(PUBLIC_KEY_PATH, "r", encoding="utf-8") as key_file:
+            public_key = key_file.read().strip()
+        key_blob = public_key.split()
+        if len(key_blob) < 2 or key_blob[0] not in ("ssh-ed25519", "ssh-rsa", "ecdsa-sha2-nistp256"):
+            raise ValueError("Invalid deployment public key.")
+        base64.b64decode(key_blob[1], validate=True)
+        if any(char in public_key for char in "\r\n"):
+            raise ValueError("Invalid deployment public key.")
+    except (OSError, ValueError, binascii.Error):
+        raise ValueError("The deployment public key is unavailable or invalid.") from None
+
+    client = None
+    try:
+        client = connect_with_fingerprint_check(ip_address, ssh_port, username, fingerprint, password=password)
+        if client is None:
+            raise ValueError("Could not verify the trusted host key.")
+        # Fixed paths only; the key is passed as a single quoted argument, never
+        # interpolated into the remote shell program. A temp file is created by
+        # mktemp beside authorized_keys, then atomically replaces it.
+        script = (
+            "set -eu; key=$1; file=$2; "
+            "if [ ! -e \"$file\" ]; then exit 0; fi; "
+            "tmp=$(/usr/bin/mktemp /home/pinpoint-deployment/.ssh/.authorized_keys.XXXXXXXX); "
+            "trap '/usr/bin/rm -f -- \"$tmp\"' EXIT; "
+            "/usr/bin/grep -Fvx -- \"$key\" \"$file\" > \"$tmp\" || [ $? -eq 1 ]; "
+            "/usr/bin/chown pinpoint-deployment:pinpoint-deployment \"$tmp\"; "
+            "/usr/bin/chmod 600 \"$tmp\"; /usr/bin/mv -f -- \"$tmp\" \"$file\""
+        )
+        actions = [
+            ("key", "/bin/sh -c " + shlex.quote(script) + " sh "
+             + shlex.quote(public_key) + " " + shlex.quote(REMOTE_AUTHORIZED_KEYS)),
+            ("sudo_rule", "/usr/bin/rm -f -- " + shlex.quote(REMOTE_SUDOERS)),
+            ("helper", "/usr/bin/rm -f -- " + shlex.quote(REMOTE_HELPER)),
+        ]
+        results = []
+        for name, command in actions:
+            result = run_sudo_command(client, command, password, log_command="NCPA cleanup " + name,
+                                      suppress_output=True)
+            results.append({"step": name, "ok": bool(result["success"])})
+        if remove_account:
+            if all(step["ok"] for step in results):
+                result = run_sudo_command(client, "/usr/sbin/userdel -r " + shlex.quote(DEPLOYMENT_USER),
+                                          password, log_command="NCPA cleanup account", suppress_output=True)
+                results.append({"step": "account", "ok": bool(result["success"])})
+            else:
+                results.append({"step": "account", "ok": False, "skipped": True})
+        return results
+    finally:
+        password = None
+        if client is not None:
+            client.close()
+
+
 def ssh_host_key_name(ip_address, ssh_port):
     """
     The name paramiko looks a host key up by: the bare address on port 22,
@@ -130,8 +199,8 @@ def run_command(client, command, log_command=None, expected_exit_codes=()):
             "error": errors
             }
 
-def run_sudo_command(client, command, password, log_command=None, expected_exit_codes=()):
-    """Run via sudo; expected nonzero exits log at INFO without changing the result."""
+def run_sudo_command(client, command, password, log_command=None, expected_exit_codes=(), suppress_output=False):
+    """Run via sudo; optionally omit remote output from logs and result for sensitive steps."""
     stdin, stdout, stderr = client.exec_command( f"sudo -S -p '' {command}", get_pty=False)
     stdin.write(password + '\n')
     stdin.flush()
@@ -141,41 +210,23 @@ def run_sudo_command(client, command, password, log_command=None, expected_exit_
     exit_status = stdout.channel.recv_exit_status()
 
     logged_command = log_command if log_command is not None else command
+    if suppress_output:
+        output = ""
+        errors = ""
 
     if exit_status != 0:
         if exit_status in expected_exit_codes:
-            current_app.logger.info(
-                "Expected probe exit %s: %s", exit_status, logged_command
-            )
+            current_app.logger.info("Expected probe exit %s: %s", exit_status, logged_command)
         else:
             current_app.logger.error(
-                f"Command failed (exit {exit_status}): "
-                f"{logged_command}\n"
-                f"Output: {output}\n"
-                f"Errors: {errors}"
+                "Command failed (exit %s): %s%s", exit_status, logged_command,
+                "" if suppress_output else f"\nOutput: {output}\nErrors: {errors}",
             )
-        return {
-            "success": False,
-            "message": "Privilidged command failed.",
-            "output": output,
-            "error": errors
-            }
+        return {"success": False, "message": "Privileged command failed.", "output": output, "error": errors}
 
     if errors:
-        # Non-zero-exit-only failures can still log warnings to stderr
-        # (e.g. apt/gpg noise) — log for visibility, but don't treat as failure
-        current_app.logger.warning(
-            f"Command succeeded but wrote to stderr: "
-            f"{logged_command}\n"
-            f"Errors: {errors}"
-        )
-
-    return {
-            "success": True, 
-            "message": "",
-            "output": output,
-            "error": errors
-            }
+        current_app.logger.warning("Command succeeded but wrote to stderr: %s\nErrors: %s", logged_command, errors)
+    return {"success": True, "message": "", "output": output, "error": errors}
 
 def get_host_key_fingerprint(ip_address, ssh_port):
     """
@@ -783,13 +834,11 @@ def check_device_credentials(ip_address, ssh_port, fingerprint, username, passwo
             try: client.close()
             except Exception: pass
 
-def verify_ncpa_reachable(ip_address, token, timeout=5):
-    """
-    Verify that the Pinpoint server can reach NCPA and
-    that NCPA accepts the generated authentication token.
-    """
-
-    port = ncpa_port()
+def verify_ncpa_reachable(ip_address, token, timeout=5, port=None):
+    """Verify that an agent on its deployed (or configured) port accepts the token."""
+    port = ncpa_port() if port is None else int(port)
+    if not 1 <= port <= 65535:
+        raise ValueError("NCPA port must be between 1 and 65535.")
     url = f"https://{ip_address}:{port}/api"
 
     try:
@@ -829,12 +878,8 @@ def verify_ncpa_reachable(ip_address, token, timeout=5):
             "message": f"Unable to connect to NCPA on port {port}."
         }
 
-    except requests.RequestException as e:
-        current_app.logger.warning(
-            "NCPA reachability check failed for %s: %s",
-            ip_address,
-            e
-        )
+    except requests.RequestException:
+        current_app.logger.warning("NCPA reachability check failed for %s.", ip_address)
 
         return {
             "success": False,
@@ -854,11 +899,14 @@ EXCLUDED_NODE_PREFIXES = ("|sys", "|proc", "|run", "|dev", "|boot|efi")
 DISK_PERCENT_LEAF = "used_percent"
 
 
-def _ncpa_get(ip_address, token, path, timeout=5):
+def _ncpa_get(ip_address, token, path, timeout=5, port=None):
     """GET an NCPA API node (e.g. "disk/logical"); the decoded JSON, or None."""
+    port = ncpa_port() if port is None else int(port)
+    if not 1 <= port <= 65535:
+        raise ValueError("NCPA port must be between 1 and 65535.")
     try:
         response = requests.get(
-            f"https://{ip_address}:{ncpa_port()}/api/{path}",
+            f"https://{ip_address}:{port}/api/{path}",
             params={"token": token},
             verify=False,
             timeout=timeout,
@@ -889,7 +937,7 @@ def _is_monitorable_disk_node(name, info):
     return True
 
 
-def discover_disk_nodes(ip_address, token):
+def discover_disk_nodes(ip_address, token, port=None):
     """
     Ask the agent itself which logical disk nodes it serves (GET
     /api/disk/logical) and keep those that are real filesystems and whose
@@ -897,7 +945,10 @@ def discover_disk_nodes(ip_address, token):
     "/"), not after lsblk partitions, so this is the only reliable source.
     Returns the node names in the agent's order.
     """
-    listing = _ncpa_get(ip_address, token, "disk/logical")
+    def get_node(path):
+        return _ncpa_get(ip_address, token, path) if port is None else _ncpa_get(ip_address, token, path, port=port)
+
+    listing = get_node("disk/logical")
     nodes = listing.get("logical") if isinstance(listing, dict) else None
     if not isinstance(nodes, dict):
         return []
@@ -906,7 +957,7 @@ def discover_disk_nodes(ip_address, token):
     for name, info in nodes.items():
         if not _is_monitorable_disk_node(name, info):
             continue
-        if _ncpa_get(ip_address, token, f"disk/logical/{name}/{DISK_PERCENT_LEAF}") is None:
+        if get_node(f"disk/logical/{name}/{DISK_PERCENT_LEAF}") is None:
             current_app.logger.info("NCPA disk node %r has no %s value; skipped.", name, DISK_PERCENT_LEAF)
             continue
         names.append(name)
@@ -919,7 +970,10 @@ def refresh_ncpa_partitions(ncpa_deployment, ip_address):
     NCPADevicePartition rows (whose Name is the NCPA node name). Used after
     install and whenever disks change. Commits. Returns the stored names.
     """
-    names = discover_disk_nodes(ip_address, ncpa_deployment.Token)
+    if ncpa_deployment.Port:
+        names = discover_disk_nodes(ip_address, ncpa_deployment.Token, port=deployed_ncpa_port(ncpa_deployment))
+    else:
+        names = discover_disk_nodes(ip_address, ncpa_deployment.Token)
     db.session.execute(
         sa.delete(NCPADevicePartition).where(
             NCPADevicePartition.NCPADeployID == ncpa_deployment.NCPADeployID
@@ -1060,6 +1114,7 @@ def install_ncpa(device_id, ncpa_deployment_status_id, ip_address):
         ncpa_deployment.Deployement_Method = DeploymentMethod.AUTOMATIC
         ncpa_deployment.Agent_Status = AgentStatus.DEPLOYED
         ncpa_deployment.Token = token
+        ncpa_deployment.Port = ncpa_port()
         ncpa_deployment.Error = None
         ncpa_deployment.NCPADeploymentStatusID = (
             ncpa_deployment_status_id

@@ -35,6 +35,7 @@ PERMISSIONS = [
     "system.deploy.ncpa",
     "system.hosts",
     "system.hosts.edit",
+    "system.hosts.alerts",
     "system.logs",
     "system.report",
     "system.notifications",
@@ -61,6 +62,8 @@ PERMISSIONS = [
     "settings.discovery",
     "settings.plugins",
     "settings.email",
+    "remediation.view",
+    "remediation.manage",
 ]
 
 ROLES = [

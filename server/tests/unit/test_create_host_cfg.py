@@ -228,6 +228,13 @@ class TestNcpaHost:
             "ncpa-disk_sdb1-5693-tcp": "pinpoint_nd_ncpa!5693!secrettoken!disk/logical/sdb1/percent!",
         }
 
+    def test_alternate_listener_port_is_used_in_check(self, app, plugin_config):
+        host = make_host("linux-alt", tcp={"5864": "ncpa"}, net_discovery_id=7)
+        facts = {7: {"ncpa": {"token": "secrettoken", "port": 5864, "partitions": []}}}
+        with app.app_context():
+            services = as_dict(build_host_services(host, facts, plugin_config))
+        assert services["ncpa-cpu-5864-tcp"].startswith("pinpoint_nd_ncpa!5864!secrettoken!")
+
     def test_without_deployed_token_falls_back_to_tcp(self, app, plugin_config):
         host = make_host("linux-x", tcp={"5693": "ncpa"}, net_discovery_id=8)
         with app.app_context():
@@ -449,6 +456,14 @@ class TestLoadHostPluginFacts:
             deployed.NetDiscoveryID: {"ncpa": {"token": "new-token", "partitions": ["nvme0n1p2"]}}
         }
 
+    def test_non_default_port_is_available_to_ncpa_planner(self, db_session, admin_user):
+        device = make_device(db_session, admin_user, "alternate", "10.0.0.8")
+        deployment = make_ncpa_deployment(db_session, device, "token", [])
+        deployment.Port = 5864
+        db_session.session.commit()
+
+        facts = load_host_plugin_facts()
+        assert facts[device.NetDiscoveryID]["ncpa"]["port"] == 5864
     def test_monitored_interfaces_become_snmp_facts(self, db_session, admin_user):
         device = make_device(db_session, admin_user, "switch", "10.0.0.4")
         other = make_device(db_session, admin_user, "other", "10.0.0.5")
@@ -587,7 +602,25 @@ class TestCreateHostCfgFile:
         assert services["host-d"] == {"ntp-123-udp": "pinpoint_nd_ntp!123!"}
 
         assert all(cmd.startswith("pinpoint_nd_snmp!") for cmd in services["host-a"].values())
-        assert all(cmd.startswith("pinpoint_nd_ncpa!5693!tokenB!") for cmd in services["host-b"].values())
+        # With resource macros, the NCPA token is replaced by a $USERn$ reference.
+        assert all(cmd.startswith("pinpoint_nd_ncpa!5693!USER") for cmd in services["host-b"].values())
+        assert all("tokenB" not in cmd for cmd in services["host-b"].values())
+
+    def test_backfilled_port_preserves_existing_ncpa_config(self, app, db_session, admin_user, plugin_config, tmp_path):
+        device = make_device(db_session, admin_user, "existing", "10.0.0.12")
+        deployment = make_ncpa_deployment(db_session, device, "tokenB", ["sda1"])
+        db_session.session.commit()
+        discovered = {"10.0.0.0/24": {
+            "10.0.0.12": make_host("existing", tcp={"5693": "ncpa"}, net_discovery_id=device.NetDiscoveryID)
+        }}
+        with patched_config(app, HOST_CONFIG_DIR=tmp_path):
+            before = _create_host_cfg_file(discovered).read_text()
+            deployment.Port = int(app.config["NCPA_PORT"])
+            db_session.session.commit()
+            after = _create_host_cfg_file(discovered).read_text()
+        assert re.sub(r"# generated at .*", "# generated at <time>", before) == re.sub(
+            r"# generated at .*", "# generated at <time>", after
+        )
 
     def test_commands_defined_once_for_used_plugins_only(self, app, db_session, admin_user, plugin_config, tmp_path):
         discovered = {
@@ -969,6 +1002,146 @@ class TestNotificationScriptPath:
 
 
 
+# ==========================================================
+# RESOURCE MACRO INTEGRATION (issue #129)
+# Guarded: only collected when resource_macros exists.
+# ==========================================================
+
+@pytest.mark.usefixtures("all_monitoring_plugins")
+class TestResourceMacroIntegration:
+    """
+    After resource_macros.py is created and wired into create_host_cfg.py, the
+    generated hosts.cfg must not expose literal NCPA tokens or custom-check
+    passwords.  Until then, these tests are expected to fail at collection time
+    because the import inside each test method (via pytest.importorskip) will
+    skip the test — keeping the rest of the file green.
+
+    Once the module exists, the tests will be collected and will fail until
+    create_host_cfg.py is updated to call resource_macros.  That is the
+    desired red→green progression for issue #129.
+    """
+
+    _SECRET_TOKEN = "verysecrettoken99"
+    _NCPA_METRICS_LOCAL = [
+        {"metric": "cpu", "path": "cpu/percent", "warning": "50", "critical": "80"},
+    ]
+
+    def _generate(self, app, db_session, admin_user, tmp_path):
+        """
+        Helper: create one NCPA device, write a minimal resource.cfg, run
+        _create_host_cfg_file(), and return (hosts_cfg_text, resource_cfg_text).
+        """
+        resource_macros = pytest.importorskip(
+            "app.network_discovery.resource_macros",
+            reason="resource_macros.py not yet implemented (issue #129)",
+        )
+
+        device = make_device(db_session, admin_user, "ncpa-macro-host", "10.0.0.55")
+        make_ncpa_deployment(db_session, device, self._SECRET_TOKEN, [])
+        db_session.session.commit()
+
+        discovered = {
+            "10.0.0.0/24": {
+                "10.0.0.55": make_host(
+                    "ncpa-macro-host",
+                    tcp={"5693": "ncpa"},
+                    net_discovery_id=device.NetDiscoveryID,
+                )
+            }
+        }
+
+        resource_cfg = tmp_path / "resource.cfg"
+        resource_cfg.write_text("$USER1$=/usr/local/nagios/libexec\n")
+        resource_cfg.chmod(0o660)
+
+        with patched_config(
+            app,
+            HOST_CONFIG_DIR=tmp_path,
+            NAGIOS_RESOURCE_CFG=str(resource_cfg),
+            SNMP_OIDS=[],
+            SNMP_COMMUNITY_STRING="public",
+            SNMP_PORT="161",
+            NCPA_METRICS=self._NCPA_METRICS_LOCAL,
+            NCPA_PORT="5693",
+        ):
+            cfg_path = _create_host_cfg_file(discovered)
+
+        return cfg_path.read_text(), resource_cfg.read_text()
+
+    def test_ncpa_token_absent_from_hosts_cfg(
+        self, app, db_session, admin_user, tmp_path
+    ):
+        """Literal NCPA token must NOT appear anywhere in the generated hosts.cfg."""
+        hosts_cfg_text, _ = self._generate(app, db_session, admin_user, tmp_path)
+        assert self._SECRET_TOKEN not in hosts_cfg_text, (
+            f"Literal token '{self._SECRET_TOKEN}' found in hosts.cfg. "
+            "It must be replaced with a $USERn$ macro."
+        )
+
+    def test_ncpa_command_uses_unexpanded_resource_slot(
+        self, app, db_session, admin_user, tmp_path
+    ):
+        """The NCPA check_command must pass an unexpanded resource identifier."""
+        hosts_cfg_text, _ = self._generate(app, db_session, admin_user, tmp_path)
+        ncpa_commands = re.findall(
+            r"check_command\s+(pinpoint_nd_ncpa\S+)", hosts_cfg_text
+        )
+        assert ncpa_commands, "No NCPA check_command lines found in hosts.cfg"
+        for cmd in ncpa_commands:
+            assert "!USER" in cmd and "$USER" not in cmd, (
+                f"check_command '{cmd}' does not use a bare resource identifier — "
+                "the token must be stored in resource.cfg."
+            )
+
+    def test_custom_check_password_absent_from_hosts_cfg(
+        self, app, db_session, admin_user, tmp_path
+    ):
+        """A custom-check credential must not appear literally in hosts.cfg."""
+        pytest.importorskip(
+            "app.network_discovery.resource_macros",
+            reason="resource_macros.py not yet implemented (issue #129)",
+        )
+
+        SECRET_PASSWORD = "SuperSecretDBPass!"
+        device = make_device(
+            db_session,
+            admin_user,
+            "db-macro-host",
+            "10.0.0.61",
+            plugin_variables={"mysql": {"user": "nagios", "password": SECRET_PASSWORD}},
+        )
+        db_session.session.commit()
+
+        discovered = {
+            "10.0.0.0/24": {
+                "10.0.0.61": make_host(
+                    "db-macro-host",
+                    tcp={"3306": "mysql"},
+                    net_discovery_id=device.NetDiscoveryID,
+                )
+            }
+        }
+        resource_cfg = tmp_path / "resource.cfg"
+        resource_cfg.write_text("$USER1$=/usr/local/nagios/libexec\n")
+        resource_cfg.chmod(0o660)
+
+        with patched_config(
+            app,
+            HOST_CONFIG_DIR=tmp_path,
+            NAGIOS_RESOURCE_CFG=str(resource_cfg),
+            SNMP_OIDS=[],
+            SNMP_COMMUNITY_STRING="public",
+            SNMP_PORT="161",
+            NCPA_METRICS=self._NCPA_METRICS_LOCAL,
+            NCPA_PORT="5693",
+        ):
+            cfg_path = _create_host_cfg_file(discovered)
+
+        hosts_cfg_text = cfg_path.read_text()
+        assert SECRET_PASSWORD not in hosts_cfg_text, (
+            f"Literal password '{SECRET_PASSWORD}' found in hosts.cfg. "
+            "Credentials must be stored in resource.cfg via $USERn$ macros."
+        )
 
 class TestNcpaPathVerification:
     def test_missing_metric_is_recorded_and_other_services_survive(self, app, plugin_config):
@@ -1057,3 +1230,19 @@ class TestNcpaPathVerification:
         monkeypatch.setattr(module.requests, 'get', Mock(return_value=response))
         module.ncpa_path_cache.clear()
         assert module.probe_ncpa_paths('10.78.0.2', 5693, 'test-token') is None
+
+
+@pytest.mark.parametrize("stored_port, expected_port", [(5703, 5703), (None, "5693")])
+def test_ncpa_inventory_probe_uses_deployed_port_or_default(app, db_session, admin_user, monkeypatch, stored_port, expected_port):
+    from unittest.mock import Mock
+    from app.network_discovery import create_host_cfg as module
+    device = make_device(db_session, admin_user, "inventory-port", "10.77.0.2")
+    deployment = make_ncpa_deployment(db_session, device, "synthetic-inventory-token")
+    deployment.Port = stored_port
+    db_session.session.flush()
+    probe = Mock(return_value=frozenset({"cpu/percent"}))
+    monkeypatch.setattr(module, "probe_ncpa_paths", probe)
+    with app.app_context(), patched_config(app, NCPA_PORT="5693"):
+        facts = module.load_host_plugin_facts(probe_ncpa=True)
+    probe.assert_called_once_with("10.77.0.2", expected_port, "synthetic-inventory-token")
+    assert facts[device.NetDiscoveryID]["ncpa"]["available_paths"] == frozenset({"cpu/percent"})

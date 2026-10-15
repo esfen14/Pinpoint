@@ -22,6 +22,9 @@ vi.mock('../pages/MaintenancePage', () => ({
 vi.mock('../pages/ManageAccountsPage', () => ({
   ManageAccountsPage: () => <div>Manage Accounts Page</div>,
 }))
+vi.mock('../pages/RemediationPage', () => ({
+  RemediationPage: () => <div>Remediation Page</div>,
+}))
 vi.mock('../pages/PlaceholderPage', () => ({
   PlaceholderPage: ({ title }: { title: string }) => <div>{title} Page</div>,
 }))
@@ -64,6 +67,11 @@ describe('App routing', () => {
   it('registers the Maintenance page at /maintenance', () => {
     renderApp('/maintenance')
     expect(screen.getByText('Maintenance Page')).toBeInTheDocument()
+  })
+
+  it('registers the Remediation page at /remediation', () => {
+    renderApp('/remediation')
+    expect(screen.getByText('Remediation Page')).toBeInTheDocument()
   })
 
   it('does not register the former /topology route', () => {
