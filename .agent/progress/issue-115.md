@@ -133,9 +133,7 @@ Requirement coverage (every requirement in A–H):
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | intake | Scope resolved by user: STARTTLS only | scripts/vmlab preflight; docker ps --format '{{.Names}}' | VBoxManage absent; Docker socket access denied; no live mutations performed |
-
 | 1 | Implemented STARTTLS custom validation/API/helper and UI; added bounded failure reader and tests. Confirmed red before code: relay 31 failures; missing reader collection error; frontend 8 failures. | Focused backend: 89 passed; frontend: 38 passed; verify.sh frontend and docs green; verify.sh backend still running | Core source implemented; live checks blocked by infrastructure. Broad backend and final documentation pending. |
-
 | 2 | Documented STARTTLS-only scope, API/failure semantics and user workflow; matched custom password limit to helper (256) while retaining Gmail 200 limit; added boundary/rotation cases. | verify.sh backend: 2889 passed/14 skipped; verify.sh frontend green; verify.sh docs green; focused frontend 38 passed | Full initial stages green; final combined all verification pending after final source refinements. |
 
 ## State for the next session
@@ -155,3 +153,5 @@ Requirement coverage (every requirement in A–H):
 - Injection/secret review: helper invocation remains a fixed argument list with exactly six JSON fields on stdin; custom host/port/TLS/username/sender mirror the installed helper contract, no shell interpolation. Custom SMTP failures expose fixed text; helper diagnostics redact credentials. Log reader returns fixed reasons only and reads at most 64 KiB from a nonblocking regular file. Existing Gmail test files are unchanged.
 - Format evidence: inspected upstream Nagios Core tag nagios-4.5.11 base/workers.c (NOTIFY header and contiguous indented stderr blocks), not a live appliance observation. Raw command logging is DEBUG-only; parser never requires it.
 - Isolated backend environment copied from the existing dependency environment into this checkout because uv and ensurepip are absent; no dependency/version change. Frontend npm ci completed.
+
+- Re-read #115 body/comments before draft PR: no new comments or requirement changes. User scope decision controls conditional installer work; all application requirements map to the table above. Live delivery and service-user readability lack proof, so do not mark overall acceptance or reviewer approval complete. Final scripts/verify.sh all is running on application source 899e7cd2.
