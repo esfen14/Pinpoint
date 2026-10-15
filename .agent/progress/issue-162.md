@@ -26,7 +26,7 @@ Requirement coverage:
 ## Plan
 
 1. [ ] Diagnose ownership and search recovery sources read-only; record sanitized evidence in docs/test-runs/2026-10-15-issue-162-recovery/REPORT.md.
-2. [ ] Add failing isolated preflight tests, implement fail-closed identity checks in scripts/vmlab and an owning helper, validate narrow checks.
+2. [x] Add failing isolated preflight tests, implement fail-closed identity checks in scripts/vmlab and an owning helper, validate narrow checks.
 3. [ ] Perform disposable-only snapshot marker trial if ownership is proved; otherwise record exact blocker and preserve inherited processes.
 4. [ ] Update docs/plans/VM_Lab_Plan.md, spec files/Agent_Workflow_and_CI.md and spec files/Implementation_Status.md; verify finish conditions and scripts/verify.sh all; open PR with honest status.
 
@@ -36,12 +36,14 @@ Requirement coverage:
 |---|---|---|---|
 | Intake | Isolated checkout and issue coverage; owner asked for original edits | Read-only VBoxManage metadata, ps and ss | Two VBoxSVC processes; manager reports poweroff while SSH/web ports listen |
 
+| 1 | Added preflight helper, gated mutation commands and CI docs-stage tests | python3 -I scripts/test_vmlab_preflight.py; scripts/verify.sh docs; scripts/vmlab preflight (host) | 13 tests and docs green; live preflight correctly rejects existing duplicate managers |
+
 ## State for the next session
 
-- Last check run (exact command): VBoxManage showvminfo pinpoint-qa-appliance --machinereadable
-- Result: VMState=poweroff; host ports 2250/18080 listening; VBoxSVC PIDs 130559 and 305485.
-- Hypothesis: Independent IPC/control contexts share the registered VM; endpoint remains on inherited context. Cause not yet established.
-- Next action: Inspect whitelisted process context, IPC sockets and endpoint ownership read-only; search retained source backups without writing to the appliance.
+- Last check run (exact command): scripts/vmlab preflight
+- Result: expected failure, ownership ambiguous; two VBoxSVC processes still present. Isolated 13 tests and scripts/verify.sh docs green.
+- Hypothesis: Two distinct listening IPC socket inodes at the same pathname establish a split service context after pathname replacement/rebind; actor is unknown. Protected VM fd metadata prevents endpoint attribution.
+- Next action: Record sanitized process/source comparisons and blocked disposable marker trial; update owning documentation and run all verification.
 
 ## Decisions and notes
 
@@ -49,3 +51,8 @@ Requirement coverage:
 - All issue requirements map to finish conditions; no missing coverage.
 - No inherited VM start/stop, snapshot, restore, sync or application mutation is authorized until control ownership is established.
 - Owner question pending: source/backup or explicit resolution of the two overwritten uncommitted versions.
+
+- Owner has no backup and confirms the edits should have been preserved; this is not acceptance of lost edits. Recovery remains unresolved.
+- Guest read-only search found the same dashboard/status SHA-256 in all three retained checkouts, no independent backup in searched paths.
+- Host sudo read-only fd inspection unavailable (sudo requires a password); do not weaken guard or kill inherited processes.
+- Command-execution review: new helper uses subprocess argument lists, no shell interpolation, no credentials or raw command output logged. Missing metadata fails closed.
