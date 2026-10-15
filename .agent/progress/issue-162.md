@@ -49,10 +49,10 @@ Requirement coverage:
 
 ## State for the next session
 
-- Last check run (exact command): scripts/verify.sh docs
-- Result: green; 18 ownership tests green including changed ownership between command entry and SSH. Snapshot marker proof passed, all new target services are UP. Discovery smoke is running in session 94612 with networks constrained to the lab /28. Initial setup-admin parser mismatch filed as #167; supported API setup completed and fresh host login state is valid.
-- Hypothesis: All implementation work is green; only finish-phase report/smoke results, docs status, progress removal and final CI remain.
-- Next action: Wait for the single running discovery smoke; finalize docs/test-runs/2026-10-15-issue-162-snapshot-rebuild/REPORT.md and specs, then finish PR #165 and wait for latest CI.
+- Last check run (exact command): scripts/vmlab smoke --discovery-timeout 600 --hosts-timeout 300
+- Result: green: 9 passed, 0 failed; discovery successfully applied hosts.cfg in 96 seconds; all five rebuilt targets monitored and Up. Snapshot SSH/HTTP marker proof passed; 60 health checks green; 18 isolated ownership tests green.
+- Hypothesis: All issue behavior and the requested working-lab rebuild are proven; finish-phase report/index/spec status and final CI remain.
+- Next action: Finalize the snapshot/rebuild report and owning specs; verify docs, remove progress scaffolding, update PR #165 and wait for final CI.
 
 ## Decisions and notes
 
@@ -78,3 +78,5 @@ Requirement coverage:
 
 - Current user-authorized continuation resumed after the first three logged rounds; rounds 4 and 5 are the two implementation/validation rounds since that continuation.
 - #167 is a separate existing lab setup-helper compatibility defect: current installer email label changed. No parser product-code fix included here. Supported login/complete-setup API workaround succeeded, private credentials replaced stale host state, and temporary marker/one-time guest credentials were removed.
+
+- Finish verification: single tightly scoped discovery smoke completed with 9 passed, zero failed; initial host-check/poll cadence delayed two targets, and both appeared Up without forcing checks or altering product data.
