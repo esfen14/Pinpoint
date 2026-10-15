@@ -31,7 +31,7 @@ the normative behavior in the requirement specifications.
   generate host and service check timing through the shared Nagios writer;
   Flap detection (on/off and optional low/high thresholds) is also written
   through it, with a Flapping-only filter on the host and service tables and a
-  flap history (from 60-second snapshots, so fast flaps can be missed) in the
+  flap history (from polling snapshots, 60 seconds by default, so fast flaps can be missed) in the
   detail drawer;
   unchanged Nagios `Last_Check` results are not stored again. Plugin status text,
   stale fallback and the per-user browser-refresh hint use the setting. Fresh

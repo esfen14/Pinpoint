@@ -1108,8 +1108,8 @@ still see the data.
 ### 3.1 Data Freshness Indicator
 
 Both pages must show when data was last updated. Compare the last Nagios check
-timestamp to the system-wide Check interval plus up to 60 seconds for Pinpoint's
-fixed Nagios status poll, allowing reasonable scheduling jitter. If it is older,
+timestamp to the system-wide Check interval plus the configured Pinpoint Data
+polling interval (60 seconds by default), allowing reasonable scheduling jitter. If it is older,
 display a visible staleness warning. The user must always know whether they
 are looking at live or stale data. Discovery Scan Frequency (`scanFrequency`)
 only controls searches for devices and ports; it is not a check freshness limit.

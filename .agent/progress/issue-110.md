@@ -5,14 +5,14 @@ Status: in-progress
 
 ## Finish condition
 
-- [ ] System UI offers exactly 30/60/120/300 seconds, default 60, permission settings.system, persisted across reload/restart with an upgrade migration.
-- [ ] API strictly validates integers, protects writes, preserves omitted fields, version conflicts and audit policy.
-- [ ] Saves reschedule one existing nagios_poll job; startup uses persisted interval with prompt first poll; no overlapping/interrupted polls.
-- [ ] Reschedule/persistence failures restore saved value and job schedule; disabled scheduler stays disabled.
-- [ ] General explains actual independent check/poll/browser values, including Manual.
+- [x] System UI offers exactly 30/60/120/300 seconds, default 60, permission settings.system, persisted across reload/restart with an upgrade migration.
+- [x] API strictly validates integers, protects writes, preserves omitted fields, version conflicts and audit policy.
+- [x] Saves reschedule one existing nagios_poll job; startup uses persisted interval with prompt first poll; no overlapping/interrupted polls.
+- [x] Reschedule/persistence failures restore saved value and job schedule; disabled scheduler stays disabled.
+- [x] General explains actual independent check/poll/browser values, including Manual.
 - [ ] Automated coverage of all behavior, scripts/verify.sh all and green PR CI.
-- [ ] Sanitized local-lab report identifies commit, start/end/skipped/coalesced runs at 30 and another supported value, live change and restart persistence.
-- [ ] Update five issue-named specifications.
+- [x] Sanitized local-lab report identifies commit, start/end/skipped/coalesced runs at 30 and another supported value, live change and restart persistence.
+- [x] Update five issue-named specifications.
 
 Requirement coverage (every issue requirement is included):
 
@@ -29,10 +29,10 @@ Requirement coverage (every issue requirement is included):
 
 ## Plan
 
-1. [ ] Add failing backend API/scheduler/migration tests; implement Data_Polling_Interval model, multi-bind migration, scheduler reschedule/rollback service and settings API integration (server/app/{scheduler,system_models}.py, server/app/api/system/settings.py, server/migrations/versions/, server/tests/).
+1. [x] Add failing backend API/scheduler/migration tests; implement Data_Polling_Interval model, multi-bind migration, scheduler reschedule/rollback service and settings API integration (server/app/{scheduler,system_models}.py, server/app/api/system/settings.py, server/migrations/versions/, server/tests/).
 2. [x] Add failing UI/context tests; implement typed default/control and saved schedule description (client/src/types/settings/, contexts/SystemSettingsContext.tsx, components/settings/{SystemSettings,GeneralSettings}.tsx, test/).
-3. [ ] Update five owning specifications and server/tests/README.md; verify docs and all stages.
-4. [ ] Run authorized local Docker lab polling cadence/change/restart checks; commit sanitized report and index (docs/test-runs/); verify finish conditions and open PR, monitor CI.
+3. [x] Update five owning specifications and server/tests/README.md; verify docs and all stages.
+4. [x] Run authorized local Docker lab polling cadence/change/restart checks; commit sanitized report and index (docs/test-runs/); verify finish conditions and open PR, monitor CI.
 
 ## Round log
 
@@ -40,14 +40,15 @@ Requirement coverage (every issue requirement is included):
 |---|---|---|---|
 | 1 | Backend API/model/migration and in-place scheduling implemented; regression tests first failed on missing field/revision, now green | FLASK_DEBUG=1 server/.venv/bin/python -m pytest server/tests/unit/test_data_polling.py server/tests/unit/test_data_polling_migration.py -q | 29 passed; full backend stage still running |
 | 2 | UI controls/default/hint, five specifications, scheduler-test DB fixture; reran sandbox failures outside sandbox | scripts/verify.sh frontend; scripts/verify.sh docs; focused backend failure targets | Frontend/docs green; all 9 prior failing targets green; scripts/verify.sh all running in /tmp/issue-110-all.log |
+| 3 | Completed full verification and scoped real Nagios lab, committed sanitized report/index; re-read unchanged issue requirements | scripts/verify.sh all; scripts/verify.sh docs; external HTTP cadence/restart harness | Green: 2850 backend passed/14 skipped; 643 frontend passed, build/lint pass; lab 8 pass at commit 30a7c7b0 |
 | Intake | Read issue/workflow/specifications and settings/scheduler sources; isolated checkout | gh issue view 110 --json number,title,body,state,labels,url,comments | Finish condition covers all requirements |
 
 ## State for the next session
 
-- Last check run (exact command): FLASK_DEBUG=1 server/.venv/bin/python -m pytest server/tests/unit/test_data_polling.py server/tests/unit/test_data_polling_migration.py -q
-- Result (first failing lines, or "green"): green (29 passed); backend stage in /tmp/issue-110-backend.log still running and has failures to inspect.
+- Last check run (exact command): scripts/verify.sh all
+- Result (first failing lines, or "green"): green; /tmp/issue-110-all.log. Final report/doc updates also passed scripts/verify.sh docs.
 - Hypothesis: Reschedule the existing job under a shared settings-save lock, snapshot trigger/next_run_time for compensation on failed commit; do not recreate jobs or start a disabled scheduler.
-- Next action (one specific step, not "continue"): Measure 30/60-second cadence and live change/restart in isolated pinpoint-issue110-lab container while full verification runs.
+- Next action (one specific step, not "continue"): Remove progress scaffolding, push final commit, create PR from template and monitor CI.
 
 ## Decisions and notes
 
@@ -58,3 +59,6 @@ Requirement coverage (every issue requirement is included):
 - Continuation: UI tests first failed for missing polling default/control/hint; implemented all three, focused UI now 29 passed. Five issue-named specifications and tests README updated; docs stage green. Docker socket denied even outside sandbox; sudo requires authentication. User is enabling Docker access; live measurements must wait.
 
 - Docker access enabled by owner; use sg docker for a fresh group session. Existing pinpoint-lab containers untouched. Dedicated pinpoint-issue110-lab uses --network none and this checkout read-only; actual Nagios localhost CGI. Lab-only entrypoint disables scheduler for initial migration/seed (its default environment otherwise starts before tables exist); temporary sitecustomize observer records poll start/end and APScheduler submit/skip events without editing app code.
+
+- Finish proof: tests/unit/test_data_polling.py and test_data_polling_migration.py (29 focused passes), SystemSettingsConflict.test.tsx (29 passes), five specified files and docs/test-runs/2026-10-15-issue-110-polling/REPORT.md. Issue re-read at finish; no new requirements/comments or exclusions. No unrelated requirement left out. Full backend first run had sandbox socket/DNS failures and scheduler test missing DB fixture; fixture corrected, all nine prior failed targets rechecked green, complete unsandboxed verification green.
+- Live evidence preserved outside Git at /home/paeng/pinpoint-test-results/2026-10-15-issue-110-polling. Dedicated lab container stopped after observation; existing lab untouched. No app behavior changes after tested commit, only documentation/report changes. CI remains the sole pending finish check.
