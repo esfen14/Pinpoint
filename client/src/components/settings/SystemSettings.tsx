@@ -1,10 +1,19 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
+  Bell,
   Database,
   HardDrive,
   History,
+  Timer,
+  TrendingUp,
+  Waves,
   Wrench,
 } from 'lucide-react'
+import { getEscalations } from '../../lib/escalationApi'
+import { getNotificationPolicy } from '../../lib/notificationPolicyApi'
+import { onSettingsChanged } from '../../lib/settingsEvents'
+import type { NotificationPolicy } from '../../types/notificationPolicy'
+import type { Escalation } from '../../types/escalation'
 
 import { SettingsCard } from './SettingsCard'
 import { NotificationPolicySettings } from './NotificationPolicySettings'
@@ -207,19 +216,25 @@ export function SystemSettings() {
             onChange={(value) => updateSettings({ maxCheckAttempts: Number(value) })}
           />
 
-          <SettingsToggle
-            label="Maintenance Mode"
-            description="Pause scheduled scans and checks, and show a notice to all users"
-            enabled={
-              settings.maintenanceMode
-            }
-            onChange={(enabled) =>
-              updateSettings({
-                maintenanceMode:
-                  enabled,
-              })
-            }
-          />
+          <div>
+            <SettingsToggle
+              label="Maintenance Mode"
+              description="Pauses PinPoint's own scans, update checks and security checks, and shows a notice to all users. It does not silence alerts."
+              enabled={
+                settings.maintenanceMode
+              }
+              onChange={(enabled) =>
+                updateSettings({
+                  maintenanceMode:
+                    enabled,
+                })
+              }
+            />
+            <p className="mt-2 text-xs text-[var(--text-muted)]">
+              To silence alerts during planned work, schedule a{' '}
+              <a href="/maintenance" className="underline">maintenance window</a>.
+            </p>
+          </div>
 
           <SettingsToggle
             label="Automatic Backups"
@@ -315,55 +330,60 @@ export function SystemSettings() {
         <p className="mt-4 text-xs text-[var(--text-muted)]">Saved with the other system settings above.</p>
       </SettingsCard>
 
+    </div>
+  )
+}
+
+// The summary of configuration states; Settings shows it last on the System tab, under every other card.
+export function SystemStatusSummary() {
+  const { settings } = useSystemSettings()
+  const [policy, setPolicy] = useState<NotificationPolicy | null | undefined>(undefined)
+  const [escalations, setEscalations] = useState<Escalation[] | null | undefined>(undefined)
+
+  // Notification policy and escalations have their own APIs; reload them when either is saved.
+  // undefined = loading, null = could not be read.
+  useEffect(() => {
+    let cancelled = false
+    const load = () => {
+      getNotificationPolicy().then((data) => { if (!cancelled) setPolicy(data) }).catch(() => { if (!cancelled) setPolicy(null) })
+      getEscalations().then((data) => { if (!cancelled) setEscalations(data.items) }).catch(() => { if (!cancelled) setEscalations(null) })
+    }
+    load()
+    const stop = onSettingsChanged(load)
+    return () => { cancelled = true; stop() }
+  }, [])
+
+  const word = (value: unknown, text: (value: never) => string) => (value === undefined ? 'Loading…' : value === null ? 'Unavailable' : text(value as never))
+  const activeEscalations = escalations?.filter((row) => row.active).length ?? 0
+
+  return (
+    <div className="mt-6">
       <SettingsCard
         title="System Status"
         description="Overview of configuration states."
       >
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-
+          <StatusCard icon={Wrench} title="Maintenance" status={settings.maintenanceMode ? 'Active' : 'Normal'} active={settings.maintenanceMode} />
+          <StatusCard icon={Database} title="Automatic Backups" status={settings.automaticBackups ? 'Enabled' : 'Disabled'} active={settings.automaticBackups} />
+          <StatusCard icon={HardDrive} title="Log Retention" status={`${settings.logRetentionDays} days`} active />
+          <StatusCard icon={History} title="Diagnostic History" status={`${settings.diagnosticHistoryRetentionDays} days`} active />
+          <StatusCard icon={Timer} title="Check Timing" status={`Every ${settings.checkInterval} min, ${settings.maxCheckAttempts} attempts`} active />
+          <StatusCard icon={Waves} title="Flap Detection" status={settings.flapDetectionEnabled ? 'Enabled' : 'Disabled'} active={settings.flapDetectionEnabled} />
           <StatusCard
-            icon={Wrench}
-            title="Maintenance"
-            status={
-              settings.maintenanceMode
-                ? 'Active'
-                : 'Normal'
-            }
-            active={
-              settings.maintenanceMode
-            }
+            icon={Bell}
+            title="Notifications"
+            status={word(policy, (value: NotificationPolicy) =>
+              `${value.hostOptions.length} host and ${value.serviceOptions.length} service states, ${value.quietHours.length === 0 ? 'no quiet hours' : `${value.quietHours.length} quiet ${value.quietHours.length === 1 ? 'window' : 'windows'}`}`)}
+            active={Boolean(policy)}
           />
-
           <StatusCard
-            icon={Database}
-            title="Automatic Backups"
-            status={
-              settings.automaticBackups
-                ? 'Enabled'
-                : 'Disabled'
-            }
-            active={
-              settings.automaticBackups
-            }
+            icon={TrendingUp}
+            title="Escalations"
+            status={word(escalations, () => (activeEscalations === 0 ? 'None active' : `${activeEscalations} active`))}
+            active={activeEscalations > 0}
           />
-
-          <StatusCard
-            icon={HardDrive}
-            title="Log Retention"
-            status={`${settings.logRetentionDays} days`}
-            active
-          />
-
-          <StatusCard
-            icon={History}
-            title="Diagnostic History"
-            status={`${settings.diagnosticHistoryRetentionDays} days`}
-            active
-          />
-
         </div>
       </SettingsCard>
-
     </div>
   )
 }
@@ -373,9 +393,9 @@ function StatusCard({ icon: Icon, title, status, active }: { icon: typeof Wrench
     <div className="rounded-2xl bg-[var(--card-alt)] border border-[var(--border)] p-5">
       <Icon size={20} className="text-[#ffb100]" />
       <p className="mt-4 text-sm font-medium text-[var(--text)]">{title}</p>
-      <div className="mt-2 flex items-center gap-2">
-        <span className={`h-2 w-2 rounded-full ${active ? 'bg-emerald-500' : 'bg-gray-400'}`} />
-        <span className="text-xs text-[var(--text-muted)]">{status}</span>
+      <div className="mt-2 flex items-start gap-2">
+        <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${active ? 'bg-emerald-500' : 'bg-gray-400'}`} />
+        <span className="text-sm text-[var(--text-muted)]">{status}</span>
       </div>
     </div>
   )
