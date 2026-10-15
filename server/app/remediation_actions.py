@@ -6,15 +6,24 @@ Nagios event supplies is ever used as a command, script path or unit name. Each 
 parameter schema, a ``validate`` that returns cleaned values and one error per bad field,
 and a ``run`` that takes the validated parameters and a RunContext.
 
-Shipped here: ``record_only`` (changes nothing). Real recovery types are added to
-ACTION_TYPES by later issues through this same registry.
+Shipped here: ``record_only`` (changes nothing) and ``restart_local_service`` (restarts one
+unit from a fixed list on the PinPoint host). More recovery types are added to ACTION_TYPES
+through this same registry.
 """
+import subprocess
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 from dataclasses import dataclass
 from typing import Any, Callable, Optional
 
 DEFAULT_TIMEOUT_SECONDS = 30
 MAX_OUTPUT_CHARS = 1024
+
+# Units ``restart_local_service`` may restart. The installer sudoers drop-in must list exactly
+# these units (one full command line each, no wildcard); change both together. pinpoint-gunicorn
+# is left out on purpose: restarting it would kill the process that runs the restart.
+RESTARTABLE_UNITS = ("nagios",)
+SYSTEMCTL_PATH = "/usr/bin/systemctl"
+RESTART_SUBPROCESS_TIMEOUT_SECONDS = 20
 
 
 # ==========================================================
@@ -27,6 +36,17 @@ class RunContext:
     hostname: str
     service: Optional[str]
     state: str
+    # Read by the consumer before the action runs, because the action runs in a worker thread
+    # without an application context.
+    maintenance_mode: bool = False
+
+
+class ActionFailed(Exception):
+    """Raised by an action with a short fixed message that is safe to record (no raw exception text)."""
+
+
+class ActionTimedOut(Exception):
+    """Raised by an action whose own command overran; the message is recorded as the output."""
 
 
 @dataclass(frozen=True)
@@ -66,6 +86,49 @@ def run_record_only(params, context):
     return "recorded"
 
 
+# ==========================================================
+# restart_local_service
+# ==========================================================
+
+def validate_restart_local_service(params):
+    """Accept only {"unit": <one of RESTARTABLE_UNITS>}. Returns (cleaned, errors)."""
+    if params is None:
+        params = {}
+    if not isinstance(params, dict):
+        return {}, {"parameters": "Parameters must be an object."}
+    errors = {key: "This action does not take this parameter." for key in params if key != "unit"}
+    unit = params.get("unit")
+    if not isinstance(unit, str) or unit not in RESTARTABLE_UNITS:
+        errors["unit"] = "Choose one of: " + ", ".join(RESTARTABLE_UNITS) + "."
+    if errors:
+        return {}, errors
+    return {"unit": unit}, {}
+
+
+def run_restart_local_service(params, context):
+    """
+    Restart one listed unit with ``sudo -n systemctl restart <unit>`` (argument list, no shell).
+    Refused in Maintenance Mode or for a unit off the list. Only the exit code is recorded;
+    the command's own output is never kept.
+    """
+    unit = params.get("unit")
+    if unit not in RESTARTABLE_UNITS:
+        raise ActionFailed("Refused: that service is not on the list of services PinPoint may restart.")
+    if context.maintenance_mode:
+        raise ActionFailed("Refused: Maintenance Mode is on.")
+    try:
+        done = subprocess.run(
+            ["sudo", "-n", SYSTEMCTL_PATH, "restart", unit],
+            capture_output=True, text=True, timeout=RESTART_SUBPROCESS_TIMEOUT_SECONDS, check=False)
+    except subprocess.TimeoutExpired:
+        raise ActionTimedOut(f"Restarting {unit} did not finish in time.")
+    except OSError:
+        raise ActionFailed("Could not run sudo on this host.")
+    if done.returncode != 0:
+        raise ActionFailed(f"Restart of {unit} failed with exit code {done.returncode}.")
+    return f"Restarted {unit}; exit code 0."
+
+
 ACTION_TYPES = {
     "record_only": ActionType(
         key="record_only",
@@ -75,6 +138,18 @@ ACTION_TYPES = {
         parameters=[],
         validate=validate_no_parameters,
         run=run_record_only,
+    ),
+    "restart_local_service": ActionType(
+        key="restart_local_service",
+        label="Restart a PinPoint host service",
+        description="Restarts one service on the PinPoint host itself (for example Nagios) when a covered "
+                    "check fails. Only the listed services can be chosen. Not run in Maintenance Mode.",
+        parameters=[{
+            "name": "unit", "label": "Service to restart", "type": "choice",
+            "choices": list(RESTARTABLE_UNITS), "required": True,
+        }],
+        validate=validate_restart_local_service,
+        run=run_restart_local_service,
     ),
 }
 
@@ -115,6 +190,10 @@ def run_action(action_type, params, context):
             output = future.result(timeout=registered.timeout_seconds)
         except FutureTimeout:
             return RunResult("timed_out", "The action did not finish in time.")
+        except ActionTimedOut as error:
+            return RunResult("timed_out", str(error))
+        except ActionFailed as error:
+            return RunResult("failed", str(error))
         except Exception:
             return RunResult("failed", "The action failed.")
         return RunResult("succeeded", str(output)[:MAX_OUTPUT_CHARS])

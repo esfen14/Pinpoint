@@ -1173,6 +1173,7 @@ class PasswordResetRequest(db.Model):
 
 class RemediationActionType(Enum):
     RECORD_ONLY = "record_only"
+    RESTART_LOCAL_SERVICE = "restart_local_service"
 
 
 class RemediationScope(Enum):
