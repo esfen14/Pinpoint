@@ -16,6 +16,7 @@ PUT  /system
     Save settings, rejecting fields the user isn't allowed to change.
 """
 import math
+from functools import wraps
 
 from flask import request, current_app
 from flask_login import login_required, current_user
@@ -37,6 +38,7 @@ FIELD_PERMISSIONS = {
     "Security_Check_Frequency": "settings.security",
     "System_Update_Frequency": "settings.system",
     "Check_Interval": "settings.system",
+    "Data_Polling_Interval": "settings.system",
     "Retry_Interval": "settings.system",
     "Max_Check_Attempts": "settings.system",
     "Flap_Detection_Enabled": "settings.system",
@@ -80,8 +82,20 @@ def get_settings():
         return error("An unexpected error occurred.", 500)
 
 
+def serialize_settings_save(function):
+    """Serialize settings saves and scheduler compensation in this worker."""
+    @wraps(function)
+    def wrapped(*args, **kwargs):
+        from app.scheduler import settings_schedule_lock
+
+        with settings_schedule_lock:
+            return function(*args, **kwargs)
+    return wrapped
+
+
 @system_bp.route("", methods=["PUT"])
 @login_required
+@serialize_settings_save
 def update_settings():
     """
     Save the settings. The client sends the full settings object with the
@@ -89,6 +103,10 @@ def update_settings():
     Security or System field without that tab's permission is rejected
     with 403 and nothing is saved. Unchanged restricted fields are fine,
     so users without those permissions can still save General settings.
+
+    Optional dataPollingInterval: integer 30/60/120/300 seconds (default 60).
+    It reschedules Pinpoint polling without changing Nagios or browser timing.
+    Reschedule or persistence failure restores the saved interval and job.
 
     Optional System fields (omit to keep the saved value): retryInterval,
     maxCheckAttempts, flapDetectionEnabled (bool), flapLowThreshold and
@@ -136,6 +154,7 @@ def update_settings():
         field_map = [
             ("Scan_Frequency", "scanFrequency"),
             ("Check_Interval", "checkInterval"),
+            ("Data_Polling_Interval", "dataPollingInterval"),
             ("Retry_Interval", "retryInterval"),
             ("Max_Check_Attempts", "maxCheckAttempts"),
             ("Flap_Detection_Enabled", "flapDetectionEnabled"),
@@ -154,6 +173,12 @@ def update_settings():
             ("Diagnostic_History_Retention_Days", "diagnosticHistoryRetentionDays"),
         ]
 
+        from app.scheduler import SUPPORTED_POLL_INTERVALS, polling_schedule_change
+
+        polling_interval = payload.get("dataPollingInterval", row.Data_Polling_Interval)
+        if type(polling_interval) is not int or polling_interval not in SUPPORTED_POLL_INTERVALS:
+            return error("Data polling interval must be 30, 60, 120 or 300 seconds.", 400)
+
         interval = payload.get("checkInterval", row.Check_Interval)
         if type(interval) is not int or interval not in (1, 2, 5, 10, 15):
             return error("Check interval must be 1, 2, 5, 10 or 15 minutes.", 400)
@@ -169,7 +194,8 @@ def update_settings():
         max_check_attempts = payload.get("maxCheckAttempts", row.Max_Check_Attempts)
         if type(max_check_attempts) is not int or not 1 <= max_check_attempts <= 10:
             return error("Maximum check attempts must be a whole number from 1 to 10.", 400)
-        resolved = {"retryInterval": retry_interval, "maxCheckAttempts": max_check_attempts}
+        resolved = {"retryInterval": retry_interval, "maxCheckAttempts": max_check_attempts,
+                    "dataPollingInterval": polling_interval}
 
         # Flap detection settings are optional in the body too. A threshold is a
         # percentage of state change (0 to 100) or null for "use Nagios's value".
@@ -226,20 +252,26 @@ def update_settings():
                 db.session.rollback()
                 return error(f"Check settings could not be applied: {message}", 422)
 
-        row.Version += 1
-        row.Updated_By = current_user.UserID
+        polling_changed = any(attr == "Data_Polling_Interval" for attr, _, _ in changes)
+        with polling_schedule_change(polling_interval if polling_changed else None):
+            row.Version += 1
+            row.Updated_By = current_user.UserID
 
-        if audit_logging_enabled:
-            for attr, old_value, new_value in changes:
-                create_configuration_log(
-                    current_user.UserID, "system_settings", attr, str(old_value), str(new_value)
-                )
+            if audit_logging_enabled:
+                for attr, old_value, new_value in changes:
+                    create_configuration_log(
+                        current_user.UserID, "system_settings", attr, str(old_value), str(new_value)
+                    )
 
-        db.session.commit()
-        return success(row.to_dict(), message="Settings updated.")
+            db.session.flush()
+            data = row.to_dict()
+            db.session.commit()
+        return success(data, message="Settings updated.")
 
     except KeyError as exc:
+        db.session.rollback()
         return error(f"Missing required field: {exc}", 400)
     except Exception:
+        db.session.rollback()
         current_app.logger.exception("An unexpected error occurred while updating settings.")
         return error("An unexpected error occurred.", 500)

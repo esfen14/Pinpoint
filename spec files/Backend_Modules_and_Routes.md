@@ -379,6 +379,23 @@ update/custom-plugin modules.
 | `POST /api/plugin/<plugin_id>/update` | `plugin.update` | Update from an archive |
 | `POST /api/plugin/<plugin_id>/update/rollback` | `plugin.update_rollback` | Restore the backed-up version |
 
+### Data polling settings contract
+
+`GET /api/system` includes `dataPollingInterval` in seconds. `PUT /api/system`
+accepts this optional field: omitting it preserves the saved value. Only integers
+30, 60, 120 and 300 are supported (default 60); strings, booleans, null, fractional
+numbers and unsupported values return 400 before changing settings or scheduling.
+Changing it requires `settings.system` (403 otherwise); unauthenticated writes
+return 401. Unchanged restricted values remain allowed on General saves.
+Existing version conflicts (409) and the audit policy in effect before the save
+apply; audit parameter name is `Data_Polling_Interval`.
+
+Successful changes reschedule the existing `nagios_poll` job without starting a
+disabled scheduler. Exceptions during rescheduling or persistence return 500 and
+restore both the database transaction and the prior job trigger/next run time.
+The job keeps coalescing and its single-instance limit, including while a poll is
+running. Check/retry settings, discovery and browser preferences remain independent.
+
 ## Non-route backend modules
 
 | Module | Responsibility |

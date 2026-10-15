@@ -46,7 +46,7 @@ a legacy inconsistency and must not be copied as a pattern.
 |---|---|
 | System general | `scanFrequency`, notification enablement, allowed export formats |
 | System security | session timeout, strong-password policy, failed-login monitoring, audit logging, security-check frequency |
-| System operations | `checkInterval` (Nagios-generated host and service checks, minutes), `retryInterval` and `maxCheckAttempts` (how soon a failing check is re-run and how many failures confirm a problem), `flapDetectionEnabled`, `flapLowThreshold` and `flapHighThreshold` (Nagios flap detection for generated hosts and services), update frequency, maintenance mode, automatic backups, log retention, diagnostic-history retention |
+| System operations | `dataPollingInterval` (Pinpoint reads of Nagios, seconds), `checkInterval` (Nagios-generated host and service checks, minutes), `retryInterval` and `maxCheckAttempts` (how soon a failing check is re-run and how many failures confirm a problem), `flapDetectionEnabled`, `flapLowThreshold` and `flapHighThreshold` (Nagios flap detection for generated hosts and services), update frequency, maintenance mode, automatic backups, log retention, diagnostic-history retention |
 | Per-user display | theme, time zone, date/time format, font, font size, dashboard layout, dashboard refresh rate |
 
 `SystemSettings` is row `Id=1` and carries a version/update audit stamp.
@@ -234,8 +234,8 @@ different purpose.
 | Retry interval (`retryInterval`) and Maximum check attempts (`maxCheckAttempts`) | System-wide `SystemSettings.Retry_Interval` (1 to 10 minutes, default 1, never longer than the check interval) and `Max_Check_Attempts` (1 to 10, default 3; migration `b7d3f1a9c8e5`). They are written as `retry_interval` and `max_check_attempts` into every generated service and host, and the number of failures before a problem becomes HARD, and so when alerts are sent, follows them. The defaults reproduce the previous generated config exactly; a host gets an explicit `retry_interval` line only when the value is not the default 1. Same Settings → System page, permission and apply-and-rollback flow as the Check interval. There is no per-device override. |
 | Flap detection (`flapDetectionEnabled`, `flapLowThreshold`, `flapHighThreshold`) | `SystemSettings.Flap_Detection_Enabled` (default on), `Flap_Low_Threshold` and `Flap_High_Threshold` (percent of state change, 0 to 100, empty by default; migration `c5e2a8f4d716`). Defaults write nothing extra, so default generated config is unchanged and Nagios's global values (5 and 20 on the lab appliance) apply. Custom thresholds are written as `low_flap_threshold` and `high_flap_threshold`; turning detection off writes only `flap_detection_enabled 0`. The change goes through the shared config writer and a rejected config rolls the settings back. The global `enable_flap_detection` and its thresholds in `nagios.cfg` belong to the installer. |
 | Notification policy | A separate system-wide singleton controls the generated host/service notification periods, contact periods/options, state options, and renotify interval. Quiet windows use **Nagios server local time**, not each user's display zone; allowed spans are rendered as the complement in a fixed `pinpoint_notify` timeperiod in `hosts.cfg`. No quiet windows emit no new period; historical default output is preserved. Custom contacts inherit a non-registering `pinpoint-contact` template rather than rewriting stock `generic-contact`. Saving validates the candidate with Nagios, rolls back database changes on failed apply, and respects the system audit setting. Stock `localhost.cfg` and check cadence are unchanged. |
-| Data polling frequency | Pinpoint reads Nagios CGI status every 60 seconds, fixed and independent of discovery and checks. Unchanged `Last_Check` does not add another host/service or performance row. |
-| Dashboard Refresh Rate | Per-user browser fetch, Manual/1/5/15 minutes, independent of the other schedules; its hint shows the Check interval and 60-second poll. |
+| Data polling interval (`dataPollingInterval`) | System-wide `SystemSettings.Data_Polling_Interval`: exactly 30, 60 (default), 120 or 300 seconds, in Settings → System with `settings.system`. Migration `f6d2c8a1b390` gives existing installations the same 60-second default as new ones. Pinpoint reads Nagios CGI status independently of discovery, check/retry timing and browser refresh. Unchanged `Last_Check` does not add another host/service or performance row. |
+| Dashboard Refresh Rate | Per-user browser fetch, Manual/1/5/15 minutes, independent of the other schedules; its hint shows the saved Check interval, Data polling interval and the selected personal refresh rate (including Manual). |
 
 A new Nagios result can take up to one poll cycle to appear in Pinpoint, then
 up to one browser refresh cycle to appear in the dashboard. Discovery scans
@@ -245,10 +245,20 @@ are not part of that latency or the check freshness threshold.
 
 `scheduler.py` runs:
 
-- Nagios status polling every 60 seconds.
+- Nagios status polling at the persisted Data polling interval, with an immediate first run.
 - Daily purging based on `Log_Retention_Days` and
   `Diagnostic_History_Retention_Days`.
 - Settings-driven automation checks every `AUTOMATION_CHECK_MINUTES`.
+
+Saving a changed polling interval reschedules the existing `nagios_poll` job in
+place; the next run is one new interval after the save. Unchanged saves preserve
+the next run. `max_instances=1` and `coalesce=True` stay enabled: a running poll
+finishes normally, overlapping due runs are skipped, and accumulated due runs
+coalesce. Settings saves are serialized within the serving process (the supported
+deployment has one worker). The old trigger and next run time are restored on a
+reschedule, audit or persistence exception, and the database transaction rolls
+back; the API returns an error. A disabled scheduler stays disabled on save and
+reads the persisted interval when next started. No other job cadence changes.
 
 `automation.py` can schedule database backups, network discovery, plugin update
 scans, and plugin security validation. Scheduled network discovery runs only if
