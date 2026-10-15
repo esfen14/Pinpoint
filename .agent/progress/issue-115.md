@@ -128,8 +128,8 @@ Requirement coverage (every requirement in A–H):
 4. [x] Documentation and evidence: update owning specs, tests README and user guide; attempt authorized scoped real SMTP/Nagios verification when infrastructure permits; record actual lab limitations; verify docs and all.
 5. [x] Re-read issue and user decision, audit requirements, push draft or ready PR as evidence permits, inspect CI.
 
-6. [ ] Resume live acceptance: create owned standalone Docker appliance from existing cached image; install unchanged SMTP helper/dependencies; run actual STARTTLS sink, save/reload/test, real forced Nagios notification failure, service-user log reads, and Playwright Email tab checks. Record fresh docs/test-runs report; no changes to shared lab.
-7. [ ] Re-audit acceptance, update Implementation_Status.md and PR evidence; verify docs/all, remove progress and mark ready only when all applicable acceptance has observed proof.
+6. [x] Resume live acceptance: create owned standalone Docker appliance from existing cached image; install unchanged SMTP helper/dependencies; run actual STARTTLS sink, save/reload/test, real forced Nagios notification failure, service-user log reads, and Playwright Email tab checks. Record fresh docs/test-runs report; no changes to shared lab.
+7. [x] Re-audit acceptance, update Implementation_Status.md and PR evidence; verify docs/all, remove progress and mark ready only when all applicable acceptance has observed proof.
 
 ## Round log
 
@@ -149,12 +149,14 @@ Requirement coverage (every requirement in A–H):
 
 | resume-1 | Isolated Docker acceptance completed with real SMTP helper/sudo/msmtp and STARTTLS sink; actual Nagios host/service sends, forced failure in 0.33 s, service-user read and browser 31.7 s pass. User requested real inbox trial; credentials entered through UI only. | verify.sh all green: 3058 backend, 653 frontend; live harness logs and new report; lint green | Original live blocker resolved. External trial waiting on alternate sender setup after provider authentication succeeded but daily sending quota rejected DATA. |
 
+| resume-2 | Owner reported successful test email with alternate sender and pasted received real Nagios message matching unique marker/time. Restored synthetic baseline; final guarded browser passed 31.6 s; removed owned labeled container after replacing real credentials. Added immutable receipt report and corrected completed SMTP gap inventory. | verify.sh frontend green (653 tests, build/lint); verify.sh docs green; full all already passed this session; source-head CI 38711031745 all green | All applicable application acceptance has observed proof. Installer work deferred by user; no migration/permission needed. Human approvals remain outstanding. |
+
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh all > test-results/issue-115-resumed-all.log 2>&1`
-- Result (first failing lines, or "green"): green: 3058 backend / 14 skipped, 653 frontend, docs/build and lint green. Live browser corrected harness passed in 31.7 s. Latest published CI 38707800901 passed all jobs.
-- Hypothesis: Scoped STARTTLS functionality has real Docker proof. The additional owner inbox trial is blocked by the sending provider's daily quota, not authentication; owner is configuring another sender through the UI.
-- Next action (one specific step): Wait for the owner to finish the alternate sending account, then send the authorized test and labeled Nagios notification; request actual inbox confirmation without recording recipient/credentials publicly.
+- Last check run (exact command): `scripts/verify.sh frontend > test-results/issue-115-final-frontend.log 2>&1` and `scripts/verify.sh docs > test-results/issue-115-final-docs.log 2>&1`
+- Result (first failing lines, or "green"): green; full all also passed this session (3058 backend/14 skips, 653 frontend). Browser repeat passed; actual external Nagios receipt owner-confirmed. CI for 432e492f green, all jobs.
+- Hypothesis: No application work remains. Human review is required before merge; installer changes are intentionally deferred.
+- Next action (one specific step): Remove progress file per finish workflow, publish final evidence and ready PR, then observe final-head CI.
 
 ## Decisions and notes
 
@@ -180,3 +182,5 @@ Requirement coverage (every requirement in A–H):
 - Resume authorization: user says "I give permission to use docker access". This answers the blocker directly and takes precedence over requiring a new issue comment. Use sg docker to refresh the already-granted group, not sudo or socket permission changes. No additional approval needed for scoped live checks already required by #115.
 
 - Live scope ownership: only issue-115-smtp-appliance was created/changed. The shared lab and VM lab remain untouched. User explicitly requested real inbox tests and supplied a private recipient; keep all sender/recipient addresses and credentials out of committed reports. Provider quota/authentication setup attempts must remain distinct from delivery proof.
+
+- Final evidence supersedes earlier infrastructure and inbox blockers: owned Docker acceptance, final guarded browser and owner-confirmed external receipt all passed; fixture removed. Earlier notes and reports remain historical. No reviewer approval is self-certified.
