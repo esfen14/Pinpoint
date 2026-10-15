@@ -23,6 +23,7 @@ from app.network_discovery.create_host_cfg import (
 from app.system_models import (
     ActivityLog,
     AgentStatus,
+    DeviceInterface,
     DiscoveryStatus,
     NCPADeployment,
     NCPADevicePartition,
@@ -159,6 +160,21 @@ class TestSnmpHost:
             "snmp-uptime-161-udp": "pinpoint_nd_snmp!161!public!1.3.6.1.2.1.1.3.0!",
             "snmp-memory_total-161-udp": "pinpoint_nd_snmp!161!public!1.3.6.1.4.1.2021.4.5.0!",
             "snmp-lan_status-161-udp": "pinpoint_nd_snmp!161!public!1.3.6.1.2.1.2.2.1.8.3!",
+        }
+
+    def test_interfaces_add_in_and_out_octet_services(self, app, plugin_config):
+        host = make_host("switch-a", udp={"161": "snmp"}, net_discovery_id=7)
+        facts = {7: {"snmp": {"interfaces": [2, 10]}}}
+        with app.app_context():
+            services = as_dict(build_host_services(host, facts, plugin_config))
+            defaults = as_dict(build_host_services(host, {}, plugin_config))
+
+        assert {name: value for name, value in services.items() if name in defaults} == defaults
+        assert {name: value for name, value in services.items() if name not in defaults} == {
+            "snmp-if2_in_octets-161-udp": "pinpoint_nd_snmp!161!public!1.3.6.1.2.1.2.2.1.10.2!",
+            "snmp-if2_out_octets-161-udp": "pinpoint_nd_snmp!161!public!1.3.6.1.2.1.2.2.1.16.2!",
+            "snmp-if10_in_octets-161-udp": "pinpoint_nd_snmp!161!public!1.3.6.1.2.1.2.2.1.10.10!",
+            "snmp-if10_out_octets-161-udp": "pinpoint_nd_snmp!161!public!1.3.6.1.2.1.2.2.1.16.10!",
         }
 
     def test_host_overrides_community_port_and_oids(self, app, plugin_config):
@@ -448,6 +464,19 @@ class TestLoadHostPluginFacts:
 
         facts = load_host_plugin_facts()
         assert facts[device.NetDiscoveryID]["ncpa"]["port"] == 5864
+    def test_monitored_interfaces_become_snmp_facts(self, db_session, admin_user):
+        device = make_device(db_session, admin_user, "switch", "10.0.0.4")
+        other = make_device(db_session, admin_user, "other", "10.0.0.5")
+        for device_id, if_index, monitored in (
+            (device.NetDiscoveryID, 4, True), (device.NetDiscoveryID, 2, True),
+            (device.NetDiscoveryID, 9, False), (other.NetDiscoveryID, 1, False),
+        ):
+            db_session.session.add(DeviceInterface(
+                NetDiscoveryID=device_id, If_Index=if_index, Name=f"eth{if_index}", Monitored=monitored,
+            ))
+        db_session.session.commit()
+
+        assert load_host_plugin_facts() == {device.NetDiscoveryID: {"snmp": {"interfaces": [2, 4]}}}
 
     def test_loaded_hosts_carry_id_and_overrides(self, db_session, admin_user):
         device = make_device(

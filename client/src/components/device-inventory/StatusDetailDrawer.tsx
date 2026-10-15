@@ -4,6 +4,7 @@ import { ArrowLeft, X } from 'lucide-react'
 import { apiDelete, apiGet, apiPost, errorMessage } from '../../lib/api'
 import { useCurrentUser } from '../../contexts/CurrentUserContext'
 import { DeviceMonitoringSection } from './DeviceMonitoringSection'
+import { DeviceInterfacesSection } from './DeviceInterfacesSection'
 import { DevicePortsSection } from './DevicePortsSection'
 import { FlapHistorySection } from './FlapHistorySection'
 import type { MonitoringState } from '../../types/host'
@@ -345,6 +346,10 @@ export function StatusDetailDrawer({ hostname, onClose, onMonitoringChanged }: P
 
               {!service && detail.device_id != null && hasPermission('system.hosts') && (
                 <DevicePortsSection key={detail.device_id} deviceId={detail.device_id} hostname={hostname} />
+              )}
+
+              {!service && detail.device_id != null && hasPermission('system.hosts') && (
+                <DeviceInterfacesSection key={`interfaces-${detail.device_id}`} deviceId={detail.device_id} hostname={hostname} />
               )}
             </>
           )}
