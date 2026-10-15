@@ -1,7 +1,7 @@
 # Issue #79: Choose which users receive email alerts for each host
 
 Branch: `issue-79-host-alert-recipients`
-Status: blocked
+Status: in-progress
 
 ## Finish condition
 
@@ -49,6 +49,7 @@ Requirement coverage (every requirement stated by the issue):
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| Resumed after PR #165 | Read closed #162, merged #165, owner loss decision and clean rebuild/marker proof; rerun saved verification | scripts/verify.sh all | In progress; integrate the new preflight before VM access |
 | Resumed after PR #163 | Fetched merged main and re-read #79/#162/#163; planned isolated integration/migration compatibility coverage | saved scripts/verify.sh all command rerun | In progress; no VM mutation; live blocker still unresolved |
 | Resume 2026-10-15 | Current issue and draft #160 re-read; CI green; VirtualBox now available, appliance started; inherited source modifications found and will be preserved before sync | scripts/vmlab status; scripts/vmlab up; remote git status | VM and Nagios active; prior all run interrupted and must be rerun |
 | Intake | Required docs and source inspected; isolated worktree; prerequisite checked | gh issue view 80 and gh pr list --state merged --search 80 | #80 merged and VM verification documented |
@@ -119,3 +120,5 @@ Requirement coverage (every requirement stated by the issue):
 - Resume after user reports PR #163 merged: confirmed 82ba9ce9 adds interface bandwidth (#126), not lab recovery; #162 is still open without comments. Re-running saved all command before merging. Both migrations b7d3f1a9c264 (main) and a79e14c0b621 (#79) currently descend from c5e2a8f4d716, so integration needs an explicit single-head merge revision without rewriting an already-tested revision. Ask for recovery details and two controlled mailbox addresses; continue isolated testing independently.
 
 - User explicitly deferred further testing until they fix #162. Stopped this session’s running baseline verification; no merge with PR #163, migration changes or VM mutations performed. Compatibility work remains planned only. User supplied two controlled mailbox addresses in conversation for future delivery testing; keep them out of committed evidence. Resume only after #162 is resolved and control/recovery evidence is verified.
+
+- Resume after PR #165: main 977deaea closes #162. Read both recovery reports: owner accepted original two-file loss, retired old disks, rebuilt the lab, and verified SSH+HTTP marker restoration plus sole-controller runtime NAT ownership. Previous test checkout and private issue79 credentials are obsolete. Resume authorized by user reporting the blocker resolved; integrate current main and its guard before any VM operation, recheck exclusive ownership, preserve clean rebuilt state, then deploy/test #79 against the two user-controlled mailboxes supplied in conversation. Existing setup-admin compatibility bug #167 is outside scope; use validated current private credentials/API rather than stale helpers.
