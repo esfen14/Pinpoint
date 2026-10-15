@@ -90,7 +90,7 @@ block; the caller cannot supply replacement contents for other owners' lines.
 The helper and its interpreter must be root-owned and must not import mutable
 application code while privileged. It must not accept arbitrary paths, arbitrary
 commands, chown targets or broad directory privileges. Both failed apply and
-rollback must be tested with the actual service user. A helper and installer packaging/sudoers changes now exist locally on the separate
+rollback must be tested with the actual service user. A helper and installer packaging/sudoers changes are published on the separate
 installer branch `issue-129-resource-helper`; seven isolated tests and shell syntax
 checks pass. Application writes and rollback now invoke it for the foreign-owned
 default resource path. It is installed on the QA appliance with an exact no-argument
@@ -101,4 +101,4 @@ application integration is published in [app PR #161](https://github.com/esfen14
 ## External blockers
 
 SMB still needs supported child credential transport. NCPA uses the in-process adapter; unsupported client versions fail safely. The paired installer extension is required for default-path ownership-preserving
-updates. Full generated-config apply/reload, live 0640/readability, main NCPA results, argv/snapshot/log secrecy and actual-binary validation rollback passed; see [the main-daemon report](../test-runs/2026-10-15-issue-129-main-daemon/REPORT.md). Mandatory live port/cleanup journeys also pass in [the finish-journeys report](../test-runs/2026-10-15-issue-129-finish-journeys/REPORT.md). The complete issue remains draft for new evidence publication/current-head CI and paired human approvals. No production or ISO-build sign-off is implied.
+updates. Full generated-config apply/reload, live 0640/readability, main NCPA results, argv/snapshot/log secrecy and actual-binary validation rollback passed; see [the main-daemon report](../test-runs/2026-10-15-issue-129-main-daemon/REPORT.md). Mandatory live port/cleanup journeys also pass in [the finish-journeys report](../test-runs/2026-10-15-issue-129-finish-journeys/REPORT.md). The application is being finalized for review after current-head CI; application review approval is recorded. The paired installer PR remains a separate draft dependency for deployment. No production or ISO-build sign-off is implied.
