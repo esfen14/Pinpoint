@@ -243,3 +243,49 @@ together, with `PageAccess.test.tsx` and `App.test.tsx` updated.
 4. API routes and permission seeding.
 5. Frontend page, route, navigation, tests.
 6. Specs, lab run, report.
+
+## 8. What was built and seen live (for the security review and the installer)
+
+Status after the build and two lab runs on 2026-10-15
+([first](../test-runs/2026-10-15-issue-120-event-handler/REPORT.md),
+[second](../test-runs/2026-10-15-issue-120-service-and-spool/REPORT.md)). The security review and the installer
+instructions live on the docs branch of PR #157, not in this branch; these are the points to carry into them.
+
+| Threat | What was observed live |
+|---|---|
+| T1 forged spool file | A valid-looking event owned by `pinpoint`, a non-JSON file, a 3000-byte file and a symlink were all discarded with a warning that carries no file content; the symlink target was untouched. `www-data` could neither list nor write the spool folder |
+| T2 handler replaced | `/usr/local/sbin/pinpoint-event-handler` is `root:root` 755; `www-data` could not modify it |
+| T3 injection through macros | `nagios -v` accepted the generated commands (0 warnings, 0 errors). Every macro is single-quoted, and the appliance keeps Nagios's default `illegal_macro_output_chars` (`` `~$&|'"<> ``), which the installer must not change |
+| T5 sudo | No sudo rule was added; `pinpoint` can still run only `pinpoint-apply-smtp` and `systemctl reload nagios` |
+| T6 restart loop | A repeat inside the cooldown was skipped (`skipped_cooldown`) and a run past the hourly limit was skipped (`skipped_hourly_cap`), each with its reason |
+| T7 flood | Unit tested only (5000 files, bounded work) |
+| T8 secrets | A planted `password=hunter2` in a spool file never reached a run row or the service journal |
+| T9 replay | A copy of a real event produced no second run |
+| T10, T11 wide `nagios` group rights | Not changed here; installer work (Fix A and B in the installer instructions) |
+| T12 remote restart | Not shipped (D2) |
+
+Rules found during the build:
+
+- A HARD recovery (`OK` or `UP`) is also a HARD event. The consumer ignores it, so an action reacts only to problems.
+  The first lab run showed the bug (a recovery produced a run row); it was fixed test-first and re-run.
+- A passive result is hard on the first result for a service (hosts are hard too), so a live SOFT state needs an
+  active check that really fails; SOFT is unit tested only.
+
+For the installer: create `/usr/local/nagios/var/spool/pinpoint-events` as `nagios:pinpoint` with mode 2770 (its
+parent is root-owned), install the handler script from `server/scripts/pinpoint_event_handler.py` as
+`/usr/local/sbin/pinpoint-event-handler` (`root:root`, 755) and keep `enable_event_handlers=1` and the default
+`illegal_macro_output_chars`. The `pinpoint` service user must be in group `pinpoint`.
+
+### Checking the page by hand
+
+Not yet done in a browser on the lab (no login was available to the agent). With an account that has
+`remediation.view` and `remediation.manage`:
+
+1. Open Remediation in the sidebar: the banner "Actions run automatically when a service reaches a hard failure"
+   and the action `lab-120-record-only` (host `dev-0abb55`) are shown, with its switch on.
+2. Run log tab: five rows for that host (one `Succeeded`, one `Skipped (cooldown)` for the early recovery that
+   ran before the fix, `Succeeded`, `Skipped (cooldown)`, `Skipped (hourly limit)`) plus one for the test service.
+   Open one: the drawer shows the state, outcome, reason and, for a run, the output `recorded`.
+3. Turn the switch off and on again: each change is accepted and the page shows the new state after a reload.
+4. Add action with a name of two letters: the message appears under the Name field and the dialog stays open.
+5. With an account that has only `remediation.view`: no Add, Edit or Delete, and the switch cannot be toggled.
