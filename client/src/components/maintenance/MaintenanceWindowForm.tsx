@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { DropdownSelect } from '../shared/DropdownSelect'
 import { MAX_COMMENT_CHARS, formToInput, isoToInput, validateForm, type MaintenanceForm } from '../../utils/maintenanceTime'
 import type { MaintenanceDevice, MaintenanceInput, MaintenanceRecurrence, MaintenanceWindow } from '../../types/maintenance'
 
@@ -54,7 +55,7 @@ export function MaintenanceWindowForm({ devices, window, timeZone, isSaving, ser
     <form
       onSubmit={submit}
       aria-label={window ? 'Edit maintenance window' : 'New maintenance window'}
-      className="rounded-3xl border border-[var(--border)] bg-[var(--card)] p-6"
+      className="rounded-3xl border border-[var(--border)] bg-[var(--card)] p-6 shadow-sm"
     >
       <h2 className="text-base font-semibold text-[var(--text)]">
         {window ? 'Edit maintenance window' : 'New maintenance window'}
@@ -66,32 +67,27 @@ export function MaintenanceWindowForm({ devices, window, timeZone, isSaving, ser
 
       <div className="mt-5 grid gap-4 md:grid-cols-2">
         <div>
-          <label htmlFor="mw-scope" className={labelClass}>Devices</label>
-          <select
-            id="mw-scope"
-            className={fieldClass}
-            value={form.deviceId ?? ''}
-            onChange={(event) => change('deviceId', event.target.value === '' ? null : Number(event.target.value))}
-          >
-            <option value="">All monitored devices</option>
-            {devices.map((device) => (
-              <option key={device.id} value={device.id}>{device.name}</option>
-            ))}
-          </select>
+          <span className={labelClass}>Devices</span>
+          <DropdownSelect
+            label="Devices"
+            value={form.deviceId === null ? '' : String(form.deviceId)}
+            options={[{ value: '', label: 'All monitored devices' }, ...devices.map((device) => ({ value: String(device.id), label: device.name }))]}
+            onChange={(value) => change('deviceId', value === '' ? null : Number(value))}
+          />
         </div>
 
         <div>
-          <label htmlFor="mw-recurrence" className={labelClass}>Repeats</label>
-          <select
-            id="mw-recurrence"
-            className={fieldClass}
+          <span className={labelClass}>Repeats</span>
+          <DropdownSelect
+            label="Repeats"
             value={form.recurrence}
-            onChange={(event) => change('recurrence', event.target.value as MaintenanceRecurrence)}
-          >
-            <option value="none">Does not repeat</option>
-            <option value="daily">Every day</option>
-            <option value="weekly">Every week</option>
-          </select>
+            options={[
+              { value: 'none', label: 'Does not repeat' },
+              { value: 'daily', label: 'Every day' },
+              { value: 'weekly', label: 'Every week' },
+            ]}
+            onChange={(value) => change('recurrence', value as MaintenanceRecurrence)}
+          />
         </div>
 
         <div>
@@ -133,7 +129,7 @@ export function MaintenanceWindowForm({ devices, window, timeZone, isSaving, ser
         <button type="button" onClick={onClose} disabled={isSaving} className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm text-[var(--text)] disabled:opacity-50">
           Close
         </button>
-        <button type="submit" disabled={isSaving} className="rounded-xl bg-orange-500 px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
+        <button type="submit" disabled={isSaving} className="rounded-lg bg-[#ffb100] px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-[#f0a500] disabled:cursor-default disabled:opacity-50">
           {isSaving ? 'Saving…' : window ? 'Save changes' : 'Create window'}
         </button>
       </div>

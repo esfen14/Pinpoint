@@ -53,6 +53,11 @@ function renderPage() {
   return render(<MemoryRouter><MaintenancePage /></MemoryRouter>)
 }
 
+function choose(label: string, option: string) {
+  fireEvent.click(screen.getByRole('button', { name: label }))
+  fireEvent.click(screen.getByRole('option', { name: option }))
+}
+
 function fillForm(over: { start?: string; end?: string; comment?: string } = {}) {
   fireEvent.change(screen.getByLabelText('Starts'), { target: { value: over.start ?? '2099-10-21T10:00' } })
   fireEvent.change(screen.getByLabelText('Ends'), { target: { value: over.end ?? '2099-10-21T12:00' } })
@@ -115,8 +120,8 @@ describe('MaintenancePage', () => {
     await screen.findByText(/No maintenance windows yet/)
     fireEvent.click(screen.getByRole('button', { name: /New window/ }))
     fillForm()
-    fireEvent.change(screen.getByLabelText('Devices'), { target: { value: '4' } })
-    fireEvent.change(screen.getByLabelText('Repeats'), { target: { value: 'daily' } })
+    choose('Devices', 'db-01')
+    choose('Repeats', 'Every day')
     fireEvent.click(screen.getByRole('button', { name: 'Create window' }))
 
     await waitFor(() => expect(create).toHaveBeenCalledWith({
@@ -160,7 +165,7 @@ describe('MaintenancePage', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Edit window 7' }))
     expect(screen.getByLabelText('Starts')).toHaveValue('2099-10-21T10:00')
     expect(screen.getByLabelText('Ends')).toHaveValue('2099-10-21T12:00')
-    expect(screen.getByLabelText('Devices')).toHaveValue('3')
+    expect(screen.getByRole('button', { name: 'Devices' })).toHaveTextContent('web-01')
     fireEvent.change(screen.getByLabelText('Reason'), { target: { value: 'moved' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
 

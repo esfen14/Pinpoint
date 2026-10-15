@@ -100,8 +100,8 @@ export function MaintenancePage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <main className="ml-55 flex-1 space-y-6 p-6">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <PageHeader
           title="Maintenance"
           highlight="Windows"
@@ -114,7 +114,7 @@ export function MaintenancePage() {
             setSaveError(null)
             setSuccess(null)
           }}
-          className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2 text-sm font-medium text-white"
+          className="flex items-center gap-2 rounded-lg bg-[#ffb100] px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-[#f0a500]"
         >
           <Plus className="h-4 w-4" />
           New window
@@ -171,6 +171,6 @@ export function MaintenancePage() {
           onDismissCancel={() => setConfirmingId(null)}
         />
       )}
-    </div>
+    </main>
   )
 }
