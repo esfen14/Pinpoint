@@ -403,6 +403,12 @@ reassigned to a device from the unscanned network that shares the SSH key. It
 records a duplicate-identity review item. A true second NIC of one device still
 belongs to its key owner.
 
+Migration `e4a129c7b630` joins the deployed-port revision `7db78f308ee5`
+and device-interface revision `b7d3f1a9c264` into one head. Run the normal
+multi-bind `flask db upgrade`: installations at either prior head apply the
+missing branch, then the schema-free join. Prior revision identifiers and
+ancestry remain unchanged, preserving already-upgraded installations.
+
 ## NCPA deployment
 
 The SSH command helpers accept `expected_exit_codes` for probes: the account

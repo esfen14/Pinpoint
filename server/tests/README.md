@@ -322,3 +322,11 @@ inventory lookup, pending/stale checks, titlecase states and baseline inventory.
 The extended plan tracks reload rollback, NCPA deployment/path failures, missing
 installed permissions and lifecycle thresholds from the previous live report.
 No live outcome is implied by passing these isolated self-tests.
+
+### NCPA/interface migration convergence
+
+`test_ncpa_interface_merge_migration.py` uses a subprocess with private throwaway
+SQLite databases to upgrade from either previously published head, verify the
+single head on both binds and preserve stored ports/interface choices/history
+data through the merge downgrade/re-upgrade. Existing migration and upgrade
+rehearsal tests continue to enforce the single-head contract.
