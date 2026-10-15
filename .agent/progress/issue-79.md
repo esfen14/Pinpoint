@@ -14,7 +14,7 @@ Status: in-progress
 - [x] F7: Host detail editor is permission gated and sends recipient IDs (frontend test).
 - [ ] F8: VM lab save writes per-host group; Nagios validates; alerts email only selected recipients while another host emails the default group.
 - [x] F9: Backend, data, frontend specifications and Implementation_Status updated.
-- [x] F10: scripts/verify.sh all passes and PR CI is green.
+- [ ] F10: scripts/verify.sh all passes and PR CI is green.
 
 Requirement coverage (every requirement stated by the issue):
 
@@ -71,10 +71,10 @@ Requirement coverage (every requirement stated by the issue):
 
 ## State for the next session
 
-- Last check run (exact command): scripts/verify.sh all > test-results/issue79-merged-all.log 2>&1
-- Result (first failing lines, or green): green on merged commit ccd2f254: 2676 backend passed / 14 skipped; 579 frontend passed; docs/build/lint green (29 existing warnings). Focused recipient backend: 38 passed. CI run 38609237571: docs/backend/frontend all success. Pre-merge VM Playwright: 4 passed; scaffold safety: 8 passed. The final progress-only checkpoint will start another CI run; check it on resume.
-- Hypothesis: Recipient behavior passes isolated, real VM Nagios/MIME-capture and browser checks. Actual inbox delivery remains unproven. Lab control mismatch discovered during restore means two inactive-checkout edits were overwritten and cannot be claimed restored. Original active issue-129 checkout/database/service and sendmail are restored. F8 and lab recovery remain incomplete; PR #160 must remain draft.
-- Next action: Resolve #162 before further VM mutation: establish exclusive process/endpoint control and recover the original inactive-checkout dashboard.py/status.py edits from an owner-supplied source or explicitly settle their loss. Then provide controlled selected/default mailboxes and complete original external inbox acceptance on the merged branch. Verify the latest metadata CI before any readiness transition. Do not repeat already-passing checks unless changes justify them.
+- Last check run (exact command): cd server && .venv/bin/python -m pytest tests/unit/test_interface_recipient_upgrade.py tests/unit/test_host_recipients.py tests/unit/test_device_interface_migration.py -q > ../test-results/issue79-integration-green.log 2>&1
+- Result (first failing lines, or green): green, focused backend 45 passed and focused frontend 41 passed after compatibility fixes. The initial six new cases failed for multiple heads and KeyError ncpa. Saved baseline all rerun passed before integration. Full combined checks must run on the integrated branch.
+- Hypothesis: #162 is resolved by merged #165 and the actual rebuilt endpoint passes preflight. Main/#79 migrations need a merge head and SNMP-only facts need the NCPA guard; focused tests now prove both. External delivery depends on owner saving SMTP settings through the rebuilt UI; both controlled mailbox addresses have already been provided in conversation.
+- Next action: Run full verification/CI; preserve rebuilt baseline and deploy the tested commit in a separate checkout with copied databases. Verify UI, generated groups, real Nagios and then actual selected/default email routing once SMTP is configured. Recheck ownership before every VM action and restore baseline without overwriting its checkout.
 
 ## Decisions and notes
 
@@ -122,3 +122,5 @@ Requirement coverage (every requirement stated by the issue):
 - User explicitly deferred further testing until they fix #162. Stopped this session’s running baseline verification; no merge with PR #163, migration changes or VM mutations performed. Compatibility work remains planned only. User supplied two controlled mailbox addresses in conversation for future delivery testing; keep them out of committed evidence. Resume only after #162 is resolved and control/recovery evidence is verified.
 
 - Resume after PR #165: main 977deaea closes #162. Read both recovery reports: owner accepted original two-file loss, retired old disks, rebuilt the lab, and verified SSH+HTTP marker restoration plus sole-controller runtime NAT ownership. Previous test checkout and private issue79 credentials are obsolete. Resume authorized by user reporting the blocker resolved; integrate current main and its guard before any VM operation, recheck exclusive ownership, preserve clean rebuilt state, then deploy/test #79 against the two user-controlled mailboxes supplied in conversation. Existing setup-admin compatibility bug #167 is outside scope; use validated current private credentials/API rather than stale helpers.
+
+- Integration round after #165: six new regression cases reproduced two failures after merging main: two Alembic heads, and SNMP-only monitored-interface facts raising KeyError ncpa while check_ncpa is globally enabled. Added no-op merge e79b7d3c2641 and guard NCPA probing on actual NCPA facts. Initial two migration assertions incorrectly expected sibling tables to disappear on merge rollback; observed Alembic correctly retains both parents, so assert exact preservation of both tables/data instead. Focused backend 45 passed; drawer/editor/interface frontend 41 passed; new ownership preflight passes on rebuilt UUID 351eb491-f5e1-4854-a7e4-68309ad774ad. SMTP API reports configured=false/passwordSet=false; owner asked to configure through UI. No test alert sent.

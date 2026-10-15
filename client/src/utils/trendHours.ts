@@ -13,3 +13,6 @@ export const TREND_HOURS_OPTIONS: { value: TrendHours; label: string }[] = [
 export function trendBuckets(hours: TrendHours) {
   return hours < 1 ? 5 : 24
 }
+
+// The bandwidth route refuses the 5-minute window: too few check results to compute a rate from.
+export const BANDWIDTH_HOURS_OPTIONS = TREND_HOURS_OPTIONS.filter((o) => o.value >= 1)

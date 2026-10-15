@@ -5,11 +5,13 @@ import { TREND_HOURS_OPTIONS, type TrendHours } from '../../utils/trendHours'
 type TimeRangeSelectProps = {
   hours: TrendHours
   onChange: (hours: TrendHours) => void
+  // The ranges offered; every range by default.
+  options?: { value: TrendHours; label: string }[]
 }
 
-export function TimeRangeSelect({ hours, onChange }: TimeRangeSelectProps) {
+export function TimeRangeSelect({ hours, onChange, options = TREND_HOURS_OPTIONS }: TimeRangeSelectProps) {
   const [open, setOpen] = useState(false)
-  const currentLabel = TREND_HOURS_OPTIONS.find((o) => o.value === hours)?.label ?? 'Last 24 hours'
+  const currentLabel = options.find((o) => o.value === hours)?.label ?? 'Last 24 hours'
 
   return (
     <div className="relative">
@@ -24,7 +26,7 @@ export function TimeRangeSelect({ hours, onChange }: TimeRangeSelectProps) {
       </button>
       {open && (
         <div className="absolute right-0 top-full z-10 mt-2 w-40 rounded-xl border border-[var(--border)] bg-[var(--card)] p-1.5 shadow-lg">
-          {TREND_HOURS_OPTIONS.map((o) => (
+          {options.map((o) => (
             <button
               key={o.value}
               type="button"

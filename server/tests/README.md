@@ -318,3 +318,5 @@ installed permissions and lifecycle thresholds from the previous live report.
 No live outcome is implied by passing these isolated self-tests.
 
 `unit/test_host_recipients.py` covers permission-separated per-host recipients, generated groups for hosts and services, default/ineligible fallback, atomic saves and shared-writer validation/reload rollback, rescan/merge/retire ownership, permission synchronization, and a populated multi-bind migration round trip. Its subprocess runner is `support/host_recipients_migration_runner.py`; Nagios calls are mocked.
+
+`unit/test_interface_recipient_upgrade.py` and `support/interface_recipient_migration_runner.py` verify a single deployable migration head and populated upgrades from both the released interface revision and the prior host-recipient preview. Merge rollback preserves both installed parent tables and their rows. Recipient generation tests also cover selected/default/ineligible groups on interface bandwidth services while NCPA is enabled globally.

@@ -210,6 +210,27 @@ def test_custom_services_use_device_group(app, db_session, admin_user, devices, 
     assert f'pinpoint_host_{first.NetDiscoveryID}' in custom
 
 
+@pytest.mark.parametrize('selection', ['selected', 'empty', 'ineligible'])
+def test_interface_bandwidth_services_inherit_host_recipients(
+        app, db_session, admin_user, admin_role, devices, monkeypatch, tmp_path, selection):
+    from app.system_models import DeviceInterface, Open_UDP_Services
+    first = devices[0]
+    if selection != 'empty':
+        assign(first, admin_user)
+    if selection == 'ineligible':
+        admin_user.Receive_Email_Alerts = False
+        _make_user(db_session, admin_role, 'interface-fallback@example.com')
+    db.session.add(Open_UDP_Services(NetDiscoveryID=first.NetDiscoveryID, Port_Number=161, Service_Name='snmp'))
+    db.session.add(DeviceInterface(NetDiscoveryID=first.NetDiscoveryID, If_Index=7, Name='uplink', Monitored=True))
+    db.session.commit()
+    text = generate(app, monkeypatch, tmp_path)
+    bandwidth = [obj for obj in objects(text, 'service') if 'snmp-if7_' in obj]
+    assert len(bandwidth) == 2
+    expected = f'pinpoint_host_{first.NetDiscoveryID}' if selection == 'selected' else 'system_users'
+    for obj in bandwidth:
+        assert re.search(r'contact_groups\s+' + re.escape(expected) + r'\s*$', obj, re.M)
+
+
 def test_other_permissions_do_not_allow_recipient_edits(limited_client, db_session, regular_user, seeded_permissions):
     from app.system_models import RolePermission
     for name in ('account.alerts', 'system.hosts', 'system.hosts.edit'):
