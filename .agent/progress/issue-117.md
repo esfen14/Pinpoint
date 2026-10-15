@@ -1,7 +1,7 @@
 # Issue #117: Manual multiple-parent topology
 
 Branch: `issue-117-manual-topology`
-Status: ready-for-review
+Status: in-progress
 
 ## Finish condition
 
@@ -131,6 +131,8 @@ Requirement coverage (all issue sections):
 
 6. [x] Owner-requested continued testing: run browser against real backend/Nagios; fix any in-scope interaction issue with a failing regression, record a new report and verify frontend/docs/CI.
 
+7. [ ] Resume after main advanced: resolve topology/escalation/remediation conflicts, generate a schema-free migration join, prove populated upgrade from both heads and config coexistence, run full verification and publish updated CI evidence.
+
 ## Round log
 
 | Round | Change made | Check run | Result |
@@ -140,14 +142,15 @@ Requirement coverage (all issue sections):
 | 3 | Full verification green; added real-writer deferred-commit compensation proof; browser fixture smoke verified real React Flow, fixed positions, editor and read-only; corrected applied/unchanged response flags | scripts/verify.sh all; parent/migration focus; browser fixture script | Green gates and 38 focused tests. Routed trials verify final reachability but max-attempts=1 can emit transient child DOWN; default 3-attempt trial pending. |
 | 4 | Real routed default-three-attempt HARD-state checks and notification dispatch passed; published sanitized report and documented separate one-attempt caveat in #173; reread unchanged issue | python3 /tmp/issue117-live.py; scripts/verify.sh docs; gh issue view 117 --json body,comments | Default-retry single/redundant paths, pause/merge/retire pass; 14 notification events, zero child DOWN in final trial. Docs green. |
 | 5 | Final review caught oversized positive IDs returning 500 from SQLite; added failing regression, bounded IDs to SQLite integer range and proved 400. Stable full gate passed; draft PR #174 published. | final all-stage gate; focused parent/migration proof; PR checks | Local gates green; final pushed-tree CI to be observed after checkpoint. Human review and #173 guarantee remain outstanding. |
+| resumed | Merge current main, resolve combined rendering/routing/docs, generated schema-free join plus populated upgrade/coexistence tests | focused parent/escalation/remediation/migration suite; real browser/backend/Nagios | 102 passed; browser pass; full all-stage gate running |
 | intake | Reviewed issue scope and existing React Flow frontend; created isolated checkout | gh issue view 117 --json body,comments,title | Product decisions recorded; no implementation yet |
 
 ## State for the next session
 
-- Last check run (exact command): scripts/verify.sh frontend
-- Result: green: 654 frontend tests, production build and lint (0 errors / 30 warnings). 43 focused interaction tests and real browser/backend/Nagios flow passed. Prior source 519a00a passed all CI; current fix/report CI will run after checkpoint.
+- Last check run (exact command): FLASK_DEBUG=1 .venv/bin/python -m pytest tests/unit/test_topology_merge_migration.py tests/unit/test_device_parents.py tests/unit/test_device_parent_migration.py tests/unit/test_escalation_merge_migration.py tests/unit/test_event_handler_config.py tests/unit/test_escalations.py -q
+- Result: green: 102 focused tests passed. Real browser/Flask/Nagios retest passed on merged source; full all-stage gate still running at /tmp/issue117-main-sync-all.log.
 - Hypothesis: Existing writer and Inventory modules can support this without a new dependency; use a relationship table and shared editor.
-- Next action: Watch final PR #174 CI for the drawer fix/report, then obtain human review and #173 notification-guarantee decision; retain draft/progress until approved, never merge.
+- Next action: Finish scripts/verify.sh all on merged source, publish a new sanitized report and observe PR #174 CI; retain draft/progress for human review.
 
 ## Decisions and notes
 
@@ -179,3 +182,5 @@ Requirement coverage (all issue sections):
 - Current actual-browser evidence: /tmp/issue117-live-e0853d16/browser.log and /tmp/issue117-real-browser-run3.log. Real standard login, real Flask APIs and real Nagios validation/reload; no API interception. Both editor placements set/clear/reload, cross-page edges and persistence, cycle rejection/draft retention, restricted controls/direct 403 and zero page errors passed. Initial setup needed a dedicated management bridge to publish the loopback HTTP listener; all owned containers/networks cleaned up. No shared appliance/targets were touched.
 
 - Continued round 1 complete: full frontend gate green (654 tests), docs green, actual browser/backend/Nagios run passed all executed cases. New sanitized report records exact tested source and initial defect/setup deviations. All source changes in this continuation are the drawer callback fix and its integration test; no backend/migration/dependency changes.
+
+- Resumed 2026-10-15: current main advanced by 35 commits, making PR #174 conflicting and preventing pull-request CI from starting. Integrating origin/main cc1305c6 preserves topology plus new escalation/remediation behavior. Generated merge revision c117e6a9d042 keeps published histories intact. New populated-upgrade tests failed first with multiple heads; after the join they pass from both old heads, including downgrade/rejoin and history preservation. The initial test harness used ambiguous relative downgrade -1; corrected it to the explicit prior head. Combined rendering regression proves adding parents preserves escalation and remediation output.

@@ -28,6 +28,7 @@ plugin.scan, plugin.view, plugin.enable, plugin.disable
 plugin.command_override, plugin.command_restore, plugin.validate
 plugin.custom_add, plugin.custom_check, plugin.update, plugin.update_rollback
 settings.security, settings.system, settings.discovery, settings.plugins, settings.email
+remediation.view, remediation.manage
 ```
 
 Some seeded permissions are not attached to a current route. That is tracked as
@@ -124,6 +125,43 @@ Security and system setting fields are restricted with `settings.security` and
 | `PUT /api/system/notification-policy` | `settings.system` | Validate quiet-hour windows, host/service options, and renotify interval (0–1440 minutes); 400 on invalid fields, 409 on stale version, 422 with Nagios feedback on failed config apply, rolling back the database; audit changed fields when enabled |
 
 Both routes use the standard success/error envelopes. GET returns `quietHours` (weekday, `start`, `end` in 24-hour `HH:MM`), `hostOptions`, `serviceOptions`, `renotifyInterval`, `version` and `timeZone` (`Nagios server local time`). PUT accepts those editable fields plus the current integer `version`; `timeZone` is informational. Quiet windows cannot cross midnight or overlap on one weekday. The policy belongs to the default-bind singleton, and a successful save regenerates/validates/applies the shared Nagios candidate file before committing.
+
+### `app/api/system/escalations.py`
+
+| Method and path | Permission | Purpose |
+|---|---|---|
+| `GET /api/system/escalations` | `settings.system` | List saved ranges (`items`), existing recipient `groups` with `name`/`member_count`, and monitored device `hosts` with `id`/`name`; each range includes `active` and an inactivity `reason` |
+| `POST /api/system/escalations` | `settings.system` | Create and apply a notification escalation; 400 invalid fields/empty group, 422 failed Nagios validation or reload with database rollback |
+| `PUT /api/system/escalations/<id>` | `settings.system` | Replace and apply an escalation; same validation/rollback; 404 missing range |
+| `DELETE /api/system/escalations/<id>` | `settings.system` | Delete and apply an escalation; 404 missing range, 422 failed apply restores the saved range |
+
+POST/PUT require exactly `first_notification`, `last_notification`,
+`interval_minutes`, `contact_group`, `host_id`. Notification counts are integers
+from 1 to 10000, first no greater than last; interval is an integer from 0 to
+1440 minutes (0 sends once during the range). `contact_group` must be an existing
+nonempty group from the shared recipient calculation. `host_id` is a currently
+generated device ID, or `null` for all Nagios hosts and services. Responses use
+the standard envelope. Mutations hold the shared config lock through validation,
+apply and commit, log configuration changes when audit logging is enabled, and
+restore the previous database choices on failure. Existing ranges with empty
+groups or absent scoped hosts remain visible with an explanation and are omitted
+from generated configuration. No new permission is introduced.
+
+### `app/api/system/remediation.py`
+
+Allowlisted actions that run when a covered service or host reaches a HARD failure, and the log of what the consumer decided (`app/remediation.py`).
+
+| Method and path | Permission | Purpose |
+|---|---|---|
+| `GET /api/system/remediation/action-types` | `remediation.view` | The action types an admin can pick, each with `key`, `label`, `description` and its parameter schema |
+| `GET /api/system/remediation/actions` | `remediation.view` | All actions, ordered by name |
+| `POST /api/system/remediation/actions` | `remediation.manage` | Create an action; 400 with `data.fields` (field name to message) on invalid input, 422 with Nagios feedback when the regenerated config is rejected (nothing is saved), 201 on success |
+| `PUT /api/system/remediation/actions/<id>` | `remediation.manage` | Replace an action; needs the current integer `version`; 400 with `data.fields`, 404, 409 on a stale version, 422 as for create |
+| `DELETE /api/system/remediation/actions/<id>` | `remediation.manage` | Delete an action; its runs stay in the log; 404, 422 as for create |
+| `GET /api/system/remediation/runs` | `remediation.view` | The run log, newest first: `page`, `per_page` (1 to 100, default 25), filters `action` (action id), `host` (exact name), `outcome`, `from` and `to` (`YYYY-MM-DD`, inclusive); 400 on a bad value; returns `items`, `page`, `per_page`, `pages`, `total` |
+| `GET /api/system/remediation/runs/<id>` | `remediation.view` | One run including its redacted `output`; 404 when missing |
+
+An action body has `name` (3 to 60 letters, numbers, spaces, `.`, `_`, `-`; unique), `actionType` (a key from `action-types`), `scopeKind` (`service` or `host`), `hostPattern` (letters, numbers, `.`, `_`, `-`, `*`), `servicePattern` (required for a service action, null for a host action; also allows spaces, `:` and `/`), `parameters` (validated by the action type; `record_only` takes none and rejects any key), `enabled` (boolean, default false), `maxRunsPerHour` (1 to 60, default 2) and `cooldownSeconds` (60 to 86400, default 600). Patterns match an exact name or use `*` for any run of characters; there is no regex. Unknown fields are errors. Every change regenerates, validates and applies the Nagios config through the shared writer before committing, and is written to the configuration log when audit logging is on. Run list items hold `id`, `actionId`, `actionName`, `hostname`, `service`, `state`, `stateType`, `attempt`, `receivedAt`, `startedAt`, `finishedAt`, `outcome` and `reason`; outcomes are `running`, `succeeded`, `failed`, `timed_out`, `skipped_cooldown`, `skipped_hourly_cap` and `interrupted`. Nothing in a response carries credentials or internal paths.
 
 ### `app/api/system/dashboard.py`
 
@@ -423,7 +461,10 @@ running. Check/retry settings, discovery and browser preferences remain independ
 | `network_discovery/` | Scans networks and builds/applies host/service configuration |
 | `ncpa_deployment/` | Fingerprint-pinned SSH workflow and remote NCPA installation |
 | `logging/` | Writes activity and subsystem audit records |
-| `scheduler.py` | Polling, retention purge, and automation scheduling |
+| `scheduler.py` | Polling, retention purge, automation scheduling, and the remediation spool consumer (every 15 seconds; at startup it marks runs left `running` as `interrupted`) |
+| `remediation.py` | Reads the event handler spool (regular files under 2 KB owned by `REMEDIATION_SPOOL_OWNER`, at most 200 per run, symlinks never followed), parses each strictly, ignores SOFT states and recoveries (a HARD return to OK or UP never runs an action), matches enabled actions, applies the per-host-and-service cooldown and the per-action hourly cap, writes one `RemediationRun` row per decision, deletes the file, then runs the action; a replayed event runs nothing twice (unique `Event_Key` per action) |
+| `remediation_actions.py` | The code-defined action types (`record_only` only, so far): parameter schema and validation, and `run_action`, which enforces a timeout and turns a crash into a fixed message so no secret reaches the log |
+| `scripts/pinpoint_event_handler.py` | The Nagios event handler (standard library only): validates its arguments and writes one JSON file per event to the spool; never opens a shell or the network; installed by the installer at `/usr/local/sbin/pinpoint-event-handler` (`root:root`, 755) |
 | `automation.py` | Settings-driven discovery, plugin/security checks, and database backups |
 
 ## Shared statistics contract

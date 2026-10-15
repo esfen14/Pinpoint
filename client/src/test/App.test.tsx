@@ -21,6 +21,9 @@ vi.mock('../pages/SystemStatusPage', () => ({
 vi.mock('../pages/ManageAccountsPage', () => ({
   ManageAccountsPage: () => <div>Manage Accounts Page</div>,
 }))
+vi.mock('../pages/RemediationPage', () => ({
+  RemediationPage: () => <div>Remediation Page</div>,
+}))
 vi.mock('../pages/PlaceholderPage', () => ({
   PlaceholderPage: ({ title }: { title: string }) => <div>{title} Page</div>,
 }))
@@ -58,6 +61,11 @@ describe('App routing', () => {
   it('registers the System Status page at /system-status', () => {
     renderApp('/system-status')
     expect(screen.getByText('System Status Page')).toBeInTheDocument()
+  })
+
+  it('registers the Remediation page at /remediation', () => {
+    renderApp('/remediation')
+    expect(screen.getByText('Remediation Page')).toBeInTheDocument()
   })
 
   it('registers topology separately from System Status', () => {

@@ -15,6 +15,7 @@ from app.nagios.status import get_status
 DEFAULT_POLL_INTERVAL_SECONDS = 60
 SUPPORTED_POLL_INTERVALS = (30, 60, 120, 300)
 settings_schedule_lock = RLock()
+REMEDIATION_POLL_SECONDS = 15
 
 _scheduler: BackgroundScheduler | None = None
 
@@ -57,6 +58,30 @@ def _poll_nagios_status():
         get_status()
 
 
+def _mark_interrupted_remediation_runs():
+    """At startup, mark remediation runs left running by a stop as interrupted (never re-run)."""
+    from app import remediation
+
+    with app.app_context():
+        try:
+            remediation.mark_interrupted()
+        except Exception:
+            db.session.rollback()
+            current_app.logger.exception("Could not mark interrupted remediation runs")
+
+
+def _consume_remediation_spool():
+    """Hand the event handler spool to the remediation consumer. It never raises."""
+    from app import remediation
+
+    with app.app_context():
+        try:
+            remediation.process_spool()
+        except Exception:
+            db.session.rollback()
+            current_app.logger.exception("Unexpected error while consuming the remediation spool")
+
+
 def _relocate_ncpa_devices():
     """Look for NCPA devices that changed IP since the last full scan."""
     from app.network_discovery.ncpa_relocation import relocate_ncpa_devices
@@ -79,6 +104,7 @@ def _purge_old_data():
                 NetworkDiscoveryStatus,
                 NCPADeploymentStatus,
                 ExportLog,
+                RemediationRun,
             )
             from app.history_models import (
                 HostStatus,
@@ -106,6 +132,10 @@ def _purge_old_data():
                 db.session.execute(sa.delete(NCPADeploymentStatus).where(NCPADeploymentStatus.LogID.in_(old_log_ids)))
                 db.session.execute(sa.delete(ExportLog).where(ExportLog.LogID.in_(old_log_ids)))
                 db.session.execute(sa.delete(ActivityLog).where(ActivityLog.LogID.in_(old_log_ids)))
+
+            # --- Remediation run log (audit trail of automatic actions) ---
+            run_cutoff = now - timedelta(days=settings.Diagnostic_History_Retention_Days)
+            db.session.execute(sa.delete(RemediationRun).where(RemediationRun.Received_At < run_cutoff))
 
             # --- Diagnostic history retention (Nagios snapshots) ----------
             diag_cutoff = now - timedelta(days=settings.Diagnostic_History_Retention_Days)
@@ -153,6 +183,7 @@ def init_scheduler():
     if app.debug and os.environ.get("WERKZEUG_RUN_MAIN") != "true":
         return
 
+    _mark_interrupted_remediation_runs()
     _scheduler = BackgroundScheduler(daemon=True)
     _scheduler.add_job(
         _poll_nagios_status,
@@ -185,6 +216,14 @@ def init_scheduler():
         "interval",
         minutes=app.config["NCPA_RELOCATE_MINUTES"],
         id="ncpa_relocation",
+        max_instances=1,
+        coalesce=True,
+    )
+    _scheduler.add_job(
+        _consume_remediation_spool,
+        "interval",
+        seconds=REMEDIATION_POLL_SECONDS,
+        id="remediation_spool",
         max_instances=1,
         coalesce=True,
     )

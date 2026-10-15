@@ -25,6 +25,7 @@
 #   scripts/vmlab alerts [target]     take a target down, check the alert, acknowledge it, bring it back (default: web01)
 #   scripts/vmlab creds                print the installer's one-time credentials (shows the password; lab only)
 #   scripts/vmlab up | down | revert   start (headless), power off, restore the snapshot only
+#   scripts/vmlab phase0 [--with-notification]  event-handler lab checks (docs/plans/Proactive_Resolution_Implementation_Plan.md); output saved too
 #   scripts/vmlab targets <cmd...>     pass through to demo/demo_lab.py (up, down, wall, break, ...)
 #
 # The installer's own repository supplies the setup steps. Point VMLAB_INSTALLER_DIR at
@@ -488,6 +489,18 @@ print("setup-email=" + (os.environ["SETUP_NEW_EMAIL"] if needs_setup else os.env
     [ -n "$VMLAB_ADMIN_EMAIL" ] && [ -n "$VMLAB_ADMIN_PASSWORD" ] || die "no administrator login: run scripts/vmlab setup-admin (or set VMLAB_ADMIN_EMAIL and VMLAB_ADMIN_PASSWORD in $config)"
     SMOKE_PASSWORD="$VMLAB_ADMIN_PASSWORD" exec python3 -I "$root/lab/smoke.py" --base-url "$(web_url)" \
       --email "$VMLAB_ADMIN_EMAIL" --set-network "$VMLAB_LAB_NETWORK" --expect-ips "$VMLAB_TARGET_IPS" "$@"
+    ;;
+
+  phase0)
+    # Read-mostly lab checks for the proactive-resolution work. Output is also saved in the state folder.
+    need_config
+    vm_ssh true 2>/dev/null || die "the appliance is not reachable (run: scripts/vmlab up)"
+    mkdir -p "$state_dir"; out="$state_dir/phase0-$(date +%Y%m%dT%H%M%S).txt"
+    set +e
+    tr -d '\r' < "$root/lab/phase0_event_handler_probe.sh" | vm_ssh bash -s -- "$@" 2>&1 | tee "$out"
+    rc=${PIPESTATUS[1]}
+    echo "saved: $out"
+    exit "$rc"
     ;;
 
   targets) exec python3 "$root/demo/demo_lab.py" "$@" ;;

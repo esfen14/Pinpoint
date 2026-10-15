@@ -1,0 +1,45 @@
+import { test, expect } from '@playwright/test'
+
+// Explicit opt-in only; isolated test appliance, never the default smoke suite.
+const baseUrl = process.env.ISSUE116_LAB_URL
+
+test('administrator adds, edits, reloads and deletes an escalation through System settings', async ({ page }) => {
+  test.skip(!baseUrl, 'Set ISSUE116_LAB_URL to an exclusively owned test appliance.')
+  await page.goto(`${baseUrl}/login`)
+  await page.getByPlaceholder('Enter your email').fill(process.env.LAB_ADMIN_EMAIL ?? 'admin@test.com')
+  await page.locator('input[type="password"]').fill(process.env.LAB_ADMIN_PASSWORD ?? '')
+  await page.getByRole('button', { name: /sign in|log in/i }).click()
+  await expect(page).not.toHaveURL(/\/login$/)
+  await page.goto(`${baseUrl}/settings`)
+  await page.getByRole('button', { name: 'System', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Escalations', exact: true })).toBeVisible()
+  await page.getByLabel('First notification', { exact: true }).fill('6')
+  await page.getByRole('button', { name: 'Add escalation', exact: true }).click()
+  await expect(page.getByRole('alert')).toContainText('First notification must not exceed last notification.')
+  await page.getByLabel('First notification', { exact: true }).fill('2')
+  const created = page.waitForResponse((response) => response.url().endsWith('/api/system/escalations') && response.request().method() === 'POST')
+  await page.getByRole('button', { name: 'Add escalation', exact: true }).click()
+  const response = await created
+  expect(response.status()).toBe(200)
+  const id: number = (await response.json()).data.id
+  await expect(page.getByText('Escalation saved.', { exact: true })).toBeVisible()
+  await page.reload()
+  await page.getByRole('button', { name: 'System', exact: true }).click()
+  await page.getByRole('button', { name: `Edit escalation ${id}`, exact: true }).click()
+  await expect(page.getByLabel('First notification', { exact: true })).toHaveValue('2')
+  await page.getByLabel('Interval (minutes)', { exact: true }).fill('12')
+  await page.getByRole('button', { name: 'Save escalation', exact: true }).click()
+  await expect(page.getByText('Escalation saved.', { exact: true })).toBeVisible()
+  await page.reload()
+  await page.getByRole('button', { name: 'System', exact: true }).click()
+  await page.getByRole('button', { name: `Edit escalation ${id}`, exact: true }).click()
+  await expect(page.getByLabel('Interval (minutes)', { exact: true })).toHaveValue('12')
+  await page.getByRole('button', { name: `Delete escalation ${id}`, exact: true }).click()
+  await expect(page.getByRole('alertdialog', { name: 'Delete escalation' })).toBeVisible()
+  await page.getByRole('button', { name: 'Cancel deletion', exact: true }).click()
+  await expect(page.getByRole('button', { name: `Delete escalation ${id}`, exact: true })).toBeVisible()
+  await page.getByRole('button', { name: `Delete escalation ${id}`, exact: true }).click()
+  await page.getByRole('button', { name: 'Confirm deletion', exact: true }).click()
+  await expect(page.getByText('Escalation deleted.', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: `Edit escalation ${id}`, exact: true })).toHaveCount(0)
+})

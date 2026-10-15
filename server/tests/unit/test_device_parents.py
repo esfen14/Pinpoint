@@ -214,3 +214,28 @@ def test_unchanged_apply_reports_actual_writer_status(logged_in_client,devices,w
     assert result.status_code==200
     assert result.json['data']['config_applied'] is False
     assert result.json['data']['config_ok'] is True
+
+
+def test_parents_preserve_escalations_and_remediation(app, devices, db_session, tmp_path, monkeypatch):
+    """A shared candidate retains all three features when only parents change."""
+    from app.network_discovery import host_config_templates as templates
+    from app.system_models import Escalation, RemediationAction, RemediationActionType, RemediationScope
+
+    child, first, second, _ = devices
+    monkeypatch.setitem(app.config, 'HOST_CONFIG_DIR', tmp_path)
+    monkeypatch.setattr(templates, 'handler_exists', lambda path: True)
+    db.session.add(Escalation(First_Notification=2, Last_Notification=5, Interval_Minutes=10,
+                              Contact_Group='system_users', HostID=child.NetDiscoveryID))
+    db.session.add(RemediationAction(Name='Record child failure', Action_Type=RemediationActionType.RECORD_ONLY,
+                                    Scope_Kind=RemediationScope.HOST, Host_Pattern=child.Hostname,
+                                    Parameters={}, Enabled=True, Max_Runs_Per_Hour=2,
+                                    Cooldown_Seconds=600, Version=1))
+    db.session.commit()
+    baseline = _create_host_cfg_file(_load_monitored_hosts()).read_text()
+    assert 'define hostescalation' in baseline
+    assert 'event_handler                   pinpoint_event_handler_host' in baseline
+    link(child, first, second)
+    combined = _create_host_cfg_file(_load_monitored_hosts()).read_text()
+    assert re.search(r'parents\s+' + first.Hostname + ',' + second.Hostname + r'\s*$', combined, re.M)
+    without_parents = re.sub(r'\n    parents[^\n]*', '', combined)
+    assert config_fingerprint(without_parents) == config_fingerprint(baseline)
