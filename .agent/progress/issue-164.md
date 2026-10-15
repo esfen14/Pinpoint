@@ -63,6 +63,8 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| 7 | Fixed stale review summaries in selectors/confirmation by propagating fresh evidence summaries; regression added first | New regression red (old target name/IP); focused frontend green (51); verify.sh frontend green (702 tests); lookup tests green (6) | Corrected confirmation; test mocks now return the lifecycle of the requested fixture rather than a different device. CI on prior checkpoint is green; final-code all/lab repeat pending |
+| 6 | Strengthened lookup wildcard regression against an unmerged visible record and a literal percent name | FLASK_DEBUG=1 server/.venv/bin/python -m pytest server/tests/unit/test_device_identity_lookup.py -q | Green: 6 passed; product code unchanged. Required full-stage CI is being observed before final checkpoint |
 | finish | Opened draft PR #176 and attached sanitized report / verification | gh pr view issue-164-identity-review --json number,url,isDraft,statusCheckRollup,reviewDecision | PR exists; docs/backend/frontend CI in progress; no reviewer approval |
 | 5 | Full local gate and restored Docker configuration | scripts/verify.sh all; restored reconcile; fixture verify; nagios -v | Green: 3302 backend passed/14 skipped; 701 frontend passed; build/lint successful (0 errors, 28 existing warnings); restored configuration passes with 0 Nagios errors/warnings |
 | 4 | Recreated own appliance and deliberately stopped its Nagios before merge | Playwright issue-164-live with ISSUE164_EXPECT_CONFIG_WARNING=1 | Green: 1 passed; config_ok false with saved merge, one POST, source Merged, target retained, reviews refreshed. Full gate still running |
@@ -74,10 +76,10 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 ## State for the next session
 
-- Last check run (exact command): gh pr view 176 --json number,url,isDraft,statusCheckRollup,reviewDecision
-- Result (first failing lines, or "green"): Draft PR https://github.com/esfen14/Pinpoint/pull/176; docs/backend/frontend CI running. Local all-stage check and 13-case report green; human approval not obtained.
-- Hypothesis: required CI will reproduce the local gate; all product/delivery conditions are proven, with H4 CI and H8 human review remaining.
-- Next action (one specific step, not "continue"): Observe docs/backend/frontend on the latest PR commit using gh pr checks 176; record their result without claiming human approval.
+- Last check run (exact command): scripts/verify.sh frontend
+- Result (first failing lines, or "green"): green: 702 tests, successful build/lint (0 errors, 28 existing warnings). 51 focused inventory/comparison tests and 6 lookup tests pass. Prior checkpoint CI run 38736578525 passed all three jobs; fresh-summary correction must pass its own full/local/browser checks.
+- Hypothesis: fresh evidence now consistently drives comparison, merge choices and confirmation, including lifecycle exclusions.
+- Next action (one specific step, not "continue"): Run scripts/verify.sh all and repeat the normal/notice and unavailable-Nagios Docker browser journeys against this committed correction.
 
 ## Decisions and notes
 
@@ -96,3 +98,8 @@ Requirement coverage (every requirement the issue states, and the check that pro
 - Re-read issue #164 after lab tests: body unchanged, no comments. Every requirement has proof in the coverage table and sanitized report. No exclusion was implemented. Retain progress file and draft PR because H8 reviewer approval is outstanding; do not claim issue completion.
 
 - PR: https://github.com/esfen14/Pinpoint/pull/176 (draft; Closes #164). Evidence is attached by a branch-pinned link to the committed sanitized report.
+
+- Security review: lookup uses SQLAlchemy-bound parameters and literal wildcard escaping with bounded search/results. The opt-in lab FIFO probe uses only a fixed fixture host name and integer timestamps, a fixed FIFO path and nonblocking write; it accepts no shell commands or credentials. No sensitive product module was modified.
+- Disposable Docker project and local Vite process have been removed/stopped; raw evidence remains in the report location.
+
+- Plan revision from evidence: a final comparison consistency check showed that freshly loaded name/IP/state only updated cards, not choices/confirmation. Added a failing regression, propagated fresh API device summaries, and updated the inventory specification. No backend behavior changed.

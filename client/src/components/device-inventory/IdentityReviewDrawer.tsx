@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useCurrentUser } from '../../contexts/CurrentUserContext'
 import { useDisplayTime } from '../../hooks/useDisplayTime'
 import { errorMessage } from '../../lib/api'
@@ -35,7 +35,7 @@ function FocusDialog({ title, onClose, children, busy = false }: { title: string
   </div>
 }
 
-function CandidateEvidence({ device, canRead }: { device: DeviceSummary; canRead: boolean }) {
+function CandidateEvidence({ device, canRead, onDevice }: { device: DeviceSummary; canRead: boolean; onDevice: (device: DeviceSummary) => void }) {
   const { formatDateTime } = useDisplayTime()
   const [evidence, setEvidence] = useState<IdentityEvidence | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -46,16 +46,16 @@ function CandidateEvidence({ device, canRead }: { device: DeviceSummary; canRead
   useEffect(() => {
     if (!canRead) return
     let active = true
-    getIdentityEvidence(device.id).then(data => { if (active) { setEvidence(data); setError(null) } })
+    getIdentityEvidence(device.id).then(data => { if (active) { setEvidence(data); onDevice(data.device); setError(null) } })
       .catch(err => { if (active) setError(errorMessage(err)) })
     return () => { active = false }
-  }, [device.id, canRead, attempt])
+  }, [device.id, canRead, attempt, onDevice])
   async function loadAddresses() {
     setLoadingAddresses(true); setAddressError(null)
-    try { setAddresses(await getAddressEvidence(device.id)) } catch (err) { setAddressError(errorMessage(err)) }
+    try { const data = await getAddressEvidence(device.id); setAddresses(data); onDevice(data.device) } catch (err) { setAddressError(errorMessage(err)) }
     finally { setLoadingAddresses(false) }
   }
-  const current = evidence?.device ?? device
+  const current = device
   return <article className="min-w-0 space-y-2 rounded-lg border border-[var(--border)] p-3 break-words">
     <h3 className="font-semibold">{current.display_name || 'Display name unavailable'}</h3>
     <dl className="space-y-1 text-sm">
@@ -84,6 +84,9 @@ export function IdentityReviewDrawer({ review, onClose, onMerged }: { review: Id
   const canRead = hasPermission('system.hosts')
   const canMerge = canRead && hasPermission('system.hosts.edit')
   const [devices, setDevices] = useState(review.devices)
+  const updateDevice = useCallback((fresh: DeviceSummary) => {
+    setDevices(current => current.map(device => device.id === fresh.id ? fresh : device))
+  }, [])
   const [targetId, setTargetId] = useState('')
   const [sourceId, setSourceId] = useState('')
   const [search, setSearch] = useState('')
@@ -128,7 +131,7 @@ export function IdentityReviewDrawer({ review, onClose, onMerged }: { review: Id
     <p>{review.message}</p>
     <p>Merge only after verifying that both records represent the same physical device. Similar names or matching IPs are not proof of identity. Keep the record with the intended monitoring settings and current address.</p>
     {devices.length === 0 && <p>No candidate device records available. Search discovered devices to compare records.</p>}
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">{devices.map(device => <CandidateEvidence key={device.id} device={device} canRead={canRead} />)}</div>
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">{devices.map(device => <CandidateEvidence key={device.id} device={device} canRead={canRead} onDevice={updateDevice} />)}</div>
     {canMerge && <section className="space-y-3" aria-label="Merge choices">
       <form className="space-y-2" onSubmit={e => { e.preventDefault(); void findDevices() }}>
         <label className="block">Search discovered devices<input className={input} value={search} maxLength={100} onChange={e => setSearch(e.target.value)} placeholder="Name, IP address or device ID" /></label>

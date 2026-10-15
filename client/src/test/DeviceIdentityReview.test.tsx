@@ -24,7 +24,8 @@ beforeEach(() => {
   mocks.get.mockReset().mockImplementation((p: string) => {
     if (p === '/api/system/discover/review') return Promise.resolve({ items })
     if (p.includes('/lookup')) return Promise.resolve({ items: [device(3)], has_more: false })
-    const d = p.includes('/1/') ? one : two
+    const id = Number(p.match(/\/hosts\/(\d+)/)?.[1])
+    const d = items.flatMap(item => item.devices).find(candidate => candidate.id === id) ?? (id === 1 ? one : two)
     if (p.endsWith('/identifiers')) return Promise.resolve({ device: d, confidence: 'UNVERIFIED', identifiers: [], recommendation: null })
     if (p.endsWith('/addresses')) return Promise.resolve({ device: d, addresses: [] })
     throw new Error(`Unexpected ${p}`)
@@ -130,6 +131,19 @@ describe('device identity review', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Addresses offline')
     mocks.get.mockImplementation(normal); await userEvent.click(screen.getByRole('button', { name: 'Retry address history' }))
     expect(await screen.findByText('No address history available.')).toBeInTheDocument()
+  })
+
+  it('uses fresh device evidence in choices and confirmation when a review summary is stale', async () => {
+    const normal = mocks.get.getMockImplementation()!
+    mocks.get.mockImplementation((p: string) => p === '/api/system/hosts/1/identifiers'
+      ? Promise.resolve({ device: { ...one, display_name: 'Current target', ip_address: '10.77.0.12' }, confidence: 'LIKELY', identifiers: [], recommendation: null })
+      : normal(p))
+    await open()
+    await screen.findByText('Current target')
+    await confirm()
+    const confirmation = screen.getByRole('dialog', { name: 'Confirm device merge' })
+    expect(within(confirmation).getByText(/Device record to keep:/)).toHaveTextContent('Current target · 10.77.0.12')
+    expect(within(confirmation).getByText(/retains its current address/)).toHaveTextContent('10.77.0.12')
   })
 
 })

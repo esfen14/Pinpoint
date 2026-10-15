@@ -459,7 +459,9 @@ source becomes Merged and leaves monitoring, that target records take precedence
 where settings conflict, that historical monitoring snapshots remain under their
 original host names and are not transferred, and that no undo action is provided.
 Submission and dismissal are disabled while saving; a second submission is blocked.
-The existing merge route validates stale records and returns errors without
+Evidence responses refresh the candidate summaries used by both selectors and
+confirmation, including the current name, address and lifecycle state. The
+existing merge route validates stale records and returns errors without
 losing the editable choices. A successful merge refreshes reviews, counts and
 inventory without a page reload. `config_ok: false` is shown explicitly as
 **Merge saved. Nagios configuration warning: {config_message}**; it is never

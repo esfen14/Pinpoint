@@ -47,6 +47,13 @@ def test_lookup_is_bounded_and_includes_retired_sources(logged_in_client, db_ses
 def test_lookup_omits_merged_and_treats_wildcards_literally(logged_in_client, db_session, admin_user):
     status = make_status(db_session, admin_user)
     device = run_scan(db_session, status, scan("10.0.0.5"))[(NET, "10.0.0.5")]
+    # Prove wildcard escaping against a visible record before testing exclusion.
+    assert logged_in_client.get(BASE, query_string={"search": "%"}).json["data"]["items"] == []
+    assert logged_in_client.get(BASE, query_string={"search": "_"}).json["data"]["items"] == []
+    device.Display_Name = "Printer_100%"
+    db_session.session.commit()
+    literal = logged_in_client.get(BASE, query_string={"search": "100%"}).json["data"]["items"]
+    assert [row["id"] for row in literal] == [device.NetDiscoveryID]
     device.Device_State = DeviceState.MERGED
     db_session.session.commit()
     assert logged_in_client.get(BASE).json["data"]["items"] == []
