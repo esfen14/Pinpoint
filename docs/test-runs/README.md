@@ -48,6 +48,7 @@ table while you test, not afterward.
 
 | Run | Kind | Commit | Result | Report |
 |---|---|---|---|---|
+| [2026-10-15 issue-79-rebuilt-inbox](2026-10-15-issue-79-rebuilt-inbox/REPORT.md) | Rebuilt VM, browser E2E and actual Gmail transport | `4ed80435` | Partial: 11 pass; owner inbox comparison pending; baseline restored | [REPORT.md](2026-10-15-issue-79-rebuilt-inbox/REPORT.md) |
 | [2026-10-15 issue-79-vm-browser](2026-10-15-issue-79-vm-browser/REPORT.md) | VM real Nagios host/service routing and Playwright | app `3d6471dc` | Partial: feature checks pass; snapshot restore failed, two inherited edits unrecovered; inbox pending | [REPORT.md](2026-10-15-issue-79-vm-browser/REPORT.md) |
 | [2026-10-14 issue-79-docker-repeat](2026-10-14-issue-79-docker-repeat/REPORT.md) | Isolated Docker, real Nagios routing and rollback | `a60e5aba` app source | Partial: 7 follow-up passes (14 across both runs); VM/inbox unverified; earlier capture failure retained | [REPORT.md](2026-10-14-issue-79-docker-repeat/REPORT.md) |
 | [2026-10-14 issue-79-docker-initial](2026-10-14-issue-79-docker-initial/REPORT.md) | Initial Docker host/service comparison and fallback attempt | `a60e5aba` app source | Partial: 7 pass, immediate post-reload capture fails, 2 blocked | [REPORT.md](2026-10-14-issue-79-docker-initial/REPORT.md) |

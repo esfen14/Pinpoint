@@ -14,7 +14,7 @@ Status: in-progress
 - [x] F7: Host detail editor is permission gated and sends recipient IDs (frontend test).
 - [ ] F8: VM lab save writes per-host group; Nagios validates; alerts email only selected recipients while another host emails the default group.
 - [x] F9: Backend, data, frontend specifications and Implementation_Status updated.
-- [ ] F10: scripts/verify.sh all passes and PR CI is green.
+- [x] F10: scripts/verify.sh all passes and PR CI is green.
 
 Requirement coverage (every requirement stated by the issue):
 
@@ -43,12 +43,14 @@ Requirement coverage (every requirement stated by the issue):
 
 6. [ ] Resume on available VM: preserve inherited appliance state; sync issue branch and migrate; run real browser recipient save/reload/default/permission checks and Nagios delivery comparison; record report, restore lab and run all verification. Keep F8 pending until inbox evidence exists.
 
-7. [ ] Integrate merged PR #163 locally: merge origin/main, prove the migration graph has a single deployable head from both main and the already-tested #79 revision, preserve per-host groups on interface bandwidth services, then run isolated verification and CI. Leave VM mutations blocked by #162 until recovery evidence is supplied.
+7. [x] Integrate merged PR #163 locally: merge origin/main, prove the migration graph has a single deployable head from both main and the already-tested #79 revision, preserve per-host groups on interface bandwidth services, then run isolated verification and CI. Recovery evidence from merged #165 verified; guarded VM testing resumed.
 
 ## Round log
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| Rebuilt VM acceptance | Separate checkout/copied DBs, browser, real SMTP delivery, rescan/fallback, verified baseline restoration | scripts/playwright-lab; temporary guarded VM drivers | 11 pass; owner inbox comparison pending; baseline DB/static hashes unchanged |
+| Post-#165 integration | Single migration head and SNMP-only compatibility fixes, full verification and CI | scripts/verify.sh all; gh pr checks 160 | 2821 backend / 14 skipped, 640 frontend; all three CI jobs green |
 | Resumed after PR #165 | Read closed #162, merged #165, owner loss decision and clean rebuild/marker proof; rerun saved verification | scripts/verify.sh all | In progress; integrate the new preflight before VM access |
 | Resumed after PR #163 | Fetched merged main and re-read #79/#162/#163; planned isolated integration/migration compatibility coverage | saved scripts/verify.sh all command rerun | In progress; no VM mutation; live blocker still unresolved |
 | Resume 2026-10-15 | Current issue and draft #160 re-read; CI green; VirtualBox now available, appliance started; inherited source modifications found and will be preserved before sync | scripts/vmlab status; scripts/vmlab up; remote git status | VM and Nagios active; prior all run interrupted and must be rerun |
@@ -71,10 +73,10 @@ Requirement coverage (every requirement stated by the issue):
 
 ## State for the next session
 
-- Last check run (exact command): cd server && .venv/bin/python -m pytest tests/unit/test_interface_recipient_upgrade.py tests/unit/test_host_recipients.py tests/unit/test_device_interface_migration.py -q > ../test-results/issue79-integration-green.log 2>&1
-- Result (first failing lines, or green): green, focused backend 45 passed and focused frontend 41 passed after compatibility fixes. The initial six new cases failed for multiple heads and KeyError ncpa. Saved baseline all rerun passed before integration. Full combined checks must run on the integrated branch.
-- Hypothesis: #162 is resolved by merged #165 and the actual rebuilt endpoint passes preflight. Main/#79 migrations need a merge head and SNMP-only facts need the NCPA guard; focused tests now prove both. External delivery depends on owner saving SMTP settings through the rebuilt UI; both controlled mailbox addresses have already been provided in conversation.
-- Next action: Run full verification/CI; preserve rebuilt baseline and deploy the tested commit in a separate checkout with copied databases. Verify UI, generated groups, real Nagios and then actual selected/default email routing once SMTP is configured. Recheck ownership before every VM action and restore baseline without overwriting its checkout.
+- Last check run (exact command): scripts/verify.sh all > test-results/issue79-post165-all.log 2>&1
+- Result (first failing lines, or green): green, 2821 backend passed / 14 skipped, 640 frontend passed, build/lint/docs passed. All three CI jobs passed on 4ed80435 (run 38674517921). Rebuilt VM browser projects: 4 passed. Real generated host/service groups and nagios -v passed.
+- Hypothesis: implementation and current-main compatibility now verified. F8 still needs actual mailbox comparison for real delivery; SMTP configured and test API successful.
+- Next action: Await owner inbox confirmation for Oct 15 11:14–11:18 Manila; correlate both hosts and DOWN/CRITICAL events. All independent lab checks and baseline restoration are complete. If confirmed, check F8, delete progress, push final docs, make existing PR #160 ready and verify final CI; otherwise retain draft and document mismatch.
 
 ## Decisions and notes
 
@@ -124,3 +126,11 @@ Requirement coverage (every requirement stated by the issue):
 - Resume after PR #165: main 977deaea closes #162. Read both recovery reports: owner accepted original two-file loss, retired old disks, rebuilt the lab, and verified SSH+HTTP marker restoration plus sole-controller runtime NAT ownership. Previous test checkout and private issue79 credentials are obsolete. Resume authorized by user reporting the blocker resolved; integrate current main and its guard before any VM operation, recheck exclusive ownership, preserve clean rebuilt state, then deploy/test #79 against the two user-controlled mailboxes supplied in conversation. Existing setup-admin compatibility bug #167 is outside scope; use validated current private credentials/API rather than stale helpers.
 
 - Integration round after #165: six new regression cases reproduced two failures after merging main: two Alembic heads, and SNMP-only monitored-interface facts raising KeyError ncpa while check_ncpa is globally enabled. Added no-op merge e79b7d3c2641 and guard NCPA probing on actual NCPA facts. Initial two migration assertions incorrectly expected sibling tables to disappear on merge rollback; observed Alembic correctly retains both parents, so assert exact preservation of both tables/data instead. Focused backend 45 passed; drawer/editor/interface frontend 41 passed; new ownership preflight passes on rebuilt UUID 351eb491-f5e1-4854-a7e4-68309ad774ad. SMTP API reports configured=false/passwordSet=false; owner asked to configure through UI. No test alert sent.
+
+- Post-#165 verification: scripts/verify.sh all passed (2821 backend / 14 skipped; 640 frontend; docs, build and lint green); CI run 38674517921 all three jobs passed. Administrator email changed to the owner-selected address via supported API, existing password preserved and login verified; private host state updated. SMTP now configured with saved password and test send returns ok=true. Mailbox addresses remain private.
+- Rebuilt VM isolation: separate detached checkout /opt/pinpoint/issue79-acceptance-20261015 at 4ed80435; original checkout has no tracked edits and remains untouched. Service stopped for sqlite backup of both databases into isolated checkout; database paths explicitly asserted and copied databases upgraded to e79b7d3c2641. Original Nginx/Nagios files backed up privately and separate systemd drop-in selects trial WorkingDirectory/database. Isolated build active. Initial deployment failed Git ownership assertion before mutation; fixed by running Git as checkout owner. Temporary API fixture initially used role_name instead of name and omitted create status; corrected fixture, no application change.
+- Rebuilt run: scripts/playwright-lab --project issue-79-live --project issue-79-restricted passed 4/4, with actual API saves and Nagios apply. Two controlled globally eligible accounts only in copied DB; opted-out Staff reader has system.network_health/system.hosts without system.hosts.alerts. SSH plugin enabled through supported API; selected host and SSH service use private group, default host/service use system_users, group membership exact, actual Nagios validation zero errors. Real mail driver uses installed sendmail/msmtp and restores runtime checks in finally; inbox acceptance remains pending until observed.
+
+- Current actual delivery run ID is retained privately in test-results/issue79-post165/delivery-window.json. Selected target 10.77.0.2 and default target 10.77.0.3 reached real HARD DOWN and SSH HARD CRITICAL. Exact recipient sets verified from Nagios events: selected mailbox only on selected host, both on default host. Twelve Gmail SMTP 250/EX_OK receipts verified (8 selected mailbox / 4 default-only mailbox including recovery). The initial service status assertion read a stale periodic status.dat; event log independently proves HARD states and dispatch. Finally cleanup restored runtime settings; subsequent verifier proves both UP/OK. Temporary driver now waits for publication; no redundant resend performed.
+- Rebuilt live rescan succeeded within the exact 10.77.0.0/28 network and explicit TCP/UDP ports, preserving exact stable recipient IDs. Ineligible-only selection generated valid default host/service groups, then original selection restored. Baseline app restored by removing only task drop-in and restoring exact Nginx/Nagios backups. Original system.db and static index hashes match predeployment; services active and original HEAD/source unchanged. New administrator login and configured SMTP verified on restored baseline; temporary selected account absent there. Private isolated trial DB remains retained, inactive.
+- New sanitized report: docs/test-runs/2026-10-15-issue-79-rebuilt-inbox/REPORT.md (11 pass / 1 inbox-confirmation blocked by #79). Owner asked to check both actual inboxes/Spam during Oct 15 03:14–03:18 UTC / 11:14–11:18 Manila, selected host dev-16a18e and default host dev-c61190. F8 stays unticked and PR stays draft until owner answers. No mailbox addresses or raw configs/evidence committed.
