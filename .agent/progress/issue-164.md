@@ -5,33 +5,33 @@ Status: in-progress
 
 ## Finish condition
 
-- [ ] Authorized users see the Needs Review table and correct unresolved identity-review count.
-- [ ] Reviews remain discoverable regardless of the host table’s monitoring filter.
-- [ ] Loading, error, empty and unavailable-evidence states are implemented.
-- [ ] Review opens a comparison drawer with candidate details and identity evidence.
-- [ ] A review with insufficient candidates allows selection of another discovered record.
-- [ ] The administrator explicitly selects the source and surviving target.
-- [ ] Confirmation explains merge direction, address retention, conflict precedence and historical-data limitations.
-- [ ] Users without merge permission cannot initiate a merge.
-- [ ] Self-merges, invalid targets, stale records and repeat submissions are handled.
-- [ ] Successful merges refresh the interface.
-- [ ] Saved merges with configuration warnings are accurately reported.
-- [ ] Device information notices open the same review flow.
-- [ ] A recognized IP change continues updating the existing device without requiring a merge.
-- [ ] Opening or cancelling review makes no persistent change.
-- [ ] Review table, comparison drawer, merge confirmation and device information notice.
-- [ ] Typed API helpers and any necessary discovered-device lookup.
-- [ ] Frontend interaction tests and relevant backend regression coverage.
-- [ ] Updated frontend and backend specifications where affected.
-- [ ] Updated `Device_Inventory_Requirements.md` and corrected `Implementation_Status.md`.
-- [ ] User-facing guidance explaining when merging is appropriate and which record to keep.
+- [x] Authorized users see the Needs Review table and correct unresolved identity-review count.
+- [x] Reviews remain discoverable regardless of the host table’s monitoring filter.
+- [x] Loading, error, empty and unavailable-evidence states are implemented.
+- [x] Review opens a comparison drawer with candidate details and identity evidence.
+- [x] A review with insufficient candidates allows selection of another discovered record.
+- [x] The administrator explicitly selects the source and surviving target.
+- [x] Confirmation explains merge direction, address retention, conflict precedence and historical-data limitations.
+- [x] Users without merge permission cannot initiate a merge.
+- [x] Self-merges, invalid targets, stale records and repeat submissions are handled.
+- [x] Successful merges refresh the interface.
+- [x] Saved merges with configuration warnings are accurately reported.
+- [x] Device information notices open the same review flow.
+- [x] A recognized IP change continues updating the existing device without requiring a merge.
+- [x] Opening or cancelling review makes no persistent change.
+- [x] Review table, comparison drawer, merge confirmation and device information notice.
+- [x] Typed API helpers and any necessary discovered-device lookup.
+- [x] Frontend interaction tests and relevant backend regression coverage.
+- [x] Updated frontend and backend specifications where affected.
+- [x] Updated `Device_Inventory_Requirements.md` and corrected `Implementation_Status.md`.
+- [x] User-facing guidance explaining when merging is appropriate and which record to keep.
 - [ ] Verification output and sanitized browser/lab evidence attached to the pull request.
 - [ ] All acceptance criteria and required deliverables are complete.
-- [ ] Existing inventory, discovery and monitoring behavior passes regression checks.
-- [ ] Authorization, validation and error handling are verified.
+- [x] Existing inventory, discovery and monitoring behavior passes regression checks.
+- [x] Authorization, validation and error handling are verified.
 - [ ] Automated checks and required CI checks pass.
-- [ ] Browser/lab evidence confirms the complete merge journey.
-- [ ] Technical and user-facing documentation is updated.
+- [x] Browser/lab evidence confirms the complete merge journey.
+- [x] Technical and user-facing documentation is updated.
 - [ ] The pull request references this issue and describes implementation and verification.
 - [ ] Required reviewer approvals are obtained and blocking comments are resolved.
 
@@ -54,14 +54,15 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 1. [x] Add lookup regression tests, implement bounded permission-protected discovered lookup in server/app/api/system/device_identity.py; update backend specification; run focused and backend verification.
 2. [x] Add failing frontend interaction tests; implement typed contracts/helpers, review table and comparison/confirmation components in client/src/types/deviceIdentity.ts, lib/deviceIdentityApi.ts and components/device-inventory/; integrate DeviceInventoryPage.tsx and StatusDetailDrawer.tsx; run frontend verification.
-3. [ ] Update Device_Inventory_Requirements.md, Frontend_Modules_and_Routes.md, Implementation_Status.md and docs/manuals/device identity guidance; verify docs and all.
-4. [ ] Run controlled browser/lab journey with duplicate outside Monitored, keyboard and themes; record sanitized docs/test-runs evidence and attach to PR.
+3. [x] Update Device_Inventory_Requirements.md, Frontend_Modules_and_Routes.md, Implementation_Status.md and docs/manuals/device identity guidance; verify docs and all.
+4. [x] Run controlled browser/lab journey with duplicate outside Monitored, keyboard and themes; record sanitized docs/test-runs evidence and attach to PR.
 5. [ ] Re-read issue, prove finish conditions, open appropriate PR from template, inspect CI and review requirements.
 
 ## Round log
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| 5 | Full local gate and restored Docker configuration | scripts/verify.sh all; restored reconcile; fixture verify; nagios -v | Green: 3302 backend passed/14 skipped; 701 frontend passed; build/lint successful (0 errors, 28 existing warnings); restored configuration passes with 0 Nagios errors/warnings |
 | 4 | Recreated own appliance and deliberately stopped its Nagios before merge | Playwright issue-164-live with ISSUE164_EXPECT_CONFIG_WARNING=1 | Green: 1 passed; config_ok false with saved merge, one POST, source Merged, target retained, reviews refreshed. Full gate still running |
 | 3 | Disposable Docker project; controlled reconciler fixtures; repeatable opt-in browser journey | Playwright issue-164-live twice (including real source snapshot + linked notice); fixture verify; nagios -v | Both browser runs pass; target address/port/review/config postconditions pass; Nagios 0 warnings/0 errors. Full verify.sh all still running |
 | resumed | Docker membership enabled by user; sg docker activates it in this existing session | Docker ps; repeated comparison tests | Docker accessible; using a fresh isolated project, shared lab untouched |
@@ -71,10 +72,10 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 ## State for the next session
 
-- Last check run (exact command): cd client && ISSUE164_LAB_URL=http://127.0.0.1:5164 ISSUE164_SOURCE_ID=1 ISSUE164_TARGET_ID=2 ISSUE164_EXPECT_CONFIG_WARNING=1 npx playwright test --project=issue-164-live --reporter=list
-- Result (first failing lines, or "green"): green: 1 passed. Lab credentials were supplied privately through environment variables; no trace/login capture. Three complete real-browser journeys now pass (two normal including notice, one saved config warning).
-- Hypothesis: mandatory product journeys are proven; restore Nagios, write sanitized evidence and await all-stage verification before PR.
-- Next action (one specific step, not "continue"): Restore Nagios in pinpoint-issue164-appliance-1, reconcile without retrying the merge and record the test-run report.
+- Last check run (exact command): scripts/verify.sh docs
+- Result (first failing lines, or "green"): green after sanitized report/status/manual updates. scripts/verify.sh all green: 3302 backend passed/14 skipped; 701 frontend passed, build and lint green. Three Docker browser runs passed; real Nagios postconditions/restore pass. Raw evidence /home/paeng/pinpoint-test-results/issue164/.
+- Hypothesis: implementation, local verification and lab acceptance are complete; publish report/PR and observe CI. Human approvals remain required by H8.
+- Next action (one specific step, not "continue"): Open a draft PR from the repository template linking the report, then observe required CI checks and update this progress file with its URL.
 
 ## Decisions and notes
 
@@ -89,3 +90,5 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 - Docker access now works through sg docker after the user added paeng to docker. Exclusive project pinpoint-issue164 uses API 8164 / Vite 5164 and an isolated private network; shared pinpoint-lab is untouched.
 - Docker startup required disabling the opt-in scheduler before initial migrations; this is test provisioning only. Controlled observations perform no network scan. A forced real check supplies an address-unknown source snapshot for the notice journey. Raw screenshots: /home/paeng/pinpoint-test-results/issue164/{success,notice}.
+
+- Re-read issue #164 after lab tests: body unchanged, no comments. Every requirement has proof in the coverage table and sanitized report. No exclusion was implemented. Retain progress file and draft PR because H8 reviewer approval is outstanding; do not claim issue completion.
