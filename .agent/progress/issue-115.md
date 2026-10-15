@@ -134,12 +134,14 @@ Requirement coverage (every requirement in A–H):
 |---|---|---|---|
 | intake | Scope resolved by user: STARTTLS only | scripts/vmlab preflight; docker ps --format '{{.Names}}' | VBoxManage absent; Docker socket access denied; no live mutations performed |
 
+| 1 | Implemented STARTTLS custom validation/API/helper and UI; added bounded failure reader and tests. Confirmed red before code: relay 31 failures; missing reader collection error; frontend 8 failures. | Focused backend: 89 passed; frontend: 38 passed; verify.sh frontend and docs green; verify.sh backend still running | Core source implemented; live checks blocked by infrastructure. Broad backend and final documentation pending. |
+
 ## State for the next session
 
-- Last check run (exact command): `scripts/vmlab preflight`
-- Result (first failing lines, or "green"): `vmlab: VBoxManage not found`
-- Hypothesis: Application changes and isolated tests can proceed; real notification log format/service-user access and local relay need available infrastructure before ready-for-review.
-- Next action (one specific step): Add failing backend custom relay validation and password redaction tests.
+- Last check run (exact command): `scripts/verify.sh frontend > test-results/issue-115-frontend.log 2>&1`
+- Result (first failing lines, or "green"): green; 0 lint errors, 29 existing warnings. Focused backend 89 passed. Full backend running with output in test-results/issue-115-backend.log.
+- Hypothesis: Core implementation meets isolated acceptance; remaining work is documentation, full regression and live proof. No accessible live VM/Docker lab.
+- Next action (one specific step): Update the four owning specifications and Email settings user guide, then run verify.sh all and inspect the full backend result.
 
 ## Decisions and notes
 
@@ -147,3 +149,7 @@ Requirement coverage (every requirement in A–H):
 - Existing SmtpSettings already stores Provider, Host, Port and Tls; no migration or new permission needed.
 - Issue authorizes scoped SMTP/Nagios lab trials, but this environment has no VBoxManage and Docker is denied. Do not claim live passes or close the issue without that evidence.
 - Existing Gmail tests must remain unchanged. Custom usernames follow the helper's printable ASCII/length contract; sender remains a valid email.
+
+- Injection/secret review: helper invocation remains a fixed argument list with exactly six JSON fields on stdin; custom host/port/TLS/username/sender mirror the installed helper contract, no shell interpolation. Custom SMTP failures expose fixed text; helper diagnostics redact credentials. Log reader returns fixed reasons only and reads at most 64 KiB from a nonblocking regular file. Existing Gmail test files are unchanged.
+- Format evidence: inspected upstream Nagios Core tag nagios-4.5.11 base/workers.c (NOTIFY header and contiguous indented stderr blocks), not a live appliance observation. Raw command logging is DEBUG-only; parser never requires it.
+- Isolated backend environment copied from the existing dependency environment into this checkout because uv and ensurepip are absent; no dependency/version change. Frontend npm ci completed.

@@ -173,6 +173,9 @@ class Config:
     NAGIOS_BIN = Path(os.environ.get('NAGIOS_BIN') or "/usr/local/nagios/bin/nagios")
     NAGIOS_MAIN_CFG = Path(os.environ.get('NAGIOS_MAIN_CFG') or "/usr/local/nagios/etc/nagios.cfg")
 
+    # Read-only bounded tail for SMTP notification failure diagnostics.
+    NAGIOS_LOG_FILE = Path(os.environ.get("NAGIOS_LOG_FILE") or "/usr/local/nagios/var/nagios.log")
+
     # Nagios external command pipe (command_file in nagios.cfg). PinPoint writes
     # one command per line (acknowledge, forced check) through app/nagios/commands.py.
     NAGIOS_COMMAND_FILE = Path(os.environ.get('NAGIOS_COMMAND_FILE') or "/usr/local/nagios/var/rw/nagios.cmd")
