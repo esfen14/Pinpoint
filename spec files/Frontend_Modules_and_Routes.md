@@ -200,3 +200,7 @@ the latest 200 lines within 64 KiB are shown, newest last, that hostnames and
 addresses may appear, and that free-form outputs/commands/messages are redacted.
 The page/tab require `system.logs` and issue no log requests without it. Existing
 audit export retains its format choices and behavior.
+
+Live storage/log role journeys use the opt-in Playwright project `issue-124-live`
+(`client/e2e/storage-logs.lab.spec.ts`) with an exclusively owned appliance and
+private credential files. See the [acceptance report](../docs/test-runs/2026-10-15-issue-124-storage-logs/REPORT.md).

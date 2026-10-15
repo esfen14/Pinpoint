@@ -72,7 +72,12 @@ the normative behavior in the requirement specifications.
   on `issue-124-log-retention` in the separate installer repository: 100 MiB / 7-day
   host journal defaults, administrator-policy preservation and weekly installer
   log rotation. Automated tests cover helpers/APIs/UI and installer fixtures;
-  live fresh/upgrade evidence and paired PR review remain pending.
+  [exclusive VM acceptance](../docs/test-runs/2026-10-15-issue-124-storage-logs/REPORT.md)
+  verifies fresh deployment (60/0 health), bounded journal usage after volume,
+  actual rotation, administrator-policy preservation through upgrade, live APIs
+  and four browser role journeys. The post-setup installer healthcheck expects
+  hosts.cfg 664 while the existing writer uses 640 (installer #9); other 59
+  checks pass. Paired human review and interactive ISO boot remain unverified.
 - Availability, OS, network-service, device-service, alert, and notification
   report APIs. Host availability and hosts-by-OS reports use Nagios
   `archivejson.cgi` durations, matching Network Health; Nagios failure returns
