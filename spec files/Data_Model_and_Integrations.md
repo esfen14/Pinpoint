@@ -524,3 +524,35 @@ flask db init --multidb
 Migrate both databases together. Do not hand-edit generated migrations unless
 the generated operations have been reviewed and a manual correction is truly
 required.
+
+## Per-device email recipient selections
+
+`HostAlertRecipient` (`HOST_ALERT_RECIPIENT`, default bind, migration
+`a79e14c0b621`) links `NetworkDiscovery.NetDiscoveryID` and `User.UserID` as a
+composite primary key, with foreign keys to both and a user index. Merge revision
+`e79b7d3c2641` joins this migration with interface monitoring (`b7d3f1a9c264`),
+allowing normal `flask db upgrade` from either already-applied branch without
+rewriting a parent revision or changing data in the merge itself. No assignments
+are seeded, so upgraded devices keep their existing default contact group.
+There is no user-delete cascade. The standard upgrade `flask sync-permissions`
+adds `system.hosts.alerts` and grants it to Administrator.
+
+`create_host_cfg.py` loads assignments once per generation. For each generated
+device with eligible selections, it emits `pinpoint_host_<NetDiscoveryID>` with
+only Active users whose `Receive_Email_Alerts` is true. That host, discovered
+services (including monitored-interface in/out octet checks) and custom device checks reference its group. No selections or no
+eligible selections uses `system_users`; if no globally eligible contact exists,
+#80's behavior remains: no empty group and no contact_groups directive. Generated
+server checks and stock localhost objects retain their existing contact behavior.
+Numeric group names do not depend on request strings, addresses or hostnames.
+
+The recipient PUT flushes the candidate assignments, invokes the shared writer
+under its re-entrant config lock and commits only after validation and reload
+succeed (or the config is unchanged). Failed apply rolls back assignments and
+returns the shared writer's error. A successful save writes an activity entry.
+Stable device IDs preserve choices across rescans and address/hostname changes.
+Device merge unions choices on the target and drops duplicate source choices;
+retirement deletes that device's choices. No assignments remain on the merged
+source or retired device. Pause preserves choices for resume.
+
+NCPA inventory probing considers only devices with NCPA facts; an SNMP-only device with monitored interfaces does not require an NCPA deployment merely because `check_ncpa` is enabled globally.

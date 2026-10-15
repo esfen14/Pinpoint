@@ -127,6 +127,7 @@ PERMISSION_NAMES = [
     "system.deploy.ncpa",
     "system.hosts",
     "system.hosts.edit",
+    "system.hosts.alerts",
     # monitoring permissions
     "monitoring.alerts",
     "monitoring.notifications",
