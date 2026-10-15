@@ -38,7 +38,8 @@ describe('EscalationSettings', () => {
   it('adds a scoped range and reloads persisted rows', async () => {
     render(<EscalationSettings />)
     await screen.findByText('No escalations defined.')
-    fireEvent.change(screen.getByLabelText('Scope'), { target: { value: '4' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Scope' }))
+    fireEvent.click(screen.getByRole('option', { name: 'web01' }))
     list.mockResolvedValue({ ...choices, items: [{ ...item, host_id: 4 }] })
     fireEvent.click(screen.getByRole('button', { name: 'Add escalation' }))
     await waitFor(() => expect(create).toHaveBeenCalledWith({ contact_group: 'system_users', first_notification: 2, last_notification: 5, interval_minutes: 10, host_id: 4 }))

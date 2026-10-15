@@ -15,12 +15,12 @@ export function SettingsToggle({
     <div>
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-var(--system-text)">
+          <p className="text-sm font-medium text-[var(--text)]">
             {label}
           </p>
 
           {description && (
-            <p className="mt-1 text-xs text-var(--system-text-secondary)">
+            <p className="mt-1.5 text-xs text-[var(--text-muted)]">
               {description}
             </p>
           )}

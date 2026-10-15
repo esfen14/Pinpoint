@@ -4,10 +4,23 @@ import { GeneralSettings } from '../components/settings/GeneralSettings'
 import { SystemSettings } from '../components/settings/SystemSettings'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
+
   DEFAULT_SYSTEM_SETTINGS,
   SystemSettingsProvider,
   useSystemSettings,
 } from '../contexts/SystemSettingsContext'
+
+// Settings dropdowns are the shared button-and-list control (not native selects).
+const dropdownButton = (label: string) => screen.getByRole('button', { name: label })
+const shown = (label: string) => dropdownButton(label).textContent
+function pick(label: string, option: string) {
+  fireEvent.click(dropdownButton(label))
+  fireEvent.click(screen.getByRole('option', { name: option }))
+}
+function optionLabels(label: string) {
+  fireEvent.click(dropdownButton(label))
+  return screen.getAllByRole('option').map((option) => option.textContent)
+}
 
 // A tiny fake backend for /api/system (versioned) and /api/user/preferences.
 const PREFERENCE_KEYS = [
@@ -142,17 +155,15 @@ describe('SystemSettingsProvider conflict handling', () => {
 
   it('updates the General Settings description after saving Check interval in System', async () => {
     render(<SystemSettingsProvider><SettingsTabs /></SystemSettingsProvider>)
-    const checkInterval = screen.getByText('Check interval').parentElement?.querySelector('select')
-    expect(checkInterval).toBeTruthy()
-    await waitFor(() => expect(checkInterval).toHaveValue('5'))
+    await waitFor(() => expect(shown('Check interval')).toBe('5 minutes'))
 
-    fireEvent.change(checkInterval!, { target: { value: '2' } })
+    pick('Check interval', '2 minutes')
     fireEvent.click(screen.getByRole('button', { name: 'Save Changes' }))
     await waitFor(() => expect(server.checkInterval).toBe(2))
 
     fireEvent.click(screen.getByRole('button', { name: 'General Settings tab' }))
     expect(screen.getByText(/Nagios Check interval: 2 minutes/)).toBeInTheDocument()
-    expect(screen.getByText('Dashboard Refresh Rate').parentElement?.querySelector('select')).toHaveValue('5')
+    expect(shown('Dashboard Refresh Rate')).toBe('Auto Refresh - 5 minutes')
   })
 
   it('shows a Nagios apply failure instead of treating it as a version conflict', async () => {
@@ -243,14 +254,6 @@ describe('Check timing controls (retry interval and maximum check attempts)', ()
     vi.unstubAllGlobals()
   })
 
-  // The labels are not linked to their selects, so find the select inside the label's block.
-  function selectFor(label: string) {
-    const block = screen.getByText(label).closest('div')
-    const select = block?.querySelector('select')
-    if (!select) throw new Error(`no select for ${label}`)
-    return select as HTMLSelectElement
-  }
-
   async function renderControls() {
     render(<SystemSettingsProvider><Probe /><SystemSettings /></SystemSettingsProvider>)
     await waitFor(() => expect(api.isLoading).toBe(false))
@@ -265,15 +268,15 @@ describe('Check timing controls (retry interval and maximum check attempts)', ()
     server.retryInterval = 2
     server.maxCheckAttempts = 4
     await renderControls()
-    expect(selectFor('Retry interval').value).toBe('2')
-    expect(selectFor('Maximum check attempts').value).toBe('4')
+    expect(shown('Retry interval')).toBe('2 minutes')
+    expect(shown('Maximum check attempts')).toBe('4 attempts')
     expect(screen.getByText(/slower alerts and fewer false alarms/i)).toBeInTheDocument()
   })
 
   it('saves both values as system settings', async () => {
     await renderControls()
-    fireEvent.change(selectFor('Maximum check attempts'), { target: { value: '5' } })
-    fireEvent.change(selectFor('Retry interval'), { target: { value: '2' } })
+    pick('Maximum check attempts', '5 attempts')
+    pick('Retry interval', '2 minutes')
     await save()
     expect(systemPuts[0].maxCheckAttempts).toBe(5)
     expect(systemPuts[0].retryInterval).toBe(2)
@@ -283,15 +286,14 @@ describe('Check timing controls (retry interval and maximum check attempts)', ()
   it('only offers retry intervals that fit inside the check interval', async () => {
     server.checkInterval = 2
     await renderControls()
-    const values = Array.from(selectFor('Retry interval').options).map((option) => option.value)
-    expect(values).toEqual(['1', '2'])
+    expect(optionLabels('Retry interval')).toEqual(['1 minute', '2 minutes'])
   })
 
   it('lowers the retry interval when the check interval drops below it', async () => {
     server.checkInterval = 10
     server.retryInterval = 5
     await renderControls()
-    fireEvent.change(selectFor('Check interval'), { target: { value: '2' } })
+    pick('Check interval', '2 minutes')
     expect(api.settings.checkInterval).toBe(2)
     expect(api.settings.retryInterval).toBe(2)
     await save()
@@ -301,7 +303,7 @@ describe('Check timing controls (retry interval and maximum check attempts)', ()
   it('shows the server message when the Nagios config is rejected', async () => {
     await renderControls()
     applyError = 'Check settings could not be applied: Nagios reload failed'
-    fireEvent.change(selectFor('Maximum check attempts'), { target: { value: '6' } })
+    pick('Maximum check attempts', '6 attempts')
     await save()
     expect(screen.getByTestId('error')).toHaveTextContent('Nagios reload failed')
   })
@@ -415,29 +417,24 @@ describe('Data polling interval', () => {
   })
   afterEach(() => vi.unstubAllGlobals())
 
-  function pollingSelect() {
-    return screen.getByText('Data polling interval').closest('div')!.querySelector('select')!
-  }
-
   it('defaults to 60 seconds and offers exactly the supported options', async () => {
     expect(DEFAULT_SYSTEM_SETTINGS.dataPollingInterval).toBe(60)
     render(<SystemSettingsProvider><Probe /><SystemSettings /></SystemSettingsProvider>)
     await waitFor(() => expect(api.isLoading).toBe(false))
-    expect(Array.from(pollingSelect().options).map(o => [o.value, o.textContent])).toEqual([
-      ['30', '30 seconds'], ['60', '60 seconds'], ['120', '120 seconds'], ['300', '300 seconds'],
-    ])
+    expect(shown('Data polling interval')).toBe('60 seconds')
+    expect(optionLabels('Data polling interval')).toEqual(['30 seconds', '60 seconds', '120 seconds', '300 seconds'])
   })
 
   it('saves and reloads the interval independently of check and browser schedules', async () => {
     render(<SystemSettingsProvider><Probe /><SettingsTabs /></SystemSettingsProvider>)
     await waitFor(() => expect(api.isLoading).toBe(false))
-    fireEvent.change(pollingSelect(), { target: { value: '30' } })
+    pick('Data polling interval', '30 seconds')
     await save()
     expect(systemPuts[0].dataPollingInterval).toBe(30)
     expect(server.checkInterval).toBe(5)
     expect(server.dashboardRefreshRate).toBe(5)
     await act(async () => api.refreshSettings())
-    expect(pollingSelect().value).toBe('30')
+    expect(shown('Data polling interval')).toBe('30 seconds')
     fireEvent.click(screen.getByText('General Settings tab'))
     expect(screen.getByText(/Pinpoint Data polling interval: 30 seconds/)).toHaveTextContent('Nagios Check interval: 5 minutes')
   })
