@@ -35,6 +35,7 @@ PERMISSIONS = [
     "system.deploy.ncpa",
     "system.hosts",
     "system.hosts.edit",
+    "system.hosts.alerts",
     "system.logs",
     "system.report",
     "system.notifications",

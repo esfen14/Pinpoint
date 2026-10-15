@@ -129,6 +129,7 @@ PERMISSION_NAMES = [
     "system.deploy.ncpa",
     "system.hosts",
     "system.hosts.edit",
+    "system.hosts.alerts",
     # monitoring permissions
     "monitoring.alerts",
     "monitoring.notifications",
@@ -310,3 +311,30 @@ def limited_client(client, db_session, regular_user):
         f"limited_client: login failed with {resp.status_code}: {resp.get_json()}"
     )
     return client
+
+
+@pytest.fixture
+def ncpa_inventory(monkeypatch, app, db_session):
+    """Mock agent inventory for tests concerned with planning, never the network.
+
+    Paths reflect the test's metric table and recorded partitions. Probe tests
+    mock HTTP directly instead and do not request this fixture.
+    """
+    from app.network_discovery import create_host_cfg
+    from app.system_models import NCPADevicePartition
+
+    def paths(address, port, token):
+        result = set()
+        partitions = [row.Name for row in db_session.session.query(NCPADevicePartition).all()]
+        for metric in app.config["NCPA_METRICS"]:
+            path = metric["path"]
+            if "{partition}" in path:
+                result.update(path.replace("{partition}", part) for part in partitions)
+                if metric.get("fallback_path"):
+                    result.add(metric["fallback_path"])
+            else:
+                result.add(path)
+        return frozenset(result)
+
+    monkeypatch.setattr(create_host_cfg, 'probe_ncpa_paths', paths)
+    return paths

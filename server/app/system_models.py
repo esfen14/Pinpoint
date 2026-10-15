@@ -415,6 +415,19 @@ class NetworkDiscovery(db.Model):
     # Phase 10 (Plugin Manager): plugin configurations targeting this device.
     Plugin_Configurations: so.WriteOnlyMapped['PluginConfiguration'] = so.relationship(back_populates='Target_Device')
     
+class HostAlertRecipient(db.Model):
+    """A user selected for a stable device's alert email; eligibility stays on User."""
+
+    __tablename__ = "HOST_ALERT_RECIPIENT"
+
+    NetDiscoveryID: so.Mapped[int] = so.mapped_column(
+        sa.ForeignKey("NETWORK_DISCOVERY.NetDiscoveryID"), primary_key=True
+    )
+    UserID: so.Mapped[int] = so.mapped_column(
+        sa.ForeignKey("USER.UserID"), primary_key=True, index=True
+    )
+
+
 class DeviceIdentifier(db.Model):
     """
     One piece of evidence that identifies a device across IP changes (NCPA
@@ -455,6 +468,33 @@ class DeviceAddressHistory(db.Model):
     First_Seen_At: so.Mapped[datetime] = so.mapped_column(default=lambda: datetime.now(timezone.utc))
     Last_Seen_At: so.Mapped[datetime] = so.mapped_column(default=lambda: datetime.now(timezone.utc))
     Closed_At: so.Mapped[Optional[datetime]] = so.mapped_column()
+
+    NetDiscoveryID: so.Mapped[int] = so.mapped_column(sa.ForeignKey(NetworkDiscovery.NetDiscoveryID), index=True)
+
+class DeviceInterface(db.Model):
+    """
+    One network interface of a device, as SNMP (IF-MIB) reports it, kept so the interface list
+    can be shown without querying the device. Written by network_discovery/interface_discovery.py
+    on demand and on scan. Monitored is the administrator's choice: a monitored interface gets an
+    in and an out octet Nagios service (plugin_registry.snmp_checks), which the bandwidth rate is
+    computed from. Speed_Bps is None when the device does not report a speed.
+    """
+    __tablename__ = "DEVICE_INTERFACE"
+    __table_args__ = (
+        sa.UniqueConstraint('NetDiscoveryID', 'If_Index', name='uq_device_interface_index'),
+    )
+
+    DeviceInterfaceID: so.Mapped[int] = so.mapped_column(primary_key=True)
+    If_Index: so.Mapped[int] = so.mapped_column()
+    Name: so.Mapped[str] = so.mapped_column(sa.String(100))
+    Speed_Bps: so.Mapped[Optional[int]] = so.mapped_column(sa.BigInteger())
+    Admin_Status: so.Mapped[Optional[str]] = so.mapped_column(sa.String(20))
+    Oper_Status: so.Mapped[Optional[str]] = so.mapped_column(sa.String(20))
+    Monitored: so.Mapped[bool] = so.mapped_column(sa.Boolean(), default=False)
+    # False once a refresh no longer finds the interface; a monitored one is kept so its
+    # history stays reachable.
+    Present: so.Mapped[bool] = so.mapped_column(sa.Boolean(), default=True)
+    Last_Seen_At: so.Mapped[datetime] = so.mapped_column(default=lambda: datetime.now(timezone.utc))
 
     NetDiscoveryID: so.Mapped[int] = so.mapped_column(sa.ForeignKey(NetworkDiscovery.NetDiscoveryID), index=True)
 

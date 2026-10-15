@@ -22,6 +22,7 @@ acknowledgements belong in `system.db` even though they relate to Nagios alerts.
 - Identity/access: `Permission`, `Role`, `RolePermission`, `PasswordResetRequest` (forgot-password requests; Pending until an admin resets or dismisses), `User` (`Must_Change_Password` forces a password change on a new account unless the create form unticks it, after reactivation, after an admin password reset, or after CLI bootstrap recovery; `Needs_Setup` is set only by `flask init-production` on the bootstrap administrator, whose installer email and password are placeholders, and is cleared by `POST /api/user/complete-setup`; migration `d3a9e6b2f741`). The recovery command finds that account by its uniquely earliest `Created_At`, not mutable email, `UserID`, or `Needs_Setup`; ties and no account fail without changes. Each active user is a Nagios contact named and addressed by `User.Email`, so an email change regenerates the config. Alert email is formatted HTML: the generator (`host_config_templates.py`, `create_host_cfg.py`) writes two commands, `pinpoint_notify_host_html` and `pinpoint_notify_service_html`, that run `/usr/bin/python3 -I server/scripts/pinpoint_notify_email.py` (standard library only; arguments are `key=value` Nagios macros; every value is cleaned and HTML-escaped; sends through `/usr/sbin/sendmail`, which is msmtp). Each contact lists them as its host and service notification commands. If the script is missing, or its path holds a character outside `[A-Za-z0-9_./-]`, no commands are written and contacts keep Nagios's stock plain-text `notify-host-by-email` and `notify-service-by-email`.
 - Email settings: `SmtpSettings` (`SMTP_SETTINGS`), the singleton (`Id` 1) behind Settings -> Email: `Provider`, `Host`, `Port`, `Tls`, `Username`, `Sender` and `Password_Encrypted` (Fernet via `app/secrets_store.py`; never returned by the API), with `Version`/`Updated_By`. Saving also applies the settings to `/etc/msmtprc` through the installer's root helper `/usr/local/sbin/pinpoint-apply-smtp` (`sudo -n`, JSON on stdin: `host`, `port`, `tls`, `username`, `password`, `sender`). No row means no mail transport is configured.
 - Plugin settings: `PluginSettings` (`PLUGIN_SETTINGS`), one row per plugin definition (`Plugin_Name`, e.g. `snmp`) holding the variables saved from Settings -> Plugins in `Variables` (JSON), with `Version`/`Updated_By`. No row means the `config.py` defaults apply.
+- Device interfaces: `DeviceInterface` (`DEVICE_INTERFACE`, migration `b7d3f1a9c264`), one row per interface SNMP reports for a device (unique per `NetDiscoveryID` + `If_Index`): `Name`, `Speed_Bps` (null when unreported; `ifHighSpeed` is preferred over `ifSpeed`), `Admin_Status`, `Oper_Status`, `Monitored` (the administrator's choice, default false), `Present` (false once a refresh no longer finds a monitored interface) and `Last_Seen_At`. No rows means no change to the generated Nagios config.
 - Network profile: singleton `NetworkProfile` (`Id=1`) holding the editable name, reference and detail rows of the Network Health info card.
 - Audit/logging: `ActivityLog`, `ConfigurationChanges`, `ExportLog`.
 - Discovery: `NetworkDiscoveryStatus`, `SkippedService`, `NetworkDiscovery`,
@@ -295,6 +296,42 @@ Settings -> Plugins (`PluginSettings`, one row per plugin: `snmp`, `ncpa`);
 place of their `config.py` keys once per config build, for both `hosts.cfg` and the
 plugin reconciler. Per-host `Plugin_Variables` overrides still win.
 
+### Interface bandwidth
+
+Bandwidth is computed from stored samples; the Nagios checks are not changed.
+
+- **Services.** Every `DeviceInterface` with `Monitored` true becomes an `interfaces` fact for the
+  device's SNMP port (`load_host_plugin_facts()` -> `{"snmp": {"interfaces": [ifIndex, ...]}}`).
+  `snmp_checks()` in `plugin_registry.py` then adds, after the OID-table services, one in and one
+  out octet service per interface: `snmp-if<N>_in_octets-<port>-udp` (OID `1.3.6.1.2.1.2.2.1.10.<N>`)
+  and `snmp-if<N>_out_octets-<port>-udp` (`...16.<N>`). A device with no monitored interface produces
+  exactly the services it did before (the fixed interface 3 services `lan_in_octets` / `lan_out_octets`
+  stay in the OID table). At most 16 interfaces per device; `interfaces` must be whole numbers
+  (`PluginConfigurationError` otherwise). Changes are applied through
+  `regenerate_and_apply_config_status()` (via `apply_config_change()`), so the Nagios binary validates
+  them and a rejected config is rolled back.
+- **Interface discovery** (`network_discovery/interface_discovery.py`). Mechanism: the net-snmp
+  `snmpwalk` command (already required by `check_snmp`), run with an argument list and a 20 s limit
+  per column, SNMP v2c, over ifDescr, ifName, ifSpeed, ifHighSpeed, ifAdminStatus and ifOperStatus.
+  A Python SNMP library was rejected as a large new dependency, and `check_ifstatus` because it
+  reports state, not names, speeds and indexes. The port and community follow the SNMP plugin
+  rules (config defaults, the port found on the device, `Plugin_Variables["snmp"]`); address, port and
+  community are validated before they reach the command, and the community is never returned or logged
+  (it is visible in the process list for the length of a walk, as with `check_snmp`). The list is
+  refreshed on demand (`POST /hosts/<id>/interfaces/refresh`) and after the scan has saved its results
+  (`refresh_interfaces_after_scan()`: best effort, at most 64 devices and 120 s per scan; a device that
+  does not answer is skipped).
+- **Rate calculation** (`app/bandwidth.py`). `rate = (counter now - counter before) * 8 / seconds`
+  between consecutive samples of a service's first perf-data value. A sample's time is the Nagios
+  `Last_Check` (when the counter was read), not the stored `Timestamp`: the two differ by up to a
+  polling interval, which skewed rates by 17% in the lab. A decrease is a counter wrap when
+  the wrapped difference is a believable rate (width detected from the data: above 2**32 means a
+  64-bit counter), otherwise a restart, and that interval is left out; a believable rate is at most
+  110% of the link speed when known, else 100 Gbit/s. Samples more than 30 minutes apart are not
+  compared. Fewer than two valid samples (missing, non-numeric, negative or duplicate readings do not
+  count) gives no rate (`null`, shown as insufficient data). Rates are averaged into the requested
+  number of buckets; a bucket with no rate is `null`.
+
 ### Service identification
 
 A port number is a hint, not proof of the service. The default TCP scan range
@@ -399,7 +436,26 @@ answers) into `NCPADevicePartition.Name` (an NCPA node name such as `|` or
 `|data`, not an lsblk partition). Pseudo filesystems (`bpf`, `tmpfs`, ...) and
 the `|sys`, `|proc`, `|run`, `|dev` and `|boot|efi` trees are never recorded.
 The disk metric path is `disk/logical/{partition}/used_percent`; the path is
-stored raw and quoted once by the Nagios command template. If a metric cannot
+stored raw and quoted once by the Nagios command template. During config generation and plugin reconciliation, one authenticated API
+inventory request per agent confirms metric paths. Successful inventories are
+cached for 60 seconds, failures for 5 seconds, with at most 256 cache entries.
+Requests use connect/read timeouts of 1/2 seconds, refuse redirects, limit the
+response to 2 MiB and traverse at most 10,000 paths and depth 10. Unsupported
+paths are skipped individually through the existing skipped-service mechanism;
+failed inventories defer the three added defaults with a retry reason while preserving established checks. No probes run in the
+Nagios status poller. Read-only fact loading defaults to no probe.
+
+`NCPA_METRICS` preserves cpu, memory and per-partition disk and adds swap usage
+(`memory/swap/percent`, 50/80) and sda read/write rates
+(`disk/physical/sda/read_bytes`, `write_bytes`, Mi, `delta=1`, 100/200 MiB/s).
+Agents lacking sda skip these two defaults. Saved metric tables retain precedence
+and are not extended automatically on upgrade. With sda and P partitions, the
+default is 5 + P services instead of 2 + P. No load-average default is added:
+NCPA 3.5.0 on the tested agents has no such node. Process checks use path
+`processes`, queryargs `name=sshd`, and warning/critical `1:1` for an exact count.
+No endpoint, permission or database migration is added.
+
+If a plugin cannot
 be planned, the port falls back to the generic TCP check and the fallback is
 listed in the run's skipped services.
 
@@ -486,3 +542,35 @@ flask db init --multidb
 Migrate both databases together. Do not hand-edit generated migrations unless
 the generated operations have been reviewed and a manual correction is truly
 required.
+
+## Per-device email recipient selections
+
+`HostAlertRecipient` (`HOST_ALERT_RECIPIENT`, default bind, migration
+`a79e14c0b621`) links `NetworkDiscovery.NetDiscoveryID` and `User.UserID` as a
+composite primary key, with foreign keys to both and a user index. Merge revision
+`e79b7d3c2641` joins this migration with interface monitoring (`b7d3f1a9c264`),
+allowing normal `flask db upgrade` from either already-applied branch without
+rewriting a parent revision or changing data in the merge itself. No assignments
+are seeded, so upgraded devices keep their existing default contact group.
+There is no user-delete cascade. The standard upgrade `flask sync-permissions`
+adds `system.hosts.alerts` and grants it to Administrator.
+
+`create_host_cfg.py` loads assignments once per generation. For each generated
+device with eligible selections, it emits `pinpoint_host_<NetDiscoveryID>` with
+only Active users whose `Receive_Email_Alerts` is true. That host, discovered
+services (including monitored-interface in/out octet checks) and custom device checks reference its group. No selections or no
+eligible selections uses `system_users`; if no globally eligible contact exists,
+#80's behavior remains: no empty group and no contact_groups directive. Generated
+server checks and stock localhost objects retain their existing contact behavior.
+Numeric group names do not depend on request strings, addresses or hostnames.
+
+The recipient PUT flushes the candidate assignments, invokes the shared writer
+under its re-entrant config lock and commits only after validation and reload
+succeed (or the config is unchanged). Failed apply rolls back assignments and
+returns the shared writer's error. A successful save writes an activity entry.
+Stable device IDs preserve choices across rescans and address/hostname changes.
+Device merge unions choices on the target and drops duplicate source choices;
+retirement deletes that device's choices. No assignments remain on the merged
+source or retired device. Pause preserves choices for resume.
+
+NCPA inventory probing considers only devices with NCPA facts; an SNMP-only device with monitored interfaces does not require an NCPA deployment merely because `check_ncpa` is enabled globally.

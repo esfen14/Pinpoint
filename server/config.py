@@ -152,6 +152,9 @@ class Config:
             "warning": "70",
             "critical": "95",
         },
+        {"metric": "swap", "path": "memory/swap/percent", "warning": "50", "critical": "80"},
+        {"metric": "disk_read", "path": "disk/physical/sda/read_bytes", "warning": "100", "critical": "200", "units": "Mi", "queryargs": "delta=1"},
+        {"metric": "disk_write", "path": "disk/physical/sda/write_bytes", "warning": "100", "critical": "200", "units": "Mi", "queryargs": "delta=1"},
     ]
 
     # Folders where generated/backed-up host configs are stored.

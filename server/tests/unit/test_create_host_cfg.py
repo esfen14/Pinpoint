@@ -23,6 +23,7 @@ from app.network_discovery.create_host_cfg import (
 from app.system_models import (
     ActivityLog,
     AgentStatus,
+    DeviceInterface,
     DiscoveryStatus,
     NCPADeployment,
     NCPADevicePartition,
@@ -159,6 +160,21 @@ class TestSnmpHost:
             "snmp-uptime-161-udp": "pinpoint_nd_snmp!161!public!1.3.6.1.2.1.1.3.0!",
             "snmp-memory_total-161-udp": "pinpoint_nd_snmp!161!public!1.3.6.1.4.1.2021.4.5.0!",
             "snmp-lan_status-161-udp": "pinpoint_nd_snmp!161!public!1.3.6.1.2.1.2.2.1.8.3!",
+        }
+
+    def test_interfaces_add_in_and_out_octet_services(self, app, plugin_config):
+        host = make_host("switch-a", udp={"161": "snmp"}, net_discovery_id=7)
+        facts = {7: {"snmp": {"interfaces": [2, 10]}}}
+        with app.app_context():
+            services = as_dict(build_host_services(host, facts, plugin_config))
+            defaults = as_dict(build_host_services(host, {}, plugin_config))
+
+        assert {name: value for name, value in services.items() if name in defaults} == defaults
+        assert {name: value for name, value in services.items() if name not in defaults} == {
+            "snmp-if2_in_octets-161-udp": "pinpoint_nd_snmp!161!public!1.3.6.1.2.1.2.2.1.10.2!",
+            "snmp-if2_out_octets-161-udp": "pinpoint_nd_snmp!161!public!1.3.6.1.2.1.2.2.1.16.2!",
+            "snmp-if10_in_octets-161-udp": "pinpoint_nd_snmp!161!public!1.3.6.1.2.1.2.2.1.10.10!",
+            "snmp-if10_out_octets-161-udp": "pinpoint_nd_snmp!161!public!1.3.6.1.2.1.2.2.1.16.10!",
         }
 
     def test_host_overrides_community_port_and_oids(self, app, plugin_config):
@@ -433,6 +449,20 @@ class TestLoadHostPluginFacts:
             deployed.NetDiscoveryID: {"ncpa": {"token": "new-token", "partitions": ["nvme0n1p2"]}}
         }
 
+    def test_monitored_interfaces_become_snmp_facts(self, db_session, admin_user):
+        device = make_device(db_session, admin_user, "switch", "10.0.0.4")
+        other = make_device(db_session, admin_user, "other", "10.0.0.5")
+        for device_id, if_index, monitored in (
+            (device.NetDiscoveryID, 4, True), (device.NetDiscoveryID, 2, True),
+            (device.NetDiscoveryID, 9, False), (other.NetDiscoveryID, 1, False),
+        ):
+            db_session.session.add(DeviceInterface(
+                NetDiscoveryID=device_id, If_Index=if_index, Name=f"eth{if_index}", Monitored=monitored,
+            ))
+        db_session.session.commit()
+
+        assert load_host_plugin_facts() == {device.NetDiscoveryID: {"snmp": {"interfaces": [2, 4]}}}
+
     def test_loaded_hosts_carry_id_and_overrides(self, db_session, admin_user):
         device = make_device(
             db_session, admin_user, "switch", "10.0.0.3",
@@ -532,7 +562,7 @@ class TestCreateHostCfgFile:
             assert re.search(r"flap_detection_enabled\s+0", block)
             assert "_flap_threshold" not in block
 
-    def test_each_host_gets_only_its_own_services(self, app, db_session, admin_user, plugin_config, tmp_path):
+    def test_each_host_gets_only_its_own_services(self, app, db_session, admin_user, plugin_config, tmp_path, ncpa_inventory):
         ncpa_device = make_device(db_session, admin_user, "host-b", "10.0.0.12")
         make_ncpa_deployment(db_session, ncpa_device, "tokenB", ["sda1"])
         db_session.session.commit()
@@ -936,3 +966,94 @@ class TestNotificationScriptPath:
     def test_only_plain_absolute_paths_are_written_into_nagios_config(self, path, safe):
         from app.network_discovery import host_config_templates as templates
         assert bool(templates._SAFE_COMMAND_PATH.match(path)) is safe
+
+
+
+
+class TestNcpaPathVerification:
+    def test_missing_metric_is_recorded_and_other_services_survive(self, app, plugin_config):
+        host = make_host('h', tcp={'5693': 'ncpa'})
+        facts = {host['data']['net_discovery_id']: {'ncpa': {
+            'token': 'test-token', 'partitions': [], 'available_paths': frozenset({'cpu/percent'}),
+        }}}
+        skipped = []
+        with app.app_context():
+            result = plan_host_services(host, facts, plugin_config, skipped)
+        assert [s['name'] for s in result] == ['ncpa-cpu-5693-tcp']
+        assert len(skipped) == 2
+        assert 'memory' in skipped[0]['reason']
+        assert all('test-token' not in str(s) for s in skipped)
+
+    def test_probe_is_bounded_and_does_not_follow_redirects(self, monkeypatch):
+        from unittest.mock import Mock
+        from app.network_discovery import create_host_cfg as module
+        response = Mock(status_code=200)
+        import json
+        response.iter_content.return_value = [json.dumps({'root': {'cpu': {'percent': []}, 'memory': {'swap': {'percent': [0, '%']}}}}).encode()]
+        get = Mock(return_value=response)
+        monkeypatch.setattr(module.requests, 'get', get)
+        module.ncpa_path_cache.clear()
+        assert module.probe_ncpa_paths('10.78.0.2', 5693, 'private-token') == frozenset({'cpu', 'cpu/percent', 'memory', 'memory/swap', 'memory/swap/percent'})
+        kwargs = get.call_args.kwargs
+        assert kwargs['timeout'] == (1, 2)
+        assert kwargs['allow_redirects'] is False
+        assert kwargs['params'] == {'token': 'private-token'}
+        module.probe_ncpa_paths('10.78.0.2', 5693, 'private-token')
+        assert get.call_count == 1
+
+    def test_probe_failure_has_no_secret_in_skipped_reason(self, monkeypatch):
+        from unittest.mock import Mock
+        from app.network_discovery import create_host_cfg as module
+        monkeypatch.setattr(module.requests, 'get', Mock(side_effect=module.requests.Timeout('secret-token')))
+        module.ncpa_path_cache.clear()
+        assert module.probe_ncpa_paths('10.78.0.2', 5693, 'secret-token') is None
+
+    @pytest.mark.parametrize('status,body', [
+        (500, {'root': {'cpu': {'percent': []}}}),
+        (302, {'root': {'cpu': {'percent': []}}}),
+        (200, {'error': {'message': 'private-token'}}),
+        (200, {'root': 'invalid'}),
+        (200, {'root': {'error': {'message': 'private-token'}}}),
+    ])
+    def test_agent_errors_are_not_treated_as_supported(self, monkeypatch, status, body):
+        import json
+        from unittest.mock import Mock
+        from app.network_discovery import create_host_cfg as module
+        response = Mock(status_code=status)
+        response.iter_content.return_value = [json.dumps(body).encode()]
+        get = Mock(return_value=response)
+        monkeypatch.setattr(module.requests, 'get', get)
+        module.ncpa_path_cache.clear()
+        assert module.probe_ncpa_paths('10.78.0.2', 5693, 'private-token') is None
+        response.close.assert_called_once()
+
+    def test_limits_response_size(self, monkeypatch):
+        from unittest.mock import Mock
+        from app.network_discovery import create_host_cfg as module
+        response = Mock(status_code=200)
+        response.iter_content.return_value = [b'x' * (2 * 1024 * 1024 + 1)]
+        monkeypatch.setattr(module.requests, 'get', Mock(return_value=response))
+        module.ncpa_path_cache.clear()
+        assert module.probe_ncpa_paths('10.78.0.2', 5693, 'test-token') is None
+        response.close.assert_called_once()
+
+
+    def test_excessive_json_nesting_is_an_unverified_inventory(self, monkeypatch):
+        from unittest.mock import Mock
+        from app.network_discovery import create_host_cfg as module
+        response = Mock(status_code=200)
+        response.iter_content.return_value = [b'{"root":' + b'{"n":' * 1200 + b'0' + b'}' * 1200 + b'}']
+        monkeypatch.setattr(module.requests, 'get', Mock(return_value=response))
+        module.ncpa_path_cache.clear()
+        assert module.probe_ncpa_paths('10.78.0.2', 5693, 'test-token') is None
+        response.close.assert_called_once()
+
+    def test_excessive_node_count_is_unverified_instead_of_a_partial_inventory(self, monkeypatch):
+        import json
+        from unittest.mock import Mock
+        from app.network_discovery import create_host_cfg as module
+        response = Mock(status_code=200)
+        response.iter_content.return_value = [json.dumps({'root': {str(i): [] for i in range(10001)}}).encode()]
+        monkeypatch.setattr(module.requests, 'get', Mock(return_value=response))
+        module.ncpa_path_cache.clear()
+        assert module.probe_ncpa_paths('10.78.0.2', 5693, 'test-token') is None

@@ -91,7 +91,7 @@ const NCPA_TABLE: TableConfig = {
   noun: 'metric',
   target: 'NCPA host',
   note:
-    'A path containing {partition} becomes one service per disk partition found when NCPA was installed (e.g. disk_root, disk_boot).',
+    'A path containing {partition} becomes one service per disk partition found when NCPA was installed (e.g. disk_root, disk_boot). Defaults also check swap usage and disk read/write rates on sda (MiB/s, warning 100, critical 200). Change the disk path and thresholds to suit your host. Unsupported paths are skipped; rescan after an agent becomes reachable. NCPA 3.5.0 has no confirmed load-average path.',
   columns: [
     descriptionColumn,
     {
@@ -184,7 +184,7 @@ function RowTable({ config, rows, savedMetrics, onChange }: RowTableProps) {
       <div className="overflow-x-auto rounded-xl border border-[var(--border)]">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-[var(--border)] text-left text-xs text-[var(--text-muted)]">
+            <tr className="border-b border-[var(--border)] text-left text-sm text-[var(--text-muted)]">
               {config.columns.map((column) => (
                 <th key={column.key} className="px-3 py-2 font-medium">
                   {column.label}
@@ -197,7 +197,7 @@ function RowTable({ config, rows, savedMetrics, onChange }: RowTableProps) {
           <tbody>
             {rows.length === 0 && (
               <tr>
-                <td colSpan={config.columns.length + 1} className="px-3 py-3 text-xs text-[var(--text-muted)]">
+                <td colSpan={config.columns.length + 1} className="px-3 py-3 text-sm text-[var(--text-muted)]">
                   No {config.noun}s. Add at least one.
                 </td>
               </tr>
@@ -211,7 +211,7 @@ function RowTable({ config, rows, savedMetrics, onChange }: RowTableProps) {
                       value={row[column.key]}
                       placeholder={column.placeholder}
                       onChange={(e) => update(index, column.key, e.target.value)}
-                      className={`${inputClass} font-mono text-xs`}
+                      className={`${inputClass} font-mono text-sm`}
                     />
                   </td>
                 ))}
@@ -240,9 +240,9 @@ function RowTable({ config, rows, savedMetrics, onChange }: RowTableProps) {
         <Plus size={15} /> Add {config.noun}
       </button>
 
-      {config.note && <p className="mt-3 text-xs text-[var(--text-muted)]">{config.note}</p>}
+      {config.note && <p className="mt-3 text-sm text-[var(--text-muted)]">{config.note}</p>}
       {renamed && (
-        <p className="mt-3 text-xs text-amber-600 dark:text-amber-300">
+        <p className="mt-3 text-sm text-amber-600 dark:text-amber-300">
           A new or renamed description creates a new Nagios service on every {config.target}; a removed or
           renamed one stops its service, and that service&apos;s history is not carried over.
         </p>
@@ -280,7 +280,7 @@ function BandwidthHelper({ rows, onChange }: { rows: PluginSettingsRow[]; onChan
   return (
     <div className="mb-5 rounded-xl border border-[var(--border)] bg-[var(--card-alt)] p-4">
       <p className="text-sm font-medium text-[var(--text)]">Show bandwidth on Network Health</p>
-      <p className="mt-1 text-xs text-[var(--text-muted)]">
+      <p className="mt-1 text-sm text-[var(--text-muted)]">
         This tells the system to watch how much data goes in and out of your computers. Type the name of the network
         connection they use (on most Linux computers it is <span className="font-mono">eth0</span> or <span className="font-mono">ens18</span>),
         then press the button and Save. The Bandwidth card fills in after the next check.
@@ -291,7 +291,7 @@ function BandwidthHelper({ rows, onChange }: { rows: PluginSettingsRow[]; onChan
           value={connection}
           onChange={(e) => { setConnection(e.target.value); setProblem(null) }}
           placeholder="e.g. eth0"
-          className={`${inputClass} max-w-[200px] font-mono text-xs`}
+          className={`${inputClass} max-w-[200px] font-mono text-sm`}
         />
         <button
           type="button"
@@ -301,11 +301,89 @@ function BandwidthHelper({ rows, onChange }: { rows: PluginSettingsRow[]; onChan
           <Plus size={15} /> {added ? 'Update bandwidth rows' : 'Add bandwidth rows'}
         </button>
       </div>
-      {problem && <p className="mt-2 text-xs text-red-500">{problem}</p>}
+      {problem && <p className="mt-2 text-sm text-red-500">{problem}</p>}
       {added && !problem && (
-        <p className="mt-2 text-xs text-[var(--text-muted)]">
+        <p className="mt-2 text-sm text-[var(--text-muted)]">
           Bandwidth rows are in the table below. Press Save to start watching.
         </p>
+      )}
+    </div>
+  )
+}
+
+// Generate a draft using NCPA's exact process-name filter; saving remains explicit.
+function ProcessHelper({ rows, onChange, disabled }: {
+  rows: PluginSettingsRow[]
+  onChange: (rows: PluginSettingsRow[]) => void
+  disabled: boolean
+}) {
+  const [name, setName] = useState('')
+  const [count, setCount] = useState('1')
+  const [problem, setProblem] = useState<string | null>(null)
+  const [generatedMetric, setGeneratedMetric] = useState<string | null>(null)
+
+  const add = () => {
+    const process = name.trim()
+    if (!/^[A-Za-z0-9_][A-Za-z0-9_.-]{0,23}$/.test(process)) {
+      setProblem('Process name must start with a letter, number or underscore and use only letters, numbers, dots, dashes or underscores (24 characters at most).')
+      return
+    }
+    if (!/^\d+$/.test(count) || Number(count) > 1000000) {
+      setProblem('Expected count must be a whole number from 0 to 1000000.')
+      return
+    }
+    const metric = `process_${process.toLowerCase().replace(/[.-]/g, '_')}`
+    if (rows.some((row) => row.metric.trim() === metric)) {
+      setProblem(`A row named "${metric}" already exists. Edit that row or choose another process name.`)
+      return
+    }
+    if (rows.length >= MAX_ROWS) {
+      setProblem(`At most ${MAX_ROWS} metrics are allowed.`)
+      return
+    }
+    const expected = String(Number(count))
+    onChange([...rows, {
+      metric, path: 'processes', queryargs: `name=${process}`,
+      warning: `${expected}:${expected}`, critical: `${expected}:${expected}`, units: '',
+    }])
+    setProblem(null)
+    setGeneratedMetric(metric)
+  }
+
+  return (
+    <div className="mb-5 rounded-xl border border-[var(--border)] bg-[var(--card-alt)] p-4">
+      <p className="text-sm font-medium text-[var(--text)]">Watch a process</p>
+      <p className="mt-1 text-xs text-[var(--text-muted)]">
+        Enter the exact process name as shown by the agent and the number you expect on every NCPA host.
+        A different count raises a Critical alert. Names are case sensitive. A count of zero checks that a process stays stopped.
+      </p>
+      <div className="mt-3 flex flex-wrap items-end gap-3">
+        <label className="text-xs text-[var(--text-muted)]">
+          Process name
+          <input
+            value={name} placeholder="e.g. sshd" disabled={disabled}
+            onChange={(event) => { setName(event.target.value); setProblem(null) }}
+            className={`${inputClass} mt-1 max-w-[220px] font-mono text-xs`}
+          />
+        </label>
+        <label className="text-xs text-[var(--text-muted)]">
+          Expected process count
+          <input
+            type="number" min="0" max="1000000" step="1" value={count} disabled={disabled}
+            onChange={(event) => { setCount(event.target.value); setProblem(null) }}
+            className={`${inputClass} mt-1 max-w-[160px] text-xs`}
+          />
+        </label>
+        <button
+          type="button" onClick={add} disabled={disabled || rows.length >= MAX_ROWS}
+          className="flex items-center gap-1.5 rounded-xl border border-[var(--border)] px-3 py-2 text-sm text-[var(--text)] hover:bg-[var(--hover)] disabled:opacity-40"
+        >
+          <Plus size={15} /> Add process check
+        </button>
+      </div>
+      {problem && <p role="alert" className="mt-2 text-xs text-red-500">{problem}</p>}
+      {generatedMetric && rows.some((row) => row.metric === generatedMetric) && !problem && (
+        <p className="mt-2 text-xs text-[var(--text-muted)]">Review the generated row in the table below before saving.</p>
       )}
     </div>
   )
@@ -361,7 +439,10 @@ function PluginSection({ config, section, onSaved }: PluginSectionProps) {
       )}
 
       {config.plugin === 'ncpa' && (
-        <BandwidthHelper rows={draft} onChange={(rows) => { setDraft(rows); setSaveError(null) }} />
+        <>
+          <BandwidthHelper rows={draft} onChange={(rows) => { setDraft(rows); setSaveError(null) }} />
+          <ProcessHelper rows={draft} onChange={(rows) => { setDraft(rows); setSaveError(null) }} disabled={isSaving} />
+        </>
       )}
 
       <RowTable
@@ -372,7 +453,7 @@ function PluginSection({ config, section, onSaved }: PluginSectionProps) {
       />
 
       {notice && (
-        <p className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-600 dark:text-amber-400">
+        <p className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-600 dark:text-amber-400">
           {notice}
         </p>
       )}

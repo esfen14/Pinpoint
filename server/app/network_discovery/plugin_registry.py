@@ -105,6 +105,7 @@ class ServiceCheck:
     layered on top of the plugin's resolved variables for this service only.
     """
     metric: Optional[str]
+    skip_reason: Optional[str] = None
     variables: dict = field(default_factory=dict)
 
 
@@ -116,11 +117,51 @@ def single_check(variables):
     return [ServiceCheck(metric=None)]
 
 
+# IF-MIB columns the bandwidth monitoring reads: ifInOctets and ifOutOctets, indexed by ifIndex.
+IF_IN_OCTETS_OID = "1.3.6.1.2.1.2.2.1.10"
+IF_OUT_OCTETS_OID = "1.3.6.1.2.1.2.2.1.16"
+
+# Most interfaces one device can have monitored; each one adds two Nagios services.
+MAX_MONITORED_INTERFACES = 16
+MAX_INTERFACE_INDEX = 2 ** 31 - 1
+
+
+def interface_metrics(if_index):
+    """
+    Return (in_metric, out_metric), the SNMP metric names of the octet services of the interface
+    with this ifIndex, e.g. ("if5_in_octets", "if5_out_octets") for the services
+    "snmp-if5_in_octets-161-udp" and "snmp-if5_out_octets-161-udp".
+    """
+    return f"if{if_index}_in_octets", f"if{if_index}_out_octets"
+
+
+def valid_interface_indexes(interfaces):
+    """
+    Return the ifIndex numbers in `interfaces` as a sorted list without duplicates, or raise
+    PluginConfigurationError. Expects a list of integers from 1 to MAX_INTERFACE_INDEX, at most
+    MAX_MONITORED_INTERFACES of them.
+    """
+    if not isinstance(interfaces, list):
+        raise PluginConfigurationError("SNMP variable 'interfaces' must be a list.")
+    indexes = set()
+    for entry in interfaces:
+        if isinstance(entry, bool) or not isinstance(entry, int) or not 1 <= entry <= MAX_INTERFACE_INDEX:
+            raise PluginConfigurationError("Each SNMP interface must be an interface index (a whole number).")
+        indexes.add(entry)
+    if len(indexes) > MAX_MONITORED_INTERFACES:
+        raise PluginConfigurationError(f"At most {MAX_MONITORED_INTERFACES} interfaces can be monitored on one device.")
+    return sorted(indexes)
+
+
 def snmp_checks(variables):
     """
     One service per configured OID. Expects variables["oids"] to be a list of
     {"metric": ..., "oid": ...} dicts; any other key in an entry (warning,
     critical, label, units) is passed through as a per-service variable.
+
+    variables["interfaces"], when present, is a list of ifIndex numbers chosen for bandwidth
+    monitoring (Device Inventory). Each adds an in and an out octet service after the OID
+    services; see interface_metrics. With no interfaces the services are exactly the OID list.
     """
     oids = variables.get("oids") or []
     if not isinstance(oids, list):
@@ -134,6 +175,11 @@ def snmp_checks(variables):
         per_service = dict(entry)
         metric = per_service.pop("metric")
         checks.append(ServiceCheck(metric=metric, variables=per_service))
+
+    for if_index in valid_interface_indexes(variables.get("interfaces") or []):
+        in_metric, out_metric = interface_metrics(if_index)
+        checks.append(ServiceCheck(metric=in_metric, variables={"oid": f"{IF_IN_OCTETS_OID}.{if_index}"}))
+        checks.append(ServiceCheck(metric=out_metric, variables={"oid": f"{IF_OUT_OCTETS_OID}.{if_index}"}))
     return checks
 
 
@@ -143,7 +189,9 @@ def ncpa_checks(variables):
     a list of {"metric": ..., "path": ...} dicts. A path containing
     "{partition}" expands to one service per entry in variables["partitions"]
     (discovered during NCPA installation); if no partitions are known, the
-    entry's "fallback_path" is used as a single service instead.
+    entry's "fallback_path" is used as a single service instead. Confirmed
+    unavailable paths carry a skip_reason; an unverified inventory defers the
+    added defaults while preserving established checks.
     """
     metrics = variables.get("metrics") or []
     partitions = variables.get("partitions") or []
@@ -172,6 +220,24 @@ def ncpa_checks(variables):
                 ))
         elif fallback_path:
             checks.append(ServiceCheck(metric=metric, variables={**per_service, "metric_path": fallback_path}))
+    available = variables.get("available_paths")
+    unverified = variables.get("paths_unverified", False)
+    if available is not None or unverified:
+        # Inventory failure is unknown, not proof that established paths vanished.
+        # Defer only the added defaults; a confirmed missing path skips any metric.
+        from config import Config
+        added_defaults = {(entry["metric"], entry["path"]) for entry in Config.NCPA_METRICS
+                          if entry["metric"] in {"swap", "disk_read", "disk_write"}}
+        verified = []
+        for check in checks:
+            path = check.variables["metric_path"]
+            reason = None
+            if unverified and (check.metric, path) in added_defaults:
+                reason = f"NCPA metric {sanitize_name_part(check.metric)}: agent paths could not be verified; retry when the agent is reachable."
+            elif available is not None and path not in available:
+                reason = f"NCPA metric {sanitize_name_part(check.metric)}: the agent does not provide this path."
+            verified.append(ServiceCheck(metric=check.metric, variables=check.variables, skip_reason=reason))
+        checks = verified
     return checks
 
 

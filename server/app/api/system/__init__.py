@@ -16,9 +16,11 @@ from app.api.system import statistics
 from app.api.system import notifications
 from app.api.system import history
 from app.api.system import device_identity
+from app.api.system import device_interfaces
 from app.api.system import discovery_settings
 from app.api.system import network_profile
 from app.api.system import plugin_settings
 from app.api.system import smtp_settings
 from app.api.system import notification_policy
 from app.api.system import remediation
+from app.api.system import host_recipients
