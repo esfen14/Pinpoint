@@ -191,3 +191,26 @@ def test_automatic_retirement_clears_children(app,db_session,devices):
     update_unseen_devices({d.NetDiscoveryID for d in devices if d!=a},{a.Network})
     db.session.commit()
     assert a.Device_State is DeviceState.RETIRED and parents(c)==[]
+
+def test_real_successful_reload_does_not_commit_before_route_audit(app,logged_in_client,devices,tmp_path,monkeypatch):
+    from types import SimpleNamespace
+    import app.network_discovery.create_host_cfg as cfg
+    c,a,b,_=devices;link(c,a)
+    monkeypatch.setitem(app.config,'HOST_CONFIG_DIR',tmp_path)
+    original=cfg._create_host_cfg_file(cfg._load_monitored_hosts()).read_text()
+    live=tmp_path/'running.cfg';live.write_text(original)
+    monkeypatch.setitem(app.config,'NAGIOS_HOST_CFG',live)
+    monkeypatch.setitem(app.config,'BACKUP_DIR',tmp_path/'backup')
+    with patch.object(cfg,'_validate_config',return_value=(True,'Valid')),patch.object(cfg.subprocess,'run',return_value=SimpleNamespace(returncode=0)),patch('app.api.system.device_identity.create_user_log',side_effect=RuntimeError('Audit failed')):
+        response=save(logged_in_client,c,[b.NetDiscoveryID])
+    assert response.status_code==500
+    assert parents(c)==[a.NetDiscoveryID]
+    assert config_fingerprint(live.read_text())==config_fingerprint(original)
+
+def test_unchanged_apply_reports_actual_writer_status(logged_in_client,devices,writer):
+    writer.return_value=('unchanged','No config reload needed.')
+    c,a,_,_=devices
+    result=save(logged_in_client,c,[a.NetDiscoveryID])
+    assert result.status_code==200
+    assert result.json['data']['config_applied'] is False
+    assert result.json['data']['config_ok'] is True

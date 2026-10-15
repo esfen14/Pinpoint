@@ -77,7 +77,7 @@ export function TopologyPage() {
       {!loading && data?.devices.length === 0 && <p className="mt-4">No inventory devices yet.</p>}
       {!!data?.devices.length && <div className="mt-6 flex flex-wrap gap-4">
         <div className="h-[600px] min-w-0 flex-1 basis-96 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--bg)]">
-          <ReactFlow nodes={graph.nodes} edges={graph.edges} nodeTypes={nodeTypes}
+          <ReactFlow key={device || edge ? 'details' : 'overview'} colorMode={settings.theme === 'light' ? 'light' : 'dark'} nodes={graph.nodes} edges={graph.edges} nodeTypes={nodeTypes}
             nodesDraggable={false} nodesConnectable={false} edgesReconnectable={false}
             onNodeClick={(_, node: DeviceNode) => setSelected({ type: 'device', id: node.id })}
             onEdgeClick={(_, item: Edge) => setSelected({ type: 'link', id: item.id })}

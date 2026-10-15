@@ -123,9 +123,9 @@ Requirement coverage (all issue sections):
 
 ## Plan
 
-1. [ ] Add failing backend parent/API/config/lifecycle tests in `server/tests/unit/test_device_parents.py`; implement relationship model, validation/serialization in existing device modules, rendering and atomic apply; document routes/data contract; run focused regressions and backend gate.
-2. [ ] Generate/review multi-bind migration in `server/migrations/versions/`; add populated round-trip test/runner in `server/tests/`; verify upgrade/downgrade and backend gate.
-3. [ ] Add failing frontend editor/layout/topology tests under `client/src/test/`; implement shared parent editor/API/types, wire Inventory and existing React Flow prototype, routing/navigation/access, automatic hierarchy and device-only panels; update frontend/domain specs; verify frontend gate.
+1. [x] Add failing backend parent/API/config/lifecycle tests in `server/tests/unit/test_device_parents.py`; implement relationship model, validation/serialization in existing device modules, rendering and atomic apply; document routes/data contract; run focused regressions and backend gate.
+2. [x] Generate/review multi-bind migration in `server/migrations/versions/`; add populated round-trip test/runner in `server/tests/`; verify upgrade/downgrade and backend gate.
+3. [x] Add failing frontend editor/layout/topology tests under `client/src/test/`; implement shared parent editor/API/types, wire Inventory and existing React Flow prototype, routing/navigation/access, automatic hierarchy and device-only panels; update frontend/domain specs; verify frontend gate.
 4. [ ] Record isolated live Nagios reachability/rollback evidence in `docs/test-runs/` using the template; update remaining specifications and local issue mirror; run docs/all verification and checkpoint.
 5. [ ] Re-read issue and prove acceptance; publish PR using `.github/pull_request_template.md`, monitor CI; keep draft/progress if live acceptance or human decisions remain outstanding.
 
@@ -135,14 +135,15 @@ Requirement coverage (all issue sections):
 |---|---|---|---|
 | 1 | Backend graph/model/API/rendering and generated migration; baseline tests fail as expected before implementation. Fixed an authorization test that reused the authenticated client fixture; 308 focused regressions and then 34 parent/migration proofs pass. | FLASK_DEBUG=1 .venv/bin/python -m pytest tests/unit/test_device_parents.py tests/unit/test_device_parent_migration.py -q | 34 passed; first full backend gate still running and contains the already-fixed test fixture failure |
 | 2 | Added generated/reviewed migration and populated round trip; shared frontend editor, hierarchy, real-data topology, route/access wiring and specs; protected unsaved drafts during refresh | scripts/verify.sh frontend; scripts/verify.sh docs; focused parent proof | Frontend green (30 warnings, no errors); docs green; 35 latest parent tests pass. Stable full backend gate finishing. |
+| 3 | Full verification green; added real-writer deferred-commit compensation proof; browser fixture smoke verified real React Flow, fixed positions, editor and read-only; corrected applied/unchanged response flags | scripts/verify.sh all; parent/migration focus; browser fixture script | Green gates and 38 focused tests. Routed trials verify final reachability but max-attempts=1 can emit transient child DOWN; default 3-attempt trial pending. |
 | intake | Reviewed issue scope and existing React Flow frontend; created isolated checkout | gh issue view 117 --json body,comments,title | Product decisions recorded; no implementation yet |
 
 ## State for the next session
 
-- Last check run (exact command): cd server && FLASK_DEBUG=1 .venv/bin/python -m pytest tests/unit/test_device_parents.py tests/unit/test_device_parent_migration.py -q
-- Result: 34 passed in 6.23s. Broader focused regression: 308 passed in 39.12s. Initial full backend gate running at /tmp/issue117-backend-gate.log; it collected the old test-auth fixture before its correction.
+- Last check run (exact command): scripts/verify.sh all
+- Result: green (full output /tmp/issue117-all.log). Latest focused parent/migration proof is 38 passed in 7.86s. Browser fixture smoke passed (real React Flow, intercepted API).
 - Hypothesis: Existing writer and Inventory modules can support this without a new dependency; use a relationship table and shared editor.
-- Next action: Finish stable backend gate and run isolated routed Nagios acceptance per server/tests/plans/MANUAL_TOPOLOGY_ACCEPTANCE.md.
+- Next action: Complete default-retry routed trial in /tmp/issue117-live-final.log, recording HARD states and actual checks rather than initial/soft snapshots; publish sanitized report with trial limitations.
 
 ## Decisions and notes
 
@@ -159,3 +160,6 @@ Requirement coverage (all issue sections):
 - Round 2: frontend first failed on missing editor/layout modules, then 82 focused tests passed. A malformed response guard allows unchanged drawer mocks to show a parent loading error rather than crash. Added a draft-preservation regression and minute-based shared refresh. Frontend gate passed once with only known lint/build warnings; revised code gate pending. Docs gate passed after matching the route-catalog parser's exact component-name cell.
 
 - Source security review: all parent names use full-match whitelist before directive rendering; request IDs never reach commands; no secrets added to API/data; existing Nagios and resource rollback retained. Graph validation/layout are iterative, no new application dependencies. Added compensating regeneration after rollback if audit/commit fails following an applied parent edit.
+
+- Live evidence: disposable Docker containers/networks only, all owned and cleaned after each trial; no existing lab/VM touched. First setups needed a stock service definition and a same-user Nagios validator; root-run temporary config was unreadable after Nagios privilege drop. Accelerated max-attempts=1 trials showed transient child DOWN before UNREACHABLE. Nagios official docs discuss cached reachability and recommend max_check_attempts >1. The current trial uses Pinpoint's default 3 attempts and waits for HARD states with nonzero last_check before evaluating notifications. Preserve these limitations in the report; do not claim universal child-DOWN suppression.
+- After the full gate began, minor apply-status reporting and fit-on-panel-open fixes were made; current parent/migration focused proof and browser smoke pass. CI must verify the final source tree. No tests were weakened; topology-exclusion route tests changed only to reflect the approved scope reversal.
