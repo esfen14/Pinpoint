@@ -629,7 +629,7 @@ class TestSweep:
 
 class TestSchedulerJob:
 
-    def test_job_is_registered_with_the_configured_interval(self, app):
+    def test_job_is_registered_with_the_configured_interval(self, app, db_session):
         from app import scheduler
 
         fake = MagicMock()

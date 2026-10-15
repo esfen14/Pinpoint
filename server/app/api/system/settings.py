@@ -83,7 +83,7 @@ def get_settings():
 
 
 def serialize_settings_save(function):
-    """Serialize settings reads/saves and scheduler compensation in this worker."""
+    """Serialize settings saves and scheduler compensation in this worker."""
     @wraps(function)
     def wrapped(*args, **kwargs):
         from app.scheduler import settings_schedule_lock
