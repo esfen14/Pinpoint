@@ -10,27 +10,27 @@ All E, F and H checkboxes are retained below; review approvals remain human-owne
 
 #### E. Acceptance Criteria
 
-- [ ] **Part 3.1 (System):** A saved escalation appears as a valid `define serviceescalation` or `hostescalation` block and Nagios validates the config.
-- [ ] **Part 3.1 (System):** An escalation whose group has no eligible member is not written, and saving it explains why.
-- [ ] **Part 3.1 (System):** Invalid values (first greater than last, unknown group, out-of-range interval) return 400.
-- [ ] **Part 3.1 (System):** Deleting an escalation removes it from the live config.
-- [ ] **Part 3.1 (System):** With no escalations defined, generated config is unchanged.
-- [ ] **Part 3.2 (Web-Interface):** An administrator can add, edit and delete an escalation and sees it after reload.
-- [ ] **Part 3.2 (Web-Interface):** Invalid input is blocked in the form and server errors are shown.
-- [ ] **Part 3.2 (Web-Interface):** Users without permission do not see the card.
-- [ ] **Part 3.2 (Web-Interface):** The settings page tests pass unchanged.
+- [x] **Part 3.1 (System):** A saved escalation appears as a valid `define serviceescalation` or `hostescalation` block and Nagios validates the config.
+- [x] **Part 3.1 (System):** An escalation whose group has no eligible member is not written, and saving it explains why.
+- [x] **Part 3.1 (System):** Invalid values (first greater than last, unknown group, out-of-range interval) return 400.
+- [x] **Part 3.1 (System):** Deleting an escalation removes it from the live config.
+- [x] **Part 3.1 (System):** With no escalations defined, generated config is unchanged.
+- [x] **Part 3.2 (Web-Interface):** An administrator can add, edit and delete an escalation and sees it after reload.
+- [x] **Part 3.2 (Web-Interface):** Invalid input is blocked in the form and server errors are shown.
+- [x] **Part 3.2 (Web-Interface):** Users without permission do not see the card.
+- [x] **Part 3.2 (Web-Interface):** The settings page tests pass unchanged.
 
 #### F. Required Deliverables
 
-- [ ] Updated application source code (paths in section C).
-- [ ] New or updated API endpoints, with route docstrings and permission checks.
-- [ ] Database migration (multi-database, with downgrade) and `flask sync-permissions` note if a permission is added.
-- [ ] Updated frontend components, types and routes (paths in section C).
-- [ ] Unit tests for new or modified logic.
-- [ ] Frontend interaction tests under `client/src/test/`.
-- [ ] Integration or regression tests for the workflows in section G.
-- [ ] Updated technical documentation: `spec files/Backend_Modules_and_Routes.md`, `spec files/Data_Model_and_Integrations.md`, `spec files/Frontend_Modules_and_Routes.md`, and `spec files/Implementation_Status.md`.
-- [ ] Updated user-facing documentation: Help text on the card.
+- [x] Updated application source code (paths in section C).
+- [x] New or updated API endpoints, with route docstrings and permission checks.
+- [x] Database migration (multi-database, with downgrade) and `flask sync-permissions` note if a permission is added.
+- [x] Updated frontend components, types and routes (paths in section C).
+- [x] Unit tests for new or modified logic.
+- [x] Frontend interaction tests under `client/src/test/`.
+- [x] Integration or regression tests for the workflows in section G.
+- [x] Updated technical documentation: `spec files/Backend_Modules_and_Routes.md`, `spec files/Data_Model_and_Integrations.md`, `spec files/Frontend_Modules_and_Routes.md`, and `spec files/Implementation_Status.md`.
+- [x] Updated user-facing documentation: Help text on the card.
 - [ ] Evidence that the functionality works: `scripts/verify.sh all` output attached to the pull request; plus a sanitized lab report in `docs/test-runs/` using its `TEMPLATE.md`.
 
 
@@ -125,12 +125,14 @@ Requirement coverage:
 
 | 2 | Live scoped escalation, real notification 1/2 routing, empty-group suppression/restore, actual Nagios rejection rollback, browser CRUD; added commit-failure and paused-scope edge tests, readable group labels | python3 /tmp/pinpoint-116-eligibility.py; notification resume runner; Playwright; focused backend/frontend edge tests | green: 11 live cases; 1 real browser test; 39 backend and 11 frontend edge tests |
 
+| 3 | Wrote sanitized report and run index, updated implementation status, final browser pass and baseline generator comparison; trimmed generated migration EOF whitespace | scripts/verify.sh docs; git diff origin/main --check; old/new generator comparison; py_compile | green: docs, diff and compile; all four baseline output modes byte-identical to e4130ccf; final browser pass in 4.5 s. Combined all check pending |
+
 ## State for the next session
 
-- Last check run (exact command): python3 /tmp/pinpoint-116-eligibility.py
-- Result (first failing lines, or "green"): green: opt-out/deactivation suppression and restoration, real Nagios rejection rollback, restored config validates
+- Last check run (exact command): scripts/verify.sh all
+- Result (first failing lines, or "green"): running; output /tmp/pinpoint-116-all.log, exec session 3840
 - Hypothesis: Prerequisites are satisfied; existing #79 group computation can supply escalation group choices and rendering. Implementation requires sensitive Nagios config changes, triggering the workflow's Needs a person stop.
-- Next action (one specific step, not "continue"): Run final browser check on this checkpoint and scripts/verify.sh all, then write the sanitized live report and open the PR after reviewing issue requirements.
+- Next action (one specific step, not "continue"): Collect scripts/verify.sh all result (session 3840, /tmp/pinpoint-116-all.log); if green, attach its output to the PR, remove this progress file, open the PR and watch CI.
 
 ## Decisions and notes
 
@@ -154,3 +156,7 @@ Requirement coverage:
 - Live cases: `test-results/issue116-live/cases.jsonl`; raw MIME captured locally in the separate appliance, copied to ignored `test-results/issue116-live/capture`. First normal recipient message at notification 1; distinct second recipient message at notification 2, while problem_has_been_acknowledged=0 and HARD CRITICAL. No external SMTP/inbox claim.
 - Harness corrections (not application defects): empty UDP list invokes nmap's default UDP set, so requested stop of the isolated scan, terminated only that container's nmap and restarted after Failed terminal status with UDP 161 and the same two /32 targets. Continued passive results were needed to reach HARD state and trigger repeat-notification evaluation. The initial runner observed the second MIME before status.dat refreshed and failed an immediate count assertion; resumed only after the live status recorded notification count 2. The real event and messages were preserved; no product code was changed for these corrections.
 - Browser source test added as explicit opt-in `client/e2e/escalations.lab.spec.ts`; temporary runner config /tmp/pinpoint-116-playwright.config.mjs. Initial browser pass used app c1bf732f; final rerun will cover the subsequent readable group-label refinement. Newly added focused edge tests pass (39 backend, 11 frontend), with no migration/source backend change after the earlier full backend pass.
+
+- Final issue re-read via gh issue view 116 --json body,comments,title: unchanged, no comments. E criteria all demonstrated by test_escalations.py, report and browser test. F source/migration/unit/frontend/spec/help deliverables complete; combined verification output attachment remains pending. Reviewer approval is human-owned and will not be claimed or bypassed.
+- One-off exact generator comparison: archived original e4130ccf server tree into /tmp/pinpoint-116-baseline, used identical seeded fixtures and frozen time/script path, generated old/new config for default recipients, selected recipients, all-selected-ineligible, and no eligible users. Four cases passed on each tree; all four complete outputs byte-identical. Scratch test was removed from this worktree before checkpoint; raw configs/logs under ignored test-results/issue116-byte-before and issue116-byte-after, /tmp/pinpoint-116-byte-*.log. This proves no-escalation behavior against the original implementation rather than only comparing two new outputs.
+- Final browser source/test at b4d2c164 passes (4.5 s). Seven backend implementation/template hashes match container contents; manifest in ignored live output. Subsequent migration change removes only an extra EOF blank line found by git diff --check. Python compilation and final docs/diff checks pass.

@@ -48,6 +48,7 @@ table while you test, not afterward.
 
 | Run | Kind | Commit | Result | Report |
 |---|---|---|---|---|
+| [2026-10-15 issue-116-escalations](2026-10-15-issue-116-escalations/REPORT.md) | Isolated Docker Nagios escalation routing and browser CRUD | backend `c1bf732f`, final browser `b4d2c164` | Pass: 12 scoped cases; external inbox/VM timing untested | [REPORT.md](2026-10-15-issue-116-escalations/REPORT.md) |
 | [2026-10-15 issue-79-inbox-confirmed](2026-10-15-issue-79-inbox-confirmed/REPORT.md) | Owner-confirmed actual selected/default inbox comparison | app `4ed80435` | Pass: selected inbox eight messages; default-only inbox four; exclusion confirmed | [REPORT.md](2026-10-15-issue-79-inbox-confirmed/REPORT.md) |
 | [2026-10-15 issue-79-rebuilt-inbox](2026-10-15-issue-79-rebuilt-inbox/REPORT.md) | Rebuilt VM, browser E2E and actual Gmail transport | `4ed80435` | Partial: 11 pass; owner inbox comparison pending; baseline restored | [REPORT.md](2026-10-15-issue-79-rebuilt-inbox/REPORT.md) |
 | [2026-10-15 issue-79-vm-browser](2026-10-15-issue-79-vm-browser/REPORT.md) | VM real Nagios host/service routing and Playwright | app `3d6471dc` | Partial: feature checks pass; snapshot restore failed, two inherited edits unrecovered; inbox pending | [REPORT.md](2026-10-15-issue-79-vm-browser/REPORT.md) |
