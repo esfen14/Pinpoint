@@ -121,15 +121,16 @@ Requirement coverage:
 |---|---|---|---|
 | Intake | Read workflow, issue/prerequisites/specifications and relevant writer/model/API/UI source; created isolated worktree; no application edits | gh issue view 79/113; git log -6 --oneline origin/main | #79 merged as e4130ccf (PR #160); #113 closed/merged. No existing #116 branch. |
 | Plan | Saved finish conditions and coverage; stopped at explicit sensitive-module approval boundary | python3 -I scripts/check_agent_progress.py | green |
-
 | 1 | Backend model/migration/group reuse, API, rendering and frontend settings card, with owning specs; frontend work ran while the independent backend suite was pending | Focused backend 184; focused frontend/access/layout 34; scripts/verify.sh backend/frontend/docs | green: backend 2858 passed/14 skipped; frontend 651 passed/build green/0 lint errors/29 existing warnings; docs green |
+
+| 2 | Live scoped escalation, real notification 1/2 routing, empty-group suppression/restore, actual Nagios rejection rollback, browser CRUD; added commit-failure and paused-scope edge tests, readable group labels | python3 /tmp/pinpoint-116-eligibility.py; notification resume runner; Playwright; focused backend/frontend edge tests | green: 11 live cases; 1 real browser test; 39 backend and 11 frontend edge tests |
 
 ## State for the next session
 
-- Last check run (exact command): scripts/verify.sh backend
-- Result (first failing lines, or "green"): green: 2858 passed, 14 skipped in 411.54s; verify: backend OK
+- Last check run (exact command): python3 /tmp/pinpoint-116-eligibility.py
+- Result (first failing lines, or "green"): green: opt-out/deactivation suppression and restoration, real Nagios rejection rollback, restored config validates
 - Hypothesis: Prerequisites are satisfied; existing #79 group computation can supply escalation group choices and rendering. Implementation requires sensitive Nagios config changes, triggering the workflow's Needs a person stop.
-- Next action (one specific step, not "continue"): Finish the isolated Docker two-contact Nagios escalation trial; discovery is Running on the two explicit target /32 ranges (do not start overlapping discovery).
+- Next action (one specific step, not "continue"): Run final browser check on this checkpoint and scripts/verify.sh all, then write the sanitized live report and open the PR after reviewing issue requirements.
 
 ## Decisions and notes
 
@@ -149,3 +150,7 @@ Requirement coverage:
 - Docker access was explicitly authorized by the user and group membership granted. Fresh shells can access Docker through `sg docker -c ...` (the parent shell has stale groups). Created separate project pinpoint-issue116 on its own internal subnet and API port 18000 using cached lab images and this worktree's source mount. Existing pinpoint-lab and issue-128 containers are untouched. Lab is running, product acceptance not yet executed.
 
 - Round 1 verification logs: /tmp/pinpoint-116-backend.log, /tmp/pinpoint-116-frontend.log, /tmp/pinpoint-116-docs.log. Lab source checkpoint c1bf732f. One lab harness expectation initially used HTTP 200 for discovery start; server correctly returned 202 and started discovery. Preparation resumed without restarting/overlapping the scan. No product failure claimed.
+
+- Live cases: `test-results/issue116-live/cases.jsonl`; raw MIME captured locally in the separate appliance, copied to ignored `test-results/issue116-live/capture`. First normal recipient message at notification 1; distinct second recipient message at notification 2, while problem_has_been_acknowledged=0 and HARD CRITICAL. No external SMTP/inbox claim.
+- Harness corrections (not application defects): empty UDP list invokes nmap's default UDP set, so requested stop of the isolated scan, terminated only that container's nmap and restarted after Failed terminal status with UDP 161 and the same two /32 targets. Continued passive results were needed to reach HARD state and trigger repeat-notification evaluation. The initial runner observed the second MIME before status.dat refreshed and failed an immediate count assertion; resumed only after the live status recorded notification count 2. The real event and messages were preserved; no product code was changed for these corrections.
+- Browser source test added as explicit opt-in `client/e2e/escalations.lab.spec.ts`; temporary runner config /tmp/pinpoint-116-playwright.config.mjs. Initial browser pass used app c1bf732f; final rerun will cover the subsequent readable group-label refinement. Newly added focused edge tests pass (39 backend, 11 frontend), with no migration/source backend change after the earlier full backend pass.

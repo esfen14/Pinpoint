@@ -107,6 +107,12 @@ function EscalationEditor() {
     setError(null)
     setMessage(null)
   }
+  const groupLabel = (name: string) => {
+    if (name === 'system_users') return 'All eligible alert users'
+    const hostId = Number(name.replace('pinpoint_host_', ''))
+    const host = data?.hosts.find((item) => item.id === hostId)
+    return host ? `Host recipients: ${host.name}` : `Host recipient group ${hostId}`
+  }
   const eligible = data?.groups.some((group) => group.member_count > 0) ?? false
   const disabled = busy || loading
   return <div className="mt-6"><SettingsCard title="Escalations" description="Choose who receives repeated Nagios alerts after a notification count is reached.">
@@ -120,7 +126,7 @@ function EscalationEditor() {
       {data.items.length === 0 ? <p className="my-4 text-sm">No escalations defined.</p> : <div className="my-4 overflow-x-auto"><table className="w-full text-left text-sm">
         <thead><tr>{['Contact group', 'Scope', 'First notification', 'Last notification', 'Interval (minutes)', 'Status', 'Actions'].map((label) => <th key={label} className="p-2">{label}</th>)}</tr></thead>
         <tbody>{data.items.map((row) => <tr key={row.id} className="border-t border-[var(--border)]">
-          <td className="p-2">{row.contact_group}</td><td className="p-2">{row.host_id === null ? 'All hosts and services' : data.hosts.find((host) => host.id === row.host_id)?.name ?? `Unavailable host ${row.host_id}`}</td>
+          <td className="p-2">{groupLabel(row.contact_group)}</td><td className="p-2">{row.host_id === null ? 'All hosts and services' : data.hosts.find((host) => host.id === row.host_id)?.name ?? `Unavailable host ${row.host_id}`}</td>
           <td className="p-2">{row.first_notification}</td><td className="p-2">{row.last_notification}</td><td className="p-2">{row.interval_minutes}</td>
           <td className="p-2">{row.active ? 'Active' : row.reason}</td>
           <td className="space-x-2 p-2"><button type="button" className={buttonClass} disabled={disabled} aria-label={`Edit escalation ${row.id}`} onClick={() => startEdit(row)}>Edit</button><button type="button" className={buttonClass} disabled={disabled} aria-label={`Delete escalation ${row.id}`} onClick={() => setDeleting(row.id)}>Delete</button></td>
@@ -133,7 +139,7 @@ function EscalationEditor() {
           <label className="text-sm">Contact group<select aria-label="Contact group" className={inputClass} value={draft.group} onChange={(event) => change({ group: event.target.value })}>
             <option value="">Choose a group</option>
             {!data.groups.some((group) => group.name === draft.group) && draft.group && <option value={draft.group}>{draft.group} (unavailable)</option>}
-            {data.groups.map((group) => <option key={group.name} value={group.name} disabled={group.member_count === 0}>{group.name} ({group.member_count} eligible)</option>)}
+            {data.groups.map((group) => <option key={group.name} value={group.name} disabled={group.member_count === 0}>{groupLabel(group.name)} ({group.member_count} eligible)</option>)}
           </select></label>
           <label className="text-sm">Scope<select aria-label="Scope" className={inputClass} value={draft.host} onChange={(event) => change({ host: event.target.value })}>
             <option value="">All hosts and services</option>

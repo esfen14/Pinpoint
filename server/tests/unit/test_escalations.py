@@ -170,3 +170,44 @@ def test_global_blocks(logged_in_client, app, db_session, devices, writer, monke
         block, = objects(text, kind)
         assert re.search(r'host_name\s+\*\s*$', block, re.M)
     assert re.search(r'service_description\s+\*', objects(text, 'serviceescalation')[0])
+
+
+def test_database_commit_failure_compensates_config(logged_in_client, db_session, writer):
+    """An applied candidate must be rebuilt from rolled-back choices on commit failure."""
+    from app.system_models import Escalation
+    with patch.object(db.session, 'commit', side_effect=RuntimeError('database unavailable')):
+        response = logged_in_client.post(URL, json=payload())
+    assert response.status_code == 500
+    assert writer.call_count == 2
+    assert db.session.scalar(sa.select(sa.func.count()).select_from(Escalation)) == 0
+
+
+def test_paused_scope_and_host_without_services(logged_in_client, app, db_session, devices,
+                                               writer, monkeypatch, tmp_path):
+    first = devices[0]
+    save(logged_in_client, host_id=first.NetDiscoveryID)
+    # A host may have no eligible service plugins; avoid an unmatched wildcard.
+    with patch('app.network_discovery.create_host_cfg.build_host_services', return_value=[]):
+        text = generate(app, monkeypatch, tmp_path)
+    assert len(objects(text, 'hostescalation')) == 1
+    assert not objects(text, 'serviceescalation')
+    first.Include_Device_In_Scanning = False
+    db.session.commit()
+    text = generate(app, monkeypatch, tmp_path)
+    assert not objects(text, 'hostescalation')
+    assert not objects(text, 'serviceescalation')
+    item, = logged_in_client.get(URL).get_json()['data']['items']
+    assert not item['active'] and 'no longer monitored' in item['reason']
+
+
+def test_escalation_group_from_paused_source_still_has_members(logged_in_client, app, db_session,
+        admin_user, devices, writer, monkeypatch, tmp_path):
+    first, second, _ = devices
+    assign(second, admin_user)
+    group = f'pinpoint_host_{second.NetDiscoveryID}'
+    second.Include_Device_In_Scanning = False
+    db.session.commit()
+    save(logged_in_client, host_id=first.NetDiscoveryID, contact_group=group)
+    text = generate(app, monkeypatch, tmp_path)
+    assert len([obj for obj in objects(text, 'contactgroup') if group in obj]) == 1
+    assert group in objects(text, 'hostescalation')[0]
