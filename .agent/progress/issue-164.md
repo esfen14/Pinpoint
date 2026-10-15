@@ -62,16 +62,18 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| 3 | Disposable Docker project; controlled reconciler fixtures; repeatable opt-in browser journey | Playwright issue-164-live twice (including real source snapshot + linked notice); fixture verify; nagios -v | Both browser runs pass; target address/port/review/config postconditions pass; Nagios 0 warnings/0 errors. Full verify.sh all still running |
+| resumed | Docker membership enabled by user; sg docker activates it in this existing session | Docker ps; repeated comparison tests | Docker accessible; using a fresh isolated project, shared lab untouched |
 | 2 | Fixed test query typing, added notice/filter integration and keyboard/address retry tests; new components lint cleanly | verify.sh backend; verify.sh frontend; verify.sh docs; focused comparison tests | Backend 3302 passed/14 skipped; frontend 699 passed, build/lint green; docs green; expanded comparison 15 passed |
 | 1 | Lookup, review table/drawer, notices, tests and documentation implemented | Focused backend: 152 pass; focused frontend: 48 pass; verify.sh docs: green; verify.sh frontend | Frontend build rejects two new Testing Library queries using unsupported exact option; backend full suite still running |
 | 0 | Intake and isolated worktree; requirement coverage and plan | gh issue view 164 --json body,comments | Requirements covered by E/F/H; reviewer approval remains a human finish requirement |
 
 ## State for the next session
 
-- Last check run (exact command): cd client && npm test -- --run src/test/DeviceIdentityReview.test.tsx
-- Result (first failing lines, or "green"): green: 15 passed. Full backend 3302 passed/14 skipped, full frontend 699 passed with successful build/lint before two additional comparison tests; docs green. Logs /tmp/issue-164-{backend,frontend,docs,keyboard}.log.
-- Hypothesis: implementation and isolated regressions are sound; browser/Nagios acceptance requires Docker socket access.
-- Next action (one specific step, not "continue"): Add an opt-in browser journey and run verify.sh all while waiting for the user to restore Docker access.
+- Last check run (exact command): cd client && PINPOINT_ADMIN_USER=admin@test.com PINPOINT_ADMIN_PASSWORD=<private lab value> ISSUE164_LAB_URL=http://127.0.0.1:5164 ISSUE164_SOURCE_ID=1 ISSUE164_TARGET_ID=2 ISSUE164_CHECK_NOTICE=1 npx playwright test --project=issue-164-live --reporter=list
+- Result (first failing lines, or "green"): green: 1 passed; second complete real-browser run. Fixture verification and real Nagios validation passed after the first run. Full verify.sh all in /tmp/issue-164-all.log.
+- Hypothesis: normal merge journey works; need deliberate unavailable-Nagios run to prove saved warning in real browser.
+- Next action (one specific step, not "continue"): Recreate only the disposable issue164 appliance, seed fixtures, stop its Nagios and repeat the browser journey expecting a saved configuration warning.
 
 ## Decisions and notes
 
@@ -83,3 +85,6 @@ Requirement coverage (every requirement the issue states, and the check that pro
 - Docker socket is denied and passwordless sudo unavailable in this process. Real-Nagios lab acceptance requires an accessible reserved lab; no lab has been mutated.
 
 - User selected Docker labs for acceptance. Docker access restoration requested asynchronously; do not mutate the VM. scripts/vmlab preflight also reports VBoxManage not found.
+
+- Docker access now works through sg docker after the user added paeng to docker. Exclusive project pinpoint-issue164 uses API 8164 / Vite 5164 and an isolated private network; shared pinpoint-lab is untouched.
+- Docker startup required disabling the opt-in scheduler before initial migrations; this is test provisioning only. Controlled observations perform no network scan. A forced real check supplies an address-unknown source snapshot for the notice journey. Raw screenshots: /home/paeng/pinpoint-test-results/issue164/{success,notice}.
