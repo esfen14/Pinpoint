@@ -793,6 +793,12 @@ def _create_host_cfg_file(discovered_hosts, skipped=None):
         host_config.append(notification_commands)
         host_config.append(_add_space(4))
 
+    # The event handler commands, only while an enabled remediation action needs them.
+    event_handler_commands = create_event_handler_commands()
+    if event_handler_commands:
+        host_config.append(event_handler_commands)
+        host_config.append(_add_space(4))
+
     for user in users:
         user_information = {
             "contact_name": str(user.Email),

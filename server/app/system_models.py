@@ -1165,3 +1165,94 @@ class PasswordResetRequest(db.Model):
     )
 
     User: so.Mapped["User"] = so.relationship(foreign_keys=[UserID])
+
+
+# ==========================================================
+# REMEDIATION (event handler framework)
+# ==========================================================
+
+class RemediationActionType(Enum):
+    RECORD_ONLY = "record_only"
+
+
+class RemediationScope(Enum):
+    SERVICE = "service"
+    HOST = "host"
+
+
+class RemediationEventState(Enum):
+    OK = "OK"
+    WARNING = "WARNING"
+    CRITICAL = "CRITICAL"
+    UNKNOWN = "UNKNOWN"
+    UP = "UP"
+    DOWN = "DOWN"
+    UNREACHABLE = "UNREACHABLE"
+
+
+class RemediationEventStateType(Enum):
+    SOFT = "SOFT"
+    HARD = "HARD"
+
+
+class RemediationOutcome(Enum):
+    RUNNING = "running"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+    TIMED_OUT = "timed_out"
+    SKIPPED_COOLDOWN = "skipped_cooldown"
+    SKIPPED_HOURLY_CAP = "skipped_hourly_cap"
+    INTERRUPTED = "interrupted"
+
+
+class RemediationAction(db.Model):
+    """
+    An admin-defined rule: when a covered service or host reaches a HARD failure, run one
+    allowlisted action type. The action type is code (app/remediation_actions.py); the
+    parameters are validated against that type's schema and never hold a command or path.
+    """
+    __tablename__ = "REMEDIATION_ACTION"
+
+    Id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    Name: so.Mapped[str] = so.mapped_column(sa.String(60), unique=True, index=True)
+    Action_Type: so.Mapped[RemediationActionType] = so.mapped_column(sa.Enum(RemediationActionType))
+    Scope_Kind: so.Mapped[RemediationScope] = so.mapped_column(sa.Enum(RemediationScope))
+    Host_Pattern: so.Mapped[str] = so.mapped_column(sa.String(100))
+    Service_Pattern: so.Mapped[Optional[str]] = so.mapped_column(sa.String(150))
+    Parameters: so.Mapped[dict] = so.mapped_column(sa.JSON(), default=dict)
+    Enabled: so.Mapped[bool] = so.mapped_column(sa.Boolean(), default=False, server_default=sa.false())
+    Max_Runs_Per_Hour: so.Mapped[int] = so.mapped_column(sa.Integer(), default=2, server_default="2")
+    Cooldown_Seconds: so.Mapped[int] = so.mapped_column(sa.Integer(), default=600, server_default="600")
+    Version: so.Mapped[int] = so.mapped_column(sa.Integer(), default=1)
+    Updated_By: so.Mapped[Optional[int]] = so.mapped_column(sa.ForeignKey(User.UserID), index=True)
+    Updated_At: so.Mapped[datetime] = so.mapped_column(
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+
+class RemediationRun(db.Model):
+    """
+    One decision the consumer made about one event and one action, including skipped and
+    discarded ones. Action_Id is deliberately not a foreign key: deleting an action leaves
+    its runs, and Action_Name is a copy so the log still reads correctly. Kept on the
+    default bind because PinPoint writes it; history.db is for Nagios snapshots only.
+    """
+    __tablename__ = "REMEDIATION_RUN"
+    __table_args__ = (sa.UniqueConstraint("Event_Key", "Action_Id", name="uq_remediation_run_event_action"),)
+
+    Id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    Event_Key: so.Mapped[str] = so.mapped_column(sa.String(64), index=True)
+    Action_Id: so.Mapped[Optional[int]] = so.mapped_column(index=True)
+    Action_Name: so.Mapped[str] = so.mapped_column(sa.String(60))
+    Hostname: so.Mapped[str] = so.mapped_column(sa.String(100), index=True)
+    Service: so.Mapped[Optional[str]] = so.mapped_column(sa.String(150))
+    State: so.Mapped[RemediationEventState] = so.mapped_column(sa.Enum(RemediationEventState))
+    State_Type: so.Mapped[RemediationEventStateType] = so.mapped_column(sa.Enum(RemediationEventStateType))
+    Attempt: so.Mapped[int] = so.mapped_column(sa.Integer())
+    Received_At: so.Mapped[datetime] = so.mapped_column(index=True, default=lambda: datetime.now(timezone.utc))
+    Started_At: so.Mapped[Optional[datetime]] = so.mapped_column()
+    Finished_At: so.Mapped[Optional[datetime]] = so.mapped_column()
+    Outcome: so.Mapped[RemediationOutcome] = so.mapped_column(sa.Enum(RemediationOutcome), index=True)
+    Reason: so.Mapped[Optional[str]] = so.mapped_column(sa.String(200))
+    Output: so.Mapped[Optional[str]] = so.mapped_column(sa.String(1024))
