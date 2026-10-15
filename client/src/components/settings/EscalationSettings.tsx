@@ -3,11 +3,14 @@ import { useCurrentUser } from '../../contexts/CurrentUserContext'
 import { errorMessage } from '../../lib/api'
 import { createEscalation, deleteEscalation, getEscalations, updateEscalation } from '../../lib/escalationApi'
 import type { Escalation, EscalationInput, EscalationList } from '../../types/escalation'
+import { DropdownSelect } from '../shared/DropdownSelect'
+import { notifySettingsChanged } from '../../lib/settingsEvents'
 import { SettingsCard } from './SettingsCard'
 
 type Draft = { first: string; last: string; interval: string; group: string; host: string }
-const inputClass = 'mt-1 block w-full rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 py-2 text-sm text-[var(--text)] disabled:opacity-50'
-const buttonClass = 'rounded-xl border border-[var(--border)] px-3 py-2 text-sm disabled:opacity-50'
+const inputClass = 'block h-10 w-full rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 text-sm text-[var(--text)] outline-none transition duration-200 focus:border-[#ffb100] disabled:opacity-50'
+const labelClass = 'mb-2 block text-sm font-medium text-[var(--text)]'
+const buttonClass = 'rounded-xl border border-[var(--border)] px-3 py-2 text-sm text-[var(--text)] hover:bg-[var(--hover)] disabled:opacity-50'
 function emptyDraft(group = ''): Draft {
   return { first: '2', last: '5', interval: '10', group, host: '' }
 }
@@ -82,6 +85,7 @@ function EscalationEditor() {
       if (editing === null) await createEscalation(input)
       else await updateEscalation(editing, input)
       setMessage('Escalation saved.')
+      notifySettingsChanged()
       const result = await reload()
       // The mutation succeeded even if refreshing the list fails.
       reset(result)
@@ -95,6 +99,7 @@ function EscalationEditor() {
     setMessage(null)
     try {
       await deleteEscalation(deleting)
+      notifySettingsChanged()
       if (editing === deleting) reset()
       setDeleting(null)
       setMessage('Escalation deleted.')
@@ -136,19 +141,19 @@ function EscalationEditor() {
       <form className="mt-4 space-y-4" onSubmit={(event) => { event.preventDefault(); void save() }}>
         <fieldset disabled={disabled || !eligible} className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <legend className="mb-3 text-sm font-medium">{editing === null ? 'Add an escalation' : `Edit escalation ${editing}`}</legend>
-          <label className="text-sm">Contact group<select aria-label="Contact group" className={inputClass} value={draft.group} onChange={(event) => change({ group: event.target.value })}>
-            <option value="">Choose a group</option>
-            {!data.groups.some((group) => group.name === draft.group) && draft.group && <option value={draft.group}>{draft.group} (unavailable)</option>}
-            {data.groups.map((group) => <option key={group.name} value={group.name} disabled={group.member_count === 0}>{groupLabel(group.name)} ({group.member_count} eligible)</option>)}
-          </select></label>
-          <label className="text-sm">Scope<select aria-label="Scope" className={inputClass} value={draft.host} onChange={(event) => change({ host: event.target.value })}>
-            <option value="">All hosts and services</option>
-            {draft.host && !data.hosts.some((host) => String(host.id) === draft.host) && <option value={draft.host}>Unavailable host {draft.host}</option>}
-            {data.hosts.map((host) => <option key={host.id} value={host.id}>{host.name}</option>)}
-          </select></label>
-          <label className="text-sm">First notification<input aria-label="First notification" className={inputClass} inputMode="numeric" value={draft.first} onChange={(event) => change({ first: event.target.value })} /></label>
-          <label className="text-sm">Last notification<input aria-label="Last notification" className={inputClass} inputMode="numeric" value={draft.last} onChange={(event) => change({ last: event.target.value })} /></label>
-          <label className="text-sm">Interval (minutes)<input aria-label="Interval (minutes)" className={inputClass} inputMode="numeric" value={draft.interval} onChange={(event) => change({ interval: event.target.value })} /></label>
+          <div><span className={labelClass}>Contact group</span><DropdownSelect block label="Contact group" disabled={disabled || !eligible} value={draft.group} onChange={(value) => change({ group: value })} options={[
+            { value: '', label: 'Choose a group' },
+            ...(draft.group && !data.groups.some((group) => group.name === draft.group) ? [{ value: draft.group, label: `${draft.group} (unavailable)` }] : []),
+            ...data.groups.filter((group) => group.member_count > 0 || group.name === draft.group).map((group) => ({ value: group.name, label: `${groupLabel(group.name)} (${group.member_count} eligible)` })),
+          ]} /></div>
+          <div><span className={labelClass}>Scope</span><DropdownSelect block label="Scope" disabled={disabled || !eligible} value={draft.host} onChange={(value) => change({ host: value })} options={[
+            { value: '', label: 'All hosts and services' },
+            ...(draft.host && !data.hosts.some((host) => String(host.id) === draft.host) ? [{ value: draft.host, label: `Unavailable host ${draft.host}` }] : []),
+            ...data.hosts.map((host) => ({ value: String(host.id), label: host.name })),
+          ]} /></div>
+          <label className={labelClass}>First notification<input aria-label="First notification" className={`${inputClass} mt-2 font-normal`} inputMode="numeric" value={draft.first} onChange={(event) => change({ first: event.target.value })} /></label>
+          <label className={labelClass}>Last notification<input aria-label="Last notification" className={`${inputClass} mt-2 font-normal`} inputMode="numeric" value={draft.last} onChange={(event) => change({ last: event.target.value })} /></label>
+          <label className={labelClass}>Interval (minutes)<input aria-label="Interval (minutes)" className={`${inputClass} mt-2 font-normal`} inputMode="numeric" value={draft.interval} onChange={(event) => change({ interval: event.target.value })} /></label>
         </fieldset>
         <p className="text-xs text-[var(--text-muted)]">First and last counts: 1–10000, first no greater than last. Interval: 0–1440 minutes; 0 sends once during the range. Empty groups are omitted from Nagios config until eligible members return.</p>
         <button type="submit" className={buttonClass} disabled={disabled || !eligible}>{busy ? 'Applying...' : editing === null ? 'Add escalation' : 'Save escalation'}</button>

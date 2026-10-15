@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { AlertTriangle, ExternalLink, Loader2, Send } from 'lucide-react'
 
 import { SettingsCard } from './SettingsCard'
@@ -12,8 +12,19 @@ const PROVIDER_OPTIONS = [{ value: 'gmail', label: 'Gmail' }]
 
 const APP_PASSWORDS_URL = 'https://myaccount.google.com/apppasswords'
 
+// Same field look as SettingsSelect, so every control in the form lines up.
 const inputClass =
-  'w-full rounded-xl border border-[var(--border)] bg-transparent px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[#ffb100] disabled:opacity-60'
+  'h-10 w-full rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 text-sm text-[var(--text)] outline-none transition duration-200 focus:border-[#ffb100] disabled:cursor-not-allowed disabled:opacity-60'
+
+function Field({ id, label, hint, children }: { id: string; label: string; hint?: ReactNode; children: ReactNode }) {
+  return (
+    <div>
+      <label htmlFor={id} className="mb-2 block text-sm font-medium text-[var(--text)]">{label}</label>
+      {children}
+      {hint && <p className="mt-1.5 text-xs text-[var(--text-muted)]">{hint}</p>}
+    </div>
+  )
+}
 
 interface FormState {
   username: string
@@ -126,8 +137,8 @@ export function EmailSettings() {
         title="Email (SMTP)"
         description="The Gmail account PinPoint sends notification email through. These settings are shared by the whole system: every alert email is sent from this one account, whoever is signed in."
       >
-        <div className="space-y-5">
-          <div className="grid gap-4 sm:grid-cols-3">
+        <div className="space-y-7">
+          <div className="grid gap-x-8 gap-y-7 sm:grid-cols-2 lg:grid-cols-4">
             {/* Gmail is the only provider, so there is nothing to change yet. */}
             <SettingsSelect
               label="Provider"
@@ -135,62 +146,53 @@ export function EmailSettings() {
               options={PROVIDER_OPTIONS}
               onChange={() => {}}
             />
-            <label className="block text-sm text-[var(--text)]">
-              Host
-              <input aria-label="Host" value={preset.host} readOnly disabled className={`${inputClass} mt-1`} />
-            </label>
-            <div className="grid grid-cols-2 gap-4">
-              <label className="block text-sm text-[var(--text)]">
-                Port
-                <input aria-label="Port" value={preset.port} readOnly disabled className={`${inputClass} mt-1`} />
-              </label>
-              <label className="block text-sm text-[var(--text)]">
-                Security
-                <input aria-label="Security" value="STARTTLS" readOnly disabled className={`${inputClass} mt-1`} />
-              </label>
+            <Field id="smtp-host" label="Host">
+              <input id="smtp-host" aria-label="Host" value={preset.host} readOnly disabled className={inputClass} />
+            </Field>
+            <Field id="smtp-port" label="Port">
+              <input id="smtp-port" aria-label="Port" value={preset.port} readOnly disabled className={inputClass} />
+            </Field>
+            <Field id="smtp-security" label="Security">
+              <input id="smtp-security" aria-label="Security" value="STARTTLS" readOnly disabled className={inputClass} />
+            </Field>
+          </div>
+
+          <div className="grid gap-x-8 gap-y-7 lg:grid-cols-2">
+            <Field id="smtp-username" label="Username (full Gmail address)" hint="The Gmail account PinPoint signs in to, together with the app password.">
+              <input
+                id="smtp-username"
+                aria-label="Username"
+                type="email"
+                value={form.username}
+                placeholder="you@gmail.com"
+                autoComplete="off"
+                onChange={(e) => setUsername(e.target.value)}
+                className={inputClass}
+              />
+            </Field>
+
+            <div>
+              <Field id="smtp-sender" label="Sender" hint={<>The &quot;From&quot; address shown on alert emails. Gmail always uses the account above, so leave it as is.</>}>
+                <input
+                  id="smtp-sender"
+                  aria-label="Sender"
+                  type="email"
+                  value={form.sender}
+                  autoComplete="off"
+                  onChange={(e) => { setSenderEdited(true); setForm({ ...form, sender: e.target.value }) }}
+                  className={inputClass}
+                />
+              </Field>
+              {senderDiffers && (
+                <p role="alert" className="mt-1.5 flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-300">
+                  <AlertTriangle size={13} className="mt-0.5 shrink-0" />
+                  Gmail rewrites the From address to the account you sign in with, so this sender will not be kept.
+                </p>
+              )}
             </div>
           </div>
 
-          <label className="block text-sm text-[var(--text)]">
-            Username (full Gmail address)
-            <input
-              aria-label="Username"
-              type="email"
-              value={form.username}
-              placeholder="you@gmail.com"
-              autoComplete="off"
-              onChange={(e) => setUsername(e.target.value)}
-              className={`${inputClass} mt-1`}
-            />
-            <span className="mt-1.5 block text-xs text-[var(--text-muted)]">
-              The Gmail account PinPoint signs in to, together with the app password.
-            </span>
-          </label>
-
-          <div>
-            <label className="block text-sm text-[var(--text)]">
-              Sender
-              <input
-                aria-label="Sender"
-                type="email"
-                value={form.sender}
-                autoComplete="off"
-                onChange={(e) => { setSenderEdited(true); setForm({ ...form, sender: e.target.value }) }}
-                className={`${inputClass} mt-1`}
-              />
-              <span className="mt-1.5 block text-xs text-[var(--text-muted)]">
-                The &quot;From&quot; address shown on alert emails. Gmail always uses the account above, so leave it as is.
-              </span>
-            </label>
-            {senderDiffers && (
-              <p role="alert" className="mt-1.5 flex items-start gap-1.5 text-xs text-amber-600 dark:text-amber-300">
-                <AlertTriangle size={13} className="mt-0.5 shrink-0" />
-                Gmail rewrites the From address to the account you sign in with, so this sender will not be kept.
-              </p>
-            )}
-          </div>
-
-          <div>
+          <div className="space-y-4">
             <div className="rounded-xl border border-[var(--border)] bg-[var(--hover)] p-3 text-xs text-[var(--text-muted)]">
               <p>
                 Gmail does not accept your normal password here. Use a 16-character app password. You need 2-Step
@@ -205,25 +207,25 @@ export function EmailSettings() {
                 Create an app password <ExternalLink size={12} />
               </a>
             </div>
-            <label className="mt-3 block text-sm text-[var(--text)]">
-              App password
-              <input
-                aria-label="App password"
-                type="password"
-                value={form.password}
-                placeholder="xxxx xxxx xxxx xxxx"
-                autoComplete="new-password"
-                spellCheck={false}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                className={`${inputClass} mt-1`}
-              />
-            </label>
-            <p className="mt-1.5 text-xs text-[var(--text-muted)]">
-              {saved.passwordSet
-                ? 'An app password is saved. Leave this blank to keep it. '
-                : ''}
-              Paste it with or without spaces; it is used exactly as entered.
-            </p>
+            <div className="lg:max-w-[calc(50%-1rem)]">
+              <Field
+                id="smtp-app-password"
+                label="App password"
+                hint={<>{saved.passwordSet ? 'An app password is saved. Leave this blank to keep it. ' : ''}Paste it with or without spaces; it is used exactly as entered.</>}
+              >
+                <input
+                  id="smtp-app-password"
+                  aria-label="App password"
+                  type="password"
+                  value={form.password}
+                  placeholder="xxxx xxxx xxxx xxxx"
+                  autoComplete="new-password"
+                  spellCheck={false}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  className={inputClass}
+                />
+              </Field>
+            </div>
           </div>
 
           <p className="text-xs text-[var(--text-muted)]">

@@ -14,6 +14,8 @@ from app.nagios.status import get_status
 
 DEFAULT_POLL_INTERVAL_SECONDS = 60
 SUPPORTED_POLL_INTERVALS = (30, 60, 120, 300)
+# Maintenance windows are handed to Nagios on a fixed tick, whatever the status polling interval.
+MAINTENANCE_DISPATCH_SECONDS = 60
 settings_schedule_lock = RLock()
 REMEDIATION_POLL_SECONDS = 15
 
@@ -49,7 +51,12 @@ def persisted_poll_interval():
     from app.system_models import SystemSettings
 
     with app.app_context():
-        row = db.session.get(SystemSettings, 1)
+        try:
+            row = db.session.get(SystemSettings, 1)
+        except sa.exc.OperationalError:
+            # No tables yet: `flask db upgrade` imports the app on a fresh database.
+            db.session.rollback()
+            return DEFAULT_POLL_INTERVAL_SECONDS
         return row.Data_Polling_Interval if row is not None else DEFAULT_POLL_INTERVAL_SECONDS
 
 
@@ -92,6 +99,18 @@ def _relocate_ncpa_devices():
         except Exception:
             db.session.rollback()
             current_app.logger.exception("Unexpected error during NCPA relocation")
+
+
+def _dispatch_maintenance_windows():
+    """Hand maintenance windows that are about to start to Nagios as scheduled downtime."""
+    from app.maintenance import dispatch_due_windows
+
+    with app.app_context():
+        try:
+            dispatch_due_windows()
+        except Exception:
+            db.session.rollback()
+            current_app.logger.exception("Unexpected error dispatching maintenance windows")
 
 
 def _purge_old_data():
@@ -193,6 +212,14 @@ def init_scheduler():
         max_instances=1,
         coalesce=True,
         next_run_time=datetime.now(timezone.utc),
+    )
+    _scheduler.add_job(
+        _dispatch_maintenance_windows,
+        "interval",
+        seconds=MAINTENANCE_DISPATCH_SECONDS,
+        id="maintenance_windows",
+        max_instances=1,
+        coalesce=True,
     )
     _scheduler.add_job(
         _purge_old_data,
