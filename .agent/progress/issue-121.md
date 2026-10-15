@@ -44,7 +44,7 @@ Requirement coverage:
 - Last check run: scripts/verify.sh backend
 - Result: 3155 passed, 78 failed, 36 errors, none in remediation files; a sample of 5 failing files (migration round trips, automation, host recipients) also fails on a clean origin/main checkout on this Windows machine (10 failed). Not all 114 were compared. verify.sh docs fails only on a Windows path-separator assertion in scripts/test_qa_queue.py (unrelated)
 - Hypothesis: n/a
-- Next action: draft PR open; wait for CI on Linux, then Parts 8.2/8.3 after decisions
+- Next action: CI re-run after merging origin/main and re-parenting migration b8e3d5f2a417 onto a4c8e1b7d933 (CI failed on multiple Alembic heads); then Parts 8.2 and 8.3 after decisions
 
 ## Decisions and notes
 

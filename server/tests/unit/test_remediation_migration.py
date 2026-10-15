@@ -94,7 +94,7 @@ def test_restart_migration_keeps_existing_actions_and_accepts_the_new_type(resta
 
 
 def test_restart_migration_downgrade_drops_only_the_new_type_and_upgrade_returns(restart_report):
-    assert restart_report["version_after_downgrade"] == [["e4a7c1d9b305"]]
+    assert restart_report["version_after_downgrade"] == [["a4c8e1b7d933"]]
     assert restart_report["names_after_downgrade"] == ["keep"]
     assert restart_report["version_after_reupgrade"] == [["b8e3d5f2a417"]]
     assert restart_report["names_after_reupgrade"] == ["keep"]

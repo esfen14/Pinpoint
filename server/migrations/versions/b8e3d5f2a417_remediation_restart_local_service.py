@@ -8,13 +8,13 @@ narrows the column again.
 history.db is not touched.
 
 Revision ID: b8e3d5f2a417
-Revises: e4a7c1d9b305
+Revises: a4c8e1b7d933
 """
 from alembic import op
 import sqlalchemy as sa
 
 revision = 'b8e3d5f2a417'
-down_revision = 'e4a7c1d9b305'
+down_revision = 'a4c8e1b7d933'
 branch_labels = None
 depends_on = None
 
