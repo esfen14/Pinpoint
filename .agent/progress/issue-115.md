@@ -1,7 +1,7 @@
 # Issue #115: STARTTLS custom SMTP relays and notification failures
 
 Branch: `issue-115-smtp-relays`
-Status: blocked
+Status: in-progress
 
 ## Finish condition
 
@@ -128,6 +128,9 @@ Requirement coverage (every requirement in A–H):
 4. [x] Documentation and evidence: update owning specs, tests README and user guide; attempt authorized scoped real SMTP/Nagios verification when infrastructure permits; record actual lab limitations; verify docs and all.
 5. [x] Re-read issue and user decision, audit requirements, push draft or ready PR as evidence permits, inspect CI.
 
+6. [ ] Resume live acceptance: create owned standalone Docker appliance from existing cached image; install unchanged SMTP helper/dependencies; run actual STARTTLS sink, save/reload/test, real forced Nagios notification failure, service-user log reads, and Playwright Email tab checks. Record fresh docs/test-runs report; no changes to shared lab.
+7. [ ] Re-audit acceptance, update Implementation_Status.md and PR evidence; verify docs/all, remove progress and mark ready only when all applicable acceptance has observed proof.
+
 ## Round log
 
 | Round | Change made | Check run | Result |
@@ -141,6 +144,8 @@ Requirement coverage (every requirement in A–H):
 | 4 | Merged main e0a61570, resolving the report-index conflict without dropping either entry; final source verified at 58e672b4; code/spec/guide/report complete for available scope. | scripts/verify.sh all: 3056 backend passed, 14 skipped; 653 frontend passed; build/docs green; lint 0 errors/29 warnings | Local gate green. Draft #172 remains blocked solely on real-appliance acceptance and human review; CI backend is still pending at checkpoint. |
 
 | 5 | Regression-tested and corrected overbroad credential redaction: only raw SMTP details are redacted; fixed API codes/messages remain stable even when a short password matches them. Two new cases failed before fix, then passed. | scripts/verify.sh all: 3058 backend passed/14 skipped, 653 frontend passed, build/docs green, lint 0 errors/29 warnings; focused backend 121 passed | Local gate green for final source in this checkpoint. Published pre-correction draft CI was green. Final push triggers CI again; live appliance acceptance still blocked. |
+
+| resumed | User explicitly authorized Docker access. Unix account is already listed in docker group; current process lacks refreshed supplementary group. `sg docker` succeeds. Existing shared lab remains untouched. | sg docker -c "docker ps --format '{{.Names}}'"; resumed verify.sh all running | Infrastructure blocker cleared for isolated Docker acceptance. |
 
 ## State for the next session
 
@@ -169,3 +174,5 @@ Requirement coverage (every requirement in A–H):
 - Five rounds completed; no repeated-failure loop. No further source work is pending. Resume requires working lab access and the scoped live proof, then normal human review.
 
 - Final correction review: only SMTP diagnostic details may contain a server echo and need credential replacement; fixed classification codes/messages must remain independent of password contents. New Gmail/custom regression cases prove this and existing Gmail tests still pass unchanged. No new behavior or scope beyond #115 was introduced.
+
+- Resume authorization: user says "I give permission to use docker access". This answers the blocker directly and takes precedence over requiring a new issue comment. Use sg docker to refresh the already-granted group, not sudo or socket permission changes. No additional approval needed for scoped live checks already required by #115.
