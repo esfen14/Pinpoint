@@ -81,6 +81,7 @@ ssh_args() {
   printf '%s\n' "${ssh_opts[@]}"
 }
 vm_ssh() {
+  preflight >&2 || return
   local extra=(); mapfile -t extra < <(ssh_args)
   ssh "${extra[@]}" "$VMLAB_SSH_TARGET" "$@"
 }
@@ -98,10 +99,10 @@ wait_state() { # wait_state <state> <seconds>
   return 1
 }
 power_off() {
-  preflight
+  preflight || return
   [ "$(vm_state)" = "poweroff" ] && return 0
   VBoxManage controlvm "$VMLAB_VM" acpipowerbutton 2>/dev/null || true
-  wait_state poweroff 90 || { echo "graceful shutdown timed out; powering off"; VBoxManage controlvm "$VMLAB_VM" poweroff; wait_state poweroff 30; }
+  wait_state poweroff 90 || { echo "graceful shutdown timed out; powering off"; preflight || return; VBoxManage controlvm "$VMLAB_VM" poweroff; wait_state poweroff 30; }
   preflight
 }
 # A snapshot stores the VM's port forwards, so restoring one brings back the old ports.
@@ -113,12 +114,12 @@ ensure_forwards() {
   VBoxManage modifyvm "$VMLAB_VM" "--nat-pf1=web,tcp,127.0.0.1,$VMLAB_WEB_PORT,,80"
 }
 start_vm() {
-  preflight
+  preflight || return
   if [ "$(vm_state)" = "poweroff" ]; then ensure_forwards; fi
   [ "$(vm_state)" = "running" ] || VBoxManage startvm "$VMLAB_VM" --type headless >/dev/null
   echo "waiting for SSH on $VMLAB_SSH_TARGET (port $VMLAB_SSH_PORT) ..."
   local i
-  for i in $(seq 1 120); do if vm_ssh true 2>/dev/null; then preflight; return; fi; sleep 3; done
+  for i in $(seq 1 120); do if vm_ssh true 2>/dev/null; then preflight || return; return; fi; sleep 3; done
   die "the appliance did not answer on SSH within 6 minutes"
 }
 
@@ -187,6 +188,7 @@ ensure_swap() {
 # password reaches ssh through an askpass helper and sudo through stdin, never in a
 # command line.
 bootstrap_key() {
+  preflight >&2 || return
   local pw="$state_dir/lab-password" ask user="${VMLAB_SSH_TARGET%@*}" pub rc
   [ -f "$pw" ] && [ -f "$VMLAB_SSH_KEY.pub" ] || return 1
   ask="$(mktemp)"; printf '#!/bin/sh\ncat %s\n' "$pw" > "$ask"; chmod 700 "$ask"

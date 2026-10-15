@@ -42,14 +42,17 @@ Requirement coverage:
 
 | 3 | Added runtime-forward edge cases, completed sanitized diagnosis/source-loss report and owning documentation | scripts/verify.sh all; scripts/verify.sh docs; python3 -I scripts/test_vmlab_preflight.py; git diff --check | All green: 2777 backend passed/14 skipped, 628 frontend passed, build/lint green (29 existing warnings), 17 ownership tests |
 
+| resumed | User continued after interrupted wait; retained running installs and completed work | Existing logs and process inventory | Continued without restarting installs |
 | 4 | Rebuilt all five targets/base and clean appliance, provisioned Nagios and deployed main; verified real SSH+HTTP snapshot marker change/restore | python3 /tmp/issue162-marker-trial.py; scripts/vmlab health; scripts/vmlab targets wall --once | Endpoint restore PASS; snapshot ebf767b5-9d26-49a9-b76e-ab747084809b; 60 health checks pass; all target services UP |
+
+| 5 | Recheck preflight immediately before SSH and key-bootstrap actions and forced power-off; regression proves a changed controller cannot fall through to SSH even in Bash conditional contexts | python3 -I scripts/test_vmlab_preflight.py; bash -n scripts/vmlab; scripts/vmlab preflight; scripts/verify.sh docs | 18 tests, syntax, live positive ownership and docs green; original full suites/CI green, final CI pending updated commit |
 
 ## State for the next session
 
-- Last check run (exact command): python3 /tmp/issue162-marker-trial.py
-- Result: PASS: marker changed and reverted through the same SSH and HTTP endpoints; VM UUID 351eb491-f5e1-4854-a7e4-68309ad774ad; snapshot ebf767b5-9d26-49a9-b76e-ab747084809b. Raw result test-results/issue162/snapshot-marker.json. New appliance health 60/0/0, five rebuilt targets running with expected services UP. Local all/CI were green before latest evidence updates.
-- Hypothesis: Finish-condition behavior is proven; remaining work is administrator setup, tightly scoped discovery smoke, final report/spec status and PR readiness.
-- Next action: Run scripts/vmlab setup-admin, python3 /tmp/issue162-scope-smoke.py, scripts/vmlab smoke; write final snapshot/rebuild report, verify docs, remove progress scaffolding and mark PR #165 ready after CI passes.
+- Last check run (exact command): scripts/verify.sh docs
+- Result: green; 18 ownership tests green including changed ownership between command entry and SSH. Snapshot marker proof passed, all new target services are UP. Discovery smoke is running in session 94612 with networks constrained to the lab /28. Initial setup-admin parser mismatch filed as #167; supported API setup completed and fresh host login state is valid.
+- Hypothesis: All implementation work is green; only finish-phase report/smoke results, docs status, progress removal and final CI remain.
+- Next action: Wait for the single running discovery smoke; finalize docs/test-runs/2026-10-15-issue-162-snapshot-rebuild/REPORT.md and specs, then finish PR #165 and wait for latest CI.
 
 ## Decisions and notes
 
@@ -72,3 +75,6 @@ Requirement coverage:
 - Main deployment needed a transport workaround: the NodeSource single-stream download was exceptionally slow. Downloaded byte ranges on host, assembled the exact 37,783,800-byte package and verified SHA-256 31eef6210cb50f9031afb59e7f1ed741d40db5d39f0894372b19444f33c4996e against guest APT metadata, cached it, interrupted only the pending nodejs download, and resumed the unchanged installer deploy/privilege scripts. Original failed transport attempt is retained in ignored logs.
 - Installer clean checkout is 697869e. No inherited application disk/database was used; positive blank /opt/pinpoint check observed before deployment. Appliance PINPOINT_NETWORKS fallback restricted to 10.77.0.0/28 before any discovery.
 - Marker trial used a non-secret file under fresh client/dist and required the same value via SSH and HTTP. Powered-off snapshot restores avoid saved/transitional-state ambiguity. Guest machine identity and HTTP status also match after restore.
+
+- Current user-authorized continuation resumed after the first three logged rounds; rounds 4 and 5 are the two implementation/validation rounds since that continuation.
+- #167 is a separate existing lab setup-helper compatibility defect: current installer email label changed. No parser product-code fix included here. Supported login/complete-setup API workaround succeeded, private credentials replaced stale host state, and temporary marker/one-time guest credentials were removed.

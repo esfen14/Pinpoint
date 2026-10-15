@@ -115,6 +115,31 @@ class CommandGateTests(unittest.TestCase):
                     self.assertEqual(log.read_text().splitlines(), ['python3'])
                     self.assertFalse((path / 'state').exists())
 
+    def test_changed_ownership_blocks_ssh_and_bootstrap_fallback(self):
+        root = Path(__file__).resolve().parents[1]
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory)
+            log = path / 'calls'
+            python = path / 'python3'
+            python.write_text('#!/bin/sh\necho python3 >> "$GATE_LOG"\n'
+                              'if [ "$(wc -l < "$GATE_LOG")" -eq 1 ]; then exit 0; fi\nexit 1\n')
+            python.chmod(0o700)
+            for command in ['VBoxManage', 'ssh', 'tar']:
+                executable = path / command
+                executable.write_text('#!/bin/sh\necho "' + command + '" >> "$GATE_LOG"\nexit 1\n')
+                executable.chmod(0o700)
+            config = path / 'config'
+            config.write_text('')
+            env = dict(os.environ, PATH=str(path) + ':' + os.environ['PATH'],
+                       VMLAB_CONFIG=str(config), VMLAB_STATE_DIR=str(path / 'state'), GATE_LOG=str(log))
+            for command, expected in [('sync', 2), ('prepare', 3)]:
+                with self.subTest(command=command):
+                    log.write_text('')
+                    result = subprocess.run(['bash', str(root / 'scripts/vmlab'), command],
+                                            env=env, capture_output=True, text=True, timeout=5)
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertEqual(log.read_text().splitlines(), ['python3'] * expected)
+
 
 if __name__ == '__main__':
     unittest.main()

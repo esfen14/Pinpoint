@@ -112,17 +112,24 @@ edits or repair a split host control context by itself.
 
 After control is coherent, prefer a separately named, newly created appliance
 with its own empty disk, state/config folder and unused loopback ports. Do not
-clone the inherited application disk for the snapshot trial. Before provisioning,
-verify snapshot semantics through the actual endpoint:
+clone the inherited application disk for the snapshot trial. Before relying on
+snapshot protection, verify it through the actual endpoint. A fresh application
+install on the blank disk may be used to exercise HTTP as well as SSH:
 
-1. Prove ownership with preflight; record VM UUID, session PID, ports and SSH
-   host-key fingerprint. Verify the web listener too (an installed app is unnecessary).
-2. Write a random non-secret marker through SSH to a dedicated guest file, flush
-   it, and take a uniquely named disposable snapshot. Record its UUID.
-3. Change that marker through the same SSH endpoint and read it back to prove
-   the change. Stop and restore only the disposable VM, then restart it.
-4. Repeat preflight after restart (a new session PID is expected); read the marker
-   through the same endpoint and require its original value. Record both values,
+1. Prove ownership with preflight; record VM UUID, process identity, ports and
+   endpoint identity (for example guest machine-id or SSH host-key fingerprint).
+   Verify the web listener too.
+2. Write a random non-secret marker through SSH to a dedicated guest file and
+   flush it. If an HTTP service is installed, serve that file and read it through
+   HTTP too. Power off through the guarded lab command, require no remaining
+   UUID process/listeners, then take a uniquely named powered-off snapshot and
+   record its UUID. Restart through the guarded command.
+3. Change that marker through the same SSH endpoint and read it back through
+   each tested endpoint. Power off and restore only the disposable VM, then
+   restart it. Powered-off snapshots avoid a restored saved state, which the
+   current preflight intentionally rejects.
+4. Repeat preflight after restart (a new VM process PID is expected); read the marker
+   through the same endpoints and require its original value. Record both values,
    endpoint/VM identity and observed result in a sanitized report. A reported
    successful restore without the marker result is insufficient.
 5. Keep inherited disks until the owner explicitly resolves the lost edits;
