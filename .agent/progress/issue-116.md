@@ -109,9 +109,9 @@ Requirement coverage:
 
 ## Plan
 
-1. [ ] Backend TDD: extend `server/tests/unit/test_create_host_cfg.py`, `test_host_recipients.py` and new escalation API/migration tests; add `Escalation` to `server/app/system_models.py`, generate/review multi-bind migration and add round-trip support runner. Extract the existing group computation from `server/app/network_discovery/create_host_cfg.py` for shared use without changing default output. Add `hostescalation.cfg.tpl` / `serviceescalation.cfg.tpl` and validated rendering in `host_config_templates.py`. Add CRUD/options in `server/app/api/system/escalations.py`, register in `__init__.py`, reuse `settings.system`, hold config lock through apply/commit, rollback failed apply. Verify focused tests, Python compilation, backend stage and explicit injection/secret-exposure review.
-2. [ ] Frontend TDD: add `client/src/test/EscalationSettings.test.tsx`; implement `client/src/components/settings/EscalationSettings.tsx`, `client/src/lib/escalationApi.ts`, `client/src/types/escalation.ts`; mount under existing System settings permission. Cover add/edit/delete/reload, validation, 400/422 messages, no-member disabled form, confirmation and loading/error/success states; verify focused tests, PageAccess/LayoutSettings regressions and frontend stage.
-3. [ ] Update `spec files/Backend_Modules_and_Routes.md`, `Data_Model_and_Integrations.md`, `Frontend_Modules_and_Routes.md`, `Implementation_Status.md`, `server/tests/README.md` and UI help; document migration and reuse of settings.system; verify docs.
+1. [x] Backend TDD: extend `server/tests/unit/test_create_host_cfg.py`, `test_host_recipients.py` and new escalation API/migration tests; add `Escalation` to `server/app/system_models.py`, generate/review multi-bind migration and add round-trip support runner. Extract the existing group computation from `server/app/network_discovery/create_host_cfg.py` for shared use without changing default output. Add `hostescalation.cfg.tpl` / `serviceescalation.cfg.tpl` and validated rendering in `host_config_templates.py`. Add CRUD/options in `server/app/api/system/escalations.py`, register in `__init__.py`, reuse `settings.system`, hold config lock through apply/commit, rollback failed apply. Verify focused tests, Python compilation, backend stage and explicit injection/secret-exposure review.
+2. [x] Frontend TDD: add `client/src/test/EscalationSettings.test.tsx`; implement `client/src/components/settings/EscalationSettings.tsx`, `client/src/lib/escalationApi.ts`, `client/src/types/escalation.ts`; mount under existing System settings permission. Cover add/edit/delete/reload, validation, 400/422 messages, no-member disabled form, confirmation and loading/error/success states; verify focused tests, PageAccess/LayoutSettings regressions and frontend stage.
+3. [x] Update `spec files/Backend_Modules_and_Routes.md`, `Data_Model_and_Integrations.md`, `Frontend_Modules_and_Routes.md`, `Implementation_Status.md`, `server/tests/README.md` and UI help; document migration and reuse of settings.system; verify docs.
 4. [ ] Execute issue G's bounded two-contact live Nagios escalation trial in the approved exclusive lab; record real validation, delayed second-contact dispatch, deletion and default regression evidence in a sanitized `docs/test-runs/` report and index. Re-read issue/comments and prove every applicable requirement, run `scripts/verify.sh all`, attach output to PR.
 5. [ ] Remove progress file only after finish checks pass, push PR using template with Closes #116, observe CI, report reviewer approvals honestly; never merge.
 
@@ -122,12 +122,14 @@ Requirement coverage:
 | Intake | Read workflow, issue/prerequisites/specifications and relevant writer/model/API/UI source; created isolated worktree; no application edits | gh issue view 79/113; git log -6 --oneline origin/main | #79 merged as e4130ccf (PR #160); #113 closed/merged. No existing #116 branch. |
 | Plan | Saved finish conditions and coverage; stopped at explicit sensitive-module approval boundary | python3 -I scripts/check_agent_progress.py | green |
 
+| 1 | Backend model/migration/group reuse, API, rendering and frontend settings card, with owning specs; frontend work ran while the independent backend suite was pending | Focused backend 184; focused frontend/access/layout 34; scripts/verify.sh backend/frontend/docs | green: backend 2858 passed/14 skipped; frontend 651 passed/build green/0 lint errors/29 existing warnings; docs green |
+
 ## State for the next session
 
-- Last check run (exact command): python3 -I scripts/check_agent_progress.py
-- Result (first failing lines, or "green"): green
+- Last check run (exact command): scripts/verify.sh backend
+- Result (first failing lines, or "green"): green: 2858 passed, 14 skipped in 411.54s; verify: backend OK
 - Hypothesis: Prerequisites are satisfied; existing #79 group computation can supply escalation group choices and rendering. Implementation requires sensitive Nagios config changes, triggering the workflow's Needs a person stop.
-- Next action (one specific step, not "continue"): Collect the full backend stage result from /tmp/pinpoint-116-backend.log; then finish the isolated Docker two-contact trial.
+- Next action (one specific step, not "continue"): Finish the isolated Docker two-contact Nagios escalation trial; discovery is Running on the two explicit target /32 ranges (do not start overlapping discovery).
 
 ## Decisions and notes
 
@@ -145,3 +147,5 @@ Requirement coverage:
 - Injection/secret review: group identifiers are system_users or generated numeric device names from the single recipient helper; API rejects arbitrary strings, scoped host IDs resolve to generated names and renderer rejects directive metacharacters. Count/interval inputs require exact integers (not bool), with database constraints too. No new shell commands, file destinations, network calls, secrets or log payloads are added. Shared pre-apply validation and config lock remain in place. Apply failures roll back choices; commit failure attempts to rebuild prior config.
 - Frontend work/checks ran while the independent full backend suite was pending; required specs updated with source so route drift stage passes. No failed check was weakened.
 - Docker access was explicitly authorized by the user and group membership granted. Fresh shells can access Docker through `sg docker -c ...` (the parent shell has stale groups). Created separate project pinpoint-issue116 on its own internal subnet and API port 18000 using cached lab images and this worktree's source mount. Existing pinpoint-lab and issue-128 containers are untouched. Lab is running, product acceptance not yet executed.
+
+- Round 1 verification logs: /tmp/pinpoint-116-backend.log, /tmp/pinpoint-116-frontend.log, /tmp/pinpoint-116-docs.log. Lab source checkpoint c1bf732f. One lab harness expectation initially used HTTP 200 for discovery start; server correctly returned 202 and started discovery. Preparation resumed without restarting/overlapping the scan. No product failure claimed.
