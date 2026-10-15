@@ -22,6 +22,7 @@ acknowledgements belong in `system.db` even though they relate to Nagios alerts.
 - Identity/access: `Permission`, `Role`, `RolePermission`, `PasswordResetRequest` (forgot-password requests; Pending until an admin resets or dismisses), `User` (`Must_Change_Password` forces a password change on a new account unless the create form unticks it, after reactivation, after an admin password reset, or after CLI bootstrap recovery; `Needs_Setup` is set only by `flask init-production` on the bootstrap administrator, whose installer email and password are placeholders, and is cleared by `POST /api/user/complete-setup`; migration `d3a9e6b2f741`). The recovery command finds that account by its uniquely earliest `Created_At`, not mutable email, `UserID`, or `Needs_Setup`; ties and no account fail without changes. Each active user is a Nagios contact named and addressed by `User.Email`, so an email change regenerates the config. Alert email is formatted HTML: the generator (`host_config_templates.py`, `create_host_cfg.py`) writes two commands, `pinpoint_notify_host_html` and `pinpoint_notify_service_html`, that run `/usr/bin/python3 -I server/scripts/pinpoint_notify_email.py` (standard library only; arguments are `key=value` Nagios macros; every value is cleaned and HTML-escaped; sends through `/usr/sbin/sendmail`, which is msmtp). Each contact lists them as its host and service notification commands. If the script is missing, or its path holds a character outside `[A-Za-z0-9_./-]`, no commands are written and contacts keep Nagios's stock plain-text `notify-host-by-email` and `notify-service-by-email`.
 - Email settings: `SmtpSettings` (`SMTP_SETTINGS`), the singleton (`Id` 1) behind Settings -> Email: `Provider`, `Host`, `Port`, `Tls`, `Username`, `Sender` and `Password_Encrypted` (Fernet via `app/secrets_store.py`; never returned by the API), with `Version`/`Updated_By`. Saving also applies the settings to `/etc/msmtprc` through the installer's root helper `/usr/local/sbin/pinpoint-apply-smtp` (`sudo -n`, JSON on stdin: `host`, `port`, `tls`, `username`, `password`, `sender`). No row means no mail transport is configured.
 - Plugin settings: `PluginSettings` (`PLUGIN_SETTINGS`), one row per plugin definition (`Plugin_Name`, e.g. `snmp`) holding the variables saved from Settings -> Plugins in `Variables` (JSON), with `Version`/`Updated_By`. No row means the `config.py` defaults apply.
+- Device interfaces: `DeviceInterface` (`DEVICE_INTERFACE`, migration `b7d3f1a9c264`), one row per interface SNMP reports for a device (unique per `NetDiscoveryID` + `If_Index`): `Name`, `Speed_Bps` (null when unreported; `ifHighSpeed` is preferred over `ifSpeed`), `Admin_Status`, `Oper_Status`, `Monitored` (the administrator's choice, default false), `Present` (false once a refresh no longer finds a monitored interface) and `Last_Seen_At`. No rows means no change to the generated Nagios config.
 - Network profile: singleton `NetworkProfile` (`Id=1`) holding the editable name, reference and detail rows of the Network Health info card.
 - Audit/logging: `ActivityLog`, `ConfigurationChanges`, `ExportLog`.
 - Discovery: `NetworkDiscoveryStatus`, `SkippedService`, `NetworkDiscovery`,
@@ -276,6 +277,42 @@ Settings -> Plugins (`PluginSettings`, one row per plugin: `snmp`, `ncpa`);
 `plugin_config()` in `network_discovery/plugin_settings.py` puts the saved values in
 place of their `config.py` keys once per config build, for both `hosts.cfg` and the
 plugin reconciler. Per-host `Plugin_Variables` overrides still win.
+
+### Interface bandwidth
+
+Bandwidth is computed from stored samples; the Nagios checks are not changed.
+
+- **Services.** Every `DeviceInterface` with `Monitored` true becomes an `interfaces` fact for the
+  device's SNMP port (`load_host_plugin_facts()` -> `{"snmp": {"interfaces": [ifIndex, ...]}}`).
+  `snmp_checks()` in `plugin_registry.py` then adds, after the OID-table services, one in and one
+  out octet service per interface: `snmp-if<N>_in_octets-<port>-udp` (OID `1.3.6.1.2.1.2.2.1.10.<N>`)
+  and `snmp-if<N>_out_octets-<port>-udp` (`...16.<N>`). A device with no monitored interface produces
+  exactly the services it did before (the fixed interface 3 services `lan_in_octets` / `lan_out_octets`
+  stay in the OID table). At most 16 interfaces per device; `interfaces` must be whole numbers
+  (`PluginConfigurationError` otherwise). Changes are applied through
+  `regenerate_and_apply_config_status()` (via `apply_config_change()`), so the Nagios binary validates
+  them and a rejected config is rolled back.
+- **Interface discovery** (`network_discovery/interface_discovery.py`). Mechanism: the net-snmp
+  `snmpwalk` command (already required by `check_snmp`), run with an argument list and a 20 s limit
+  per column, SNMP v2c, over ifDescr, ifName, ifSpeed, ifHighSpeed, ifAdminStatus and ifOperStatus.
+  A Python SNMP library was rejected as a large new dependency, and `check_ifstatus` because it
+  reports state, not names, speeds and indexes. The port and community follow the SNMP plugin
+  rules (config defaults, the port found on the device, `Plugin_Variables["snmp"]`); address, port and
+  community are validated before they reach the command, and the community is never returned or logged
+  (it is visible in the process list for the length of a walk, as with `check_snmp`). The list is
+  refreshed on demand (`POST /hosts/<id>/interfaces/refresh`) and after the scan has saved its results
+  (`refresh_interfaces_after_scan()`: best effort, at most 64 devices and 120 s per scan; a device that
+  does not answer is skipped).
+- **Rate calculation** (`app/bandwidth.py`). `rate = (counter now - counter before) * 8 / seconds`
+  between consecutive samples of a service's first perf-data value. A sample's time is the Nagios
+  `Last_Check` (when the counter was read), not the stored `Timestamp`: the two differ by up to a
+  polling interval, which skewed rates by 17% in the lab. A decrease is a counter wrap when
+  the wrapped difference is a believable rate (width detected from the data: above 2**32 means a
+  64-bit counter), otherwise a restart, and that interval is left out; a believable rate is at most
+  110% of the link speed when known, else 100 Gbit/s. Samples more than 30 minutes apart are not
+  compared. Fewer than two valid samples (missing, non-numeric, negative or duplicate readings do not
+  count) gives no rate (`null`, shown as insufficient data). Rates are averaged into the requested
+  number of buckets; a bucket with no rate is `null`.
 
 ### Service identification
 

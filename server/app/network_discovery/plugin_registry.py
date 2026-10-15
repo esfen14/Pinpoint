@@ -117,11 +117,51 @@ def single_check(variables):
     return [ServiceCheck(metric=None)]
 
 
+# IF-MIB columns the bandwidth monitoring reads: ifInOctets and ifOutOctets, indexed by ifIndex.
+IF_IN_OCTETS_OID = "1.3.6.1.2.1.2.2.1.10"
+IF_OUT_OCTETS_OID = "1.3.6.1.2.1.2.2.1.16"
+
+# Most interfaces one device can have monitored; each one adds two Nagios services.
+MAX_MONITORED_INTERFACES = 16
+MAX_INTERFACE_INDEX = 2 ** 31 - 1
+
+
+def interface_metrics(if_index):
+    """
+    Return (in_metric, out_metric), the SNMP metric names of the octet services of the interface
+    with this ifIndex, e.g. ("if5_in_octets", "if5_out_octets") for the services
+    "snmp-if5_in_octets-161-udp" and "snmp-if5_out_octets-161-udp".
+    """
+    return f"if{if_index}_in_octets", f"if{if_index}_out_octets"
+
+
+def valid_interface_indexes(interfaces):
+    """
+    Return the ifIndex numbers in `interfaces` as a sorted list without duplicates, or raise
+    PluginConfigurationError. Expects a list of integers from 1 to MAX_INTERFACE_INDEX, at most
+    MAX_MONITORED_INTERFACES of them.
+    """
+    if not isinstance(interfaces, list):
+        raise PluginConfigurationError("SNMP variable 'interfaces' must be a list.")
+    indexes = set()
+    for entry in interfaces:
+        if isinstance(entry, bool) or not isinstance(entry, int) or not 1 <= entry <= MAX_INTERFACE_INDEX:
+            raise PluginConfigurationError("Each SNMP interface must be an interface index (a whole number).")
+        indexes.add(entry)
+    if len(indexes) > MAX_MONITORED_INTERFACES:
+        raise PluginConfigurationError(f"At most {MAX_MONITORED_INTERFACES} interfaces can be monitored on one device.")
+    return sorted(indexes)
+
+
 def snmp_checks(variables):
     """
     One service per configured OID. Expects variables["oids"] to be a list of
     {"metric": ..., "oid": ...} dicts; any other key in an entry (warning,
     critical, label, units) is passed through as a per-service variable.
+
+    variables["interfaces"], when present, is a list of ifIndex numbers chosen for bandwidth
+    monitoring (Device Inventory). Each adds an in and an out octet service after the OID
+    services; see interface_metrics. With no interfaces the services are exactly the OID list.
     """
     oids = variables.get("oids") or []
     if not isinstance(oids, list):
@@ -135,6 +175,11 @@ def snmp_checks(variables):
         per_service = dict(entry)
         metric = per_service.pop("metric")
         checks.append(ServiceCheck(metric=metric, variables=per_service))
+
+    for if_index in valid_interface_indexes(variables.get("interfaces") or []):
+        in_metric, out_metric = interface_metrics(if_index)
+        checks.append(ServiceCheck(metric=in_metric, variables={"oid": f"{IF_IN_OCTETS_OID}.{if_index}"}))
+        checks.append(ServiceCheck(metric=out_metric, variables={"oid": f"{IF_OUT_OCTETS_OID}.{if_index}"}))
     return checks
 
 

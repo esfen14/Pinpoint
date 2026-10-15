@@ -62,12 +62,12 @@ function ListEditor({ label, description, placeholder, items, isValid, invalidMe
   return (
     <div>
       <p className="text-sm font-medium text-[var(--text)]">{label}</p>
-      <p className="mt-0.5 text-xs text-[var(--text-muted)]">{description}</p>
+      <p className="mt-0.5 text-sm text-[var(--text-muted)]">{description}</p>
 
       <div className="mt-3 flex flex-wrap gap-2">
-        {items.length === 0 && <span className="text-xs text-[var(--text-muted)]">{emptyMessage}</span>}
+        {items.length === 0 && <span className="text-sm text-[var(--text-muted)]">{emptyMessage}</span>}
         {items.map((item) => (
-          <span key={String(item)} className="flex items-center gap-1 rounded-full bg-[var(--hover)] px-3 py-1 text-xs text-[var(--text)]">
+          <span key={String(item)} className="flex items-center gap-1 rounded-full bg-[var(--hover)] px-3 py-1 text-sm text-[var(--text)]">
             {item}
             <button
               type="button"
@@ -104,7 +104,7 @@ function ListEditor({ label, description, placeholder, items, isValid, invalidMe
           <Plus size={15} />
         </button>
       </div>
-      {error && <p className="mt-1.5 text-xs text-red-500">{error}</p>}
+      {error && <p className="mt-1.5 text-sm text-red-500">{error}</p>}
     </div>
   )
 }
@@ -169,12 +169,12 @@ function PortServicesEditor({ label, description, services, savedServices, resol
   return (
     <div>
       <p className="text-sm font-medium text-[var(--text)]">{label}</p>
-      <p className="mt-0.5 text-xs text-[var(--text-muted)]">{description}</p>
+      <p className="mt-0.5 text-sm text-[var(--text-muted)]">{description}</p>
 
       <div className="mt-3 overflow-hidden rounded-xl border border-[var(--border)]">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-[var(--border)] text-left text-xs text-[var(--text-muted)]">
+            <tr className="border-b border-[var(--border)] text-left text-sm text-[var(--text-muted)]">
               <th className="px-3 py-2 font-medium">Port</th>
               <th className="px-3 py-2 font-medium">Expected service</th>
               <th className="px-3 py-2 font-medium">Checked by</th>
@@ -184,7 +184,7 @@ function PortServicesEditor({ label, description, services, savedServices, resol
           <tbody>
             {entries.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-3 py-3 text-xs text-[var(--text-muted)]">No entries.</td>
+                <td colSpan={4} className="px-3 py-3 text-sm text-[var(--text-muted)]">No entries.</td>
               </tr>
             )}
             {entries.map(([key, value]) => {
@@ -194,11 +194,11 @@ function PortServicesEditor({ label, description, services, savedServices, resol
               return (
                 <tr key={key} className="border-b border-[var(--border)] last:border-0">
                   <td className="px-3 py-2 text-[var(--text)]">{key}</td>
-                  <td className="px-3 py-2 font-mono text-xs text-[var(--text)]">{value}</td>
-                  <td className={`px-3 py-2 text-xs ${check.tone}`}>{check.text}</td>
+                  <td className="px-3 py-2 font-mono text-sm text-[var(--text)]">{value}</td>
+                  <td className={`px-3 py-2 text-sm ${check.tone}`}>{check.text}</td>
                   <td className="px-2 py-2 text-right">
                     {locked ? (
-                      <span className="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">Fixed</span>
+                      <span className="text-xs uppercase tracking-wide text-[var(--text-muted)]">Fixed</span>
                     ) : (
                       <button
                         type="button"
@@ -248,7 +248,7 @@ function PortServicesEditor({ label, description, services, savedServices, resol
           <Plus size={15} />
         </button>
       </div>
-      {error && <p className="mt-1.5 text-xs text-red-500">{error}</p>}
+      {error && <p className="mt-1.5 text-sm text-red-500">{error}</p>}
     </div>
   )
 }
