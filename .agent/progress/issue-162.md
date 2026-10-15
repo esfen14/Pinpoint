@@ -6,9 +6,9 @@ Status: in-progress
 ## Finish condition
 
 - [x] F1 Recover or explicitly resolve with the owner the two original uncommitted file versions; document recovery source and compare contents.
-- [ ] F2 Identify why separate VBoxSVC instances could control the same registered appliance UUID while SSH remained attached to the inherited process.
-- [ ] F3 Before mutation, preflight proves the controlled VM process owns intended loopback SSH/web endpoints; fail closed on duplicate control/processes or ambiguous ownership.
-- [ ] F4 Verify snapshot take/change/restore through an endpoint marker in a disposable lab without inherited application data.
+- [x] F2 Identify why separate VBoxSVC instances could control the same registered appliance UUID while SSH remained attached to the inherited process.
+- [x] F3 Before mutation, preflight proves the controlled VM process owns intended loopback SSH/web endpoints; fail closed on duplicate control/processes or ambiguous ownership.
+- [x] F4 Verify snapshot take/change/restore through an endpoint marker in a disposable lab without inherited application data.
 - [ ] F5 Record sanitized recovery evidence, update VM preflight documentation, and pass relevant verification.
 
 Requirement coverage:
@@ -27,7 +27,7 @@ Requirement coverage:
 
 1. [x] Diagnose ownership and search recovery sources read-only; record sanitized evidence in docs/test-runs/2026-10-15-issue-162-recovery/REPORT.md.
 2. [x] Add failing isolated preflight tests, implement fail-closed identity checks in scripts/vmlab and an owning helper, validate narrow checks.
-3. [ ] Perform disposable-only snapshot marker trial if ownership is proved; otherwise record exact blocker and preserve inherited processes.
+3. [x] Perform disposable-only snapshot marker trial if ownership is proved; otherwise record exact blocker and preserve inherited processes.
 4. [ ] Update docs/plans/VM_Lab_Plan.md, spec files/Agent_Workflow_and_CI.md and spec files/Implementation_Status.md; verify finish conditions and scripts/verify.sh all; open PR with honest status.
 
 ## Round log
@@ -42,12 +42,14 @@ Requirement coverage:
 
 | 3 | Added runtime-forward edge cases, completed sanitized diagnosis/source-loss report and owning documentation | scripts/verify.sh all; scripts/verify.sh docs; python3 -I scripts/test_vmlab_preflight.py; git diff --check | All green: 2777 backend passed/14 skipped, 628 frontend passed, build/lint green (29 existing warnings), 17 ownership tests |
 
+| 4 | Rebuilt all five targets/base and clean appliance, provisioned Nagios and deployed main; verified real SSH+HTTP snapshot marker change/restore | python3 /tmp/issue162-marker-trial.py; scripts/vmlab health; scripts/vmlab targets wall --once | Endpoint restore PASS; snapshot ebf767b5-9d26-49a9-b76e-ab747084809b; 60 health checks pass; all target services UP |
+
 ## State for the next session
 
-- Last check run (exact command): scripts/verify.sh docs
-- Result: green after report/spec edits; scripts/verify.sh all green (2777 backend passed, 14 skipped; 628 frontend passed; 29 existing lint warnings); 17 ownership safety tests pass.
-- Hypothesis: Host control has been recovered; remaining work is clean OS/target installation and endpoint-marker proof, not application behavior.
-- Next action: Poll appliance create session 98664 and target base session 1783; once SSH is ready, provision appliance, run powered-off endpoint-marker snapshot trial, deploy main and rebuild targets.
+- Last check run (exact command): python3 /tmp/issue162-marker-trial.py
+- Result: PASS: marker changed and reverted through the same SSH and HTTP endpoints; VM UUID 351eb491-f5e1-4854-a7e4-68309ad774ad; snapshot ebf767b5-9d26-49a9-b76e-ab747084809b. Raw result test-results/issue162/snapshot-marker.json. New appliance health 60/0/0, five rebuilt targets running with expected services UP. Local all/CI were green before latest evidence updates.
+- Hypothesis: Finish-condition behavior is proven; remaining work is administrator setup, tightly scoped discovery smoke, final report/spec status and PR readiness.
+- Next action: Run scripts/vmlab setup-admin, python3 /tmp/issue162-scope-smoke.py, scripts/vmlab smoke; write final snapshot/rebuild report, verify docs, remove progress scaffolding and mark PR #165 ready after CI passes.
 
 ## Decisions and notes
 
@@ -66,3 +68,7 @@ Requirement coverage:
 
 - Live evidence changed the guard design: VirtualBox 7.2 omits SessionPID from showvminfo and SUID VM launchers protect /proc/PID/fd even for their owner. The runtime `VBoxManage debugvm ... info nat0` table exposes active TCP HOST_FORWARD socket descriptors. Guard now requires these exact SSH/web listeners and destination services plus exclusive host listeners, the unique UUID process and its sole parent controller. Unsupported/missing NAT output rejects; no sudo requirement was introduced.
 - Retired UUID inventory saved privately in test-results/issue162/retired-inventory.json. Retired only configured appliance, demo base and five targets; unrelated/legacy registered VMs retained.
+
+- Main deployment needed a transport workaround: the NodeSource single-stream download was exceptionally slow. Downloaded byte ranges on host, assembled the exact 37,783,800-byte package and verified SHA-256 31eef6210cb50f9031afb59e7f1ed741d40db5d39f0894372b19444f33c4996e against guest APT metadata, cached it, interrupted only the pending nodejs download, and resumed the unchanged installer deploy/privilege scripts. Original failed transport attempt is retained in ignored logs.
+- Installer clean checkout is 697869e. No inherited application disk/database was used; positive blank /opt/pinpoint check observed before deployment. Appliance PINPOINT_NETWORKS fallback restricted to 10.77.0.0/28 before any discovery.
+- Marker trial used a non-secret file under fresh client/dist and required the same value via SSH and HTTP. Powered-off snapshot restores avoid saved/transitional-state ambiguity. Guest machine identity and HTTP status also match after restore.
