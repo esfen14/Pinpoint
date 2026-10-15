@@ -43,10 +43,13 @@ Requirement coverage (every requirement stated by the issue):
 
 6. [ ] Resume on available VM: preserve inherited appliance state; sync issue branch and migrate; run real browser recipient save/reload/default/permission checks and Nagios delivery comparison; record report, restore lab and run all verification. Keep F8 pending until inbox evidence exists.
 
+7. [ ] Integrate merged PR #163 locally: merge origin/main, prove the migration graph has a single deployable head from both main and the already-tested #79 revision, preserve per-host groups on interface bandwidth services, then run isolated verification and CI. Leave VM mutations blocked by #162 until recovery evidence is supplied.
+
 ## Round log
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| Resumed after PR #163 | Fetched merged main and re-read #79/#162/#163; planned isolated integration/migration compatibility coverage | saved scripts/verify.sh all command rerun | In progress; no VM mutation; live blocker still unresolved |
 | Resume 2026-10-15 | Current issue and draft #160 re-read; CI green; VirtualBox now available, appliance started; inherited source modifications found and will be preserved before sync | scripts/vmlab status; scripts/vmlab up; remote git status | VM and Nagios active; prior all run interrupted and must be rerun |
 | Intake | Required docs and source inspected; isolated worktree; prerequisite checked | gh issue view 80 and gh pr list --state merged --search 80 | #80 merged and VM verification documented |
 | 1 | Added backend model/migration, recipient API, shared-writer groups and lifecycle handling with tests | cd server && .venv/bin/python -m pytest tests/unit/test_host_recipients.py -q | 34 passed, 2 failed: custom-check test used unsupported ssh plugin; permission-delete fixture hit write-only ORM relationship |
@@ -112,3 +115,5 @@ Requirement coverage (every requirement stated by the issue):
 - Latest PR CI did not trigger because GitHub reported CONFLICTING after #128 merged into main. Merged origin/main (9ce590eb); only report-index conflict, resolved by retaining both sets of reports. No migration-head conflict. Incoming #128 NCPA generation changes are automatically merged; recipient-focused tests and full verification must be rerun. No post-merge live run is authorized until #162 is resolved; previous VM evidence remains attributed to 3d6471dc.
 
 - Final merged verification: origin/main 9ce590eb merged as ccd2f254; only report-index conflict, both histories retained. Focused 38 passed, all 2676 backend / 14 skipped and 579 frontend passed. CI https://github.com/esfen14/Pinpoint/actions/runs/38609237571 passed all three jobs. No post-merge VM run: #162 forbids further mutation until control/recovery resolved. PR remains draft; external inbox and original two-file recovery questions remain unanswered.
+
+- Resume after user reports PR #163 merged: confirmed 82ba9ce9 adds interface bandwidth (#126), not lab recovery; #162 is still open without comments. Re-running saved all command before merging. Both migrations b7d3f1a9c264 (main) and a79e14c0b621 (#79) currently descend from c5e2a8f4d716, so integration needs an explicit single-head merge revision without rewriting an already-tested revision. Ask for recovery details and two controlled mailbox addresses; continue isolated testing independently.
