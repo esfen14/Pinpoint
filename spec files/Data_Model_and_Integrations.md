@@ -408,6 +408,10 @@ and device-interface revision `b7d3f1a9c264` into one head. Run the normal
 multi-bind `flask db upgrade`: installations at either prior head apply the
 missing branch, then the schema-free join. Prior revision identifiers and
 ancestry remain unchanged, preserving already-upgraded installations.
+Migration `f129a79e6301` then joins that head with the independently published
+interface/recipient merge `e79b7d3c2641`. It adds no schema/data changes and
+restores one head for both binds after the recipient feature is integrated.
+Upgrades from either merge preserve installed port, interface and recipient data.
 
 ## NCPA deployment
 

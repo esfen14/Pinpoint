@@ -326,9 +326,10 @@ No live outcome is implied by passing these isolated self-tests.
 ### NCPA/interface migration convergence
 
 `test_ncpa_interface_merge_migration.py` uses a subprocess with private throwaway
-SQLite databases to upgrade from either previously published head, verify the
-single head on both binds and preserve stored ports/interface choices/history
-data through the merge downgrade/re-upgrade. Existing migration and upgrade
+SQLite databases to upgrade from the original port/interface heads and both
+published port/interface and interface/recipient joins, verify the single current
+head on both binds and preserve stored ports/interface choices/recipient selections/
+history data through the merge downgrade/re-upgrade. Existing migration and upgrade
 rehearsal tests continue to enforce the single-head contract.
 `unit/test_host_recipients.py` covers permission-separated per-host recipients, generated groups for hosts and services, default/ineligible fallback, atomic saves and shared-writer validation/reload rollback, rescan/merge/retire ownership, permission synchronization, and a populated multi-bind migration round trip. Its subprocess runner is `support/host_recipients_migration_runner.py`; Nagios calls are mocked.
 

@@ -64,7 +64,7 @@ Copied from issue sections E, F and H; tick only with observed proof.
 - [x] PR references #129. (draft PR #161)
 - [x] PR describes implementation and tests. (draft PR #161 describes the fixes, tests and remaining blockers)
 - [ ] Required CI checks pass. (a119afa4 passed; published e5c7e6f0 conflicts with newer main9ce590eb and has no current-head runs. Local conflict resolution and verification are in progress; its push needs confirmation)
-- [ ] Required reviewer approvals obtained.
+- [x] Required reviewer approvals obtained. (owner states review complete; app PR161 Lorraine APPROVED on33ebe47e, observed2026-10-15; current CI repair remains to publish/verify)
 - [x] Blocking review comments resolved. (current app PR review-comment count zero; required approvals still absent on both PRs)
 - [ ] All applicable acceptance and deliverables complete.
 
@@ -134,12 +134,14 @@ Requirement coverage (each issue requirement maps to E/F/H; proof pending):
 
 | 32 (CI migration convergence) | Newer main merged device-interface revision b7d3f1a9c264 alongside existing deployed-port head7db78f308ee5. Current CI feae5261 fails collection with MultipleHeads. Added two failing prior-head upgrade regressions, then generated-style no-op multi-bind merge e4a129c7b630 without editing applied ancestors. | Regression red: 2 failures; focused migration/upgrade suite | 37 passed after fix, including both prior heads, populated data/history preservation and downgrade/re-upgrade. Initial harness relative downgrade was ambiguous; explicit parent target fixed the harness. Full backend gate passed: 2925 passed/14 skipped; docs passed. No live databases touched and no new push authorized. |
 
+| 33 (reviewed CI repair) | Owner reports review complete; PR161 records Lorraine approval on33ebe47e. Updated clean local branch to remote762ecc5d, whose newer main recipient merge left e4a129c7b630/e79b7d3c2641 heads. Extended upgrade regressions from four published entry points, including recipient preservation/valid FK fixture. Added schema-free f129a79e6301 join without changing published migrations. | Before fix4 MultipleHeads failures; focused migration/upgrade suite | 42 passed after fix, covering single-head both-bind upgrade and preserved port/interface/recipient/history through downgrade/re-upgrade. Backend gate passed:2971 passed/14 skipped; docs passed. No VM changes or push authorized. |
+
 ## State for the next session
 
-- Last check run: `scripts/verify.sh backend > test-results/issue-129/migration-merge-backend.log 2>&1`; `scripts/verify.sh docs > test-results/issue-129/migration-merge-docs.log 2>&1`.
-- Result: green: 2925 backend passed/14 skipped; docs passed. Focused migration/upgrade suite37 passed. Both prior-head upgrades failed with MultipleHeads before fix, then passed after adding schema-free multi-bind join e4a129c7b630. Prior migrations untouched; port/interface/history data preserved through tested downgrade/re-upgrade. Frontend CI passed on feae5261; frontend unchanged in this fix.
-- Hypothesis: The reported PR backend failure is caused by migration branching after the newer interface merge, and the new join restores a single head without rewriting already-applied migrations. Local backend passes; current remote feae5261 remains red until this fix is published and CI reruns.
-- Next action: Ask for confirmation to push the migration fix checkpoint, then check all current-head CI jobs. Required application/installer approvals remain absent. Do not claim a live database upgrade or PR approval/merge.
+- Last check run: `scripts/verify.sh backend > test-results/issue-129/recipient-merge-backend.log 2>&1`; `scripts/verify.sh docs > test-results/issue-129/recipient-merge-docs.log 2>&1`.
+- Result: green: 2971 backend passed/14 skipped; docs passed. Focused migration/upgrade suite42 passed. Four starting-head regressions reproduced MultipleHeads before fix; schema-free f129a79e6301 joins both published merge heads and preserves port/interface/recipient/history data through downgrade/re-upgrade. Frontend unchanged; latest remote frontend CI passed.
+- Hypothesis: Latest762ecc5d CI failure is caused by the newly integrated host-recipient migration head; the added join fixes the migration graph without rewriting applied ancestry. Local backend passes. App approval observed and owner confirms review complete; only repair publication/current-head CI remains for this request.
+- Next action: Ask for confirmation to push the verified migration repair checkpoint, then verify GitHub backend/current-head CI. Do not rerun completed lab work or claim live migration/merge; user authorizes each new push separately.
 
 ## Decisions and notes
 
@@ -199,3 +201,5 @@ Requirement coverage (each issue requirement maps to E/F/H; proof pending):
 - Owner authorized and published 2f80b3db/e5c7e6f0; app PR body now records required live journeys. GitHub subsequently reported CONFLICTING/DIRTY against main9ce590eb. Local merge retains #128 bounded inventory and all of #129 secure transport/port semantics. Explicit integration review: inventory token remains requests params in memory; probe errors remain suppressed; stored port enters the existing validated bounded probe; no secret argv or weaker validation was introduced. No workflow/test removals or PR merge.
 
 - CI investigation after owner reported PR issues: actual checkout already on issue-129 at feae5261 (later main/interface merge), clean before edits. PR161 has no comments/reviews; docs/frontend green, backend collection fails with MultipleHeads7db78f308ee5/b7d3f1a9c264. New merge preserves both deployed histories rather than rewriting parents; tests use private disposable SQLite files.
+
+- Latest owner instruction: PR reviewed, only backend CI remains. Confirmed app approval by lorraine-pangilinan on33ebe47e, no inline comments; current762ecc5d docs/frontend CI pass and backend fails collection with new e4a129c7b630/e79b7d3c2641 MultipleHeads. Repair only that graph/test integration; do not reopen completed live work or solicit another implementation decision. Normal pushes still require confirmation.
