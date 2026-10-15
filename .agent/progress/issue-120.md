@@ -60,13 +60,14 @@ Requirement coverage:
 | 1 | Read issue and standards; wrote the design; edited issue text for D1/D3; opened draft PR | scripts/check_agent_progress.py | n/a, no code |
 | 2 | resumed after design approval; found standards reserve history.db for Nagios snapshots, owner chose system.db for RemediationRun | - | design and notes updated |
 | 3 | Plan step 2: migration e4a7c1d9b305 (REMEDIATION_ACTION, REMEDIATION_RUN), models, registry (record_only, validation, timeout), RemediationRun pruning in _purge_old_data; tests written first and seen failing | pytest test_remediation_migration.py test_remediation_actions.py test_scheduler.py | 23 passed |
+| 4 | Plan step 3, first half: handler server/scripts/pinpoint_event_handler.py; tests first (hostile args, state sets, flood limit, atomic write); tests caught '..' passing the character check, now rejected | pytest tests/unit/test_event_handler.py | 83 passed, 1 skipped (POSIX file mode, runs on Linux CI) |
 
 ## State for the next session
 
-- Last check run (exact command): cd server; python -m pytest tests/unit/test_remediation_migration.py tests/unit/test_remediation_actions.py tests/unit/test_scheduler.py -q
-- Result: 23 passed. Full tests/unit: 2604 passed; failures are Windows-only or already failing without these changes (test_automation security check, test_nagios_commands needs os.mkfifo, test_notification_policy_migration fails on a clean checkout too). Linux CI is the combined check.
+- Last check run (exact command): cd server; python -m pytest tests/unit/test_event_handler.py -q
+- Result: 83 passed, 1 skipped (POSIX mode test, Linux CI)
 - Hypothesis: build order in the design is sound; the handler and consumer are the risky part
-- Next action: plan step 3: failing tests for the handler script server/scripts/pinpoint_event_handler.py (valid and hostile arguments), then the handler, then the consumer server/app/remediation.py
+- Next action: plan step 3, second half: failing tests for the consumer server/app/remediation.py (spool checks: wrong owner, symlink, directory, oversize, malformed; SOFT ignored; match; cooldown; hourly cap; duplicate; interrupted on startup; bounded 200 files), then the consumer and the 15 s scheduler job in scheduler.py
 
 ## Decisions and notes
 
