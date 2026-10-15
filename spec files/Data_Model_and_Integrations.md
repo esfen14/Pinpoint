@@ -26,7 +26,7 @@ acknowledgements belong in `system.db` even though they relate to Nagios alerts.
 - Network profile: singleton `NetworkProfile` (`Id=1`) holding the editable name, reference and detail rows of the Network Health info card.
 - Audit/logging: `ActivityLog`, `ConfigurationChanges`, `ExportLog`.
 - Discovery: `NetworkDiscoveryStatus`, `SkippedService`, `NetworkDiscovery`,
-  `Open_TCP_Services`, `Open_UDP_Services`.
+  `Open_TCP_Services`, `Open_UDP_Services`, `DeviceParent` (manual reachability links).
 - NCPA deployment: `SSHCredentials`, `NCPADeploymentStatus` (one row per run,
   with `Reviewed_At`/`Reviewed_By`), `NCPADeploymentResult` (one row per device
   per run), `NCPADeployment` (each device's latest agent state and nullable installed `Port`),
@@ -678,3 +678,11 @@ storage, foreign keys/uniqueness/self-link constraints and downgrade/re-upgrade.
 Parent transactions ask the shared writer to defer its history commit until the
 route commits the graph and audit entry; lifecycle edits also synchronize the
 existing Plugin Manager derived rows before committing.
+
+
+Nagios still owns state classification and notifications. Declaring multiple
+parents does not create alternate network routes. Cached parent states and a
+single check attempt can briefly classify a child DOWN before UNREACHABLE;
+see [the observed trial and follow-up](../docs/test-runs/2026-10-15-issue-117-manual-topology/REPORT.md).
+The default-three-attempt routed trial passed. No global cache, retry or notification
+setting is silently changed by selecting parents.

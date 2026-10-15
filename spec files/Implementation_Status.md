@@ -11,9 +11,14 @@ Manual multiple-parent relationships, graph validation and eligibility-aware Nag
 rendering are implemented on the issue branch, with a reversible multi-bind
 migration. The existing React Flow prototype is wired to real inventory/status data,
 with a shared Inventory/Topology parent editor and automatic non-editable layout.
-Focused backend tests and migration round-trip pass; full verification, live
-reachability/notifications and CI evidence are still pending. No live acceptance is
-implied by mocked writer tests.
+Local full verification and real routed Nagios default-three-attempt reachability,
+notification dispatch, pause, merge and retire checks pass; the browser fixture
+uses intercepted APIs. See [the report](../docs/test-runs/2026-10-15-issue-117-manual-topology/REPORT.md).
+CI and human review are tracked on the implementation PR. One-attempt settings can
+emit transient child DOWN notifications before UNREACHABLE; notification guarantees
+and any main-config change are a separate [decision #173](https://github.com/esfen14/Pinpoint/issues/173).
+Parent links do not implement routing failover or guarantee immediate suppression
+under every Nagios cache/retry configuration.
 
 ## Implemented backend areas
 

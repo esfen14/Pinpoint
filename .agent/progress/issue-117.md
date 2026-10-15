@@ -7,34 +7,34 @@ Status: in-progress
 
 #### E. Acceptance Criteria
 
-- [ ] **Part 4.1 (System):** Setting one or multiple parents makes the generated host definition contain the corresponding Nagios `parents` list, and Nagios validates it.
-- [ ] **Part 4.1 (System):** A self-parent, a cycle through any parent path, duplicate IDs, or a missing, retired or merged parent is refused with 400; the previous parent set remains intact.
-- [ ] **Part 4.1 (System):** Retiring or merging a parent leaves no dangling reference and the config still validates.
-- [ ] **Part 4.1 (System):** Ineligible parents are individually omitted and reported; eligible parents remain in the generated list. A host with no eligible parents gets valid config without `parents`.
-- [ ] **Part 4.1 (System):** On a lab network, demonstrate Nagios reachability for both a single parent and redundant parents: a failed intermediate parent makes dependent children UNREACHABLE when no alternate route remains; loss of one parent with an available alternate route does not incorrectly mark a reachable child UNREACHABLE. Record observed host states and DOWN/UNREACHABLE notification behavior.
-- [ ] **Part 4.1 (System):** Hosts without a parent behave exactly as before.
-- [ ] **Part 4.2 (Web-Interface):** A user with `system.hosts.edit` can set, change and clear multiple parents from both Inventory and Topology, and the complete parent set persists after reload.
-- [ ] **Part 4.2 (Web-Interface):** Cycle and invalid choices show the server message.
-- [ ] **Part 4.2 (Web-Interface):** A user without the permission sees the parents in both Inventory and Topology but cannot change them.
-- [ ] **Part 4.2 (Web-Interface):** Existing drawer and table tests pass unchanged.
+- [x] **Part 4.1 (System):** Setting one or multiple parents makes the generated host definition contain the corresponding Nagios `parents` list, and Nagios validates it.
+- [x] **Part 4.1 (System):** A self-parent, a cycle through any parent path, duplicate IDs, or a missing, retired or merged parent is refused with 400; the previous parent set remains intact.
+- [x] **Part 4.1 (System):** Retiring or merging a parent leaves no dangling reference and the config still validates.
+- [x] **Part 4.1 (System):** Ineligible parents are individually omitted and reported; eligible parents remain in the generated list. A host with no eligible parents gets valid config without `parents`.
+- [x] **Part 4.1 (System):** On a lab network, demonstrate Nagios reachability for both a single parent and redundant parents: a failed intermediate parent makes dependent children UNREACHABLE when no alternate route remains; loss of one parent with an available alternate route does not incorrectly mark a reachable child UNREACHABLE. Record observed host states and DOWN/UNREACHABLE notification behavior.
+- [x] **Part 4.1 (System):** Hosts without a parent behave exactly as before.
+- [x] **Part 4.2 (Web-Interface):** A user with `system.hosts.edit` can set, change and clear multiple parents from both Inventory and Topology, and the complete parent set persists after reload.
+- [x] **Part 4.2 (Web-Interface):** Cycle and invalid choices show the server message.
+- [x] **Part 4.2 (Web-Interface):** A user without the permission sees the parents in both Inventory and Topology but cannot change them.
+- [x] **Part 4.2 (Web-Interface):** Existing drawer and table tests pass unchanged.
 
-- [ ] **Topology:** The supported routed page displays real backend devices and configured parent edges, including all Device Inventory devices, paused devices and devices without parents.
-- [ ] **Topology:** Automatic hierarchy handles shared children with multiple parents; node dragging and layout modification are disabled.
-- [ ] **Topology:** Loading, error, empty and permission states are tested; hardcoded sample nodes and edges are removed from the supported page.
-- [ ] **Topology:** Matching specifications and tests recognize topology as supported, superseding the former release exclusion.
-- [ ] **Topology:** Detail panels use real device data and manual parent relationships only; tests verify sample interface details, interface navigation, and placeholder traffic/utilization charts are absent from the supported topology page.
+- [x] **Topology:** The supported routed page displays real backend devices and configured parent edges, including all Device Inventory devices, paused devices and devices without parents.
+- [x] **Topology:** Automatic hierarchy handles shared children with multiple parents; node dragging and layout modification are disabled.
+- [x] **Topology:** Loading, error, empty and permission states are tested; hardcoded sample nodes and edges are removed from the supported page.
+- [x] **Topology:** Matching specifications and tests recognize topology as supported, superseding the former release exclusion.
+- [x] **Topology:** Detail panels use real device data and manual parent relationships only; tests verify sample interface details, interface navigation, and placeholder traffic/utilization charts are absent from the supported topology page.
 
 #### F. Required Deliverables
 
-- [ ] Updated application source code (paths in section C).
-- [ ] New or updated API endpoints, with route docstrings and permission checks.
-- [ ] Database migration (multi-database, with downgrade) and `flask sync-permissions` note if a permission is added.
-- [ ] Updated frontend components, types and routes (paths in section C).
-- [ ] Unit tests for new or modified logic.
-- [ ] Frontend interaction tests under `client/src/test/`.
-- [ ] Integration or regression tests for the workflows in section G.
-- [ ] Updated technical documentation: `spec files/Backend_Modules_and_Routes.md`, `spec files/Data_Model_and_Integrations.md`, `spec files/Device_Inventory_Requirements.md`, `spec files/Frontend_Modules_and_Routes.md`, and `spec files/Implementation_Status.md`, and the topology boundary in `spec files/System_Overview_and_Architecture.md`.
-- [ ] Updated user-facing documentation: Drawer help text.
+- [x] Updated application source code (paths in section C).
+- [x] New or updated API endpoints, with route docstrings and permission checks.
+- [x] Database migration (multi-database, with downgrade) and `flask sync-permissions` note if a permission is added.
+- [x] Updated frontend components, types and routes (paths in section C).
+- [x] Unit tests for new or modified logic.
+- [x] Frontend interaction tests under `client/src/test/`.
+- [x] Integration or regression tests for the workflows in section G.
+- [x] Updated technical documentation: `spec files/Backend_Modules_and_Routes.md`, `spec files/Data_Model_and_Integrations.md`, `spec files/Device_Inventory_Requirements.md`, `spec files/Frontend_Modules_and_Routes.md`, and `spec files/Implementation_Status.md`, and the topology boundary in `spec files/System_Overview_and_Architecture.md`.
+- [x] Updated user-facing documentation: Drawer help text.
 - [ ] Evidence that the functionality works: `scripts/verify.sh all` output attached to the pull request; plus a sanitized lab report in `docs/test-runs/` using its `TEMPLATE.md`.
 
 #### G. Testing and Verification
@@ -56,38 +56,38 @@ Test results must be real runs. Do not claim a test passed without attaching its
 #### Functional Completion
 
 - [ ] All mandatory acceptance criteria are satisfied.
-- [ ] Required functionality works as specified.
-- [ ] Existing behavior has not been unintentionally broken.
-- [ ] Applicable edge cases are handled.
+- [x] Required functionality works as specified.
+- [x] Existing behavior has not been unintentionally broken.
+- [x] Applicable edge cases are handled.
 
 #### Code Quality
 
-- [ ] Code follows PinPoint's existing architectural patterns and conventions.
-- [ ] No unnecessary duplicate functionality is introduced.
-- [ ] Relevant linting and static analysis checks pass.
+- [x] Code follows PinPoint's existing architectural patterns and conventions.
+- [x] No unnecessary duplicate functionality is introduced.
+- [x] Relevant linting and static analysis checks pass.
 - [ ] No unresolved critical defects remain.
 
 #### Testing
 
-- [ ] Required automated tests are added or updated.
-- [ ] All applicable automated tests pass.
-- [ ] Relevant integration and regression tests pass.
+- [x] Required automated tests are added or updated.
+- [x] All applicable automated tests pass.
+- [x] Relevant integration and regression tests pass.
 - [ ] Test results or verification evidence are attached to the pull request.
 
 #### Security and Reliability
 
-- [ ] User inputs and configuration values are validated.
-- [ ] Authorization is enforced where required.
-- [ ] Sensitive data is handled securely.
-- [ ] Errors are handled without introducing uncontrolled failures.
-- [ ] Relevant performance and reliability requirements are satisfied.
+- [x] User inputs and configuration values are validated.
+- [x] Authorization is enforced where required.
+- [x] Sensitive data is handled securely.
+- [x] Errors are handled without introducing uncontrolled failures.
+- [x] Relevant performance and reliability requirements are satisfied.
 
 #### Documentation
 
-- [ ] Relevant technical documentation is updated.
-- [ ] User documentation is updated for user-facing changes.
-- [ ] New configuration parameters are documented.
-- [ ] Deployment or migration steps are documented where applicable.
+- [x] Relevant technical documentation is updated.
+- [x] User documentation is updated for user-facing changes.
+- [x] New configuration parameters are documented.
+- [x] Deployment or migration steps are documented where applicable.
 
 #### Pull Request Review
 
@@ -126,7 +126,7 @@ Requirement coverage (all issue sections):
 1. [x] Add failing backend parent/API/config/lifecycle tests in `server/tests/unit/test_device_parents.py`; implement relationship model, validation/serialization in existing device modules, rendering and atomic apply; document routes/data contract; run focused regressions and backend gate.
 2. [x] Generate/review multi-bind migration in `server/migrations/versions/`; add populated round-trip test/runner in `server/tests/`; verify upgrade/downgrade and backend gate.
 3. [x] Add failing frontend editor/layout/topology tests under `client/src/test/`; implement shared parent editor/API/types, wire Inventory and existing React Flow prototype, routing/navigation/access, automatic hierarchy and device-only panels; update frontend/domain specs; verify frontend gate.
-4. [ ] Record isolated live Nagios reachability/rollback evidence in `docs/test-runs/` using the template; update remaining specifications and local issue mirror; run docs/all verification and checkpoint.
+4. [x] Record isolated live Nagios reachability/rollback evidence in `docs/test-runs/` using the template; update remaining specifications and local issue mirror; run docs/all verification and checkpoint.
 5. [ ] Re-read issue and prove acceptance; publish PR using `.github/pull_request_template.md`, monitor CI; keep draft/progress if live acceptance or human decisions remain outstanding.
 
 ## Round log
@@ -136,6 +136,7 @@ Requirement coverage (all issue sections):
 | 1 | Backend graph/model/API/rendering and generated migration; baseline tests fail as expected before implementation. Fixed an authorization test that reused the authenticated client fixture; 308 focused regressions and then 34 parent/migration proofs pass. | FLASK_DEBUG=1 .venv/bin/python -m pytest tests/unit/test_device_parents.py tests/unit/test_device_parent_migration.py -q | 34 passed; first full backend gate still running and contains the already-fixed test fixture failure |
 | 2 | Added generated/reviewed migration and populated round trip; shared frontend editor, hierarchy, real-data topology, route/access wiring and specs; protected unsaved drafts during refresh | scripts/verify.sh frontend; scripts/verify.sh docs; focused parent proof | Frontend green (30 warnings, no errors); docs green; 35 latest parent tests pass. Stable full backend gate finishing. |
 | 3 | Full verification green; added real-writer deferred-commit compensation proof; browser fixture smoke verified real React Flow, fixed positions, editor and read-only; corrected applied/unchanged response flags | scripts/verify.sh all; parent/migration focus; browser fixture script | Green gates and 38 focused tests. Routed trials verify final reachability but max-attempts=1 can emit transient child DOWN; default 3-attempt trial pending. |
+| 4 | Real routed default-three-attempt HARD-state checks and notification dispatch passed; published sanitized report and documented separate one-attempt caveat in #173; reread unchanged issue | python3 /tmp/issue117-live.py; scripts/verify.sh docs; gh issue view 117 --json body,comments | Default-retry single/redundant paths, pause/merge/retire pass; 14 notification events, zero child DOWN in final trial. Docs green. |
 | intake | Reviewed issue scope and existing React Flow frontend; created isolated checkout | gh issue view 117 --json body,comments,title | Product decisions recorded; no implementation yet |
 
 ## State for the next session
@@ -143,7 +144,7 @@ Requirement coverage (all issue sections):
 - Last check run (exact command): scripts/verify.sh all
 - Result: green (full output /tmp/issue117-all.log). Latest focused parent/migration proof is 38 passed in 7.86s. Browser fixture smoke passed (real React Flow, intercepted API).
 - Hypothesis: Existing writer and Inventory modules can support this without a new dependency; use a relationship table and shared editor.
-- Next action: Complete default-retry routed trial in /tmp/issue117-live-final.log, recording HARD states and actual checks rather than initial/soft snapshots; publish sanitized report with trial limitations.
+- Next action: Open the implementation draft PR, run final stable all-stage verification and watch CI; retain progress until review/one-attempt notification guarantee is decided.
 
 ## Decisions and notes
 
@@ -163,3 +164,6 @@ Requirement coverage (all issue sections):
 
 - Live evidence: disposable Docker containers/networks only, all owned and cleaned after each trial; no existing lab/VM touched. First setups needed a stock service definition and a same-user Nagios validator; root-run temporary config was unreadable after Nagios privilege drop. Accelerated max-attempts=1 trials showed transient child DOWN before UNREACHABLE. Nagios official docs discuss cached reachability and recommend max_check_attempts >1. The current trial uses Pinpoint's default 3 attempts and waits for HARD states with nonzero last_check before evaluating notifications. Preserve these limitations in the report; do not claim universal child-DOWN suppression.
 - After the full gate began, minor apply-status reporting and fit-on-panel-open fixes were made; current parent/migration focused proof and browser smoke pass. CI must verify the final source tree. No tests were weakened; topology-exclusion route tests changed only to reflect the approved scope reversal.
+
+- Final live evidence: /tmp/issue117-live-a2ab65f9 and /tmp/issue117-live-active-checks.log, source 051abed5. Active physical checks were scheduled through Nagios FIFO and HARD/nonzero-check states required. See committed report for fixture/setup deviations and SMTP/browser limitations.
+- Finish re-read: issue body unchanged, no comments. All E acceptance behavior has unit/frontend/live proof as mapped above. Human review/approvals and final CI remain unchecked; no merge will be attempted.
