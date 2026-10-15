@@ -782,6 +782,7 @@ class SystemSettings(db.Model):
 
     # General (system-wide only)
     Scan_Frequency: so.Mapped[int] = so.mapped_column(sa.Integer(), default=6)
+    Data_Polling_Interval: so.Mapped[int] = so.mapped_column(sa.Integer(), default=60, server_default="60")
     Check_Interval: so.Mapped[int] = so.mapped_column(sa.Integer(), default=5)
     # How soon a failing check is re-run, and how many failures in a row turn a
     # problem from SOFT into HARD. Rendered into every generated host and service.
@@ -825,6 +826,7 @@ class SystemSettings(db.Model):
         return {
             "scanFrequency": self.Scan_Frequency,
             "checkInterval": self.Check_Interval,
+            "dataPollingInterval": self.Data_Polling_Interval,
             "retryInterval": self.Retry_Interval,
             "maxCheckAttempts": self.Max_Check_Attempts,
             "flapDetectionEnabled": self.Flap_Detection_Enabled,

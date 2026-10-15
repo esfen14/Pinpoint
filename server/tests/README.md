@@ -120,6 +120,7 @@ Basenames below live under `unit/`, except `integration/test_live_nagios.py`.
 | `test_ncpa_command_logging.py` | Mocked SSH command logging: expected probe exits, ordinary and unexpected failures, stderr warnings, account/key creation and idempotency |
 | `test_ncpa.py` | Eligible/trusted devices, SSH fingerprint confirmation, deployment start/stop/status, and validation |
 | `test_automation.py` | Due-time helpers, automation-user selection, maintenance mode, backups, discovery/update scheduling, and security checks |
+| `test_data_polling.py`, `test_data_polling_migration.py` | Polling defaults, populated multi-bind migration round trip, strict API validation/permissions/version/audit, independent schedules, runtime reschedule/rollback, disabled/startup behavior and real scheduler overlap/coalescing |
 | `test_scheduler.py` | Scheduler suppression in the test environment and initialization behavior |
 
 ### Plugin Manager

@@ -38,17 +38,20 @@ Requirement coverage (every issue requirement is included):
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| 1 | Backend API/model/migration and in-place scheduling implemented; regression tests first failed on missing field/revision, now green | FLASK_DEBUG=1 server/.venv/bin/python -m pytest server/tests/unit/test_data_polling.py server/tests/unit/test_data_polling_migration.py -q | 29 passed; full backend stage still running |
 | Intake | Read issue/workflow/specifications and settings/scheduler sources; isolated checkout | gh issue view 110 --json number,title,body,state,labels,url,comments | Finish condition covers all requirements |
 
 ## State for the next session
 
-- Last check run (exact command): gh issue view 110 --json number,title,body,state,labels,url,comments
-- Result (first failing lines, or "green"): green
+- Last check run (exact command): FLASK_DEBUG=1 server/.venv/bin/python -m pytest server/tests/unit/test_data_polling.py server/tests/unit/test_data_polling_migration.py -q
+- Result (first failing lines, or "green"): green (29 passed); backend stage in /tmp/issue-110-backend.log still running and has failures to inspect.
 - Hypothesis: Reschedule the existing job under a shared settings-save lock, snapshot trigger/next_run_time for compensation on failed commit; do not recreate jobs or start a disabled scheduler.
-- Next action (one specific step, not "continue"): Write failing polling API and real scheduler tests.
+- Next action (one specific step, not "continue"): Inspect completed backend/frontend stage logs, resolve regressions, then run scripts/verify.sh all.
 
 ## Decisions and notes
 
 - Issue explicitly authorizes the schema migration and local-lab measurements. No sensitive network/config execution module changes are planned.
 - Use isolated /tmp/Pinpoint-issue-110 checkout; main checkout stays untouched.
 - Lab choices are fixed by owner at 30/60/120/300 seconds, not inferred from measurements.
+
+- Continuation: UI tests first failed for missing polling default/control/hint; implemented all three, focused UI now 29 passed. Five issue-named specifications and tests README updated; docs stage green. Docker socket denied even outside sandbox; sudo requires authentication. User is enabling Docker access; live measurements must wait.

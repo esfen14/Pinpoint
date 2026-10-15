@@ -71,6 +71,11 @@ the normative behavior in the requirement specifications.
 - Plugin Manager scanning, inventory, running checks, summaries, details,
   dependencies, enable/disable, validation, custom upload, command overrides,
   updates/rollback, history, and target configuration.
+- Configurable Pinpoint Data polling interval (`dataPollingInterval`): 30/60/120/300
+  seconds, default 60, system permission, persisted with upgrade default migration.
+  Saves reschedule one existing job and restore its trigger/next run on failure;
+  disabled scheduling stays disabled and startup uses the saved interval. General
+  displays the actual saved check/poll and personal browser refresh schedules.
 - Scheduled Nagios polling, retention purges, backups, network scans, plugin
   update scans, and security validation.
 

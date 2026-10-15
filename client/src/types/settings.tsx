@@ -40,6 +40,7 @@ export interface SystemSettings {
   // Dashboard / diagnostics
   dashboardRefreshRate: number
   scanFrequency: number
+  dataPollingInterval: number
   checkInterval: number
   retryInterval: number
   maxCheckAttempts: number

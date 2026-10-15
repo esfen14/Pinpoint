@@ -1115,8 +1115,12 @@ are looking at live or stale data. Discovery Scan Frequency (`scanFrequency`)
 only controls searches for devices and ports; it is not a check freshness limit.
 
 Settings → General shows the per-user Dashboard Refresh Rate (Manual/1/5/15
-minutes) with a dynamic hint showing the current Check interval and fixed
-60-second data poll. Changing browser refresh does not change Nagios checks,
+minutes) with a dynamic hint showing the saved Nagios Check interval, saved
+Pinpoint Data polling interval and the selected per-user refresh value, including
+Manual. Data polling interval is administrator-controlled in Settings → System
+(`settings.system`), exactly 30/60/120/300 seconds with a 60-second default. It is
+persisted across restart and a successful save reschedules polling immediately;
+a failed reschedule or persistence restores the saved value and active schedule. Changing browser refresh does not change Nagios checks,
 polling, or network discovery. Settings → System offers administrators the
 system-wide Check interval (1/2/5/10/15 minutes, default 5), Retry interval (1 to
 10 minutes, default 1, only values up to the Check interval are offered, and
