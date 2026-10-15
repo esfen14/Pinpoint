@@ -211,3 +211,123 @@ class TestStorage:
     def test_unreadable_secret_is_skipped_not_fatal(self, app):
         with app.app_context():
             assert dpv.decrypt_secrets({"auth_password_enc": "v1:garbage"}) == {}
+
+
+# ==========================================================
+# CONFIG GENERATION
+# ==========================================================
+
+import re
+from pathlib import Path
+
+from app.network_discovery.create_host_cfg import (
+    _create_host_cfg_file,
+    apply_secret_substitutions,
+    collect_snmp_secrets,
+    load_host_plugin_facts,
+)
+from tests.unit.test_create_host_cfg import make_device, make_host, patched_config
+
+OID = "1.3.6.1.2.1.1.3.0"
+
+
+def store_override(db_session, device, validated_input, previous=None):
+    """Save an override like the API does (encrypting the passwords)."""
+    validated = dpv.validate_overrides("snmp", validated_input)
+    device.Plugin_Variables = {"snmp": dpv.build_stored(validated, previous or {})}
+    db_session.session.commit()
+
+
+def generate(app, device, tmp_path, host_name="snmp-host", ip="10.0.0.70"):
+    discovered = {"10.0.0.0/24": {ip: make_host(
+        host_name, udp={"161": "snmp"}, net_discovery_id=device.NetDiscoveryID,
+        plugin_variables=device.Plugin_Variables)}}
+    resource = tmp_path / "resource.cfg"
+    resource.write_text("$USER1$=/usr/local/nagios/libexec\n")
+    resource.chmod(0o660)
+    with patched_config(app, HOST_CONFIG_DIR=tmp_path, NAGIOS_RESOURCE_CFG=str(resource),
+                        SNMP_OIDS=[{"metric": "uptime", "oid": OID}], SNMP_COMMUNITY_STRING="public",
+                        SNMP_PORT="161", NCPA_METRICS=[], NCPA_PORT="5693"):
+        cfg = _create_host_cfg_file(discovered)
+    return cfg.read_text(), resource.read_text()
+
+
+@pytest.mark.usefixtures("monitoring_plugins")
+class TestV3ConfigGeneration:
+
+    def test_v3_passwords_become_slots_not_literals(self, app, db_session, admin_user, tmp_path):
+        device = make_device(db_session, admin_user, "snmp-host", "10.0.0.70")
+        store_override(db_session, device, V3_AUTHPRIV)
+        hosts, resource = generate(app, device, tmp_path)
+
+        assert PASSWORD not in hosts and PRIVACY not in hosts
+        commands = re.findall(r"check_command\s+(pinpoint_nd_snmp_v3\S.*)", hosts)
+        assert commands, hosts
+        for command in commands:
+            assert re.search(r"--auth-slot 'USER\d+'", command) and re.search(r"--priv-slot 'USER\d+'", command)
+            assert "$USER" not in command and "-C " not in command
+        assert f"={PASSWORD}" in resource and f"={PRIVACY}" in resource
+        definition = re.search(r"command_name\s+pinpoint_nd_snmp_v3\s+command_line\s+(.*)", hosts)
+        assert definition and "pinpoint_check_native.py" in definition.group(1)
+        assert "-P 3" in definition.group(1)
+
+    def test_v3_command_resolves_to_the_same_effective_check(self, app, db_session, admin_user, tmp_path):
+        device = make_device(db_session, admin_user, "snmp-host", "10.0.0.70")
+        store_override(db_session, device, V3_AUTHPRIV)
+        hosts, _resource = generate(app, device, tmp_path)
+        command = re.search(r"check_command\s+(pinpoint_nd_snmp_v3\S.*)", hosts).group(1)
+        for expected in (f"!161!{OID}!", "-L 'authPriv'", "-U 'monitor'", "-a 'SHA'", "-x 'AES'"):
+            assert expected in command
+
+    def test_v2c_device_renders_exactly_as_before(self, app, db_session, admin_user, tmp_path):
+        (tmp_path / "a").mkdir()
+        (tmp_path / "b").mkdir()
+        plain = make_device(db_session, admin_user, "snmp-host", "10.0.0.70")
+        before, resource_before = generate(app, plain, tmp_path / "a")
+        with_override = make_device(db_session, admin_user, "snmp-host", "10.0.0.71")
+        store_override(db_session, with_override, {"protocol": "2c"})
+        after, _ = generate(app, with_override, tmp_path / "b", ip="10.0.0.71")
+        assert "pinpoint_nd_snmp_v3" not in before and "pinpoint_nd_snmp_v3" not in after
+        assert f"!161!public!{OID}!" in before
+        assert f"!161!public!{OID}!-P '2c'" in after
+        assert "# BEGIN PINPOINT" not in resource_before
+
+    def test_noauthnopriv_has_no_secrets_and_no_slot_flags(self, app, db_session, admin_user, tmp_path):
+        device = make_device(db_session, admin_user, "snmp-host", "10.0.0.70")
+        store_override(db_session, device, {"protocol": "3", "security_level": "noAuthNoPriv", "v3_user": "monitor"})
+        hosts, resource = generate(app, device, tmp_path)
+        command = re.search(r"check_command\s+(pinpoint_nd_snmp_v3\S.*)", hosts).group(1)
+        assert "-L 'noAuthNoPriv'" in command and "slot" not in command
+        assert "# BEGIN PINPOINT" not in resource
+
+    def test_unreadable_password_skips_the_port_instead_of_rendering_without_it(self, app, db_session, admin_user, tmp_path):
+        device = make_device(db_session, admin_user, "snmp-host", "10.0.0.70")
+        store_override(db_session, device, V3_AUTHPRIV)
+        device.Plugin_Variables = {"snmp": {**device.Plugin_Variables["snmp"], "auth_password_enc": "v1:garbage"}}
+        db_session.session.commit()
+        hosts, _resource = generate(app, device, tmp_path)
+        assert "pinpoint_nd_snmp_v3" not in hosts and "check_snmp" not in hosts
+
+    def test_facts_hold_plaintext_only_for_version_3(self, app, db_session, admin_user):
+        v3 = make_device(db_session, admin_user, "v3-host", "10.0.0.70")
+        store_override(db_session, v3, V3_AUTHPRIV)
+        v2 = make_device(db_session, admin_user, "v2-host", "10.0.0.71")
+        store_override(db_session, v2, {"protocol": "2c"})
+        facts = load_host_plugin_facts()
+        assert facts[v3.NetDiscoveryID]["snmp"]["auth_password"] == PASSWORD
+        assert v2.NetDiscoveryID not in facts
+        assert collect_snmp_secrets(facts) == {
+            f"snmp_v3:{v3.NetDiscoveryID}:auth_password": PASSWORD,
+            f"snmp_v3:{v3.NetDiscoveryID}:priv_password": PRIVACY,
+        }
+
+    def test_substitution_fails_closed_without_a_slot(self):
+        command = "pinpoint_nd_snmp_v3!161!1.3!-L 'authPriv' --auth-slot 'literal-password'"
+        with pytest.raises(PluginConfigurationError):
+            apply_secret_substitutions(command, {})
+        assert apply_secret_substitutions(command, {"literal-password": "$USER4$"}).endswith("--auth-slot 'USER4'")
+
+    def test_public_arguments_matching_a_password_are_not_replaced(self):
+        command = "pinpoint_nd_snmp_v3!161!1.3!-U 'secretvalue' --auth-slot 'secretvalue'"
+        result = apply_secret_substitutions(command, {"secretvalue": "$USER4$"})
+        assert "-U 'secretvalue'" in result and "--auth-slot 'USER4'" in result
