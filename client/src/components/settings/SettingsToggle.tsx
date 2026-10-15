@@ -1,6 +1,8 @@
 interface SettingsToggleProps {
   label: string
   description?: string
+  /** A small colour dot before the label (for example the colour of a state). */
+  dotClass?: string
   enabled: boolean
   onChange: (enabled: boolean) => void
 }
@@ -8,6 +10,7 @@ interface SettingsToggleProps {
 export function SettingsToggle({
   label,
   description,
+  dotClass,
   enabled,
   onChange,
 }: SettingsToggleProps) {
@@ -15,7 +18,8 @@ export function SettingsToggle({
     <div>
       <div className="flex items-center justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-[var(--text)]">
+          <p className="flex items-center gap-2 text-sm font-medium text-[var(--text)]">
+            {dotClass && <span aria-hidden="true" className={`h-2 w-2 shrink-0 rounded-full ${dotClass}`} />}
             {label}
           </p>
 

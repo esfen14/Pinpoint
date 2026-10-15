@@ -19,7 +19,7 @@ vi.mock('../contexts/CurrentUserContext', () => ({
 // Settings tabs render real forms; stub them to keep this about which tabs show.
 vi.mock('../components/settings/GeneralSettings', () => ({ GeneralSettings: () => <div>General form</div> }))
 vi.mock('../components/settings/SecuritySettings', () => ({ SecuritySettings: () => <div>Security form</div> }))
-vi.mock('../components/settings/SystemSettings', () => ({ SystemSettings: () => <div>Notification policy card</div> }))
+vi.mock('../components/settings/SystemSettings', () => ({ SystemSettings: () => <div>Notification policy card</div>, SystemStatusSummary: () => null }))
 vi.mock('../contexts/SystemSettingsContext', () => ({
   useSystemSettings: () => ({ refreshSettings: () => Promise.resolve() }),
 }))

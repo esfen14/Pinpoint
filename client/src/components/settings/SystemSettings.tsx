@@ -321,6 +321,16 @@ export function SystemSettings() {
         <p className="mt-4 text-xs text-[var(--text-muted)]">Saved with the other system settings above.</p>
       </SettingsCard>
 
+    </div>
+  )
+}
+
+// The summary of configuration states; Settings shows it last on the System tab, under every other card.
+export function SystemStatusSummary() {
+  const { settings } = useSystemSettings()
+
+  return (
+    <div className="mt-6">
       <SettingsCard
         title="System Status"
         description="Overview of configuration states."
@@ -369,7 +379,6 @@ export function SystemSettings() {
 
         </div>
       </SettingsCard>
-
     </div>
   )
 }
