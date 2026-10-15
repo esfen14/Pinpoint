@@ -5,7 +5,7 @@ Status: in-progress
 
 ## Finish condition
 
-- [ ] F1 Recover or explicitly resolve with the owner the two original uncommitted file versions; document recovery source and compare contents.
+- [x] F1 Recover or explicitly resolve with the owner the two original uncommitted file versions; document recovery source and compare contents.
 - [ ] F2 Identify why separate VBoxSVC instances could control the same registered appliance UUID while SSH remained attached to the inherited process.
 - [ ] F3 Before mutation, preflight proves the controlled VM process owns intended loopback SSH/web endpoints; fail closed on duplicate control/processes or ambiguous ownership.
 - [ ] F4 Verify snapshot take/change/restore through an endpoint marker in a disposable lab without inherited application data.
@@ -56,3 +56,6 @@ Requirement coverage:
 - Guest read-only search found the same dashboard/status SHA-256 in all three retained checkouts, no independent backup in searched paths.
 - Host sudo read-only fd inspection unavailable (sudo requires a password); do not weaken guard or kill inherited processes.
 - Command-execution review: new helper uses subprocess argument lists, no shell interpolation, no credentials or raw command output logged. Missing metadata fails closed.
+
+- 2026-10-15 owner explicitly authorized: "Remove the old disks and remake the Lab"; acceptance of loss separately confirmed: "Accept as unrecoverable but document loss". F1 resolved by owner decision, not by recovery. Old lab disks may be removed; unrelated VMs remain outside scope.
+- Plan revision after owner decision: retire old appliance and pinpoint-demo-* lab VMs, reset split controllers after children are stopped, build clean appliance/targets, and perform endpoint marker trial. Record exact target UUID inventory before teardown.
