@@ -17,7 +17,8 @@ export function MaintenanceBanner() {
       <Wrench className="h-4 w-4 shrink-0" />
       <span>
         <strong className="font-semibold">Maintenance mode is on.</strong>{' '}
-        Scheduled scans, update checks and security checks are paused until it is turned off.
+        PinPoint&apos;s scheduled scans, update checks and security checks are paused until it is turned off. Alerts are
+        not silenced; use <a href="/maintenance" className="underline">a maintenance window</a> for that.
       </span>
     </div>
   )
