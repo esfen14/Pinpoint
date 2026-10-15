@@ -1,9 +1,10 @@
 import { Cog, Lock, Mail, Puzzle, Radar, ServerCog } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
+import { EscalationSettings } from '../components/settings/EscalationSettings'
 import { GeneralSettings } from '../components/settings/GeneralSettings'
 import { SecuritySettings } from '../components/settings/SecuritySettings'
-import { SystemSettings } from '../components/settings/SystemSettings'
+import { SystemSettings, SystemStatusSummary } from '../components/settings/SystemSettings'
 import { DiscoverySettings } from '../components/settings/DiscoverySettings'
 import { PluginSettings } from '../components/settings/PluginSettings'
 import { EmailSettings } from '../components/settings/EmailSettings'
@@ -69,7 +70,7 @@ export function SettingsPage() {
         <div className="mt-10">
           {shownTab === 'general' && <GeneralSettings />}
           {shownTab === 'security' && <SecuritySettings />}
-          {shownTab === 'system' && <SystemSettings />}
+          {shownTab === 'system' && <><SystemSettings /><EscalationSettings /><SystemStatusSummary /></>}
           {shownTab === 'discovery' && <DiscoverySettings />}
           {shownTab === 'plugins' && <PluginSettings />}
           {shownTab === 'email' && <EmailSettings />}

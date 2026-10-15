@@ -16,6 +16,11 @@ export default defineConfig({
   },
   projects: [
     {
+      name: 'issue-115-live',
+      testMatch: /email-settings\.lab\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
       name: 'setup-admin',
       testMatch: /auth\.setup\.ts/,
     },
@@ -35,6 +40,11 @@ export default defineConfig({
     {
       name: 'setup-issue-79-reader',
       testMatch: /auth\.host-recipients\.setup\.ts/,
+    },
+    {
+      name: 'issue-116-live',
+      testMatch: /escalations\.lab\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'] },
     },
     {
       name: 'issue-79-live',

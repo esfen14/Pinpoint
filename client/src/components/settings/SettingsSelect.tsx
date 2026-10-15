@@ -1,22 +1,18 @@
+import { DropdownSelect } from '../shared/DropdownSelect'
+
 interface SettingsSelectOption { value: string; label: string }
 interface SettingsSelectProps {
   label: string; value: string; options: SettingsSelectOption[]
   onChange: (value: string) => void; description?: string
 }
 
+// A labelled form-field dropdown: the same button-and-list control as the rest of the app
+// (shared/DropdownSelect), stretched to the field width.
 export function SettingsSelect({ label, value, options, onChange, description }: SettingsSelectProps) {
   return (
     <div>
-      <label className="mb-2 block text-sm font-medium text-[var(--text)]">{label}</label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="h-10 w-full rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 text-sm text-[var(--text)] outline-none transition duration-200 focus:border-[#ffb100]"
-      >
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value} className="bg-[var(--card)] text-[var(--text)]">{opt.label}</option>
-        ))}
-      </select>
+      <span className="mb-2 block text-sm font-medium text-[var(--text)]">{label}</span>
+      <DropdownSelect block label={label} value={value} options={options} onChange={onChange} />
       {description && <p className="mt-1.5 text-xs text-[var(--text-muted)]">{description}</p>}
     </div>
   )

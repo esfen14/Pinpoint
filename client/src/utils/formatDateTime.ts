@@ -31,7 +31,7 @@ export function serverDate(value: string | number | Date): Date {
 }
 
 /** Parses "UTC+08:00" / "UTC-05:00" into a minute offset (e.g. 480 / -300). The browser setting uses the date's own local offset. */
-function parseUtcOffsetMinutes(timeZone: string, date: Date): number {
+export function parseUtcOffsetMinutes(timeZone: string, date: Date): number {
   if (timeZone === BROWSER_TIME_ZONE) return -date.getTimezoneOffset()
   const match = /^UTC([+-])(\d{2}):(\d{2})$/.exec(timeZone)
   if (!match) return 0

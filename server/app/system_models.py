@@ -428,6 +428,26 @@ class HostAlertRecipient(db.Model):
     )
 
 
+class Escalation(db.Model):
+    """A notification-count range routed to an existing recipient group.
+
+    A null HostID scopes to all Nagios hosts/services; otherwise the stable
+    device ID follows address changes. Empty groups remain saved but inactive.
+    """
+    __tablename__ = "ESCALATION"
+    __table_args__ = (
+        sa.CheckConstraint('First_Notification >= 1 AND Last_Notification >= First_Notification AND Last_Notification <= 10000', name='ck_escalation_counts'),
+        sa.CheckConstraint('Interval_Minutes >= 0 AND Interval_Minutes <= 1440', name='ck_escalation_interval'),
+    )
+
+    EscalationID: so.Mapped[int] = so.mapped_column(primary_key=True)
+    First_Notification: so.Mapped[int] = so.mapped_column(sa.Integer)
+    Last_Notification: so.Mapped[int] = so.mapped_column(sa.Integer)
+    Interval_Minutes: so.Mapped[int] = so.mapped_column(sa.Integer)
+    Contact_Group: so.Mapped[str] = so.mapped_column(sa.String(80))
+    HostID: so.Mapped[Optional[int]] = so.mapped_column(sa.ForeignKey("NETWORK_DISCOVERY.NetDiscoveryID"), nullable=True)
+
+
 class DeviceIdentifier(db.Model):
     """
     One piece of evidence that identifies a device across IP changes (NCPA
@@ -497,6 +517,62 @@ class DeviceInterface(db.Model):
     Last_Seen_At: so.Mapped[datetime] = so.mapped_column(default=lambda: datetime.now(timezone.utc))
 
     NetDiscoveryID: so.Mapped[int] = so.mapped_column(sa.ForeignKey(NetworkDiscovery.NetDiscoveryID), index=True)
+
+class MaintenanceWindow(db.Model):
+    """
+    A planned maintenance window that PinPoint turns into Nagios scheduled downtime, so alerts
+    and notifications for the scope stop while the work is done (app/maintenance.py). This is
+    not PinPoint's own Maintenance Mode (SystemSettings.Maintenance_Mode), which only pauses
+    PinPoint's background jobs.
+
+    Start_At/End_At are the first occurrence in UTC. Recurrence is "none", "daily" or "weekly"
+    and repeats at the same local time in Time_Zone (an IANA name), so it follows daylight
+    saving. NetDiscoveryID is the device, or NULL for every monitored device. Status is
+    "active", "cancelled" or "completed" (a window with no further occurrence).
+    """
+    __tablename__ = "MAINTENANCE_WINDOW"
+
+    WindowID: so.Mapped[int] = so.mapped_column(primary_key=True)
+    NetDiscoveryID: so.Mapped[Optional[int]] = so.mapped_column(sa.ForeignKey(NetworkDiscovery.NetDiscoveryID), index=True)
+    Start_At: so.Mapped[datetime] = so.mapped_column()
+    End_At: so.Mapped[datetime] = so.mapped_column()
+    Recurrence: so.Mapped[str] = so.mapped_column(sa.String(10), default="none")
+    Recurrence_Until: so.Mapped[Optional[datetime]] = so.mapped_column()
+    Time_Zone: so.Mapped[str] = so.mapped_column(sa.String(64), default="UTC")
+    Comment: so.Mapped[str] = so.mapped_column(sa.String(255))
+    Status: so.Mapped[str] = so.mapped_column(sa.String(20), default="active", index=True)
+    Last_Occurrence_Sent: so.Mapped[Optional[datetime]] = so.mapped_column()
+    Created_At: so.Mapped[datetime] = so.mapped_column(default=lambda: datetime.now(timezone.utc))
+    Created_By: so.Mapped[int] = so.mapped_column(sa.ForeignKey(User.UserID), index=True)
+
+    Occurrences: so.Mapped[list['MaintenanceOccurrence']] = so.relationship(
+        back_populates='Window', cascade='all, delete-orphan'
+    )
+
+
+class MaintenanceOccurrence(db.Model):
+    """
+    One occurrence of a window that was handed to Nagios (or tried). The unique (window, start)
+    pair is what stops an occurrence being scheduled twice after a restart or an overlapping
+    poll. Status is "pending" (retrying), "sent", "failed" (gave up; Last_Error says why) or
+    "cancelled".
+    """
+    __tablename__ = "MAINTENANCE_OCCURRENCE"
+    __table_args__ = (
+        sa.UniqueConstraint('WindowID', 'Start_At', name='uq_maintenance_occurrence_start'),
+    )
+
+    OccurrenceID: so.Mapped[int] = so.mapped_column(primary_key=True)
+    Start_At: so.Mapped[datetime] = so.mapped_column()
+    End_At: so.Mapped[datetime] = so.mapped_column()
+    Status: so.Mapped[str] = so.mapped_column(sa.String(20), default="pending")
+    Attempts: so.Mapped[int] = so.mapped_column(default=0)
+    Last_Error: so.Mapped[Optional[str]] = so.mapped_column(sa.String(255))
+    Sent_At: so.Mapped[Optional[datetime]] = so.mapped_column()
+
+    WindowID: so.Mapped[int] = so.mapped_column(sa.ForeignKey(MaintenanceWindow.WindowID), index=True)
+    Window: so.Mapped[MaintenanceWindow] = so.relationship(back_populates='Occurrences')
+
 
 class DeviceReviewItem(db.Model):
     """

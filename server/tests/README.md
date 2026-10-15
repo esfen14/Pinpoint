@@ -336,3 +336,22 @@ rehearsal tests continue to enforce the single-head contract.
 `unit/test_host_recipients.py` covers permission-separated per-host recipients, generated groups for hosts and services, default/ineligible fallback, atomic saves and shared-writer validation/reload rollback, rescan/merge/retire ownership, permission synchronization, and a populated multi-bind migration round trip. Its subprocess runner is `support/host_recipients_migration_runner.py`; Nagios calls are mocked.
 
 `unit/test_interface_recipient_upgrade.py` and `support/interface_recipient_migration_runner.py` verify a single deployable migration head and populated upgrades from both the released interface revision and the prior host-recipient preview. Merge rollback preserves both installed parent tables and their rows. Recipient generation tests also cover selected/default/ineligible groups on interface bandwidth services while NCPA is enabled globally.
+
+`unit/test_smtp_relays.py` covers custom STARTTLS helper-compatible validation,
+API save/reload/blank-password preservation and mocked SMTP sends, invalid-value
+rejection before helper invocation, and credential-safe failures. Existing
+`unit/test_smtp_settings.py` Gmail regressions are unchanged.
+`unit/test_mail_failures.py` covers bounded tails, safe reason categories,
+missing/unreadable/nonregular logs, partial blocks, rotation, unrelated jobs and
+fresh settings-API reads. Source-format fixtures were checked against Nagios Core
+4.5.11 `base/workers.c`; these isolated tests do not prove appliance readability
+or real notification delivery.
+`unit/test_escalations.py` covers escalation authentication/permission, exact JSON validation, CRUD/reload, mocked apply failure and rollback, group opt-out/deactivation filtering, scoped/global rendering and unchanged output after deletion. `unit/test_escalation_migration.py` runs `support/escalation_migration_runner.py` against populated disposable system/history databases, proving numeric/FK constraints, a single revision per bind, downgrade/re-upgrade and preservation of recipient/device/history data.
+
+`unit/test_escalation_merge_migration.py` extends the shared populated convergence
+runner to start at either the escalation or remediation head. It verifies a
+single revision on both binds, preservation of each parent's existing feature
+rows, and downgrade/re-upgrade of the schema-free join without losing choices,
+remediation runs, polling values, recipients, interfaces, deployed ports or the
+history marker. The escalation generator tests also cover enabled remediation
+handlers and escalation recipients in the same candidate file.

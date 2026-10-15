@@ -24,6 +24,7 @@ account.view, account.edit, account.info, account.alerts
 system.discover, system.deploy.ncpa, system.hosts, system.hosts.edit, system.hosts.alerts, system.logs
 system.report, system.notifications, system.services, system.network_health
 system.acknowledge_alerts, system.recheck, system.dashboard, system.history
+maintenance.manage
 plugin.scan, plugin.view, plugin.enable, plugin.disable
 plugin.command_override, plugin.command_restore, plugin.validate
 plugin.custom_add, plugin.custom_check, plugin.update, plugin.update_rollback
@@ -125,6 +126,37 @@ Security and system setting fields are restricted with `settings.security` and
 | `PUT /api/system/notification-policy` | `settings.system` | Validate quiet-hour windows, host/service options, and renotify interval (0–1440 minutes); 400 on invalid fields, 409 on stale version, 422 with Nagios feedback on failed config apply, rolling back the database; audit changed fields when enabled |
 
 Both routes use the standard success/error envelopes. GET returns `quietHours` (weekday, `start`, `end` in 24-hour `HH:MM`), `hostOptions`, `serviceOptions`, `renotifyInterval`, `version` and `timeZone` (`Nagios server local time`). PUT accepts those editable fields plus the current integer `version`; `timeZone` is informational. Quiet windows cannot cross midnight or overlap on one weekday. The policy belongs to the default-bind singleton, and a successful save regenerates/validates/applies the shared Nagios candidate file before committing.
+
+### `app/api/system/maintenance.py`
+
+| Method and path | Permission | Purpose |
+|---|---|---|
+| `GET /api/system/maintenance/windows` | `maintenance.manage` | List windows (newest first, at most 200) with `nextOccurrence`, the five most recent occurrences (status, attempts, `error`) and `devices`, the monitored devices a window can be scoped to |
+| `POST /api/system/maintenance/windows` | `maintenance.manage` | Create a window (201). 400 when invalid: `startAt`/`endAt` need a UTC offset, end after start and in the future, `recurrence` none/daily/weekly, one-off at most 30 days, a recurring window no longer than its period, `recurrenceUntil` only for a recurring window and at most 366 days after the start, `timeZone` a known IANA name, `comment` 1–200 characters with no line break, `deviceId` null (all devices) or an existing device that is monitored. Audited |
+| `PUT /api/system/maintenance/windows/<id>` | `maintenance.manage` | Replace an active window with the same validation (400; 404 unknown; 400 when not active). Downtime already handed to Nagios for its unfinished occurrences is deleted first; the response adds `nagios_synced` / `nagios_message`. Audited |
+| `POST /api/system/maintenance/windows/<id>/cancel` | `maintenance.manage` | Cancel a window and delete its pending and running Nagios downtime (`nagios_synced` / `nagios_message` as above; the window is cancelled even when Nagios could not be told). 400 when already cancelled, 404 unknown. Audited |
+
+A window is Nagios scheduled downtime, not PinPoint's own Maintenance Mode (a `SystemSettings` flag that only pauses PinPoint's background jobs and is unchanged). Times are ISO 8601 in and out, stored as UTC; `timeZone` is only the zone a daily or weekly window repeats in, so it keeps its local time across a daylight-saving change. Nothing is sent to Nagios by these routes except the delete on edit and cancel; the scheduler job `maintenance_windows` (`app/maintenance.py`) schedules downtime shortly before each occurrence.
+### `app/api/system/escalations.py`
+
+| Method and path | Permission | Purpose |
+|---|---|---|
+| `GET /api/system/escalations` | `settings.system` | List saved ranges (`items`), existing recipient `groups` with `name`/`member_count`, and monitored device `hosts` with `id`/`name`; each range includes `active` and an inactivity `reason` |
+| `POST /api/system/escalations` | `settings.system` | Create and apply a notification escalation; 400 invalid fields/empty group, 422 failed Nagios validation or reload with database rollback |
+| `PUT /api/system/escalations/<id>` | `settings.system` | Replace and apply an escalation; same validation/rollback; 404 missing range |
+| `DELETE /api/system/escalations/<id>` | `settings.system` | Delete and apply an escalation; 404 missing range, 422 failed apply restores the saved range |
+
+POST/PUT require exactly `first_notification`, `last_notification`,
+`interval_minutes`, `contact_group`, `host_id`. Notification counts are integers
+from 1 to 10000, first no greater than last; interval is an integer from 0 to
+1440 minutes (0 sends once during the range). `contact_group` must be an existing
+nonempty group from the shared recipient calculation. `host_id` is a currently
+generated device ID, or `null` for all Nagios hosts and services. Responses use
+the standard envelope. Mutations hold the shared config lock through validation,
+apply and commit, log configuration changes when audit logging is enabled, and
+restore the previous database choices on failure. Existing ranges with empty
+groups or absent scoped hosts remain visible with an explanation and are omitted
+from generated configuration. No new permission is introduced.
 
 ### `app/api/system/remediation.py`
 
@@ -268,14 +300,16 @@ this is a documented implementation mismatch, not a recommended convention.
 
 ### `app/api/system/smtp_settings.py`
 
-Settings -> Email: the Gmail account notification mail is sent through (Gmail
-only, STARTTLS on port 587). Logic is in `app/smtp_settings.py`.
+Settings -> Email: the shared account notification mail is sent through. Gmail
+keeps its fixed preset; Other SMTP relay accepts custom STARTTLS settings. Logic
+is in `app/smtp_settings.py`; notification failures come from
+`app/nagios/mail_failures.py`.
 
 | Method and path | Permission | Purpose |
 |---|---|---|
-| `GET /api/system/smtp-settings` | `settings.email` | `settings` (`provider`, `host`, `port`, `tls`, `username`, `sender`, `passwordSet`, `configured`, `version`, `updatedAt`) and `presets.gmail`. The password is never returned, only whether one is saved |
-| `PUT /api/system/smtp-settings` | `settings.email` | Save `{version, provider, host, port, tls, username, sender?, password?}`. Only `gmail`, `smtp.gmail.com`, 587 and `starttls` are accepted (`none`/`ssl` are 400); `username` and `sender` are email addresses (sender defaults to the username); `password` is printable ASCII, at most 200 characters, used exactly as sent (never trimmed or stripped of spaces) and may be left out or empty once one is saved. The settings go to the root helper (`sudo -n /usr/local/sbin/pinpoint-apply-smtp`, one JSON object on stdin) and are saved only if it exits 0; its stderr is returned as the message (400 when it rejected the input, 500 when it is missing or timed out). 409 on a stale version. Writes Configuration Change entries (`smtp_settings`, the password logged only as `changed`) when audit logging is on |
-| `POST /api/system/smtp-settings/test` | `settings.email` | Send a test message to the signed-in user's address over STARTTLS with the saved settings (400 when none are saved). Always 200 with `{ok, recipient}` or `{ok: false, code, message, explanation, details}`; `code` is `auth_failed` (535, `BadCredentials`, "Username and Password not accepted": friendly Gmail app-password message), `connect_failed` (blocked port 587), `host_not_found`, `tls_failed`, `rejected` or `send_failed`; `message` is plain language, `explanation` says technically what happened and what to check, and `details` is the mail server's own text |
+| `GET /api/system/smtp-settings` | `settings.email` | `settings` (`provider`, `host`, `port`, `tls`, `username`, `sender`, `passwordSet`, `configured`, `version`, `updatedAt`) and `presets.gmail` / `presets.custom`, plus `lastMailFailure` (`null` or `{time, reason}`). Time is ISO 8601 UTC; reason is fixed sanitized text. Reads at most 64 KiB from the current `NAGIOS_LOG_FILE` on every GET; missing, unreadable and nonregular logs give `null`. The password is never returned, only whether one is saved |
+| `PUT /api/system/smtp-settings` | `settings.email` | Save `{version, provider, host, port, tls, username, sender?, password?}`. Gmail keeps `smtp.gmail.com`, 587 and `starttls`, an email username and its existing validation messages. `custom` accepts the installed helper host rules (1–253 ASCII letters, digits, dots or hyphens, starting and ending with a letter or digit), integer port 1–65535 and only `starttls`; `tls`/`none`/`ssl` are 400. Custom usernames contain 1–254 printable ASCII characters; sender is a valid email matching the helper regex and defaults to username only when that is an email. `password` is printable ASCII, at most 200 characters for Gmail or 256 for custom, used exactly as sent (never trimmed or stripped of spaces) and may be left out or empty once one is saved. The settings go to the root helper (`sudo -n /usr/local/sbin/pinpoint-apply-smtp`, one JSON object on stdin) and are saved only if it exits 0; its credential-redacted stderr is returned as the message (400 when it rejected the input, 500 when it is missing or timed out). 409 on a stale version. Writes Configuration Change entries (`smtp_settings`, the password logged only as `changed`) when audit logging is on |
+| `POST /api/system/smtp-settings/test` | `settings.email` | Send a test message to the signed-in user's address over STARTTLS with the saved settings (400 when none are saved). Always 200 with `{ok, recipient}` or `{ok: false, code, message, explanation, details}`; `code` is `auth_failed` (535, `BadCredentials`, "Username and Password not accepted": friendly Gmail app-password message), `connect_failed` (blocked port 587), `host_not_found`, `tls_failed`, `rejected` or `send_failed`; `message` is plain language, `explanation` says technically what happened and what to check, and `details` is credential-redacted Gmail server text, or empty for custom relays (fixed generic messages without Gmail-specific advice) |
 
 ### `app/api/system/plugin_settings.py`
 

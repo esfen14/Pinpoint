@@ -10,12 +10,14 @@ type DropdownSelectProps<T extends string | number> = {
   options: DropdownOption<T>[]
   onChange: (value: T) => void
   disabled?: boolean
+  // Fill the width of a form field (Settings) instead of sizing to the choice (toolbars).
+  block?: boolean
 }
 
 // The button-and-popover dropdown used across Network Health and the Dashboard (see TimeRangeSelect):
 // a rounded button showing the current choice and a chevron, and a card-style list under it with the
 // chosen item in the amber highlight. Closes on a choice, on a click elsewhere and on Escape.
-export function DropdownSelect<T extends string | number>({ label, value, options, onChange, disabled }: DropdownSelectProps<T>) {
+export function DropdownSelect<T extends string | number>({ label, value, options, onChange, disabled, block }: DropdownSelectProps<T>) {
   const [open, setOpen] = useState(false)
   const root = useRef<HTMLDivElement>(null)
   const current = options.find((option) => option.value === value)
@@ -45,7 +47,9 @@ export function DropdownSelect<T extends string | number>({ label, value, option
         aria-expanded={open}
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
-        className="flex max-w-[14rem] items-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--card-alt)] px-3 py-2 text-sm text-[var(--text)] hover:bg-[var(--hover)] disabled:cursor-not-allowed disabled:opacity-50"
+        className={`flex items-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--card-alt)] px-3 py-2 text-sm text-[var(--text)] hover:bg-[var(--hover)] disabled:cursor-not-allowed disabled:opacity-50 ${
+          block ? 'h-10 w-full justify-between bg-[var(--input-bg)]' : 'max-w-[14rem]'
+        }`}
       >
         <span className="truncate">{current?.label ?? '—'}</span>
         <ChevronDown className="h-3.5 w-3.5 shrink-0" />
@@ -54,7 +58,9 @@ export function DropdownSelect<T extends string | number>({ label, value, option
         <div
           role="listbox"
           aria-label={label}
-          className="absolute right-0 top-full z-10 mt-2 max-h-64 min-w-40 max-w-xs overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--card)] p-1.5 shadow-lg"
+          className={`absolute top-full z-10 mt-2 max-h-64 overflow-y-auto rounded-xl border border-[var(--border)] bg-[var(--card)] p-1.5 shadow-lg ${
+            block ? 'left-0 right-0' : 'right-0 min-w-40 max-w-xs'
+          }`}
         >
           {options.map((option) => (
             <button

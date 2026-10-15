@@ -358,20 +358,20 @@ function ProcessHelper({ rows, onChange, disabled }: {
         A different count raises a Critical alert. Names are case sensitive. A count of zero checks that a process stays stopped.
       </p>
       <div className="mt-3 flex flex-wrap items-end gap-3">
-        <label className="text-xs text-[var(--text-muted)]">
+        <label className="text-sm font-medium text-[var(--text)]">
           Process name
           <input
             value={name} placeholder="e.g. sshd" disabled={disabled}
             onChange={(event) => { setName(event.target.value); setProblem(null) }}
-            className={`${inputClass} mt-1 max-w-[220px] font-mono text-xs`}
+            className={`${inputClass} mt-1 max-w-[220px] font-mono text-sm font-normal`}
           />
         </label>
-        <label className="text-xs text-[var(--text-muted)]">
+        <label className="text-sm font-medium text-[var(--text)]">
           Expected process count
           <input
             type="number" min="0" max="1000000" step="1" value={count} disabled={disabled}
             onChange={(event) => { setCount(event.target.value); setProblem(null) }}
-            className={`${inputClass} mt-1 max-w-[160px] text-xs`}
+            className={`${inputClass} mt-1 max-w-[160px] text-sm font-normal`}
           />
         </label>
         <button

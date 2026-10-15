@@ -20,9 +20,12 @@ acknowledgements belong in `system.db` even though they relate to Nagios alerts.
 ### Default bind: identity, configuration, operations, and acknowledgement
 
 - Identity/access: `Permission`, `Role`, `RolePermission`, `PasswordResetRequest` (forgot-password requests; Pending until an admin resets or dismisses), `User` (`Must_Change_Password` forces a password change on a new account unless the create form unticks it, after reactivation, after an admin password reset, or after CLI bootstrap recovery; `Needs_Setup` is set only by `flask init-production` on the bootstrap administrator, whose installer email and password are placeholders, and is cleared by `POST /api/user/complete-setup`; migration `d3a9e6b2f741`). The recovery command finds that account by its uniquely earliest `Created_At`, not mutable email, `UserID`, or `Needs_Setup`; ties and no account fail without changes. Each active user is a Nagios contact named and addressed by `User.Email`, so an email change regenerates the config. Alert email is formatted HTML: the generator (`host_config_templates.py`, `create_host_cfg.py`) writes two commands, `pinpoint_notify_host_html` and `pinpoint_notify_service_html`, that run `/usr/bin/python3 -I server/scripts/pinpoint_notify_email.py` (standard library only; arguments are `key=value` Nagios macros; every value is cleaned and HTML-escaped; sends through `/usr/sbin/sendmail`, which is msmtp). Each contact lists them as its host and service notification commands. If the script is missing, or its path holds a character outside `[A-Za-z0-9_./-]`, no commands are written and contacts keep Nagios's stock plain-text `notify-host-by-email` and `notify-service-by-email`.
-- Email settings: `SmtpSettings` (`SMTP_SETTINGS`), the singleton (`Id` 1) behind Settings -> Email: `Provider`, `Host`, `Port`, `Tls`, `Username`, `Sender` and `Password_Encrypted` (Fernet via `app/secrets_store.py`; never returned by the API), with `Version`/`Updated_By`. Saving also applies the settings to `/etc/msmtprc` through the installer's root helper `/usr/local/sbin/pinpoint-apply-smtp` (`sudo -n`, JSON on stdin: `host`, `port`, `tls`, `username`, `password`, `sender`). No row means no mail transport is configured.
+- Email settings: `SmtpSettings` (`SMTP_SETTINGS`), the singleton (`Id` 1) behind Settings -> Email: `Provider`, `Host`, `Port`, `Tls`, `Username`, `Sender` and `Password_Encrypted` (Fernet via `app/secrets_store.py`; never returned by the API), with `Version`/`Updated_By`. Saving also applies the settings to `/etc/msmtprc` through the installer's root helper `/usr/local/sbin/pinpoint-apply-smtp` (`sudo -n`, JSON on stdin: `host`, `port`, `tls`, `username`, `password`, `sender`). No row means no mail transport is configured. `Provider` is `gmail` (fixed smtp.gmail.com:587 STARTTLS) or `custom` (helper-valid host and port 1–65535, STARTTLS only). The existing columns support both; no migration or permission change is required. The helper JSON field set remains unchanged.
+
+  `app/nagios/mail_failures.py` reads at most 64 KiB from the current regular `NAGIOS_LOG_FILE` (default `/usr/local/nagios/var/nagios.log`) per settings GET, opening nonblocking and ignoring partial boundary lines. It recognizes Nagios 4.5.11 NOTIFY worker failures and adjacent stderr categories; stdout, command text, addresses and credentials never leave the reader. The last failure is returned as UTC time plus fixed reason, or null for missing/unreadable/nonregular/no-match logs. It is a historical failure in the current tail, not a delivery receipt or current health status; a successful test does not erase it. Rotation/tail eviction can remove the indicator. This diagnostic is not written to either database and does not alter archive-based notification history.
 - Plugin settings: `PluginSettings` (`PLUGIN_SETTINGS`), one row per plugin definition (`Plugin_Name`, e.g. `snmp`) holding the variables saved from Settings -> Plugins in `Variables` (JSON), with `Version`/`Updated_By`. No row means the `config.py` defaults apply.
 - Device interfaces: `DeviceInterface` (`DEVICE_INTERFACE`, migration `b7d3f1a9c264`), one row per interface SNMP reports for a device (unique per `NetDiscoveryID` + `If_Index`): `Name`, `Speed_Bps` (null when unreported; `ifHighSpeed` is preferred over `ifSpeed`), `Admin_Status`, `Oper_Status`, `Monitored` (the administrator's choice, default false), `Present` (false once a refresh no longer finds a monitored interface) and `Last_Seen_At`. No rows means no change to the generated Nagios config.
+- Maintenance windows: `MaintenanceWindow` (`MAINTENANCE_WINDOW`, migration `a4c8e1b7d933`): `NetDiscoveryID` (a device, or null for every monitored device), `Start_At`/`End_At` (first occurrence, naive UTC), `Recurrence` (`none`, `daily`, `weekly`), `Recurrence_Until`, `Time_Zone` (IANA name the recurrence repeats in), `Comment`, `Status` (`active`, `cancelled`, `completed`), `Last_Occurrence_Sent`, `Created_By`/`Created_At`; and `MaintenanceOccurrence` (`MAINTENANCE_OCCURRENCE`), one row per occurrence handed to Nagios, unique per (`WindowID`, `Start_At`), with `Status` (`pending` while retrying, `sent`, `failed`, `cancelled`), `Attempts`, `Last_Error` and `Sent_At`. No rows means nothing changes. The downgrade drops both tables; run `flask sync-permissions` after upgrading to add `maintenance.manage` (Administrator only).
 - Network profile: singleton `NetworkProfile` (`Id=1`) holding the editable name, reference and detail rows of the Network Health info card.
 - Audit/logging: `ActivityLog`, `ConfigurationChanges`, `ExportLog`.
 - Discovery: `NetworkDiscoveryStatus`, `SkippedService`, `NetworkDiscovery`,
@@ -33,6 +36,7 @@ acknowledgements belong in `system.db` even though they relate to Nagios alerts.
   `NCPADevicePartition`.
 - Remediation: `RemediationAction` (`REMEDIATION_ACTION`): the admin-defined rule with `Name` (unique), `Action_Type` (`record_only` or `restart_local_service`; the second was added by migration `b8e3d5f2a417`), `Scope_Kind` (service or host), `Host_Pattern`, `Service_Pattern`, `Parameters` (JSON, validated per type), `Enabled`, `Max_Runs_Per_Hour`, `Cooldown_Seconds`, `Version` and `Updated_By`/`Updated_At`; and `RemediationRun` (`REMEDIATION_RUN`): one row per decision with `Event_Key` (sha256 of kind, host, service, state and last state change; unique together with `Action_Id`), `Action_Id` (a plain number, not a foreign key, so deleting an action keeps its runs), `Action_Name` (a copy), host, service, state, `State_Type`, `Attempt`, `Received_At`, `Started_At`, `Finished_At`, `Outcome`, `Reason` and `Output` (at most 1 KB, redacted). Both live in `system.db` because PinPoint writes them; `history.db` stays Nagios snapshots only. Migration `e4a7c1d9b305` creates both tables and the `remediation.view` and `remediation.manage` permissions, granted to the Administrator role.
 - Settings: singleton `SystemSettings`, singleton `NotificationPolicy` (`NOTIFICATION_POLICY`, Id 1, migration `143c48cd6663`), one-per-user `UserPreferences`. `NotificationPolicy` stores weekday/HH:MM quiet windows as JSON, host/service option strings, a 0–1440-minute renotify interval, `Version`, and `Updated_By`; the migration seeds the historical 24x7/default-options/30-minute policy and removes the table on downgrade.
+- Notification escalations: `Escalation` (`ESCALATION`, migration `cd74e5f8a2d5`) stores `First_Notification` and `Last_Notification` (1–10000, first no greater than last), `Interval_Minutes` (0–1440), `Contact_Group` (an existing generated recipient group) and nullable `HostID` (stable `NetworkDiscovery` foreign key; null scopes to all Nagios hosts and services). Database checks enforce numeric ranges. An empty table preserves generated config byte-for-byte. Upgrade creates only this default-bind table; downgrade drops it without changing recipient/device/history records. Deploy with the existing multi-bind `flask db upgrade`; no new permission or `sync-permissions` change is needed.
 - Notifications/alerts: `NotificationCursor`, `AlertAcknowledgement`,
   append-only `AckHistory`.
 
@@ -196,8 +200,10 @@ the poll continues.
 `nagios`). The CGI route is not used: `cgi.cfg` authorizes commands only for
 `nagiosadmin`, which has no password. The allowlist is closed, one function per
 command: acknowledge/remove acknowledgement (host, service), forced check (host,
-service) and schedule downtime (host, service; for the maintenance-window
-work). Each line is `[epoch] COMMAND;args`, built only after validation: host,
+service), schedule downtime (host, service) and cancel downtime by host name and
+comment (`DEL_DOWNTIME_BY_HOST_NAME;host;;;comment`, which removes the host's and its
+services' downtime with that exact comment; the comment is required, since a blank one
+would delete all of the host's downtime). Each line is `[epoch] COMMAND;args`, built only after validation: host,
 service and author may not contain newline, CR, NUL or `;`; a comment may not
 contain newline, CR or NUL (400 at the route) and has `;` replaced by `,`, is cut
 to 255 characters and logged at INFO only to 40; a line may not exceed 4096 bytes
@@ -265,6 +271,7 @@ are not part of that latency or the check freshness threshold.
 - Daily purging based on `Log_Retention_Days` and
   `Diagnostic_History_Retention_Days`.
 - Settings-driven automation checks every `AUTOMATION_CHECK_MINUTES`.
+- Maintenance window dispatch every 60 seconds (`maintenance_windows`, `app/maintenance.py`).
 - The remediation spool consumer every 15 seconds (`max_instances=1`); at startup, runs left
   `running` by a stop become `interrupted` and are never run again.
 
@@ -287,6 +294,29 @@ at least one scan has already been recorded; a fresh installation waits for an
 administrator to trigger the first scan manually. Maintenance mode permits backups but
 stops the other automated operations. Jobs are attributed to an active user for
 audit purposes.
+
+## Maintenance windows and Nagios downtime
+
+`app/maintenance.py` turns a `MaintenanceWindow` into Nagios scheduled downtime through
+the command channel. The dispatcher runs every 60 seconds with the server's clock (the
+Nagios server's clock on an appliance). For each active window it finds the occurrence
+running now or next; when that starts within 10 minutes it claims a
+`MaintenanceOccurrence` row (committed before anything is sent, unique per window and
+start, so a restart or an overlapping run never schedules it twice) and sends
+`SCHEDULE_HOST_DOWNTIME` for each host in scope and `SCHEDULE_SVC_DOWNTIME` for each of
+its services in the latest snapshot, with a fixed start and end so Nagios ends the
+downtime itself. Host downtime alone does not raise a service's `Scheduled_Downtime_Depth`,
+hence the per-service commands. Every downtime carries the comment
+`PinPoint maintenance window <id> starting <epoch>`; cancelling or editing deletes by that
+comment, so only downtime PinPoint created for that occurrence is touched. A failed send
+(pipe unavailable, scope device paused or absent from Nagios) leaves the occurrence
+`pending` and is retried on the next runs, each retry first deleting what the earlier
+attempt left; after 3 attempts it is `failed` with the reason in `Last_Error`, shown on the
+Maintenance page and written to the activity log. A window with no occurrence left is
+marked `completed`. Daily and weekly windows repeat at the same local time in their
+`Time_Zone`, with the same length. `DEL_DOWNTIME_BY_HOST_NAME` was checked on the Docker
+lab's Nagios 4.5.11 (`docs/test-runs/2026-10-15-issue-122-maintenance-windows/REPORT.md`).
+This path is injection-sensitive: it only calls the closed functions in `commands.py`.
 
 ## Network discovery and Nagios configuration
 
@@ -661,3 +691,40 @@ retirement deletes that device's choices. No assignments remain on the merged
 source or retired device. Pause preserves choices for resume.
 
 NCPA inventory probing considers only devices with NCPA facts; an SNMP-only device with monitored interfaces does not require an NCPA deployment merely because `check_ncpa` is enabled globally.
+
+### Escalation rendering and recipient ownership
+
+`network_discovery/recipient_groups.py` is the shared Active/opted-in eligibility
+calculation for the config writer and escalation options. It returns the existing
+`system_users` and per-device `pinpoint_host_<numeric ID>` groups; it introduces
+no new recipient model. Empty known groups remain available with zero members
+for explanations, but no empty group or dependent escalation is written.
+
+`host_config_templates.create_escalations()` renders host and service escalation
+templates into the same candidate file as contacts and hosts. Global scope uses
+fixed Nagios wildcards; device scope uses the current generated stable host name,
+rejecting config metacharacters. Scoped absent/paused/retired/merged hosts are
+omitted; a scoped host with no generated service receives only a host escalation.
+Groups referenced by escalations are emitted once even if their source device
+currently has no generated host. Account opt-out/deactivation triggers the
+existing shared config rebuild, which omits now-empty escalation groups and
+ranges without deleting their saved choices. They resume when members return.
+
+Nagios owns notification counting and suppression. During a matching range the
+escalation group replaces the normal recipients; overlapping ranges combine
+eligible escalation contacts and use Nagios's shortest interval. Normal contacts
+resume outside the range. Interval zero sends once during that range. The
+existing notification policy, quiet hours, acknowledgements and downtime still
+apply. Counts are finite in this interface (no special last-notification zero).
+All mutations go through `regenerate_and_apply_config_status()` with the shared
+config lock held through commit and rollback on validation or reload failure.
+
+### Escalation migration convergence
+
+Schema-free merge revision `99f584ed8151` joins the published escalation
+revision `cd74e5f8a2d5` and remediation revision `e4a7c1d9b305`. Existing revisions
+and their ancestry are unchanged. Normal multi-bind `flask db upgrade` applies
+whichever branch is missing and reaches one head on each bind. Downgrading only
+this join preserves both parents' schemas and existing escalation choices,
+remediation actions/runs, recipient selections, deployed NCPA ports, interfaces,
+polling preferences and history data.

@@ -7,9 +7,11 @@ import tempfile
 
 sys.path.insert(0, os.getcwd())
 starting_head = sys.argv[1]
-assert starting_head in ("7db78f308ee5", "b7d3f1a9c264", "e4a129c7b630", "e79b7d3c2641", "f129a79e6301", "f6d2c8a1b390")
-has_port = starting_head in ("7db78f308ee5", "e4a129c7b630", "f129a79e6301")
-has_recipients = starting_head in ("e79b7d3c2641", "f129a79e6301", "f6d2c8a1b390")
+assert starting_head in ("7db78f308ee5", "b7d3f1a9c264", "e4a129c7b630", "e79b7d3c2641", "f129a79e6301", "f6d2c8a1b390", "cd74e5f8a2d5", "e4a7c1d9b305")
+has_port = starting_head in ("7db78f308ee5", "e4a129c7b630", "f129a79e6301", "e4a7c1d9b305")
+has_recipients = starting_head in ("e79b7d3c2641", "f129a79e6301", "f6d2c8a1b390", "cd74e5f8a2d5", "e4a7c1d9b305")
+has_polling = starting_head in ("f6d2c8a1b390", "e4a7c1d9b305")
+new_merge_parent = starting_head in ("cd74e5f8a2d5", "e4a7c1d9b305")
 has_interfaces = starting_head != "7db78f308ee5"
 workspace = tempfile.TemporaryDirectory()
 sysdb = os.path.join(workspace.name, "system.db")
@@ -44,10 +46,31 @@ def populate(conn, table, values):
     conn.execute(f'INSERT INTO "{table}" ({fields}) VALUES ({", ".join("?" for _ in values)})', list(values.values()))
 
 
+def feature_rows():
+    """Snapshot only existing feature tables so upgrade can add the other branch."""
+    with sqlite3.connect(sysdb) as conn:
+        names = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+        return {name: conn.execute(f'SELECT * FROM "{name}" ORDER BY 1').fetchall()
+                for name in ('ESCALATION', 'REMEDIATION_ACTION', 'REMEDIATION_RUN') if name in names}
+
+
+def populate_features(conn, escalation=False, remediation=False):
+    """Persist representative valid choices/runs for merge data-preservation checks."""
+    if escalation:
+        conn.execute("INSERT INTO ESCALATION VALUES (1, 2, 5, 10, 'pinpoint_host_1', 1)")
+    if remediation:
+        populate(conn, 'REMEDIATION_ACTION', {'Id': 1, 'Name': 'Existing action',
+                 'Action_Type': 'RECORD_ONLY', 'Scope_Kind': 'SERVICE',
+                 'Host_Pattern': 'existing', 'Service_Pattern': 'SSH', 'Parameters': '{}'})
+        populate(conn, 'REMEDIATION_RUN', {'Id': 1, 'Action_Id': 1, 'Event_Key': 'existing-event',
+                 'Action_Name': 'Existing action', 'Hostname': 'existing', 'Service': 'SSH',
+                 'State': 'CRITICAL', 'State_Type': 'HARD', 'Outcome': 'SUCCEEDED'})
+
+
 upgrade(starting_head)
 with sqlite3.connect(sysdb) as conn:
     populate(conn, 'SYSTEM_SETTINGS', {})
-    if starting_head == 'f6d2c8a1b390':
+    if has_polling:
         conn.execute('UPDATE SYSTEM_SETTINGS SET Data_Polling_Interval=120')
     populate(conn, 'ROLE', {'RoleID': 1, 'Name': 'Administrator'})
     populate(conn, 'USER', {'UserID': 1, 'RoleID': 1, 'Email': 'fixture@example.com', 'Status': 'ACTIVE'})
@@ -62,6 +85,11 @@ with sqlite3.connect(sysdb) as conn:
         conn.execute('UPDATE NCPA_DEPLOYMENT SET Port=5703 WHERE NCPADeployID=1')
     if has_interfaces:
         conn.execute("INSERT INTO DEVICE_INTERFACE (If_Index,Name,Monitored,Present,Last_Seen_At,NetDiscoveryID) VALUES (1,'eth-test',1,1,'2026-01-01',1)")
+if new_merge_parent:
+    with sqlite3.connect(sysdb) as conn:
+        populate_features(conn, escalation=starting_head == 'cd74e5f8a2d5',
+                          remediation=starting_head == 'e4a7c1d9b305')
+existing_features = feature_rows() if new_merge_parent else {}
 with sqlite3.connect(histdb) as conn:
     conn.execute("CREATE TABLE merge_test_marker (value TEXT)")
     conn.execute("INSERT INTO merge_test_marker VALUES ('preserved')")
@@ -75,10 +103,17 @@ with sqlite3.connect(sysdb) as conn:
 with sqlite3.connect(sysdb) as conn:
     if not has_recipients:
         conn.execute('INSERT INTO HOST_ALERT_RECIPIENT VALUES (1, 1)')
-    if starting_head != 'f6d2c8a1b390':
+    if not has_polling:
         assert conn.execute('SELECT Data_Polling_Interval FROM SYSTEM_SETTINGS').fetchone()[0] == 60
         conn.execute('UPDATE SYSTEM_SETTINGS SET Data_Polling_Interval=120')
     assert not conn.execute('PRAGMA foreign_key_check').fetchall()
+if new_merge_parent:
+    assert all(feature_rows()[name] == rows for name, rows in existing_features.items())
+    with sqlite3.connect(sysdb) as conn:
+        populate_features(conn, escalation=starting_head != 'cd74e5f8a2d5',
+                          remediation=starting_head != 'e4a7c1d9b305')
+        assert not conn.execute('PRAGMA foreign_key_check').fetchall()
+joined_features = feature_rows() if new_merge_parent else {}
 alembic_config = Config()
 alembic_config.set_main_option("script_location", "migrations")
 report = {
@@ -93,8 +128,12 @@ report = {
 }
 # Downgrade only the no-op join, retaining both schemas/data, then rejoin.
 with app.app_context():
-    flask_migrate.downgrade(directory="migrations", revision="7db78f308ee5")
+    flask_migrate.downgrade(directory="migrations", revision=starting_head if new_merge_parent else "7db78f308ee5")
+if new_merge_parent:
+    assert feature_rows() == joined_features
 upgrade("head")
+report['existing_feature_rows_preserved'] = all(joined_features[name] == rows for name, rows in existing_features.items())
+report['merge_roundtrip_preserves_features'] = feature_rows() == joined_features if new_merge_parent else True
 report["roundtrip_polling"] = read(sysdb, "SELECT Data_Polling_Interval FROM SYSTEM_SETTINGS")[0][0]
 report["roundtrip_recipient"] = read(sysdb, "SELECT * FROM HOST_ALERT_RECIPIENT")
 report["roundtrip_port"] = read(sysdb, "SELECT Port FROM NCPA_DEPLOYMENT")[0][0]
