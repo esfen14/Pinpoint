@@ -1,7 +1,7 @@
 # Issue #164: Device identity review and merge controls
 
 Branch: `issue-164-identity-review`
-Status: in-progress
+Status: ready-for-review
 
 ## Finish condition
 
@@ -29,7 +29,7 @@ Status: in-progress
 - [x] All acceptance criteria and required deliverables are complete.
 - [x] Existing inventory, discovery and monitoring behavior passes regression checks.
 - [x] Authorization, validation and error handling are verified.
-- [ ] Automated checks and required CI checks pass.
+- [x] Automated checks and required CI checks pass.
 - [x] Browser/lab evidence confirms the complete merge journey.
 - [x] Technical and user-facing documentation is updated.
 - [x] The pull request references this issue and describes implementation and verification.
@@ -57,12 +57,14 @@ Requirement coverage (every requirement the issue states, and the check that pro
 2. [x] Add failing frontend interaction tests; implement typed contracts/helpers, review table and comparison/confirmation components in client/src/types/deviceIdentity.ts, lib/deviceIdentityApi.ts and components/device-inventory/; integrate DeviceInventoryPage.tsx and StatusDetailDrawer.tsx; run frontend verification.
 3. [x] Update Device_Inventory_Requirements.md, Frontend_Modules_and_Routes.md, Implementation_Status.md and docs/manuals/device identity guidance; verify docs and all.
 4. [x] Run controlled browser/lab journey with duplicate outside Monitored, keyboard and themes; record sanitized docs/test-runs evidence and attach to PR.
-5. [ ] Re-read issue, prove finish conditions, open appropriate PR from template, inspect CI and review requirements.
+5. [x] Re-read issue, prove finish conditions, open appropriate PR from template, inspect CI and review requirements.
 
 ## Round log
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| finish-handoff | Final implementation/local/lab proof and CI complete; follow-up evidence published | gh pr checks 176 (run 38737994672 on 8c8ff608); verify.sh all; docs verification | All three CI jobs green; only H8 reviewer approval remains. Final metadata-only checkpoint will rerun CI |
+| finish-repeat | Repeated full local gate and both Docker journeys on fresh-summary correction | scripts/verify.sh all; Playwright normal+notice and unavailable-Nagios; fixture verify; source history query; nagios -v | Green: 3302 backend passed/14 skipped, 702 frontend passed; both browser runs passed; retained source snapshot; restored config passes with 0 errors/warnings. Latest backend CI pending |
 | 7 | Fixed stale review summaries in selectors/confirmation by propagating fresh evidence summaries; regression added first | New regression red (old target name/IP); focused frontend green (51); verify.sh frontend green (702 tests); lookup tests green (6) | Corrected confirmation; test mocks now return the lifecycle of the requested fixture rather than a different device. CI on prior checkpoint is green; final-code all/lab repeat pending |
 | 6 | Strengthened lookup wildcard regression against an unmerged visible record and a literal percent name | FLASK_DEBUG=1 server/.venv/bin/python -m pytest server/tests/unit/test_device_identity_lookup.py -q | Green: 6 passed; product code unchanged. Required full-stage CI is being observed before final checkpoint |
 | finish | Opened draft PR #176 and attached sanitized report / verification | gh pr view issue-164-identity-review --json number,url,isDraft,statusCheckRollup,reviewDecision | PR exists; docs/backend/frontend CI in progress; no reviewer approval |
@@ -76,10 +78,10 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 ## State for the next session
 
-- Last check run (exact command): scripts/verify.sh frontend
-- Result (first failing lines, or "green"): green: 702 tests, successful build/lint (0 errors, 28 existing warnings). 51 focused inventory/comparison tests and 6 lookup tests pass. Prior checkpoint CI run 38736578525 passed all three jobs; fresh-summary correction must pass its own full/local/browser checks.
-- Hypothesis: fresh evidence now consistently drives comparison, merge choices and confirmation, including lifecycle exclusions.
-- Next action (one specific step, not "continue"): Run scripts/verify.sh all and repeat the normal/notice and unavailable-Nagios Docker browser journeys against this committed correction.
+- Last check run (exact command): gh pr checks 176 --watch --interval 20
+- Result (first failing lines, or "green"): green on implementation 8c8ff608, run 38737994672: docs pass, frontend pass, backend pass. Local all gate: 3302 backend passed/14 skipped, 702 frontend passed, successful build/lint/docs. Both final Docker journeys and snapshot/configuration postconditions pass. Evidence: docs/test-runs/2026-10-15-issue-164-final-refresh/REPORT.md.
+- Hypothesis: all implementation/delivery requirements are proven; only H8 requires a reviewer. A final report/progress-only checkpoint reruns CI, which must also be green before merge.
+- Next action (one specific step, not "continue"): Obtain required human approval on draft PR #176 and resolve blocking review comments. Once that finish condition is met, remove this progress file, mark the PR ready and observe the required checks; never merge it as an agent.
 
 ## Decisions and notes
 
@@ -103,3 +105,5 @@ Requirement coverage (every requirement the issue states, and the check that pro
 - Disposable Docker project and local Vite process have been removed/stopped; raw evidence remains in the report location.
 
 - Plan revision from evidence: a final comparison consistency check showed that freshly loaded name/IP/state only updated cards, not choices/confirmation. Added a failing regression, propagated fresh API device summaries, and updated the inventory specification. No backend behavior changed.
+
+- Final implementation CI: https://github.com/esfen14/Pinpoint/actions/runs/38737994672 (all three jobs pass). No reviewer approvals or blocking review comments exist at this handoff.
