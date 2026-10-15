@@ -13,6 +13,7 @@ import {
   Shield,
   Users,
   Wrench,
+  Zap,
 } from 'lucide-react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useCurrentUser } from '../../contexts/CurrentUserContext'
@@ -50,6 +51,11 @@ const navItems = [
     to: '/ncpa-deployment',
     label: 'NCPA Deployment',
     icon: ServerCog,
+  },
+  {
+    to: '/remediation',
+    label: 'Remediation',
+    icon: Zap,
   },
   {
     to: '/history',

@@ -61,6 +61,8 @@ PERMISSIONS = [
     "settings.discovery",
     "settings.plugins",
     "settings.email",
+    "remediation.view",
+    "remediation.manage",
 ]
 
 ROLES = [
