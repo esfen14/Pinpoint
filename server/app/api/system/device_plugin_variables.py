@@ -164,13 +164,17 @@ def previous_override(device, plugin):
 def get_device_plugin_variables(id, plugin):
     """
     A device's override for one registry plugin: {"plugin", "variables" (plain values),
-    "secrets_set" ({name: bool}, never a value), "editable" (the variables that may be set)}.
+    "secrets_set" ({name: bool}, never a value), "editable" (the variables that may be set),
+    "in_use" (snmp only: whether the device has an SNMP port monitored; null for other plugins)}.
     404 for an unknown device or plugin.
     """
     device, plugin, problem = editable_device(id, plugin)
     if problem is not None:
         return problem
-    return success(variables_module.serialize(previous_override(device, plugin), plugin))
+    data = variables_module.serialize(previous_override(device, plugin), plugin)
+    # The drawer shows the SNMP form only for a device that has an SNMP port monitored.
+    data["in_use"] = device_snmp_port(device) is not None if plugin == "snmp" else None
+    return success(data)
 
 
 @system_bp.put('/hosts/<int:id>/plugin-variables/<plugin>')

@@ -105,6 +105,15 @@ class TestSaveReadReset:
         assert body["variables"] == {} and body["secrets_set"] == {"auth_password": False, "priv_password": False}
         assert "community" in body["editable"] and "oid" not in body["editable"]
 
+    def test_in_use_follows_the_devices_snmp_port(self, logged_in_client, device):
+        from app.system_models import Open_UDP_Services, PortState
+        assert logged_in_client.get(url(device)).get_json()["data"]["in_use"] is False
+        assert logged_in_client.get(url(device, "http")).get_json()["data"]["in_use"] is None
+        db.session.add(Open_UDP_Services(Port_Number=161, Service_Name="snmp", Plugin_Name="snmp",
+                                         Port_State=PortState.MONITORED, NetDiscoveryID=device.NetDiscoveryID))
+        db.session.commit()
+        assert logged_in_client.get(url(device)).get_json()["data"]["in_use"] is True
+
     def test_save_then_read_back(self, logged_in_client, device, applied):
         resp = put(logged_in_client, device, {"protocol": "2c", "community": "lab"})
         assert resp.status_code == 200
