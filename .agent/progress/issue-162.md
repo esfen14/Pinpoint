@@ -25,7 +25,7 @@ Requirement coverage:
 
 ## Plan
 
-1. [ ] Diagnose ownership and search recovery sources read-only; record sanitized evidence in docs/test-runs/2026-10-15-issue-162-recovery/REPORT.md.
+1. [x] Diagnose ownership and search recovery sources read-only; record sanitized evidence in docs/test-runs/2026-10-15-issue-162-recovery/REPORT.md.
 2. [x] Add failing isolated preflight tests, implement fail-closed identity checks in scripts/vmlab and an owning helper, validate narrow checks.
 3. [ ] Perform disposable-only snapshot marker trial if ownership is proved; otherwise record exact blocker and preserve inherited processes.
 4. [ ] Update docs/plans/VM_Lab_Plan.md, spec files/Agent_Workflow_and_CI.md and spec files/Implementation_Status.md; verify finish conditions and scripts/verify.sh all; open PR with honest status.
@@ -40,12 +40,14 @@ Requirement coverage:
 
 | 2 | Owner accepted loss and authorized deleting/rebuilding old lab; retired seven VMs/disks; rebuilt appliance from ISO. Replaced unsupported SessionPID/fd requirement with unique same-controller VM process plus live NAT HOST_FORWARD socket proof | python3 -I scripts/test_vmlab_preflight.py; scripts/verify.sh docs; scripts/vmlab preflight | 15 tests/docs green; positive live preflight passed for new UUID 351eb491-f5e1-4854-a7e4-68309ad774ad |
 
+| 3 | Added runtime-forward edge cases, completed sanitized diagnosis/source-loss report and owning documentation | scripts/verify.sh all; scripts/verify.sh docs; python3 -I scripts/test_vmlab_preflight.py; git diff --check | All green: 2777 backend passed/14 skipped, 628 frontend passed, build/lint green (29 existing warnings), 17 ownership tests |
+
 ## State for the next session
 
 - Last check run (exact command): scripts/verify.sh docs
-- Result: green; 15 isolated ownership tests; positive live preflight passed. Full verify is running in exec session 10377, log /tmp/issue162-verify-all.log. Fresh appliance creation is running in session 98664, log test-results/issue162/create-appliance.log.
-- Hypothesis: Orphaned listening IPC inode survives pathname replacement; reconnecting VBoxManage starts a second manager at the current path. Both inherited VMs shut down through their actual SSH endpoints before authorized retirement. New controller/UUID/process/NAT forwards agree.
-- Next action: Finish fresh appliance install, verify endpoint-marker snapshot restore, then rebuild base/targets and update final report/specs.
+- Result: green after report/spec edits; scripts/verify.sh all green (2777 backend passed, 14 skipped; 628 frontend passed; 29 existing lint warnings); 17 ownership safety tests pass.
+- Hypothesis: Host control has been recovered; remaining work is clean OS/target installation and endpoint-marker proof, not application behavior.
+- Next action: Poll appliance create session 98664 and target base session 1783; once SSH is ready, provision appliance, run powered-off endpoint-marker snapshot trial, deploy main and rebuild targets.
 
 ## Decisions and notes
 

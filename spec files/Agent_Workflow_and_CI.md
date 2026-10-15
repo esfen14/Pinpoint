@@ -131,17 +131,18 @@ Where results go is defined in [`docs/test-runs/README.md`](../docs/test-runs/RE
 ### VM control preflight
 
 Before VM-lab mutation, `scripts/vmlab preflight` must prove one same-user
-VirtualBox controller, agreement between appliance UUID/session PID/parent
-process, and exclusive ownership of both configured loopback listener sockets.
+VirtualBox controller, agreement between appliance UUID and the unique VM process under that controller,
+and active runtime NAT forwarding sockets for both exclusive loopback listeners
+(guest SSH/22 and web/80). A supplied session PID must also agree.
 Powered-off state requires no remaining UUID process or endpoint listeners.
-Mutation commands enforce this check; inaccessible process metadata, duplicate
+Mutation commands enforce this check; inaccessible process identity, missing runtime forwarding evidence, duplicate
 controllers and ambiguous/transitional states fail closed. It is a Linux-host
 check; it cannot substitute for exclusive lab ownership. See
 [VM Lab Plan §4.0](../docs/plans/VM_Lab_Plan.md) for recovery and the disposable
 endpoint-marker snapshot trial. Never treat a snapshot command's success alone
-as proof that the endpoint is protected. The #162 inherited endpoint remains
-blocked; the new guard's positive running path and disposable restore trial
-have not yet been verified there.
+as proof that the endpoint is protected. The #162 owner accepted the lost edits as unrecoverable and authorized retirement
+of the old lab disks. Positive ownership proof passed on the newly created appliance;
+endpoint snapshot restoration is recorded separately in the recovery report.
 
 ### QA finding (qa-run) and agent loop safety constraints
 

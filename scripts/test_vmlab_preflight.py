@@ -14,7 +14,7 @@ spec.loader.exec_module(preflight)
 class OwnershipTests(unittest.TestCase):
     def check(self, state='running', managers=(10,), processes=None, listeners=None, session='20', forwards=None):
         if processes is None:
-            processes = {20: {'uuid': 'vm-id', 'parent': 10, 'sockets': {'ssh', 'web'}}}
+            processes = {20: {'uuid': 'vm-id', 'parent': 10}}
         if listeners is None:
             listeners = {2250: [('127.0.0.1', 'ssh')], 18080: [('127.0.0.1', 'web')]}
         if forwards is None:
@@ -42,8 +42,8 @@ class OwnershipTests(unittest.TestCase):
 
     def test_duplicate_uuid(self):
         with self.assertRaises(ValueError):
-            self.check(processes={20: {'uuid': 'vm-id', 'parent': 10, 'sockets': {'ssh', 'web'}},
-                                  21: {'uuid': 'vm-id', 'parent': 10, 'sockets': set()}})
+            self.check(processes={20: {'uuid': 'vm-id', 'parent': 10},
+                                  21: {'uuid': 'vm-id', 'parent': 10}})
 
     def test_version_without_session_pid_uses_unique_controlled_process(self):
         self.check(session='')
@@ -54,7 +54,7 @@ class OwnershipTests(unittest.TestCase):
 
     def test_wrong_controller(self):
         with self.assertRaises(ValueError):
-            self.check(processes={20: {'uuid': 'vm-id', 'parent': 11, 'sockets': {'ssh', 'web'}}})
+            self.check(processes={20: {'uuid': 'vm-id', 'parent': 11}})
 
     def test_missing_runtime_forward_is_ambiguous(self):
         with self.assertRaises(ValueError):
@@ -64,6 +64,15 @@ class OwnershipTests(unittest.TestCase):
         for rows in [[('127.0.0.1', 23, '10.0.2.15')], [('0.0.0.0', 22, '10.0.2.15')]]:
             with self.subTest(rows=rows), self.assertRaises(ValueError):
                 self.check(forwards={2250: rows, 18080: [('127.0.0.1', 80, '10.0.2.15')]})
+
+    def test_runtime_duplicate_forward_or_mixed_guest_is_ambiguous(self):
+        for rows in [[('127.0.0.1', 22, '10.0.2.15')] * 2, [('127.0.0.1', 22, '10.0.2.16')]]:
+            with self.subTest(rows=rows), self.assertRaises(ValueError):
+                self.check(forwards={2250: rows, 18080: [('127.0.0.1', 80, '10.0.2.15')]})
+
+    def test_running_vm_without_a_process_is_ambiguous(self):
+        with self.assertRaises(ValueError):
+            self.check(processes={})
 
     def test_runtime_nat_parser_ignores_connections_and_requires_real_forwards(self):
         data = '''TCP[SYN_SENT] 23 127.0.0.1 2250 10.0.2.15 22 0 0

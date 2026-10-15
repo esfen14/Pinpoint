@@ -1,6 +1,6 @@
 # VM Lab Plan (faithful lane)
 
-Status: **blocked for inherited-appliance mutation by [#162](https://github.com/esfen14/Pinpoint/issues/162); alerts and the `break` commands not yet run; NCPA run done (partial, #45).** Design agreed
+Status: **control recovery and clean rebuild in progress ([#162](https://github.com/esfen14/Pinpoint/issues/162)); alerts and the `break` commands not yet run; NCPA run done (partial, #45).** Design agreed
 2026-10-08. The first end-to-end run passed (create, provision, fresh install of `main`,
 healthcheck 59/0, discovery and monitoring of five targets, sync); see
 [`docs/test-runs/2026-10-08-vm-lab-first-run/`](../test-runs/2026-10-08-vm-lab-first-run/REPORT.md). Feeds
@@ -84,18 +84,20 @@ preflight in `scripts/vmlab_preflight.py` requires:
 
 - exactly one same-user `VBoxSVC` control process;
 - for a running appliance, exactly one VM process for its UUID, matching
-  `showvminfo --machinereadable`'s `SessionPID` and parent controller PID;
-- exactly one listener on each configured port, bound to `127.0.0.1`, with both
-  socket inodes held by that VM process (IPv6/wildcard conflicts also reject);
+  the sole parent controller PID (and `SessionPID` when supplied by the version);
+- exactly one listener on each configured port, bound to `127.0.0.1`, plus active runtime `TCP[HOST_FORWARD]` sockets reported by that controlled
+  VM through `VBoxManage debugvm <vm> info nat0`, targeting guest SSH/22 and web/80
+  on the same guest (IPv6/wildcard host conflicts also reject);
 - for a powered-off appliance, no process for its UUID and no listener on either
-  lab port. Transitional states, hidden/protected process metadata and unavailable
+  lab port. Transitional states, unreadable process identity, missing/unsupported NAT output and unavailable
   host procfs reject. Run on the host; a container/PID sandbox is not sufficient.
 
 Appliance/target mutation commands run this check before SSH/API/control actions;
 start and power-off paths recheck ownership at state boundaries. `create` requires
 an unused name/ports, a single controller and no same-user running VM processes.
-Positive running-VM proof remains unverified on the incident workstation because
-VM file descriptors are protected; do not remove the check to bypass this.
+VirtualBox 7.2 does not include `SessionPID` in machine-readable metadata and its
+SUID VM processes protect `/proc/<pid>/fd`. Runtime NAT socket inspection provides
+positive listener proof without weakening OS permissions or requiring sudo.
 These checks are observations, not a distributed lock: retain exclusive lab ownership
 and do not run concurrent VM/control commands.
 
@@ -123,8 +125,8 @@ verify snapshot semantics through the actual endpoint:
    through the same endpoint and require its original value. Record both values,
    endpoint/VM identity and observed result in a sanitized report. A reported
    successful restore without the marker result is insufficient.
-5. Keep the inherited disks and recovery evidence until the owner explicitly
-   resolves the lost edits. The incident snapshots are not verified endpoint backups.
+5. Keep inherited disks until the owner explicitly resolves the lost edits;
+   an explicit owner-authorized retirement may remove them. Retain sanitized recovery evidence. The incident snapshots are not verified endpoint backups.
 
 Before any later sync, inspect the guest destination's Git status and the service
 WorkingDirectory. Preserve existing edits and choose an explicitly separate test
@@ -132,7 +134,9 @@ checkout rather than overwriting inherited work. The ownership guard does not
 back up application data or establish a clean destination.
 
 See the [read-only recovery report](../test-runs/2026-10-15-issue-162-recovery/REPORT.md).
-The marker trial is blocked until host ownership is established.
+The original inherited disks were retired with explicit owner approval after the
+owner accepted the overwritten edits as unrecoverable. The new appliance uses a
+new UUID and a blank disk; it contains no inherited application data.
 
 If the appliance or snapshot is missing, recreate the lane with steps 1 through
 5 below.  This is a setup/recovery operation, not a QA case: obtain the lab
