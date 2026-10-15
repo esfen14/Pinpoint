@@ -99,35 +99,35 @@ General rules for every issue:
 
 #### E. Acceptance Criteria
 
-- [ ] **Part 4.1 (System):** Setting one or multiple parents makes the generated host definition contain the corresponding Nagios `parents` list, and Nagios validates it.
-- [ ] **Part 4.1 (System):** A self-parent, a cycle through any parent path, duplicate IDs, or a missing, retired or merged parent is refused with 400; the previous parent set remains intact.
-- [ ] **Part 4.1 (System):** Retiring or merging a parent leaves no dangling reference and the config still validates.
-- [ ] **Part 4.1 (System):** Ineligible parents are individually omitted and reported; eligible parents remain in the generated list. A host with no eligible parents gets valid config without `parents`.
-- [ ] **Part 4.1 (System):** On a lab network, demonstrate Nagios reachability for both a single parent and redundant parents: a failed intermediate parent makes dependent children UNREACHABLE when no alternate route remains; loss of one parent with an available alternate route does not incorrectly mark a reachable child UNREACHABLE. Record observed host states and DOWN/UNREACHABLE notification behavior.
-- [ ] **Part 4.1 (System):** Hosts without a parent behave exactly as before.
-- [ ] **Part 4.2 (Web-Interface):** A user with `system.hosts.edit` can set, change and clear multiple parents from both Inventory and Topology, and the complete parent set persists after reload.
-- [ ] **Part 4.2 (Web-Interface):** Cycle and invalid choices show the server message.
-- [ ] **Part 4.2 (Web-Interface):** A user without the permission sees the parents in both Inventory and Topology but cannot change them.
-- [ ] **Part 4.2 (Web-Interface):** Existing drawer and table tests pass unchanged.
+- [x] **Part 4.1 (System):** Setting one or multiple parents makes the generated host definition contain the corresponding Nagios `parents` list, and Nagios validates it.
+- [x] **Part 4.1 (System):** A self-parent, a cycle through any parent path, duplicate IDs, or a missing, retired or merged parent is refused with 400; the previous parent set remains intact.
+- [x] **Part 4.1 (System):** Retiring or merging a parent leaves no dangling reference and the config still validates.
+- [x] **Part 4.1 (System):** Ineligible parents are individually omitted and reported; eligible parents remain in the generated list. A host with no eligible parents gets valid config without `parents`.
+- [x] **Part 4.1 (System):** On a lab network, demonstrate Nagios reachability for both a single parent and redundant parents: a failed intermediate parent makes dependent children UNREACHABLE when no alternate route remains; loss of one parent with an available alternate route does not incorrectly mark a reachable child UNREACHABLE. Record observed host states and DOWN/UNREACHABLE notification behavior.
+- [x] **Part 4.1 (System):** Hosts without a parent behave exactly as before.
+- [x] **Part 4.2 (Web-Interface):** A user with `system.hosts.edit` can set, change and clear multiple parents from both Inventory and Topology, and the complete parent set persists after reload.
+- [x] **Part 4.2 (Web-Interface):** Cycle and invalid choices show the server message.
+- [x] **Part 4.2 (Web-Interface):** A user without the permission sees the parents in both Inventory and Topology but cannot change them.
+- [x] **Part 4.2 (Web-Interface):** Existing drawer and table tests pass unchanged.
 
-- [ ] **Topology:** The supported routed page displays real backend devices and configured parent edges, including all Device Inventory devices, paused devices and devices without parents.
-- [ ] **Topology:** Automatic hierarchy handles shared children with multiple parents; node dragging and layout modification are disabled.
-- [ ] **Topology:** Loading, error, empty and permission states are tested; hardcoded sample nodes and edges are removed from the supported page.
-- [ ] **Topology:** Matching specifications and tests recognize topology as supported, superseding the former release exclusion.
-- [ ] **Topology:** Detail panels use real device data and manual parent relationships only; tests verify sample interface details, interface navigation, and placeholder traffic/utilization charts are absent from the supported topology page.
+- [x] **Topology:** The supported routed page displays real backend devices and configured parent edges, including all Device Inventory devices, paused devices and devices without parents.
+- [x] **Topology:** Automatic hierarchy handles shared children with multiple parents; node dragging and layout modification are disabled.
+- [x] **Topology:** Loading, error, empty and permission states are tested; hardcoded sample nodes and edges are removed from the supported page.
+- [x] **Topology:** Matching specifications and tests recognize topology as supported, superseding the former release exclusion.
+- [x] **Topology:** Detail panels use real device data and manual parent relationships only; tests verify sample interface details, interface navigation, and placeholder traffic/utilization charts are absent from the supported topology page.
 
 #### F. Required Deliverables
 
-- [ ] Updated application source code (paths in section C).
-- [ ] New or updated API endpoints, with route docstrings and permission checks.
-- [ ] Database migration (multi-database, with downgrade) and `flask sync-permissions` note if a permission is added.
-- [ ] Updated frontend components, types and routes (paths in section C).
-- [ ] Unit tests for new or modified logic.
-- [ ] Frontend interaction tests under `client/src/test/`.
-- [ ] Integration or regression tests for the workflows in section G.
-- [ ] Updated technical documentation: `spec files/Backend_Modules_and_Routes.md`, `spec files/Data_Model_and_Integrations.md`, `spec files/Device_Inventory_Requirements.md`, `spec files/Frontend_Modules_and_Routes.md`, and `spec files/Implementation_Status.md`, and the topology boundary in `spec files/System_Overview_and_Architecture.md`.
-- [ ] Updated user-facing documentation: Drawer help text.
-- [ ] Evidence that the functionality works: `scripts/verify.sh all` output attached to the pull request; plus a sanitized lab report in `docs/test-runs/` using its `TEMPLATE.md`.
+- [x] Updated application source code (paths in section C).
+- [x] New or updated API endpoints, with route docstrings and permission checks.
+- [x] Database migration (multi-database, with downgrade) and `flask sync-permissions` note if a permission is added.
+- [x] Updated frontend components, types and routes (paths in section C).
+- [x] Unit tests for new or modified logic.
+- [x] Frontend interaction tests under `client/src/test/`.
+- [x] Integration or regression tests for the workflows in section G.
+- [x] Updated technical documentation: `spec files/Backend_Modules_and_Routes.md`, `spec files/Data_Model_and_Integrations.md`, `spec files/Device_Inventory_Requirements.md`, `spec files/Frontend_Modules_and_Routes.md`, and `spec files/Implementation_Status.md`, and the topology boundary in `spec files/System_Overview_and_Architecture.md`.
+- [x] Updated user-facing documentation: Drawer help text.
+- [x] Evidence that the functionality works: `scripts/verify.sh all` output attached to the pull request; plus a sanitized lab report in `docs/test-runs/` using its `TEMPLATE.md`.
 
 #### G. Testing and Verification
 
@@ -147,49 +147,75 @@ Test results must be real runs. Do not claim a test passed without attaching its
 
 #### Functional Completion
 
-- [ ] All mandatory acceptance criteria are satisfied.
-- [ ] Required functionality works as specified.
-- [ ] Existing behavior has not been unintentionally broken.
-- [ ] Applicable edge cases are handled.
+- [x] All mandatory acceptance criteria are satisfied.
+- [x] Required functionality works as specified.
+- [x] Existing behavior has not been unintentionally broken.
+- [x] Applicable edge cases are handled.
 
 #### Code Quality
 
-- [ ] Code follows PinPoint's existing architectural patterns and conventions.
-- [ ] No unnecessary duplicate functionality is introduced.
-- [ ] Relevant linting and static analysis checks pass.
-- [ ] No unresolved critical defects remain.
+- [x] Code follows PinPoint's existing architectural patterns and conventions.
+- [x] No unnecessary duplicate functionality is introduced.
+- [x] Relevant linting and static analysis checks pass.
+- [x] No unresolved critical defects remain.
 
 #### Testing
 
-- [ ] Required automated tests are added or updated.
-- [ ] All applicable automated tests pass.
-- [ ] Relevant integration and regression tests pass.
-- [ ] Test results or verification evidence are attached to the pull request.
+- [x] Required automated tests are added or updated.
+- [x] All applicable automated tests pass.
+- [x] Relevant integration and regression tests pass.
+- [x] Test results or verification evidence are attached to the pull request.
 
 #### Security and Reliability
 
-- [ ] User inputs and configuration values are validated.
-- [ ] Authorization is enforced where required.
-- [ ] Sensitive data is handled securely.
-- [ ] Errors are handled without introducing uncontrolled failures.
-- [ ] Relevant performance and reliability requirements are satisfied.
+- [x] User inputs and configuration values are validated.
+- [x] Authorization is enforced where required.
+- [x] Sensitive data is handled securely.
+- [x] Errors are handled without introducing uncontrolled failures.
+- [x] Relevant performance and reliability requirements are satisfied.
 
 #### Documentation
 
-- [ ] Relevant technical documentation is updated.
-- [ ] User documentation is updated for user-facing changes.
-- [ ] New configuration parameters are documented.
-- [ ] Deployment or migration steps are documented where applicable.
+- [x] Relevant technical documentation is updated.
+- [x] User documentation is updated for user-facing changes.
+- [x] New configuration parameters are documented.
+- [x] Deployment or migration steps are documented where applicable.
 
 #### Pull Request Review
 
-- [ ] The pull request references the corresponding issue number.
-- [ ] The pull request describes the implementation and testing performed.
-- [ ] Required CI checks pass.
+- [x] The pull request references the corresponding issue number.
+- [x] The pull request describes the implementation and testing performed.
+- [x] Required CI checks pass.
 - [ ] All required reviewer approvals are obtained.
-- [ ] Blocking review comments are resolved.
-- [ ] All applicable acceptance criteria and required deliverables are complete.
+- [x] Blocking review comments are resolved.
+- [x] All applicable acceptance criteria and required deliverables are complete.
 
 Do not mark this issue as completed solely because code has been written. Test results, reviewer approvals and deployment verification must be backed by evidence attached to the pull request and must not be claimed without it.
 
 
+#### Checklist verification snapshot (2026-10-15)
+
+Verified against implementation source `4981a70e` and published checkpoint
+`633e3616` in [PR #174](https://github.com/esfen14/Pinpoint/pull/174).
+The subsequent checklist correction changes documentation only.
+
+- Full local `scripts/verify.sh all`: **3338 backend passed / 14 skipped,
+  694 frontend passed (54 files)**; production build and docs passed; lint
+  0 errors / 31 warnings. Output summary is attached in the PR description.
+- [CI run 38734683462](https://github.com/esfen14/Pinpoint/actions/runs/38734683462):
+  all three required jobs passed on `633e3616`; backend/frontend JUnit artifacts
+  are attached to that run. New documentation-only checkpoint CI is tracked on
+  the PR separately.
+- [Combined-source report](https://github.com/esfen14/Pinpoint/blob/issue-117-manual-topology/docs/test-runs/2026-10-15-issue-117-main-sync/REPORT.md):
+  102 focused tests, populated migration upgrades from both prior heads, combined
+  parent/escalation/remediation rendering and real browser/Flask/Nagios saves.
+- [Routed acceptance](https://github.com/esfen14/Pinpoint/blob/issue-117-manual-topology/docs/test-runs/2026-10-15-issue-117-manual-topology/REPORT.md)
+  and [browser regression/retest](https://github.com/esfen14/Pinpoint/blob/issue-117-manual-topology/docs/test-runs/2026-10-15-issue-117-live-browser/REPORT.md)
+  cover the remaining acceptance cases.
+- No outstanding review comments exist at this snapshot. This satisfies the
+  blocking-comment item; it does not establish reviewer approval. Approval
+  remains unchecked and the PR stays draft.
+- No known unresolved critical defect remains within the agreed #117 scope.
+  The separate single-attempt notification guarantee remains decision
+  [#173](https://github.com/esfen14/Pinpoint/issues/173). SMTP inbox delivery and
+  production deployment remain unverified; neither is claimed by these checks.

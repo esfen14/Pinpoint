@@ -35,7 +35,7 @@ Status: ready-for-review
 - [x] Integration or regression tests for the workflows in section G.
 - [x] Updated technical documentation: `spec files/Backend_Modules_and_Routes.md`, `spec files/Data_Model_and_Integrations.md`, `spec files/Device_Inventory_Requirements.md`, `spec files/Frontend_Modules_and_Routes.md`, and `spec files/Implementation_Status.md`, and the topology boundary in `spec files/System_Overview_and_Architecture.md`.
 - [x] Updated user-facing documentation: Drawer help text.
-- [ ] Evidence that the functionality works: `scripts/verify.sh all` output attached to the pull request; plus a sanitized lab report in `docs/test-runs/` using its `TEMPLATE.md`.
+- [x] Evidence that the functionality works: `scripts/verify.sh all` output attached to the pull request; plus a sanitized lab report in `docs/test-runs/` using its `TEMPLATE.md`.
 
 #### G. Testing and Verification
 
@@ -55,7 +55,7 @@ Test results must be real runs. Do not claim a test passed without attaching its
 
 #### Functional Completion
 
-- [ ] All mandatory acceptance criteria are satisfied.
+- [x] All mandatory acceptance criteria are satisfied.
 - [x] Required functionality works as specified.
 - [x] Existing behavior has not been unintentionally broken.
 - [x] Applicable edge cases are handled.
@@ -65,14 +65,14 @@ Test results must be real runs. Do not claim a test passed without attaching its
 - [x] Code follows PinPoint's existing architectural patterns and conventions.
 - [x] No unnecessary duplicate functionality is introduced.
 - [x] Relevant linting and static analysis checks pass.
-- [ ] No unresolved critical defects remain.
+- [x] No unresolved critical defects remain.
 
 #### Testing
 
 - [x] Required automated tests are added or updated.
 - [x] All applicable automated tests pass.
 - [x] Relevant integration and regression tests pass.
-- [ ] Test results or verification evidence are attached to the pull request.
+- [x] Test results or verification evidence are attached to the pull request.
 
 #### Security and Reliability
 
@@ -91,12 +91,12 @@ Test results must be real runs. Do not claim a test passed without attaching its
 
 #### Pull Request Review
 
-- [ ] The pull request references the corresponding issue number.
-- [ ] The pull request describes the implementation and testing performed.
-- [ ] Required CI checks pass.
+- [x] The pull request references the corresponding issue number.
+- [x] The pull request describes the implementation and testing performed.
+- [x] Required CI checks pass.
 - [ ] All required reviewer approvals are obtained.
-- [ ] Blocking review comments are resolved.
-- [ ] All applicable acceptance criteria and required deliverables are complete.
+- [x] Blocking review comments are resolved.
+- [x] All applicable acceptance criteria and required deliverables are complete.
 
 Do not mark this issue as completed solely because code has been written. Test results, reviewer approvals and deployment verification must be backed by evidence attached to the pull request and must not be claimed without it.
 
@@ -143,14 +143,15 @@ Requirement coverage (all issue sections):
 | 4 | Real routed default-three-attempt HARD-state checks and notification dispatch passed; published sanitized report and documented separate one-attempt caveat in #173; reread unchanged issue | python3 /tmp/issue117-live.py; scripts/verify.sh docs; gh issue view 117 --json body,comments | Default-retry single/redundant paths, pause/merge/retire pass; 14 notification events, zero child DOWN in final trial. Docs green. |
 | 5 | Final review caught oversized positive IDs returning 500 from SQLite; added failing regression, bounded IDs to SQLite integer range and proved 400. Stable full gate passed; draft PR #174 published. | final all-stage gate; focused parent/migration proof; PR checks | Local gates green; final pushed-tree CI to be observed after checkpoint. Human review and #173 guarantee remain outstanding. |
 | resumed | Merge current main, resolve combined rendering/routing/docs, generated schema-free join plus populated upgrade/coexistence tests | focused parent/escalation/remediation/migration suite; real browser/backend/Nagios | 102 passed; browser pass; full all-stage gate green (3338 backend / 694 frontend) |
+| checklist | Synchronize issue/progress/local mirror against recorded test evidence and actual PR/CI state | gh pr checks 174; scripts/verify.sh docs | Existing source CI all green; documentation gate recorded at checkpoint; reviewer approval outstanding |
 | intake | Reviewed issue scope and existing React Flow frontend; created isolated checkout | gh issue view 117 --json body,comments,title | Product decisions recorded; no implementation yet |
 
 ## State for the next session
 
-- Last check run (exact command): scripts/verify.sh all
-- Result: green: 3338 backend passed / 14 skipped; 54 frontend files / 694 tests passed; production build, docs and lint pass (0 errors / 31 warnings). 102 focused tests and actual browser/backend/Nagios retest also pass. Source tested 4981a70e; current changes only record evidence.
+- Last check run (exact command): gh pr checks 174
+- Result: docs, backend and frontend passed on 633e3616 in CI run 38734683462. Backend CI confirms 3338 passed / 14 skipped. Full local verification confirms 694 frontend tests, build/docs/lint pass. Checklist correction changes documentation only; scripts/verify.sh docs is the appropriate gate for this correction.
 - Hypothesis: Existing writer and Inventory modules can support this without a new dependency; use a relationship table and shared editor.
-- Next action: Observe current PR #174 CI, then obtain human review and the separate #173 decision; retain draft/progress and never merge.
+- Next action: Obtain human review and the separate #173 decision; retain draft/progress and never merge. Track documentation-only checkpoint checks on PR #174.
 
 ## Decisions and notes
 
@@ -186,3 +187,33 @@ Requirement coverage (all issue sections):
 - Resumed 2026-10-15: current main advanced by 35 commits, making PR #174 conflicting and preventing pull-request CI from starting. Integrating origin/main cc1305c6 preserves topology plus new escalation/remediation behavior. Generated merge revision c117e6a9d042 keeps published histories intact. New populated-upgrade tests failed first with multiple heads; after the join they pass from both old heads, including downgrade/rejoin and history preservation. The initial test harness used ambiguous relative downgrade -1; corrected it to the explicit prior head. Combined rendering regression proves adding parents preserves escalation and remediation output.
 
 - Resumed verification complete: /tmp/issue117-main-sync-all.log is green (3338 backend / 14 skipped, 694 frontend, build/docs/lint pass). Actual browser/Nagios evidence at /tmp/issue117-live-cca82448/ and /tmp/issue117-main-sync-browser.log; owned containers/networks and preview server removed. New main-sync report preserves older reports unchanged. PR is mergeable again; CI run 38733883241 began normally after conflict resolution. Final report checkpoint changes documentation/progress only.
+
+
+#### Checklist verification snapshot (2026-10-15)
+
+Verified against implementation source `4981a70e` and published checkpoint
+`633e3616` in [PR #174](https://github.com/esfen14/Pinpoint/pull/174).
+The subsequent checklist correction changes documentation only.
+
+- Full local `scripts/verify.sh all`: **3338 backend passed / 14 skipped,
+  694 frontend passed (54 files)**; production build and docs passed; lint
+  0 errors / 31 warnings. Output summary is attached in the PR description.
+- [CI run 38734683462](https://github.com/esfen14/Pinpoint/actions/runs/38734683462):
+  all three required jobs passed on `633e3616`; backend/frontend JUnit artifacts
+  are attached to that run. New documentation-only checkpoint CI is tracked on
+  the PR separately.
+- [Combined-source report](https://github.com/esfen14/Pinpoint/blob/issue-117-manual-topology/docs/test-runs/2026-10-15-issue-117-main-sync/REPORT.md):
+  102 focused tests, populated migration upgrades from both prior heads, combined
+  parent/escalation/remediation rendering and real browser/Flask/Nagios saves.
+- [Routed acceptance](https://github.com/esfen14/Pinpoint/blob/issue-117-manual-topology/docs/test-runs/2026-10-15-issue-117-manual-topology/REPORT.md)
+  and [browser regression/retest](https://github.com/esfen14/Pinpoint/blob/issue-117-manual-topology/docs/test-runs/2026-10-15-issue-117-live-browser/REPORT.md)
+  cover the remaining acceptance cases.
+- No outstanding review comments exist at this snapshot. This satisfies the
+  blocking-comment item; it does not establish reviewer approval. Approval
+  remains unchecked and the PR stays draft.
+- No known unresolved critical defect remains within the agreed #117 scope.
+  The separate single-attempt notification guarantee remains decision
+  [#173](https://github.com/esfen14/Pinpoint/issues/173). SMTP inbox delivery and
+  production deployment remain unverified; neither is claimed by these checks.
+
+- Checklist correction: the previous handoff updated the PR evidence but failed to synchronize the issue body, local issue mirror and progress finish-condition boxes. Reconciled all three against actual reports, CI and PR state; only required reviewer approvals remain unchecked. No blocking review comments currently exist. No source, test or migration behavior changed.
