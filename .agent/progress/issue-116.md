@@ -1,7 +1,7 @@
 # Issue #116: Alert contact groups and Nagios escalations
 
 Branch: `issue-116-alert-escalations`
-Status: in-progress
+Status: ready-for-review
 
 ## Finish condition
 
@@ -112,7 +112,7 @@ Requirement coverage:
 1. [x] Backend TDD: extend `server/tests/unit/test_create_host_cfg.py`, `test_host_recipients.py` and new escalation API/migration tests; add `Escalation` to `server/app/system_models.py`, generate/review multi-bind migration and add round-trip support runner. Extract the existing group computation from `server/app/network_discovery/create_host_cfg.py` for shared use without changing default output. Add `hostescalation.cfg.tpl` / `serviceescalation.cfg.tpl` and validated rendering in `host_config_templates.py`. Add CRUD/options in `server/app/api/system/escalations.py`, register in `__init__.py`, reuse `settings.system`, hold config lock through apply/commit, rollback failed apply. Verify focused tests, Python compilation, backend stage and explicit injection/secret-exposure review.
 2. [x] Frontend TDD: add `client/src/test/EscalationSettings.test.tsx`; implement `client/src/components/settings/EscalationSettings.tsx`, `client/src/lib/escalationApi.ts`, `client/src/types/escalation.ts`; mount under existing System settings permission. Cover add/edit/delete/reload, validation, 400/422 messages, no-member disabled form, confirmation and loading/error/success states; verify focused tests, PageAccess/LayoutSettings regressions and frontend stage.
 3. [x] Update `spec files/Backend_Modules_and_Routes.md`, `Data_Model_and_Integrations.md`, `Frontend_Modules_and_Routes.md`, `Implementation_Status.md`, `server/tests/README.md` and UI help; document migration and reuse of settings.system; verify docs.
-4. [ ] Execute issue G's bounded two-contact live Nagios escalation trial in the approved exclusive lab; record real validation, delayed second-contact dispatch, deletion and default regression evidence in a sanitized `docs/test-runs/` report and index. Re-read issue/comments and prove every applicable requirement, run `scripts/verify.sh all`, attach output to PR.
+4. [x] Execute issue G's bounded two-contact live Nagios escalation trial in the approved exclusive lab; record real validation, delayed second-contact dispatch, deletion and default regression evidence in a sanitized `docs/test-runs/` report and index. Re-read issue/comments and prove every applicable requirement, run `scripts/verify.sh all`, attach output to PR.
 5. [ ] Remove progress file only after finish checks pass, push PR using template with Closes #116, observe CI, report reviewer approvals honestly; never merge.
 
 ## Round log
@@ -127,12 +127,14 @@ Requirement coverage:
 
 | 3 | Wrote sanitized report and run index, updated implementation status, final browser pass and baseline generator comparison; trimmed generated migration EOF whitespace | scripts/verify.sh docs; git diff origin/main --check; old/new generator comparison; py_compile | green: docs, diff and compile; all four baseline output modes byte-identical to e4130ccf; final browser pass in 4.5 s. Combined all check pending |
 
+| 4 | Completed combined final verification and final issue coverage review | scripts/verify.sh all | green: 2861 backend passed/14 skipped; 651 frontend tests; build green; lint 0 errors/29 existing warnings; verify: all OK |
+
 ## State for the next session
 
 - Last check run (exact command): scripts/verify.sh all
-- Result (first failing lines, or "green"): running; output /tmp/pinpoint-116-all.log, exec session 3840
+- Result (first failing lines, or "green"): green: verify: all OK; /tmp/pinpoint-116-all.log (full output, 150234 bytes)
 - Hypothesis: Prerequisites are satisfied; existing #79 group computation can supply escalation group choices and rendering. Implementation requires sensitive Nagios config changes, triggering the workflow's Needs a person stop.
-- Next action (one specific step, not "continue"): Collect scripts/verify.sh all result (session 3840, /tmp/pinpoint-116-all.log); if green, attach its output to the PR, remove this progress file, open the PR and watch CI.
+- Next action (one specific step, not "continue"): Remove this progress file, push, create the PR using the template, attach full verification output in collapsed comment parts, and watch required CI checks.
 
 ## Decisions and notes
 
@@ -164,3 +166,5 @@ Requirement coverage:
 - Added the `issue-116-live` project to client/playwright.config.ts so the committed browser regression is reproducible without the temporary runner config. The test still skips before requests unless ISSUE116_LAB_URL is explicitly supplied; no default smoke/dependency/credential behavior changes. Its application source is unchanged.
 
 - Reproducible browser project guard verified: `client/node_modules/.bin/playwright test --config client/playwright.config.ts --project=issue-116-live` with no lab URL reports one skipped test and makes no live request. Docs checks pass after documenting invocation. Own disposable lab project was removed after retaining evidence, and own Vite process stopped; existing labs remain unchanged. Combined all verification still running.
+
+- Final verification succeeded on the final implementation. Remaining actions are PR/evidence publication and CI. Human reviewer approval remains explicitly outstanding; do not merge or claim it is obtained. No external SMTP, inbox, installer/VM or production elapsed-minute validation was performed. Local evidence covers the issue's stated lab requirement using real Nagios and its unchanged notifier.
