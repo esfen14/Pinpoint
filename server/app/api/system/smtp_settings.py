@@ -4,7 +4,7 @@ mail is sent through.
 
 Saving sends the settings to the root helper (see app/smtp_settings.py), which
 writes /etc/msmtprc, and stores them in the SmtpSettings singleton in
-system.db. The helper's error text is returned as-is so the card can show it.
+system.db. The helper's error text is credential-redacted before the card shows it.
 The password is write-only: it is stored encrypted and no route returns it. All
 routes need the "settings.email" permission, which also controls the Email tab
 on the Settings page.
@@ -133,7 +133,6 @@ def update_smtp_settings_route():
             setattr(row, column, values[key])
         if password_changed:
             changes.append(("password", "-", "changed"))
-        row.Provider = values["provider"]
         row.Password_Encrypted = encrypted
         row.Version += 1
         row.Updated_By = current_user.UserID

@@ -156,8 +156,9 @@ def validate_smtp_settings(data, has_saved_password):
     else:
         if not isinstance(password, str):
             raise SmtpSettingsError("The password must be text.")
-        if len(password) > MAX_PASSWORD_LENGTH:
-            raise SmtpSettingsError(f"The password can be at most {MAX_PASSWORD_LENGTH} characters.")
+        password_limit = MAX_PASSWORD_LENGTH if provider == "gmail" else 256
+        if len(password) > password_limit:
+            raise SmtpSettingsError(f"The password can be at most {password_limit} characters.")
         if not is_printable_ascii(password):
             raise SmtpSettingsError("The password can only contain printable ASCII characters.")
 

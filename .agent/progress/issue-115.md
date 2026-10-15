@@ -122,7 +122,7 @@ Requirement coverage (every requirement in A–H):
 
 ## Plan
 
-1. [ ] Backend: add failing relay/error tests in server/tests/unit/test_smtp_relays.py; implement STARTTLS custom validation and provider-aware safe errors in server/app/smtp_settings.py; retain helper JSON fields; verify backend.
+1. [x] Backend: add failing relay/error tests in server/tests/unit/test_smtp_relays.py; implement STARTTLS custom validation and provider-aware safe errors in server/app/smtp_settings.py; retain helper JSON fields; verify backend.
 2. [ ] Failure reporting: test bounded parser/API in server/tests/unit/test_mail_failures.py; implement server/app/nagios/mail_failures.py, config/README path and GET contract; verify backend.
 3. [ ] Frontend: add relay/API/polling tests; update EmailSettings.tsx, types/smtpSettings.ts and lib/smtpSettingsApi.ts; preserve existing Gmail tests; verify frontend.
 4. [ ] Documentation and evidence: update owning specs, tests README and user guide; attempt authorized scoped real SMTP/Nagios verification when infrastructure permits; record actual lab limitations; verify docs and all.
@@ -136,12 +136,14 @@ Requirement coverage (every requirement in A–H):
 
 | 1 | Implemented STARTTLS custom validation/API/helper and UI; added bounded failure reader and tests. Confirmed red before code: relay 31 failures; missing reader collection error; frontend 8 failures. | Focused backend: 89 passed; frontend: 38 passed; verify.sh frontend and docs green; verify.sh backend still running | Core source implemented; live checks blocked by infrastructure. Broad backend and final documentation pending. |
 
+| 2 | Documented STARTTLS-only scope, API/failure semantics and user workflow; matched custom password limit to helper (256) while retaining Gmail 200 limit; added boundary/rotation cases. | verify.sh backend: 2889 passed/14 skipped; verify.sh frontend green; verify.sh docs green; focused frontend 38 passed | Full initial stages green; final combined all verification pending after final source refinements. |
+
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh frontend > test-results/issue-115-frontend.log 2>&1`
-- Result (first failing lines, or "green"): green; 0 lint errors, 29 existing warnings. Focused backend 89 passed. Full backend running with output in test-results/issue-115-backend.log.
-- Hypothesis: Core implementation meets isolated acceptance; remaining work is documentation, full regression and live proof. No accessible live VM/Docker lab.
-- Next action (one specific step): Update the four owning specifications and Email settings user guide, then run verify.sh all and inspect the full backend result.
+- Last check run (exact command): `scripts/verify.sh docs > test-results/issue-115-docs.log 2>&1`
+- Result (first failing lines, or "green"): green. Full initial backend 2889 passed, 14 skipped; frontend build/tests/lint green.
+- Hypothesis: Final combined regression should pass; real appliance acceptance cannot be proven in this environment.
+- Next action (one specific step): Run scripts/verify.sh all against the final source and create a sanitized blocked-lab report and draft PR with the actual results.
 
 ## Decisions and notes
 

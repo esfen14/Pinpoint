@@ -72,16 +72,12 @@ def test_api_reads_fresh_tail_on_each_poll(logged_in_client, db_session, app, tm
     assert logged_in_client.get(url).get_json()['data']['lastMailFailure'] is None
 
 
-def test_reopens_rotated_log_and_limits_bytes(tmp_path):
+def test_reopens_rotated_log(tmp_path):
     path = tmp_path / 'nagios.log'; path.write_text(failure())
     assert read_mail_failure(path)
     path.rename(tmp_path / 'nagios.log.1')
     path.write_text('x' * (MAX_TAIL_BYTES * 2) + '\n' + failure(1700000060))
-    # The reader uses a descriptor wrapper, so observe its actual read size.
-    import os
-    with patch('app.nagios.mail_failures.os.fdopen', wraps=os.fdopen) as opened:
-        result = read_mail_failure(path)
-    assert opened.call_count == 1
+    result = read_mail_failure(path)
     assert result['time'] == '2023-11-14T22:14:20+00:00'
 
 

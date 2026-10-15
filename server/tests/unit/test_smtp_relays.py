@@ -91,3 +91,10 @@ def test_password_echo_is_redacted_from_helper_and_smtp_errors(logged_in_client,
     data = response.get_json()['data']
     assert data['code'] == 'auth_failed' and 'Gmail' not in data['message']
     assert SECRET not in response.get_data(as_text=True) and SECRET not in caplog.text
+
+
+@pytest.mark.parametrize('port', [1, 65535])
+def test_custom_port_and_helper_password_limits(port):
+    assert validate_smtp_settings({**CUSTOM, 'port': port, 'password': 'x' * 256}, False)['port'] == port
+    with pytest.raises(SmtpSettingsError, match='password'):
+        validate_smtp_settings({**CUSTOM, 'password': 'x' * 257}, False)

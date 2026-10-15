@@ -149,3 +149,27 @@ This editor does not require account-management permission and does not change
 any user's global email setting.
 
 Live browser coverage for host recipients is opt-in through `scripts/playwright-lab --project issue-79-live --project issue-79-restricted`. The tests save through the real recipient API/Nagios writer, reopen the drawer to verify persistence, clear the choices to verify default fallback, restore the original assignments, and verify that the restricted reader sees no editor and receives 403 for recipient reads/writes. They require two eligible lab accounts and discovered lab targets.
+
+## Email settings
+
+`components/settings/EmailSettings.tsx`, `lib/smtpSettingsApi.ts` and
+`types/smtpSettings.ts` own Settings → Email (`settings.email`). Provider choices
+are Gmail and Other SMTP relay. Gmail keeps its fixed host/port/security, app
+password instructions, sender warning and historical save body. Other SMTP relay
+shows editable host and port plus fixed STARTTLS security; host, integer port
+1–65535 and STARTTLS are validated before saving. Its username may be a relay
+account name; sender must be an email address accepted by the relay. Server 400
+messages appear in the save error state. Discard restores the saved provider and
+values. Loading, save/success/error and test-email states remain available.
+
+Passwords are masked and write-only, never loaded from the API or stored in
+browser storage. Blank preserves the saved credential; successful save clears
+the entered value. Gmail and custom provider help text are separate.
+
+The tab reads `lastMailFailure` from the settings GET and refreshes it every
+30 seconds while mounted without replacing unsaved edits. A present value shows
+the time using display preferences, sanitized reason and a Test email settings
+link. Null removes it; polling errors show a refresh error and retain the last
+observed indicator. Requests do not overlap. A successful test does not clear a
+historical failure; the tab explains this. See the
+[Email settings guide](../docs/manuals/Email_Settings.md).
