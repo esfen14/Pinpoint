@@ -62,7 +62,7 @@ def duplicate_run_rejected(conn):
         conn.execute(
             "insert into REMEDIATION_RUN (Event_Key, Action_Id, Action_Name, Hostname, Service, State,"
             " State_Type, Attempt, Received_At, Outcome)"
-            " values ('k1', 1, 'first action', 'web-01', 'HTTP', 'CRITICAL', 'HARD', 3, '2026-01-01', 'DUPLICATE')"
+            " values ('k1', 1, 'first action', 'web-01', 'HTTP', 'CRITICAL', 'HARD', 3, '2026-01-01', 'SUCCEEDED')"
         )
         conn.commit()
         return False

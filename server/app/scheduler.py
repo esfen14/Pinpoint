@@ -11,6 +11,7 @@ from app.automation import run_due_automation
 from app.nagios.status import get_status
 
 POLL_INTERVAL_SECONDS = 60
+REMEDIATION_POLL_SECONDS = 15
 
 _scheduler: BackgroundScheduler | None = None
 
@@ -18,6 +19,30 @@ _scheduler: BackgroundScheduler | None = None
 def _poll_nagios_status():
     with app.app_context():
         get_status()
+
+
+def _mark_interrupted_remediation_runs():
+    """At startup, mark remediation runs left running by a stop as interrupted (never re-run)."""
+    from app import remediation
+
+    with app.app_context():
+        try:
+            remediation.mark_interrupted()
+        except Exception:
+            db.session.rollback()
+            current_app.logger.exception("Could not mark interrupted remediation runs")
+
+
+def _consume_remediation_spool():
+    """Hand the event handler spool to the remediation consumer. It never raises."""
+    from app import remediation
+
+    with app.app_context():
+        try:
+            remediation.process_spool()
+        except Exception:
+            db.session.rollback()
+            current_app.logger.exception("Unexpected error while consuming the remediation spool")
 
 
 def _relocate_ncpa_devices():
@@ -121,6 +146,7 @@ def init_scheduler():
     if app.debug and os.environ.get("WERKZEUG_RUN_MAIN") != "true":
         return
 
+    _mark_interrupted_remediation_runs()
     _scheduler = BackgroundScheduler(daemon=True)
     _scheduler.add_job(
         _poll_nagios_status,
@@ -153,6 +179,14 @@ def init_scheduler():
         "interval",
         minutes=app.config["NCPA_RELOCATE_MINUTES"],
         id="ncpa_relocation",
+        max_instances=1,
+        coalesce=True,
+    )
+    _scheduler.add_job(
+        _consume_remediation_spool,
+        "interval",
+        seconds=REMEDIATION_POLL_SECONDS,
+        id="remediation_spool",
         max_instances=1,
         coalesce=True,
     )

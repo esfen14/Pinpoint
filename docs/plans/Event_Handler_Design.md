@@ -110,8 +110,11 @@ reserve `history.db` for Nagios snapshots. The existing `_purge_old_data` job de
 `Diagnostic_History_Retention_Days`. The row keeps no foreign key to the action: deleting an action must
 leave its runs, so `Action_Id` is a plain number and the action name is copied into the row.
 
-`Outcome` values: `succeeded`, `failed`, `timed_out`, `skipped_cooldown`, `skipped_hourly_cap`,
-`skipped_disabled`, `discarded_malformed`, `interrupted`, `duplicate`.
+`Outcome` values: `running`, `succeeded`, `failed`, `timed_out`, `skipped_cooldown`,
+`skipped_hourly_cap`, `interrupted`. (Changed during build: a replayed event, a malformed file and a
+disabled action cannot be stored as rows. The unique key on `Event_Key` and `Action_Id` is what stops a
+replay; a malformed file has no action or valid host to record; only enabled actions are ever matched.
+Replays and malformed files are discarded and written to the application log with no file content.)
 
 Patterns are exact names or contain `*` only (`web-*`). Allowed characters `A-Za-z0-9._*-`. No regex.
 

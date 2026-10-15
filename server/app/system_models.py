@@ -1159,10 +1159,7 @@ class RemediationOutcome(Enum):
     TIMED_OUT = "timed_out"
     SKIPPED_COOLDOWN = "skipped_cooldown"
     SKIPPED_HOURLY_CAP = "skipped_hourly_cap"
-    SKIPPED_DISABLED = "skipped_disabled"
-    DISCARDED_MALFORMED = "discarded_malformed"
     INTERRUPTED = "interrupted"
-    DUPLICATE = "duplicate"
 
 
 class RemediationAction(db.Model):
