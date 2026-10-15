@@ -1,3 +1,4 @@
+import { StorageUsageCard } from '../components/dashboard/StorageUsageCard'
 import { useEffect, useState } from 'react'
 import { AlertTriangle, Gauge, Server, Wifi } from 'lucide-react'
 import { NetworkPerformanceSection } from '../components/dashboard/NetworkPerformanceSection'
@@ -190,6 +191,8 @@ export function DashboardPage() {
               </div>
             </div>
           </div>
+
+          <StorageUsageCard usage={status?.storageUsage ?? null} isLoading={isLoading} error={loadError ? 'Storage usage could not be refreshed.' : null} />
 
           <NagiosSyncNotice message={syncNotice} onDismiss={() => setSyncNotice(null)} />
 

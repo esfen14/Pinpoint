@@ -68,6 +68,9 @@ def test_api_uses_only_configured_path(logged_in_client, db_session, app, tmp_pa
     assert len(response.get_json()['data']['lines']) == 1
 
 
-def test_authorization(client, limited_client, db_session):
+def test_requires_login(client, db_session):
     assert client.get(URL).status_code in (401, 302)
+
+
+def test_requires_permission(limited_client, db_session):
     assert limited_client.get(URL).status_code == 403

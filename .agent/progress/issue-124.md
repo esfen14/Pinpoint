@@ -77,8 +77,8 @@ Requirement coverage (every requirement the issue states, and the check that pro
 ## Plan
 
 1. [ ] Backend tests first: add server/tests/unit/test_storage_usage.py and test_nagios_log.py; implement server/app/storage_usage.py and nagios_log.py; extend api/system/dashboard.py and log.py, config.py/README settings and backend route catalog. Run focused and backend checks.
-2. [ ] Frontend tests first: storage card and log panel under client/src/test/; implement components/dashboard/StorageUsageCard.tsx and components/system-logs/NagiosLogPanel.tsx; wire pages/DashboardPage.tsx, SystemLogsPage.tsx and types/dashboard.ts, log.ts. Preserve existing page tests and permissions; run frontend verification.
-3. [ ] Separate installer issue branch: tests for setup/configure-log-retention.sh, wire setup/deploy-pinpoint-web.sh and document limits/admin preservation in README.md. Run isolated tests and security review of fixed paths, arguments and secret exposure.
+2. [x] Frontend tests first: storage card and log panel under client/src/test/; implement components/dashboard/StorageUsageCard.tsx and components/system-logs/NagiosLogPanel.tsx; wire pages/DashboardPage.tsx, SystemLogsPage.tsx and types/dashboard.ts, log.ts. Preserve existing page tests and permissions; run frontend verification.
+3. [x] Separate installer issue branch: tests for setup/configure-log-retention.sh, wire setup/deploy-pinpoint-web.sh and document limits/admin preservation in README.md. Run isolated tests and security review of fixed paths, arguments and secret exposure.
 4. [ ] Finish owning specs, Help and server/tests/README.md; run actual fresh/upgrade lab cases only after proving exclusive lab ownership; record sanitized docs/test-runs report with exact tested commits and observed/untested cases. Re-read issue and run scripts/verify.sh all; checkpoint evidence.
 5. [ ] Create paired PRs from repository templates, attach output/evidence and check CI. Keep application PR draft with this progress file if any mandatory criterion remains unproven; otherwise remove progress file and mark ready. Never merge.
 
@@ -86,15 +86,17 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| 2 | Split shared-client auth test; implemented storage/log UI and permission guards; preserved existing dashboard tests | focused backend: 72 pass; focused frontend: 27 pass; scripts/verify.sh frontend | 695 frontend tests pass, build/lint green (32 warnings). Backend stage still running; initial collected auth test is expected to fail once |
+| 3 | Implemented separate fixed-path installer helper, admin override preservation and logrotate; upstream push denied, existing fork used | python3 -m unittest discover -s tests -p test_log_retention.py; bash -n | 4 installer tests pass, syntax green; installer commit ffb4cc3 |
 | 1 | Added storage/tail helpers and fixed-path APIs plus tests; initial red confirmed missing modules | focused storage/log/dashboard pytest | 70 passed, 1 failed: authorization test requested anonymous and logged-in fixtures sharing a client; split test required |
 | Plan | Read issue and shared workflow; isolated checkout from origin/main cc1305c6; inspected external installer deploy script | gh issue view 124; installer tree/deploy inspection | Installer located; no code changed |
 
 ## State for the next session
 
 - Last check run (exact command): scripts/verify.sh backend > /tmp/issue124-backend-stage.log 2>&1
-- Result (first failing lines, or "green"): focused 70 passed, 1 failed: anonymous assertion saw limited-client session (403); backend stage launched, result pending
+- Result (first failing lines, or "green"): frontend gate green: 695 tests; focused backend green: 72 tests; initial backend stage pending, old auth fixture test failed during collection run.
 - Hypothesis: Backend and UI are independent of installer privileges; all three parts need evidence before ready-for-review.
-- Next action (one specific step, not "continue"): Split anonymous/limited-client authorization tests, then rerun focused and backend checks.
+- Next action (one specific step, not "continue"): Update owning docs, run full all gate, and fresh-install on the isolated issue124 VM clone using the paired installer.
 
 ## Decisions and notes
 
@@ -104,3 +106,5 @@ Requirement coverage (every requirement the issue states, and the check that pro
 - Tail request accepts only lines (1..500) and after (nonnegative Unix seconds); fixed trusted config path; cap input/output bytes at 64 KiB and disclose unavailable state. Default/old dashboard fields retain their values.
 - Storage traversal must be bounded and report incomplete scans explicitly, skip symlinks and avoid repeated per-host work. Per-location filesystem measurements handle split mounts.
 - No lab ownership established yet; never reset shared VMs or discard other agents' edits.
+
+- To avoid shared-lab ownership ambiguity, created a linked clone of the base snapshot named pinpoint-issue124-appliance; its separate internal network and loopback ports will isolate acceptance without changing shared appliance/targets. Base snapshot remains untouched.
