@@ -98,3 +98,13 @@ def test_custom_port_and_helper_password_limits(port):
     assert validate_smtp_settings({**CUSTOM, 'port': port, 'password': 'x' * 256}, False)['port'] == port
     with pytest.raises(SmtpSettingsError, match='password'):
         validate_smtp_settings({**CUSTOM, 'password': 'x' * 257}, False)
+
+
+@pytest.mark.parametrize('provider', ['gmail', 'custom'])
+def test_credential_redaction_preserves_fixed_error_codes(provider):
+    from app.smtp_settings import send_test_email
+    with patch('app.smtp_settings.smtplib.SMTP') as smtp:
+        smtp.return_value.__enter__.return_value.starttls.side_effect = smtplib.SMTPNotSupportedError('echo tls')
+        result = send_test_email({**CUSTOM, 'provider': provider}, 'tls', 'admin@example.org')
+    assert result['code'] == 'tls_failed'
+    assert 'echo tls' not in result['details']

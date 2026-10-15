@@ -297,5 +297,6 @@ def send_test_email(settings, password, recipient):
     except (smtplib.SMTPException, OSError) as exc:
         classify = classify_smtp_error if settings["provider"] == "gmail" else classify_relay_error
         result = classify(exc, settings["host"], settings["port"])
-        return {"ok": False, **{key: redact_mail_secret(value, password) for key, value in result.items()}}
+        result["details"] = redact_mail_secret(result["details"], password)
+        return {"ok": False, **result}
     return {"ok": True, "recipient": recipient}

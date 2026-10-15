@@ -140,12 +140,14 @@ Requirement coverage (every requirement in A–H):
 
 | 4 | Merged main e0a61570, resolving the report-index conflict without dropping either entry; final source verified at 58e672b4; code/spec/guide/report complete for available scope. | scripts/verify.sh all: 3056 backend passed, 14 skipped; 653 frontend passed; build/docs green; lint 0 errors/29 warnings | Local gate green. Draft #172 remains blocked solely on real-appliance acceptance and human review; CI backend is still pending at checkpoint. |
 
+| 5 | Regression-tested and corrected overbroad credential redaction: only raw SMTP details are redacted; fixed API codes/messages remain stable even when a short password matches them. Two new cases failed before fix, then passed. | scripts/verify.sh all: 3058 backend passed/14 skipped, 653 frontend passed, build/docs green, lint 0 errors/29 warnings; focused backend 121 passed | Local gate green for final source in this checkpoint. Published pre-correction draft CI was green. Final push triggers CI again; live appliance acceptance still blocked. |
+
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh all > test-results/issue-115-all-merged.log 2>&1`
-- Result (first failing lines, or "green"): green; 3056 backend passed / 14 skipped, 653 frontend passed, build/docs green, lint 0 errors / 29 warnings. Tested application source 58e672b4. Existing Gmail test files unchanged from main; edited Python files compile.
-- Hypothesis: Isolated functionality is complete; actual installed-helper/SMTP/Nagios behavior and service-user log access cannot be certified here. CI docs/frontend have passed; backend pending at checkpoint. PR is mergeable.
-- Next action (one specific step): Inspect the latest checks on draft PR #172, then use an accessible exclusively owned appliance to run the four skipped cases in docs/test-runs/2026-10-15-issue-115-starttls-preflight/REPORT.md and create a fresh report before review readiness.
+- Last check run (exact command): `scripts/verify.sh all > test-results/issue-115-all-final-correction.log 2>&1`
+- Result (first failing lines, or "green"): green; 3058 backend passed / 14 skipped, 653 frontend passed, build/docs green, lint 0 errors / 29 warnings. This ran on a8a112a5 plus the error-redaction correction and its tests, committed with this progress checkpoint. Prior draft CI run 38705934980 passed all three jobs; final source push triggers a new run.
+- Hypothesis: Isolated implementation is complete and the log/error privacy guards are verified. Actual installed-helper/SMTP/Nagios behavior and service-user log access cannot be certified in this environment.
+- Next action (one specific step): Inspect the latest CI checks on draft PR #172, then use an accessible exclusively owned appliance to run the four skipped cases in docs/test-runs/2026-10-15-issue-115-starttls-preflight/REPORT.md and create a fresh report before review readiness.
 
 ## Decisions and notes
 
@@ -164,4 +166,6 @@ Requirement coverage (every requirement in A–H):
 
 - Final coverage audit: all application requirements have source/unit/API/interaction proofs listed above, but actual helper writes and notification-generated failures remain unticked because mocks/source-format inspection are not live proof. Gmail behavior is proven by unchanged regression files, not a new inbox send. The F migration/permission deliverable is not applicable (existing columns/permission); installer release notes and implicit-TLS checks are deferred by the user's choice. The user guide and on-tab help are complete. No reviewer approvals or full live acceptance claimed.
 - Infrastructure confirmation: `sudo -n docker ps` also fails with "interactive authentication is required". No privileged bypass, VM mutation, relay change or external email send was performed.
-- Four rounds completed; no repeated-failure loop. No further source work is pending. Resume requires working lab access and the scoped live proof, then normal human review.
+- Five rounds completed; no repeated-failure loop. No further source work is pending. Resume requires working lab access and the scoped live proof, then normal human review.
+
+- Final correction review: only SMTP diagnostic details may contain a server echo and need credential replacement; fixed classification codes/messages must remain independent of password contents. New Gmail/custom regression cases prove this and existing Gmail tests still pass unchanged. No new behavior or scope beyond #115 was introduced.
