@@ -16,9 +16,11 @@ import socket
 import ssl
 
 import paramiko
+import sqlalchemy as sa
 from flask import current_app
 
-from app.system_models import IdentifierKind
+from app import db
+from app.system_models import IdentifierKind, NCPADeployment, NetworkDiscovery
 
 PROBE_TIMEOUT = 3
 
@@ -99,6 +101,15 @@ def collect_identifiers(ip_address, tcp_ports):
     identifiers = []
 
     ncpa_port = str(current_app.config["NCPA_PORT"])
+    if ncpa_port not in ports:
+        known_port = db.session.scalar(
+            sa.select(NCPADeployment.Port)
+            .join(NetworkDiscovery, NCPADeployment.NetworkDiscoveryID == NetworkDiscovery.NetDiscoveryID)
+            .where(NetworkDiscovery.IP_Address == ip_address, NCPADeployment.Token.is_not(None))
+            .order_by(NCPADeployment.NCPADeployID.desc())
+        )
+        if known_port and str(known_port) in ports:
+            ncpa_port = str(known_port)
     if ncpa_port in ports:
         fingerprint = tls_certificate_fingerprint(ip_address, ncpa_port)
         if fingerprint:

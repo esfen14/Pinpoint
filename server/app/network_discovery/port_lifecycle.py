@@ -101,6 +101,17 @@ def is_ephemeral_port(port):
     return False
 
 
+def device_ncpa_port(device_id):
+    """Return the recorded NCPA listener port, or the configured port for legacy rows."""
+    port = db.session.scalar(
+        sa.select(NCPADeployment.Port).where(
+            NCPADeployment.NetworkDiscoveryID == device_id,
+            NCPADeployment.Token.is_not(None),
+        ).order_by(NCPADeployment.NCPADeployID.desc())
+    )
+    return int(port or current_app.config["NCPA_PORT"])
+
+
 def device_has_ncpa_token(device_id):
     """True if the device has a deployed NCPA token."""
     token = db.session.scalar(
@@ -116,7 +127,7 @@ def is_protected_ncpa_port(port, device_id):
     """NCPA's port with Source NCPA is never demoted while a token is deployed."""
     return (
         port.Source is PortSource.NCPA
-        and port.Port_Number == int(current_app.config["NCPA_PORT"])
+        and port.Port_Number == device_ncpa_port(device_id)
         and device_has_ncpa_token(device_id)
     )
 
@@ -665,7 +676,7 @@ def mark_ncpa_port(device_id):
     deployment (called from add_ncpa_port). Reuses an existing row for the
     port so nothing is duplicated. Does not commit.
     """
-    port_number = int(current_app.config["NCPA_PORT"])
+    port_number = device_ncpa_port(device_id)
     now = utcnow()
     port = db.session.scalar(
         sa.select(Open_TCP_Services).where(

@@ -45,9 +45,10 @@ that discovery found, and these have none.
 3. **Set a fixed `SECRET_KEY`** in the service's environment file (for example `/etc/pinpoint/pinpoint.env`), or
    `PINPOINT_SECRETS_KEY`. Passwords are encrypted with it (section 7). Do not change it later without
    reading section 7.
-4. **Restrict the Nagios host file.** If you will store passwords, the generated host file holds them in plain
-   text (section 7). Make it readable only by the Nagios user and group, for example `chmod 640` with the right
-   group.
+4. **Check secret-file access.** In the issue #129 build, passwords use the protected Nagios resource file
+   (section 7); the host file contains macro references and uses mode 0640. The resource writer must preserve
+   `nagios:nagios` ownership and mode 0660. The default resource path requires the paired installer helper; full live generated-config acceptance remains incomplete;
+   do not deploy this unfinished build as a completed security fix.
 5. **Check the Nagios server can reach what you will check:** a device on the network, the SSH key you will
    name, or the files and devices of the Nagios server itself.
 
@@ -196,10 +197,15 @@ How it is handled:
   plugin history. An invalid value is reported by argument name only.
 - **Changing a check:** leave the box blank to keep the stored password. Type a new one to replace it. An
   optional password has a "Remove the stored …" box; a required one cannot be removed.
-- **Passwords are written to the Nagios host file.** Nagios needs the password in the check's command, so it is in
-  plain text in that file, in the Nagios web UI's command view, and in the process list while the check runs. Keep
-  the host file readable only by the Nagios user and group. Pinpoint logs a warning when a host file that holds a
-  password is readable by everyone.
+- **Generated resource storage (issue #129 build).** Decrypted passwords go in the managed block of
+  `NAGIOS_RESOURCE_CFG` (default `/usr/local/nagios/etc/resource.cfg`); `hosts.cfg` contains bare USER slot
+  identifiers. The resource file must retain `nagios:nagios` ownership and mode 0660. The writer refuses
+  other-user access or an update that cannot retain ownership. A failed config change restores previous
+  resources and host configuration. Supported native checks receive the password through
+  extra-options stdin after verifying installed support. Password-bearing SMB checks are refused because
+  this plugin lacks secure child credential input. The default resource path uses the restricted installer helper for foreign-owned
+  updates and rollback; custom paths must be writable with preserved ownership by the
+  application itself. Full live generated-config acceptance remains unfinished; see [the transport plan](../plans/Issue_129_Check_Secret_Transport.md).
 
 If the key changes:
 
@@ -301,7 +307,7 @@ Some arguments to know:
   are in `Configuration_Data["variables"]`, encrypted passwords in `["secrets"]`, and `["paused"]` is the pause flag.
 - **Host file:** device checks are written under their device's host; server checks under "Define Server Checks".
   One `pinpoint_custom_<plugin>` command is defined per plugin in use.
-- **What it does not do:** Pinpoint does not edit `localhost.cfg` or `resource.cfg`, does not store SSH keys, and
+- **What it does not do:** Pinpoint does not edit `localhost.cfg` or resource-file content outside its owned block, does not store SSH keys, and
   does not run a check anywhere but the Nagios server.
 
 

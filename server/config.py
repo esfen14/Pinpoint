@@ -172,6 +172,11 @@ class Config:
     NAGIOS_HOST_CFG = Path(os.environ.get('NAGIOS_HOST_CFG') or "/usr/local/nagios/etc/objects/hosts.cfg")
     NAGIOS_BIN = Path(os.environ.get('NAGIOS_BIN') or "/usr/local/nagios/bin/nagios")
     NAGIOS_MAIN_CFG = Path(os.environ.get('NAGIOS_MAIN_CFG') or "/usr/local/nagios/etc/nagios.cfg")
+    # Nagios resource file: defines $USER1$..$USER256$ macros.  PinPoint writes
+    # NCPA tokens and custom-check passwords into a managed block ($USER2$+)
+    # so they are not exposed on process command lines or in world-readable
+    # config files.  Override via NAGIOS_RESOURCE_CFG in the environment.
+    NAGIOS_RESOURCE_CFG = Path(os.environ.get('NAGIOS_RESOURCE_CFG') or "/usr/local/nagios/etc/resource.cfg")
 
     # Read-only bounded tail for SMTP notification failure diagnostics.
     NAGIOS_LOG_FILE = Path(os.environ.get("NAGIOS_LOG_FILE") or "/usr/local/nagios/var/nagios.log")

@@ -185,6 +185,27 @@ class TestStoreDeploymentIdentity:
         assert ncpa.store_deployment_identity(9999, {"machine_id": MACHINE_ID, "macs": []}, CERT_1) == []
 
 
+def test_disk_probe_uses_stored_port(app, db_session, admin_user):
+    device = make_ncpa_device(db_session, admin_user, state=None)
+    deployment = db.session.scalar(sa.select(NCPADeployment).where(
+        NCPADeployment.NetworkDiscoveryID == device.NetDiscoveryID,
+        NCPADeployment.Token.is_not(None)))
+    deployment.Port = 5864
+    db.session.commit()
+    with patch.object(ncpa.requests, "get") as get:
+        get.return_value.status_code = 200
+        get.return_value.json.return_value = {"logical": {}}
+        ncpa.refresh_ncpa_partitions(deployment, device.IP_Address)
+    assert get.call_args.args[0].startswith("https://10.0.0.5:5864/")
+
+
+def test_reachability_uses_explicit_installed_port(app):
+    with app.app_context(), patch.object(ncpa.requests, "get") as get:
+        get.return_value.status_code = 200
+        assert ncpa.verify_ncpa_reachable("10.0.0.5", "token", port=5864)["success"]
+    assert get.call_args.args[0] == "https://10.0.0.5:5864/api"
+
+
 class TestInstallNcpa:
     """install_ncpa() with SSH, the helper and NCPA reachability mocked."""
 
@@ -248,6 +269,17 @@ class TestInstallNcpa:
 
         token = run.call_args.args[1].split()[-1].strip("'")
         assert len(token) == 32 and int(token, 16) >= 0
+
+    def test_success_records_listener_port(self, db_session, admin_user):
+        device = make_linux_device(db_session, admin_user)
+        with patched_config(ncpa.current_app, NCPA_PORT="5864"):
+            ok, _run, probe = self.run_install(device)
+        assert ok
+        deployment = db.session.scalar(sa.select(NCPADeployment).where(
+            NCPADeployment.NetworkDiscoveryID == device.NetDiscoveryID,
+            NCPADeployment.Token.is_not(None)))
+        assert deployment.Port == 5864
+        probe.assert_called_once_with(device.IP_Address, 5864)
 
     def test_redeploy_reuses_the_existing_token(self, db_session, admin_user):
         device = make_linux_device(db_session, admin_user)
@@ -393,7 +425,19 @@ class TestSshProbe:
 
 class TestCollectIdentifiers:
 
-    def test_probes_only_the_ports_that_are_open(self, app):
+    def test_uses_stored_port_for_known_agent(self, db_session, admin_user):
+        device = make_ncpa_device(db_session, admin_user, state=None)
+        deployment = db.session.scalar(sa.select(NCPADeployment).where(
+            NCPADeployment.NetworkDiscoveryID == device.NetDiscoveryID,
+            NCPADeployment.Token.is_not(None)))
+        deployment.Port = 5864
+        db.session.commit()
+        with patch.object(identity_probes, "tls_certificate_fingerprint", return_value=CERT_1) as probe:
+            found = identity_probes.collect_identifiers(device.IP_Address, {"5864": {}})
+        assert (IdentifierKind.NCPA_CERT, CERT_1) in found
+        probe.assert_called_once_with(device.IP_Address, "5864")
+
+    def test_probes_only_the_ports_that_are_open(self, app, db_session):
         with app.app_context(), \
              patch.object(identity_probes, "tls_certificate_fingerprint", return_value=CERT_1) as tls, \
              patch.object(identity_probes, "ssh_host_key_fingerprint", return_value=SSH_1) as ssh_probe:
@@ -498,6 +542,18 @@ class TestFindDevicesToRelocate:
 
 
 class TestRelocate:
+
+    def test_alternate_port_is_swept_and_probed(self, db_session, admin_user, relocation):
+        device = make_ncpa_device(db_session, admin_user)
+        deployment = db.session.scalar(sa.select(NCPADeployment).where(
+            NCPADeployment.NetworkDiscoveryID == device.NetDiscoveryID,
+            NCPADeployment.Token.is_not(None)))
+        deployment.Port = 5864
+        db.session.commit()
+
+        assert ncpa_relocation.relocate_ncpa_devices() == [device.NetDiscoveryID]
+        relocation.sweep.assert_called_once_with(NET, 5864)
+        relocation.probe.assert_called_once_with("10.0.0.99", 5864)
 
     def test_down_device_is_found_at_its_new_address(self, db_session, admin_user, relocation):
         device = make_ncpa_device(db_session, admin_user)

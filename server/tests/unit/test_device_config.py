@@ -247,7 +247,7 @@ class TestConfigWriteLock:
             held.append(("load", config_write_lock._is_owned()))
             return {}
 
-        def apply(_path):
+        def apply(_path, rollback_resources=None):
             held.append(("apply", config_write_lock._is_owned()))
             return True, "ok"
 
@@ -437,3 +437,138 @@ class TestApplyHardening:
         assert ok is False
         assert live.read_text() == "OLD"
         assert run.call_count == 2
+
+
+class TestResourceConfigTransaction:
+    @pytest.mark.parametrize("failure", ["validation", "apply", "generation", "exception"])
+    def test_failure_restores_resource_and_preserves_live_hosts(self, app, tmp_path, failure):
+        resource = tmp_path / "resource.cfg"
+        resource.write_text("# original resource\n")
+        resource.chmod(0o660)
+        live = tmp_path / "hosts.cfg"
+        live.write_text("original hosts")
+        candidate = tmp_path / "candidate.cfg"
+        candidate.write_text("candidate hosts")
+        def generate(_hosts):
+            resource.write_text("# changed resource\n")
+            if failure == "generation":
+                raise OSError("synthetic failure")
+            return candidate
+        with app.app_context(), patched_config(app, NAGIOS_RESOURCE_CFG=resource, NAGIOS_HOST_CFG=live), \
+             patch.object(create_host_cfg, "_load_monitored_hosts", return_value={}), \
+             patch.object(create_host_cfg, "_create_host_cfg_file", side_effect=generate), \
+             patch.object(create_host_cfg, "_validate_config", return_value=(failure != "validation", "synthetic rejection"),
+                          side_effect=OSError("synthetic verify error") if failure == "exception" else None), \
+             patch.object(create_host_cfg, "_apply_new_host_cfg", return_value=(failure != "apply", "synthetic apply failure")):
+            outcome, _message = create_host_cfg.regenerate_and_apply_config_status()
+        assert outcome == "failed"
+        assert resource.read_text() == "# original resource\n"
+        assert resource.stat().st_mode & 0o777 == 0o660
+        assert live.read_text() == "original hosts"
+
+    def test_changed_resource_requires_apply_even_when_hosts_match(self, app, tmp_path):
+        resource = tmp_path / "resource.cfg"
+        resource.write_text("# original\n")
+        resource.chmod(0o660)
+        live = tmp_path / "hosts.cfg"
+        live.write_text("same hosts")
+        candidate = tmp_path / "candidate.cfg"
+        candidate.write_text("same hosts")
+        def generate(_hosts):
+            resource.write_text("# rotated credential\n")
+            return candidate
+        with app.app_context(), patched_config(app, NAGIOS_RESOURCE_CFG=resource, NAGIOS_HOST_CFG=live), \
+             patch.object(create_host_cfg, "_load_monitored_hosts", return_value={}), \
+             patch.object(create_host_cfg, "_create_host_cfg_file", side_effect=generate), \
+             patch.object(create_host_cfg, "_validate_config", return_value=(True, "valid")) as validate, \
+             patch.object(create_host_cfg, "_apply_new_host_cfg", return_value=(True, "applied")) as apply:
+            outcome, _message = create_host_cfg.regenerate_and_apply_config_status()
+        assert outcome == "applied"
+        validate.assert_called_once()
+        apply.assert_called_once()
+        assert resource.read_text() == "# rotated credential\n"
+
+    def test_failed_snapshot_prevents_generation(self, app, tmp_path):
+        resource = tmp_path / "resource.cfg"
+        resource.write_text("# original\n")
+        with app.app_context(), patched_config(app, NAGIOS_RESOURCE_CFG=resource), \
+             patch.object(Path, "read_bytes", side_effect=PermissionError("synthetic snapshot failure")), \
+             patch.object(create_host_cfg, "_create_host_cfg_file") as generate:
+            outcome, _message = create_host_cfg.regenerate_and_apply_config_status()
+        assert outcome == "failed"
+        generate.assert_not_called()
+
+    def test_reload_rollback_restores_both_files_before_second_reload(self, app, tmp_path):
+        resource = tmp_path / "resource.cfg"
+        resource.write_text("# old resource\n")
+        resource.chmod(0o660)
+        live = tmp_path / "hosts.cfg"
+        live.write_text("old hosts")
+        live.chmod(0o664)
+        candidate = tmp_path / "candidate.cfg"
+        candidate.write_text("new hosts")
+        observed = []
+        def generate(_hosts):
+            resource.write_text("# new resource\n")
+            return candidate
+        def reload(*_args, **_kwargs):
+            observed.append((live.read_text(), resource.read_text(), live.stat().st_mode & 0o777))
+            return MagicMock(returncode=1 if len(observed) == 1 else 0, stdout="", stderr="")
+        with app.app_context(), patched_config(app, NAGIOS_RESOURCE_CFG=resource, NAGIOS_HOST_CFG=live,
+                                              BACKUP_DIR=tmp_path / "backups"), \
+             patch.object(create_host_cfg, "_load_monitored_hosts", return_value={}), \
+             patch.object(create_host_cfg, "_create_host_cfg_file", side_effect=generate), \
+             patch.object(create_host_cfg, "_validate_config", return_value=(True, "valid")), \
+             patch.object(create_host_cfg.subprocess, "run", side_effect=reload):
+            outcome, _message = create_host_cfg.regenerate_and_apply_config_status()
+        assert outcome == "failed"
+        assert observed == [("new hosts", "# new resource\n", 0o640), ("old hosts", "# old resource\n", 0o664)]
+
+    def test_clean_reload_applies_mode_to_live_file(self, app, tmp_path):
+        result = MagicMock(returncode=0, stdout="", stderr="")
+        ok, _message, live = TestApplyReloadFailure.apply_with_reload(app, tmp_path, reload_result=result)
+        assert ok
+        assert live.stat().st_mode & 0o777 == 0o640
+
+
+@pytest.mark.parametrize("flow", ["discovery", "ncpa"])
+@pytest.mark.parametrize("failure", ["validation", "apply", "cancel"])
+def test_every_config_flow_restores_resources_on_failure(app, db_session, admin_user, tmp_path, flow, failure):
+    """Scans and post-deployment generation use the same rollback as user edits."""
+    resource = tmp_path / "resource.cfg"
+    resource.write_text("# old resource\n")
+    resource.chmod(0o660)
+    live = tmp_path / "hosts.cfg"
+    live.write_text("old hosts")
+    candidate = tmp_path / "candidate.cfg"
+    candidate.write_text("new hosts")
+    stop = threading.Event()
+    def generate(*_args):
+        resource.write_text("# new resource\n")
+        return candidate
+    def validate(*_args):
+        if failure == "cancel":
+            stop.set()
+        return failure != "validation", "synthetic rejection"
+    scanned = scan("10.0.0.5", mac=MAC_1, hostname="fridge.lan", tcp={22: "ssh"})
+    with patched_config(app, NAGIOS_RESOURCE_CFG=resource, NAGIOS_HOST_CFG=live,
+                        HOST_CONFIG_DIR=tmp_path / "gen"), \
+         patch.object(create_host_cfg, "discover_network", return_value=scanned), \
+         patch.object(create_host_cfg, "collect_identifiers", return_value=[]), \
+         patch.object(create_host_cfg, "get_monitoring_server_ips", return_value=set()), \
+         patch.object(create_host_cfg, "_sync_running_plugins"), \
+         patch.object(create_host_cfg, "_create_host_cfg_file", side_effect=generate), \
+         patch.object(create_host_cfg, "_validate_config", side_effect=validate), \
+         patch.object(create_host_cfg, "_apply_new_host_cfg", return_value=(False, "synthetic failure")) as apply:
+        if flow == "discovery":
+            create_host_cfg.discover_network_create_hosts(app, admin_user.UserID, stop)
+        else:
+            patcher = patch.object(create_host_cfg, "update_ncpa_deployment_status")
+            with patcher:
+                create_host_cfg.add_ncpa_port(app, [], 1, stop)
+    assert resource.read_text() == "# old resource\n"
+    assert live.read_text() == "old hosts"
+    if failure != "apply":
+        apply.assert_not_called()
+    else:
+        apply.assert_called_once()

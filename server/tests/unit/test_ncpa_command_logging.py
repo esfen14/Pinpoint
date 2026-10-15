@@ -1,10 +1,72 @@
 """NCPA command logging and bootstrap probes, with SSH entirely mocked."""
 import logging
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 import app.ncpa_deployment.ncpa_deployment as worker
+
+
+def test_cleanup_steps_continue_after_failure_without_secret_in_logs(app, caplog, monkeypatch, tmp_path):
+    key = tmp_path / "deploy.pub"
+    key.write_text("ssh-ed25519 YWJj")
+    monkeypatch.setattr(worker, "PUBLIC_KEY_PATH", str(key))
+    client = MagicMock()
+    with app.app_context(), patch.object(worker, "connect_with_fingerprint_check", return_value=client), \
+         patch.object(worker, "run_sudo_command", side_effect=[
+             {"success": True}, {"success": False, "error": "private-secret"},
+             {"success": True}, {"success": True},
+         ]) as run:
+        steps = worker.cleanup_ncpa_bootstrap("10.0.0.5", 22, "fp", "admin", "private-secret", True)
+    assert steps == [
+        {"step": "key", "ok": True}, {"step": "sudo_rule", "ok": False},
+        {"step": "helper", "ok": True}, {"step": "account", "ok": False, "skipped": True},
+    ]
+    assert run.call_count == 3
+    assert all(call.kwargs["log_command"].startswith("NCPA cleanup ") for call in run.call_args_list)
+    assert "private-secret" not in str(steps) + caplog.text
+    client.close.assert_called_once()
+
+
+def test_cleanup_uses_fixed_paths_and_quotes_key(app, monkeypatch, tmp_path):
+    key = tmp_path / "deploy.pub"
+    key.write_text("ssh-ed25519 YWJj operator's-key")
+    monkeypatch.setattr(worker, "PUBLIC_KEY_PATH", str(key))
+    client = MagicMock()
+    with app.app_context(), patch.object(worker, "connect_with_fingerprint_check", return_value=client), \
+         patch.object(worker, "run_sudo_command", return_value={"success": True}) as run:
+        steps = worker.cleanup_ncpa_bootstrap("10.0.0.5", 22, "fp", "admin", "private-secret", True)
+    assert all(step["ok"] for step in steps)
+    assert [step["step"] for step in steps] == ["key", "sudo_rule", "helper", "account"]
+    assert run.call_count == 4
+    assert "operator's-key" not in str([call.kwargs for call in run.call_args_list])
+    assert "'\"'\"'" in run.call_args_list[0].args[1]
+    for call in run.call_args_list:
+        assert call.kwargs["suppress_output"] is True
+        assert call.args[2] == "private-secret"
+
+
+def test_cleanup_connection_failure_runs_no_commands(app, monkeypatch, tmp_path):
+    key = tmp_path / "deploy.pub"
+    key.write_text("ssh-ed25519 YWJj")
+    monkeypatch.setattr(worker, "PUBLIC_KEY_PATH", str(key))
+    with app.app_context(), patch.object(worker, "connect_with_fingerprint_check", return_value=None), \
+         patch.object(worker, "run_sudo_command") as run:
+        with pytest.raises(ValueError, match="trusted host key"):
+            worker.cleanup_ncpa_bootstrap("10.0.0.5", 22, "fp", "admin", "private-secret")
+    run.assert_not_called()
+
+
+def test_cleanup_suppresses_remote_output_even_on_failure(app, caplog):
+    client = MagicMock()
+    client.exec_command.return_value = ssh_result(1, b"private-secret")
+    with app.app_context():
+        result = worker.run_sudo_command(
+            client, "/bin/false", "private-secret", log_command="NCPA cleanup key", suppress_output=True
+        )
+    assert not result["success"]
+    assert result["error"] == "" and result["output"] == ""
+    assert "private-secret" not in caplog.text
 
 
 def ssh_result(code, stderr=b""):

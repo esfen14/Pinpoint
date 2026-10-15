@@ -157,3 +157,5 @@ Requirement coverage (every requirement in A–H):
 - Isolated backend environment copied from the existing dependency environment into this checkout because uv and ensurepip are absent; no dependency/version change. Frontend npm ci completed.
 
 - Re-read #115 body/comments before draft PR: no new comments or requirement changes. User scope decision controls conditional installer work; all application requirements map to the table above. Live delivery and service-user readability lack proof, so do not mark overall acceptance or reviewer approval complete. Final scripts/verify.sh all is running on application source 899e7cd2.
+
+- Main advanced to e0a61570 (#129) while this issue was being worked. PR initially showed CONFLICTING and no CI run. Merged origin/main locally, preserving both report-index entries; unrelated upstream NCPA changes are retained. Final combined run is restarted against the merged source. No issue-115 requirement or scope changed.

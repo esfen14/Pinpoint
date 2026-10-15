@@ -16,6 +16,12 @@ export type DeviceOutcome =
 
 export type AgentStatus = 'Pending NCPA' | 'Deployed NCPA' | 'Deployment Failed' | 'Excluded' | 'Incompatible'
 
+export type CleanupResult = {
+  device_id: number
+  agent_status: AgentStatus
+  steps: { step: string; ok: boolean; skipped?: boolean }[]
+}
+
 export type CredentialCheckResult =
   | 'ok'
   | 'auth_failed'
