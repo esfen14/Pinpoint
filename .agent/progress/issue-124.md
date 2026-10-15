@@ -86,14 +86,15 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| 1 | Added storage/tail helpers and fixed-path APIs plus tests; initial red confirmed missing modules | focused storage/log/dashboard pytest | 70 passed, 1 failed: authorization test requested anonymous and logged-in fixtures sharing a client; split test required |
 | Plan | Read issue and shared workflow; isolated checkout from origin/main cc1305c6; inspected external installer deploy script | gh issue view 124; installer tree/deploy inspection | Installer located; no code changed |
 
 ## State for the next session
 
-- Last check run (exact command): python3 -I scripts/check_agent_progress.py
-- Result (first failing lines, or "green"): pending initial plan validation
+- Last check run (exact command): scripts/verify.sh backend > /tmp/issue124-backend-stage.log 2>&1
+- Result (first failing lines, or "green"): focused 70 passed, 1 failed: anonymous assertion saw limited-client session (403); backend stage launched, result pending
 - Hypothesis: Backend and UI are independent of installer privileges; all three parts need evidence before ready-for-review.
-- Next action (one specific step, not "continue"): Add failing backend storage/tail/API tests after completing relevant spec and source reads.
+- Next action (one specific step, not "continue"): Split anonymous/limited-client authorization tests, then rerun focused and backend checks.
 
 ## Decisions and notes
 

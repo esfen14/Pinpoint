@@ -360,6 +360,7 @@ accepts an optional `data` argument for errors the client must act on.
 
 | Method and path | Permission | Purpose |
 |---|---|---|
+| `GET /api/system/log/nagios` | `system.logs` | Bounded redacted Nagios state-log tail; lines 1–500 (default 200), after Unix seconds, at most 64 KiB; fixed configured path, unreadable returns empty/unavailable |
 | `GET /api/system/log` | `system.logs` | User activity logs |
 | `GET /api/system/configurationchange` | `system.logs` | Configuration-change logs |
 | `GET /api/system/networkdiscovery` | `system.logs` | Discovery-run logs |

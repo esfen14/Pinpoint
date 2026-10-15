@@ -40,6 +40,7 @@ from flask_login import current_user, login_required
 from sqlalchemy.exc import IntegrityError
 
 from app import db
+from app.storage_usage import get_storage_usage
 from app.api.helper.database_access.permissions import require_permission
 from app.api.helper.responses import success, error
 from app.logging.user_activity import create_audit_log
@@ -380,7 +381,10 @@ def dashboard_status():
     """
     Return the health of the monitoring system itself (Nagios process state,
     version, uptime, check flags) plus the Nagios server's own resource metrics
-    (check_load, check_disk, check_swap).
+    (check_load, check_disk, check_swap). Includes storage_usage: databases
+    (name, bytes, filesystem), backups/archives (bytes, complete, filesystem).
+    Each filesystem has free_bytes/total_bytes, or null when unavailable. Missing
+    files have null bytes; partial directory totals have complete=false.
 
     Response shape:
     {
@@ -432,6 +436,7 @@ def dashboard_status():
         return success({
             "nagios":            nagios_info,
             "server_resources":  resources,
+            "storage_usage": get_storage_usage(),
         })
 
     except Exception:
