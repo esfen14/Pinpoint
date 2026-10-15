@@ -422,6 +422,10 @@ Migration `f129a79e6301` then joins that head with the independently published
 interface/recipient merge `e79b7d3c2641`. It adds no schema/data changes and
 restores one head for both binds after the recipient feature is integrated.
 Upgrades from either merge preserve installed port, interface and recipient data.
+Migration `a129f6d23901` joins `f129a79e6301` with the independently published
+data-polling revision `f6d2c8a1b390`. The join changes no schema or data, keeps
+applied ancestry intact and restores one upgrade head on both database binds.
+Existing custom polling intervals remain unchanged.
 
 ## NCPA deployment
 

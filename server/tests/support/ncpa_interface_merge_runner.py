@@ -7,8 +7,9 @@ import tempfile
 
 sys.path.insert(0, os.getcwd())
 starting_head = sys.argv[1]
-assert starting_head in ("7db78f308ee5", "b7d3f1a9c264", "e4a129c7b630", "e79b7d3c2641")
-has_port = starting_head in ("7db78f308ee5", "e4a129c7b630")
+assert starting_head in ("7db78f308ee5", "b7d3f1a9c264", "e4a129c7b630", "e79b7d3c2641", "f129a79e6301", "f6d2c8a1b390")
+has_port = starting_head in ("7db78f308ee5", "e4a129c7b630", "f129a79e6301")
+has_recipients = starting_head in ("e79b7d3c2641", "f129a79e6301", "f6d2c8a1b390")
 has_interfaces = starting_head != "7db78f308ee5"
 workspace = tempfile.TemporaryDirectory()
 sysdb = os.path.join(workspace.name, "system.db")
@@ -45,13 +46,16 @@ def populate(conn, table, values):
 
 upgrade(starting_head)
 with sqlite3.connect(sysdb) as conn:
+    populate(conn, 'SYSTEM_SETTINGS', {})
+    if starting_head == 'f6d2c8a1b390':
+        conn.execute('UPDATE SYSTEM_SETTINGS SET Data_Polling_Interval=120')
     populate(conn, 'ROLE', {'RoleID': 1, 'Name': 'Administrator'})
     populate(conn, 'USER', {'UserID': 1, 'RoleID': 1, 'Email': 'fixture@example.com', 'Status': 'ACTIVE'})
     populate(conn, 'ACTIVITY_LOG', {'LogID': 1, 'UserID': 1})
     populate(conn, 'NETWORK_DISCOVERY_STATUS', {'DiscoveryStatusID': 1, 'LogID': 1, 'Status': 'SUCCESS'})
     populate(conn, 'NETWORK_DISCOVERY', {'NetDiscoveryID': 1, 'DiscoveryStatusID': 1,
              'IP_Address': '10.77.0.2', 'Network': '10.77.0.0/28', 'Nagios_Host_Name': 'existing', 'Device_State': 'ACTIVE'})
-    if starting_head == 'e79b7d3c2641':
+    if has_recipients:
         conn.execute('INSERT INTO HOST_ALERT_RECIPIENT VALUES (1, 1)')
     conn.execute('INSERT INTO NCPA_DEPLOYMENT (NCPADeployID, Agent_Status, NetworkDiscoveryID) VALUES (1, "DEPLOYED", 1)')
     if has_port:
@@ -69,12 +73,16 @@ with sqlite3.connect(sysdb) as conn:
     if not has_interfaces:
         conn.execute("INSERT INTO DEVICE_INTERFACE (If_Index,Name,Monitored,Present,Last_Seen_At,NetDiscoveryID) VALUES (1,'eth-test',1,1,'2026-01-01',1)")
 with sqlite3.connect(sysdb) as conn:
-    if starting_head != 'e79b7d3c2641':
+    if not has_recipients:
         conn.execute('INSERT INTO HOST_ALERT_RECIPIENT VALUES (1, 1)')
+    if starting_head != 'f6d2c8a1b390':
+        assert conn.execute('SELECT Data_Polling_Interval FROM SYSTEM_SETTINGS').fetchone()[0] == 60
+        conn.execute('UPDATE SYSTEM_SETTINGS SET Data_Polling_Interval=120')
     assert not conn.execute('PRAGMA foreign_key_check').fetchall()
 alembic_config = Config()
 alembic_config.set_main_option("script_location", "migrations")
 report = {
+    "polling": read(sysdb, "SELECT Data_Polling_Interval FROM SYSTEM_SETTINGS")[0][0],
     "recipient": read(sysdb, "SELECT * FROM HOST_ALERT_RECIPIENT"),
     "heads": ScriptDirectory.from_config(alembic_config).get_heads(),
     "system_version": read(sysdb, "SELECT version_num FROM alembic_version"),
@@ -87,6 +95,7 @@ report = {
 with app.app_context():
     flask_migrate.downgrade(directory="migrations", revision="7db78f308ee5")
 upgrade("head")
+report["roundtrip_polling"] = read(sysdb, "SELECT Data_Polling_Interval FROM SYSTEM_SETTINGS")[0][0]
 report["roundtrip_recipient"] = read(sysdb, "SELECT * FROM HOST_ALERT_RECIPIENT")
 report["roundtrip_port"] = read(sysdb, "SELECT Port FROM NCPA_DEPLOYMENT")[0][0]
 report["roundtrip_interface"] = read(sysdb, "SELECT Name,Monitored FROM DEVICE_INTERFACE")[0]

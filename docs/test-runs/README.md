@@ -48,6 +48,7 @@ table while you test, not afterward.
 
 | Run | Kind | Commit | Result | Report |
 |---|---|---|---|---|
+| [2026-10-15 issue-129-polling-ci-repair](2026-10-15-issue-129-polling-ci-repair/REPORT.md) | Latest polling/NCPA migration convergence and regression repair | repair on `5bb6f7a0` | Partial:3002 backend/45 focused tests and docs pass; repair publication/CI pending | [REPORT.md](2026-10-15-issue-129-polling-ci-repair/REPORT.md) |
 | [2026-10-15 issue-129-review-readiness](2026-10-15-issue-129-review-readiness/REPORT.md) | Final local gate, migration convergence and current CI | `7c0bb631` | Pass for application review readiness; paired installer remains a separate deployment dependency | [REPORT.md](2026-10-15-issue-129-review-readiness/REPORT.md) |
 | [2026-10-15 issue-129-main-sync](2026-10-15-issue-129-main-sync/REPORT.md) | Main #128 inventory integration, stored-port regression and merged full verification | merge working tree `e5c7e6f0` + `9ce590eb` | Partial: 2784 backend/568 frontend and full gate pass; new merge publication/CI and human approvals pending | [REPORT.md](2026-10-15-issue-129-main-sync/REPORT.md) |
 | [2026-10-15 issue-129-finish-journeys](2026-10-15-issue-129-finish-journeys/REPORT.md) | Actual failed-install cleanup and non-default-port main monitoring/probes/relocation | app source `c9f8e263`, gate `a119afa4` | Partial: mandatory live journeys pass; new evidence publication and paired human approvals pending | [REPORT.md](2026-10-15-issue-129-finish-journeys/REPORT.md) |
