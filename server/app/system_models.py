@@ -714,6 +714,7 @@ class NCPADeployment(db.Model):
     NCPADeployID: so.Mapped[int] = so.mapped_column(primary_key=True)
     Deployement_Method: so.Mapped[Optional[DeploymentMethod]] = so.mapped_column(sa.Enum(DeploymentMethod))
     Token: so.Mapped[Optional[str]] = so.mapped_column(sa.String(32))
+    Port: so.Mapped[Optional[int]] = so.mapped_column(sa.Integer)
     Agent_Status: so.Mapped[Optional[AgentStatus]] = so.mapped_column(sa.Enum(AgentStatus))
     Error: so.Mapped[Optional[str]] = so.mapped_column()
 
@@ -782,6 +783,7 @@ class SystemSettings(db.Model):
 
     # General (system-wide only)
     Scan_Frequency: so.Mapped[int] = so.mapped_column(sa.Integer(), default=6)
+    Data_Polling_Interval: so.Mapped[int] = so.mapped_column(sa.Integer(), default=60, server_default="60")
     Check_Interval: so.Mapped[int] = so.mapped_column(sa.Integer(), default=5)
     # How soon a failing check is re-run, and how many failures in a row turn a
     # problem from SOFT into HARD. Rendered into every generated host and service.
@@ -825,6 +827,7 @@ class SystemSettings(db.Model):
         return {
             "scanFrequency": self.Scan_Frequency,
             "checkInterval": self.Check_Interval,
+            "dataPollingInterval": self.Data_Polling_Interval,
             "retryInterval": self.Retry_Interval,
             "maxCheckAttempts": self.Max_Check_Attempts,
             "flapDetectionEnabled": self.Flap_Detection_Enabled,

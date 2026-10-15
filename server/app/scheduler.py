@@ -1,5 +1,7 @@
 import atexit
 import os
+from contextlib import contextmanager
+from threading import RLock
 from datetime import datetime, timedelta, timezone
 
 import sqlalchemy as sa
@@ -10,10 +12,45 @@ from app import app, db
 from app.automation import run_due_automation
 from app.nagios.status import get_status
 
-POLL_INTERVAL_SECONDS = 60
+DEFAULT_POLL_INTERVAL_SECONDS = 60
+SUPPORTED_POLL_INTERVALS = (30, 60, 120, 300)
+settings_schedule_lock = RLock()
 REMEDIATION_POLL_SECONDS = 15
 
 _scheduler: BackgroundScheduler | None = None
+
+
+@contextmanager
+def polling_schedule_change(seconds):
+    """Apply a poll interval until the caller commits; restore the job on error.
+
+    The settings route holds settings_schedule_lock across read, validation and
+    commit. Modifying the same job preserves executor instance accounting, so a
+    running poll finishes and max_instances continues to prevent overlap.
+    A disabled scheduler is never created here.
+    """
+    job = _scheduler.get_job("nagios_poll") if _scheduler is not None else None
+    if _scheduler is not None and job is None:
+        raise RuntimeError("Running scheduler has no Nagios polling job")
+    previous = {"trigger": job.trigger, "next_run_time": job.next_run_time} if job else None
+    try:
+        if job is not None and seconds is not None:
+            job.reschedule("interval", seconds=seconds)
+        yield
+    except Exception:
+        if job is not None and seconds is not None:
+            # Restore both cadence and phase, including partial reschedule errors.
+            job.modify(**previous)
+        raise
+
+
+def persisted_poll_interval():
+    """Read the system poll interval at startup without creating settings rows."""
+    from app.system_models import SystemSettings
+
+    with app.app_context():
+        row = db.session.get(SystemSettings, 1)
+        return row.Data_Polling_Interval if row is not None else DEFAULT_POLL_INTERVAL_SECONDS
 
 
 def _poll_nagios_status():
@@ -151,11 +188,11 @@ def init_scheduler():
     _scheduler.add_job(
         _poll_nagios_status,
         "interval",
-        seconds=POLL_INTERVAL_SECONDS,
+        seconds=persisted_poll_interval(),
         id="nagios_poll",
         max_instances=1,
         coalesce=True,
-        next_run_time=datetime.now(),
+        next_run_time=datetime.now(timezone.utc),
     )
     _scheduler.add_job(
         _purge_old_data,
@@ -164,7 +201,7 @@ def init_scheduler():
         id="retention_purge",
         max_instances=1,
         coalesce=True,
-        next_run_time=datetime.now(),
+        next_run_time=datetime.now(timezone.utc),
     )
     _scheduler.add_job(
         run_due_automation,

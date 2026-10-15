@@ -27,7 +27,7 @@ config.Config.SQLALCHEMY_BINDS = {"history": "sqlite:///" + histdb}
 import flask_migrate  # noqa: E402
 from app import app  # noqa: E402
 
-BEFORE = "e79b7d3c2641"
+BEFORE = "a129f6d23901"
 TARGET = "e4a7c1d9b305"
 TABLES = ("REMEDIATION_ACTION", "REMEDIATION_RUN")
 report = {}

@@ -43,6 +43,7 @@ GET    /system/deployment/ncpa/runs/<id>           – One run with per-device r
 POST   /system/deployment/ncpa/runs/<id>/review    – Mark a finished run as reviewed
 GET    /system/deployment/ncpa/devices/trusted     – Trust-confirmed devices ready for deploy
 POST   /system/deployment/ncpa/<id>/refresh-disks  – Re-read a deployed agent's disks
+POST   /system/deployment/ncpa/<id>/cleanup        – Remove failed-install bootstrap artifacts
 """
 
 from datetime import datetime, timezone, date
@@ -941,6 +942,67 @@ def review_ncpa_deployment_run(run_id):
         db.session.rollback()
         current_app.logger.exception("An unexpected error occurred while reviewing a deployment run.")
         return error("An unexpected error occurred.", 500)
+
+
+# ==========================================================
+# FAILED-DEPLOYMENT CLEANUP
+# ==========================================================
+
+@system_bp.post('/deployment/ncpa/<int:device_id>/cleanup')
+@login_required
+@require_permission('system.deploy.ncpa')
+def cleanup_ncpa_deployment(device_id):
+    """Remove failed-install bootstrap artifacts on a trusted device.
+
+    JSON body: ``{"username": str, "password": str, "remove_account"?: bool}``.
+    Returns each step's result; no credential or remote output is returned.
+    """
+    data = request.get_json(silent=True)
+    validation_error = validate_json_data(data)
+    if validation_error:
+        return validation_error
+    entries, message = parse_credential_entries({"devices": [{**data, "device_id": device_id}]})
+    if entries is None:
+        return error(message, 400)
+    if type(data.get("remove_account", False)) is not bool:
+        return error("remove_account must be a boolean.", 400)
+    entry = entries[0]
+
+    if deploy_ncpa_thread is not None and deploy_ncpa_thread.is_alive():
+        return error("A deployment is running; retry cleanup after it finishes.", 409)
+    try:
+        device = db.session.get(NetworkDiscovery, device_id)
+        if device is None or not device.Include_Device_In_Scanning:
+            return error("Device not found.", 404)
+        creds, deployment = device_deployment_rows(device_id)
+        if deployment is None or deployment.Agent_Status is not AgentStatus.FAILED:
+            return error("Cleanup is only available after a failed deployment.", 409)
+        if creds is None or not creds.Key_Fingerprint or not creds.SSH_Port:
+            return error("Confirm the device host key before cleanup.", 409)
+        fingerprint = get_host_key_fingerprint(device.IP_Address, creds.SSH_Port)
+        if fingerprint is None:
+            return error("Could not reach device.", 502)
+        if not hmac.compare_digest(fingerprint, creds.Key_Fingerprint):
+            return error("Host key changed; verify again before cleanup.", 409)
+
+        steps = cleanup_ncpa_bootstrap(
+            device.IP_Address, creds.SSH_Port, creds.Key_Fingerprint,
+            entry["username"], entry["password"], data.get("remove_account", False),
+        )
+        failed = any(not step["ok"] for step in steps)
+        deployment.Agent_Status = AgentStatus.FAILED if failed else AgentStatus.PENDING_NCPA
+        deployment.Error = "Cleanup incomplete; review the step results." if failed else None
+        create_user_log(current_user.UserID, f"NCPA deployment cleanup for device {device_id}: "
+                        f"{'incomplete' if failed else 'completed'}")
+        db.session.commit()
+        return success({"device_id": device_id, "steps": steps, "agent_status": deployment.Agent_Status.value},
+                       message="Cleanup incomplete." if failed else "Cleanup completed.")
+    except Exception:
+        db.session.rollback()
+        current_app.logger.error("NCPA cleanup failed for device %s.", device_id)
+        return error("Cleanup could not be completed.", 500)
+    finally:
+        entry["password"] = None
 
 
 @system_bp.get('/deployment/ncpa/devices/trusted')

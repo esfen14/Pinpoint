@@ -182,6 +182,14 @@ export function SystemSettings() {
           />
 
           <SettingsSelect
+            label="Data polling interval"
+            description="How often Pinpoint reads results from Nagios. Separate from Nagios checks, network discovery and browser refresh."
+            value={String(settings.dataPollingInterval)}
+            options={[30, 60, 120, 300].map((seconds) => ({ value: String(seconds), label: `${seconds} seconds` }))}
+            onChange={(value) => updateSettings({ dataPollingInterval: Number(value) })}
+          />
+
+          <SettingsSelect
             label="Retry interval"
             description="How soon Nagios re-checks something that just failed. Cannot be longer than the check interval."
             value={String(settings.retryInterval)}

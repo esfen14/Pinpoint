@@ -29,7 +29,7 @@ acknowledgements belong in `system.db` even though they relate to Nagios alerts.
   `Open_TCP_Services`, `Open_UDP_Services`.
 - NCPA deployment: `SSHCredentials`, `NCPADeploymentStatus` (one row per run,
   with `Reviewed_At`/`Reviewed_By`), `NCPADeploymentResult` (one row per device
-  per run), `NCPADeployment` (each device's latest agent state),
+  per run), `NCPADeployment` (each device's latest agent state and nullable installed `Port`),
   `NCPADevicePartition`.
 - Remediation: `RemediationAction` (`REMEDIATION_ACTION`): the admin-defined rule with `Name` (unique), `Action_Type`, `Scope_Kind` (service or host), `Host_Pattern`, `Service_Pattern`, `Parameters` (JSON, validated per type), `Enabled`, `Max_Runs_Per_Hour`, `Cooldown_Seconds`, `Version` and `Updated_By`/`Updated_At`; and `RemediationRun` (`REMEDIATION_RUN`): one row per decision with `Event_Key` (sha256 of kind, host, service, state and last state change; unique together with `Action_Id`), `Action_Id` (a plain number, not a foreign key, so deleting an action keeps its runs), `Action_Name` (a copy), host, service, state, `State_Type`, `Attempt`, `Received_At`, `Started_At`, `Finished_At`, `Outcome`, `Reason` and `Output` (at most 1 KB, redacted). Both live in `system.db` because PinPoint writes them; `history.db` stays Nagios snapshots only. Migration `e4a7c1d9b305` creates both tables and the `remediation.view` and `remediation.manage` permissions, granted to the Administrator role.
 - Settings: singleton `SystemSettings`, singleton `NotificationPolicy` (`NOTIFICATION_POLICY`, Id 1, migration `143c48cd6663`), one-per-user `UserPreferences`. `NotificationPolicy` stores weekday/HH:MM quiet windows as JSON, host/service option strings, a 0–1440-minute renotify interval, `Version`, and `Updated_By`; the migration seeds the historical 24x7/default-options/30-minute policy and removes the table on downgrade.
@@ -47,7 +47,7 @@ a legacy inconsistency and must not be copied as a pattern.
 |---|---|
 | System general | `scanFrequency`, notification enablement, allowed export formats |
 | System security | session timeout, strong-password policy, failed-login monitoring, audit logging, security-check frequency |
-| System operations | `checkInterval` (Nagios-generated host and service checks, minutes), `retryInterval` and `maxCheckAttempts` (how soon a failing check is re-run and how many failures confirm a problem), `flapDetectionEnabled`, `flapLowThreshold` and `flapHighThreshold` (Nagios flap detection for generated hosts and services), update frequency, maintenance mode, automatic backups, log retention, diagnostic-history retention |
+| System operations | `dataPollingInterval` (Pinpoint reads of Nagios, seconds), `checkInterval` (Nagios-generated host and service checks, minutes), `retryInterval` and `maxCheckAttempts` (how soon a failing check is re-run and how many failures confirm a problem), `flapDetectionEnabled`, `flapLowThreshold` and `flapHighThreshold` (Nagios flap detection for generated hosts and services), update frequency, maintenance mode, automatic backups, log retention, diagnostic-history retention |
 | Per-user display | theme, time zone, date/time format, font, font size, dashboard layout, dashboard refresh rate |
 
 `SystemSettings` is row `Id=1` and carries a version/update audit stamp.
@@ -105,8 +105,11 @@ Plugin lifecycle and active monitoring are separate:
   the arguments of each, are the `CUSTOM_CHECK_FIELDS` table; `PLUGIN_CLASSES` gives every
   other catalog plugin its reason for not taking one. A password field is stored encrypted in
   `Configuration_Data["secrets"]` (`app/secrets_store.py`, Fernet, key from `PINPOINT_SECRETS_KEY` or
-  `SECRET_KEY`), never returned by the API, and decrypted only when `hosts.cfg` is generated, where it
-  is written in plain text because Nagios needs it in the command (docs/plans/Custom_Checks_Plan.md §8b). Merging a device moves its custom
+  `SECRET_KEY`), never returned by the API, and decrypted only during config generation. It is stored
+  in the protected resource file and referenced by a bare USER slot identifier in `hosts.cfg`.
+  `server/scripts/pinpoint_check_native.py` supplies passwords to `check_nt`, `check_radius` and
+  `check_mysql_query` using extra-options stdin after verifying installed help support. Password-bearing
+  SMB generation is refused because its child process lacks secure credential transport. Merging a device moves its custom
   checks to the target, dropping one whose name the target already has.
 - **Server checks** are custom checks with no device (`NetDiscoveryID` empty) for the plugins in
   `SERVER_CHECK_FIELDS` (`check_apt`, `check_uptime`, `check_sensors`, `check_ide_smart`,
@@ -247,8 +250,8 @@ different purpose.
 | Retry interval (`retryInterval`) and Maximum check attempts (`maxCheckAttempts`) | System-wide `SystemSettings.Retry_Interval` (1 to 10 minutes, default 1, never longer than the check interval) and `Max_Check_Attempts` (1 to 10, default 3; migration `b7d3f1a9c8e5`). They are written as `retry_interval` and `max_check_attempts` into every generated service and host, and the number of failures before a problem becomes HARD, and so when alerts are sent, follows them. The defaults reproduce the previous generated config exactly; a host gets an explicit `retry_interval` line only when the value is not the default 1. Same Settings → System page, permission and apply-and-rollback flow as the Check interval. There is no per-device override. |
 | Flap detection (`flapDetectionEnabled`, `flapLowThreshold`, `flapHighThreshold`) | `SystemSettings.Flap_Detection_Enabled` (default on), `Flap_Low_Threshold` and `Flap_High_Threshold` (percent of state change, 0 to 100, empty by default; migration `c5e2a8f4d716`). Defaults write nothing extra, so default generated config is unchanged and Nagios's global values (5 and 20 on the lab appliance) apply. Custom thresholds are written as `low_flap_threshold` and `high_flap_threshold`; turning detection off writes only `flap_detection_enabled 0`. The change goes through the shared config writer and a rejected config rolls the settings back. The global `enable_flap_detection` and its thresholds in `nagios.cfg` belong to the installer. |
 | Notification policy | A separate system-wide singleton controls the generated host/service notification periods, contact periods/options, state options, and renotify interval. Quiet windows use **Nagios server local time**, not each user's display zone; allowed spans are rendered as the complement in a fixed `pinpoint_notify` timeperiod in `hosts.cfg`. No quiet windows emit no new period; historical default output is preserved. Custom contacts inherit a non-registering `pinpoint-contact` template rather than rewriting stock `generic-contact`. Saving validates the candidate with Nagios, rolls back database changes on failed apply, and respects the system audit setting. Stock `localhost.cfg` and check cadence are unchanged. |
-| Data polling frequency | Pinpoint reads Nagios CGI status every 60 seconds, fixed and independent of discovery and checks. Unchanged `Last_Check` does not add another host/service or performance row. |
-| Dashboard Refresh Rate | Per-user browser fetch, Manual/1/5/15 minutes, independent of the other schedules; its hint shows the Check interval and 60-second poll. |
+| Data polling interval (`dataPollingInterval`) | System-wide `SystemSettings.Data_Polling_Interval`: exactly 30, 60 (default), 120 or 300 seconds, in Settings → System with `settings.system`. Migration `f6d2c8a1b390` gives existing installations the same 60-second default as new ones. Pinpoint reads Nagios CGI status independently of discovery, check/retry timing and browser refresh. Unchanged `Last_Check` does not add another host/service or performance row. |
+| Dashboard Refresh Rate | Per-user browser fetch, Manual/1/5/15 minutes, independent of the other schedules; its hint shows the saved Check interval, Data polling interval and the selected personal refresh rate (including Manual). |
 
 A new Nagios result can take up to one poll cycle to appear in Pinpoint, then
 up to one browser refresh cycle to appear in the dashboard. Discovery scans
@@ -258,7 +261,7 @@ are not part of that latency or the check freshness threshold.
 
 `scheduler.py` runs:
 
-- Nagios status polling every 60 seconds.
+- Nagios status polling at the persisted Data polling interval, with an immediate first run.
 - Daily purging based on `Log_Retention_Days` and
   `Diagnostic_History_Retention_Days`.
 - Settings-driven automation checks every `AUTOMATION_CHECK_MINUTES`.
@@ -267,6 +270,16 @@ are not part of that latency or the check freshness threshold.
 
 The daily purge also deletes `RemediationRun` rows older than
 `Diagnostic_History_Retention_Days`.
+
+Saving a changed polling interval reschedules the existing `nagios_poll` job in
+place; the next run is one new interval after the save. Unchanged saves preserve
+the next run. `max_instances=1` and `coalesce=True` stay enabled: a running poll
+finishes normally, overlapping due runs are skipped, and accumulated due runs
+coalesce. Settings saves are serialized within the serving process (the supported
+deployment has one worker). The old trigger and next run time are restored on a
+reschedule, audit or persistence exception, and the database transaction rolls
+back; the API returns an error. A disabled scheduler stays disabled on save and
+reads the persisted interval when next started. No other job cadence changes.
 
 `automation.py` can schedule database backups, network discovery, plugin update
 scans, and plugin security validation. Scheduled network discovery runs only if
@@ -418,6 +431,20 @@ reassigned to a device from the unscanned network that shares the SSH key. It
 records a duplicate-identity review item. A true second NIC of one device still
 belongs to its key owner.
 
+Migration `e4a129c7b630` joins the deployed-port revision `7db78f308ee5`
+and device-interface revision `b7d3f1a9c264` into one head. Run the normal
+multi-bind `flask db upgrade`: installations at either prior head apply the
+missing branch, then the schema-free join. Prior revision identifiers and
+ancestry remain unchanged, preserving already-upgraded installations.
+Migration `f129a79e6301` then joins that head with the independently published
+interface/recipient merge `e79b7d3c2641`. It adds no schema/data changes and
+restores one head for both binds after the recipient feature is integrated.
+Upgrades from either merge preserve installed port, interface and recipient data.
+Migration `a129f6d23901` joins `f129a79e6301` with the independently published
+data-polling revision `f6d2c8a1b390`. The join changes no schema or data, keeps
+applied ancestry intact and restores one upgrade head on both database binds.
+Existing custom polling intervals remain unchanged.
+
 ## NCPA deployment
 
 The SSH command helpers accept `expected_exit_codes` for probes: the account
@@ -437,7 +464,7 @@ answers) into `NCPADevicePartition.Name` (an NCPA node name such as `|` or
 the `|sys`, `|proc`, `|run`, `|dev` and `|boot|efi` trees are never recorded.
 The disk metric path is `disk/logical/{partition}/used_percent`; the path is
 stored raw and quoted once by the Nagios command template. During config generation and plugin reconciliation, one authenticated API
-inventory request per agent confirms metric paths. Successful inventories are
+inventory request per agent on its stored deployed port (falling back to `NCPA_PORT`) confirms metric paths. Successful inventories are
 cached for 60 seconds, failures for 5 seconds, with at most 256 cache entries.
 Requests use connect/read timeouts of 1/2 seconds, refuse redirects, limit the
 response to 2 MiB and traverse at most 10,000 paths and depth 10. Unsupported
@@ -465,7 +492,13 @@ stops listening if a client drops it), and a deployment fails with "NCPA
 stopped listening after the identity check." if the port stops accepting
 connections afterwards. A failed install after the bootstrap step reports that
 the deployment account, its key, sudo rule and helper remain on the device;
-nothing removes them automatically.
+nothing removes them automatically. A user with `system.deploy.ncpa` can run the
+explicit failed-deployment cleanup route, using request-only SSH credentials. It
+rechecks the pinned fingerprint before any remote command, removes the bootstrap
+key, sudo rule and helper, and optionally removes the account after those steps
+succeed. It reports each step without remote command output, logs the outcome,
+and returns the device to Pending NCPA only when every requested step succeeds.
+Untrusted, non-failed or currently deploying devices are refused.
 
 Each run records one `NCPADeploymentResult` per device. Its `Outcome`
 (`DeploymentOutcome`) moves Pending → Running → Success, Failed, Down
@@ -492,17 +525,71 @@ pre-flight key check at start, the credential check, bootstrap and install)
 uses the pinned port, and paramiko host keys
 for non-22 ports are registered as `[address]:port`. If SSH moves, the device
 must be trust-confirmed again. The remote helper configures the agent's
-`[listener]` port to `Config.NCPA_PORT`, and Pinpoint reaches the agent on that
-port; deployment has no per-device NCPA port. The helper replaces any
+`[listener]` port to `Config.NCPA_PORT` and records that installed port in
+`NCPADeployment.Port`. Checks, disk/reachability/certificate probes, relocation
+and protected port handling use the recorded port, falling back to `NCPA_PORT`
+when absent. Migration `7db78f308ee5` backfills deployed rows with the configured
+port and downgrades by dropping the column; failed/pending rows remain NULL.
+The column tracks deployment state; it is not a user-editable re-port setting. The helper replaces any
 active or commented `port` line in `[listener]` with exactly one, and fails with
 "Could not set the NCPA listener port." otherwise. `NCPA_PORT` is a
 deployment-time setting (not editable in the UI): changing it after agents are
-deployed requires redeploying them. An invalid value is reported as "NCPA_PORT
+deployed does not relocate existing listeners or change their stored ports. A
+listener change requires a separate supported deployment workflow; this release
+has no re-port control. An invalid value is reported as "NCPA_PORT
 must be an integer between 1 and 65535." (HTTP 500 from the start route). Discovery's identity probes read
 the SSH host key on `SSH_PORT` and on every port nmap identified as `ssh`.
 
 Credentials, tokens, passwords, and secret-bearing command arguments must never
 appear in logs, API responses, or persisted Nagios snapshot check commands.
+
+## Check-secret resources
+
+`network_discovery/resource_macros.py` owns only the exact `# BEGIN PINPOINT` /
+`# END PINPOINT` block in `Config.NAGIOS_RESOURCE_CFG` (environment
+`NAGIOS_RESOURCE_CFG`, default `/usr/local/nagios/etc/resource.cfg`). USER1 stays
+reserved for plugins; USER2 through USER256 are allocated deterministically to
+secret keys, excluding slots defined outside the block. Key/slot metadata in
+comments retains assignments across regenerations; removed keys free slots and
+removing the last secret clears the owned entries. Exhaustion refuses generation
+with a safe count/limit message. Malformed blocks or slot collisions are rejected.
+
+Resource replacement uses a unique private temporary file, retaining the existing
+owner, group and mode. Other-user permissions are refused. Production ownership
+must remain `nagios:nagios` with mode 0660. When the application is not the owner,
+updates and rollback use `/usr/bin/sudo -n /usr/local/sbin/pinpoint-apply-resources`
+with no command arguments. Only the validated owned block (or null to remove it),
+an assertion of the fixed resource path and a digest of the external regions go
+on stdin; external replacement content never goes to the helper. The helper
+independently retains external bytes and metadata. Missing, rejected or timed-out
+helper calls fail safely without exposing stdout/stderr; successful calls require
+byte and metadata verification. This helper supports only the default resource
+path; a foreign-owned custom resource path is refused. A process-owned custom
+path still uses the direct atomic writer. A missing or unwritable required resource file prevents
+candidate publication. Generated and successfully applied live `hosts.cfg` use
+0640; the live owner/group are preserved. Secret substitution changes only the
+known password/token fields, not matching text in public arguments.
+
+Discovery, post-deployment generation and the shared regeneration path snapshot
+resource bytes in memory before generation under `config_write_lock`. Generation,
+validation, apply failure or cancellation restores the original bytes; failed
+application restores both files before reloading the old configuration. Resource
+changes require validation/reload even when normalized hosts.cfg is unchanged.
+No secret backup file is left on disk. Generated NCPA commands run
+`server/scripts/pinpoint_check_ncpa.py` under `/usr/bin/python3 -I`, passing a bare
+USERn identifier instead of an expanded macro. The adapter reads the private owned
+slot and supplies the token to the inspected NCPA 1.2.4/1.2.5 client's options in
+memory, executing it in the same process. Unsupported versions, malformed resources,
+credential/diagnostic flags and credential-bearing output fail with safe UNKNOWN
+results. Public metric/options, plugin output, performance data and return codes
+are retained. Native custom checks use verified extra-options stdin; passwords
+with surrounding whitespace are refused rather than altered by the INI parser.
+No adapter is privileged or imports Flask. Automated parent/child process tests
+pass. Installed service-user writes, resource validation and exact rollback have
+also passed; four real NCPA adapter metrics matched the stock client as `nagios`.
+Applying/reloading the complete generated configuration and final live Nagios
+acceptance remain incomplete; see
+[the issue #129 transport plan](../docs/plans/Issue_129_Check_Secret_Transport.md).
 
 ## Alert acknowledgement lifecycle
 
@@ -524,8 +611,8 @@ Model changes affect a multi-bind migration environment. From `server/`, with
 the virtual environment active:
 
 ```bash
-flask db migrate --multidb -m "short description"
-flask db upgrade --multidb
+flask db migrate -m "short description"
+flask db upgrade
 flask sync-permissions   # after any upgrade: adds new seed permissions, grants them to Administrator
 ```
 

@@ -62,6 +62,7 @@ export const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
   dashboardRefreshRate: 5,
   scanFrequency: 6,
   checkInterval: 5,
+  dataPollingInterval: 60,
   retryInterval: 1,
   maxCheckAttempts: 3,
   flapDetectionEnabled: true,
