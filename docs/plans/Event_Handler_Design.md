@@ -142,7 +142,7 @@ For each run (bounded to 200 files, oldest first):
    never followed) or is larger than 2 KB. Record `discarded_malformed` and delete it.
 2. Parse strictly (`json.loads`, exactly the expected keys and types, same character and length
    rules as the handler). Anything else: `discarded_malformed`, delete.
-3. State type not `HARD`: delete the file, write nothing (a soft state "produces none").
+3. State type not `HARD`, or a recovery (state `OK` or `UP`): delete the file, write nothing (a soft state "produces none"). Found in the lab run: a HARD recovery is also a HARD event, and without this rule it ran the action when the service came back.
 4. Build `Event_Key = sha256(kind|host|service|state|last_change)`.
 5. Find enabled actions whose scope matches. None: delete the file, write nothing.
 6. For each action: if a row with the same `Event_Key` and `Action_Id` exists, count it as `duplicate`

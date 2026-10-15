@@ -94,6 +94,20 @@ def test_soft_state_makes_no_run_and_the_file_is_removed(db_session, spool):
     assert left(spool) == []
 
 
+@pytest.mark.parametrize("changes", [
+    {"state": "OK"},
+    {"kind": "host", "service": None, "state": "UP"},
+])
+def test_a_recovery_makes_no_run_and_the_file_is_removed(db_session, spool, changes):
+    """A HARD recovery (OK or UP) is not a failure: no action may run on it, whatever the cooldown."""
+    add_action(db_session, Scope_Kind=RemediationScope.SERVICE if "kind" not in changes else RemediationScope.HOST,
+               Host_Pattern="*", Service_Pattern="*" if "kind" not in changes else None)
+    put(spool, event(**changes))
+    remediation.process_spool(str(spool))
+    assert runs(db_session) == []
+    assert left(spool) == []
+
+
 @pytest.mark.parametrize("changes", [{"host": "db-01"}, {"service": "SSH"}, {"kind": "host", "service": None, "state": "DOWN"}])
 def test_events_outside_the_scope_make_no_run(db_session, spool, changes):
     add_action(db_session)

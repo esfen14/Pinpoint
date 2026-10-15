@@ -4,7 +4,8 @@ Remediation consumer: turns spool files left by the Nagios event handler into re
 The handler (scripts/pinpoint_event_handler.py) writes one small JSON file per state change to a
 spool folder. A scheduler job calls ``process_spool`` every few seconds. Everything in a spool
 file is untrusted: the file must be a regular file of the expected size owned by the trusted
-user, and its content is parsed strictly. For each valid HARD event the consumer finds the
+user, and its content is parsed strictly. For each valid HARD problem event (a SOFT state or a
+recovery to OK or UP is ignored) the consumer finds the
 enabled actions that cover it, applies the cooldown and hourly cap, writes one RemediationRun
 row per action, and only then runs the action type from app/remediation_actions.py.
 
@@ -48,6 +49,8 @@ SECRET_RE = re.compile(
     r"\b(pass(?:word|wd)?|secret|token|api[_-]?key|key|community|auth\w*)\b\s*[=:]\s*\S+", re.IGNORECASE)
 
 EVENT_KEYS = {"v", "kind", "host", "service", "state", "state_type", "attempt", "last_change"}
+# A HARD recovery is not a failure: actions react to problems, never to the return to OK or UP.
+RECOVERY_STATES = {"OK", "UP"}
 HOST_STATES = {"UP", "DOWN", "UNREACHABLE"}
 SERVICE_STATES = {"OK", "WARNING", "CRITICAL", "UNKNOWN"}
 
@@ -272,7 +275,7 @@ def handle_file(path, uid, summary):
         summary["discarded"] += 1
         return
     summary["processed"] += 1
-    if event["state_type"] != "HARD":
+    if event["state_type"] != "HARD" or event["state"] in RECOVERY_STATES:
         remove(path)
         return
     to_run = record_decisions(event, datetime.now(timezone.utc))
