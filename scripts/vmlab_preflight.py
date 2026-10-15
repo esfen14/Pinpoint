@@ -2,12 +2,13 @@
 import argparse
 import ipaddress
 import os
+import re
 from pathlib import Path
 import subprocess
 import sys
 
 
-def validate(info, managers, processes, listeners, ports):
+def validate(info, managers, processes, listeners, ports, forwards):
     """Reject ambiguous controller, session or TCP socket ownership observations."""
     if len(managers) != 1:
         raise ValueError('expected exactly one VBoxSVC for this user; duplicate or missing control context')
@@ -25,12 +26,17 @@ def validate(info, managers, processes, listeners, ports):
     if len(matching) != 1:
         raise ValueError('expected exactly one process for the appliance UUID')
     pid, process = next(iter(matching.items()))
-    if info.get('SessionPID') != str(pid) or process['parent'] != managers[0]:
+    if (info.get('SessionPID') and info['SessionPID'] != str(pid)) or process['parent'] != managers[0]:
         raise ValueError('SessionPID/process/controller ownership does not agree')
-    for port in ports:
+    for port, guest_port in zip(ports, [22, 80]):
         rows = listeners.get(port, [])
-        if len(rows) != 1 or rows[0][0] != '127.0.0.1' or rows[0][1] not in process['sockets']:
+        if len(rows) != 1 or rows[0][0] != '127.0.0.1':
             raise ValueError(f'cannot prove exclusive loopback listener ownership on port {port}')
+        runtime = forwards.get(port, [])
+        if len(runtime) != 1 or runtime[0][:2] != ('127.0.0.1', guest_port):
+            raise ValueError(f'controlled VM has no unique active forwarding socket on port {port}')
+    if forwards[ports[0]][0][2] != forwards[ports[1]][0][2]:
+        raise ValueError('SSH and web forwarding sockets target different guests')
 
 
 def inventory():
@@ -75,6 +81,22 @@ def tcp_listeners(ports):
     return result
 
 
+
+def nat_forwards(text):
+    """Parse only active TCP host-forward sockets from the VM runtime NAT debugger."""
+    result = {}
+    pattern = r'^\s*TCP\[HOST_FORWARD\]\s+(\d+)\s+(\S+)\s+(\d+)\s+(\S+)\s+(\d+)\s+'
+    for line in text.splitlines():
+        match = re.match(pattern, line)
+        if match:
+            fd, host, port, guest, guest_port = match.groups()
+            if int(fd) < 0:
+                raise ValueError('invalid runtime forwarding descriptor')
+            ipaddress.ip_address(host)
+            ipaddress.ip_address(guest)
+            result.setdefault(int(port), []).append((host, int(guest_port), guest))
+    return result
+
 def main():
     """Inspect controller metadata and prove ownership without SSH or VM mutation."""
     parser = argparse.ArgumentParser(description=__doc__)
@@ -106,11 +128,15 @@ def main():
         info = dict((key, value.strip('"')) for key, value in
                     (line.split('=', 1) for line in proc.stdout.splitlines() if '=' in line))
         managers, processes = inventory()
-        for process in processes.values():
-            process['sockets'] = set()
-            if process['uuid'].lower() == info.get('UUID', '').lower():
-                process['sockets'] = {os.readlink(fd) for fd in (process['path'] / 'fd').iterdir()}
-        validate(info, managers, processes, tcp_listeners(ports), ports)
+        forwards = {}
+        if info.get('VMState') == 'running':
+            runtime = subprocess.run(['VBoxManage', 'debugvm', args.vm, 'info', 'nat0'],
+                                     capture_output=True, text=True, timeout=20, check=True)
+            forwards = nat_forwards(runtime.stdout)
+            final_managers, final_processes = inventory()
+            if final_managers != managers or final_processes != processes:
+                raise ValueError('VM/controller identity changed during observation')
+        validate(info, managers, processes, tcp_listeners(ports), ports, forwards)
         print(f"Preflight passed: VM {info['UUID']} ({info['VMState']}), exclusive control and endpoint ownership.")
     except (OSError, ValueError, KeyError, subprocess.SubprocessError):
         # Do not echo command lines, environment, credentials or raw subprocess output.

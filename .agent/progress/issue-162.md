@@ -38,12 +38,14 @@ Requirement coverage:
 
 | 1 | Added preflight helper, gated mutation commands and CI docs-stage tests | python3 -I scripts/test_vmlab_preflight.py; scripts/verify.sh docs; scripts/vmlab preflight (host) | 13 tests and docs green; live preflight correctly rejects existing duplicate managers |
 
+| 2 | Owner accepted loss and authorized deleting/rebuilding old lab; retired seven VMs/disks; rebuilt appliance from ISO. Replaced unsupported SessionPID/fd requirement with unique same-controller VM process plus live NAT HOST_FORWARD socket proof | python3 -I scripts/test_vmlab_preflight.py; scripts/verify.sh docs; scripts/vmlab preflight | 15 tests/docs green; positive live preflight passed for new UUID 351eb491-f5e1-4854-a7e4-68309ad774ad |
+
 ## State for the next session
 
-- Last check run (exact command): scripts/vmlab preflight
-- Result: expected failure, ownership ambiguous; two VBoxSVC processes still present. Isolated 13 tests and scripts/verify.sh docs green.
-- Hypothesis: Two distinct listening IPC socket inodes at the same pathname establish a split service context after pathname replacement/rebind; actor is unknown. Protected VM fd metadata prevents endpoint attribution.
-- Next action: Record sanitized process/source comparisons and blocked disposable marker trial; update owning documentation and run all verification.
+- Last check run (exact command): scripts/verify.sh docs
+- Result: green; 15 isolated ownership tests; positive live preflight passed. Full verify is running in exec session 10377, log /tmp/issue162-verify-all.log. Fresh appliance creation is running in session 98664, log test-results/issue162/create-appliance.log.
+- Hypothesis: Orphaned listening IPC inode survives pathname replacement; reconnecting VBoxManage starts a second manager at the current path. Both inherited VMs shut down through their actual SSH endpoints before authorized retirement. New controller/UUID/process/NAT forwards agree.
+- Next action: Finish fresh appliance install, verify endpoint-marker snapshot restore, then rebuild base/targets and update final report/specs.
 
 ## Decisions and notes
 
@@ -59,3 +61,6 @@ Requirement coverage:
 
 - 2026-10-15 owner explicitly authorized: "Remove the old disks and remake the Lab"; acceptance of loss separately confirmed: "Accept as unrecoverable but document loss". F1 resolved by owner decision, not by recovery. Old lab disks may be removed; unrelated VMs remain outside scope.
 - Plan revision after owner decision: retire old appliance and pinpoint-demo-* lab VMs, reset split controllers after children are stopped, build clean appliance/targets, and perform endpoint marker trial. Record exact target UUID inventory before teardown.
+
+- Live evidence changed the guard design: VirtualBox 7.2 omits SessionPID from showvminfo and SUID VM launchers protect /proc/PID/fd even for their owner. The runtime `VBoxManage debugvm ... info nat0` table exposes active TCP HOST_FORWARD socket descriptors. Guard now requires these exact SSH/web listeners and destination services plus exclusive host listeners, the unique UUID process and its sole parent controller. Unsupported/missing NAT output rejects; no sudo requirement was introduced.
+- Retired UUID inventory saved privately in test-results/issue162/retired-inventory.json. Retired only configured appliance, demo base and five targets; unrelated/legacy registered VMs retained.

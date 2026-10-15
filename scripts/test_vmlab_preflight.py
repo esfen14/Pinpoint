@@ -12,13 +12,15 @@ spec.loader.exec_module(preflight)
 
 
 class OwnershipTests(unittest.TestCase):
-    def check(self, state='running', managers=(10,), processes=None, listeners=None, session='20'):
+    def check(self, state='running', managers=(10,), processes=None, listeners=None, session='20', forwards=None):
         if processes is None:
             processes = {20: {'uuid': 'vm-id', 'parent': 10, 'sockets': {'ssh', 'web'}}}
         if listeners is None:
             listeners = {2250: [('127.0.0.1', 'ssh')], 18080: [('127.0.0.1', 'web')]}
+        if forwards is None:
+            forwards = {2250: [('127.0.0.1', 22, '10.0.2.15')], 18080: [('127.0.0.1', 80, '10.0.2.15')]}
         return preflight.validate({'UUID': 'vm-id', 'VMState': state, 'SessionPID': session},
-                                  list(managers), processes, listeners, [2250, 18080])
+                                  list(managers), processes, listeners, [2250, 18080], forwards)
 
     def test_proven_running_owner(self):
         self.check()
@@ -43,9 +45,8 @@ class OwnershipTests(unittest.TestCase):
             self.check(processes={20: {'uuid': 'vm-id', 'parent': 10, 'sockets': {'ssh', 'web'}},
                                   21: {'uuid': 'vm-id', 'parent': 10, 'sockets': set()}})
 
-    def test_missing_session_pid(self):
-        with self.assertRaises(ValueError):
-            self.check(session='')
+    def test_version_without_session_pid_uses_unique_controlled_process(self):
+        self.check(session='')
 
     def test_wrong_session_pid(self):
         with self.assertRaises(ValueError):
@@ -55,9 +56,21 @@ class OwnershipTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.check(processes={20: {'uuid': 'vm-id', 'parent': 11, 'sockets': {'ssh', 'web'}}})
 
-    def test_listener_owned_by_other_process(self):
+    def test_missing_runtime_forward_is_ambiguous(self):
         with self.assertRaises(ValueError):
-            self.check(listeners={2250: [('127.0.0.1', 'foreign')], 18080: [('127.0.0.1', 'web')]})
+            self.check(forwards={})
+
+    def test_wrong_guest_service_or_address_is_ambiguous(self):
+        for rows in [[('127.0.0.1', 23, '10.0.2.15')], [('0.0.0.0', 22, '10.0.2.15')]]:
+            with self.subTest(rows=rows), self.assertRaises(ValueError):
+                self.check(forwards={2250: rows, 18080: [('127.0.0.1', 80, '10.0.2.15')]})
+
+    def test_runtime_nat_parser_ignores_connections_and_requires_real_forwards(self):
+        data = '''TCP[SYN_SENT] 23 127.0.0.1 2250 10.0.2.15 22 0 0
+  TCP[HOST_FORWARD] 18 127.0.0.1 2250 10.0.2.15 22 0 0
+  TCP[HOST_FORWARD] 19 127.0.0.1 18080 10.0.2.15 80 0 0'''
+        self.assertEqual(preflight.nat_forwards(data), {2250: [('127.0.0.1', 22, '10.0.2.15')],
+                                                     18080: [('127.0.0.1', 80, '10.0.2.15')]})
 
     def test_missing_or_wildcard_or_duplicate_listener(self):
         for rows in [[], [('0.0.0.0', 'ssh')], [('127.0.0.1', 'ssh'), ('::', 'other')]]:
