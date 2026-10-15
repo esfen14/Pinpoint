@@ -133,14 +133,15 @@ Requirement coverage (all issue sections):
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| 1 | Backend graph/model/API/rendering and generated migration; baseline tests fail as expected before implementation. Fixed an authorization test that reused the authenticated client fixture; 308 focused regressions and then 34 parent/migration proofs pass. | FLASK_DEBUG=1 .venv/bin/python -m pytest tests/unit/test_device_parents.py tests/unit/test_device_parent_migration.py -q | 34 passed; first full backend gate still running and contains the already-fixed test fixture failure |
 | intake | Reviewed issue scope and existing React Flow frontend; created isolated checkout | gh issue view 117 --json body,comments,title | Product decisions recorded; no implementation yet |
 
 ## State for the next session
 
-- Last check run (exact command): gh issue view 117 --json body,comments,title
-- Result: Issue open; agreed scope includes topology/multiple parents/device-only panels.
+- Last check run (exact command): cd server && FLASK_DEBUG=1 .venv/bin/python -m pytest tests/unit/test_device_parents.py tests/unit/test_device_parent_migration.py -q
+- Result: 34 passed in 6.23s. Broader focused regression: 308 passed in 39.12s. Initial full backend gate running at /tmp/issue117-backend-gate.log; it collected the old test-auth fixture before its correction.
 - Hypothesis: Existing writer and Inventory modules can support this without a new dependency; use a relationship table and shared editor.
-- Next action: Add and run backend parent tests before implementing model and API.
+- Next action: Finish/re-run backend gate after correcting test-auth fixture, then implement frontend against the newly failing editor/topology tests.
 
 ## Decisions and notes
 
@@ -149,3 +150,6 @@ Requirement coverage (all issue sections):
 - Existing topology is a disconnected static React Flow prototype; retain canvas/node/edge selection structure, remove fake telemetry, do frontend layout only. Keep System Status separate.
 - No new permissions or dependency planned. View uses `system.network_health` as Inventory does; parent write uses `system.hosts.edit`. Gateway suggestions remain advisory.
 - The issue asks existing drawer/table regressions to pass unchanged; route tests excluding topology must change because the owner explicitly reversed that scope.
+
+- Migration generation: used private databases upgraded to a129f6d23901, flask_migrate.migrate with rev_id b117d9a2c041 (multi-bind environment). Reviewed generated operations: default-bind table/index/FKs/self-check only, no history changes.
+- Shared writer inspection found a legacy history commit inside successful apply; added opt-in deferred commit for parent transactions while preserving the existing default for all other callers. Lifecycle parent edits reuse sync_rows/desired_services/set_plugin_states without committing early.

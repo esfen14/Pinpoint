@@ -738,6 +738,14 @@ def _create_host_cfg_file(discovered_hosts, skipped=None):
 
     cfg_path = HOST_CONFIG_DIR / filename
 
+    from app.network_discovery.device_identity import parent_pairs, parent_omission_reason
+    device_rows = {d.NetDiscoveryID: d for d in db.session.scalars(sa.select(NetworkDiscovery))}
+    generated_ids = {h["data"].get("net_discovery_id") for group in discovered_hosts.values() for h in group.values()}
+    parents_by_device = {}
+    for child, parent in sorted(parent_pairs()):
+        row = device_rows.get(parent)
+        if parent in generated_ids and parent_omission_reason(row) is None:
+            parents_by_device.setdefault(child, []).append(nagios_host_name(row))
     host_config = []
 
     host_config.append(
@@ -953,6 +961,7 @@ def _create_host_cfg_file(discovered_hosts, skipped=None):
             host["alias"] = "alias"
             host["address"] = ip
             device_id = host_data["data"].get("net_discovery_id")
+            host["parents"] = parents_by_device.get(device_id, [])
             members = recipients_by_device.get(device_id, [])
             host_contact_group = contact_group_name
             if members:
@@ -1546,7 +1555,7 @@ def _validate_config(cfg_path):
     finally:
         temp_cfg_path.unlink(missing_ok=True)
 
-def _apply_new_host_cfg(cfg_path, rollback_resources=None):
+def _apply_new_host_cfg(cfg_path, rollback_resources=None, commit_history=True):
     """
     Applies a validated candidate host config as the new live Nagios config.
 
@@ -1612,10 +1621,15 @@ def _apply_new_host_cfg(cfg_path, rollback_resources=None):
         return False, "Failed to apply Nagios configuration. Rolled back to the previous files."
 
     try:
-        migrate_legacy_service_history(_last_generated_names)
-        db.session.commit()
+        # Parent edits own their transaction: a successful reload must not commit
+        # the graph before its audit entry and route commit succeed.
+        with db.session.begin_nested():
+            migrate_legacy_service_history(_last_generated_names)
+        if commit_history:
+            db.session.commit()
     except Exception:
-        db.session.rollback()
+        if commit_history:
+            db.session.rollback()
         current_app.logger.exception("Could not carry service history over to the new service names.")
 
     return True, f"Applied {cfg_path} successfully. Backup stored at {backup_path}"
@@ -2127,7 +2141,7 @@ def resource_config_transaction():
     return resource_macros.ResourceTransaction(current_app.config["NAGIOS_RESOURCE_CFG"])
 
 
-def regenerate_and_apply_config_status():
+def regenerate_and_apply_config_status(commit_history=True):
     """Rebuild, validate and apply monitored configuration under the writer lock.
 
     Return applied, unchanged or failed with a safe message. Resource bytes are
@@ -2144,7 +2158,10 @@ def regenerate_and_apply_config_status():
             is_valid, result = _validate_config(new_cfg)
             if not is_valid:
                 return "failed", f"Config failed to validate: {result}"
-            applied, message = _apply_new_host_cfg(new_cfg, rollback_resources=resources.rollback)
+            if commit_history:
+                applied, message = _apply_new_host_cfg(new_cfg, rollback_resources=resources.rollback)
+            else:
+                applied, message = _apply_new_host_cfg(new_cfg, rollback_resources=resources.rollback, commit_history=False)
             if applied:
                 resources.commit()
             return ("applied" if applied else "failed"), message

@@ -1,5 +1,5 @@
 define host {{
-    host_name                       {host_name}
+    host_name                       {host_name}{parents_line}
     alias                           {alias}
     address                         {address}
     check_command                   check-host-alive

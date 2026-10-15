@@ -47,6 +47,7 @@ from app.network_discovery.device_identity import (
     MONITORING_STATES,
     devices_by_host_name,
     monitoring_state,
+    parent_summaries, parent_summaries_by_device,
 )
 from app.system_models import AlertAcknowledgement, AckHistory, AckAction
 
@@ -228,14 +229,18 @@ def list_hosts():
         page_result = db.paginate(query, page=page, per_page=per_page, error_out=False)
 
         devices = devices_by_host_name([h.Hostname for h in page_result.items])
+        parents_by_id = parent_summaries_by_device([d.NetDiscoveryID for d in devices.values()])
 
         items = []
         for h in page_result.items:
             ack = ack_map.get(h.Hostname)
             device = devices.get(h.Hostname)
+            parents = parents_by_id.get(device.NetDiscoveryID, []) if device else []
             items.append({
                 "hostname":      h.Hostname,
                 "device_id":     device.NetDiscoveryID if device else None,
+                "parent_device_ids": [p["id"] for p in parents],
+                "parents": parents,
                 "ip_address":    device.IP_Address if device else None,
                 "monitoring_state": monitoring_state(device) if device else None,
                 "monitored":     monitoring_state(device) == "monitored" if device else None,
@@ -402,10 +407,13 @@ def host_detail(hostname: str):
         )
 
         device = devices_by_host_name([host.Hostname]).get(host.Hostname)
+        parents = parent_summaries(device.NetDiscoveryID) if device else []
 
         return success({
             "hostname":               host.Hostname,
             "device_id":              device.NetDiscoveryID if device else None,
+            "parent_device_ids": [p["id"] for p in parents],
+            "parents": parents,
             "monitoring_state":       monitoring_state(device) if device else None,
             "monitored":              monitoring_state(device) == "monitored" if device else None,
             "state":                  host.Current_State.value,

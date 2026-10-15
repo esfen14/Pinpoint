@@ -643,3 +643,38 @@ retirement deletes that device's choices. No assignments remain on the merged
 source or retired device. Pause preserves choices for resume.
 
 NCPA inventory probing considers only devices with NCPA facts; an SNMP-only device with monitored interfaces does not require an NCPA deployment merely because `check_ncpa` is enabled globally.
+
+
+## Manual parent relationships
+
+`DeviceParent` (`DEVICE_PARENT`, default bind) stores manual reachability edges with
+composite primary key `(Child_ID, Parent_ID)`, foreign keys to stable device IDs,
+a parent index and a self-link check. New/upgraded devices have no parent links by
+default. Iterative graph validation rejects cycles through any parent path; a
+parent-set replacement is atomic and rejects duplicates, missing IDs and retired/
+merged parents. Discovery never infers parents. Merge rewrites both ends,
+deduplicates and refuses self-links/cycles; explicit and automatic retirement clear
+relationships in the retirement transaction. Pause preserves manual choices.
+
+Configuration loads parent pairs once and includes only names present in the candidate
+whose parent remains actively checked (including Missing, excluding paused, retired,
+merged and address-unknown). Parent host names must match `[A-Za-z0-9_.-]+`; no
+request strings enter a directive or shell command. Multiple parents become Nagios's
+comma-separated `parents` list. No eligible parents leaves the original host output
+unchanged. API summaries and topology edges explain omitted parents. Parent changes
+use the existing shared pre-apply validation, config lock and resource/host rollback.
+
+The topology read model uses existing inventory records and latest stored Nagios
+snapshots with a fixed number of database queries; it does not compute reachability,
+probe devices or collect interface/traffic telemetry. React computes graph positions.
+
+Migration `b117d9a2c041` follows `a129f6d23901`. It was generated with the
+repository's multi-bind Alembic environment and reviewed: only `DEVICE_PARENT`
+and its index/constraints are added on the default bind; history has no schema
+change. Run `flask db upgrade` for both binds. No permission is added. Downgrade
+removes parent relationships while retaining devices and monitoring history.
+The populated migration regression verifies default-empty parents, multiple-parent
+storage, foreign keys/uniqueness/self-link constraints and downgrade/re-upgrade.
+Parent transactions ask the shared writer to defer its history commit until the
+route commits the graph and audit entry; lifecycle edits also synchronize the
+existing Plugin Manager derived rows before committing.
