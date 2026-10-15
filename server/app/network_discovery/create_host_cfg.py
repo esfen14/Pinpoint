@@ -55,7 +55,7 @@ from app.system_models import \
     PortState
 from app.logging import create_network_discovery_status, update_network_discovery_status, calculate_progress, create_skipped_service_logs
 from app.logging.deployment_history import update_ncpa_deployment_status
-from app.system_models import DiscoveryStatus, DeploymentStatus, NetworkDiscoveryStatus, ServiceIdentification
+from app.system_models import DiscoveryStatus, DeploymentStatus, NetworkDiscoveryStatus, ServiceIdentification, HostAlertRecipient
 from app.network_discovery.discovery_settings import get_port_services, ncpa_port_key
 from app.network_discovery.interface_discovery import refresh_interfaces_after_scan
 from app.network_discovery.plugin_settings import plugin_config
@@ -239,8 +239,8 @@ def load_host_plugin_facts(probe_ncpa=False):
         ).all()} if facts else {}
         for device_id, device_facts in facts.items():
             device = devices.get(device_id)
-            if device is not None:
-                ncpa = device_facts["ncpa"]
+            ncpa = device_facts.get("ncpa")
+            if device is not None and ncpa is not None:
                 ncpa["available_paths"] = probe_ncpa_paths(
                     device.IP_Address, ncpa.get("port") or current_app.config["NCPA_PORT"], ncpa["token"],
                 )
@@ -838,6 +838,18 @@ def _create_host_cfg_file(discovered_hosts, skipped=None):
         """
     )
 
+    # Load eligible per-device members once, using the same contacts written above.
+    # Group names contain only our numeric device IDs, never request text.
+    recipients_by_device = {}
+    eligible_emails = {user.UserID: user.Email for user in users}
+    for recipient in db.session.scalars(
+        sa.select(HostAlertRecipient).order_by(HostAlertRecipient.NetDiscoveryID, HostAlertRecipient.UserID)
+    ):
+        email = eligible_emails.get(recipient.UserID)
+        if email is not None:
+            recipients_by_device.setdefault(recipient.NetDiscoveryID, []).append(email)
+    written_recipient_groups = set()
+
     hostgroups = {
                 "Linux":{
                     "devices":[]
@@ -940,7 +952,20 @@ def _create_host_cfg_file(discovered_hosts, skipped=None):
             host["host_name"] = host_data["data"]["hostname"]
             host["alias"] = "alias"
             host["address"] = ip
-            host["contact_groups"] = contact_group_name
+            device_id = host_data["data"].get("net_discovery_id")
+            members = recipients_by_device.get(device_id, [])
+            host_contact_group = contact_group_name
+            if members:
+                host_contact_group = f"pinpoint_host_{device_id}"
+                if device_id not in written_recipient_groups:
+                    host_config.append(create_contactgroup({
+                        "group_name": host_contact_group,
+                        "alias_name": f"Alert recipients for device {device_id}",
+                        "member_list": ",".join(members),
+                    }))
+                    host_config.append(_add_space(4))
+                    written_recipient_groups.add(device_id)
+            host["contact_groups"] = host_contact_group
             if not active_checks:
                 host["active_checks_enabled"] = False
                 host["notes"] = inactive_note
@@ -996,7 +1021,7 @@ def _create_host_cfg_file(discovered_hosts, skipped=None):
                 service = {
                     "host_name": host_data["data"]["hostname"],
                     "service_name": service_name,
-                    "contact_groups": contact_group_name
+                    "contact_groups": host_contact_group
                 }
                 if not active_checks:
                     service["active_checks_enabled"] = False
@@ -1012,7 +1037,7 @@ def _create_host_cfg_file(discovered_hosts, skipped=None):
                 service = {
                     "host_name": host_data["data"]["hostname"],
                     "service_name": service_name,
-                    "contact_groups": contact_group_name
+                    "contact_groups": host_contact_group
                 }
                 if not active_checks:
                     service["active_checks_enabled"] = False

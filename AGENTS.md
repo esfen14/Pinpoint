@@ -48,6 +48,7 @@ It is the one procedure for every agent. The commands below only load it:
 | Tool | Command |
 |---|---|
 | Claude Code | `/work-issue <n>` (`.claude/skills/work-issue/SKILL.md`) |
+| Codex | `$work-issue <n>` ([`.codex/skills/work-issue/SKILL.md`](.codex/skills/work-issue/SKILL.md)) |
 | OpenCode | `/work-issue <n>` (`.opencode/commands/work-issue.md`) |
 | Any other agent | Tell it: "Follow `.agent/workflows/work-issue.md` for issue #<n>." |
 
