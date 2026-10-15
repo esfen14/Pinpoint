@@ -48,6 +48,7 @@ table while you test, not afterward.
 
 | Run | Kind | Commit | Result | Report |
 |---|---|---|---|---|
+| [2026-10-15 issue-110-polling-retest](2026-10-15-issue-110-polling-retest/REPORT.md) | Fresh full regression and real Nagios polling/API/restart retest | `6cbc59d0` | Pass: 9 report cases; 2850 backend and 643 frontend tests passed; 14 backend skips | [REPORT.md](2026-10-15-issue-110-polling-retest/REPORT.md) |
 | [2026-10-15 issue-110-polling](2026-10-15-issue-110-polling/REPORT.md) | Isolated Docker real Nagios polling cadence, live reschedule and restart persistence | `30a7c7b0` | Pass: 8 scoped checks; 30/60-second timing, nondefault restart and no overlap | [REPORT.md](2026-10-15-issue-110-polling/REPORT.md) |
 | [2026-10-15 issue-79-inbox-confirmed](2026-10-15-issue-79-inbox-confirmed/REPORT.md) | Owner-confirmed actual selected/default inbox comparison | app `4ed80435` | Pass: selected inbox eight messages; default-only inbox four; exclusion confirmed | [REPORT.md](2026-10-15-issue-79-inbox-confirmed/REPORT.md) |
 | [2026-10-15 issue-79-rebuilt-inbox](2026-10-15-issue-79-rebuilt-inbox/REPORT.md) | Rebuilt VM, browser E2E and actual Gmail transport | `4ed80435` | Partial: 11 pass; owner inbox comparison pending; baseline restored | [REPORT.md](2026-10-15-issue-79-rebuilt-inbox/REPORT.md) |
