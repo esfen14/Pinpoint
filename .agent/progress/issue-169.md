@@ -5,8 +5,8 @@ Status: in-progress
 
 ## Finish condition
 
-- [ ] Three valid adapters link to the shared workflows.
-- [ ] AGENTS.md and Agent_Workflow_and_CI.md document adapters.
+- [x] Three valid adapters link to the shared workflows.
+- [x] AGENTS.md and Agent_Workflow_and_CI.md document adapters.
 - [ ] Skill validation and docs verification pass; PR and CI results recorded.
 
 | Issue requirement | Finish-condition item | Proof (test or command) |
@@ -17,7 +17,7 @@ Status: in-progress
 
 ## Plan
 
-1. [ ] Add .codex/skills adapters and update AGENTS.md and spec files/Agent_Workflow_and_CI.md.
+1. [x] Add .codex/skills adapters and update AGENTS.md and spec files/Agent_Workflow_and_CI.md.
 2. [ ] Validate skills, run scripts/verify.sh docs and all, remove progress scaffolding and open PR.
 
 ## Round log
@@ -25,13 +25,14 @@ Status: in-progress
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 0 | Read workflows and plan | Source inspection | Three workflow adapters required |
+| 1 | Added three adapters and documentation | quick_validate.py for all three; scripts/verify.sh docs; scripts/verify.sh all | Skills and docs green; all stops at missing python in isolated checkout |
 
 ## State for the next session
 
-- Last check run (exact command): git status --short
-- Result: green; clean checkout before progress file.
+- Last check run (exact command): scripts/verify.sh all
+- Result: docs green; backend cannot start because python is unavailable in the isolated checkout.
 - Hypothesis: Thin adapters preserve workflow ownership.
-- Next action: Create three SKILL.md files and document their paths.
+- Next action: Open PR after removing progress scaffolding and inspect CI for backend/frontend checks.
 
 ## Decisions and notes
 
