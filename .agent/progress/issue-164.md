@@ -62,6 +62,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| 4 | Recreated own appliance and deliberately stopped its Nagios before merge | Playwright issue-164-live with ISSUE164_EXPECT_CONFIG_WARNING=1 | Green: 1 passed; config_ok false with saved merge, one POST, source Merged, target retained, reviews refreshed. Full gate still running |
 | 3 | Disposable Docker project; controlled reconciler fixtures; repeatable opt-in browser journey | Playwright issue-164-live twice (including real source snapshot + linked notice); fixture verify; nagios -v | Both browser runs pass; target address/port/review/config postconditions pass; Nagios 0 warnings/0 errors. Full verify.sh all still running |
 | resumed | Docker membership enabled by user; sg docker activates it in this existing session | Docker ps; repeated comparison tests | Docker accessible; using a fresh isolated project, shared lab untouched |
 | 2 | Fixed test query typing, added notice/filter integration and keyboard/address retry tests; new components lint cleanly | verify.sh backend; verify.sh frontend; verify.sh docs; focused comparison tests | Backend 3302 passed/14 skipped; frontend 699 passed, build/lint green; docs green; expanded comparison 15 passed |
@@ -70,10 +71,10 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 ## State for the next session
 
-- Last check run (exact command): cd client && PINPOINT_ADMIN_USER=admin@test.com PINPOINT_ADMIN_PASSWORD=<private lab value> ISSUE164_LAB_URL=http://127.0.0.1:5164 ISSUE164_SOURCE_ID=1 ISSUE164_TARGET_ID=2 ISSUE164_CHECK_NOTICE=1 npx playwright test --project=issue-164-live --reporter=list
-- Result (first failing lines, or "green"): green: 1 passed; second complete real-browser run. Fixture verification and real Nagios validation passed after the first run. Full verify.sh all in /tmp/issue-164-all.log.
-- Hypothesis: normal merge journey works; need deliberate unavailable-Nagios run to prove saved warning in real browser.
-- Next action (one specific step, not "continue"): Recreate only the disposable issue164 appliance, seed fixtures, stop its Nagios and repeat the browser journey expecting a saved configuration warning.
+- Last check run (exact command): cd client && ISSUE164_LAB_URL=http://127.0.0.1:5164 ISSUE164_SOURCE_ID=1 ISSUE164_TARGET_ID=2 ISSUE164_EXPECT_CONFIG_WARNING=1 npx playwright test --project=issue-164-live --reporter=list
+- Result (first failing lines, or "green"): green: 1 passed. Lab credentials were supplied privately through environment variables; no trace/login capture. Three complete real-browser journeys now pass (two normal including notice, one saved config warning).
+- Hypothesis: mandatory product journeys are proven; restore Nagios, write sanitized evidence and await all-stage verification before PR.
+- Next action (one specific step, not "continue"): Restore Nagios in pinpoint-issue164-appliance-1, reconcile without retrying the merge and record the test-run report.
 
 ## Decisions and notes
 
