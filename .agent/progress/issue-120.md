@@ -46,7 +46,7 @@ Requirement coverage:
 ## Plan
 
 1. [x] Design review: approved 2026-10-15 (docs/plans/Event_Handler_Design.md)
-2. [ ] Migration, models and action registry with tests, plus RemediationRun pruning in _purge_old_data (server/app/system_models.py, server/app/remediation_actions.py, server/app/scheduler.py, new migration)
+2. [x] Migration, models and action registry with tests, plus RemediationRun pruning in _purge_old_data (server/app/system_models.py, server/app/remediation_actions.py, server/app/scheduler.py, new migration)
 3. [ ] Handler script and consumer with tests (server/scripts/pinpoint_event_handler.py, server/app/remediation.py, server/app/scheduler.py)
 4. [ ] Config rendering with byte-identical proof (server/app/network_discovery/host_config_templates.py, create_host_cfg.py, templates)
 5. [ ] API routes and permission seeding (server/app/api/system/remediation.py, server/app/api/commands/seed.py)
@@ -58,20 +58,22 @@ Requirement coverage:
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 1 | Read issue and standards; wrote the design; edited issue text for D1/D3; opened draft PR | scripts/check_agent_progress.py | n/a, no code |
+| 2 | resumed after design approval; found standards reserve history.db for Nagios snapshots, owner chose system.db for RemediationRun | - | design and notes updated |
+| 3 | Plan step 2: migration e4a7c1d9b305 (REMEDIATION_ACTION, REMEDIATION_RUN), models, registry (record_only, validation, timeout), RemediationRun pruning in _purge_old_data; tests written first and seen failing | pytest test_remediation_migration.py test_remediation_actions.py test_scheduler.py | 23 passed |
 
 ## State for the next session
 
-- Last check run (exact command): none (no code written)
-- Result: -
+- Last check run (exact command): cd server; python -m pytest tests/unit/test_remediation_migration.py tests/unit/test_remediation_actions.py tests/unit/test_scheduler.py -q
+- Result: 23 passed. Full tests/unit: 2604 passed; failures are Windows-only or already failing without these changes (test_automation security check, test_nagios_commands needs os.mkfifo, test_notification_policy_migration fails on a clean checkout too). Linux CI is the combined check.
 - Hypothesis: build order in the design is sound; the handler and consumer are the risky part
-- Next action: start plan step 2 with a failing migration test
+- Next action: plan step 3: failing tests for the handler script server/scripts/pinpoint_event_handler.py (valid and hostile arguments), then the handler, then the consumer server/app/remediation.py
 
 ## Decisions and notes
 
 - Owner decisions 2026-10-14: D1 narrow nagios group rights; D2 no remote restart; D3 handler at /usr/local/sbin with source here.
 - Owner instruction: whenever a fix needs the installer, leave an md file for the installer maintainer (as in PR #157).
 - Owner asked: review the design before writing code (sensitive module).
-- Review answers 2026-10-15: Q1-Q4 accepted; Q4 plus pruning RemediationRun with Diagnostic_History_Retention_Days (90) in this issue; Q5 test every threat row, lab run limited to security-relevant checks.
+- Review answers 2026-10-15: Q1-Q4 accepted; Q4 changed to system.db, plus pruning RemediationRun with Diagnostic_History_Retention_Days (90) in this issue; Q5 test every threat row, lab run limited to security-relevant checks.
 - Note for the specs: service-uptime reports (/report/network-services, /device-services) are built from ServiceStatus snapshots, so Diagnostic_History_Retention_Days below 90 shortens last_90d reports. Consider a line in Implementation_Status.md (not part of #120).
 - Issue #120 text updated 2026-10-14 to match D1 and D3 (spool group pinpoint, handler in /usr/local/sbin).
-- Deviations from the issue wording are listed in the design for the reviewer: one file per event, two commands, two permissions, runs in history.db.
+- Deviations from the issue wording are listed in the design for the reviewer: one file per event, two commands, two permissions, runs in system.db (changed 2026-10-15: standards reserve history.db for Nagios snapshots).

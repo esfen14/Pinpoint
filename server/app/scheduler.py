@@ -42,6 +42,7 @@ def _purge_old_data():
                 NetworkDiscoveryStatus,
                 NCPADeploymentStatus,
                 ExportLog,
+                RemediationRun,
             )
             from app.history_models import (
                 HostStatus,
@@ -69,6 +70,10 @@ def _purge_old_data():
                 db.session.execute(sa.delete(NCPADeploymentStatus).where(NCPADeploymentStatus.LogID.in_(old_log_ids)))
                 db.session.execute(sa.delete(ExportLog).where(ExportLog.LogID.in_(old_log_ids)))
                 db.session.execute(sa.delete(ActivityLog).where(ActivityLog.LogID.in_(old_log_ids)))
+
+            # --- Remediation run log (audit trail of automatic actions) ---
+            run_cutoff = now - timedelta(days=settings.Diagnostic_History_Retention_Days)
+            db.session.execute(sa.delete(RemediationRun).where(RemediationRun.Received_At < run_cutoff))
 
             # --- Diagnostic history retention (Nagios snapshots) ----------
             diag_cutoff = now - timedelta(days=settings.Diagnostic_History_Retention_Days)

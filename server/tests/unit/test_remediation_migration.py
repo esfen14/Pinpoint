@@ -1,0 +1,60 @@
+"""
+tests/unit/test_remediation_migration.py — The remediation tables migration
+(migrations/versions/e4a7c1d9b305_remediation_tables.py).
+
+Runs the migration on throwaway SQLite files (in a subprocess, see
+tests/support/remediation_migration_runner.py) and checks that it creates the action and run
+tables with the documented columns, refuses a repeated event for the same action, and
+downgrades and upgrades again.
+"""
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+
+SERVER_DIR = Path(__file__).resolve().parents[2]
+ACTION_COLUMNS = {
+    "Id", "Name", "Action_Type", "Scope_Kind", "Host_Pattern", "Service_Pattern", "Parameters",
+    "Enabled", "Max_Runs_Per_Hour", "Cooldown_Seconds", "Version", "Updated_By", "Updated_At",
+}
+RUN_COLUMNS = {
+    "Id", "Event_Key", "Action_Id", "Action_Name", "Hostname", "Service", "State", "State_Type",
+    "Attempt", "Received_At", "Started_At", "Finished_At", "Outcome", "Reason", "Output",
+}
+
+
+@pytest.fixture(scope="module")
+def report():
+    result = subprocess.run(
+        [sys.executable, "tests/support/remediation_migration_runner.py"],
+        cwd=SERVER_DIR, capture_output=True, text=True, timeout=180,
+    )
+    assert result.returncode == 0, result.stderr[-3000:]
+    body = result.stdout.split("REPORT_BEGIN")[1].split("REPORT_END")[0]
+    return json.loads(body)
+
+
+def test_upgrade_reaches_the_new_revision(report):
+    assert report["version"] == [["e4a7c1d9b305"]]
+    assert report["version_after_reupgrade"] == [["e4a7c1d9b305"]]
+
+
+def test_tables_are_created_by_the_upgrade_only(report):
+    assert report["tables_before"] == []
+    assert report["tables_after"] == ["REMEDIATION_ACTION", "REMEDIATION_RUN"]
+
+
+def test_tables_have_the_documented_columns(report):
+    assert set(report["action_columns"]) == ACTION_COLUMNS
+    assert set(report["run_columns"]) == RUN_COLUMNS
+
+
+def test_the_same_event_cannot_be_recorded_twice_for_one_action(report):
+    assert report["duplicate_run_rejected"] is True
+
+
+def test_downgrade_removes_the_tables_and_upgrade_restores_them(report):
+    assert report["tables_after_downgrade"] == []
+    assert report["tables_after_reupgrade"] == ["REMEDIATION_ACTION", "REMEDIATION_RUN"]

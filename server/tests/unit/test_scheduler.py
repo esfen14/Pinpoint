@@ -13,3 +13,44 @@ class TestInitScheduler:
     def test_init_is_noop_under_testing(self, app):
         scheduler.init_scheduler()
         assert scheduler._scheduler is None
+
+
+class TestPurgeRemediationRuns:
+    """_purge_old_data also bounds the remediation run log (an audit trail, not statistics)."""
+
+    @staticmethod
+    def _run(Event_Key, received_at):
+        from app.system_models import RemediationEventState, RemediationEventStateType, RemediationOutcome, RemediationRun
+        return RemediationRun(
+            Event_Key=Event_Key, Action_Id=1, Action_Name="a", Hostname="web-01", Service="HTTP",
+            State=RemediationEventState.CRITICAL, State_Type=RemediationEventStateType.HARD, Attempt=3,
+            Received_At=received_at, Outcome=RemediationOutcome.SUCCEEDED,
+        )
+
+    def test_old_runs_are_removed_and_recent_ones_kept(self, db_session):
+        from datetime import datetime, timedelta, timezone
+        from app.system_models import RemediationRun, SystemSettings
+
+        now = datetime.now(timezone.utc)
+        db_session.session.add(SystemSettings(Id=1, Diagnostic_History_Retention_Days=90))
+        db_session.session.add(self._run("old", now - timedelta(days=91)))
+        db_session.session.add(self._run("recent", now - timedelta(days=89)))
+        db_session.session.commit()
+
+        scheduler._purge_old_data()
+
+        keys = [r.Event_Key for r in db_session.session.query(RemediationRun).all()]
+        assert keys == ["recent"]
+
+    def test_retention_setting_is_respected(self, db_session):
+        from datetime import datetime, timedelta, timezone
+        from app.system_models import RemediationRun, SystemSettings
+
+        now = datetime.now(timezone.utc)
+        db_session.session.add(SystemSettings(Id=1, Diagnostic_History_Retention_Days=7))
+        db_session.session.add(self._run("eight-days", now - timedelta(days=8)))
+        db_session.session.commit()
+
+        scheduler._purge_old_data()
+
+        assert db_session.session.query(RemediationRun).count() == 0

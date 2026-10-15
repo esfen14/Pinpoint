@@ -5,7 +5,7 @@ design to be reviewed before any code touches the sensitive files (`app/network_
 new path that runs actions). Written for the reviewer and for the engineer who will build it.
 
 Review answers (section 6), 2026-10-15: Q1 accepted (one file per event). Q2 accepted (two
-commands). Q3 accepted (two permissions). Q4 accepted (`RemediationRun` in `history.db`), with
+commands). Q3 accepted (two permissions). Q4 changed on 2026-10-15: `RemediationRun` goes in `system.db`, not `history.db`, because the Engineering Standards allow only Nagios-produced snapshots in `history.db`. Retention addition kept:
 one addition: `_purge_old_data` in `scheduler.py` also deletes `RemediationRun` rows older than
 `Diagnostic_History_Retention_Days` (default 90) in this issue, with a unit test, so the table is
 bounded from the start (it is an audit trail, not a source for network statistics). Q5: cover every
@@ -103,18 +103,19 @@ existing byte-for-byte fixtures (`notification_policy_default_hosts.cfg`) plus a
 | Table | Database | Fields |
 |---|---|---|
 | `RemediationAction` | `system.db` | `Id`, `Name` (unique, 3 to 60 chars), `Action_Type` (fixed enum), `Scope_Kind` (`service` or `host`), `Host_Pattern`, `Service_Pattern`, `Parameters` (JSON, validated per type), `Enabled`, `Max_Runs_Per_Hour` (1 to 60, default 2), `Cooldown_Seconds` (60 to 86400, default 600), `Version`, `Updated_By`, `Updated_At` |
-| `RemediationRun` | `history.db` | `Id`, `Event_Key` (unique with `Action_Id`), `Action_Id`, `Action_Name` (snapshot), `Hostname`, `Service`, `State`, `State_Type`, `Attempt`, `Received_At`, `Started_At`, `Finished_At`, `Outcome`, `Reason`, `Output` (max 1 KB, redacted) |
+| `RemediationRun` | `system.db` | `Id`, `Event_Key` (unique with `Action_Id`), `Action_Id`, `Action_Name` (snapshot), `Hostname`, `Service`, `State`, `State_Type`, `Attempt`, `Received_At`, `Started_At`, `Finished_At`, `Outcome`, `Reason`, `Output` (max 1 KB, redacted) |
 
-`RemediationRun` lives in `history.db` so the existing retention job can later prune it (#155). It
-has no foreign key to the action (different database); the action name is copied into the row so
-the log still reads correctly after an action is deleted.
+`RemediationRun` lives in `system.db` with the actions: it is written by PinPoint, and the standards
+reserve `history.db` for Nagios snapshots. The existing `_purge_old_data` job deletes rows older than
+`Diagnostic_History_Retention_Days`. The row keeps no foreign key to the action: deleting an action must
+leave its runs, so `Action_Id` is a plain number and the action name is copied into the row.
 
 `Outcome` values: `succeeded`, `failed`, `timed_out`, `skipped_cooldown`, `skipped_hourly_cap`,
 `skipped_disabled`, `discarded_malformed`, `interrupted`, `duplicate`.
 
 Patterns are exact names or contain `*` only (`web-*`). Allowed characters `A-Za-z0-9._*-`. No regex.
 
-One migration for both databases (`upgrade_` and `upgrade_history`), reviewed by hand, with a working
+One migration on the default bind (`upgrade_`; `upgrade_history` is empty), reviewed by hand, with a working
 downgrade, chained after the current head.
 
 ### 3.4 Action registry
@@ -228,7 +229,7 @@ together, with `PageAccess.test.tsx` and `App.test.tsx` updated.
 1. One file per event instead of one appended line (3.1). Accept?
 2. Two commands (service and host) instead of one (3.2). Accept?
 3. `remediation.view` and `remediation.manage` instead of one permission (3.6). Accept?
-4. `RemediationRun` in `history.db` (3.3) so retention can prune it later. Accept?
+4. `RemediationRun` in `system.db` (3.3), pruned by the existing retention job. Accept? (Changed from `history.db`: the standards reserve that for Nagios snapshots.)
 5. Anything in section 4 that should be tested differently before it can be signed off?
 
 ## 7. Build order once the design is approved
