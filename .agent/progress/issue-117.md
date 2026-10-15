@@ -1,7 +1,7 @@
 # Issue #117: Manual multiple-parent topology
 
 Branch: `issue-117-manual-topology`
-Status: in-progress
+Status: ready-for-review
 
 ## Finish condition
 
@@ -129,7 +129,7 @@ Requirement coverage (all issue sections):
 4. [x] Record isolated live Nagios reachability/rollback evidence in `docs/test-runs/` using the template; update remaining specifications and local issue mirror; run docs/all verification and checkpoint.
 5. [x] Re-read issue and prove acceptance; publish PR using `.github/pull_request_template.md`, monitor CI; keep draft/progress if live acceptance or human decisions remain outstanding.
 
-6. [ ] Owner-requested continued testing: run browser against real backend/Nagios; fix any in-scope interaction issue with a failing regression, record a new report and verify frontend/docs/CI.
+6. [x] Owner-requested continued testing: run browser against real backend/Nagios; fix any in-scope interaction issue with a failing regression, record a new report and verify frontend/docs/CI.
 
 ## Round log
 
@@ -144,10 +144,10 @@ Requirement coverage (all issue sections):
 
 ## State for the next session
 
-- Last check run (exact command): cd server && FLASK_DEBUG=1 .venv/bin/python -m pytest tests/unit/test_device_parents.py tests/unit/test_device_parent_migration.py -q
-- Result: Final focused parent/migration proof green at /tmp/issue117-last-parent-proof.log (39 passed). Full stable-tree gate /tmp/issue117-final-all.log passed 3040 backend / 14 skips and 653 frontend tests before the final oversized-ID guard. That guard was first proven red (500 from SQLite overflow) then fixed to return 400. Final pushed-tree CI is the remaining automated gate.
+- Last check run (exact command): scripts/verify.sh frontend
+- Result: green: 654 frontend tests, production build and lint (0 errors / 30 warnings). 43 focused interaction tests and real browser/backend/Nagios flow passed. Prior source 519a00a passed all CI; current fix/report CI will run after checkpoint.
 - Hypothesis: Existing writer and Inventory modules can support this without a new dependency; use a relationship table and shared editor.
-- Next action: Record real-browser evidence from /tmp/issue117-live-e0853d16, verify the changed frontend/docs, and watch CI for the drawer fix.
+- Next action: Watch final PR #174 CI for the drawer fix/report, then obtain human review and #173 notification-guarantee decision; retain draft/progress until approved, never merge.
 
 ## Decisions and notes
 
@@ -177,3 +177,5 @@ Requirement coverage (all issue sections):
 - Owner explicitly requested continued testing after the prior handoff, then resumed after an interruption. The prior final source 519a00a passed all CI jobs: https://github.com/esfen14/Pinpoint/actions/runs/38713297084 .
 - Continued round 1: real browser/backend run reproduced an Inventory success-message loss. The parent callback unnecessarily set the host-detail reload key, unmounting the parent editor. A new focused integration regression (`DeviceParentDrawer.test.tsx`) failed first; changed callback to refresh the table only, preserving the editor and confirmation. 43 focused frontend tests then passed, with existing drawer/Inventory tests unchanged.
 - Current actual-browser evidence: /tmp/issue117-live-e0853d16/browser.log and /tmp/issue117-real-browser-run3.log. Real standard login, real Flask APIs and real Nagios validation/reload; no API interception. Both editor placements set/clear/reload, cross-page edges and persistence, cycle rejection/draft retention, restricted controls/direct 403 and zero page errors passed. Initial setup needed a dedicated management bridge to publish the loopback HTTP listener; all owned containers/networks cleaned up. No shared appliance/targets were touched.
+
+- Continued round 1 complete: full frontend gate green (654 tests), docs green, actual browser/backend/Nagios run passed all executed cases. New sanitized report records exact tested source and initial defect/setup deviations. All source changes in this continuation are the drawer callback fix and its integration test; no backend/migration/dependency changes.

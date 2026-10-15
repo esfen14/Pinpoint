@@ -48,6 +48,7 @@ table while you test, not afterward.
 
 | Run | Kind | Commit | Result | Report |
 |---|---|---|---|---|
+| [2026-10-15 issue-117-live-browser](2026-10-15-issue-117-live-browser/REPORT.md) | Real browser/Flask/Nagios parent editing and drawer success regression | `b0a105e6` | Partial: seven cases pass; final pushed-tree CI/review tracked on PR #174 | [REPORT.md](2026-10-15-issue-117-live-browser/REPORT.md) |
 | [2026-10-15 issue-117-manual-topology](2026-10-15-issue-117-manual-topology/REPORT.md) | Real isolated routed single/redundant-parent Nagios and frontend fixture smoke | `051abed5` | Partial: default-retry feature cases/local gates pass; final CI/review pending; one-attempt caveat #173 | [REPORT.md](2026-10-15-issue-117-manual-topology/REPORT.md) |
 | [2026-10-15 issue-129-polling-ci-repair](2026-10-15-issue-129-polling-ci-repair/REPORT.md) | Latest polling/NCPA migration convergence and regression repair | repair on `5bb6f7a0` | Partial:3002 backend/45 focused tests and docs pass; repair publication/CI pending | [REPORT.md](2026-10-15-issue-129-polling-ci-repair/REPORT.md) |
 | [2026-10-15 issue-129-review-readiness](2026-10-15-issue-129-review-readiness/REPORT.md) | Final local gate, migration convergence and current CI | `7c0bb631` | Pass for application review readiness; paired installer remains a separate deployment dependency | [REPORT.md](2026-10-15-issue-129-review-readiness/REPORT.md) |
