@@ -27,7 +27,7 @@ The official page has 55 bullets in 8 categories. "Performance Data" appears und
 | Not Applicable | 9 |
 | **Total** | **55** |
 
-These totals match the Section 2 table row by row. **21 issues** are raised (Section 3).
+These totals match the Section 2 table row by row. **25 issues** are raised (Section 3); Issues #22 to #25 were added afterwards for proactive recovery and are not reflected in the status counts above.
 
 ### Development issues
 
@@ -775,6 +775,15 @@ Conventions: "Existing" paths were verified in the repository. "(new)" marks pro
 **Acceptance Criteria:** Reports show the target and a breach flag, and the status document matches the UI.
 
 **Verification Plan:** Unit tests, manual check.
+
+### Issues #22 to #25 — Completing proactive recovery (added 2026-10-13)
+
+Issues #7 and #8 deliver the event-handler framework and the restart actions. Reviewing them against the Proactive Resolution row in Section 2 left four gaps, each written up in [`docs/issues/`](issues/README.md):
+
+- **Issue #22 — Escalation and outcome visibility.** A failed, capped or repeating recovery is raised as a Nagios custom notification (through the Issue #19 command channel) so it follows the normal contacts and escalations, and the outcome is shown beside the alert. Needed because the Issue #8 acceptance criterion "a failed restart escalates as a normal alert" had no implementation in #7 or #8. Priority Medium · Complexity Medium · Dependencies #7, #8, #19.
+- **Issue #23 — Per-service "Recover automatically" toggle with the restart limit.** Listed as the frontend change for #8 above but missing from its ticket. Priority Low · Complexity Medium · Dependencies #7, #8.
+- **Issue #24 — Safety controls, retention and health.** Global kill switch, skipping acknowledged or downtimed problems, retention of runs and spool files, a consumer heartbeat with a stalled indicator, and handling of runs interrupted by a crash. Priority Medium · Complexity Medium · Dependencies #7 (and #19, #9 for the ownership checks).
+- **Issue #25 — Trend forecast warnings.** Estimates when a disk or memory metric will cross its threshold from stored performance data, so operators are warned before a failure. Goes beyond Nagios Core, so it **awaits a product decision**. Priority Low · Complexity High.
 
 
 ---

@@ -211,3 +211,24 @@ def test_escalation_group_from_paused_source_still_has_members(logged_in_client,
     text = generate(app, monkeypatch, tmp_path)
     assert len([obj for obj in objects(text, 'contactgroup') if group in obj]) == 1
     assert group in objects(text, 'hostescalation')[0]
+
+
+def test_escalations_coexist_with_enabled_remediation(logged_in_client, app, db_session,
+        devices, writer, monkeypatch, tmp_path):
+    """The integrated writer retains both the handler and escalation recipients."""
+    from app.network_discovery import host_config_templates as templates
+    from tests.unit.test_event_handler_config import add_action
+    first = devices[0]
+    monkeypatch.setattr(templates, 'handler_exists', lambda path: True)
+    add_action(db_session, Host_Pattern=first.Nagios_Host_Name, Service_Pattern='*')
+    save(logged_in_client, host_id=first.NetDiscoveryID)
+    text = generate(app, monkeypatch, tmp_path)
+    assert len(objects(text, 'hostescalation')) == 1
+    assert len(objects(text, 'serviceescalation')) == 1
+    services = [obj for obj in objects(text, 'service') if re.search(
+        r'host_name\s+' + re.escape(first.Nagios_Host_Name) + r'\s*$', obj, re.M)]
+    assert services
+    for service in services:
+        assert re.search(r'event_handler\s+pinpoint_event_handler_service', service)
+        assert re.search(r'contact_groups\s+system_users', service)
+    assert 'define command' in text and 'pinpoint_event_handler_service' in text

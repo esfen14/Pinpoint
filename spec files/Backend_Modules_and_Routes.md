@@ -28,6 +28,7 @@ plugin.scan, plugin.view, plugin.enable, plugin.disable
 plugin.command_override, plugin.command_restore, plugin.validate
 plugin.custom_add, plugin.custom_check, plugin.update, plugin.update_rollback
 settings.security, settings.system, settings.discovery, settings.plugins, settings.email
+remediation.view, remediation.manage
 ```
 
 Some seeded permissions are not attached to a current route. That is tracked as
@@ -145,6 +146,22 @@ apply and commit, log configuration changes when audit logging is enabled, and
 restore the previous database choices on failure. Existing ranges with empty
 groups or absent scoped hosts remain visible with an explanation and are omitted
 from generated configuration. No new permission is introduced.
+
+### `app/api/system/remediation.py`
+
+Allowlisted actions that run when a covered service or host reaches a HARD failure, and the log of what the consumer decided (`app/remediation.py`).
+
+| Method and path | Permission | Purpose |
+|---|---|---|
+| `GET /api/system/remediation/action-types` | `remediation.view` | The action types an admin can pick, each with `key`, `label`, `description` and its parameter schema |
+| `GET /api/system/remediation/actions` | `remediation.view` | All actions, ordered by name |
+| `POST /api/system/remediation/actions` | `remediation.manage` | Create an action; 400 with `data.fields` (field name to message) on invalid input, 422 with Nagios feedback when the regenerated config is rejected (nothing is saved), 201 on success |
+| `PUT /api/system/remediation/actions/<id>` | `remediation.manage` | Replace an action; needs the current integer `version`; 400 with `data.fields`, 404, 409 on a stale version, 422 as for create |
+| `DELETE /api/system/remediation/actions/<id>` | `remediation.manage` | Delete an action; its runs stay in the log; 404, 422 as for create |
+| `GET /api/system/remediation/runs` | `remediation.view` | The run log, newest first: `page`, `per_page` (1 to 100, default 25), filters `action` (action id), `host` (exact name), `outcome`, `from` and `to` (`YYYY-MM-DD`, inclusive); 400 on a bad value; returns `items`, `page`, `per_page`, `pages`, `total` |
+| `GET /api/system/remediation/runs/<id>` | `remediation.view` | One run including its redacted `output`; 404 when missing |
+
+An action body has `name` (3 to 60 letters, numbers, spaces, `.`, `_`, `-`; unique), `actionType` (a key from `action-types`), `scopeKind` (`service` or `host`), `hostPattern` (letters, numbers, `.`, `_`, `-`, `*`), `servicePattern` (required for a service action, null for a host action; also allows spaces, `:` and `/`), `parameters` (validated by the action type; `record_only` takes none and rejects any key), `enabled` (boolean, default false), `maxRunsPerHour` (1 to 60, default 2) and `cooldownSeconds` (60 to 86400, default 600). Patterns match an exact name or use `*` for any run of characters; there is no regex. Unknown fields are errors. Every change regenerates, validates and applies the Nagios config through the shared writer before committing, and is written to the configuration log when audit logging is on. Run list items hold `id`, `actionId`, `actionName`, `hostname`, `service`, `state`, `stateType`, `attempt`, `receivedAt`, `startedAt`, `finishedAt`, `outcome` and `reason`; outcomes are `running`, `succeeded`, `failed`, `timed_out`, `skipped_cooldown`, `skipped_hourly_cap` and `interrupted`. Nothing in a response carries credentials or internal paths.
 
 ### `app/api/system/dashboard.py`
 
@@ -326,6 +343,7 @@ shared writer: validated with the Nagios binary, rolled back if rejected).
 | `POST /api/system/deployment/ncpa/<device_id>/confirm-trust` | `system.deploy.ncpa` | Body `{"fingerprint"}`: save the key only if the live key on the device's SSH port still equals the one the user approved, pinning that port in `SSH_Port`; 409 with `data.fingerprint` when it changed, 502 when unreachable |
 | `POST /api/system/deployment/ncpa/check-credentials` | `system.deploy.ncpa` | Test each device's login and sudo on its pinned SSH port without deploying; per-device result `ok`, `auth_failed`, `no_sudo`, `unreachable`, `host_key_changed`, `not_trusted`, `not_found` or `rate_limited` (one check per device per 3 s) |
 | `POST /api/system/deployment/ncpa/<device_id>/refresh-disks` | `system.deploy.ncpa` | Re-read the agent's logical disks, store them, regenerate the Nagios config |
+| `POST /api/system/deployment/ncpa/<device_id>/cleanup` | `system.deploy.ncpa` | Body `{"username", "password", "remove_account"?}`: only a failed deployment on a trusted device with no running deployment; recheck SSH key before SSH and remove Pinpoint bootstrap key/rule/helper, optionally account. Response lists each step with `ok`/optional `skipped`, and `agent_status`; complete cleanup returns Pending NCPA, incomplete cleanup stays Deployment Failed with a safe error. An activity entry records the outcome; request credentials are cleared. Errors never contain credentials. |
 | `POST /api/system/deployment/ncpa/start` | `system.deploy.ncpa` | Validate credentials and devices, create the run with a Rejected or Pending result per device, and start the worker; 400 with `data.rejected` when no device can be deployed |
 | `POST /api/system/deployment/ncpa/stop` | `system.deploy.ncpa` | Request deployment cancellation; devices not started become Skipped |
 | `GET /api/system/deployment/ncpa/status` | `system.deploy.ncpa` | Latest run with per-device results, outcome counts, starter and review state |
@@ -400,6 +418,23 @@ update/custom-plugin modules.
 | `POST /api/plugin/<plugin_id>/update` | `plugin.update` | Update from an archive |
 | `POST /api/plugin/<plugin_id>/update/rollback` | `plugin.update_rollback` | Restore the backed-up version |
 
+### Data polling settings contract
+
+`GET /api/system` includes `dataPollingInterval` in seconds. `PUT /api/system`
+accepts this optional field: omitting it preserves the saved value. Only integers
+30, 60, 120 and 300 are supported (default 60); strings, booleans, null, fractional
+numbers and unsupported values return 400 before changing settings or scheduling.
+Changing it requires `settings.system` (403 otherwise); unauthenticated writes
+return 401. Unchanged restricted values remain allowed on General saves.
+Existing version conflicts (409) and the audit policy in effect before the save
+apply; audit parameter name is `Data_Polling_Interval`.
+
+Successful changes reschedule the existing `nagios_poll` job without starting a
+disabled scheduler. Exceptions during rescheduling or persistence return 500 and
+restore both the database transaction and the prior job trigger/next run time.
+The job keeps coalescing and its single-instance limit, including while a poll is
+running. Check/retry settings, discovery and browser preferences remain independent.
+
 ## Non-route backend modules
 
 | Module | Responsibility |
@@ -417,7 +452,10 @@ update/custom-plugin modules.
 | `network_discovery/` | Scans networks and builds/applies host/service configuration |
 | `ncpa_deployment/` | Fingerprint-pinned SSH workflow and remote NCPA installation |
 | `logging/` | Writes activity and subsystem audit records |
-| `scheduler.py` | Polling, retention purge, and automation scheduling |
+| `scheduler.py` | Polling, retention purge, automation scheduling, and the remediation spool consumer (every 15 seconds; at startup it marks runs left `running` as `interrupted`) |
+| `remediation.py` | Reads the event handler spool (regular files under 2 KB owned by `REMEDIATION_SPOOL_OWNER`, at most 200 per run, symlinks never followed), parses each strictly, ignores SOFT states and recoveries (a HARD return to OK or UP never runs an action), matches enabled actions, applies the per-host-and-service cooldown and the per-action hourly cap, writes one `RemediationRun` row per decision, deletes the file, then runs the action; a replayed event runs nothing twice (unique `Event_Key` per action) |
+| `remediation_actions.py` | The code-defined action types (`record_only` only, so far): parameter schema and validation, and `run_action`, which enforces a timeout and turns a crash into a fixed message so no secret reaches the log |
+| `scripts/pinpoint_event_handler.py` | The Nagios event handler (standard library only): validates its arguments and writes one JSON file per event to the spool; never opens a shell or the network; installed by the installer at `/usr/local/sbin/pinpoint-event-handler` (`root:root`, 755) |
 | `automation.py` | Settings-driven discovery, plugin/security checks, and database backups |
 
 ## Shared statistics contract

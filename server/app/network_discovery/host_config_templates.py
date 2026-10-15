@@ -1,9 +1,10 @@
 import re
 from pathlib import Path
 
-from app import db
-from app.system_models import Escalation, NotificationPolicy, SystemSettings
 import sqlalchemy as sa
+
+from app import db, remediation
+from app.system_models import Escalation, NotificationPolicy, RemediationAction, SystemSettings
 
 NOTIFICATION_PERIOD = "pinpoint_notify"
 WEEKDAYS = ("sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday")
@@ -147,6 +148,7 @@ def create_host(host):
     )
     rendered = _drop_empty_contact_groups(rendered)
     rendered = add_flap_lines(rendered)
+    rendered = add_event_handler_lines(rendered, "host", host["host_name"], None)
     if host.get("active_checks_enabled") is False:
         rendered = add_inactive_lines(rendered, host.get("notes") or "Address unknown")
     return rendered
@@ -171,6 +173,7 @@ def create_service(service, service_command):
     )
     rendered = _drop_empty_contact_groups(rendered)
     rendered = add_flap_lines(rendered)
+    rendered = add_event_handler_lines(rendered, "service", service["host_name"], service["service_name"])
     if service.get("active_checks_enabled") is False:
         rendered = add_inactive_lines(rendered, service.get("notes") or "Address unknown")
     return rendered
@@ -215,6 +218,67 @@ def create_notification_commands():
         python=NOTIFY_PYTHON,
         script=script,
     )
+
+
+# ----------------------------------------------------------------------
+# Event handler (remediation)
+#
+# A covered host or service gets `event_handler pinpoint_event_handler_<kind>`: Nagios then
+# runs server/scripts/pinpoint_event_handler.py (installed by the installer at
+# EVENT_HANDLER_PATH) on every state change, and it leaves a note in the spool folder.
+# Nothing is written unless an action is enabled AND the program exists on this machine,
+# because Nagios rejects a config that names an undefined command. Objects no enabled
+# action covers are rendered exactly as before.
+# ----------------------------------------------------------------------
+EVENT_HANDLER_PATH = "/usr/local/sbin/pinpoint-event-handler"
+EVENT_HANDLER_COMMANDS = {"host": "pinpoint_event_handler_host", "service": "pinpoint_event_handler_service"}
+
+
+def handler_exists(path):
+    """True when the handler program is a file on this machine. A separate function so tests can set it."""
+    return Path(path).is_file()
+
+
+def event_handler_path():
+    """The handler path to write into config, or None when it is missing or unsafe in a command line."""
+    if not _SAFE_COMMAND_PATH.match(EVENT_HANDLER_PATH) or not handler_exists(EVENT_HANDLER_PATH):
+        return None
+    return EVENT_HANDLER_PATH
+
+
+def enabled_remediation_actions():
+    """All enabled remediation actions (read-only)."""
+    return db.session.scalars(sa.select(RemediationAction).where(RemediationAction.Enabled.is_(True))).all()
+
+
+def create_event_handler_commands():
+    """The `define command` blocks for the event handler, or an empty string when none are needed."""
+    script = event_handler_path()
+    if script is None or not enabled_remediation_actions():
+        return ""
+    return _load_template("event_handler_commands.cfg.tpl").format(python=NOTIFY_PYTHON, script=script)
+
+
+def add_event_handler_lines(rendered, kind, host_name, service_name):
+    """
+    Append `event_handler` and `event_handler_enabled 1` to a rendered host or service when an
+    enabled action covers it, just before the closing brace. Otherwise return it unchanged. The
+    same matching as the consumer (app/remediation.py) decides what is covered.
+    """
+    if event_handler_path() is None:
+        return rendered
+    event = {"kind": kind, "host": host_name, "service": service_name}
+    if not any(remediation.covers(action, event) for action in enabled_remediation_actions()):
+        return rendered
+    body = rendered.rstrip()
+    assert body.endswith("}")
+    lines = [
+        body[:-1].rstrip(),
+        "    %-32s%s" % ("event_handler", EVENT_HANDLER_COMMANDS[kind]),
+        "    %-32s%s" % ("event_handler_enabled", "1"),
+        "}",
+    ]
+    return "\n".join(lines)
 
 
 def create_contact(contact):

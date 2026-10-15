@@ -15,6 +15,7 @@ const api = vi.hoisted(() => ({
   confirmTrust: vi.fn(),
   checkCredentials: vi.fn(),
   startDeployment: vi.fn(),
+  cleanupDeployment: vi.fn(),
 }))
 
 vi.mock('../lib/ncpaDeploymentApi', () => ({
@@ -110,6 +111,27 @@ describe('NcpaDeploymentPage', () => {
     expect(card('Failed')).toHaveTextContent('1')
     expect(card('Down')).toHaveTextContent('1')
     expect(screen.getByRole('tab', { name: /Deployment History/ })).toHaveTextContent('1 to review')
+  })
+
+  it('offers cleanup only on trusted failed devices, reports steps and clears credentials', async () => {
+    api.cleanupDeployment.mockResolvedValue({
+      device_id: 3, agent_status: 'Pending NCPA',
+      steps: [{ step: 'key', ok: true }, { step: 'sudo_rule', ok: true }, { step: 'helper', ok: true }],
+    })
+    renderPage()
+    const failedRow = (await screen.findByText('app-03')).closest('tr')!
+    expect(within(screen.getByText('web-01').closest('tr')!).queryByRole('button', { name: /Clean up/ })).not.toBeInTheDocument()
+    expect(within(screen.getByText('db-02').closest('tr')!).queryByRole('button', { name: /Clean up/ })).not.toBeInTheDocument()
+    fireEvent.click(within(failedRow).getByRole('button', { name: /Clean up/ }))
+    const dialog = screen.getByRole('dialog', { name: /Clean up/ })
+    fireEvent.change(within(dialog).getByLabelText('SSH username'), { target: { value: 'operator' } })
+    fireEvent.change(within(dialog).getByLabelText('SSH password'), { target: { value: 'private-secret' } })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Run cleanup' }))
+    await waitFor(() => expect(api.cleanupDeployment).toHaveBeenCalledWith(3, 'operator', 'private-secret', false))
+    expect(await within(dialog).findByText(/key.*complete/i)).toBeInTheDocument()
+    expect(within(dialog).getByLabelText('SSH password')).toHaveValue('')
+    expect(within(dialog).getByLabelText('SSH username')).toHaveValue('')
+    expect(screen.queryByText('private-secret')).not.toBeInTheDocument()
   })
 
   it('opens host-key verification for an unverified device', async () => {

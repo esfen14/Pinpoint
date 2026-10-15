@@ -4,6 +4,7 @@ import { CheckCircle2, KeyRound, Power, ServerCog, XCircle } from 'lucide-react'
 import { PageHeader } from '../components/shared/PageHeader'
 import { SummaryStatCard } from '../components/shared/SummaryStatCard'
 import { NcpaDevicesTable } from '../components/ncpa-deployment/NcpaDevicesTable'
+import { CleanupDialog } from '../components/ncpa-deployment/CleanupDialog'
 import { DeploymentHistoryTable } from '../components/ncpa-deployment/DeploymentHistoryTable'
 import { DeploymentRunBanner } from '../components/ncpa-deployment/DeploymentRunBanner'
 import { DeploymentRunDrawer } from '../components/ncpa-deployment/DeploymentRunDrawer'
@@ -35,6 +36,7 @@ export function NcpaDeploymentPage() {
   const [devicesKey, setDevicesKey] = useState(0)
   const [checked, setChecked] = useState<Set<number>>(new Set())
   const [wizard, setWizard] = useState<WizardOptions | null>(null)
+  const [cleanupDevice, setCleanupDevice] = useState<NcpaDevice | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [historyKey, setHistoryKey] = useState(0)
   const [historyCounts, setHistoryCounts] = useState<{ total: number; needsReview: number } | null>(null)
@@ -244,6 +246,7 @@ export function NcpaDeploymentPage() {
           onDeploySelected={() => openWizard({ initialSelection: [...selected] })}
           onVerify={(id) => openWizard({ initialSelection: [id], startStep: 1, verifyOnly: true })}
           onRetry={(id) => openWizard({ initialSelection: [id] })}
+          onCleanup={setCleanupDevice}
         />
       ) : (
         <DeploymentHistoryTable refreshKey={historyKey} onSelectRun={openRun} />
@@ -267,6 +270,8 @@ export function NcpaDeploymentPage() {
           }}
         />
       )}
+
+      {cleanupDevice && <CleanupDialog device={cleanupDevice} onClose={() => setCleanupDevice(null)} onChanged={loadDevices} />}
 
       {wizard && (
         <DeployWizard
