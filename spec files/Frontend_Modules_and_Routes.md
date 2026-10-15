@@ -157,3 +157,10 @@ states are present; mutations disable controls while applying. No eligible group
 disables the form and explains Active/email-alert eligibility. Inactive saved
 ranges remain visible and removable. Help explains replacement recipients,
 notification counts, interval zero and existing quiet-hour/suppression behavior.
+
+The opt-in browser regression is `e2e/escalations.lab.spec.ts`, Playwright project
+`issue-116-live`. Set `ISSUE116_LAB_URL` to an exclusively owned test lab and
+`LAB_ADMIN_PASSWORD` for its administrator (optional `LAB_ADMIN_EMAIL`), then run
+`npx playwright test --project=issue-116-live` from `client/`. With no lab URL the
+test skips before any request; normal Vitest verification never runs live tests.
+Login screenshots, video and traces remain disabled.
