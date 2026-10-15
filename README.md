@@ -140,6 +140,8 @@ Supported Python version: **3.14** (developed on 3.14.2).
 | `NAGIOS_MAIN_CFG` | `/usr/local/nagios/etc/nagios.cfg` | no | Main Nagios config, used for `nagios -v` validation. |
 | `NAGIOS_BIN` | `/usr/local/nagios/bin/nagios` | no | Nagios binary, used for validation. |
 | `NAGIOS_COMMAND_FILE` | `/usr/local/nagios/var/rw/nagios.cmd` | no | Nagios external command pipe; the service user must be in group `nagios` to write it. |
+| `REMEDIATION_SPOOL_DIR` | `/usr/local/nagios/var/spool/pinpoint-events` | no | Folder the Nagios event handler writes one small file per state change to; PinPoint's consumer reads and deletes them. The installer creates it (owner `nagios`, group `pinpoint`, mode 2770). |
+| `REMEDIATION_SPOOL_OWNER` | `nagios` | no | The only user whose spool files PinPoint trusts; a file owned by anyone else is discarded. |
 | `NAGIOS_PLUGIN_DIR` | `/usr/local/nagios/libexec/` | no | Directory scanned by the Plugin Manager. |
 | `PINPOINT_SECRETS_KEY` | `SECRET_KEY` | no | Text the encryption key for stored custom-check passwords is derived from. Without it the key comes from `SECRET_KEY`. If the key changes, stored passwords cannot be read: those checks are left out of `hosts.cfg` until an administrator enters the password again. Keep it stable across upgrades, or set it separately so rotating `SECRET_KEY` does not discard passwords. |
 | `PINPOINT_PORT_ARCHIVE_AFTER_DAYS` | `30` | no | Days a port stays `MISSING` before it is archived and its service leaves Nagios. A number above zero; anything else stops startup. Mainly for shortening the wait in a test lab. |

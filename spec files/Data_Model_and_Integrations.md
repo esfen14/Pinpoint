@@ -30,6 +30,7 @@ acknowledgements belong in `system.db` even though they relate to Nagios alerts.
   with `Reviewed_At`/`Reviewed_By`), `NCPADeploymentResult` (one row per device
   per run), `NCPADeployment` (each device's latest agent state),
   `NCPADevicePartition`.
+- Remediation: `RemediationAction` (`REMEDIATION_ACTION`): the admin-defined rule with `Name` (unique), `Action_Type`, `Scope_Kind` (service or host), `Host_Pattern`, `Service_Pattern`, `Parameters` (JSON, validated per type), `Enabled`, `Max_Runs_Per_Hour`, `Cooldown_Seconds`, `Version` and `Updated_By`/`Updated_At`; and `RemediationRun` (`REMEDIATION_RUN`): one row per decision with `Event_Key` (sha256 of kind, host, service, state and last state change; unique together with `Action_Id`), `Action_Id` (a plain number, not a foreign key, so deleting an action keeps its runs), `Action_Name` (a copy), host, service, state, `State_Type`, `Attempt`, `Received_At`, `Started_At`, `Finished_At`, `Outcome`, `Reason` and `Output` (at most 1 KB, redacted). Both live in `system.db` because PinPoint writes them; `history.db` stays Nagios snapshots only. Migration `e4a7c1d9b305` creates both tables and the `remediation.view` and `remediation.manage` permissions, granted to the Administrator role.
 - Settings: singleton `SystemSettings`, singleton `NotificationPolicy` (`NOTIFICATION_POLICY`, Id 1, migration `143c48cd6663`), one-per-user `UserPreferences`. `NotificationPolicy` stores weekday/HH:MM quiet windows as JSON, host/service option strings, a 0–1440-minute renotify interval, `Version`, and `Updated_By`; the migration seeds the historical 24x7/default-options/30-minute policy and removes the table on downgrade.
 - Notifications/alerts: `NotificationCursor`, `AlertAcknowledgement`,
   append-only `AckHistory`.
@@ -208,6 +209,18 @@ matching `AcknowledgementType.NORMACK`. This path is injection-sensitive
 `app/nagios/notifications.py` reads `archivejson.cgi` for durable alert and
 notification event ranges.
 
+Event handler: when at least one enabled `RemediationAction` exists and the program
+`/usr/local/sbin/pinpoint-event-handler` is a file on this machine,
+`host_config_templates.py` writes the commands `pinpoint_event_handler_service` and
+`pinpoint_event_handler_host` into `hosts.cfg` (every Nagios macro single-quoted; the path must
+be a safe Linux path) and adds `event_handler` and `event_handler_enabled 1` to exactly the hosts
+and services an enabled action covers, using the same matching as the consumer. With no enabled
+action, or without the program, the generated file is byte-for-byte what it was before.
+Nagios runs the handler as `nagios` on every state change of a covered object; the handler writes
+one file per event to `REMEDIATION_SPOOL_DIR`, and `app/remediation.py` decides and records. The
+spool folder, the root-owned handler and narrower rights for the `nagios` group are installer work
+(see the installer instructions); the application never runs a command taken from an event.
+
 `Config.NAGIOS_HOST` is the CGI network host. In contrast,
 `api/system/statistics.py` uses `NAGIOS_HOST = "localhost"` to identify the
 Nagios server within status data. Changing either requires understanding its
@@ -248,6 +261,11 @@ are not part of that latency or the check freshness threshold.
 - Daily purging based on `Log_Retention_Days` and
   `Diagnostic_History_Retention_Days`.
 - Settings-driven automation checks every `AUTOMATION_CHECK_MINUTES`.
+- The remediation spool consumer every 15 seconds (`max_instances=1`); at startup, runs left
+  `running` by a stop become `interrupted` and are never run again.
+
+The daily purge also deletes `RemediationRun` rows older than
+`Diagnostic_History_Retention_Days`.
 
 `automation.py` can schedule database backups, network discovery, plugin update
 scans, and plugin security validation. Scheduled network discovery runs only if
