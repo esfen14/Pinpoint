@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useState } from 'react'
 import { AlertTriangle, ExternalLink, Loader2, Send } from 'lucide-react'
 
 import { SettingsCard } from './SettingsCard'
@@ -13,19 +13,8 @@ const MAIL_POLL_MS = 30000
 
 const APP_PASSWORDS_URL = 'https://myaccount.google.com/apppasswords'
 
-// Same field look as SettingsSelect, so every control in the form lines up.
 const inputClass =
   'h-10 w-full rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 text-sm text-[var(--text)] outline-none transition duration-200 focus:border-[#ffb100] disabled:cursor-not-allowed disabled:opacity-60'
-
-function Field({ id, label, hint, children }: { id: string; label: string; hint?: ReactNode; children: ReactNode }) {
-  return (
-    <div>
-      <label htmlFor={id} className="mb-2 block text-sm font-medium text-[var(--text)]">{label}</label>
-      {children}
-      {hint && <p className="mt-1.5 text-xs text-[var(--text-muted)]">{hint}</p>}
-    </div>
-  )
-}
 
 interface FormState {
   provider: 'gmail' | 'custom'
@@ -240,13 +229,16 @@ export function EmailSettings() {
             <label className="block text-sm text-[var(--text)]">
               Sender
               <input
-                id="smtp-username"
-                aria-label="Username"
+                id="smtp-sender"
+                aria-label="Sender"
                 type="email"
-                value={form.username}
-                placeholder="you@gmail.com"
+                value={form.sender}
+                placeholder={isGmail ? 'you@gmail.com' : 'alerts@example.org'}
                 autoComplete="off"
-                onChange={(e) => setUsername(e.target.value)}
+                onChange={(e) => {
+                  setSenderEdited(true)
+                  setForm({ ...form, sender: e.target.value })
+                }}
                 className={inputClass}
               />
               <span className="mt-1.5 block text-xs text-[var(--text-muted)]">
