@@ -48,6 +48,7 @@ table while you test, not afterward.
 
 | Run | Kind | Commit | Result | Report |
 |---|---|---|---|---|
+| [2026-10-15 issue-120-event-handler](2026-10-15-issue-120-event-handler/REPORT.md) | Existing lab appliance: event handler chain on real Nagios, cooldown and hourly cap, permissions, `nagios -v` | `420e55d9` (first deployed at `708dd520`) | Partial: 11 pass, 1 fail found and fixed (recovery ran the action), 5 skipped (browser, service scope, live SOFT, replay, byte-identical diff) | [REPORT.md](2026-10-15-issue-120-event-handler/REPORT.md) |
 | [2026-10-15 issue-79-inbox-confirmed](2026-10-15-issue-79-inbox-confirmed/REPORT.md) | Owner-confirmed actual selected/default inbox comparison | app `4ed80435` | Pass: selected inbox eight messages; default-only inbox four; exclusion confirmed | [REPORT.md](2026-10-15-issue-79-inbox-confirmed/REPORT.md) |
 | [2026-10-15 issue-79-rebuilt-inbox](2026-10-15-issue-79-rebuilt-inbox/REPORT.md) | Rebuilt VM, browser E2E and actual Gmail transport | `4ed80435` | Partial: 11 pass; owner inbox comparison pending; baseline restored | [REPORT.md](2026-10-15-issue-79-rebuilt-inbox/REPORT.md) |
 | [2026-10-15 issue-79-vm-browser](2026-10-15-issue-79-vm-browser/REPORT.md) | VM real Nagios host/service routing and Playwright | app `3d6471dc` | Partial: feature checks pass; snapshot restore failed, two inherited edits unrecovered; inbox pending | [REPORT.md](2026-10-15-issue-79-vm-browser/REPORT.md) |
