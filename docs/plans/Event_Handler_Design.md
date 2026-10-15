@@ -14,7 +14,7 @@ threat row with a test, and keep the lab run to the security-relevant checks.
 Decisions already made by the project owner (2026-10-14): **D1** narrow the `nagios` group rights,
 **D2** leave remote restart out of the first release, **D3** the handler is
 `/usr/local/sbin/pinpoint-event-handler`, root-owned, with its source kept in this repository.
-Installer changes are written up in `Installer_Instructions_Proactive_Resolution.md` (not built
+Installer changes are written up in [`Installer_Instructions_Proactive_Resolution.md`](Installer_Instructions_Proactive_Resolution.md) (not built
 here).
 
 ## 1. What this issue delivers (and what it does not)
