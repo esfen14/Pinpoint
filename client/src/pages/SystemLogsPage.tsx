@@ -16,6 +16,7 @@ type LogTab = LogCategory | 'nagios'
 
 export function SystemLogsPage() {
   const { hasPermission } = useCurrentUser()
+  const canViewLogs = hasPermission('system.logs')
   const { settings } = useSystemSettings()
   const [activeTab, setActiveTab] = useState<LogTab>('activity')
   const [selectedLog, setSelectedLog] = useState<LogEntry | null>(null)
@@ -45,7 +46,7 @@ export function SystemLogsPage() {
   }, [activeTab, startDate, endDate])
 
   useEffect(() => {
-    if (activeTab === 'nagios' || !hasPermission('system.logs')) return
+    if (activeTab === 'nagios' || !canViewLogs) return
     const endpoint = LOG_ENDPOINTS[activeTab]
     let cancelled = false
 
@@ -77,7 +78,7 @@ export function SystemLogsPage() {
     return () => {
       cancelled = true
     }
-  }, [activeTab, page, debouncedQuery, startDate, endDate])
+  }, [activeTab, page, debouncedQuery, startDate, endDate, canViewLogs])
 
   const getTabLabel = (tab: LogTab) => {
     switch (tab) {
@@ -96,7 +97,7 @@ export function SystemLogsPage() {
     }
   }
 
-  if (!hasPermission('system.logs')) return null
+  if (!canViewLogs) return null
 
   return (
     <main className="ml-[220px] flex-1">

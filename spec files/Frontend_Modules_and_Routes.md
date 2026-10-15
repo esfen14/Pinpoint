@@ -27,7 +27,7 @@ requests use `src/lib/api.ts`; Plugin Manager wrappers live in
 | `/ncpa-deployment` | `NcpaDeploymentPage` | `system.deploy.ncpa` | Warns, through `useNcpaPluginState`, when `check_ncpa` is not enabled in Plugin Manager (the agent's checks are monitored only while it is). Connected to the NCPA deployment routes: device list, deploy wizard (host-key trust, login checks, start), live run banner, Deployment History tab and run review drawer (`?tab=history&run=<id>`). Trusted failed devices (not deployed/healthy devices) have a Clean up dialog: it accepts ephemeral SSH credentials, optionally removes the deployment account after artifact removal, shows each cleanup step and refreshes the list; fields clear after every request. |
 | `/remediation` | `RemediationPage` | `remediation.view` | Connected to `/api/system/remediation/...`; sidebar entry "Remediation". An Actions tab (banner "Actions run automatically when a service reaches a hard failure", an enable switch per action, an add/edit form built from the action types with server messages shown against the right field, delete with confirmation; with only `remediation.view` the list is read-only) and a Run log tab (filters for action, outcome, host and dates, pagination, skipped runs show their reason, a drawer with the redacted output). Changes need `remediation.manage`; 409 offers a reload and 422 shows the Nagios message |
 | `/reports` | `ReportsPage` | `system.report` | Connected for host availability and network-services views; backend exposes additional report routes |
-| `/system-logs` | `SystemLogsPage` | `system.logs` | Connected to five log categories |
+| `/system-logs` | `SystemLogsPage` | `system.logs` | Connected to five audit log categories and a bounded Nagios log tab |
 | `/accounts` | `ManageAccountsPage` | `account.view` | Connected to account/role APIs. The table shows each user's Email Alerts (On/Off); the add and edit forms show a "Send this user email alerts" checkbox only with `account.alerts`, and a failed Nagios apply is shown as a notice. The first account is marked by the account API as `is_super_admin`; its edit form keeps Status Active, disables the status selector, explains that the bootstrap administrator must retain account/role administration, and disables role options whose `preserves_bootstrap_admin_access` value is false |
 | `/manage-roles` | `ManageRolesPage` | `role.view` | Connected to role and permission APIs. The built-in `Administrator` role shows every permission as read-only with an explanation, and its name cannot be edited. The bootstrap administrator's assigned role is marked as locked; its edit form disables the seven account/role administration permission controls and role deactivation, even when assigned to a different role |
 | `/settings` | `SettingsPage` | Any logged-in user; tabs are separately gated | Connected to system settings and user preferences. Tabs: General Settings, Security, System, Network Discovery, Plugins and Email; the System tab includes the notification-policy card |
@@ -177,3 +177,26 @@ The opt-in browser regression is `e2e/escalations.lab.spec.ts`, Playwright proje
 `npx playwright test --project=issue-116-live` from `client/`. With no lab URL the
 test skips before any request; normal Vitest verification never runs live tests.
 Login screenshots, video and traces remain disabled.
+
+
+## Appliance storage and Nagios log viewer
+
+`DashboardPage` passes status `storage_usage` through `types/dashboard.ts` to
+`components/dashboard/StorageUsageCard.tsx`. It displays database/backup/archive
+sizes, per-location free/total disk and a warning below 10% free, with the
+threshold in help text, unavailable/partial labels, loading and error states.
+The card requires `system.dashboard` and preserves old status payload handling.
+Status loads independently so a failing or denied Network Health source does not
+hide appliance storage.
+
+`SystemLogsPage` retains its five paginated audit categories and adds **Nagios
+log**, a separate `components/system-logs/NagiosLogPanel.tsx` rather than a
+paginated audit record. It reads `/api/system/log/nagios?lines=200` through the
+shared API client and `NagiosLogResponse` in `types/log.ts`. Refresh disables
+while loading; empty, file-unavailable, network failure and 403 states are
+explicit, and stale requests are ignored after unmount. Search/date filters,
+details and audit export do not apply to the bounded tail. Help states that only
+the latest 200 lines within 64 KiB are shown, newest last, that hostnames and
+addresses may appear, and that free-form outputs/commands/messages are redacted.
+The page/tab require `system.logs` and issue no log requests without it. Existing
+audit export retains its format choices and behavior.

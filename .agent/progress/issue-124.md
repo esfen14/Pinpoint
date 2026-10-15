@@ -76,7 +76,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 ## Plan
 
-1. [ ] Backend tests first: add server/tests/unit/test_storage_usage.py and test_nagios_log.py; implement server/app/storage_usage.py and nagios_log.py; extend api/system/dashboard.py and log.py, config.py/README settings and backend route catalog. Run focused and backend checks.
+1. [x] Backend tests first: add server/tests/unit/test_storage_usage.py and test_nagios_log.py; implement server/app/storage_usage.py and nagios_log.py; extend api/system/dashboard.py and log.py, config.py/README settings and backend route catalog. Run focused and backend checks.
 2. [x] Frontend tests first: storage card and log panel under client/src/test/; implement components/dashboard/StorageUsageCard.tsx and components/system-logs/NagiosLogPanel.tsx; wire pages/DashboardPage.tsx, SystemLogsPage.tsx and types/dashboard.ts, log.ts. Preserve existing page tests and permissions; run frontend verification.
 3. [x] Separate installer issue branch: tests for setup/configure-log-retention.sh, wire setup/deploy-pinpoint-web.sh and document limits/admin preservation in README.md. Run isolated tests and security review of fixed paths, arguments and secret exposure.
 4. [ ] Finish owning specs, Help and server/tests/README.md; run actual fresh/upgrade lab cases only after proving exclusive lab ownership; record sanitized docs/test-runs report with exact tested commits and observed/untested cases. Re-read issue and run scripts/verify.sh all; checkpoint evidence.
@@ -86,6 +86,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| 4 | Updated all five owning specs, user help and test inventory; isolated VM fresh install, journal volume, logrotate/admin-policy and live permission/API checks; added status-source independence regression and fix | scripts/verify.sh all; docs final; focused frontend 28 tests; actual VM checks | Backend 3315 passed / 14 skipped; docs green; full frontend 695 passed / 1 unrelated BandwidthCard callback timing failure. Fresh install health 60/0, journald 92.5 MiB after 192 MB input, logrotate/admin policy and live API checks pass. Browser/full upgrade pending |
 | 2 | Split shared-client auth test; implemented storage/log UI and permission guards; preserved existing dashboard tests | focused backend: 72 pass; focused frontend: 27 pass; scripts/verify.sh frontend | 695 frontend tests pass, build/lint green (32 warnings). Backend stage still running; initial collected auth test is expected to fail once |
 | 3 | Implemented separate fixed-path installer helper, admin override preservation and logrotate; upstream push denied, existing fork used | python3 -m unittest discover -s tests -p test_log_retention.py; bash -n | 4 installer tests pass, syntax green; installer commit ffb4cc3 |
 | 1 | Added storage/tail helpers and fixed-path APIs plus tests; initial red confirmed missing modules | focused storage/log/dashboard pytest | 70 passed, 1 failed: authorization test requested anonymous and logged-in fixtures sharing a client; split test required |
@@ -93,10 +94,10 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 ## State for the next session
 
-- Last check run (exact command): scripts/verify.sh backend > /tmp/issue124-backend-stage.log 2>&1
-- Result (first failing lines, or "green"): frontend gate green: 695 tests; focused backend green: 72 tests; initial backend stage pending, old auth fixture test failed during collection run.
-- Hypothesis: Backend and UI are independent of installer privileges; all three parts need evidence before ready-for-review.
-- Next action (one specific step, not "continue"): Update owning docs, run full all gate, and fresh-install on the isolated issue124 VM clone using the paired installer.
+- Last check run (exact command): scripts/verify.sh all > /tmp/issue124-all.log 2>&1
+- Result (first failing lines, or "green"): backend 3315 passed, 14 skipped; frontend 695 passed, 1 failed: BandwidthCard.test.tsx:240 expected latest onReading callback to be a reading but got null. Same unchanged file passed the preceding frontend gate.
+- Hypothesis: Existing BandwidthCard callback effect has a timing-dependent test; no issue124 source imports or changes it. Re-run the exact unchanged test once before deciding whether it is a separate blocker.
+- Next action (one specific step, not "continue"): Round 5: rerun unchanged BandwidthCard test, run full all gate again, finish isolated browser/upgrade cases, report evidence and open paired PRs; stop after this round if any mandatory requirement remains unproven.
 
 ## Decisions and notes
 
@@ -108,3 +109,5 @@ Requirement coverage (every requirement the issue states, and the check that pro
 - No lab ownership established yet; never reset shared VMs or discard other agents' edits.
 
 - To avoid shared-lab ownership ambiguity, created a linked clone of the base snapshot named pinpoint-issue124-appliance; its separate internal network and loopback ports will isolate acceptance without changing shared appliance/targets. Base snapshot remains untouched.
+
+- Installer draft PR: https://github.com/lorraine-pangilinan/PinPoint-Installer/pull/8 (existing esfen14 fork; upstream push denied). VM private config /tmp/issue124-vmlab.env, guarded SSH wrapper /tmp/issue124-ssh, private test credentials /tmp/issue124-private. App fresh commit f80d6c1; installer ffb4cc3.

@@ -15,6 +15,7 @@ export default defineConfig({
     video: 'off',
   },
   projects: [
+    { name: 'issue-124-live', testMatch: /storage-logs\.lab\.spec\.ts/, use: { ...devices['Desktop Chrome'] } },
     {
       name: 'setup-admin',
       testMatch: /auth\.setup\.ts/,

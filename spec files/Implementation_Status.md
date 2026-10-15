@@ -63,7 +63,16 @@ the normative behavior in the requirement specifications.
   review, and trusted-device routes.
 - NCPA bootstrap probes log expected missing-account/key exits at INFO while
   preserving creation behavior; unexpected command failures remain ERROR (#47).
-- Activity, configuration, discovery, NCPA, and export logs.
+- Activity, configuration, discovery, NCPA, and export logs. Issue #124 adds a
+  read-only fixed-path Nagios log tail and a System Logs tab (200 lines by
+  default, caps 500 lines / 64 KiB, command/output redaction, permission and
+  unavailable states). Dashboard status now includes bounded database, backup
+  and archive storage measurements with per-location free disk and a below-10%
+  warning. No model/migration/permission changes. Paired installer changes live
+  on `issue-124-log-retention` in the separate installer repository: 100 MiB / 7-day
+  host journal defaults, administrator-policy preservation and weekly installer
+  log rotation. Automated tests cover helpers/APIs/UI and installer fixtures;
+  live fresh/upgrade evidence and paired PR review remain pending.
 - Availability, OS, network-service, device-service, alert, and notification
   report APIs. Host availability and hosts-by-OS reports use Nagios
   `archivejson.cgi` durations, matching Network Health; Nagios failure returns

@@ -96,6 +96,7 @@ Basenames below live under `unit/`, except `integration/test_live_nagios.py`.
 
 | File | Coverage |
 |---|---|
+| `test_storage_usage.py`, `test_nagios_log.py` | Appliance size/missing/partial filesystem measurements, bounded tail/unterminated/large files, conservative redaction, fixed path, invalid parameters, special files and login/permission guards |
 | `test_dashboard.py` | Dashboard auth guards, monitoring status, summary, active alerts, acknowledgement workflows, and recent notifications |
 | `test_network_health.py` | Summary, trend windows/buckets, plugin grouping, last-scan metadata, and auth guards |
 | `test_network_hosts.py` | Latest-host listing/filtering/pagination, host details, and host acknowledgement |

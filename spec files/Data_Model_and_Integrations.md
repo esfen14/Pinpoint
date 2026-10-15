@@ -258,6 +258,36 @@ A new Nagios result can take up to one poll cycle to appear in Pinpoint, then
 up to one browser refresh cycle to appear in the dashboard. Discovery scans
 are not part of that latency or the check freshness threshold.
 
+## Appliance storage and Nagios log access
+
+`app/storage_usage.py` measures the SQLite files returned by
+`automation.database_file_paths()` (in-memory databases omitted),
+`DATABASE_BACKUP_DIR` and `NAGIOS_LOG_ARCHIVE_DIR`. File lengths use `os.stat`;
+folders sum regular-file lengths, skipping symlinks, with budgets of 10,000
+entries and 0.1 seconds per directory tree. `complete=false` marks a partial
+folder total, which the UI labels “At least”. Missing/unreadable paths have
+`bytes=null`, never a fabricated zero. `shutil.disk_usage` reports free/total
+bytes separately for every location, including split mounts. A missing path
+uses its nearest existing parent for disk space. No internal directory paths
+are returned. This is a current measurement on each dashboard-status request,
+independent of host count or monitoring plugin configuration; it creates no
+model or migration.
+
+`app/nagios_log.py` reads only the trusted `NAGIOS_LOG_PATH`, default
+`/usr/local/nagios/var/nagios.log`. It opens read-only, nonblocking, without
+following a final symlink, checks for a regular file and seeks to the last
+64 KiB. A clipped first record is discarded. It returns at most 500 lines
+(default 200) in file order, newest last, with optional exclusive `after` Unix
+seconds. Unterminated final lines are supported. Unknown/unparseable timestamps
+are omitted when `after` is positive. Missing, unreadable, symlinked and special
+files give an empty unavailable result. It never loads the whole log or accepts
+a path from HTTP. Host/service alert and current/initial state records keep
+validated host/service names, state/type/attempt fields; plugin output and all
+other messages, including commands and debug content, are replaced with
+redaction markers. Hostnames and addresses can remain visible. This
+conservative policy avoids guessing which free-form arguments are secrets.
+Nagios continues to own log rotation; Pinpoint does not modify its logs.
+
 ## Scheduler and retention
 
 `scheduler.py` runs:
