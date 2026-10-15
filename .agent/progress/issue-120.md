@@ -1,7 +1,7 @@
 # Issue #120: System Implementation Add Allowlisted Event Handler Framework With Remediation Screen and Installer Support
 
 Branch: `issue-120-event-handler-framework`
-Status: in-progress
+Status: blocked
 <!-- Status is one of: in-progress | blocked | ready-for-review -->
 
 Plan issue #7. Design approved by the project owner 2026-10-15 (answers recorded at the top of
@@ -65,13 +65,14 @@ Requirement coverage:
 | 6 | Plan step 4: config rendering in host_config_templates.py (handler_exists, event_handler_path, create_event_handler_commands, add_event_handler_lines), template event_handler_commands.cfg.tpl, commands emitted in create_host_cfg.py; tests first: no/disabled action or missing handler leaves output byte-identical, covered objects only, same matching as consumer, every macro single-quoted, unsafe path refused | pytest tests/unit/test_event_handler_config.py plus 18 related config test files | 18 new passed; related files 369 passed, 1 known Windows file-lock failure (test_notification_policy_migration, fails on clean checkout too) |
 | 7 | Plan step 5: API server/app/api/system/remediation.py (7 routes, per-field 400, 409, 422 rollback, run filters, audit log), permissions remediation.view/manage in seed.py and conftest, granted to Administrator by migration e4a7c1d9b305 (as b6e1d4a8c2f9 did for settings.email); test_upgrade_rehearsal expectations extended for the two new permissions; tests first | pytest test_remediation_api.py, test_remediation_migration.py, test_upgrade_rehearsal.py; full tests/unit | 63 API tests pass; full suite 2828 passed, 5 failed of which 2 were mine (upgrade rehearsal, now fixed) and 3 are Windows-only/known |
 | 8 | Plan step 6: frontend. types/remediation.ts, lib/remediationApi.ts, pages/RemediationPage.tsx, components/remediation/ (ActionsTable, ActionFormDialog, RunLog, RunDrawer), route in App.tsx, sidebar entry, pageAccess '/remediation' -> remediation.view; tests first (25 page tests, PageAccess and App tests extended) | npx vitest run (all), npm run build, eslint on new files | 582 passed; build ok; lint 0 errors (1 warning: load-in-effect, same pattern as other pages) |
+| 9 | Plan step 7 (all but the lab): README env table, Backend/Data/Frontend specs, Implementation_Status; merged origin/main (one conflict, both imports kept); migration re-chained after main's merged head e79b7d3c2641; docs checks, route and client drift checks; full backend and frontend suites on the merged tree | scripts/verify.sh docs (by hand past a known Windows failure), pytest tests/unit, vitest run, npm run build, npm run lint | frontend 669 passed, build ok, lint 0 errors; backend 3025 passed, 7 failed + 26 errors all Windows-only or failing on untouched main (checked in a worktree) |
 
 ## State for the next session
 
-- Last check run (exact command): cd client; npx vitest run; npm run build
-- Result: 582 passed; build ok
+- Last check run (exact command): cd server; python -m pytest tests/unit -q; cd ../client; npx vitest run; npm run build; npm run lint
+- Result: frontend green; backend only Windows-only/pre-existing failures (test_automation security check, test_nagios_commands needs os.mkfifo, four migration round-trip tests with WinError 32 on temp db cleanup, test_notification_policy_migration)
 - Hypothesis: build order in the design is sound; the handler and consumer are the risky part
-- Next action: plan step 7: update specs (Backend_Modules_and_Routes.md routes and permissions, Data_Model_and_Integrations.md models/retention/event handler config, Frontend_Modules_and_Routes.md page and components, Implementation_Status.md, Event_Handler_Security_Review.md T3 note, installer instructions if handler/spool details changed), run scripts/verify.sh docs then all, then the lab run (needs the owner's explicit go-ahead to deploy to the appliance; installer fixes C and D applied by hand there) and the lab report under docs/test-runs/, then delete this progress file and mark the PR ready. Not yet done anywhere: nagios -v validation of the generated config, Linux CI proof of the symlink and file-mode tests
+- Next action: BLOCKED on the lab. Remaining finish-condition proof: deploy to a lab appliance (owner go-ahead needed), apply installer fixes C and D by hand (spool folder nagios:pinpoint 2770, handler at /usr/local/sbin/pinpoint-event-handler root:root 755), run nagios -v on the generated config, create a record_only action for one lab service, force a hard failure and recovery with passive results, check exactly one run, SOFT gives none, cooldown and cap skips, www-data cannot write the spool, sudo -n -l -U pinpoint unchanged; write docs/test-runs/<date>-issue-120-event-handler/REPORT.md. Also needs Linux CI green (symlink and handler file-mode tests are skipped on Windows). The security review and installer instructions are on the PR #157 branch, not here: add a T3 and handler-path note there. Then delete this progress file and mark the PR ready
 
 ## Decisions and notes
 
