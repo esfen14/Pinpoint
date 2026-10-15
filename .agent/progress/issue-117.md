@@ -1,7 +1,7 @@
 # Issue #117: Manual multiple-parent topology
 
 Branch: `issue-117-manual-topology`
-Status: ready-for-review
+Status: in-progress
 
 ## Finish condition
 
@@ -129,6 +129,8 @@ Requirement coverage (all issue sections):
 4. [x] Record isolated live Nagios reachability/rollback evidence in `docs/test-runs/` using the template; update remaining specifications and local issue mirror; run docs/all verification and checkpoint.
 5. [x] Re-read issue and prove acceptance; publish PR using `.github/pull_request_template.md`, monitor CI; keep draft/progress if live acceptance or human decisions remain outstanding.
 
+6. [ ] Owner-requested continued testing: run browser against real backend/Nagios; fix any in-scope interaction issue with a failing regression, record a new report and verify frontend/docs/CI.
+
 ## Round log
 
 | Round | Change made | Check run | Result |
@@ -145,7 +147,7 @@ Requirement coverage (all issue sections):
 - Last check run (exact command): cd server && FLASK_DEBUG=1 .venv/bin/python -m pytest tests/unit/test_device_parents.py tests/unit/test_device_parent_migration.py -q
 - Result: Final focused parent/migration proof green at /tmp/issue117-last-parent-proof.log (39 passed). Full stable-tree gate /tmp/issue117-final-all.log passed 3040 backend / 14 skips and 653 frontend tests before the final oversized-ID guard. That guard was first proven red (500 from SQLite overflow) then fixed to return 400. Final pushed-tree CI is the remaining automated gate.
 - Hypothesis: Existing writer and Inventory modules can support this without a new dependency; use a relationship table and shared editor.
-- Next action: Watch final PR CI, then obtain human review of PR #174 and the notification-guarantee decision in #173; remove progress before making the PR ready, never merge.
+- Next action: Record real-browser evidence from /tmp/issue117-live-e0853d16, verify the changed frontend/docs, and watch CI for the drawer fix.
 
 ## Decisions and notes
 
@@ -171,3 +173,7 @@ Requirement coverage (all issue sections):
 
 - PR: https://github.com/esfen14/Pinpoint/pull/174 (draft). Progress is intentionally retained because human review/approval and the separate #173 notification-guarantee decision are not agent-proven. Implementation steps and default-retry acceptance are complete; no required reviewer approval or universal single-attempt suppression is claimed. Session has reached five recorded rounds; no further speculative implementation in this session.
 - Final full run before the one-line oversized-ID guard: /tmp/issue117-final-all.log. The added guard had a red regression (1 failed / 7 passed invalid-ID cases), then the complete focused parent/migration proof passed. CI must verify the final source. No source migration or dependency changed during that full run.
+
+- Owner explicitly requested continued testing after the prior handoff, then resumed after an interruption. The prior final source 519a00a passed all CI jobs: https://github.com/esfen14/Pinpoint/actions/runs/38713297084 .
+- Continued round 1: real browser/backend run reproduced an Inventory success-message loss. The parent callback unnecessarily set the host-detail reload key, unmounting the parent editor. A new focused integration regression (`DeviceParentDrawer.test.tsx`) failed first; changed callback to refresh the table only, preserving the editor and confirmation. 43 focused frontend tests then passed, with existing drawer/Inventory tests unchanged.
+- Current actual-browser evidence: /tmp/issue117-live-e0853d16/browser.log and /tmp/issue117-real-browser-run3.log. Real standard login, real Flask APIs and real Nagios validation/reload; no API interception. Both editor placements set/clear/reload, cross-page edges and persistence, cycle rejection/draft retention, restricted controls/direct 403 and zero page errors passed. Initial setup needed a dedicated management bridge to publish the loopback HTTP listener; all owned containers/networks cleaned up. No shared appliance/targets were touched.

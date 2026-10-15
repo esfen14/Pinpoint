@@ -347,7 +347,7 @@ export function StatusDetailDrawer({ hostname, onClose, onMonitoringChanged }: P
               )}
 
               {!service && detail.device_id != null && (
-                <DeviceParentSection key={`parents-${detail.device_id}`} deviceId={detail.device_id} onChanged={() => { setReloadKey(k => k + 1); onMonitoringChanged?.() }} />
+                <DeviceParentSection key={`parents-${detail.device_id}`} deviceId={detail.device_id} onChanged={onMonitoringChanged} />
               )}
 
               {!service && detail.device_id != null && hasPermission('system.hosts.alerts') && (

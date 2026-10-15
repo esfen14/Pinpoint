@@ -159,7 +159,8 @@ stable device ID exists) and the selected-device topology panel. It shows config
 parents to readers, a searchable checkbox multi-select/clear-all/save to
 `system.hosts.edit`, an advisory suggested gateway, monitoring warnings for omitted
 parents, loading/retry/empty states and server validation/apply errors. A rejected
-save retains the draft; a successful save refreshes the graph/drawer. Retired and
+save retains the draft; a successful save refreshes the graph or Inventory table
+without unmounting the editor, so its success message remains visible. Retired and
 merged devices are read-only. Parent choices do not require access to the Ports or
 Interfaces sections.
 
