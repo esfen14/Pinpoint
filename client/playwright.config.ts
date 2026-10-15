@@ -42,6 +42,11 @@ export default defineConfig({
       testMatch: /auth\.host-recipients\.setup\.ts/,
     },
     {
+      name: 'issue-116-live',
+      testMatch: /escalations\.lab\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
       name: 'issue-79-live',
       testMatch: /host-recipients\.lab\.spec\.ts/,
       use: {

@@ -346,3 +346,12 @@ missing/unreadable/nonregular logs, partial blocks, rotation, unrelated jobs and
 fresh settings-API reads. Source-format fixtures were checked against Nagios Core
 4.5.11 `base/workers.c`; these isolated tests do not prove appliance readability
 or real notification delivery.
+`unit/test_escalations.py` covers escalation authentication/permission, exact JSON validation, CRUD/reload, mocked apply failure and rollback, group opt-out/deactivation filtering, scoped/global rendering and unchanged output after deletion. `unit/test_escalation_migration.py` runs `support/escalation_migration_runner.py` against populated disposable system/history databases, proving numeric/FK constraints, a single revision per bind, downgrade/re-upgrade and preservation of recipient/device/history data.
+
+`unit/test_escalation_merge_migration.py` extends the shared populated convergence
+runner to start at either the escalation or remediation head. It verifies a
+single revision on both binds, preservation of each parent's existing feature
+rows, and downgrade/re-upgrade of the schema-free join without losing choices,
+remediation runs, polling values, recipients, interfaces, deployed ports or the
+history marker. The escalation generator tests also cover enabled remediation
+handlers and escalation recipients in the same candidate file.

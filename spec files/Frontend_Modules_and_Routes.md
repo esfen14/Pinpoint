@@ -175,3 +175,28 @@ link. Null removes it; polling errors show a refresh error and retain the last
 observed indicator. Requests do not overlap. A successful test does not clear a
 historical failure; the tab explains this. See the
 [Email settings guide](../docs/manuals/Email_Settings.md).
+### Escalation settings
+
+`SettingsPage` mounts `components/settings/EscalationSettings.tsx` after the
+existing System controls in Settings → System. Both that tab and the card require
+`settings.system`; the card makes no request when permission is absent.
+`lib/escalationApi.ts` uses the shared JSON client for `/api/system/escalations`
+CRUD; `types/escalation.ts` owns the wire contracts. No new tab, route or
+permission is added.
+
+The card lists group, all/device scope, first/last counts, interval, activity
+explanation and Edit/Delete actions. Its form supports create and edit, validates
+finite 1–10000 integer counts and 0–1440 integer minutes before saving, and shows
+server error messages including 400 and 422 without losing rejected drafts.
+Delete requires explicit confirmation. Loading, retry/reload, empty and success
+states are present; mutations disable controls while applying. No eligible group
+disables the form and explains Active/email-alert eligibility. Inactive saved
+ranges remain visible and removable. Help explains replacement recipients,
+notification counts, interval zero and existing quiet-hour/suppression behavior.
+
+The opt-in browser regression is `e2e/escalations.lab.spec.ts`, Playwright project
+`issue-116-live`. Set `ISSUE116_LAB_URL` to an exclusively owned test lab and
+`LAB_ADMIN_PASSWORD` for its administrator (optional `LAB_ADMIN_EMAIL`), then run
+`npx playwright test --project=issue-116-live` from `client/`. With no lab URL the
+test skips before any request; normal Vitest verification never runs live tests.
+Login screenshots, video and traces remain disabled.

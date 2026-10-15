@@ -4,7 +4,7 @@ from pathlib import Path
 import sqlalchemy as sa
 
 from app import db, remediation
-from app.system_models import NotificationPolicy, RemediationAction, SystemSettings
+from app.system_models import Escalation, NotificationPolicy, RemediationAction, SystemSettings
 
 NOTIFICATION_PERIOD = "pinpoint_notify"
 WEEKDAYS = ("sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday")
@@ -327,3 +327,29 @@ def create_multi_host_service(host_group_name, service_name, command, contactgro
         command=command,
         contact_groups=contactgroup
     )
+
+def create_escalations(groups, hosts, services):
+    """Render saved ranges only for eligible groups and present scoped hosts.
+
+    The global wildcard is a fixed literal. Scoped names come from the same
+    generated hosts, never the request; reject control/config metacharacters.
+    Return blocks and referenced groups; this helper does not commit.
+    """
+    blocks, needed = [], set()
+    for row in db.session.scalars(sa.select(Escalation).order_by(Escalation.EscalationID)):
+        if not groups.get(row.Contact_Group):
+            continue
+        hostname = '*' if row.HostID is None else hosts.get(row.HostID)
+        if not hostname or (hostname != '*' and not re.fullmatch(r'[A-Za-z0-9_.:-]+', hostname)):
+            continue
+        if not (1 <= row.First_Notification <= row.Last_Notification <= 10000
+                and 0 <= row.Interval_Minutes <= 1440):
+            continue
+        fields = dict(host_name=hostname, contact_group=row.Contact_Group,
+                      first=row.First_Notification, last=row.Last_Notification,
+                      interval=row.Interval_Minutes)
+        blocks.append(_load_template('hostescalation.cfg.tpl').format(**fields))
+        if row.HostID is None or services.get(hostname):
+            blocks.append(_load_template('serviceescalation.cfg.tpl').format(**fields))
+        needed.add(row.Contact_Group)
+    return blocks, needed
