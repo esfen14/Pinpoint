@@ -5,6 +5,7 @@ import type { HostNotificationOption, NotificationPolicy, QuietHourWindow, Servi
 import { DropdownSelect } from '../shared/DropdownSelect'
 import { Layers, Server } from 'lucide-react'
 import { SettingsToggle } from './SettingsToggle'
+import { notifySettingsChanged } from '../../lib/settingsEvents'
 import { SettingsCard } from './SettingsCard'
 import { SettingsActions } from './SettingsActions'
 
@@ -98,6 +99,7 @@ export function NotificationPolicySettings() {
       setSaved(updated)
       setForm(structuredClone(updated))
       setSavedMessage(true)
+      notifySettingsChanged()
     } catch (err) {
       setSaveError(errorMessage(err, 'Unable to save notification policy.'))
       setConflict(err instanceof ApiError && err.status === 409)

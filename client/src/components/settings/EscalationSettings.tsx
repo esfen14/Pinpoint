@@ -4,6 +4,7 @@ import { errorMessage } from '../../lib/api'
 import { createEscalation, deleteEscalation, getEscalations, updateEscalation } from '../../lib/escalationApi'
 import type { Escalation, EscalationInput, EscalationList } from '../../types/escalation'
 import { DropdownSelect } from '../shared/DropdownSelect'
+import { notifySettingsChanged } from '../../lib/settingsEvents'
 import { SettingsCard } from './SettingsCard'
 
 type Draft = { first: string; last: string; interval: string; group: string; host: string }
@@ -84,6 +85,7 @@ function EscalationEditor() {
       if (editing === null) await createEscalation(input)
       else await updateEscalation(editing, input)
       setMessage('Escalation saved.')
+      notifySettingsChanged()
       const result = await reload()
       // The mutation succeeded even if refreshing the list fails.
       reset(result)
@@ -97,6 +99,7 @@ function EscalationEditor() {
     setMessage(null)
     try {
       await deleteEscalation(deleting)
+      notifySettingsChanged()
       if (editing === deleting) reset()
       setDeleting(null)
       setMessage('Escalation deleted.')
