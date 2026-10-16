@@ -12,7 +12,7 @@ Scope this session (agreed with the user): Part 8.1 only. Parts 8.2 and 8.3 stay
 - [ ] 8.1 Maintenance Mode and the hourly cap block the restart and record why.
 - [ ] 8.1 No shell is used; output contains no secrets.
 - [ ] 8.1 Permitted units exposed through the actions API.
-- [ ] 8.2 sudo rule / visudo / upgrade handling (OUT OF THIS SESSION: installer code not in repo)
+- [x] 8.2 sudo rule / visudo / upgrade handling: already merged in the installer repo (verified 2026-10-16)
 - [ ] 8.3 design note and remote restart (OUT OF THIS SESSION: needs investigation and security decision)
 
 Requirement coverage:
