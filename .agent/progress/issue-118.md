@@ -40,13 +40,14 @@ One row per loop round, newest last.
 |---|---|---|
 | 0 | Scope clarified with user: Nagios native host suppression plus NCPA dependency, default on | Issue updated | Plan ready |
 | 1 | Added the user-approved NCPA TCP master service, notification-only dependencies, and strict default-on environment setting; off leaves the old service set | Focused renderer/reconcile (140 passed); `scripts/verify.sh backend` | 3751 passed, 14 skipped; backend OK |
+| 2 | Ran Docker lab and wrote sanitized `docs/test-runs/2026-10-17-issue-118/REPORT.md` plus index row | Nagios -v: 3 dependencies, 0 warnings/errors; host outage: 1 host event, 0 service events; APIs show 3 critical services; `scripts/verify.sh docs` | Lab checks pass; docs gate fails because new environment variable is absent from README production settings table |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh backend`
-- Result (first failing lines, or "green"): green — 3751 passed, 14 skipped, backend OK.
-- Hypothesis: generated dependency objects are syntactically valid and Nagios already suppresses same-host service notifications, but both need a real lab observation.
-- Next action (one specific step, not "continue"): Run the isolated Docker lab, validate generated dependencies with Nagios, and record a host-down notification/state trial.
+- Last check run (exact command): `scripts/verify.sh docs`
+- Result (first failing lines, or "green"): `Read by the server but missing from the README production settings table: PINPOINT_NCPA_NOTIFICATION_DEPENDENCIES (config.py)`.
+- Hypothesis: the new environment setting must be documented in the production settings table before the docs drift check can pass.
+- Next action (one specific step, not "continue"): Add `PINPOINT_NCPA_NOTIFICATION_DEPENDENCIES` to the README production settings table and rerun `scripts/verify.sh docs`.
 
 ## Decisions and notes
 
