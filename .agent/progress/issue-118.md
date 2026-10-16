@@ -28,8 +28,8 @@ Requirement coverage (every requirement the issue states, and the check that pro
 ## Plan
 
 1. [x] Add failing renderer tests in `server/tests/unit/test_create_host_cfg.py` for default-on, NCPA metric/port pairing, absent target and setting-off baseline service list; implement in `server/app/network_discovery/create_host_cfg.py`, `host_config_templates.py`, `templates/servicedependency.cfg.tpl`, and `server/config.py`; run focused tests and `scripts/verify.sh backend`.
-2. [ ] Run Nagios validation and a host-down notification/state trial using the isolated lab; write sanitized evidence in `docs/test-runs/2026-10-17-issue-118/REPORT.md` and add its index entry in `docs/test-runs/README.md`.
-3. [ ] Update `spec files/Data_Model_and_Integrations.md`, `Backend_Modules_and_Routes.md`, `Implementation_Status.md`, and the relevant user manual with the behavior and setting; run `scripts/verify.sh docs`.
+2. [x] Run Nagios validation and a host-down notification/state trial using the isolated lab; write sanitized evidence in `docs/test-runs/2026-10-17-issue-118/REPORT.md` and add its index entry in `docs/test-runs/README.md`.
+3. [x] Update `spec files/Data_Model_and_Integrations.md`, `Backend_Modules_and_Routes.md`, `Implementation_Status.md`, `README.md`, and the relevant user manual with the behavior and setting; run `scripts/verify.sh docs`.
 4. [ ] Re-read #118, run regressions including `test_plugin_reconcile.py` and `scripts/verify.sh all`, attach backend output, complete the security review, remove this progress file, and open a PR using `.github/pull_request_template.md`.
 
 ## Round log
@@ -41,13 +41,14 @@ One row per loop round, newest last.
 | 0 | Scope clarified with user: Nagios native host suppression plus NCPA dependency, default on | Issue updated | Plan ready |
 | 1 | Added the user-approved NCPA TCP master service, notification-only dependencies, and strict default-on environment setting; off leaves the old service set | Focused renderer/reconcile (140 passed); `scripts/verify.sh backend` | 3751 passed, 14 skipped; backend OK |
 | 2 | Ran Docker lab and wrote sanitized `docs/test-runs/2026-10-17-issue-118/REPORT.md` plus index row | Nagios -v: 3 dependencies, 0 warnings/errors; host outage: 1 host event, 0 service events; APIs show 3 critical services; `scripts/verify.sh docs` | Lab checks pass; docs gate fails because new environment variable is absent from README production settings table |
+| 3 | Documented the configuration variable, dependency behavior, native host suppression, and lab result in README, owning specs, status, and user manual | `scripts/verify.sh docs` | green: 174 links, 25 environment variables, 17 browser routes, docs OK |
 
 ## State for the next session
 
 - Last check run (exact command): `scripts/verify.sh docs`
-- Result (first failing lines, or "green"): `Read by the server but missing from the README production settings table: PINPOINT_NCPA_NOTIFICATION_DEPENDENCIES (config.py)`.
-- Hypothesis: the new environment setting must be documented in the production settings table before the docs drift check can pass.
-- Next action (one specific step, not "continue"): Add `PINPOINT_NCPA_NOTIFICATION_DEPENDENCIES` to the README production settings table and rerun `scripts/verify.sh docs`.
+- Result (first failing lines, or "green"): green — 174 documents, 25 environment variables, 17 browser routes; docs OK.
+- Hypothesis: the scoped behavior is complete; remaining work is the final issue coverage audit and all-stage verification.
+- Next action (one specific step, not "continue"): Re-read issue #118 and run the focused regression and `scripts/verify.sh all` with output saved for the PR.
 
 ## Decisions and notes
 
