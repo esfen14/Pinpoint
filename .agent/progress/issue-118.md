@@ -5,11 +5,11 @@ Status: in-progress
 
 ## Finish condition
 
-- [ ] Generated NCPA dependencies validate in Nagios; a lab host outage sends one host notification and no service notifications.
-- [ ] NCPA metrics depend on their own host's NCPA port service when present, and have no dangling dependency when absent.
-- [ ] With the dependency setting off, generated config is unchanged from the prior output.
-- [ ] Dashboard and Network Health continue showing real service states.
-- [ ] Source, unit and regression tests, technical and user documentation, backend output, and sanitized lab report are delivered.
+- [x] Generated NCPA dependencies validate in Nagios; a lab host outage sends one host notification event and no service notification events.
+- [x] NCPA metrics depend on their own host's NCPA port service when present, and have no dangling dependency when absent.
+- [x] With the dependency setting off, generated config retains the prior services and has no dependency objects.
+- [x] Dashboard and Network Health continue showing real service states.
+- [x] Source, unit and regression tests, technical and user documentation, backend output, and sanitized lab report are delivered.
 - [ ] Applicable code, security, reliability, documentation, verification, CI, and PR review conditions in section H are met or accurately recorded as pending human review.
 
 Requirement coverage (every requirement the issue states, and the check that proves it):
@@ -42,13 +42,14 @@ One row per loop round, newest last.
 | 1 | Added the user-approved NCPA TCP master service, notification-only dependencies, and strict default-on environment setting; off leaves the old service set | Focused renderer/reconcile (140 passed); `scripts/verify.sh backend` | 3751 passed, 14 skipped; backend OK |
 | 2 | Ran Docker lab and wrote sanitized `docs/test-runs/2026-10-17-issue-118/REPORT.md` plus index row | Nagios -v: 3 dependencies, 0 warnings/errors; host outage: 1 host event, 0 service events; APIs show 3 critical services; `scripts/verify.sh docs` | Lab checks pass; docs gate fails because new environment variable is absent from README production settings table |
 | 3 | Documented the configuration variable, dependency behavior, native host suppression, and lab result in README, owning specs, status, and user manual | `scripts/verify.sh docs` | green: 174 links, 25 environment variables, 17 browser routes, docs OK |
+| 4 | Re-read #118, aligned `docs/issues/issue-005.md`, added strict setting parser tests and reviewed generation security | Focused tests `170 passed`; `scripts/verify.sh docs`; `scripts/verify.sh all` saved in `test-results/issue-118-verify-all.log` | all OK: 3762 backend passed/14 skipped, 864 frontend passed, build complete, lint 0 errors/30 warnings |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh docs`
-- Result (first failing lines, or "green"): green — 174 documents, 25 environment variables, 17 browser routes; docs OK.
-- Hypothesis: the scoped behavior is complete; remaining work is the final issue coverage audit and all-stage verification.
-- Next action (one specific step, not "continue"): Re-read issue #118 and run the focused regression and `scripts/verify.sh all` with output saved for the PR.
+- Last check run (exact command): `scripts/verify.sh all > test-results/issue-118-verify-all.log 2>&1`
+- Result (first failing lines, or "green"): green — 3762 backend passed, 14 skipped; 864 frontend passed; build and docs passed; lint 0 errors, 30 warnings; `verify: all OK`.
+- Hypothesis: application code and scoped lab acceptance are ready for PR review; CI and reviewer approvals are post-PR gates.
+- Next action (one specific step, not "continue"): Remove this progress file, create the PR with the exact backend output summary and lab report, then inspect CI checks.
 
 ## Decisions and notes
 
@@ -56,3 +57,6 @@ One row per loop round, newest last.
 - `hostdependency` cannot reference services; no host dependency object will be generated.
 - The user approved a visible per-agent TCP port service as the master. The issue body records this decision. It is generated only while the feature is on and `check_tcp` is enabled.
 - Sensitive-module review will check Nagios object escaping, secret exposure, and pre-apply validation before the PR.
+- Sensitive-module review complete: no new shell command or file destination; the port is checked as a 1–65535 integer before joining a generated name or command, and metric names come from the existing sanitized service planner. Host names are the same values already rendered in host and service objects. Dependency objects contain no check arguments or resource macros, so no token or community is added. The existing candidate validation/apply/rollback path is unchanged. Generation adds linear work per host and no polling or network call.
+- In the Docker lab, each configured contact received one host dispatch for the hard DOWN event (28 contacts); this is one host notification event, not one email total. Zero service notification events occurred.
+- A real NCPA agent/port-failure notification trial remains unverified because the Docker targets do not run NCPA; it is explicitly recorded in the report. Human CI/review approvals remain after PR creation.
