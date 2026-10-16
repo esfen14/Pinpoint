@@ -4,12 +4,20 @@ import { PageHeader } from '../components/shared/PageHeader'
 import { ActionsTable } from '../components/remediation/ActionsTable'
 import { ActionFormDialog } from '../components/remediation/ActionFormDialog'
 import { RunLog } from '../components/remediation/RunLog'
+import { StatusPanel } from '../components/remediation/StatusPanel'
 import { useCurrentUser } from '../contexts/CurrentUserContext'
 import { ApiError, errorMessage } from '../lib/api'
-import { deleteAction, getActionTypes, listActions, updateAction } from '../lib/remediationApi'
-import type { ActionTypeInfo, RemediationAction } from '../types/remediation'
+import {
+  deleteAction, getActionTypes, getHealth, getSettings, listActions, updateAction, updateSettings,
+} from '../lib/remediationApi'
+import type {
+  ActionTypeInfo, RemediationAction, RemediationHealth, RemediationSettings,
+} from '../types/remediation'
 
 type Tab = 'actions' | 'runs'
+
+// How often the health card refreshes; the consumer itself runs every 15 seconds.
+const HEALTH_REFRESH_MS = 15000
 
 const alertClass =
   'rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300'
@@ -28,6 +36,12 @@ export function RemediationPage() {
   const [actionError, setActionError] = useState<string | null>(null)
   const [busyId, setBusyId] = useState<number | null>(null)
   const [editing, setEditing] = useState<RemediationAction | 'new' | null>(null)
+  const [health, setHealth] = useState<RemediationHealth | null>(null)
+  const [healthError, setHealthError] = useState<string | null>(null)
+  const [settings, setSettings] = useState<RemediationSettings | null>(null)
+  const [settingsError, setSettingsError] = useState<string | null>(null)
+  const [statusLoading, setStatusLoading] = useState(true)
+  const [switchSaving, setSwitchSaving] = useState(false)
 
   const load = useCallback(async () => {
     setLoadError(null)
@@ -50,6 +64,62 @@ export function RemediationPage() {
     load()
   }, [load])
 
+  const loadHealth = useCallback(async () => {
+    try {
+      setHealth(await getHealth())
+      setHealthError(null)
+    } catch (err) {
+      setHealthError(
+        err instanceof ApiError && err.status === 403
+          ? 'You do not have permission to view the health of automatic recovery.'
+          : 'Unable to load the health of automatic recovery.',
+      )
+    }
+  }, [])
+
+  const loadSettings = useCallback(async () => {
+    try {
+      setSettings(await getSettings())
+      setSettingsError(null)
+    } catch (err) {
+      setSettingsError(
+        err instanceof ApiError && err.status === 403
+          ? 'You do not have permission to view the kill switch.'
+          : 'Unable to load the kill switch.',
+      )
+    }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    Promise.all([loadHealth(), loadSettings()]).finally(() => {
+      if (!cancelled) setStatusLoading(false)
+    })
+    const timer = window.setInterval(loadHealth, HEALTH_REFRESH_MS)
+    return () => {
+      cancelled = true
+      window.clearInterval(timer)
+    }
+  }, [loadHealth, loadSettings])
+
+  const toggleKillSwitch = async () => {
+    if (!settings) return
+    const stopping = settings.enabled
+    const question = stopping
+      ? 'Stop automatic recovery? This stops for every action: nothing will run until you switch it back on. Failures are still logged as skipped.'
+      : 'Resume automatic recovery? Enabled actions will run again on the next hard failure.'
+    if (!window.confirm(question)) return
+    setSwitchSaving(true)
+    setSettingsError(null)
+    try {
+      setSettings(await updateSettings({ enabled: !stopping }))
+    } catch (err) {
+      setSettingsError(errorMessage(err, 'Unable to change the kill switch.'))
+    } finally {
+      setSwitchSaving(false)
+    }
+  }
+
   const typeLabels = Object.fromEntries(types.map((t) => [t.key, t.label]))
 
   const toggle = async (action: RemediationAction) => {
@@ -68,6 +138,7 @@ export function RemediationPage() {
           enabled: !action.enabled,
           maxRunsPerHour: action.maxRunsPerHour,
           cooldownSeconds: action.cooldownSeconds,
+          runWhenAcknowledged: action.runWhenAcknowledged,
         },
         action.version,
       )
@@ -112,6 +183,17 @@ export function RemediationPage() {
           Actions run automatically when a service reaches a hard failure.
         </div>
 
+        <StatusPanel
+          health={health}
+          healthError={healthError}
+          settings={settings}
+          settingsError={settingsError}
+          isLoading={statusLoading}
+          canManage={canManage}
+          isSaving={switchSaving}
+          onToggleKillSwitch={toggleKillSwitch}
+        />
+
         <div role="tablist" className="flex gap-6 border-b border-[var(--border)]">
           <button type="button" role="tab" aria-selected={tab === 'actions'} onClick={() => setTab('actions')} className={tabClass(tab === 'actions')}>
             Actions
@@ -154,6 +236,7 @@ export function RemediationPage() {
                 typeLabels={typeLabels}
                 canManage={canManage}
                 busyId={busyId}
+                killSwitchOn={settings?.enabled === false}
                 onToggle={toggle}
                 onEdit={setEditing}
                 onDelete={remove}

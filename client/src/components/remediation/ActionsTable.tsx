@@ -7,6 +7,8 @@ type Props = {
   canManage: boolean
   // The action whose switch or delete is in progress, so it cannot be double-clicked.
   busyId: number | null
+  // True when the kill switch has stopped all automatic recovery.
+  killSwitchOn: boolean
   onToggle: (action: RemediationAction) => void
   onEdit: (action: RemediationAction) => void
   onDelete: (action: RemediationAction) => void
@@ -19,7 +21,7 @@ function coverage(action: RemediationAction): string {
     : action.hostPattern
 }
 
-export function ActionsTable({ actions, typeLabels, canManage, busyId, onToggle, onEdit, onDelete }: Props) {
+export function ActionsTable({ actions, typeLabels, canManage, busyId, killSwitchOn, onToggle, onEdit, onDelete }: Props) {
   return (
     <div className="overflow-x-auto rounded-xl border border-[var(--border)]">
       <table className="w-full text-left text-sm">
@@ -54,6 +56,9 @@ export function ActionsTable({ actions, typeLabels, canManage, busyId, onToggle,
                     }`}
                   />
                 </button>
+                {killSwitchOn && action.enabled && (
+                  <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">Paused by the kill switch</p>
+                )}
               </td>
               <td className="px-4 py-3 font-medium">{action.name}</td>
               <td className="px-4 py-3">{typeLabels[action.actionType] ?? action.actionType}</td>

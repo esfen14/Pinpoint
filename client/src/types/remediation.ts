@@ -9,6 +9,10 @@ export type RemediationOutcome =
   | 'skipped_cooldown'
   | 'skipped_hourly_cap'
   | 'interrupted'
+  | 'skipped_kill_switch'
+  | 'skipped_maintenance'
+  | 'skipped_downtime'
+  | 'skipped_acknowledged'
 
 export const OUTCOME_LABELS: Record<RemediationOutcome, string> = {
   running: 'Running',
@@ -18,6 +22,10 @@ export const OUTCOME_LABELS: Record<RemediationOutcome, string> = {
   skipped_cooldown: 'Skipped (cooldown)',
   skipped_hourly_cap: 'Skipped (hourly limit)',
   interrupted: 'Interrupted',
+  skipped_kill_switch: 'Skipped (kill switch)',
+  skipped_maintenance: 'Skipped (maintenance)',
+  skipped_downtime: 'Skipped (downtime)',
+  skipped_acknowledged: 'Skipped (acknowledged)',
 }
 
 export interface ActionTypeInfo {
@@ -38,6 +46,7 @@ export interface RemediationAction {
   enabled: boolean
   maxRunsPerHour: number
   cooldownSeconds: number
+  runWhenAcknowledged: boolean
   version: number
   updatedAt: string | null
   updatedBy: number | null
@@ -54,6 +63,7 @@ export interface RemediationActionInput {
   enabled: boolean
   maxRunsPerHour: number
   cooldownSeconds: number
+  runWhenAcknowledged: boolean
 }
 
 export interface RemediationRun {
@@ -92,6 +102,26 @@ export interface RemediationRunFilters {
   outcome?: RemediationOutcome
   from?: string
   to?: string
+}
+
+/** GET /api/system/remediation/health: whether the consumer that runs actions is working. */
+export interface RemediationHealth {
+  lastTickAt: string | null
+  lastError: string | null
+  stalled: boolean
+  backlog: number
+  oldestSpoolAgeSeconds: number | null
+  runsLast24h: number
+  capsHitLast24h: number
+  skippedLast24h: number
+  droppedTotal: number
+  droppedAt: string | null
+}
+
+/** GET and PUT /api/system/remediation/settings: the kill switch and how long runs are kept. */
+export interface RemediationSettings {
+  enabled: boolean
+  retentionDays: number
 }
 
 /** Field name (for example "name" or "parameters.command") to the server's message. */

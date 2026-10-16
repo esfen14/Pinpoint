@@ -56,6 +56,7 @@ function buildInput(form: {
   enabled: boolean
   maxRunsPerHour: number
   cooldownSeconds: number
+  runWhenAcknowledged: boolean
   parameters: Record<string, unknown>
 }): RemediationActionInput {
   return {
@@ -68,6 +69,7 @@ function buildInput(form: {
     enabled: form.enabled,
     maxRunsPerHour: form.maxRunsPerHour,
     cooldownSeconds: form.cooldownSeconds,
+    runWhenAcknowledged: form.runWhenAcknowledged,
   }
 }
 
@@ -81,6 +83,7 @@ export function ActionFormDialog({ types, action, onClose, onSaved, onReload }: 
   const [enabled, setEnabled] = useState(action?.enabled ?? false)
   const [maxRunsPerHour, setMaxRunsPerHour] = useState(action?.maxRunsPerHour ?? 2)
   const [cooldownSeconds, setCooldownSeconds] = useState(action?.cooldownSeconds ?? 600)
+  const [runWhenAcknowledged, setRunWhenAcknowledged] = useState(action?.runWhenAcknowledged ?? false)
   const [errors, setErrors] = useState<FieldErrors>({})
   const [generalError, setGeneralError] = useState<string | null>(null)
   const [stale, setStale] = useState(false)
@@ -105,7 +108,7 @@ export function ActionFormDialog({ types, action, onClose, onSaved, onReload }: 
     setGeneralError(null)
     setStale(false)
     const input = buildInput({
-      name, actionType, scopeKind, hostPattern, servicePattern, enabled, maxRunsPerHour, cooldownSeconds,
+      name, actionType, scopeKind, hostPattern, servicePattern, enabled, maxRunsPerHour, cooldownSeconds, runWhenAcknowledged,
       parameters: action?.parameters ?? {},
     })
     try {
@@ -116,7 +119,7 @@ export function ActionFormDialog({ types, action, onClose, onSaved, onReload }: 
       const fields = fieldErrors(err)
       if (Object.keys(fields).length > 0) {
         setErrors(fields)
-        const known = new Set(['name', 'actionType', 'scopeKind', 'hostPattern', 'servicePattern', 'enabled', 'maxRunsPerHour', 'cooldownSeconds'])
+        const known = new Set(['name', 'actionType', 'scopeKind', 'hostPattern', 'servicePattern', 'enabled', 'maxRunsPerHour', 'cooldownSeconds', 'runWhenAcknowledged'])
         const other = Object.entries(fields).filter(([key]) => !known.has(key))
         if (other.length > 0) setGeneralError(other.map(([key, message]) => `${key}: ${message}`).join(' '))
       } else {
@@ -253,6 +256,23 @@ export function ActionFormDialog({ types, action, onClose, onSaved, onReload }: 
           Enabled
         </label>
         {errors.enabled && <p className="text-sm text-red-600">{errors.enabled}</p>}
+
+        <div>
+          <label className="flex items-center gap-2 text-sm text-[var(--text)]">
+            <input
+              type="checkbox"
+              checked={runWhenAcknowledged}
+              onChange={(e) => setRunWhenAcknowledged(e.target.checked)}
+              aria-describedby="remediation-runWhenAcknowledged-help"
+            />
+            Run when acknowledged
+          </label>
+          <p id="remediation-runWhenAcknowledged-help" className="mt-1 text-sm text-[var(--text-muted)]">
+            Off by default: the action is skipped when an operator has already acknowledged the problem. Turn it on
+            only if the action should still run for acknowledged problems.
+          </p>
+          {errors.runWhenAcknowledged && <p className="text-sm text-red-600">{errors.runWhenAcknowledged}</p>}
+        </div>
 
         <div className="flex justify-end gap-2 pt-2">
           <button type="button" onClick={onClose} className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm text-[var(--text)] hover:bg-[var(--hover)]">

@@ -53,7 +53,7 @@ one-row table; new skip outcomes are new `RemediationOutcome` members.
 4. [x] Retention: purge uses `Remediation_Retention_Days`; delete spool files older than a fixed age; cap spool entries (oldest dropped, count recorded in the state row and logged). Files: `server/app/scheduler.py`, `server/app/remediation.py`, `server/tests/unit/test_scheduler.py`.
 5. [x] Heartbeat + health: record last tick/error each consumer run; `GET /api/system/remediation/health` (`remediation.view`) with last tick, backlog, oldest spool age, runs and caps in 24 h, `stalled`. Files: `server/app/remediation.py`, `server/app/api/system/remediation.py`, tests.
 6. [x] Settings routes: `GET`/`PUT /api/system/remediation/settings` (`remediation.manage` to write), validation, `ConfigurationChanges` audit, 403 path. Files: `server/app/api/system/remediation.py`, `server/tests/unit/test_remediation_api.py`.
-7. [ ] Frontend: types + API client; health card with stalled banner; kill switch with confirmation and per-row state; `Run when acknowledged` option; skip reasons in `RunLog`/`RunDrawer`; loading/error/403 states. Files: `client/src/lib/remediationApi.ts`, `client/src/pages/RemediationPage.tsx`, `client/src/components/remediation/*`, `client/src/test/RemediationPage.test.tsx`.
+7. [x] Frontend: types + API client; health card with stalled banner; kill switch with confirmation and per-row state; `Run when acknowledged` option; skip reasons in `RunLog`/`RunDrawer`; loading/error/403 states. Files: `client/src/lib/remediationApi.ts`, `client/src/pages/RemediationPage.tsx`, `client/src/components/remediation/*`, `client/src/test/RemediationPage.test.tsx`.
 8. [ ] Docs: spec files (Backend, Data Model, Frontend, Implementation Status), page help text, admin note on a stalled consumer. Run `scripts/verify.sh docs`.
 9. [ ] Full verify (`scripts/verify.sh all`), delete progress file, PR. Lab report in `docs/test-runs/` needs the lab appliance: a person must run it (live lab is off limits unless the issue says so; it does, in section G, but ask first).
 
@@ -71,15 +71,16 @@ One row per loop round, newest last.
 | 5 | Step 5: `record_tick` heartbeat (good tick clears error; unreadable folder sets a fixed-sentence error), `health_snapshot`, `GET /api/system/remediation/health` (`remediation.view`); 12 new tests, health URL added to the login/permission list | `pytest tests/unit/test_remediation_consumer.py tests/unit/test_remediation_api.py` (red: 11 failed) then green | 167 passed 1 skipped |
 | 6 | resumed (new session); branch had no new commits on origin/main; re-ran remediation api+consumer tests | `pytest tests/unit/test_remediation_api.py tests/unit/test_remediation_consumer.py` | 167 passed 1 skipped |
 | 7 | Step 6: `GET`/`PUT /api/system/remediation/settings` (`enabled`, `retentionDays` 7 to 3650), per-field 400s, audit as `remediation_setting`, Settings page version untouched; 13 new tests | `pytest tests/unit/test_remediation_api.py -k settings` (red: 12 failed) then full file | 103 passed |
+| 8 | Step 7: types + API client; new `StatusPanel` (health values, stalled banner, kill switch with confirm both ways, view-only disabled); per-row "Paused by the kill switch"; `Run when acknowledged` checkbox + help text (and the enable switch now keeps it); new skip outcomes in labels/filter; 14 new tests, 2 existing adjusted | `npx vitest run src/test/RemediationPage.test.tsx` (red: 17 failed) then green; `npx tsc -b`; `npx eslint` on touched files | 41 passed; tsc clean; eslint 0 errors, 2 warnings (1 pre-existing `set-state-in-effect`, 1 same kind added) |
 
 ## State for the next session
 
 Everything a fresh session needs to continue without redoing work.
 
-- Last check run (exact command): `python -m pytest tests/unit/test_remediation_api.py -q` (from `server/`)
-- Result (first failing lines, or "green"): green, 103 passed
-- Hypothesis: n/a. Backend (steps 1-6) complete.
-- Next action (one specific step, not "continue"): plan step 7: read `client/src/pages/RemediationPage.tsx`, `client/src/lib/remediationApi.ts`, `client/src/components/remediation/*` and `client/src/test/RemediationPage.test.tsx`; add failing frontend tests first (health card + stalled banner, kill switch confirm dialog, run-when-acknowledged checkbox, skip reasons), then implement.
+- Last check run (exact command): `npx vitest run src/test/RemediationPage.test.tsx` (from `client/`)
+- Result (first failing lines, or "green"): green, 41 passed
+- Hypothesis: n/a. Steps 1-7 done.
+- Next action (one specific step, not "continue"): plan step 8 docs: update `spec files/Backend_Modules_and_Routes.md` (routes `settings`, `health`; consumer description; outcomes list), `Data_Model_and_Integrations.md` (new columns, `REMEDIATION_CONSUMER_STATE`, purge text, migration `f155a3c7d2b1`), `Frontend_Modules_and_Routes.md` (StatusPanel), `Implementation_Status.md`; add an admin guide section (find the #121 "automatic recovery guide" under `docs/`); run `scripts/verify.sh docs`. Then step 9.
 
 ## Decisions and notes
 
@@ -91,3 +92,4 @@ Everything a fresh session needs to continue without redoing work.
 - `test_escalation_merge_migration.py` (2 cases) fails on clean main under Windows: `PermissionError` deleting a locked temp `history.db` at subprocess exit; migrations themselves run. Not caused by this issue.
 - Spec text to fix in step 8: Data Model says the daily purge uses `Diagnostic_History_Retention_Days` for runs; it now uses `Remediation_Retention_Days`. Spool files older than 7 days are purged; the cap (1000) is enforced on every consumer tick, not daily, so a flood is bounded within 15 s.
 - Health `stalled` threshold uses `app.scheduler.REMEDIATION_POLL_SECONDS` (15) x 3 = 45 s; `lastError` is always a fixed sentence (no paths). Backlog/oldest age use one listing plus one `lstat` of the oldest file.
+- Frontend uses `window.confirm` for the kill switch, matching the existing delete confirmation on this page. The health card refreshes every 15 s.
