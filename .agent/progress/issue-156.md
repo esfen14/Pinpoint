@@ -38,7 +38,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 ## Plan
 
 1. [x] Pure forecast math: `server/app/forecast.py` (`fit_forecast`), test first in `server/tests/unit/test_forecast.py`.
-2. [ ] Model `ResourceForecast` (default bind) in `server/app/system_models.py` plus multi-database migration with downgrade and a migration test.
+2. [x] Model `ResourceForecast` (default bind) in `server/app/system_models.py` plus multi-database migration with downgrade and a migration test.
 3. [ ] Job `compute_forecasts()` in `server/app/forecast.py`: bounded queries, service cap, skip paused/retired/merged devices, replace the latest row per host/service/metric; register in `server/app/scheduler.py`. Tests in `test_forecast_job.py`, including a query-count bound.
 4. [ ] Read route `GET /system/forecast` in `server/app/api/system/forecast.py`, registered in `server/app/api/system/__init__.py`; permission reuse; tests in `test_forecast_routes.py`.
 5. [ ] Frontend: `client/src/types/forecast.ts`, `ForecastList` on the Dashboard, forecast badge in `ServiceStatusTable.tsx`, three states, tests under `client/src/test/`.
@@ -54,15 +54,18 @@ One row per loop round, newest last.
 |---|---|---|---|
 | 0 | Plan written, branch created | none | n/a |
 | 1 | `fit_forecast` in `server/app/forecast.py` with 15 unit tests (failed first: module missing) | `python -m pytest tests/unit/test_forecast.py -q` in `server/` | 15 passed |
+| 2 | `ResourceForecast` model, hand-written migration `b7e2a9c4d518` (`flask db migrate` has no `--multidb` here), round-trip test and runner (failed first: no table) | `python -m pytest tests/unit/test_forecast_migration.py tests/unit/test_forecast.py -q` | 16 passed |
 
 ## State for the next session
 
 - Last check run (exact command): `cd server && python -m pytest tests/unit/test_forecast.py -q`
 - Result (first failing lines, or "green"): green, 15 passed
 - Hypothesis: NCPA metric names are `disk/logical/<part>/used_percent` and `memory/virtual/percent` (see `server/tests/unit/test_dashboard.py:242`); `ServicePerfData` joins `ServiceStatus` for the timestamp.
-- Next action: step 2. Add model `ResourceForecast` to `server/app/system_models.py`, write the migration test first (copy the pattern of `server/tests/unit/test_maintenance_migration.py`), then `flask db migrate --multidb` and review it. Head revision is `d117f3b8a053`.
+- Next action (step 3): write `server/tests/unit/test_forecast_job.py` first for `compute_forecasts()`; then implement it in `server/app/forecast.py` and register it in `server/app/scheduler.py`. (Old step 2 text follows, ignore:) Add model `ResourceForecast` to `server/app/system_models.py`, write the migration test first (copy the pattern of `server/tests/unit/test_maintenance_migration.py`), then `flask db migrate --multidb` and review it. Head revision is `d117f3b8a053`.
 
 ## Decisions and notes
+
+- The existing `test_maintenance_migration.py` fails on this Windows machine (temp-dir cleanup of an open SQLite file, `PermissionError` after the report prints). Not caused by this branch; the forecast runner uses `ignore_cleanup_errors=True`.
 
 - Display only (user, 2026-10-17). Notification delivery needs #132 and #153 and a settings UI; record as a follow-up issue (not yet created on GitHub; ask the user).
 - The issue asks for a lab report comparing the forecast with a real disk fill. That needs a lab appliance; it cannot be produced here and will be listed as not verified.

@@ -586,6 +586,34 @@ class MaintenanceOccurrence(db.Model):
     Window: so.Mapped[MaintenanceWindow] = so.relationship(back_populates='Occurrences')
 
 
+class ResourceForecast(db.Model):
+    """
+    The latest straight-line forecast of when one metric on one service reaches its warning or
+    critical threshold (app/forecast.py). Only the newest forecast per host, service and metric
+    is kept, replaced on every run; there is no forecast history. It is an estimate for display:
+    it never changes a Nagios state. Kind is "warning" or "critical"; Crossing_At is UTC.
+    """
+    __tablename__ = "RESOURCE_FORECAST"
+    __table_args__ = (
+        sa.UniqueConstraint('Hostname', 'Service', 'Metric', name='uq_resource_forecast_metric'),
+    )
+
+    ForecastID: so.Mapped[int] = so.mapped_column(primary_key=True)
+    Hostname: so.Mapped[str] = so.mapped_column(sa.String(100), index=True)
+    Service: so.Mapped[str] = so.mapped_column(sa.String(150))
+    Metric: so.Mapped[str] = so.mapped_column(sa.String(50))
+    Kind: so.Mapped[str] = so.mapped_column(sa.String(10))
+    Threshold: so.Mapped[float] = so.mapped_column(sa.Float())
+    Crossing_At: so.Mapped[datetime] = so.mapped_column(index=True)
+    Slope_Per_Hour: so.Mapped[float] = so.mapped_column(sa.Float())
+    R_Squared: so.Mapped[float] = so.mapped_column(sa.Float())
+    Sample_Count: so.Mapped[int] = so.mapped_column()
+    Window_Hours: so.Mapped[float] = so.mapped_column(sa.Float())
+    Current_Value: so.Mapped[float] = so.mapped_column(sa.Float())
+    Unit: so.Mapped[Optional[str]] = so.mapped_column(sa.String(5))
+    Computed_At: so.Mapped[datetime] = so.mapped_column(default=lambda: datetime.now(timezone.utc))
+
+
 class DeviceReviewItem(db.Model):
     """
     A decision the reconciler refused to make on its own (conflicting
