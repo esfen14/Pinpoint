@@ -17,6 +17,11 @@ UNIDENTIFIED_SERVICE_NAMES = frozenset({"unknown", "tcpwrapped"})
 UDP_VERSION_HOST_TIMEOUT = "90s"
 
 
+# nmap reports a TLS-wrapped service with its plain name and tunnel="ssl"; these are the names
+# whose check differs once the connection is encrypted (plugin_registry has a definition of each).
+TLS_SERVICE_NAMES = {"http": "https", "pop3": "pop3s", "imap": "imaps"}
+
+
 def service_from_nmap(service):
     """
     Turn one nmap <service> element into {"service_name", "identified_by"}.
@@ -26,14 +31,14 @@ def service_from_nmap(service):
     up in nmap-services, so only a probed, named service counts as a
     FINGERPRINT; everything else is a PORT_HINT that discovery may replace
     with a configured fallback name. HTTP inside a TLS tunnel is reported as
-    "https" so it gets a TLS check.
+    "https", and POP3 or IMAP inside one as "pop3s" / "imaps", so they get a TLS check.
     """
     if service is None:
         return {"service_name": "unknown", "identified_by": ServiceIdentification.PORT_HINT.name}
 
     name = (service.attrib.get("name") or "unknown").strip().lower()
-    if service.attrib.get("tunnel") == "ssl" and name == "http":
-        name = "https"
+    if service.attrib.get("tunnel") == "ssl":
+        name = TLS_SERVICE_NAMES.get(name, name)
 
     identified_by = ServiceIdentification.PORT_HINT
     if name in UNIDENTIFIED_SERVICE_NAMES:

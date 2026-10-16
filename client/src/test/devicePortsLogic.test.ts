@@ -136,16 +136,16 @@ describe('confirmations', () => {
 
     expect(confirmationText('ignore', p, 'web-01')).toBe('Ignore tcp/8080 on web-01? It will not be monitored.')
     expect(confirmationText('stop', p, 'web-01')).toBe(
-      'Stop monitoring http-proxy on web-01? Its Nagios service is removed; history is kept.')
+      'Stop monitoring http-proxy on web-01? The Nagios service for this port is removed; its history is kept.')
     expect(confirmationText('leave_suggested', p, 'web-01')).toBe(
-      'Leave tcp/8080 suggested? Its Nagios service is removed and no plugin will monitor it again until you do.')
+      'Leave tcp/8080 suggested? The Nagios service for this port is removed, and no plugin will monitor it again until you do.')
   })
 
   it('tells a monitored port its Nagios service is not changed when the pin is removed', () => {
     const text = confirmationText('remove_pin', port({ state: 'MONITORED', pinned: true }), 'web-01')
 
     expect(text).toContain('Let scans decide the service for tcp/22 on web-01 again?')
-    expect(text).toContain('Its Nagios service is not changed.')
+    expect(text).toContain('The Nagios service for this port is not changed.')
     expect(text).toContain('a review item is recorded')
   })
 

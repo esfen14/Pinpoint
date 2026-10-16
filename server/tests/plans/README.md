@@ -36,6 +36,9 @@ links by case ID (its section 7 records the decision for each); none is retired.
 - [Manual Topology Acceptance](MANUAL_TOPOLOGY_ACCEPTANCE.md): issue #117 manual
   multiple-parent API/configuration, real isolated routed Nagios reachability, lifecycle
   rollback and frontend regression checks.
+- [STARTTLS SMTP Relay Acceptance](SMTP_Relay_Acceptance.md): issue #115 live
+  helper/sudo, STARTTLS sink, real Nagios notification failures, browser polling
+  and separately authorized inbox confirmation.
 - [Historical test failures](historical/TEST_FAILURES.md): previous findings;
   historical counts are not the current collection inventory.
 

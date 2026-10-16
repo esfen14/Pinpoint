@@ -18,6 +18,9 @@ vi.mock('../pages/NetworkHealthPage', () => ({
 vi.mock('../pages/SystemStatusPage', () => ({
   SystemStatusPage: () => <div>System Status Page</div>,
 }))
+vi.mock('../pages/MaintenancePage', () => ({
+  MaintenancePage: () => <div>Maintenance Page</div>,
+}))
 vi.mock('../pages/ManageAccountsPage', () => ({
   ManageAccountsPage: () => <div>Manage Accounts Page</div>,
 }))
@@ -61,6 +64,11 @@ describe('App routing', () => {
   it('registers the System Status page at /system-status', () => {
     renderApp('/system-status')
     expect(screen.getByText('System Status Page')).toBeInTheDocument()
+  })
+
+  it('registers the Maintenance page at /maintenance', () => {
+    renderApp('/maintenance')
+    expect(screen.getByText('Maintenance Page')).toBeInTheDocument()
   })
 
   it('registers the Remediation page at /remediation', () => {

@@ -131,13 +131,13 @@ export function confirmationText(action: PortActionId, port: DevicePort, host: s
     case 'ignore':
       return `Ignore ${label} on ${host}? It will not be monitored.`
     case 'stop':
-      return `Stop monitoring ${port.service_name} on ${host}? Its Nagios service is removed; history is kept.`
+      return `Stop monitoring ${port.service_name} on ${host}? The Nagios service for this port is removed; its history is kept.`
     case 'leave_suggested':
-      return `Leave ${label} suggested? Its Nagios service is removed and no plugin will monitor it again until you do.`
+      return `Leave ${label} suggested? The Nagios service for this port is removed, and no plugin will monitor it again until you do.`
     case 'remove_pin': {
       const monitored = port.state === 'MONITORED' || port.state === 'MISSING'
       const effect = monitored
-        ? 'Its Nagios service is not changed. If a later scan sees a different service, the current one is kept and a review item is recorded.'
+        ? 'The Nagios service for this port is not changed. If a later scan sees a different service, the current one is kept and a review item is recorded.'
         : 'The service goes back to what the last scan saw.'
       return `Let scans decide the service for ${label} on ${host} again? ${effect}`
     }

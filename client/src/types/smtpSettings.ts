@@ -1,6 +1,6 @@
-// Gmail is the only provider: smtp.gmail.com, port 587, STARTTLS.
+// Both provider choices require encrypted STARTTLS submission.
 export type SmtpPreset = {
-  provider: 'gmail'
+  provider: 'gmail' | 'custom'
   host: string
   port: number
   tls: 'starttls'
@@ -18,10 +18,17 @@ export type SmtpSettings = SmtpPreset & {
 
 export type SmtpSettingsResponse = {
   settings: SmtpSettings
-  presets: { gmail: SmtpPreset }
+  presets: { gmail: SmtpPreset; custom: SmtpPreset }
+  lastMailFailure: MailFailure | null
 }
 
+export type MailFailure = { time: string; reason: string }
+
 export type SmtpSaveValues = {
+  provider?: 'gmail' | 'custom'
+  host?: string
+  port?: number
+  tls?: 'starttls'
   username: string
   sender: string
   // Sent exactly as typed. Left out to keep the saved one.
@@ -37,6 +44,6 @@ export type SmtpTestResult =
       message: string
       // Technically what happened and what to check, in plain English.
       explanation: string
-      // The mail server's own text.
+      // Gmail's diagnostic text, with credentials redacted; empty for custom relays.
       details: string
     }

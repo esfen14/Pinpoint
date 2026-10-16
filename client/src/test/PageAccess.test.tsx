@@ -19,7 +19,7 @@ vi.mock('../contexts/CurrentUserContext', () => ({
 // Settings tabs render real forms; stub them to keep this about which tabs show.
 vi.mock('../components/settings/GeneralSettings', () => ({ GeneralSettings: () => <div>General form</div> }))
 vi.mock('../components/settings/SecuritySettings', () => ({ SecuritySettings: () => <div>Security form</div> }))
-vi.mock('../components/settings/SystemSettings', () => ({ SystemSettings: () => <div>Notification policy card</div> }))
+vi.mock('../components/settings/SystemSettings', () => ({ SystemSettings: () => <div>Notification policy card</div>, SystemStatusSummary: () => null }))
 vi.mock('../contexts/SystemSettingsContext', () => ({
   useSystemSettings: () => ({ refreshSettings: () => Promise.resolve() }),
 }))
@@ -38,6 +38,13 @@ describe('pageAccess', () => {
     expect(canAccessPage('/ncpa-deployment', ['system.deploy.ncpa'])).toBe(true)
     expect(canAccessPage('/ncpa-deployment', ['plugin.view'])).toBe(false)
     expect(firstAccessiblePage(['system.deploy.ncpa'])).toBe('/ncpa-deployment')
+  })
+
+  it('gates Maintenance on maintenance.manage', () => {
+    expect(PAGE_PERMISSIONS['/maintenance']).toBe('maintenance.manage')
+    expect(canAccessPage('/maintenance', ['maintenance.manage'])).toBe(true)
+    expect(canAccessPage('/maintenance', ['system.hosts.edit', 'system.network_health'])).toBe(false)
+    expect(firstAccessiblePage(['maintenance.manage'])).toBe('/maintenance')
   })
 
   it('gates both System Status and Topology on network health permission', () => {
@@ -75,6 +82,17 @@ describe('Sidebar', () => {
     expect(screen.queryByText('Manage Roles')).not.toBeInTheDocument()
     expect(screen.queryByText('System Logs')).not.toBeInTheDocument()
     expect(screen.queryByText('NCPA Deployment')).not.toBeInTheDocument()
+  })
+
+  it('shows Maintenance only with maintenance.manage', () => {
+    signIn(['system.dashboard'])
+    const { unmount } = render(<MemoryRouter><Sidebar /></MemoryRouter>)
+    expect(screen.queryByText('Maintenance')).not.toBeInTheDocument()
+    unmount()
+
+    signIn(['maintenance.manage'])
+    render(<MemoryRouter><Sidebar /></MemoryRouter>)
+    expect(screen.getByText('Maintenance')).toBeInTheDocument()
   })
 
   it('shows NCPA Deployment with the deploy permission', () => {

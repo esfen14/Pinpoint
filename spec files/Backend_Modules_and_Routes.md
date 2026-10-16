@@ -24,6 +24,7 @@ account.view, account.edit, account.info, account.alerts
 system.discover, system.deploy.ncpa, system.hosts, system.hosts.edit, system.hosts.alerts, system.logs
 system.report, system.notifications, system.services, system.network_health
 system.acknowledge_alerts, system.recheck, system.dashboard, system.history
+maintenance.manage
 plugin.scan, plugin.view, plugin.enable, plugin.disable
 plugin.command_override, plugin.command_restore, plugin.validate
 plugin.custom_add, plugin.custom_check, plugin.update, plugin.update_rollback
@@ -126,6 +127,16 @@ Security and system setting fields are restricted with `settings.security` and
 
 Both routes use the standard success/error envelopes. GET returns `quietHours` (weekday, `start`, `end` in 24-hour `HH:MM`), `hostOptions`, `serviceOptions`, `renotifyInterval`, `version` and `timeZone` (`Nagios server local time`). PUT accepts those editable fields plus the current integer `version`; `timeZone` is informational. Quiet windows cannot cross midnight or overlap on one weekday. The policy belongs to the default-bind singleton, and a successful save regenerates/validates/applies the shared Nagios candidate file before committing.
 
+### `app/api/system/maintenance.py`
+
+| Method and path | Permission | Purpose |
+|---|---|---|
+| `GET /api/system/maintenance/windows` | `maintenance.manage` | List windows (newest first, at most 200) with `nextOccurrence`, the five most recent occurrences (status, attempts, `error`) and `devices`, the monitored devices a window can be scoped to |
+| `POST /api/system/maintenance/windows` | `maintenance.manage` | Create a window (201). 400 when invalid: `startAt`/`endAt` need a UTC offset, end after start and in the future, `recurrence` none/daily/weekly, one-off at most 30 days, a recurring window no longer than its period, `recurrenceUntil` only for a recurring window and at most 366 days after the start, `timeZone` a known IANA name, `comment` 1–200 characters with no line break, `deviceId` null (all devices) or an existing device that is monitored. Audited |
+| `PUT /api/system/maintenance/windows/<id>` | `maintenance.manage` | Replace an active window with the same validation (400; 404 unknown; 400 when not active). Downtime already handed to Nagios for its unfinished occurrences is deleted first; the response adds `nagios_synced` / `nagios_message`. Audited |
+| `POST /api/system/maintenance/windows/<id>/cancel` | `maintenance.manage` | Cancel a window and delete its pending and running Nagios downtime (`nagios_synced` / `nagios_message` as above; the window is cancelled even when Nagios could not be told). 400 when already cancelled, 404 unknown. Audited |
+
+A window is Nagios scheduled downtime, not PinPoint's own Maintenance Mode (a `SystemSettings` flag that only pauses PinPoint's background jobs and is unchanged). Times are ISO 8601 in and out, stored as UTC; `timeZone` is only the zone a daily or weekly window repeats in, so it keeps its local time across a daylight-saving change. Nothing is sent to Nagios by these routes except the delete on edit and cancel; the scheduler job `maintenance_windows` (`app/maintenance.py`) schedules downtime shortly before each occurrence.
 ### `app/api/system/escalations.py`
 
 | Method and path | Permission | Purpose |
@@ -161,7 +172,7 @@ Allowlisted actions that run when a covered service or host reaches a HARD failu
 | `GET /api/system/remediation/runs` | `remediation.view` | The run log, newest first: `page`, `per_page` (1 to 100, default 25), filters `action` (action id), `host` (exact name), `outcome`, `from` and `to` (`YYYY-MM-DD`, inclusive); 400 on a bad value; returns `items`, `page`, `per_page`, `pages`, `total` |
 | `GET /api/system/remediation/runs/<id>` | `remediation.view` | One run including its redacted `output`; 404 when missing |
 
-An action body has `name` (3 to 60 letters, numbers, spaces, `.`, `_`, `-`; unique), `actionType` (a key from `action-types`), `scopeKind` (`service` or `host`), `hostPattern` (letters, numbers, `.`, `_`, `-`, `*`), `servicePattern` (required for a service action, null for a host action; also allows spaces, `:` and `/`), `parameters` (validated by the action type; `record_only` takes none and rejects any key), `enabled` (boolean, default false), `maxRunsPerHour` (1 to 60, default 2) and `cooldownSeconds` (60 to 86400, default 600). Patterns match an exact name or use `*` for any run of characters; there is no regex. Unknown fields are errors. Every change regenerates, validates and applies the Nagios config through the shared writer before committing, and is written to the configuration log when audit logging is on. Run list items hold `id`, `actionId`, `actionName`, `hostname`, `service`, `state`, `stateType`, `attempt`, `receivedAt`, `startedAt`, `finishedAt`, `outcome` and `reason`; outcomes are `running`, `succeeded`, `failed`, `timed_out`, `skipped_cooldown`, `skipped_hourly_cap` and `interrupted`. Nothing in a response carries credentials or internal paths.
+An action body has `name` (3 to 60 letters, numbers, spaces, `.`, `_`, `-`; unique), `actionType` (a key from `action-types`), `scopeKind` (`service` or `host`), `hostPattern` (letters, numbers, `.`, `_`, `-`, `*`), `servicePattern` (required for a service action, null for a host action; also allows spaces, `:` and `/`), `parameters` (validated by the action type; `record_only` takes none and rejects any key; `restart_local_service` takes exactly `unit`, one of the fixed list in `RESTARTABLE_UNITS`, currently `nagios`, and anything else is a 400 on `parameters.unit`), `enabled` (boolean, default false), `maxRunsPerHour` (1 to 60, default 2) and `cooldownSeconds` (60 to 86400, default 600). Patterns match an exact name or use `*` for any run of characters; there is no regex. Unknown fields are errors. Every change regenerates, validates and applies the Nagios config through the shared writer before committing, and is written to the configuration log when audit logging is on. Run list items hold `id`, `actionId`, `actionName`, `hostname`, `service`, `state`, `stateType`, `attempt`, `receivedAt`, `startedAt`, `finishedAt`, `outcome` and `reason`; outcomes are `running`, `succeeded`, `failed`, `timed_out`, `skipped_cooldown`, `skipped_hourly_cap` and `interrupted`. Nothing in a response carries credentials or internal paths.
 
 ### `app/api/system/dashboard.py`
 
@@ -289,14 +300,16 @@ this is a documented implementation mismatch, not a recommended convention.
 
 ### `app/api/system/smtp_settings.py`
 
-Settings -> Email: the Gmail account notification mail is sent through (Gmail
-only, STARTTLS on port 587). Logic is in `app/smtp_settings.py`.
+Settings -> Email: the shared account notification mail is sent through. Gmail
+keeps its fixed preset; Other SMTP relay accepts custom STARTTLS settings. Logic
+is in `app/smtp_settings.py`; notification failures come from
+`app/nagios/mail_failures.py`.
 
 | Method and path | Permission | Purpose |
 |---|---|---|
-| `GET /api/system/smtp-settings` | `settings.email` | `settings` (`provider`, `host`, `port`, `tls`, `username`, `sender`, `passwordSet`, `configured`, `version`, `updatedAt`) and `presets.gmail`. The password is never returned, only whether one is saved |
-| `PUT /api/system/smtp-settings` | `settings.email` | Save `{version, provider, host, port, tls, username, sender?, password?}`. Only `gmail`, `smtp.gmail.com`, 587 and `starttls` are accepted (`none`/`ssl` are 400); `username` and `sender` are email addresses (sender defaults to the username); `password` is printable ASCII, at most 200 characters, used exactly as sent (never trimmed or stripped of spaces) and may be left out or empty once one is saved. The settings go to the root helper (`sudo -n /usr/local/sbin/pinpoint-apply-smtp`, one JSON object on stdin) and are saved only if it exits 0; its stderr is returned as the message (400 when it rejected the input, 500 when it is missing or timed out). 409 on a stale version. Writes Configuration Change entries (`smtp_settings`, the password logged only as `changed`) when audit logging is on |
-| `POST /api/system/smtp-settings/test` | `settings.email` | Send a test message to the signed-in user's address over STARTTLS with the saved settings (400 when none are saved). Always 200 with `{ok, recipient}` or `{ok: false, code, message, explanation, details}`; `code` is `auth_failed` (535, `BadCredentials`, "Username and Password not accepted": friendly Gmail app-password message), `connect_failed` (blocked port 587), `host_not_found`, `tls_failed`, `rejected` or `send_failed`; `message` is plain language, `explanation` says technically what happened and what to check, and `details` is the mail server's own text |
+| `GET /api/system/smtp-settings` | `settings.email` | `settings` (`provider`, `host`, `port`, `tls`, `username`, `sender`, `passwordSet`, `configured`, `version`, `updatedAt`) and `presets.gmail` / `presets.custom`, plus `lastMailFailure` (`null` or `{time, reason}`). Time is ISO 8601 UTC; reason is fixed sanitized text. Reads at most 64 KiB from the current `NAGIOS_LOG_FILE` on every GET; missing, unreadable and nonregular logs give `null`. The password is never returned, only whether one is saved |
+| `PUT /api/system/smtp-settings` | `settings.email` | Save `{version, provider, host, port, tls, username, sender?, password?}`. Gmail keeps `smtp.gmail.com`, 587 and `starttls`, an email username and its existing validation messages. `custom` accepts the installed helper host rules (1–253 ASCII letters, digits, dots or hyphens, starting and ending with a letter or digit), integer port 1–65535 and only `starttls`; `tls`/`none`/`ssl` are 400. Custom usernames contain 1–254 printable ASCII characters; sender is a valid email matching the helper regex and defaults to username only when that is an email. `password` is printable ASCII, at most 200 characters for Gmail or 256 for custom, used exactly as sent (never trimmed or stripped of spaces) and may be left out or empty once one is saved. The settings go to the root helper (`sudo -n /usr/local/sbin/pinpoint-apply-smtp`, one JSON object on stdin) and are saved only if it exits 0; its credential-redacted stderr is returned as the message (400 when it rejected the input, 500 when it is missing or timed out). 409 on a stale version. Writes Configuration Change entries (`smtp_settings`, the password logged only as `changed`) when audit logging is on |
+| `POST /api/system/smtp-settings/test` | `settings.email` | Send a test message to the signed-in user's address over STARTTLS with the saved settings (400 when none are saved). Always 200 with `{ok, recipient}` or `{ok: false, code, message, explanation, details}`; `code` is `auth_failed` (535, `BadCredentials`, "Username and Password not accepted": friendly Gmail app-password message), `connect_failed` (blocked port 587), `host_not_found`, `tls_failed`, `rejected` or `send_failed`; `message` is plain language, `explanation` says technically what happened and what to check, and `details` is credential-redacted Gmail server text, or empty for custom relays (fixed generic messages without Gmail-specific advice) |
 
 ### `app/api/system/plugin_settings.py`
 
@@ -342,6 +355,26 @@ shared writer: validated with the Nagios binary, rolled back if rejected).
 | `GET /api/system/hosts/<id>/interfaces` | `system.hosts` | The stored interface list: `device`, `snmp` (SNMP is monitored on the device), `max_monitored` (16) and `interfaces` (`if_index`, `name`, `speed_bps`, `admin_status`, `oper_status`, `monitored`, `present`, `last_seen_at`) |
 | `POST /api/system/hosts/<id>/interfaces/refresh` | `system.hosts.edit` | Read the list from the device over SNMP (`snmpwalk`, 20 s limit) and store it: new interfaces are added unmonitored, known ones updated with the monitoring choice kept, vanished ones removed unless monitored (kept with `present` false). 400 when SNMP is not monitored on the device, 502 with a plain-language reason when the device cannot be read; the community is never in the message. Same body as the list route |
 | `PUT /api/system/hosts/<id>/interfaces/<if_index>` | `system.hosts.edit` | Body `{"monitored": true/false}` (400 for anything else): start or stop monitoring one interface. 404 for an interface not in the list, 400 when SNMP is not monitored, the device no longer reports the interface, or 16 are already monitored. Response is the list body plus `config_applied`, `config_ok` (false only when the change was saved but Nagios was not brought up to date) and `config_message` |
+
+### `app/api/system/device_plugin_variables.py`
+
+Per-device overrides of a registry plugin's variables, stored in
+`NetworkDiscovery.Plugin_Variables[<plugin>]` (the Device Inventory SNMP form uses it for the SNMP
+version and v3 credentials, and the Ports section's Check options form for the expected text,
+status codes, virtual host and method of `http` / `https` and the greeting of `pop3`, `imap`,
+`pop3s` and `imaps`; see "Mail and web service checks" in `Data_Model_and_Integrations.md`). A change is validated, written to the activity log (variable names,
+never values) and applied through `regenerate_and_apply_config_status()` under `config_write_lock`;
+if Nagios rejects it the change is rolled back and the response is 422. Validation reuses the
+registry (`validate_variable_value`, `validate_snmp_v3`, `editable_variables`), so it cannot drift
+from what the generator renders. Secret variables (SNMP v3 `auth_password`, `priv_password`) are
+encrypted with `secrets_store` as `<name>_enc` and never returned.
+
+| Method and path | Permission | Purpose |
+|---|---|---|
+| `GET /api/system/hosts/<id>/plugin-variables/<plugin>` | `system.hosts` | `plugin`, `variables` (plain values), `secrets_set` (`{name: bool}`), `editable` and `in_use` (snmp only: the device has an SNMP port monitored; `null` for other plugins). 404 for an unknown device or a plugin that is not a registry definition |
+| `PUT /api/system/hosts/<id>/plugin-variables/<plugin>` | `system.hosts.edit` | Body `{"variables": {...}, "clear_secrets": [...]}`; an empty body resets. The plain variables replace the stored ones; a secret that is not sent keeps its value, `clear_secrets` removes one. Unknown keys, invalid values and a v3 field the security level needs are 400 with `data.field` naming the variable; a retired or merged device is 400; a body over 8 KiB is 400; 422 when Nagios rejects the config (change rolled back). SNMP: `protocol` is 1, 2c or 3; v3 needs `security_level`, `v3_user` and, per level, `auth_protocol`/`auth_password` and `priv_protocol`/`priv_password` (passwords 8 to 64 printable characters); fields a level does not use, and every v3 field of a v1/v2c device, are dropped with their stored passwords |
+| `DELETE /api/system/hosts/<id>/plugin-variables/<plugin>` | `system.hosts.edit` | Reset the override: the device returns to the defaults. Same 404, 400 and 422 rules |
+| `POST /api/system/hosts/<id>/plugin-variables/<plugin>/test` | `system.hosts.edit` | SNMP only (400 otherwise). Query the device once with `check_snmp` (uptime OID) using the settings in the body (or the saved ones when empty; a blank password uses the stored one). Saves and applies nothing. 200 with `ok`, `state` and `message`; an unreachable device is a failed result. v3 passphrases go to `check_snmp` on stdin as extra-options and are scrubbed from the message |
 
 ### `app/api/system/ncpa_deployment.py`
 
@@ -463,7 +496,7 @@ running. Check/retry settings, discovery and browser preferences remain independ
 | `logging/` | Writes activity and subsystem audit records |
 | `scheduler.py` | Polling, retention purge, automation scheduling, and the remediation spool consumer (every 15 seconds; at startup it marks runs left `running` as `interrupted`) |
 | `remediation.py` | Reads the event handler spool (regular files under 2 KB owned by `REMEDIATION_SPOOL_OWNER`, at most 200 per run, symlinks never followed), parses each strictly, ignores SOFT states and recoveries (a HARD return to OK or UP never runs an action), matches enabled actions, applies the per-host-and-service cooldown and the per-action hourly cap, writes one `RemediationRun` row per decision, deletes the file, then runs the action; a replayed event runs nothing twice (unique `Event_Key` per action) |
-| `remediation_actions.py` | The code-defined action types (`record_only` only, so far): parameter schema and validation, and `run_action`, which enforces a timeout and turns a crash into a fixed message so no secret reaches the log |
+| `remediation_actions.py` | The code-defined action types (`record_only`, and `restart_local_service` which runs `sudo -n /usr/bin/systemctl restart <unit>` as an argument list with no shell for a unit in `RESTARTABLE_UNITS`; it is refused for an unlisted unit or in Maintenance Mode, and records only the exit code, never command output): parameter schema and validation, and `run_action`, which enforces a timeout and turns a crash into a fixed message so no secret reaches the log. `RESTARTABLE_UNITS` and the installer sudoers drop-in must change together |
 | `scripts/pinpoint_event_handler.py` | The Nagios event handler (standard library only): validates its arguments and writes one JSON file per event to the spool; never opens a shell or the network; installed by the installer at `/usr/local/sbin/pinpoint-event-handler` (`root:root`, 755) |
 | `automation.py` | Settings-driven discovery, plugin/security checks, and database backups |
 

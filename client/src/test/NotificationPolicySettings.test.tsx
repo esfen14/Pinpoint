@@ -20,7 +20,7 @@ describe('NotificationPolicySettings', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Add quiet hours' }))
     fireEvent.change(screen.getByLabelText('Start 1'), { target: { value: '09:00' } })
     fireEvent.change(screen.getByLabelText('End 1'), { target: { value: '10:00' } })
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Down' }))
+    fireEvent.click(screen.getByRole('switch', { name: 'Down' }))
     fireEvent.change(screen.getByLabelText('Renotify interval (minutes)'), { target: { value: '15' } })
     fireEvent.click(screen.getByRole('button', { name: /Save Changes/i }))
     await waitFor(() => expect(savePolicy).toHaveBeenCalledWith(expect.objectContaining({ renotifyInterval: 15, hostOptions: ['u', 'r', 'f', 's'], quietHours: [{ weekday: 'monday', start: '09:00', end: '10:00' }] })))

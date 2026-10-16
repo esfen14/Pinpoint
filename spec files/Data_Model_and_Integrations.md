@@ -20,9 +20,12 @@ acknowledgements belong in `system.db` even though they relate to Nagios alerts.
 ### Default bind: identity, configuration, operations, and acknowledgement
 
 - Identity/access: `Permission`, `Role`, `RolePermission`, `PasswordResetRequest` (forgot-password requests; Pending until an admin resets or dismisses), `User` (`Must_Change_Password` forces a password change on a new account unless the create form unticks it, after reactivation, after an admin password reset, or after CLI bootstrap recovery; `Needs_Setup` is set only by `flask init-production` on the bootstrap administrator, whose installer email and password are placeholders, and is cleared by `POST /api/user/complete-setup`; migration `d3a9e6b2f741`). The recovery command finds that account by its uniquely earliest `Created_At`, not mutable email, `UserID`, or `Needs_Setup`; ties and no account fail without changes. Each active user is a Nagios contact named and addressed by `User.Email`, so an email change regenerates the config. Alert email is formatted HTML: the generator (`host_config_templates.py`, `create_host_cfg.py`) writes two commands, `pinpoint_notify_host_html` and `pinpoint_notify_service_html`, that run `/usr/bin/python3 -I server/scripts/pinpoint_notify_email.py` (standard library only; arguments are `key=value` Nagios macros; every value is cleaned and HTML-escaped; sends through `/usr/sbin/sendmail`, which is msmtp). Each contact lists them as its host and service notification commands. If the script is missing, or its path holds a character outside `[A-Za-z0-9_./-]`, no commands are written and contacts keep Nagios's stock plain-text `notify-host-by-email` and `notify-service-by-email`.
-- Email settings: `SmtpSettings` (`SMTP_SETTINGS`), the singleton (`Id` 1) behind Settings -> Email: `Provider`, `Host`, `Port`, `Tls`, `Username`, `Sender` and `Password_Encrypted` (Fernet via `app/secrets_store.py`; never returned by the API), with `Version`/`Updated_By`. Saving also applies the settings to `/etc/msmtprc` through the installer's root helper `/usr/local/sbin/pinpoint-apply-smtp` (`sudo -n`, JSON on stdin: `host`, `port`, `tls`, `username`, `password`, `sender`). No row means no mail transport is configured.
+- Email settings: `SmtpSettings` (`SMTP_SETTINGS`), the singleton (`Id` 1) behind Settings -> Email: `Provider`, `Host`, `Port`, `Tls`, `Username`, `Sender` and `Password_Encrypted` (Fernet via `app/secrets_store.py`; never returned by the API), with `Version`/`Updated_By`. Saving also applies the settings to `/etc/msmtprc` through the installer's root helper `/usr/local/sbin/pinpoint-apply-smtp` (`sudo -n`, JSON on stdin: `host`, `port`, `tls`, `username`, `password`, `sender`). No row means no mail transport is configured. `Provider` is `gmail` (fixed smtp.gmail.com:587 STARTTLS) or `custom` (helper-valid host and port 1–65535, STARTTLS only). The existing columns support both; no migration or permission change is required. The helper JSON field set remains unchanged.
+
+  `app/nagios/mail_failures.py` reads at most 64 KiB from the current regular `NAGIOS_LOG_FILE` (default `/usr/local/nagios/var/nagios.log`) per settings GET, opening nonblocking and ignoring partial boundary lines. It recognizes Nagios 4.5.11 NOTIFY worker failures and adjacent stderr categories; stdout, command text, addresses and credentials never leave the reader. The last failure is returned as UTC time plus fixed reason, or null for missing/unreadable/nonregular/no-match logs. It is a historical failure in the current tail, not a delivery receipt or current health status; a successful test does not erase it. Rotation/tail eviction can remove the indicator. This diagnostic is not written to either database and does not alter archive-based notification history.
 - Plugin settings: `PluginSettings` (`PLUGIN_SETTINGS`), one row per plugin definition (`Plugin_Name`, e.g. `snmp`) holding the variables saved from Settings -> Plugins in `Variables` (JSON), with `Version`/`Updated_By`. No row means the `config.py` defaults apply.
 - Device interfaces: `DeviceInterface` (`DEVICE_INTERFACE`, migration `b7d3f1a9c264`), one row per interface SNMP reports for a device (unique per `NetDiscoveryID` + `If_Index`): `Name`, `Speed_Bps` (null when unreported; `ifHighSpeed` is preferred over `ifSpeed`), `Admin_Status`, `Oper_Status`, `Monitored` (the administrator's choice, default false), `Present` (false once a refresh no longer finds a monitored interface) and `Last_Seen_At`. No rows means no change to the generated Nagios config.
+- Maintenance windows: `MaintenanceWindow` (`MAINTENANCE_WINDOW`, migration `a4c8e1b7d933`): `NetDiscoveryID` (a device, or null for every monitored device), `Start_At`/`End_At` (first occurrence, naive UTC), `Recurrence` (`none`, `daily`, `weekly`), `Recurrence_Until`, `Time_Zone` (IANA name the recurrence repeats in), `Comment`, `Status` (`active`, `cancelled`, `completed`), `Last_Occurrence_Sent`, `Created_By`/`Created_At`; and `MaintenanceOccurrence` (`MAINTENANCE_OCCURRENCE`), one row per occurrence handed to Nagios, unique per (`WindowID`, `Start_At`), with `Status` (`pending` while retrying, `sent`, `failed`, `cancelled`), `Attempts`, `Last_Error` and `Sent_At`. No rows means nothing changes. The downgrade drops both tables; run `flask sync-permissions` after upgrading to add `maintenance.manage` (Administrator only).
 - Network profile: singleton `NetworkProfile` (`Id=1`) holding the editable name, reference and detail rows of the Network Health info card.
 - Audit/logging: `ActivityLog`, `ConfigurationChanges`, `ExportLog`.
 - Discovery: `NetworkDiscoveryStatus`, `SkippedService`, `NetworkDiscovery`,
@@ -31,7 +34,7 @@ acknowledgements belong in `system.db` even though they relate to Nagios alerts.
   with `Reviewed_At`/`Reviewed_By`), `NCPADeploymentResult` (one row per device
   per run), `NCPADeployment` (each device's latest agent state and nullable installed `Port`),
   `NCPADevicePartition`.
-- Remediation: `RemediationAction` (`REMEDIATION_ACTION`): the admin-defined rule with `Name` (unique), `Action_Type`, `Scope_Kind` (service or host), `Host_Pattern`, `Service_Pattern`, `Parameters` (JSON, validated per type), `Enabled`, `Max_Runs_Per_Hour`, `Cooldown_Seconds`, `Version` and `Updated_By`/`Updated_At`; and `RemediationRun` (`REMEDIATION_RUN`): one row per decision with `Event_Key` (sha256 of kind, host, service, state and last state change; unique together with `Action_Id`), `Action_Id` (a plain number, not a foreign key, so deleting an action keeps its runs), `Action_Name` (a copy), host, service, state, `State_Type`, `Attempt`, `Received_At`, `Started_At`, `Finished_At`, `Outcome`, `Reason` and `Output` (at most 1 KB, redacted). Both live in `system.db` because PinPoint writes them; `history.db` stays Nagios snapshots only. Migration `e4a7c1d9b305` creates both tables and the `remediation.view` and `remediation.manage` permissions, granted to the Administrator role.
+- Remediation: `RemediationAction` (`REMEDIATION_ACTION`): the admin-defined rule with `Name` (unique), `Action_Type` (`record_only` or `restart_local_service`; the second was added by migration `b8e3d5f2a417`), `Scope_Kind` (service or host), `Host_Pattern`, `Service_Pattern`, `Parameters` (JSON, validated per type), `Enabled`, `Max_Runs_Per_Hour`, `Cooldown_Seconds`, `Version` and `Updated_By`/`Updated_At`; and `RemediationRun` (`REMEDIATION_RUN`): one row per decision with `Event_Key` (sha256 of kind, host, service, state and last state change; unique together with `Action_Id`), `Action_Id` (a plain number, not a foreign key, so deleting an action keeps its runs), `Action_Name` (a copy), host, service, state, `State_Type`, `Attempt`, `Received_At`, `Started_At`, `Finished_At`, `Outcome`, `Reason` and `Output` (at most 1 KB, redacted). Both live in `system.db` because PinPoint writes them; `history.db` stays Nagios snapshots only. Migration `e4a7c1d9b305` creates both tables and the `remediation.view` and `remediation.manage` permissions, granted to the Administrator role.
 - Settings: singleton `SystemSettings`, singleton `NotificationPolicy` (`NOTIFICATION_POLICY`, Id 1, migration `143c48cd6663`), one-per-user `UserPreferences`. `NotificationPolicy` stores weekday/HH:MM quiet windows as JSON, host/service option strings, a 0–1440-minute renotify interval, `Version`, and `Updated_By`; the migration seeds the historical 24x7/default-options/30-minute policy and removes the table on downgrade.
 - Notification escalations: `Escalation` (`ESCALATION`, migration `cd74e5f8a2d5`) stores `First_Notification` and `Last_Notification` (1–10000, first no greater than last), `Interval_Minutes` (0–1440), `Contact_Group` (an existing generated recipient group) and nullable `HostID` (stable `NetworkDiscovery` foreign key; null scopes to all Nagios hosts and services). Database checks enforce numeric ranges. An empty table preserves generated config byte-for-byte. Upgrade creates only this default-bind table; downgrade drops it without changing recipient/device/history records. Deploy with the existing multi-bind `flask db upgrade`; no new permission or `sync-permissions` change is needed.
 - Notifications/alerts: `NotificationCursor`, `AlertAcknowledgement`,
@@ -197,8 +200,10 @@ the poll continues.
 `nagios`). The CGI route is not used: `cgi.cfg` authorizes commands only for
 `nagiosadmin`, which has no password. The allowlist is closed, one function per
 command: acknowledge/remove acknowledgement (host, service), forced check (host,
-service) and schedule downtime (host, service; for the maintenance-window
-work). Each line is `[epoch] COMMAND;args`, built only after validation: host,
+service), schedule downtime (host, service) and cancel downtime by host name and
+comment (`DEL_DOWNTIME_BY_HOST_NAME;host;;;comment`, which removes the host's and its
+services' downtime with that exact comment; the comment is required, since a blank one
+would delete all of the host's downtime). Each line is `[epoch] COMMAND;args`, built only after validation: host,
 service and author may not contain newline, CR, NUL or `;`; a comment may not
 contain newline, CR or NUL (400 at the route) and has `;` replaced by `,`, is cut
 to 255 characters and logged at INFO only to 40; a line may not exceed 4096 bytes
@@ -266,6 +271,7 @@ are not part of that latency or the check freshness threshold.
 - Daily purging based on `Log_Retention_Days` and
   `Diagnostic_History_Retention_Days`.
 - Settings-driven automation checks every `AUTOMATION_CHECK_MINUTES`.
+- Maintenance window dispatch every 60 seconds (`maintenance_windows`, `app/maintenance.py`).
 - The remediation spool consumer every 15 seconds (`max_instances=1`); at startup, runs left
   `running` by a stop become `interrupted` and are never run again.
 
@@ -289,6 +295,29 @@ administrator to trigger the first scan manually. Maintenance mode permits backu
 stops the other automated operations. Jobs are attributed to an active user for
 audit purposes.
 
+## Maintenance windows and Nagios downtime
+
+`app/maintenance.py` turns a `MaintenanceWindow` into Nagios scheduled downtime through
+the command channel. The dispatcher runs every 60 seconds with the server's clock (the
+Nagios server's clock on an appliance). For each active window it finds the occurrence
+running now or next; when that starts within 10 minutes it claims a
+`MaintenanceOccurrence` row (committed before anything is sent, unique per window and
+start, so a restart or an overlapping run never schedules it twice) and sends
+`SCHEDULE_HOST_DOWNTIME` for each host in scope and `SCHEDULE_SVC_DOWNTIME` for each of
+its services in the latest snapshot, with a fixed start and end so Nagios ends the
+downtime itself. Host downtime alone does not raise a service's `Scheduled_Downtime_Depth`,
+hence the per-service commands. Every downtime carries the comment
+`PinPoint maintenance window <id> starting <epoch>`; cancelling or editing deletes by that
+comment, so only downtime PinPoint created for that occurrence is touched. A failed send
+(pipe unavailable, scope device paused or absent from Nagios) leaves the occurrence
+`pending` and is retried on the next runs, each retry first deleting what the earlier
+attempt left; after 3 attempts it is `failed` with the reason in `Last_Error`, shown on the
+Maintenance page and written to the activity log. A window with no occurrence left is
+marked `completed`. Daily and weekly windows repeat at the same local time in their
+`Time_Zone`, with the same length. `DEL_DOWNTIME_BY_HOST_NAME` was checked on the Docker
+lab's Nagios 4.5.11 (`docs/test-runs/2026-10-15-issue-122-maintenance-windows/REPORT.md`).
+This path is injection-sensitive: it only calls the closed functions in `commands.py`.
+
 ## Network discovery and Nagios configuration
 
 `app/network_discovery/network_discovery.py` performs host/TCP/UDP discovery.
@@ -309,6 +338,92 @@ Settings -> Plugins (`PluginSettings`, one row per plugin: `snmp`, `ncpa`);
 `plugin_config()` in `network_discovery/plugin_settings.py` puts the saved values in
 place of their `config.py` keys once per config build, for both `hosts.cfg` and the
 plugin reconciler. Per-host `Plugin_Variables` overrides still win.
+
+### SNMP version and v3 credentials (per device)
+
+`Plugin_Variables["snmp"]` may hold `protocol` (the `check_snmp -P` value: `1`, `2c`, `3`),
+`community`, and for version 3 `security_level` (`noAuthNoPriv`, `authNoPriv`, `authPriv`),
+`v3_user`, `auth_protocol` (`MD5`, `SHA`) and `priv_protocol` (`DES`, `AES`), written only through
+`device_plugin_variables.py`. The two passphrases are stored encrypted (`secrets_store`, Fernet) as
+`auth_password_enc` and `priv_password_enc`; no API returns them. No migration: the column and
+its JSON shape already existed, and a device without an override renders exactly as before.
+
+- **Version 1, 2c or none** use the `snmp` definition and `pinpoint_nd_snmp` unchanged.
+- **Version 3** selects `SNMP_V3_DEFINITION` (`plugin_registry.py`, command `pinpoint_nd_snmp_v3`,
+  outside `PLUGIN_DEFINITIONS` so no port resolves to it). It has no community argument, fixes `-P 3`
+  and renders `-L -U -a -x` from the variables. `validate_snmp_v3()` checks the fields the level needs;
+  a device missing one (or whose stored password can no longer be decrypted) has its SNMP port
+  skipped with a reason, never rendered without credentials.
+- **Passwords.** `load_host_plugin_facts()` decrypts them into memory; `collect_snmp_secrets()` keys
+  them `snmp_v3:<device>:<name>` for the resource-slot allocator, and `apply_secret_substitutions()`
+  replaces each `--auth-slot` / `--priv-slot` value with a bare `USERn` identifier. The command
+  definition runs `check_snmp` under `scripts/pinpoint_check_native.py`, which reads the slots from
+  the protected resource file and gives `check_snmp` the passphrases on stdin as `--extra-opts`.
+  `hosts.cfg` therefore holds no passphrase and neither does `check_snmp`'s own argument list.
+  **Limit:** `check_snmp` passes the passphrases to its `snmpget` helper in that helper's arguments
+  for the moment a check runs, so a local user could see them in the process list then. This is not
+  claimed to meet the "no secret in child processes" rule of Engineering Standards; closing it needs
+  a different SNMP client (see Implementation_Status).
+- **Slot limit.** v3 passphrases share the 255 resource slots with NCPA tokens and custom-check
+  passwords; exhaustion refuses generation with the existing safe message (422 from the API).
+- **Interface discovery** uses `snmpwalk -v2c`, so a v3 device reports "supports SNMP v1 and v2c only".
+
+### Mail and web service checks (per device)
+
+Mail and web checks have options that an administrator sets per device and service, stored in
+`Plugin_Variables[<plugin>]` and written only through `device_plugin_variables.py` (no migration:
+the column and its JSON shape already existed). A device without an override renders exactly as
+before; `tests/unit/test_plugin_registry.py` (`TestUnchangedDefaults`) pins the command of every
+existing definition.
+
+| Service | Check | Variables (all optional, default in brackets) |
+|---|---|---|
+| `pop3` (110), `pop3s` (995, TLS) | `check_tcp -M crit [-S] -e` | `expected_text` (`+OK`), `warning`, `critical` |
+| `imap` (143), `imaps` (993, TLS) | `check_tcp -M crit [-S] -e` | `expected_text` (`* OK`), `warning`, `critical` |
+| `http`, `https` | `check_http` | `expected_text` (`-s`), `expected_status` (`-e`), `method` (`-j`), `virtual_host` (`-H`), plus the existing `url`, `warning`, `critical` (and `certificate_days` for https) |
+
+- **Mail.** `check_pop` and `check_imap` are not in the bundled catalog, so the four definitions
+  use `check_tcp`, which compares the greeting the server sends on connect with the expected text.
+  `-M crit` makes a wrong greeting CRITICAL (`check_tcp` reports it as WARNING by default). The TLS
+  variants add `-S`. They are reached by the service name `pop3`, `imap`, `pop3s` or `imaps`
+  (discovery names TLS-wrapped POP3 and IMAP that way). A port that was already monitored keeps the
+  plugin frozen when monitoring started (`generic tcp`); use **Set service** on it to switch.
+- **Web.** The new options render after the existing ones, so a default command is unchanged.
+  `virtual_host` cannot be an option of the standard command: `check_http -H` is the address there.
+  Once it is set, `command_definition_name()` selects `http_vhost` / `https_vhost`
+  (`WEB_VHOST_DEFINITIONS`, command `pinpoint_nd_http_vhost`, outside `PLUGIN_DEFINITIONS` like
+  `snmp_v3`), which passes the device address as `-I` and the virtual host as `-H`. Each device
+  setting applies to every port of that service on the device.
+- **Validation.** `validate_variable_value()` rejects, naming the variable and never its value:
+  the forbidden characters (single and double quotes, the backtick, `!`, `$`, `;` and the backslash, line breaks, NUL), an `expected_status` that is not
+  one to ten HTTP status codes from 100 to 599 separated by commas, a `method` outside
+  GET, HEAD, POST, PUT, DELETE, OPTIONS and PATCH (upper case), and a `virtual_host` that is not a
+  host name (letters, digits, `.`, `-`; up to 253 characters; it cannot start with `-`). Values are
+  single-quoted in the generated command line. The API answers 400 with `data.field`.
+- **Authentication headers and passwords for web checks are out of scope** (they need the secret
+  handling of Issue #16 first). Nothing else about the command, the secret slots or the Nagios
+  pre-apply validation changes.
+- **Decision on `nrpe`.** The `5666 -> nrpe` entries of `TCP_PORT_SERVICES` and `UDP_PORT_SERVICES`
+  are kept: no check depends on them, `test_discovery_settings.py` resolves them, and removing a
+  default would change what an upgraded installation proposes for the port. Remove them in a change
+  that owns that migration if the team wants them gone.
+
+#### Services checked at port level only
+
+The registry contains only plugins in the bundled catalog (`spec files/Plugins_List.md`); custom and
+community plugins are out of scope by team decision. A service without a bundled plugin is therefore
+checked by the generic `tcp` plugin, which proves that the port accepts a connection and nothing more:
+
+- **Database engines:** Microsoft SQL Server, Oracle and MongoDB (only MySQL and PostgreSQL have a
+  bundled plugin; `check_dbi` and `check_oracle` need credentials and are unavailable).
+- **Application servers:** JBoss, WebLogic and Citrix.
+- **Anything else** nmap names but the registry does not (for example `smtps`, `submission`,
+  `ldap` on a non-default setup without a base DN, `redis`): port level.
+
+These services still appear in Device Inventory and still alert when the port stops answering;
+what they lack is a check of the service's own reply. Web and API services are covered by `http`
+and `https` for the status code and the response text, not for authentication. The user guide is
+[Application checks](../docs/manuals/Application_Checks.md).
 
 ### Interface bandwidth
 
@@ -356,7 +471,8 @@ ports; if the second step fails the port-number names are kept. `service_from_nm
 keeps nmap's evidence: `method="probed"` with a real name is a `FINGERPRINT`;
 `method="table"` (a lookup by port number) is a `PORT_HINT`; `unknown` and
 `tcpwrapped` (the port accepted and closed) are stored as `unknown` with a
-`PORT_HINT`; HTTP inside `tunnel="ssl"` is reported as `https`. Discovery then
+`PORT_HINT`; HTTP, POP3 and IMAP inside `tunnel="ssl"` are reported as `https`,
+`pop3s` and `imaps` (`TLS_SERVICE_NAMES` in `network_discovery.py`), so they get a TLS check. Discovery then
 decides each port's service name, strongest first:
 
 1. `USER`: a service an operator pinned on that device's port through
@@ -370,6 +486,10 @@ decides each port's service name, strongest first:
    read and never stored, so it cannot drift from `NCPA_PORT`; that port always
    takes `ncpa` because deployment configures the agent there and nmap
    fingerprints it as https.
+   The defaults are 22 `ssh`, 80 `http`, 443 `https`, 110 `pop3`, 143 `imap`, 993 `imaps`
+   and 995 `pop3s` (the four mail names were added by issue #131). Only a table that was
+   never saved from Settings picks up new defaults; a saved table is the administrator's
+   and is not changed.
 4. `PORT_HINT`: nmap's guess from the port number; never trusted on its own.
 
 **Not used as intended.** When nmap fingerprints a service that contradicts the
@@ -745,6 +865,10 @@ polling preferences and history data.
 
 
 ### Topology migration convergence
+
+Because main later added `a4c8e1b7d933` (maintenance windows) and
+`b8e3d5f2a417` (remediation restart), schema-free revision `d117f3b8a053` joins
+`c117e6a9d042` with `b8e3d5f2a417` so the tree again has a single head.
 
 Schema-free merge revision `c117e6a9d042` joins the published manual-parent
 revision `b117d9a2c041` and escalation/remediation head `99f584ed8151` without

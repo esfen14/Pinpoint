@@ -65,6 +65,12 @@ API structure beyond §8.
 - Below the Ports section the drawer shows an **Interfaces** section for a device with SNMP
   monitored (nothing for other devices): the interfaces the device reports, a Monitor choice
   for each and a Refresh button, with the same `system.hosts` / `system.hosts.edit` rules.
+- Below the Interfaces section the drawer shows an **SNMP** section for a device with an SNMP
+  port monitored: the SNMP version (Default, 1, 2c, 3), the community, and for version 3 the
+  security level, user, and the authentication and privacy protocols and passwords. Passwords
+  are never shown after saving. The section offers Save, Test and Reset to defaults, with the
+  same `system.hosts` / `system.hosts.edit` rules (Test needs edit). Routes:
+  [`Backend_Modules_and_Routes.md`](Backend_Modules_and_Routes.md) (`device_plugin_variables.py`).
   It is a separate section and does not change the Ports requirements; its behavior is in
   [`Display_Requirements.md`](Display_Requirements.md) §2.5.1 and
   [`Backend_Modules_and_Routes.md`](Backend_Modules_and_Routes.md) (`device_interfaces.py`).
@@ -136,13 +142,34 @@ once ("You can view ports but not change them.").
 | Suggested (any reason except *Not used as intended*) | **Monitor** | Monitors the port (releases a hold, accepts a flag). If its plugin is not enabled it will produce a service only once the plugin is, and the row says so | none |
 | Suggested, reason *plugin not enabled* | link **Enable {check_plugin}** | Opens Plugin Manager | none |
 | Suggested | **Ignore** | Hides it from "needs attention"; no service | "Ignore {protocol}/{port} on {host}? It will not be monitored." |
-| Monitored or Missing | **Stop monitoring** | Becomes Ignored; its Nagios service is removed | "Stop monitoring {service} on {host}? Its Nagios service is removed; history is kept." |
-| Monitored or Missing | **Leave suggested** | Becomes Suggested and **held**; its service is removed and no plugin will monitor it again until an administrator does | "Leave {protocol}/{port} suggested? Its Nagios service is removed and no plugin will monitor it again until you do." |
+| Monitored or Missing | **Stop monitoring** | Becomes Ignored; its Nagios service is removed | "Stop monitoring {service} on {host}? The Nagios service for this port is removed; its history is kept." |
+| Monitored or Missing | **Leave suggested** | Becomes Suggested and **held**; its service is removed and no plugin will monitor it again until an administrator does | "Leave {protocol}/{port} suggested? The Nagios service for this port is removed, and no plugin will monitor it again until you do." |
 | Ignored | **Resume** | Becomes Monitored again, checked by the plugin for its service | none |
 | Any except Archived | **Set service…** | See §6 | see §6 |
 | Pinned, any except Archived | **Remove pin** | Lets scans decide the service again (§6) | "Let scans decide the service for {protocol}/{port} on {host} again?" plus the sentence for its state from §6 |
 
 For a *Not used as intended* port, **Acknowledge and monitor** is shown instead of Monitor, because both would do the same thing.
+
+### Check options (issue #131)
+
+A **Monitored or Missing** port whose service is `http`, `https`, `pop3`, `imap`, `pop3s` or `imaps`
+also has a **Check options** button, shown to every user who can see the section (it is not one of the
+actions above and does not need `system.hosts.edit` to open). It opens a dialog titled
+"Check options: {service} on {host}", loaded from `GET /api/system/hosts/<id>/plugin-variables/<service>`:
+
+- `http` and `https`: **Expected text**, **Expected status codes** (for example `200,301`), **Virtual host**
+  and **Request method** (Default, GET, HEAD, POST, PUT, DELETE, OPTIONS, PATCH).
+- `pop3`, `pop3s`, `imap`, `imaps`: **Expected greeting**, with the default (`+OK` or `* OK`) shown.
+- An empty field means the default check. The options belong to the device and the service, so they
+  apply to every port of that service on the device; the dialog says so.
+- **Save** is checked in the browser as the server checks it (forbidden characters, status codes 100 to 599,
+  host name, method) and shows the message instead of sending; the server's 400 and 422 messages are shown as
+  they are. **Reset to defaults** removes the override (disabled while nothing is saved). Saving and resetting
+  apply the Nagios config, and the saved values are shown again when the dialog is reopened or the page reloaded.
+- Without `system.hosts.edit`, or for a retired or merged device, the fields are disabled, Save and Reset are
+  not shown, the dialog says "You can view the options but not change them." and the button reads **Close**.
+- Loading, load error with **Retry**, saving and success states are shown. Authentication headers and passwords are not offered.
+- User guide: [Application checks](../docs/manuals/Application_Checks.md).
 
 Not available:
 
@@ -169,8 +196,8 @@ Not available:
   - any other name on UDP: "Skipped: no check exists for this UDP service".
 - Text always shown: "Scans will no longer change this port's service on this device.
   You can change it again or use Remove pin."
-- Extra text when the port is Monitored or Missing: "Its Nagios service will be renamed
-  (for example http-8080-tcp becomes ssh-8080-tcp). History stays under the old name."
+- Extra text when the port is Monitored or Missing: "The Nagios service for this port will be renamed
+  (for example http-8080-tcp becomes ssh-8080-tcp). Its history stays under the old name."
 - Buttons **Cancel** and **Save**; Save is disabled while the name is invalid or unchanged.
 
 **Effect:** the service name is saved and marked Pinned. A port that is already monitored
@@ -187,7 +214,7 @@ service again.
   follows scans from now on. Confirmation sentence: "The service goes back to what the last
   scan saw."
 - A **Monitored or Missing** port keeps its service and its Nagios service unchanged.
-  Confirmation sentence: "Its Nagios service is not changed. If a later scan sees a different
+  Confirmation sentence: "The Nagios service for this port is not changed. If a later scan sees a different
   service, the current one is kept and a review item is recorded."
 - A hold is never changed by removing a pin, and neither is the port's state.
 - It is refused for a port that is not pinned ("This port is not pinned.").
@@ -285,6 +312,9 @@ Plugin Manager beyond the one hint line in §7.
     port the Nagios service is unchanged; the port's state and hold are never changed by it.
 23. Remove pin on a port that is not pinned is refused with "This port is not pinned."; a scan
     after the pin is removed may change the service again.
+24. Check options (§5) appears only on a Monitored or Missing http, https, pop3, imap, pop3s or imaps
+    port; a permitted user can save and reset the options and sees them after reopening; invalid values are
+    blocked with a message and server errors are shown; without `system.hosts.edit` the options are read-only.
 
 ---
 

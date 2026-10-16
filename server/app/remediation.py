@@ -32,7 +32,7 @@ from app import db
 from app.remediation_actions import RunContext, run_action
 from app.system_models import (
     RemediationAction, RemediationEventState, RemediationEventStateType, RemediationOutcome,
-    RemediationRun, RemediationScope,
+    RemediationRun, RemediationScope, SystemSettings,
 )
 
 MAX_FILES_PER_RUN = 200
@@ -253,7 +253,10 @@ def execute(run_id, name, action_type, parameters, event):
     row = db.session.get(RemediationRun, run_id)
     row.Started_At = datetime.now(timezone.utc)
     db.session.commit()
-    context = RunContext(hostname=event["host"], service=event["service"], state=event["state"])
+    settings = db.session.get(SystemSettings, 1)
+    context = RunContext(
+        hostname=event["host"], service=event["service"], state=event["state"],
+        maintenance_mode=bool(settings and settings.Maintenance_Mode))
     result = run_action(action_type, parameters, context)
     row = db.session.get(RemediationRun, run_id)
     row.Outcome = RESULT_OUTCOMES.get(result.outcome, RemediationOutcome.FAILED)
