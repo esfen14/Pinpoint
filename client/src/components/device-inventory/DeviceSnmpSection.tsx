@@ -47,8 +47,8 @@ const LEVEL_OPTIONS: { value: SnmpSecurityLevel | ''; label: string }[] = [
   ...SECURITY_LEVELS,
 ]
 
-const INPUT = 'h-10 w-full rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 text-sm text-[var(--text)] disabled:cursor-not-allowed disabled:opacity-50'
-const BUTTON = 'flex items-center gap-1 rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs font-medium hover:bg-[var(--hover)] disabled:opacity-50'
+const INPUT = 'h-10 w-full rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 text-[15px] text-[var(--text)] disabled:cursor-not-allowed disabled:opacity-50'
+const BUTTON = 'flex items-center gap-1 rounded-lg border border-[var(--border)] px-3 py-1.5 text-[13px] font-medium hover:bg-[var(--hover)] disabled:opacity-50'
 
 // The badge text: what this device is polled with now.
 function modeLabel(saved: DeviceVariablesResponse): string {
@@ -169,7 +169,7 @@ export function DeviceSnmpSection({ deviceId, hostname }: Props) {
   if (loadError) {
     return (
       <section>
-        <h3 className="mb-2 font-semibold">SNMP</h3>
+        <h3 className="mb-2 text-[17px] font-semibold">SNMP</h3>
         <div className="space-y-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-red-600 dark:text-red-400">
           <p>{loadError}</p>
           <button
@@ -178,7 +178,7 @@ export function DeviceSnmpSection({ deviceId, hostname }: Props) {
               setLoadError(null)
               setReloadKey((key) => key + 1)
             }}
-            className="rounded-lg border border-red-500/40 px-3 py-1 text-xs font-medium hover:bg-red-500/10"
+            className="rounded-lg border border-red-500/40 px-3 py-1 text-[13px] font-medium hover:bg-red-500/10"
           >
             Retry
           </button>
@@ -205,7 +205,7 @@ export function DeviceSnmpSection({ deviceId, hostname }: Props) {
     const isSaved = kept[name]
     return (
       <div>
-        <label className="mb-1 block text-xs font-medium" htmlFor={`snmp-${name}`}>{label}</label>
+        <label className="mb-1 block text-[13px] font-medium" htmlFor={`snmp-${name}`}>{label}</label>
         <div className="flex gap-2">
           <input
             id={`snmp-${name}`}
@@ -236,15 +236,15 @@ export function DeviceSnmpSection({ deviceId, hostname }: Props) {
   return (
     <section className="rounded-2xl border border-[#F4A90B]/40 bg-[#F4A90B]/5 p-4">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <h3 className="flex items-center gap-2 font-semibold">
+        <h3 className="flex items-center gap-2 text-[17px] font-semibold">
           <Radio className="h-4 w-4 text-[#F4A90B]" aria-hidden="true" />
           SNMP monitoring
         </h3>
-        <span className="rounded-full bg-[#F4A90B]/15 px-2.5 py-0.5 text-xs font-medium text-[#F4A90B]">
+        <span className="rounded-full bg-[#F4A90B]/15 px-2.5 py-0.5 text-[13px] font-medium text-[#F4A90B]">
           {modeLabel(saved)}
         </span>
       </div>
-      <p className="mb-3 text-xs text-[var(--text-muted)]">
+      <p className="mb-3 text-[13px] text-[var(--text-muted)]">
         This device answers SNMP. Choose how {hostname} is polled: version 1, 2c, or 3 with a user and passwords.
         Leave the version on Default to use the network-wide settings.
         {!canEdit && ' You can view SNMP settings but not change them.'}
@@ -252,7 +252,7 @@ export function DeviceSnmpSection({ deviceId, hostname }: Props) {
 
       <div className="space-y-3">
         <div>
-          <p className="mb-1 text-xs font-medium">SNMP version</p>
+          <p className="mb-1 text-[13px] font-medium">SNMP version</p>
           <DropdownSelect<SnmpVersion>
             label="SNMP version"
             block
@@ -265,7 +265,7 @@ export function DeviceSnmpSection({ deviceId, hostname }: Props) {
 
         {form.version !== '3' && (
           <div>
-            <label className="mb-1 block text-xs font-medium" htmlFor="snmp-community">Community</label>
+            <label className="mb-1 block text-[13px] font-medium" htmlFor="snmp-community">Community</label>
             <input
               id="snmp-community"
               type="text"
@@ -281,7 +281,7 @@ export function DeviceSnmpSection({ deviceId, hostname }: Props) {
         {form.version === '3' && (
           <>
             <div>
-              <p className="mb-1 text-xs font-medium">Security level</p>
+              <p className="mb-1 text-[13px] font-medium">Security level</p>
               <DropdownSelect<SnmpSecurityLevel | ''>
                 label="Security level"
                 block
@@ -292,7 +292,7 @@ export function DeviceSnmpSection({ deviceId, hostname }: Props) {
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium" htmlFor="snmp-user">SNMP v3 user</label>
+              <label className="mb-1 block text-[13px] font-medium" htmlFor="snmp-user">SNMP v3 user</label>
               <input
                 id="snmp-user"
                 type="text"
@@ -306,7 +306,7 @@ export function DeviceSnmpSection({ deviceId, hostname }: Props) {
             {needsAuth(form) && (
               <>
                 <div>
-                  <p className="mb-1 text-xs font-medium">Authentication protocol</p>
+                  <p className="mb-1 text-[13px] font-medium">Authentication protocol</p>
                   <DropdownSelect<string>
                     label="Authentication protocol"
                     block
@@ -322,7 +322,7 @@ export function DeviceSnmpSection({ deviceId, hostname }: Props) {
             {needsPriv(form) && (
               <>
                 <div>
-                  <p className="mb-1 text-xs font-medium">Privacy protocol</p>
+                  <p className="mb-1 text-[13px] font-medium">Privacy protocol</p>
                   <DropdownSelect<string>
                     label="Privacy protocol"
                     block
@@ -335,7 +335,7 @@ export function DeviceSnmpSection({ deviceId, hostname }: Props) {
                 {passwordField('priv_password', 'Privacy password', form.privPassword, (value) => change({ privPassword: value }))}
               </>
             )}
-            <p className="text-xs text-[var(--text-muted)]">
+            <p className="text-[13px] text-[var(--text-muted)]">
               Passwords are stored encrypted and are never shown again. They are not written to the Nagios host file.
             </p>
           </>
@@ -343,19 +343,19 @@ export function DeviceSnmpSection({ deviceId, hostname }: Props) {
       </div>
 
       {notice && (
-        <p role="status" className="mt-3 rounded-lg bg-emerald-500/10 px-3 py-2 text-xs text-emerald-700 dark:text-emerald-300">
+        <p role="status" className="mt-3 rounded-lg bg-emerald-500/10 px-3 py-2 text-[13px] text-emerald-700 dark:text-emerald-300">
           {notice}
         </p>
       )}
       {problem && (
-        <p role="alert" className="mt-3 rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-600 dark:text-red-400">
+        <p role="alert" className="mt-3 rounded-lg bg-red-500/10 px-3 py-2 text-[13px] text-red-600 dark:text-red-400">
           {problem}
         </p>
       )}
       {testResult && (
         <p
           role={testResult.ok ? 'status' : 'alert'}
-          className={`mt-3 rounded-lg px-3 py-2 text-xs ${testResult.ok
+          className={`mt-3 rounded-lg px-3 py-2 text-[13px] ${testResult.ok
             ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
             : 'bg-red-500/10 text-red-600 dark:text-red-400'}`}
         >

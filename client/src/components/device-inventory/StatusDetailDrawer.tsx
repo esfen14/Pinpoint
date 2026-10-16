@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { ArrowLeft, X } from 'lucide-react'
 
 import { apiDelete, apiGet, apiPost, errorMessage } from '../../lib/api'
 import { useCurrentUser } from '../../contexts/CurrentUserContext'
@@ -11,6 +10,7 @@ import { DevicePortsSection } from './DevicePortsSection'
 import { FlapHistorySection } from './FlapHistorySection'
 import type { MonitoringState } from '../../types/host'
 import { useDisplayTime } from '../../hooks/useDisplayTime'
+import { DrawerShell } from '../shared/DrawerShell'
 import { CheckNowButton } from '../shared/CheckNowButton'
 import { NagiosSyncNotice } from '../shared/NagiosSyncNotice'
 import { nagiosSyncNotice, type NagiosSyncResult } from '../../types/nagiosSync'
@@ -159,35 +159,12 @@ export function StatusDetailDrawer({ hostname, onClose, onMonitoringChanged }: P
     : []
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/50">
-      <div className="h-full w-full max-w-xl overflow-y-auto border-l border-[var(--border)] bg-[var(--card)] shadow-xl">
-        <div className="sticky top-0 flex items-center justify-between border-b border-[var(--border)] bg-[var(--card)] px-6 py-4">
-          <div className="flex items-center gap-2">
-            {service && (
-              <button
-                type="button"
-                aria-label="Back to host"
-                onClick={() => setService(null)}
-                className="text-[var(--text-muted)] hover:text-[var(--text)]"
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </button>
-            )}
-            <h2 className="text-lg font-semibold text-[var(--text)]">
-              {service ? `${hostname} / ${service}` : hostname}
-            </h2>
-          </div>
-          <button
-            type="button"
-            aria-label="Close"
-            onClick={onClose}
-            className="text-[var(--text-muted)] hover:text-[var(--text)]"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        <div className="space-y-6 p-6 text-sm text-[var(--text)]">
+    <DrawerShell
+      title={service ? `${hostname} / ${service}` : hostname}
+      onBack={service ? () => setService(null) : undefined}
+      backLabel="Back to host"
+      onClose={onClose}
+    >
           {error && (
             <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-red-600 dark:text-red-400">
               {error}
@@ -199,17 +176,17 @@ export function StatusDetailDrawer({ hostname, onClose, onMonitoringChanged }: P
             <>
               <section className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${stateClass(detail.state)}`}>
+                  <span className={`rounded-full px-2.5 py-0.5 text-[13px] font-medium ${stateClass(detail.state)}`}>
                     {detail.state}
                   </span>
-                  <span className="text-xs text-[var(--text-muted)]">{detail.state_type}</span>
-                  {detail.is_flapping && <span className="text-xs text-amber-600 dark:text-amber-400">Flapping</span>}
-                  {detail.in_downtime && <span className="text-xs text-[var(--text-muted)]">In downtime</span>}
+                  <span className="text-[13px] text-[var(--text-muted)]">{detail.state_type}</span>
+                  {detail.is_flapping && <span className="text-[13px] text-amber-600 dark:text-amber-400">Flapping</span>}
+                  {detail.in_downtime && <span className="text-[13px] text-[var(--text-muted)]">In downtime</span>}
                 </div>
-                <pre className="whitespace-pre-wrap break-words font-mono text-xs text-[var(--text-muted)]">
+                <pre className="whitespace-pre-wrap break-words font-mono text-[13px] text-[var(--text-muted)]">
                   {detail.plugin_output || '—'}
                 </pre>
-                <p className="text-xs text-[var(--text-muted)]">
+                <p className="text-[13px] text-[var(--text-muted)]">
                   Check latency {detail.check_latency.toFixed(3)}s · execution {detail.check_execution_time.toFixed(3)}s
                 </p>
                 {detail.ack && (
@@ -239,13 +216,13 @@ export function StatusDetailDrawer({ hostname, onClose, onMonitoringChanged }: P
 
               {service && hasPermission('system.acknowledge_alerts') && (
                 <section>
-                  <h3 className="mb-2 font-semibold">Acknowledgement</h3>
+                  <h3 className="mb-2 text-[17px] font-semibold">Acknowledgement</h3>
                   {detail.ack ? (
                     <button
                       type="button"
                       disabled={isSaving}
                       onClick={() => changeAcknowledgement(false)}
-                      className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs text-[var(--text)] hover:bg-[var(--hover)] disabled:opacity-50"
+                      className="rounded-lg border border-[var(--border)] px-3 py-1.5 text-[13px] text-[var(--text)] hover:bg-[var(--hover)] disabled:opacity-50"
                     >
                       {isSaving ? 'Saving…' : 'Unacknowledge'}
                     </button>
@@ -259,30 +236,30 @@ export function StatusDetailDrawer({ hostname, onClose, onMonitoringChanged }: P
                         rows={2}
                         placeholder="Comment explaining the acknowledgement"
                         aria-label="Acknowledgement comment"
-                        className="w-full rounded-lg border border-[var(--border)] bg-[var(--input-bg)] px-3 py-2 text-sm text-[var(--text)] outline-none focus:border-[#ffb100]"
+                        className="w-full rounded-lg border border-[var(--border)] bg-[var(--input-bg)] px-3 py-2 text-[15px] text-[var(--text)] outline-none focus:border-[#ffb100]"
                       />
                       <button
                         type="button"
                         disabled={isSaving || !comment.trim()}
                         onClick={() => changeAcknowledgement(true)}
-                        className="rounded-lg bg-[#ffb100] px-3 py-1.5 text-xs font-semibold text-black disabled:cursor-not-allowed disabled:opacity-50"
+                        className="rounded-lg bg-[#ffb100] px-3 py-1.5 text-[13px] font-semibold text-black disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {isSaving ? 'Saving…' : 'Acknowledge'}
                       </button>
                     </div>
                   )}
-                  {ackError && <p className="mt-2 text-xs text-red-600 dark:text-red-400">{ackError}</p>}
+                  {ackError && <p className="mt-2 text-[13px] text-red-600 dark:text-red-400">{ackError}</p>}
                 </section>
               )}
 
               <section>
-                <h3 className="mb-2 font-semibold">Timestamps</h3>
+                <h3 className="mb-2 text-[17px] font-semibold">Timestamps</h3>
                 <dl className="grid grid-cols-2 gap-x-4 gap-y-2">
                   {timestamps.map((key) => {
                     const value = detail[key] as string | null
                     return (
                       <div key={key}>
-                        <dt className="text-xs text-[var(--text-muted)]">{TIMESTAMP_LABELS[key]}</dt>
+                        <dt className="text-[13px] text-[var(--text-muted)]">{TIMESTAMP_LABELS[key]}</dt>
                         <dd>{formatDateTime(value)}</dd>
                       </div>
                     )
@@ -291,11 +268,11 @@ export function StatusDetailDrawer({ hostname, onClose, onMonitoringChanged }: P
               </section>
 
               <section>
-                <h3 className="mb-2 font-semibold">Performance data</h3>
+                <h3 className="mb-2 text-[17px] font-semibold">Performance data</h3>
                 {detail.perf_data.length === 0 ? (
                   <p className="text-[var(--text-muted)]">No performance data reported.</p>
                 ) : (
-                  <table className="w-full text-left text-xs">
+                  <table className="w-full text-left text-[13px]">
                     <thead className="text-[var(--text-muted)]">
                       <tr>
                         <th className="py-1 pr-2 font-medium">Metric</th>
@@ -322,7 +299,7 @@ export function StatusDetailDrawer({ hostname, onClose, onMonitoringChanged }: P
 
               {!service && detail.services && (
                 <section>
-                  <h3 className="mb-2 font-semibold">Services</h3>
+                  <h3 className="mb-2 text-[17px] font-semibold">Services</h3>
                   {detail.services.length === 0 ? (
                     <p className="text-[var(--text-muted)]">No services are monitored on this host.</p>
                   ) : (
@@ -335,7 +312,7 @@ export function StatusDetailDrawer({ hostname, onClose, onMonitoringChanged }: P
                             className="flex w-full items-center justify-between gap-3 py-2 text-left hover:bg-[var(--hover)]"
                           >
                             <span>{s.service}</span>
-                            <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${stateClass(s.state)}`}>
+                            <span className={`rounded-full px-2.5 py-0.5 text-[13px] font-medium ${stateClass(s.state)}`}>
                               {s.state}
                             </span>
                           </button>
@@ -362,8 +339,6 @@ export function StatusDetailDrawer({ hostname, onClose, onMonitoringChanged }: P
               )}
             </>
           )}
-        </div>
-      </div>
-    </div>
+    </DrawerShell>
   )
 }
