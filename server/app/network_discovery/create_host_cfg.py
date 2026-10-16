@@ -555,9 +555,10 @@ def plan_plugin_services(plugin_name, service_label, port, transport, facts, ove
         overrides=overrides.get(plugin_name),
     )
 
-    # SNMP version 3 uses its own command (no community, credentials as resource slots).
+    # SNMP version 3 uses its own command (no community, credentials as resource slots); a web
+    # check with a virtual host uses its *_vhost command (the address moves to -I).
     command_plugin = command_definition_name(plugin_name, variables)
-    if command_plugin != plugin_name:
+    if command_plugin != plugin_name and plugin_name == "snmp":
         validate_snmp_v3(variables)
 
     planned = []

@@ -368,6 +368,63 @@ its JSON shape already existed, and a device without an override renders exactly
   passwords; exhaustion refuses generation with the existing safe message (422 from the API).
 - **Interface discovery** uses `snmpwalk -v2c`, so a v3 device reports "supports SNMP v1 and v2c only".
 
+### Mail and web service checks (per device)
+
+Mail and web checks have options that an administrator sets per device and service, stored in
+`Plugin_Variables[<plugin>]` and written only through `device_plugin_variables.py` (no migration:
+the column and its JSON shape already existed). A device without an override renders exactly as
+before; `tests/unit/test_plugin_registry.py` (`TestUnchangedDefaults`) pins the command of every
+existing definition.
+
+| Service | Check | Variables (all optional, default in brackets) |
+|---|---|---|
+| `pop3` (110), `pop3s` (995, TLS) | `check_tcp -M crit [-S] -e` | `expected_text` (`+OK`), `warning`, `critical` |
+| `imap` (143), `imaps` (993, TLS) | `check_tcp -M crit [-S] -e` | `expected_text` (`* OK`), `warning`, `critical` |
+| `http`, `https` | `check_http` | `expected_text` (`-s`), `expected_status` (`-e`), `method` (`-j`), `virtual_host` (`-H`), plus the existing `url`, `warning`, `critical` (and `certificate_days` for https) |
+
+- **Mail.** `check_pop` and `check_imap` are not in the bundled catalog, so the four definitions
+  use `check_tcp`, which compares the greeting the server sends on connect with the expected text.
+  `-M crit` makes a wrong greeting CRITICAL (`check_tcp` reports it as WARNING by default). The TLS
+  variants add `-S`. They are reached by the service name `pop3`, `imap`, `pop3s` or `imaps`
+  (discovery names TLS-wrapped POP3 and IMAP that way). A port that was already monitored keeps the
+  plugin frozen when monitoring started (`generic tcp`); use **Set service** on it to switch.
+- **Web.** The new options render after the existing ones, so a default command is unchanged.
+  `virtual_host` cannot be an option of the standard command: `check_http -H` is the address there.
+  Once it is set, `command_definition_name()` selects `http_vhost` / `https_vhost`
+  (`WEB_VHOST_DEFINITIONS`, command `pinpoint_nd_http_vhost`, outside `PLUGIN_DEFINITIONS` like
+  `snmp_v3`), which passes the device address as `-I` and the virtual host as `-H`. Each device
+  setting applies to every port of that service on the device.
+- **Validation.** `validate_variable_value()` rejects, naming the variable and never its value:
+  the forbidden characters (single and double quotes, the backtick, `!`, `$`, `;` and the backslash, line breaks, NUL), an `expected_status` that is not
+  one to ten HTTP status codes from 100 to 599 separated by commas, a `method` outside
+  GET, HEAD, POST, PUT, DELETE, OPTIONS and PATCH (upper case), and a `virtual_host` that is not a
+  host name (letters, digits, `.`, `-`; up to 253 characters; it cannot start with `-`). Values are
+  single-quoted in the generated command line. The API answers 400 with `data.field`.
+- **Authentication headers and passwords for web checks are out of scope** (they need the secret
+  handling of Issue #16 first). Nothing else about the command, the secret slots or the Nagios
+  pre-apply validation changes.
+- **Decision on `nrpe`.** The `5666 -> nrpe` entries of `TCP_PORT_SERVICES` and `UDP_PORT_SERVICES`
+  are kept: no check depends on them, `test_discovery_settings.py` resolves them, and removing a
+  default would change what an upgraded installation proposes for the port. Remove them in a change
+  that owns that migration if the team wants them gone.
+
+#### Services checked at port level only
+
+The registry contains only plugins in the bundled catalog (`spec files/Plugins_List.md`); custom and
+community plugins are out of scope by team decision. A service without a bundled plugin is therefore
+checked by the generic `tcp` plugin, which proves that the port accepts a connection and nothing more:
+
+- **Database engines:** Microsoft SQL Server, Oracle and MongoDB (only MySQL and PostgreSQL have a
+  bundled plugin; `check_dbi` and `check_oracle` need credentials and are unavailable).
+- **Application servers:** JBoss, WebLogic and Citrix.
+- **Anything else** nmap names but the registry does not (for example `smtps`, `submission`,
+  `ldap` on a non-default setup without a base DN, `redis`): port level.
+
+These services still appear in Device Inventory and still alert when the port stops answering;
+what they lack is a check of the service's own reply. Web and API services are covered by `http`
+and `https` for the status code and the response text, not for authentication. The user guide is
+[Application checks](../docs/manuals/Application_Checks.md).
+
 ### Interface bandwidth
 
 Bandwidth is computed from stored samples; the Nagios checks are not changed.
@@ -414,7 +471,8 @@ ports; if the second step fails the port-number names are kept. `service_from_nm
 keeps nmap's evidence: `method="probed"` with a real name is a `FINGERPRINT`;
 `method="table"` (a lookup by port number) is a `PORT_HINT`; `unknown` and
 `tcpwrapped` (the port accepted and closed) are stored as `unknown` with a
-`PORT_HINT`; HTTP inside `tunnel="ssl"` is reported as `https`. Discovery then
+`PORT_HINT`; HTTP, POP3 and IMAP inside `tunnel="ssl"` are reported as `https`,
+`pop3s` and `imaps` (`TLS_SERVICE_NAMES` in `network_discovery.py`), so they get a TLS check. Discovery then
 decides each port's service name, strongest first:
 
 1. `USER`: a service an operator pinned on that device's port through
@@ -428,6 +486,10 @@ decides each port's service name, strongest first:
    read and never stored, so it cannot drift from `NCPA_PORT`; that port always
    takes `ncpa` because deployment configures the agent there and nmap
    fingerprints it as https.
+   The defaults are 22 `ssh`, 80 `http`, 443 `https`, 110 `pop3`, 143 `imap`, 993 `imaps`
+   and 995 `pop3s` (the four mail names were added by issue #131). Only a table that was
+   never saved from Settings picks up new defaults; a saved table is the administrator's
+   and is not changed.
 4. `PORT_HINT`: nmap's guess from the port number; never trusted on its own.
 
 **Not used as intended.** When nmap fingerprints a service that contradicts the

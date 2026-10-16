@@ -85,6 +85,10 @@ class Config:
         "22": "ssh",
         "80": "http",
         "443": "https",
+        "110": "pop3",
+        "143": "imap",
+        "993": "imaps",
+        "995": "pop3s",
     }
     UDP_PORT_SERVICES = {
         "5666": "nrpe",

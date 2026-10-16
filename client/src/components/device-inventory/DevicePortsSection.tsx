@@ -7,6 +7,8 @@ import { changePort } from '../../lib/devicePortsApi'
 import { useCurrentUser } from '../../contexts/CurrentUserContext'
 import { useDevicePorts } from '../../hooks/useDevicePorts'
 import type { DevicePort, PortStateName } from '../../types/devicePorts'
+import { CheckOptionsDialog } from './CheckOptionsDialog'
+import { hasCheckOptions } from './checkOptionsForm'
 import { SetServiceDialog } from './SetServiceDialog'
 import {
   ACTION_LABELS,
@@ -64,6 +66,7 @@ export function DevicePortsSection({ deviceId, hostname }: Props) {
   const [confirm, setConfirm] = useState<Confirm | null>(null)
   const [pinFor, setPinFor] = useState<DevicePort | null>(null)
   const [pinError, setPinError] = useState<string | null>(null)
+  const [optionsFor, setOptionsFor] = useState<DevicePort | null>(null)
   const [showArchived, setShowArchived] = useState(false)
 
   const device = data?.device
@@ -205,6 +208,7 @@ export function DevicePortsSection({ deviceId, hostname }: Props) {
                       canViewPlugins={canViewPlugins}
                       busy={busyKey === portKey(port)}
                       onAction={choose}
+                      onCheckOptions={setOptionsFor}
                     />
                   ))}
                 </ul>
@@ -244,6 +248,16 @@ export function DevicePortsSection({ deviceId, hostname }: Props) {
         </div>
       )}
 
+      {optionsFor && hasCheckOptions(optionsFor.plugin_name) && (
+        <CheckOptionsDialog
+          deviceId={deviceId}
+          hostname={hostname}
+          plugin={optionsFor.plugin_name}
+          canEdit={editable}
+          onClose={() => setOptionsFor(null)}
+        />
+      )}
+
       {pinFor && data && (
         <SetServiceDialog
           port={pinFor}
@@ -268,12 +282,15 @@ type RowProps = {
   canViewPlugins: boolean
   busy: boolean
   onAction: (action: PortActionId, port: DevicePort) => void
+  onCheckOptions: (port: DevicePort) => void
 }
 
-function PortRow({ port, host, editable, canViewPlugins, busy, onAction }: RowProps) {
+function PortRow({ port, host, editable, canViewPlugins, busy, onAction, onCheckOptions }: RowProps) {
   const { formatDateTime } = useDisplayTime()
   const flagged = port.expected_service_name !== null && !port.mismatch_acknowledged
   const actions = editable ? actionsFor(port) : []
+  // Options belong to the check a monitored port runs, so only a monitored web or mail port has them.
+  const hasOptions = (port.state === 'MONITORED' || port.state === 'MISSING') && hasCheckOptions(port.plugin_name)
 
   return (
     <li className="rounded-xl border border-[var(--border)] p-3">
@@ -326,8 +343,19 @@ function PortRow({ port, host, editable, canViewPlugins, busy, onAction }: RowPr
         <span className="text-[13px] text-[var(--text-muted)]" title={port.last_seen_at ? formatDateTime(port.last_seen_at) : undefined}>
           Last seen {relativeTime(port.last_seen_at)}
         </span>
-        {actions.length > 0 && (
+        {(actions.length > 0 || hasOptions) && (
           <div className="flex flex-wrap gap-1.5">
+            {hasOptions && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => onCheckOptions(port)}
+                aria-label={`Check options for ${portLabel(port)} on ${host}`}
+                className="rounded-lg border border-[var(--border)] px-2.5 py-1 text-[13px] font-medium text-[var(--text)] hover:bg-[var(--hover)] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Check options
+              </button>
+            )}
             {actions.map((action) => (
               <button
                 key={action}

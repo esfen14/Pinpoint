@@ -254,8 +254,15 @@ SNMP_V3_REQUIRED = {
     "authPriv": ("v3_user", "auth_protocol", "auth_password", "priv_protocol", "priv_password"),
 }
 SNMP_V3_FIELDS = ("security_level", "v3_user", "auth_protocol", "auth_password", "priv_protocol", "priv_password")
+# check_http -j methods the web check options offer.
+HTTP_METHODS = ("GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")
+# A virtual host is a host name (letters, digits, '.', '-'), never an option or a path.
+VIRTUAL_HOST_PATTERN = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9.-]{0,251}[A-Za-z0-9])?$")
+# check_http -e: HTTP status codes, comma separated (200 or 200,301).
+EXPECTED_STATUS_PATTERN = re.compile(r"^[1-5][0-9]{2}(?:,[1-5][0-9]{2}){0,9}$")
 # Variables whose value must be one of a fixed set, for every plugin that declares them.
 ENUMERATED_VARIABLES = {
+    "method": HTTP_METHODS,
     "protocol": SNMP_VERSIONS,
     "security_level": SNMP_SECURITY_LEVELS,
     "auth_protocol": SNMP_AUTH_PROTOCOLS,
@@ -333,6 +340,9 @@ class PluginDefinition:
     # Variables that hold a credential: encrypted at rest, never returned by an API, and written
     # to the command only as a resource-slot identifier (see create_host_cfg.apply_secret_substitutions).
     secret_variables: tuple = ()
+    # Variables an administrator may set that this definition's own command cannot carry: another
+    # definition's command renders them (the web checks' virtual_host, see WEB_VHOST_DEFINITIONS).
+    extra_variables: tuple = ()
 
     @property
     def command_name(self):
@@ -358,6 +368,16 @@ class PluginDefinition:
 # Flags follow spec files/Plugins_List.md. check_udp and check_ftp are not
 # catalogued there, but both are installed by nagios-plugins 2.4.12 as
 # aliases of check_tcp and were already used by the previous command maps.
+# check_tcp reports a reply that is not the expected one as WARNING unless told otherwise (-M);
+# a mail server that greets wrongly is CRITICAL, like a web check whose status or text is wrong.
+MAIL_FIXED_FLAGS = "-M crit"
+# The options of the mail checks: the greeting check_tcp expects (-e) and the response-time limits.
+MAIL_OPTIONS = {"expected_text": "-e", "warning": "-w", "critical": "-c"}
+# The options added to the web checks by issue #131, rendered after the existing ones so a default
+# command is unchanged. virtual_host is not here: -H is the address flag of the standard command,
+# so a virtual host selects the *_vhost definition instead (see command_definition_name).
+WEB_CHECK_OPTIONS = {"expected_text": "-s", "expected_status": "-e", "method": "-j"}
+
 PLUGIN_DEFINITIONS = {
     definition.name: definition
     for definition in (
@@ -425,8 +445,9 @@ PLUGIN_DEFINITIONS = {
             check_plugin="check_http",
             transports=(Transport.TCP,),
             arguments=(("-p", "port"),),
-            options={"url": "-u", "warning": "-w", "critical": "-c"},
+            options={"url": "-u", "warning": "-w", "critical": "-c", **WEB_CHECK_OPTIONS},
             defaults={"port": 80},
+            extra_variables=("virtual_host",),
         ),
         PluginDefinition(
             name="https",
@@ -434,8 +455,9 @@ PLUGIN_DEFINITIONS = {
             transports=(Transport.TCP,),
             arguments=(("-p", "port"),),
             fixed_flags="-S",
-            options={"url": "-u", "warning": "-w", "critical": "-c", "certificate_days": "-C"},
+            options={"url": "-u", "warning": "-w", "critical": "-c", "certificate_days": "-C", **WEB_CHECK_OPTIONS},
             defaults={"port": 443},
+            extra_variables=("virtual_host",),
         ),
         PluginDefinition(
             name="ssh",
@@ -459,6 +481,47 @@ PLUGIN_DEFINITIONS = {
             arguments=(("-p", "port"),),
             options={"warning": "-w", "critical": "-c"},
             defaults={"port": 25},
+        ),
+        # POP3 and IMAP have no plugin of their own in the bundled catalog, so check_tcp verifies
+        # the greeting the server sends on connect (-e). The expected text is a variable, so a
+        # server that greets differently can be matched per device. The TLS variants (-S) are
+        # reached through nmap's pop3s / imaps names (service_from_nmap names a TLS-wrapped
+        # pop3 / imap that way).
+        PluginDefinition(
+            name="pop3",
+            check_plugin="check_tcp",
+            transports=(Transport.TCP,),
+            arguments=(("-p", "port"),),
+            fixed_flags=MAIL_FIXED_FLAGS,
+            options=dict(MAIL_OPTIONS),
+            defaults={"port": 110, "expected_text": "+OK"},
+        ),
+        PluginDefinition(
+            name="pop3s",
+            check_plugin="check_tcp",
+            transports=(Transport.TCP,),
+            arguments=(("-p", "port"),),
+            fixed_flags=f"-S {MAIL_FIXED_FLAGS}",
+            options=dict(MAIL_OPTIONS),
+            defaults={"port": 995, "expected_text": "+OK"},
+        ),
+        PluginDefinition(
+            name="imap",
+            check_plugin="check_tcp",
+            transports=(Transport.TCP,),
+            arguments=(("-p", "port"),),
+            fixed_flags=MAIL_FIXED_FLAGS,
+            options=dict(MAIL_OPTIONS),
+            defaults={"port": 143, "expected_text": "* OK"},
+        ),
+        PluginDefinition(
+            name="imaps",
+            check_plugin="check_tcp",
+            transports=(Transport.TCP,),
+            arguments=(("-p", "port"),),
+            fixed_flags=f"-S {MAIL_FIXED_FLAGS}",
+            options=dict(MAIL_OPTIONS),
+            defaults={"port": 993, "expected_text": "* OK"},
         ),
         PluginDefinition(
             name="mysql",
@@ -589,7 +652,34 @@ SNMP_V3_DEFINITION = PluginDefinition(
     defaults={"port": 161},
     secret_variables=("auth_password", "priv_password"),
 )
-INTERNAL_DEFINITIONS = {SNMP_V3_DEFINITION.name: SNMP_V3_DEFINITION}
+
+
+def web_vhost_definition(base):
+    """
+    The command a web check uses once a virtual host is set. check_http's -H is the host name sent
+    in the Host header, and the standard command passes the device address there, so the address
+    moves to -I and the virtual host takes -H. Everything else is the base definition's.
+    """
+    return PluginDefinition(
+        name=f"{base.name}_vhost",
+        check_plugin=base.check_plugin,
+        transports=base.transports,
+        host_flag="-I",
+        arguments=(*base.arguments, ("-H", "virtual_host")),
+        fixed_flags=base.fixed_flags,
+        options=dict(base.options),
+        defaults=dict(base.defaults),
+    )
+
+
+# Not services of their own: the "http" / "https" plugins select these (command_definition_name).
+WEB_VHOST_DEFINITIONS = {
+    name: web_vhost_definition(PLUGIN_DEFINITIONS[name]) for name in ("http", "https")
+}
+INTERNAL_DEFINITIONS = {
+    SNMP_V3_DEFINITION.name: SNMP_V3_DEFINITION,
+    **{definition.name: definition for definition in WEB_VHOST_DEFINITIONS.values()},
+}
 
 GENERIC_PLUGIN_FOR_TRANSPORT = {
     Transport.TCP: "tcp",
@@ -616,11 +706,14 @@ def get_plugin_definition(plugin_name):
 def command_definition_name(plugin_name, variables):
     """
     The definition whose command a plugin's services use with these variables: "snmp" becomes
-    "snmp_v3" once its protocol variable is 3, every other plugin is its own. v1 and v2c devices
-    keep the command they always had.
+    "snmp_v3" once its protocol variable is 3, and "http" / "https" become their *_vhost definition
+    once a virtual host is set. Every other plugin is its own, and so are v1 and v2c devices and web
+    checks without a virtual host: they keep the command they always had.
     """
     if plugin_name == "snmp" and str(variables.get("protocol") or "") == "3":
         return SNMP_V3_DEFINITION.name
+    if plugin_name in WEB_VHOST_DEFINITIONS and str(variables.get("virtual_host") or ""):
+        return WEB_VHOST_DEFINITIONS[plugin_name].name
     return plugin_name
 
 
@@ -640,7 +733,7 @@ def editable_variables(plugin_name):
     """
     definition = get_plugin_definition(plugin_name)
     names = {variable for _flag, variable in definition.arguments}
-    names |= set(definition.options) | set(definition.defaults)
+    names |= set(definition.options) | set(definition.defaults) | set(definition.extra_variables)
     if plugin_name == "snmp":
         names |= set(SNMP_V3_DEFINITION.options) | set(SNMP_V3_DEFINITION.defaults)
     return names - NON_EDITABLE_VARIABLES
@@ -778,6 +871,10 @@ def validate_variable_value(variable, value):
         raise PluginConfigurationError(
             f"Variable '{variable}' must be one of: {', '.join(ENUMERATED_VARIABLES[variable])}."
         )
+    if variable == "virtual_host" and not VIRTUAL_HOST_PATTERN.match(text):
+        raise PluginConfigurationError("Variable 'virtual_host' must be a host name (letters, digits, '.' and '-').")
+    if variable == "expected_status" and not EXPECTED_STATUS_PATTERN.match(text):
+        raise PluginConfigurationError("Variable 'expected_status' must be HTTP status codes from 100 to 599, separated by commas.")
     if variable == "v3_user" and not SNMP_USER_PATTERN.match(text):
         raise SnmpV3Error("Variable 'v3_user' must be 1 to 32 letters, digits, '.', '_', '@' or '-', starting with a letter or digit.", "v3_user")
     if any(character in FORBIDDEN_VALUE_CHARACTERS for character in text):

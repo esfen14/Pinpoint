@@ -437,3 +437,156 @@ class TestConfirmedNcpaDefaults:
         assert [check.metric for check in checks if check.skip_reason is None] == ['cpu', 'memory', 'disk_root']
         assert [check.metric for check in checks if check.skip_reason] == ['swap', 'disk_read', 'disk_write']
         assert all('could not be verified' in check.skip_reason for check in checks if check.skip_reason)
+
+
+# ==========================================================
+# MAIL AND WEB SERVICE CHECK OPTIONS (issue #131)
+# ==========================================================
+
+# The rendered command of every definition that existed before issue #131, with the variables
+# discovery gives it. Nothing here may change when the new variables are left unset.
+UNCHANGED_COMMANDS = {
+    "tcp": ("pinpoint_nd_tcp!8080!", "$USER1$/check_tcp -H $HOSTADDRESS$ -p '$ARG1$' $ARG2$"),
+    "http": ("pinpoint_nd_http!80!", "$USER1$/check_http -H $HOSTADDRESS$ -p '$ARG1$' $ARG2$"),
+    "https": ("pinpoint_nd_https!443!", "$USER1$/check_http -H $HOSTADDRESS$ -S -p '$ARG1$' $ARG2$"),
+    "smtp": ("pinpoint_nd_smtp!25!", "$USER1$/check_smtp -H $HOSTADDRESS$ -p '$ARG1$' $ARG2$"),
+}
+
+
+class TestUnchangedDefaults:
+
+    @pytest.mark.parametrize("plugin", sorted(UNCHANGED_COMMANDS))
+    def test_command_definition_is_byte_identical(self, plugin):
+        _, command_line = UNCHANGED_COMMANDS[plugin]
+        assert get_plugin_definition(plugin).command_line == command_line
+
+    @pytest.mark.parametrize("plugin,port", [("http", 80), ("https", 443)])
+    def test_default_web_check_renders_as_before(self, plugin, port):
+        variables = resolve_plugin_variables(plugin, discovered={"port": port})
+        assert resolve_plugin_command(plugin, variables, Transport.TCP) == f"pinpoint_nd_{plugin}!{port}!"
+
+    def test_existing_options_still_render(self):
+        command = resolve_plugin_command("http", {"port": 80, "url": "/health", "warning": "2", "critical": "5"})
+        assert command == "pinpoint_nd_http!80!-u '/health' -w '2' -c '5'"
+
+    def test_a_web_command_name_is_unchanged_without_a_virtual_host(self):
+        from app.network_discovery.plugin_registry import command_definition_name
+        assert command_definition_name("http", {"port": 80, "expected_text": "ok"}) == "http"
+        assert command_definition_name("https", {"port": 443}) == "https"
+
+
+class TestMailDefinitions:
+
+    @pytest.mark.parametrize("name,port,greeting,tls", [
+        ("pop3", 110, "+OK", False),
+        ("imap", 143, "* OK", False),
+        ("pop3s", 995, "+OK", True),
+        ("imaps", 993, "* OK", True),
+    ])
+    def test_default_command_checks_the_greeting(self, name, port, greeting, tls):
+        definition = get_plugin_definition(name)
+        assert definition.check_plugin == "check_tcp"
+        assert definition.transports == (Transport.TCP,)
+        variables = resolve_plugin_variables(name, discovered={"port": port})
+        assert resolve_plugin_command(name, variables, Transport.TCP) == f"pinpoint_nd_{name}!{port}!-e '{greeting}'"
+        assert ("-S" in definition.command_line.split()) is tls
+
+    def test_command_lines(self):
+        assert get_plugin_definition("pop3").command_line == "$USER1$/check_tcp -H $HOSTADDRESS$ -M crit -p '$ARG1$' $ARG2$"
+        assert get_plugin_definition("imaps").command_line == "$USER1$/check_tcp -H $HOSTADDRESS$ -S -M crit -p '$ARG1$' $ARG2$"
+
+    @pytest.mark.parametrize("name", ["pop3", "imap", "pop3s", "imaps"])
+    def test_a_wrong_greeting_is_critical_not_warning(self, name):
+        assert "-M crit" in get_plugin_definition(name).command_line
+
+    def test_port_is_a_variable_not_a_lookup_key(self):
+        variables = resolve_plugin_variables("pop3", discovered={"port": 2110})
+        assert resolve_plugin_command("pop3", variables) == "pinpoint_nd_pop3!2110!-e '+OK'"
+
+    def test_greeting_and_thresholds_can_be_overridden(self):
+        variables = resolve_plugin_variables(
+            "imap", discovered={"port": 143}, overrides={"expected_text": "* OK Dovecot", "warning": "1", "critical": "3"})
+        assert resolve_plugin_command("imap", variables) == "pinpoint_nd_imap!143!-e '* OK Dovecot' -w '1' -c '3'"
+
+    @pytest.mark.parametrize("service,plugin", [("pop3", "pop3"), ("imap", "imap"), ("pop3s", "pop3s"), ("imaps", "imaps")])
+    def test_service_names_resolve_to_their_plugin(self, service, plugin):
+        assert resolve_plugin_name(service, Transport.TCP) == plugin
+
+    def test_mail_services_are_not_offered_for_udp(self):
+        assert resolve_plugin_name("pop3", Transport.UDP) == "udp"
+
+    def test_the_services_are_checked_by_check_tcp(self):
+        from app.network_discovery.plugin_registry import plugin_for_definition
+        assert {plugin_for_definition(name) for name in ("pop3", "imap", "pop3s", "imaps")} == {"check_tcp"}
+
+    def test_rendered_command_object(self):
+        assert "command_name    pinpoint_nd_pop3s" in render_command_definition("pop3s")
+        assert "-S -M crit -p '$ARG1$'" in render_command_definition("pop3s")
+
+
+class TestWebCheckOptions:
+
+    def test_all_options_render_with_their_flags(self):
+        command = resolve_plugin_command("http", {
+            "port": 80, "url": "/health", "expected_text": "all good",
+            "expected_status": "200,301", "method": "HEAD",
+        })
+        assert command == "pinpoint_nd_http!80!-u '/health' -s 'all good' -e '200,301' -j 'HEAD'"
+
+    def test_https_renders_them_too(self):
+        command = resolve_plugin_command("https", {"port": 443, "expected_text": "ok", "expected_status": "200"})
+        assert command == "pinpoint_nd_https!443!-s 'ok' -e '200'"
+
+    def test_a_virtual_host_uses_the_vhost_command_with_the_device_address(self):
+        from app.network_discovery.plugin_registry import command_definition_name
+        variables = {"port": 80, "virtual_host": "www.example.com", "expected_text": "ok"}
+        name = command_definition_name("http", variables)
+        assert name == "http_vhost"
+        assert resolve_plugin_command(name, variables, Transport.TCP) == "pinpoint_nd_http_vhost!80!www.example.com!-s 'ok'"
+        assert get_plugin_definition(name).command_line == (
+            "$USER1$/check_http -I $HOSTADDRESS$ -p '$ARG1$' -H '$ARG2$' $ARG3$")
+        assert get_plugin_definition("https_vhost").command_line == (
+            "$USER1$/check_http -I $HOSTADDRESS$ -S -p '$ARG1$' -H '$ARG2$' $ARG3$")
+
+    def test_vhost_commands_are_recognised_as_check_http(self):
+        assert plugin_for_command("pinpoint_nd_https_vhost!443!www.example.com!") == "check_http"
+
+    def test_blank_values_are_not_rendered(self):
+        assert resolve_plugin_command("http", {"port": 80, "expected_text": "", "method": ""}) == "pinpoint_nd_http!80!"
+
+    @pytest.mark.parametrize("variable,value", [
+        ("expected_text", "bad'text"), ("expected_text", "a;b"), ("expected_text", "$MACRO$"),
+        ("expected_text", "a!b"), ("expected_text", "back\\slash"), ("expected_text", "two\nlines"),
+        ("virtual_host", "host;rm"), ("virtual_host", "a b"), ("virtual_host", "-evil"),
+        ("virtual_host", "host/path"), ("virtual_host", "x" * 254),
+        ("expected_status", "98"), ("expected_status", "600"), ("expected_status", "20x"),
+        ("expected_status", "200,"), ("expected_status", "200;404"), ("expected_status", "HTTP/1.1 200"),
+        ("method", "FETCH"), ("method", "get"), ("method", "GET;"),
+    ])
+    def test_invalid_values_name_the_variable_not_the_value(self, variable, value):
+        from app.network_discovery.plugin_registry import validate_variable_value
+        with pytest.raises(PluginConfigurationError, match=f"'{variable}'") as raised:
+            validate_variable_value(variable, value)
+        assert value not in str(raised.value)
+
+    @pytest.mark.parametrize("variable,value", [
+        ("expected_text", "Welcome to *our* site (v2)"), ("expected_text", "+OK"), ("expected_text", "* OK"),
+        ("virtual_host", "www.example.com"), ("virtual_host", "intranet"), ("virtual_host", "a-b.example.org"),
+        ("expected_status", "200"), ("expected_status", "200,301,404"),
+        ("method", "GET"), ("method", "HEAD"), ("method", "POST"),
+    ])
+    def test_valid_values_are_accepted(self, variable, value):
+        from app.network_discovery.plugin_registry import validate_variable_value
+        assert validate_variable_value(variable, value) == value
+
+    def test_the_editable_variables_include_the_new_options(self):
+        from app.network_discovery.plugin_registry import editable_variables
+        for plugin in ("http", "https"):
+            assert {"expected_text", "expected_status", "virtual_host", "method"} <= editable_variables(plugin)
+        for plugin in ("pop3", "imap", "pop3s", "imaps"):
+            assert "expected_text" in editable_variables(plugin)
+            assert not {"expected_status", "virtual_host", "method"} & editable_variables(plugin)
+
+    def test_other_plugins_do_not_accept_the_web_options(self):
+        from app.network_discovery.plugin_registry import editable_variables
+        assert not {"expected_text", "virtual_host", "method"} & editable_variables("ssh")

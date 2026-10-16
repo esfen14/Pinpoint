@@ -347,3 +347,49 @@ class TestTestAction:
 
     def test_only_snmp_can_be_tested(self, logged_in_client, device):
         assert logged_in_client.post(url(device, "http", "/test"), json={}).status_code == 400
+
+
+# ==========================================================
+# MAIL AND WEB CHECK OPTIONS (issue #131)
+# ==========================================================
+
+class TestWebAndMailOptions:
+
+    WEB = {"expected_text": "Welcome", "expected_status": "200,301", "virtual_host": "www.example.com", "method": "HEAD"}
+
+    @pytest.mark.parametrize("plugin", ["http", "https"])
+    def test_web_options_are_saved_and_read_back(self, logged_in_client, device, plugin):
+        resp = logged_in_client.put(url(device, plugin), json={"variables": self.WEB})
+        assert resp.status_code == 200
+        assert stored(device) == {plugin: self.WEB}
+        data = logged_in_client.get(url(device, plugin)).get_json()["data"]
+        assert data["variables"] == self.WEB
+        assert {"expected_text", "expected_status", "virtual_host", "method"} <= set(data["editable"])
+
+    @pytest.mark.parametrize("plugin", ["pop3", "imap", "pop3s", "imaps"])
+    def test_mail_greeting_is_saved(self, logged_in_client, device, plugin):
+        assert logged_in_client.put(url(device, plugin), json={"variables": {"expected_text": "+OK ready"}}).status_code == 200
+        assert stored(device) == {plugin: {"expected_text": "+OK ready"}}
+
+    @pytest.mark.parametrize("plugin,variable,value", [
+        ("http", "expected_text", "it's"), ("http", "expected_text", "a;b"), ("http", "expected_text", "x$y"),
+        ("http", "expected_status", "700"), ("http", "expected_status", "ok"), ("https", "expected_status", "200;"),
+        ("http", "method", "FETCH"), ("https", "method", "get"),
+        ("http", "virtual_host", "bad host"), ("https", "virtual_host", "-x"),
+        ("pop3", "expected_text", "a`b"),
+    ])
+    def test_invalid_values_are_400_naming_the_field(self, logged_in_client, device, plugin, variable, value):
+        resp = logged_in_client.put(url(device, plugin), json={"variables": {variable: value}})
+        assert resp.status_code == 400
+        assert resp.get_json()["data"]["field"] == variable and variable in resp.get_json()["message"]
+        assert value not in resp.get_json()["message"]
+        assert stored(device) is None
+
+    def test_web_only_options_are_unknown_for_mail(self, logged_in_client, device):
+        resp = logged_in_client.put(url(device, "imap"), json={"variables": {"virtual_host": "mail.example.com"}})
+        assert resp.status_code == 400 and resp.get_json()["data"]["field"] == "virtual_host"
+
+    def test_reset_returns_to_the_defaults(self, logged_in_client, device):
+        logged_in_client.put(url(device, "http"), json={"variables": self.WEB})
+        assert logged_in_client.delete(url(device, "http")).status_code == 200
+        assert stored(device) is None

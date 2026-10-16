@@ -150,6 +150,27 @@ once ("You can view ports but not change them.").
 
 For a *Not used as intended* port, **Acknowledge and monitor** is shown instead of Monitor, because both would do the same thing.
 
+### Check options (issue #131)
+
+A **Monitored or Missing** port whose service is `http`, `https`, `pop3`, `imap`, `pop3s` or `imaps`
+also has a **Check options** button, shown to every user who can see the section (it is not one of the
+actions above and does not need `system.hosts.edit` to open). It opens a dialog titled
+"Check options: {service} on {host}", loaded from `GET /api/system/hosts/<id>/plugin-variables/<service>`:
+
+- `http` and `https`: **Expected text**, **Expected status codes** (for example `200,301`), **Virtual host**
+  and **Request method** (Default, GET, HEAD, POST, PUT, DELETE, OPTIONS, PATCH).
+- `pop3`, `pop3s`, `imap`, `imaps`: **Expected greeting**, with the default (`+OK` or `* OK`) shown.
+- An empty field means the default check. The options belong to the device and the service, so they
+  apply to every port of that service on the device; the dialog says so.
+- **Save** is checked in the browser as the server checks it (forbidden characters, status codes 100 to 599,
+  host name, method) and shows the message instead of sending; the server's 400 and 422 messages are shown as
+  they are. **Reset to defaults** removes the override (disabled while nothing is saved). Saving and resetting
+  apply the Nagios config, and the saved values are shown again when the dialog is reopened or the page reloaded.
+- Without `system.hosts.edit`, or for a retired or merged device, the fields are disabled, Save and Reset are
+  not shown, the dialog says "You can view the options but not change them." and the button reads **Close**.
+- Loading, load error with **Retry**, saving and success states are shown. Authentication headers and passwords are not offered.
+- User guide: [Application checks](../docs/manuals/Application_Checks.md).
+
 Not available:
 
 - **The NCPA port of a device with a deployed agent**: no Stop, Ignore, Leave suggested
@@ -291,6 +312,9 @@ Plugin Manager beyond the one hint line in §7.
     port the Nagios service is unchanged; the port's state and hold are never changed by it.
 23. Remove pin on a port that is not pinned is refused with "This port is not pinned."; a scan
     after the pin is removed may change the service again.
+24. Check options (§5) appears only on a Monitored or Missing http, https, pop3, imap, pop3s or imaps
+    port; a permitted user can save and reset the options and sees them after reopening; invalid values are
+    blocked with a message and server errors are shown; without `system.hosts.edit` the options are read-only.
 
 ---
 
