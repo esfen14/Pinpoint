@@ -68,6 +68,18 @@ class TestServiceFromNmap:
         result = service_from_nmap(service(name="http", tunnel="ssl", method="probed"))
         assert result == {"service_name": "https", "identified_by": FINGERPRINT}
 
+    @pytest.mark.parametrize("name,expected", [("pop3", "pop3s"), ("imap", "imaps")])
+    def test_mail_inside_tls_gets_the_tls_name(self, name, expected):
+        result = service_from_nmap(service(name=name, tunnel="ssl", method="probed"))
+        assert result == {"service_name": expected, "identified_by": FINGERPRINT}
+
+    @pytest.mark.parametrize("name", ["pop3", "imap", "ssh", "smtp"])
+    def test_plain_services_keep_their_name(self, name):
+        assert service_from_nmap(service(name=name, method="probed"))["service_name"] == name
+
+    def test_tls_around_another_service_keeps_its_name(self):
+        assert service_from_nmap(service(name="smtp", tunnel="ssl", method="probed"))["service_name"] == "smtp"
+
     @pytest.mark.parametrize("name", ["tcpwrapped", "unknown"])
     def test_unidentified_answers_are_hints(self, name):
         assert service_from_nmap(service(name=name, method="probed"))["identified_by"] == PORT_HINT
@@ -149,6 +161,28 @@ class TestPortRules:
         assert tcp["5693"] == {"service_name": "ncpa", "identified_by": PORT_RULE}
         assert tcp["8080"] == {"service_name": "http", "identified_by": PORT_RULE}
         assert tcp["22"] == {"service_name": "http", "identified_by": FINGERPRINT, "expected_service": "ssh"}
+
+    @pytest.mark.parametrize("port,name", [("110", "pop3"), ("143", "imap"), ("993", "imaps"), ("995", "pop3s")])
+    def test_the_default_table_names_the_mail_ports(self, app, port, name):
+        with app.app_context():
+            assert get_port_services("tcp")[port] == name
+
+    @pytest.mark.parametrize("port,found,table", [
+        ("110", "pop3", "pop3"), ("143", "imap", "imap"), ("993", "imaps", "imaps"), ("995", "pop3s", "pop3s")])
+    def test_a_mail_fingerprint_agrees_with_the_default_table(self, app, port, found, table):
+        data = {"service_name": found, "identified_by": FINGERPRINT}
+        with app.app_context():
+            apply_service_rules(data, port, get_port_services("tcp"))
+        assert data == {"service_name": table, "identified_by": PORT_RULE}
+
+    def test_an_existing_default_is_not_disturbed_by_the_mail_ports(self, app):
+        with app.app_context():
+            table = get_port_services("tcp")
+        for port, name in {"22": "ssh", "80": "http", "443": "https"}.items():
+            assert table[port] == name
+        data = {"service_name": "http", "identified_by": FINGERPRINT}
+        apply_service_rules(data, "143", table)
+        assert data["expected_service"] == "imap" and data["service_name"] == "http"
 
     def test_the_tcp_table_always_holds_the_ncpa_port(self, app):
         with app.app_context():

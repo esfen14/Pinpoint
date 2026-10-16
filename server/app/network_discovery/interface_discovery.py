@@ -196,6 +196,9 @@ def device_snmp_settings(device):
         )
     except PluginConfigurationError:
         raise InterfaceDiscoveryError("This device has no usable SNMP settings.")
+    if str(variables.get("protocol") or "") == "3":
+        # snmpwalk is run with a v2c community here; v3 credentials are not passed to it.
+        raise InterfaceDiscoveryError("Interface discovery supports SNMP v1 and v2c only, not v3.")
     return variables.get("port"), variables.get("community")
 
 

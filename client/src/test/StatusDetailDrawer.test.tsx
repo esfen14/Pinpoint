@@ -143,7 +143,8 @@ describe('StatusDetailDrawer flap history', () => {
     render(<StatusDetailDrawer hostname="web-01" onClose={() => {}} />)
     await screen.findByText(/Flagged as flapping in 7 checks/)
 
-    fireEvent.change(screen.getByLabelText('Flap history window'), { target: { value: '168' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Flap history window' }))
+    fireEvent.click(screen.getByRole('option', { name: /7 days|168|week/i }))
 
     await waitFor(() => expect(flapCalls().at(-1)).toBe('/api/system/network-health/flapping?hours=168'))
   })

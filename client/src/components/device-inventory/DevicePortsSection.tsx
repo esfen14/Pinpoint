@@ -7,6 +7,8 @@ import { changePort } from '../../lib/devicePortsApi'
 import { useCurrentUser } from '../../contexts/CurrentUserContext'
 import { useDevicePorts } from '../../hooks/useDevicePorts'
 import type { DevicePort, PortStateName } from '../../types/devicePorts'
+import { CheckOptionsDialog } from './CheckOptionsDialog'
+import { hasCheckOptions } from './checkOptionsForm'
 import { SetServiceDialog } from './SetServiceDialog'
 import {
   ACTION_LABELS,
@@ -64,6 +66,7 @@ export function DevicePortsSection({ deviceId, hostname }: Props) {
   const [confirm, setConfirm] = useState<Confirm | null>(null)
   const [pinFor, setPinFor] = useState<DevicePort | null>(null)
   const [pinError, setPinError] = useState<string | null>(null)
+  const [optionsFor, setOptionsFor] = useState<DevicePort | null>(null)
   const [showArchived, setShowArchived] = useState(false)
 
   const device = data?.device
@@ -120,7 +123,7 @@ export function DevicePortsSection({ deviceId, hostname }: Props) {
 
   return (
     <section>
-      <h3 className="mb-2 font-semibold">Ports</h3>
+      <h3 className="mb-2 text-[17px] font-semibold">Ports</h3>
 
       {isLoading && !data && (
         <p className="flex items-center text-[var(--text-muted)]">
@@ -134,7 +137,7 @@ export function DevicePortsSection({ deviceId, hostname }: Props) {
           <button
             type="button"
             onClick={reload}
-            className="rounded-lg border border-red-500/40 px-3 py-1 text-xs font-medium hover:bg-red-500/10"
+            className="rounded-lg border border-red-500/40 px-3 py-1 text-[13px] font-medium hover:bg-red-500/10"
           >
             Retry
           </button>
@@ -146,7 +149,7 @@ export function DevicePortsSection({ deviceId, hostname }: Props) {
       )}
 
       {data && data.ports.length > 0 && (
-        <p className="mb-2 text-xs text-[var(--text-muted)]">
+        <p className="mb-2 text-[13px] text-[var(--text-muted)]">
           {STATE_ORDER.filter((state) => data.counts[state] > 0)
             .map((state) => `${data.counts[state]} ${STATE_LABELS[state].toLowerCase()}`)
             .join(' · ')}
@@ -154,21 +157,21 @@ export function DevicePortsSection({ deviceId, hostname }: Props) {
       )}
 
       {data && !canEdit && data.ports.length > 0 && (
-        <p className="mb-2 text-xs text-[var(--text-muted)]">You can view ports but not change them.</p>
+        <p className="mb-2 text-[13px] text-[var(--text-muted)]">You can view ports but not change them.</p>
       )}
       {data && endedDevice && (
-        <p className="mb-2 text-xs text-[var(--text-muted)]">
+        <p className="mb-2 text-[13px] text-[var(--text-muted)]">
           This device is {device?.state === 'MERGED' ? 'merged' : 'retired'}.
         </p>
       )}
 
       {notice && (
-        <p role="status" className="mb-2 rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
+        <p role="status" className="mb-2 rounded-lg bg-amber-500/10 px-3 py-2 text-[13px] text-amber-700 dark:text-amber-300">
           {notice}
         </p>
       )}
       {actionError && (
-        <p role="alert" className="mb-2 rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-600 dark:text-red-400">
+        <p role="alert" className="mb-2 rounded-lg bg-red-500/10 px-3 py-2 text-[13px] text-red-600 dark:text-red-400">
           {actionError}
         </p>
       )}
@@ -183,13 +186,13 @@ export function DevicePortsSection({ deviceId, hostname }: Props) {
                   type="button"
                   onClick={() => setShowArchived((open) => !open)}
                   aria-expanded={!collapsed}
-                  className="mb-1 flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]"
+                  className="mb-1 flex items-center gap-1 text-[13px] font-semibold uppercase tracking-wide text-[var(--text-muted)]"
                 >
                   {collapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                   {group.title} ({group.ports.length})
                 </button>
               ) : (
-                <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-[var(--text-muted)]">
+                <h4 className="mb-1 text-[13px] font-semibold uppercase tracking-wide text-[var(--text-muted)]">
                   {group.title} ({group.ports.length})
                 </h4>
               )}
@@ -205,6 +208,7 @@ export function DevicePortsSection({ deviceId, hostname }: Props) {
                       canViewPlugins={canViewPlugins}
                       busy={busyKey === portKey(port)}
                       onAction={choose}
+                      onCheckOptions={setOptionsFor}
                     />
                   ))}
                 </ul>
@@ -222,26 +226,36 @@ export function DevicePortsSection({ deviceId, hostname }: Props) {
           className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
         >
           <div className="w-full max-w-sm space-y-3 rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-xl">
-            <h3 className="text-base font-semibold text-[var(--text)]">{ACTION_LABELS[confirm.action]}</h3>
-            <p className="text-sm text-[var(--text-muted)]">{confirmationText(confirm.action, confirm.port, hostname)}</p>
+            <h3 className="text-[17px] font-semibold text-[var(--text)]">{ACTION_LABELS[confirm.action]}</h3>
+            <p className="text-[15px] text-[var(--text-muted)]">{confirmationText(confirm.action, confirm.port, hostname)}</p>
             <div className="flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setConfirm(null)}
-                className="rounded-lg border border-[var(--border)] px-4 py-2 text-sm text-[var(--text)] hover:bg-[var(--hover)]"
+                className="rounded-lg border border-[var(--border)] px-4 py-2 text-[15px] text-[var(--text)] hover:bg-[var(--hover)]"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={confirmAction}
-                className="rounded-lg bg-[#ffb100] px-4 py-2 text-sm font-semibold text-black"
+                className="rounded-lg bg-[#ffb100] px-4 py-2 text-[15px] font-semibold text-black"
               >
                 {ACTION_LABELS[confirm.action]}
               </button>
             </div>
           </div>
         </div>
+      )}
+
+      {optionsFor && hasCheckOptions(optionsFor.plugin_name) && (
+        <CheckOptionsDialog
+          deviceId={deviceId}
+          hostname={hostname}
+          plugin={optionsFor.plugin_name}
+          canEdit={editable}
+          onClose={() => setOptionsFor(null)}
+        />
       )}
 
       {pinFor && data && (
@@ -268,44 +282,47 @@ type RowProps = {
   canViewPlugins: boolean
   busy: boolean
   onAction: (action: PortActionId, port: DevicePort) => void
+  onCheckOptions: (port: DevicePort) => void
 }
 
-function PortRow({ port, host, editable, canViewPlugins, busy, onAction }: RowProps) {
+function PortRow({ port, host, editable, canViewPlugins, busy, onAction, onCheckOptions }: RowProps) {
   const { formatDateTime } = useDisplayTime()
   const flagged = port.expected_service_name !== null && !port.mismatch_acknowledged
   const actions = editable ? actionsFor(port) : []
+  // Options belong to the check a monitored port runs, so only a monitored web or mail port has them.
+  const hasOptions = (port.state === 'MONITORED' || port.state === 'MISSING') && hasCheckOptions(port.plugin_name)
 
   return (
     <li className="rounded-xl border border-[var(--border)] p-3">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="font-mono text-sm font-semibold">{portLabel(port)}</span>
+        <span className="font-mono text-[15px] font-semibold">{portLabel(port)}</span>
         <span>{port.service_name}</span>
-        <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${STATE_STYLES[port.state]}`}>
+        <span className={`rounded-full px-2.5 py-0.5 text-[13px] font-medium ${STATE_STYLES[port.state]}`}>
           {STATE_LABELS[port.state]}
         </span>
-        {port.state === 'MISSING' && <span className="text-xs text-amber-600 dark:text-amber-400">not seen lately</span>}
+        {port.state === 'MISSING' && <span className="text-[13px] text-amber-600 dark:text-amber-400">not seen lately</span>}
         {flagged && (
-          <span className="rounded-full bg-amber-500/15 px-2.5 py-0.5 text-xs font-medium text-amber-600 dark:text-amber-400">
+          <span className="rounded-full bg-amber-500/15 px-2.5 py-0.5 text-[13px] font-medium text-amber-600 dark:text-amber-400">
             Not used as intended
           </span>
         )}
         {port.promotion_held && (
-          <span className="rounded-full bg-gray-500/15 px-2.5 py-0.5 text-xs font-medium text-[var(--text-muted)]">Held</span>
+          <span className="rounded-full bg-gray-500/15 px-2.5 py-0.5 text-[13px] font-medium text-[var(--text-muted)]">Held</span>
         )}
       </div>
 
       {flagged && (
-        <p className="mt-1 text-xs text-[var(--text-muted)]">
+        <p className="mt-1 text-[13px] text-[var(--text-muted)]">
           found {port.service_name}, expected {port.expected_service_name}
         </p>
       )}
 
-      <p className="mt-1 text-xs text-[var(--text-muted)]">
+      <p className="mt-1 text-[13px] text-[var(--text-muted)]">
         {identifiedLabel(port)} · Check: {port.check_plugin ?? 'none'}
       </p>
 
       {port.reason && (
-        <p className="mt-1 text-xs text-[var(--text)]">
+        <p className="mt-1 text-[13px] text-[var(--text)]">
           {port.reason.text}
           {(port.reason.code === 'plugin_not_enabled' || port.reason.code === 'monitoring_inactive') && canViewPlugins && port.check_plugin && (
             <>
@@ -319,15 +336,26 @@ function PortRow({ port, host, editable, canViewPlugins, busy, onAction }: RowPr
       )}
 
       {port.managed_by_ncpa && (
-        <p className="mt-1 text-xs text-[var(--text-muted)]">Managed by NCPA deployment</p>
+        <p className="mt-1 text-[13px] text-[var(--text-muted)]">Managed by NCPA deployment</p>
       )}
 
       <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-        <span className="text-xs text-[var(--text-muted)]" title={port.last_seen_at ? formatDateTime(port.last_seen_at) : undefined}>
+        <span className="text-[13px] text-[var(--text-muted)]" title={port.last_seen_at ? formatDateTime(port.last_seen_at) : undefined}>
           Last seen {relativeTime(port.last_seen_at)}
         </span>
-        {actions.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
+        {(actions.length > 0 || hasOptions) && (
+          <div className="ml-auto flex flex-wrap justify-end gap-1.5">
+            {hasOptions && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => onCheckOptions(port)}
+                aria-label={`Check options for ${portLabel(port)} on ${host}`}
+                className="rounded-lg border border-[var(--border)] px-2.5 py-1 text-[13px] font-medium text-[var(--text)] hover:bg-[var(--hover)] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Check options
+              </button>
+            )}
             {actions.map((action) => (
               <button
                 key={action}
@@ -335,7 +363,7 @@ function PortRow({ port, host, editable, canViewPlugins, busy, onAction }: RowPr
                 disabled={busy}
                 onClick={() => onAction(action, port)}
                 aria-label={`${ACTION_LABELS[action]} ${portLabel(port)} on ${host}`}
-                className="rounded-lg border border-[var(--border)] px-2.5 py-1 text-xs font-medium text-[var(--text)] hover:bg-[var(--hover)] disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-lg border border-[var(--border)] px-2.5 py-1 text-[13px] font-medium text-[var(--text)] hover:bg-[var(--hover)] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {ACTION_LABELS[action]}
               </button>

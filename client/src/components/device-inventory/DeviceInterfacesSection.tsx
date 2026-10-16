@@ -97,13 +97,13 @@ export function DeviceInterfacesSection({ deviceId, hostname }: Props) {
   return (
     <section>
       <div className="mb-2 flex items-center justify-between gap-2">
-        <h3 className="font-semibold">Interfaces</h3>
+        <h3 className="text-[17px] font-semibold">Interfaces</h3>
         {data && canEdit && data.snmp && (
           <button
             type="button"
             onClick={() => void refresh()}
             disabled={refreshing}
-            className="flex items-center gap-1 rounded-lg border border-[var(--border)] px-2.5 py-1 text-xs font-medium hover:bg-[var(--hover)] disabled:opacity-50"
+            className="flex items-center gap-1 rounded-lg border border-[var(--border)] px-2.5 py-1 text-[13px] font-medium hover:bg-[var(--hover)] disabled:opacity-50"
           >
             {refreshing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
             {refreshing ? 'Refreshing…' : 'Refresh'}
@@ -123,7 +123,7 @@ export function DeviceInterfacesSection({ deviceId, hostname }: Props) {
           <button
             type="button"
             onClick={retry}
-            className="rounded-lg border border-red-500/40 px-3 py-1 text-xs font-medium hover:bg-red-500/10"
+            className="rounded-lg border border-red-500/40 px-3 py-1 text-[13px] font-medium hover:bg-red-500/10"
           >
             Retry
           </button>
@@ -137,19 +137,19 @@ export function DeviceInterfacesSection({ deviceId, hostname }: Props) {
       )}
 
       {data && data.interfaces.length > 0 && (
-        <p className="mb-2 text-xs text-[var(--text-muted)]">
+        <p className="mb-2 text-[13px] text-[var(--text-muted)]">
           {monitoredCount} of {data.max_monitored} monitored. Each monitored interface adds an in and an out bandwidth check.
           {!canEdit && ' You can view interfaces but not change them.'}
         </p>
       )}
 
       {notice && (
-        <p role="status" className="mb-2 rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
+        <p role="status" className="mb-2 rounded-lg bg-amber-500/10 px-3 py-2 text-[13px] text-amber-700 dark:text-amber-300">
           {notice}
         </p>
       )}
       {actionError && (
-        <p role="alert" className="mb-2 rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-600 dark:text-red-400">
+        <p role="alert" className="mb-2 rounded-lg bg-red-500/10 px-3 py-2 text-[13px] text-red-600 dark:text-red-400">
           {actionError}
         </p>
       )}
@@ -163,7 +163,7 @@ export function DeviceInterfacesSection({ deviceId, hostname }: Props) {
               <li key={row.if_index} className="flex items-center justify-between gap-3 rounded-lg border border-[var(--border)] px-3 py-2">
                 <div className="min-w-0">
                   <p className="truncate font-medium">{row.name}</p>
-                  <p className="flex flex-wrap items-center gap-x-2 text-xs text-[var(--text-muted)]">
+                  <p className="flex flex-wrap items-center gap-x-2 text-[13px] text-[var(--text-muted)]">
                     <span>#{row.if_index}</span>
                     {speed && <span>{speed}</span>}
                     {row.oper_status && (
@@ -174,7 +174,7 @@ export function DeviceInterfacesSection({ deviceId, hostname }: Props) {
                     {!row.present && <span>no longer reported by the device</span>}
                   </p>
                 </div>
-                <label className="flex shrink-0 items-center gap-2 text-xs">
+                <label className="flex shrink-0 items-center gap-2 text-[13px]">
                   {busyIndex === row.if_index && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                   <input
                     type="checkbox"

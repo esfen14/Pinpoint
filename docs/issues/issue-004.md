@@ -1,4 +1,6 @@
-### Issue #4 — System Implementation Add Parent Device Relationships and Nagios Parents Rendering With Device Selector
+# Manual Parent Relationships and Network Topology
+
+GitHub implementation issue: [#117](https://github.com/esfen14/Pinpoint/issues/117).
 
 **Category:** System
 
@@ -12,10 +14,20 @@
 
 **Dependencies:** None
 
-**Plan reference:** Issue #4 in [`docs/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../NAGIOS_CORE_FEATURE_GAP_PLAN.md) §3. The number is a plan identifier, not a GitHub issue number.
+**Plan reference:** Issue #4 in [`docs/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](https://github.com/esfen14/Pinpoint/blob/main/docs/NAGIOS_CORE_FEATURE_GAP_PLAN.md) §3. The number is a plan identifier, not a GitHub issue number.
 
-> **Blocked / conditional:** **Part 4.1 (System):** Needs a scope decision first. `Implementation_Status.md` excludes backend topology computation and the topology view from the current release. Parent links (data and Nagios `parents` only, no map) are a different thing, but the team must confirm that before work starts.  
-> **Part 4.2 (Web-Interface):** Same condition as Part 4.1.
+#### Scope decision (2026-10-15)
+
+The product owner includes network topology in the release. This supersedes the topology exclusion in the original issue and the current specifications; update those specifications as part of this issue.
+
+- Parent relationships are configured manually. Each device may have zero, one, or multiple parents; use a relationship table rather than a single nullable parent column. Nagios supports multiple parents.
+- Wire the existing topology frontend (`client/src/pages/wagpakielaman.tsx`, currently a static prototype) to backend inventory, monitoring state, and parent relationships, and register a supported Topology page.
+- Each graph connection represents a configured parent relationship, not a discovered physical interface connection.
+- Authorized users can set, change, and clear parents from both Device Inventory and Topology, using the same backend validation and permission checks.
+- Show all devices exposed by Device Inventory, including devices without parents and paused devices. Make monitoring state clear.
+- Use an automatic hierarchy that handles multiple parents. Disable node dragging and layout modification; saved custom layouts are out of scope.
+- Automatic parent inference is out of scope. A suggested gateway is advisory and never creates a relationship automatically.
+- Topology detail panels show device details from existing backend data and manually configured parent relationships only. Interface details, interface-to-parent mapping, traffic/utilization charts, and new telemetry collection are out of scope. Remove the prototype's sample interface details and placeholder charts from the supported page. Existing interface and bandwidth functionality elsewhere remains outside this issue.
 
 #### A. Problem Description
 
@@ -29,8 +41,10 @@ Operators cannot say which device sits behind which. Once the backend stores par
 
 **Out of scope for this issue:**
 
-- A topology map or any visualization (excluded from the release).
-- Automatic parent inference beyond a suggestion.
+- Automatic parent inference beyond an advisory suggestion.
+- Manual layout modification and saved custom layouts.
+- Physical interface connections inferred from parent relationships.
+- Topology interface panels, interface-to-parent mapping, traffic/utilization charts, and new telemetry collection.
 
 #### B. Current Implementation
 
@@ -48,19 +62,23 @@ Paths below were verified in the repository on 2026-10-13 unless marked *(propos
 
 **Backend / System**
 
-1. **Part 4.1 (System):** Add a nullable self-referencing `Parent_Device_ID` column on `NetworkDiscovery` and a migration.
-2. **Part 4.1 (System):** Validate on write: the parent exists and is not the device itself, is not retired or merged, and the link creates no cycle. Return 400 with a clear message.
-3. **Part 4.1 (System):** Extend `PUT /api/system/hosts/<id>` (permission `system.hosts.edit`) to accept `parent_device_id`, and include the parent in the device summary returned by the host routes.
-4. **Part 4.1 (System):** Render `parents <host_name>` in `host.cfg.tpl` when the parent is monitored. If the parent is paused, retired, merged or address-unknown, omit `parents` for that host and report it in the response, so a bad parent never hides a real outage or breaks the config.
-5. **Part 4.1 (System):** On merge and retire (`device_identity.py`), re-point or clear children of the affected device in the same transaction.
+1. **Part 4.1 (System):** Add a device-parent relationship table supporting zero or more parents per `NetworkDiscovery` device and a multi-database migration with downgrade. Enforce unique child-parent pairs.
+2. **Part 4.1 (System):** Validate the complete parent set on write: every parent exists, is not the device itself, is not retired or merged, and no link creates a cycle through any parent path. Reject duplicate parent IDs with 400 and a clear message. Apply parent-set updates atomically.
+3. **Part 4.1 (System):** Extend `PUT /api/system/hosts/<id>` (permission `system.hosts.edit`) to accept `parent_device_ids` as a list (an empty list clears all parents), and include the parent IDs and summaries in the device summary returned by the host routes. Omission preserves the existing parent set.
+4. **Part 4.1 (System):** Render the Nagios `parents` directive with the comma-separated host names of all eligible monitored parents. Omit paused, retired, merged, or address-unknown parents individually and report those omissions in the response; omit the directive when no eligible parents remain. Preserve Nagios validation and rollback.
+5. **Part 4.1 (System):** On merge and retire (`device_identity.py`), re-point or clear child-parent relationships of the affected device in the same transaction. Deduplicate relationships and prevent self-links or cycles introduced by merging; reject a merge that cannot preserve a valid graph without silently dropping unrelated relationships.
 6. **Part 4.1 (System):** Apply through `regenerate_and_apply_config_status()` with rollback on failure.
 
 **Frontend / Web Interface**
 
-1. **Part 4.2 (Web-Interface):** Add a "Parent device" field to the drawer *(a new section component, proposed `DeviceParentSection.tsx` in `components/device-inventory/`)* with a searchable list of other monitored devices, a "None" choice and the suggested gateway.
+1. **Part 4.2 (Web-Interface):** Add a "Parent device" field to the drawer *(a new section component, proposed `DeviceParentSection.tsx` in `components/device-inventory/`)* with a searchable multi-select of eligible devices, a clear-all action and an advisory suggested gateway. Display all selected parents and their monitoring states.
 2. **Part 4.2 (Web-Interface):** Show a warning when the chosen parent is not monitored, and the server's 400 message for cycles or invalid parents.
-3. **Part 4.2 (Web-Interface):** Show the parent in the drawer and an optional column or tooltip in `HostTable.tsx`.
+3. **Part 4.2 (Web-Interface):** Show all configured parents in the drawer and an optional column or tooltip in `HostTable.tsx`.
 4. **Part 4.2 (Web-Interface):** Respect `system.hosts.edit`: read-only without it.
+
+5. **Topology:** Replace static prototype nodes and edges with backend data, expose the page through routing/navigation with documented server and client permissions, and show all Device Inventory devices and configured parent edges. Include loading, error, empty and read-only states.
+6. **Topology:** Allow parent-set edits from a selected device using the same API and `system.hosts.edit` guard as Inventory. Use an automatic hierarchy supporting multiple parents, with node dragging and layout modification disabled. Clearly distinguish configured edges from their eligibility for Nagios rendering.
+7. **Topology detail panels:** Display device details using existing backend data and manually configured parents only. Remove sample interface details, interface navigation, and placeholder traffic/utilization charts from the supported topology page; do not add interface-to-parent mapping or new telemetry collection.
 
 #### D. Implementation Guidelines
 
@@ -81,38 +99,44 @@ General rules for every issue:
 
 #### E. Acceptance Criteria
 
-- [ ] **Part 4.1 (System):** Setting a parent makes the generated host definition contain a `parents` line, and Nagios validates it.
-- [ ] **Part 4.1 (System):** A self-parent, a cycle, or a retired or merged parent is refused with 400.
-- [ ] **Part 4.1 (System):** Retiring or merging a parent leaves no dangling reference and the config still validates.
-- [ ] **Part 4.1 (System):** A host whose parent is paused still gets a valid config, without `parents`.
-- [ ] **Part 4.1 (System):** On a lab network, powering off a parent makes its children UNREACHABLE and only the parent raises a DOWN alert.
-- [ ] **Part 4.1 (System):** Hosts without a parent behave exactly as before.
-- [ ] **Part 4.2 (Web-Interface):** A user with `system.hosts.edit` can set, change and clear a parent, and it persists after reload.
-- [ ] **Part 4.2 (Web-Interface):** Cycle and invalid choices show the server message.
-- [ ] **Part 4.2 (Web-Interface):** A user without the permission sees the parent but cannot change it.
-- [ ] **Part 4.2 (Web-Interface):** Existing drawer and table tests pass unchanged.
+- [x] **Part 4.1 (System):** Setting one or multiple parents makes the generated host definition contain the corresponding Nagios `parents` list, and Nagios validates it.
+- [x] **Part 4.1 (System):** A self-parent, a cycle through any parent path, duplicate IDs, or a missing, retired or merged parent is refused with 400; the previous parent set remains intact.
+- [x] **Part 4.1 (System):** Retiring or merging a parent leaves no dangling reference and the config still validates.
+- [x] **Part 4.1 (System):** Ineligible parents are individually omitted and reported; eligible parents remain in the generated list. A host with no eligible parents gets valid config without `parents`.
+- [x] **Part 4.1 (System):** On a lab network, demonstrate Nagios reachability for both a single parent and redundant parents: a failed intermediate parent makes dependent children UNREACHABLE when no alternate route remains; loss of one parent with an available alternate route does not incorrectly mark a reachable child UNREACHABLE. Record observed host states and DOWN/UNREACHABLE notification behavior.
+- [x] **Part 4.1 (System):** Hosts without a parent behave exactly as before.
+- [x] **Part 4.2 (Web-Interface):** A user with `system.hosts.edit` can set, change and clear multiple parents from both Inventory and Topology, and the complete parent set persists after reload.
+- [x] **Part 4.2 (Web-Interface):** Cycle and invalid choices show the server message.
+- [x] **Part 4.2 (Web-Interface):** A user without the permission sees the parents in both Inventory and Topology but cannot change them.
+- [x] **Part 4.2 (Web-Interface):** Existing drawer and table tests pass unchanged.
+
+- [x] **Topology:** The supported routed page displays real backend devices and configured parent edges, including all Device Inventory devices, paused devices and devices without parents.
+- [x] **Topology:** Automatic hierarchy handles shared children with multiple parents; node dragging and layout modification are disabled.
+- [x] **Topology:** Loading, error, empty and permission states are tested; hardcoded sample nodes and edges are removed from the supported page.
+- [x] **Topology:** Matching specifications and tests recognize topology as supported, superseding the former release exclusion.
+- [x] **Topology:** Detail panels use real device data and manual parent relationships only; tests verify sample interface details, interface navigation, and placeholder traffic/utilization charts are absent from the supported topology page.
 
 #### F. Required Deliverables
 
-- [ ] Updated application source code (paths in section C).
-- [ ] New or updated API endpoints, with route docstrings and permission checks.
-- [ ] Database migration (multi-database, with downgrade) and `flask sync-permissions` note if a permission is added.
-- [ ] Updated frontend components, types and routes (paths in section C).
-- [ ] Unit tests for new or modified logic.
-- [ ] Frontend interaction tests under `client/src/test/`.
-- [ ] Integration or regression tests for the workflows in section G.
-- [ ] Updated technical documentation: `spec files/Backend_Modules_and_Routes.md`, `spec files/Data_Model_and_Integrations.md`, `spec files/Device_Inventory_Requirements.md`, `spec files/Frontend_Modules_and_Routes.md`, and `spec files/Implementation_Status.md`.
-- [ ] Updated user-facing documentation: Drawer help text.
-- [ ] Evidence that the functionality works: `scripts/verify.sh all` output attached to the pull request; plus a sanitized lab report in `docs/test-runs/` using its `TEMPLATE.md`.
+- [x] Updated application source code (paths in section C).
+- [x] New or updated API endpoints, with route docstrings and permission checks.
+- [x] Database migration (multi-database, with downgrade) and `flask sync-permissions` note if a permission is added.
+- [x] Updated frontend components, types and routes (paths in section C).
+- [x] Unit tests for new or modified logic.
+- [x] Frontend interaction tests under `client/src/test/`.
+- [x] Integration or regression tests for the workflows in section G.
+- [x] Updated technical documentation: `spec files/Backend_Modules_and_Routes.md`, `spec files/Data_Model_and_Integrations.md`, `spec files/Device_Inventory_Requirements.md`, `spec files/Frontend_Modules_and_Routes.md`, and `spec files/Implementation_Status.md`, and the topology boundary in `spec files/System_Overview_and_Architecture.md`.
+- [x] Updated user-facing documentation: Drawer help text.
+- [x] Evidence that the functionality works: `scripts/verify.sh all` output attached to the pull request; plus a sanitized lab report in `docs/test-runs/` using its `TEMPLATE.md`.
 
 #### G. Testing and Verification
 
-- **Part 4.1 (System):** Unit: cycle detection, merge and retire re-pointing, template output with and without a parent, paused-parent handling.
+- **Part 4.1 (System):** Unit: multiple-parent cycle detection, duplicate IDs, atomic parent-set updates, merge and retire re-pointing/deduplication, template output with zero/one/multiple parents, mixed eligible/ineligible parents, paused-parent handling.
 - **Part 4.1 (System):** API: permission and 400 paths for the extended device route.
 - **Part 4.1 (System):** Migration up and down.
-- **Part 4.1 (System):** Lab (record in `docs/test-runs/`): gateway and two children, power off the gateway.
+- **Part 4.1 (System):** Lab (record in `docs/test-runs/`): single-parent gateway with two children, plus a child with redundant parents and verified alternate routes; exercise parent failures and record reachability and notification behavior.
 - **Part 4.1 (System):** Regression: `test_device_identity.py`, `test_device_identity_routes.py`, `test_create_host_cfg.py`.
-- **Part 4.2 (Web-Interface):** Frontend: set, clear, error and read-only states.
+- **Part 4.2 (Web-Interface):** Frontend: set, change, clear, error and read-only states on both pages; topology backend wiring, all inventory devices, automatic multiple-parent hierarchy and disabled layout modification.
 - **Part 4.2 (Web-Interface):** Regression: Device Inventory tests listed above.
 
 Test results must be real runs. Do not claim a test passed without attaching its output.
@@ -123,47 +147,75 @@ Test results must be real runs. Do not claim a test passed without attaching its
 
 #### Functional Completion
 
-- [ ] All mandatory acceptance criteria are satisfied.
-- [ ] Required functionality works as specified.
-- [ ] Existing behavior has not been unintentionally broken.
-- [ ] Applicable edge cases are handled.
+- [x] All mandatory acceptance criteria are satisfied.
+- [x] Required functionality works as specified.
+- [x] Existing behavior has not been unintentionally broken.
+- [x] Applicable edge cases are handled.
 
 #### Code Quality
 
-- [ ] Code follows PinPoint's existing architectural patterns and conventions.
-- [ ] No unnecessary duplicate functionality is introduced.
-- [ ] Relevant linting and static analysis checks pass.
-- [ ] No unresolved critical defects remain.
+- [x] Code follows PinPoint's existing architectural patterns and conventions.
+- [x] No unnecessary duplicate functionality is introduced.
+- [x] Relevant linting and static analysis checks pass.
+- [x] No unresolved critical defects remain.
 
 #### Testing
 
-- [ ] Required automated tests are added or updated.
-- [ ] All applicable automated tests pass.
-- [ ] Relevant integration and regression tests pass.
-- [ ] Test results or verification evidence are attached to the pull request.
+- [x] Required automated tests are added or updated.
+- [x] All applicable automated tests pass.
+- [x] Relevant integration and regression tests pass.
+- [x] Test results or verification evidence are attached to the pull request.
 
 #### Security and Reliability
 
-- [ ] User inputs and configuration values are validated.
-- [ ] Authorization is enforced where required.
-- [ ] Sensitive data is handled securely.
-- [ ] Errors are handled without introducing uncontrolled failures.
-- [ ] Relevant performance and reliability requirements are satisfied.
+- [x] User inputs and configuration values are validated.
+- [x] Authorization is enforced where required.
+- [x] Sensitive data is handled securely.
+- [x] Errors are handled without introducing uncontrolled failures.
+- [x] Relevant performance and reliability requirements are satisfied.
 
 #### Documentation
 
-- [ ] Relevant technical documentation is updated.
-- [ ] User documentation is updated for user-facing changes.
-- [ ] New configuration parameters are documented.
-- [ ] Deployment or migration steps are documented where applicable.
+- [x] Relevant technical documentation is updated.
+- [x] User documentation is updated for user-facing changes.
+- [x] New configuration parameters are documented.
+- [x] Deployment or migration steps are documented where applicable.
 
 #### Pull Request Review
 
-- [ ] The pull request references the corresponding issue number.
-- [ ] The pull request describes the implementation and testing performed.
-- [ ] Required CI checks pass.
+- [x] The pull request references the corresponding issue number.
+- [x] The pull request describes the implementation and testing performed.
+- [x] Required CI checks pass.
 - [ ] All required reviewer approvals are obtained.
-- [ ] Blocking review comments are resolved.
-- [ ] All applicable acceptance criteria and required deliverables are complete.
+- [x] Blocking review comments are resolved.
+- [x] All applicable acceptance criteria and required deliverables are complete.
 
 Do not mark this issue as completed solely because code has been written. Test results, reviewer approvals and deployment verification must be backed by evidence attached to the pull request and must not be claimed without it.
+
+
+#### Checklist verification snapshot (2026-10-15)
+
+Verified against implementation source `4981a70e` and published checkpoint
+`633e3616` in [PR #174](https://github.com/esfen14/Pinpoint/pull/174).
+The subsequent checklist correction changes documentation only.
+
+- Full local `scripts/verify.sh all`: **3338 backend passed / 14 skipped,
+  694 frontend passed (54 files)**; production build and docs passed; lint
+  0 errors / 31 warnings. Output summary is attached in the PR description.
+- [CI run 38734683462](https://github.com/esfen14/Pinpoint/actions/runs/38734683462):
+  all three required jobs passed on `633e3616`; backend/frontend JUnit artifacts
+  are attached to that run. New documentation-only checkpoint CI is tracked on
+  the PR separately.
+- [Combined-source report](https://github.com/esfen14/Pinpoint/blob/issue-117-manual-topology/docs/test-runs/2026-10-15-issue-117-main-sync/REPORT.md):
+  102 focused tests, populated migration upgrades from both prior heads, combined
+  parent/escalation/remediation rendering and real browser/Flask/Nagios saves.
+- [Routed acceptance](https://github.com/esfen14/Pinpoint/blob/issue-117-manual-topology/docs/test-runs/2026-10-15-issue-117-manual-topology/REPORT.md)
+  and [browser regression/retest](https://github.com/esfen14/Pinpoint/blob/issue-117-manual-topology/docs/test-runs/2026-10-15-issue-117-live-browser/REPORT.md)
+  cover the remaining acceptance cases.
+- No outstanding review comments exist at this snapshot. This satisfies the
+  blocking-comment item; it does not establish reviewer approval. Approval
+  remains unchecked and the PR stays draft.
+- No known unresolved critical defect remains within the agreed #117 scope.
+  The separate single-attempt notification guarantee remains decision
+  [#173](https://github.com/esfen14/Pinpoint/issues/173). SMTP inbox delivery and
+  production deployment remain unverified; neither is claimed by these checks.

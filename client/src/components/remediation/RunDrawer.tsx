@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
-import { X } from 'lucide-react'
 import { errorMessage } from '../../lib/api'
 import { getRun } from '../../lib/remediationApi'
 import { useSystemSettings } from '../../contexts/SystemSettingsContext'
 import { formatServerDateTime } from '../../utils/formatDateTime'
 import { OUTCOME_LABELS, type RemediationRunDetail } from '../../types/remediation'
+import { DrawerShell } from '../shared/DrawerShell'
 
 type Props = {
   runId: number
@@ -57,35 +57,16 @@ export function RunDrawer({ runId, onClose }: Props) {
     : []
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex justify-end bg-black/50"
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose()
-      }}
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={`Run ${runId}`}
-        className="h-full w-full max-w-xl overflow-y-auto bg-white shadow-xl dark:bg-[#171B20]"
-      >
-        <div className="sticky top-0 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4 dark:border-white/10 dark:bg-[#171B20]">
-          <h2 className="text-lg font-semibold text-[var(--text)]">Run {runId}</h2>
-          <button type="button" aria-label="Close" onClick={onClose} className="rounded-lg p-2 hover:bg-[var(--hover)]">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        <div className="space-y-4 p-6">
+    <DrawerShell title={`Run ${runId}`} ariaLabel={`Run ${runId}`} dialog dismissOnOverlay onClose={onClose}>
           {loadError && (
-            <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300">
+            <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-[15px] text-red-700 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300">
               {loadError}
             </div>
           )}
-          {!run && !loadError && <p className="text-sm text-[var(--text-muted)]">Loading run…</p>}
+          {!run && !loadError && <p className="text-[15px] text-[var(--text-muted)]">Loading run…</p>}
           {run && (
             <>
-              <dl className="grid grid-cols-[8rem_1fr] gap-x-4 gap-y-2 text-sm">
+              <dl className="grid grid-cols-[8rem_1fr] gap-x-4 gap-y-2 text-[15px]">
                 {rows.map(([label, value]) => (
                   <div key={label} className="contents">
                     <dt className="text-[var(--text-muted)]">{label}</dt>
@@ -94,15 +75,13 @@ export function RunDrawer({ runId, onClose }: Props) {
                 ))}
               </dl>
               <div>
-                <h3 className="mb-1 text-sm font-medium text-[var(--text)]">Output</h3>
-                <pre className="whitespace-pre-wrap rounded-lg bg-[var(--hover)] p-3 text-sm text-[var(--text)]">
+                <h3 className="mb-1 text-[15px] font-medium text-[var(--text)]">Output</h3>
+                <pre className="whitespace-pre-wrap rounded-lg bg-[var(--hover)] p-3 text-[15px] text-[var(--text)]">
                   {run.output ?? 'No output.'}
                 </pre>
               </div>
             </>
           )}
-        </div>
-      </div>
-    </div>
+    </DrawerShell>
   )
 }

@@ -96,8 +96,29 @@ def test_manage_alone_cannot_read_the_run_log(limited_client, db_session, regula
 
 def test_action_types_describe_the_form(logged_in_client):
     items = logged_in_client.get(f"{BASE}/action-types").get_json()["data"]["items"]
-    assert [item["key"] for item in items] == ["record_only"]
+    assert [item["key"] for item in items] == ["record_only", "restart_local_service"]
     assert set(items[0]) == {"key", "label", "description", "parameters"}
+    restart = items[1]
+    assert restart["parameters"][0]["choices"] == ["nagios"]
+
+
+def test_restart_local_service_is_created_with_a_listed_unit(logged_in_client):
+    response = create(logged_in_client, actionType="restart_local_service", parameters={"unit": "nagios"})
+    assert response.status_code == 201
+    assert response.get_json()["data"]["parameters"] == {"unit": "nagios"}
+
+
+@pytest.mark.parametrize("parameters, field", [
+    ({}, "parameters.unit"),
+    ({"unit": "sshd"}, "parameters.unit"),
+    ({"unit": "nagios; reboot"}, "parameters.unit"),
+    ({"unit": "../nagios"}, "parameters.unit"),
+    ({"unit": "nagios", "command": "id"}, "parameters.command"),
+])
+def test_restart_local_service_rejects_a_unit_off_the_list(logged_in_client, parameters, field):
+    response = create(logged_in_client, actionType="restart_local_service", parameters=parameters)
+    assert response.status_code == 400
+    assert field in response.get_json()["data"]["fields"]
 
 
 # ==========================================================

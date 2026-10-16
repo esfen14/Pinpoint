@@ -17,6 +17,11 @@ export default defineConfig({
   projects: [
     { name: 'issue-164-live', testMatch: /device-identity\.lab\.spec\.ts/, use: { ...devices['Desktop Chrome'] } },
     {
+      name: 'issue-115-live',
+      testMatch: /email-settings\.lab\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
       name: 'setup-admin',
       testMatch: /auth\.setup\.ts/,
     },

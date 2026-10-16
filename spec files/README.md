@@ -18,7 +18,7 @@ This directory is the authoritative documentation set for Pinpoint. The root
 | [`Implementation_Status.md`](Implementation_Status.md) | Current implemented surface, incomplete work, exclusions, and known code/spec mismatches |
 | [`Display_Requirements.md`](Display_Requirements.md) | Normative Dashboard, Network Health, and alert-acknowledgement behavior and API shapes |
 | [`Alerts_Notifications_History_Requirements.md`](Alerts_Notifications_History_Requirements.md) | Normative Alerts and Notifications History page behavior |
-| [`Device_Inventory_Requirements.md`](Device_Inventory_Requirements.md) | Normative Device Inventory behavior: a device's ports and why each is or is not monitored, pin/hold/ignore actions, the monitoring-state label, pause/resume, and identity review/manual merge, with acceptance criteria |
+| [`Device_Inventory_Requirements.md`](Device_Inventory_Requirements.md) | Normative Device Inventory behavior: a device's ports and why each is or is not monitored, pin/hold/ignore actions, the monitoring-state label, pause/resume, identity review/manual merge, and manual multiple-parent relationships with the supported topology view, with acceptance criteria |
 | [`Plugins_List.md`](Plugins_List.md) | Nagios Plugins 2.4.12 capability, argument, output, and performance-data reference |
 | [`../docs/qa/QA_Test_Plan.md`](../docs/qa/QA_Test_Plan.md) and [`../docs/qa/QA_Paper_Test_Case_Tables.md`](../docs/qa/QA_Paper_Test_Case_Tables.md) | QA test cases, coverage model, methodology, and paper-ready tables grouped by ISO characteristic with a current-result ledger |
 

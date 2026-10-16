@@ -4,7 +4,7 @@ smtp_settings.py — the mail account behind Settings -> Email.
 PinPoint does not send Nagios notification mail itself: the appliance ships
 msmtp, and a root-owned helper (/usr/local/sbin/pinpoint-apply-smtp) writes
 /etc/msmtprc from one JSON object on stdin. The web server is unprivileged, so
-it runs the helper through `sudo -n`. Only Gmail over STARTTLS on port 587 is
+it runs the helper through `sudo -n`. Gmail and custom relays over STARTTLS are
 supported; Gmail needs an app password, not the account's normal password.
 
 The password is passed through exactly as typed (spaces included: Google shows
@@ -16,6 +16,7 @@ because /etc/msmtprc is readable only by root and the nagios group. smtplib
 also gives the real SMTP reply, which is what lets a rejected login be told
 apart from a blocked port or a wrong host.
 """
+import base64
 import json
 import re
 import smtplib
@@ -34,7 +35,12 @@ HELPER_TIMEOUT = 20
 SMTP_TIMEOUT = 15
 
 GMAIL = {"provider": "gmail", "host": "smtp.gmail.com", "port": 587, "tls": "starttls"}
-PRESETS = {"gmail": GMAIL}
+CUSTOM = {"provider": "custom", "host": "", "port": 587, "tls": "starttls"}
+PRESETS = {"gmail": GMAIL, "custom": CUSTOM}
+
+# Match the installed helper, including its 253-character host limit.
+HOST_PATTERN = re.compile(r"[A-Za-z0-9]([A-Za-z0-9.-]{0,251}[A-Za-z0-9])?")
+HELPER_EMAIL_PATTERN = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 
 EMAIL_PATTERN = re.compile(r"^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)+$")
 MAX_PASSWORD_LENGTH = 200
@@ -59,6 +65,7 @@ class MailHelperError(Exception):
 
 
 def is_printable_ascii(value):
+    """Return whether all characters can safely occupy one helper config line."""
     return all(0x20 <= ord(char) <= 0x7e for char in value)
 
 
@@ -104,22 +111,33 @@ def validate_smtp_settings(data, has_saved_password):
         raise SmtpSettingsError("Send the email settings as a JSON object.")
 
     provider = data.get("provider", "gmail")
-    if provider not in PRESETS:
-        raise SmtpSettingsError("Only Gmail is supported.")
-    preset = PRESETS[provider]
+    if not isinstance(provider, str) or provider not in PRESETS:
+        raise SmtpSettingsError("Choose Gmail or Other SMTP relay as the provider.")
+    preset = PRESETS[provider].copy()
 
     if data.get("tls", preset["tls"]) != "starttls":
-        raise SmtpSettingsError("Only STARTTLS is supported.")
-    if data.get("host", preset["host"]) != preset["host"]:
-        raise SmtpSettingsError(f"The Gmail host must be {preset['host']}.")
-    if data.get("port", preset["port"]) != preset["port"] or isinstance(data.get("port"), bool):
-        raise SmtpSettingsError(f"The Gmail port must be {preset['port']}.")
+        raise SmtpSettingsError("Only STARTTLS is supported." if provider == "gmail" else "The tls mode must be starttls.")
+    if provider == "gmail":
+        if data.get("host", preset["host"]) != preset["host"]:
+            raise SmtpSettingsError(f"The Gmail host must be {preset['host']}.")
+        if data.get("port", preset["port"]) != preset["port"] or isinstance(data.get("port"), bool):
+            raise SmtpSettingsError(f"The Gmail port must be {preset['port']}.")
+    else:
+        host, port = data.get("host"), data.get("port")
+        if not isinstance(host, str) or not HOST_PATTERN.fullmatch(host):
+            raise SmtpSettingsError("The host must be a host name or IPv4 address, at most 253 characters.")
+        if type(port) is not int or not 1 <= port <= 65535:
+            raise SmtpSettingsError("The port must be a whole number from 1 to 65535.")
+        preset.update(host=host, port=port)
 
     username = data.get("username")
-    if not isinstance(username, str) or not username or len(username) > 254:
-        raise SmtpSettingsError("Enter the full Gmail address as the username.")
-    if not is_printable_ascii(username) or not EMAIL_PATTERN.match(username):
-        raise SmtpSettingsError("The username must be a full email address, for example you@gmail.com.")
+    if provider == "gmail":
+        if not isinstance(username, str) or not username or len(username) > 254:
+            raise SmtpSettingsError("Enter the full Gmail address as the username.")
+        if not is_printable_ascii(username) or not EMAIL_PATTERN.match(username):
+            raise SmtpSettingsError("The username must be a full email address, for example you@gmail.com.")
+    elif not isinstance(username, str) or not username or len(username) > 254 or not is_printable_ascii(username):
+        raise SmtpSettingsError("The username must contain 1 to 254 printable ASCII characters.")
 
     sender = data.get("sender")
     if sender is None or sender == "":
@@ -127,16 +145,20 @@ def validate_smtp_settings(data, has_saved_password):
     if not isinstance(sender, str) or len(sender) > 254 or not is_printable_ascii(sender) or not EMAIL_PATTERN.match(sender):
         raise SmtpSettingsError("The sender must be a valid email address.")
 
+    if provider == "custom" and not HELPER_EMAIL_PATTERN.fullmatch(sender):
+        raise SmtpSettingsError("The sender must be a valid email address accepted by the mail helper.")
+
     password = data.get("password")
     if password is None or password == "":
         if not has_saved_password:
-            raise SmtpSettingsError("Enter the app password.")
+            raise SmtpSettingsError("Enter the app password." if provider == "gmail" else "Enter the relay password.")
         password = None
     else:
         if not isinstance(password, str):
             raise SmtpSettingsError("The password must be text.")
-        if len(password) > MAX_PASSWORD_LENGTH:
-            raise SmtpSettingsError(f"The password can be at most {MAX_PASSWORD_LENGTH} characters.")
+        password_limit = MAX_PASSWORD_LENGTH if provider == "gmail" else 256
+        if len(password) > password_limit:
+            raise SmtpSettingsError(f"The password can be at most {password_limit} characters.")
         if not is_printable_ascii(password):
             raise SmtpSettingsError("The password can only contain printable ASCII characters.")
 
@@ -150,7 +172,7 @@ def validate_smtp_settings(data, has_saved_password):
 def run_apply_helper(values, password):
     """
     Send the settings to the root helper as one JSON object on stdin (never as
-    arguments). Raises MailHelperError with the helper's stderr when it refuses
+    arguments). Raises MailHelperError with credential-redacted helper stderr when it refuses
     them (exit 1) or when it cannot be run.
     """
     payload = json.dumps({
@@ -169,13 +191,38 @@ def run_apply_helper(values, password):
 
     if result.returncode == 0:
         return
-    reason = (result.stderr or "").strip() or f"The mail helper failed (exit {result.returncode})."
+    reason = redact_mail_secret((result.stderr or "").strip(), password) or f"The mail helper failed (exit {result.returncode})."
     raise MailHelperError(reason, rejected=result.returncode == 1)
 
 
 # ==========================================================
 # TEST EMAIL
 # ==========================================================
+
+def redact_mail_secret(text, password):
+    """Remove the SMTP credential and common encodings from diagnostic text."""
+    if not password:
+        return text
+    variants = {password, repr(password), json.dumps(password), base64.b64encode(password.encode()).decode()}
+    for secret in sorted(variants, key=len, reverse=True):
+        text = text.replace(secret, "[redacted]")
+    return text
+
+
+def classify_relay_error(exc, host, port):
+    """Classify relay failures with generic guidance and no raw server text."""
+    code = classify_smtp_error(exc, host, port)["code"]
+    messages = {
+        "auth_failed": "The SMTP relay rejected the login. Check the username and password or app token.",
+        "host_not_found": f"Could not find {host}. Check the SMTP host and the server's DNS.",
+        "connect_failed": f"Could not connect to {host} on port {port}. Check the port and firewall.",
+        "tls_failed": "The secure (STARTTLS) connection to the mail server could not be set up.",
+        "rejected": "The SMTP relay refused the sender or recipient address.",
+        "send_failed": "The test email could not be sent through the SMTP relay.",
+    }
+    return {"code": code, "message": messages[code],
+            "explanation": "Check your relay's SMTP submission settings and sending permissions.", "details": ""}
+
 
 def classify_smtp_error(exc, host, port):
     """
@@ -248,5 +295,8 @@ def send_test_email(settings, password, recipient):
             smtp.login(settings["username"], password)
             smtp.send_message(message)
     except (smtplib.SMTPException, OSError) as exc:
-        return {"ok": False, **classify_smtp_error(exc, settings["host"], settings["port"])}
+        classify = classify_smtp_error if settings["provider"] == "gmail" else classify_relay_error
+        result = classify(exc, settings["host"], settings["port"])
+        result["details"] = redact_mail_secret(result["details"], password)
+        return {"ok": False, **result}
     return {"ok": True, "recipient": recipient}
