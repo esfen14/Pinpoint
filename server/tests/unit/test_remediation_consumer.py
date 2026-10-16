@@ -690,3 +690,32 @@ def test_skip_precedence_is_kill_switch_then_maintenance_then_downtime_then_ackn
         put(spool, event(last_change=1760432100 + n))
         remediation.process_spool(str(spool))
         assert runs(db_session)[-1].Outcome == outcome
+
+
+def test_a_spool_over_the_cap_drops_the_oldest_files_and_records_how_many(db_session, spool, monkeypatch):
+    from app.system_models import RemediationConsumerState
+    set_settings(db_session)
+    add_action(db_session, Cooldown_Seconds=60, Max_Runs_Per_Hour=60)
+    monkeypatch.setattr(remediation, "SPOOL_CAP", 3)
+    for n in range(5):
+        put(spool, event(last_change=1760432100 + n))
+    remediation.process_spool(str(spool))
+    # The two oldest were dropped unread; the three newest were handled.
+    assert [r.Outcome for r in runs(db_session)] == [RemediationOutcome.SUCCEEDED] + [
+        RemediationOutcome.SKIPPED_COOLDOWN] * 2
+    state = db_session.session.get(RemediationConsumerState, 1)
+    assert state.Dropped_Count == 2 and state.Dropped_At is not None
+    assert left(spool) == []
+
+
+def test_a_spool_at_the_cap_drops_nothing(db_session, spool, monkeypatch):
+    from app.system_models import RemediationConsumerState
+    set_settings(db_session)
+    add_action(db_session, Cooldown_Seconds=60, Max_Runs_Per_Hour=60)
+    monkeypatch.setattr(remediation, "SPOOL_CAP", 3)
+    for n in range(3):
+        put(spool, event(last_change=1760432100 + n))
+    remediation.process_spool(str(spool))
+    assert len(runs(db_session)) == 3
+    state = db_session.session.get(RemediationConsumerState, 1)
+    assert state is None or state.Dropped_Count == 0

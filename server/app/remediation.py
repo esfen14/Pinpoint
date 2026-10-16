@@ -34,11 +34,15 @@ from app import db
 from app.history_models import AcknowledgementType, HostStatus, ServiceStatus
 from app.remediation_actions import RunContext, run_action
 from app.system_models import (
-    RemediationAction, RemediationEventState, RemediationEventStateType, RemediationOutcome,
-    RemediationRun, RemediationScope, SystemSettings,
+    RemediationAction, RemediationConsumerState, RemediationEventState, RemediationEventStateType,
+    RemediationOutcome, RemediationRun, RemediationScope, SystemSettings,
 )
 
 MAX_FILES_PER_RUN = 200
+# A spool longer than this is a flood or a stalled consumer: the oldest files are dropped (and
+# counted). Event files nobody handled for SPOOL_MAX_AGE_DAYS are removed by the daily purge.
+SPOOL_CAP = 1000
+SPOOL_MAX_AGE_DAYS = 7
 MAX_FILE_BYTES = 2048
 MAX_HOST_LENGTH = 100
 MAX_SERVICE_LENGTH = 150
@@ -153,6 +157,64 @@ def remove(path):
             os.unlink(path)
     except OSError:
         pass
+
+
+def get_state():
+    """Return the one consumer-state row (Id 1), creating it when missing. The caller commits."""
+    state = db.session.get(RemediationConsumerState, 1)
+    if state is None:
+        state = RemediationConsumerState(Id=1, Dropped_Count=0)
+        db.session.add(state)
+    return state
+
+
+def drop_over_cap(spool_dir, names):
+    """
+    Delete the oldest files when more than SPOOL_CAP are waiting, and record how many went in
+    the consumer state and the log. ``names`` is sorted oldest first; returns the names kept.
+    """
+    excess = len(names) - SPOOL_CAP
+    if excess <= 0:
+        return names
+    dropped = 0
+    for name in names[:excess]:
+        path = os.path.join(spool_dir, name)
+        remove(path)
+        if not os.path.lexists(path):
+            dropped += 1
+    state = get_state()
+    state.Dropped_Count = (state.Dropped_Count or 0) + dropped
+    state.Dropped_At = datetime.now(timezone.utc)
+    db.session.commit()
+    current_app.logger.warning("Remediation: the spool held more than %d files; dropped the %d oldest", SPOOL_CAP, dropped)
+    return names[excess:]
+
+
+def purge_old_spool_files(spool_dir=None, now=None):
+    """
+    Remove event files in the spool older than SPOOL_MAX_AGE_DAYS (stuck or unreadable ones; a
+    handled file is already gone). Other names are left alone. Returns the number removed.
+    """
+    spool_dir = spool_dir or current_app.config["REMEDIATION_SPOOL_DIR"]
+    cutoff = (now or datetime.now(timezone.utc)).timestamp() - SPOOL_MAX_AGE_DAYS * 86400
+    removed = 0
+    try:
+        names = [name for name in os.listdir(spool_dir) if SPOOL_NAME_RE.fullmatch(name)]
+    except OSError:
+        return removed
+    for name in names:
+        path = os.path.join(spool_dir, name)
+        try:
+            if os.lstat(path).st_mtime >= cutoff:
+                continue
+        except OSError:
+            continue
+        remove(path)
+        if not os.path.lexists(path):
+            removed += 1
+    if removed:
+        current_app.logger.info("Remediation: removed %d spool files older than %d days", removed, SPOOL_MAX_AGE_DAYS)
+    return removed
 
 
 # ==========================================================
@@ -350,6 +412,11 @@ def process_spool(spool_dir=None):
     except OSError:
         return summary
     uid = trusted_uid()
+    try:
+        names = drop_over_cap(spool_dir, names)
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("Remediation: could not apply the spool cap")
     for name in names[:MAX_FILES_PER_RUN]:
         try:
             handle_file(os.path.join(spool_dir, name), uid, summary)
