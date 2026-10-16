@@ -344,7 +344,7 @@ function PortRow({ port, host, editable, canViewPlugins, busy, onAction, onCheck
           Last seen {relativeTime(port.last_seen_at)}
         </span>
         {(actions.length > 0 || hasOptions) && (
-          <div className="flex flex-wrap gap-1.5">
+          <div className="ml-auto flex flex-wrap justify-end gap-1.5">
             {hasOptions && (
               <button
                 type="button"

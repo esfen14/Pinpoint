@@ -46,6 +46,8 @@ const METHOD_OPTIONS = [{ value: '', label: 'Default' }, ...HTTP_METHODS.map((me
 export function CheckOptionsDialog({ deviceId, hostname, plugin, canEdit, onClose }: Props) {
   const title = CHECK_OPTION_SERVICES[plugin] ?? plugin
   const fields = fieldsFor(plugin)
+  // Web checks have four fields: lay them out in two columns on a wide dialog. A mail check has one.
+  const wide = fields.length > 1
 
   const [saved, setSaved] = useState<DeviceVariablesResponse | null>(null)
   const [values, setValues] = useState<CheckOptionValues>(EMPTY_VALUES)
@@ -124,7 +126,7 @@ export function CheckOptionsDialog({ deviceId, hostname, plugin, canEdit, onClos
       aria-label={`Check options for ${title} on ${hostname}`}
       className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4"
     >
-      <div className="max-h-full w-full max-w-md space-y-3 overflow-y-auto rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-xl">
+      <div className={`max-h-full w-full ${wide ? 'max-w-3xl' : 'max-w-md'} space-y-3 overflow-y-auto rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-xl`}>
         <h3 className="text-[17px] font-semibold text-[var(--text)]">
           Check options: {title} on {hostname}
         </h3>
@@ -156,7 +158,7 @@ export function CheckOptionsDialog({ deviceId, hostname, plugin, canEdit, onClos
         )}
 
         {saved && (
-          <div className="space-y-3">
+          <div className={wide ? 'grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2' : 'space-y-3'}>
             {fields.map((field) => {
               const id = `check-option-${field.name}`
               const hint = defaultHint(plugin, field.name)
