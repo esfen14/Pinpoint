@@ -37,6 +37,7 @@ from app.system_models import (
     AgentStatus,
     DeviceAddressHistory,
     DeviceIdentifier,
+    DeviceParent,
     DeviceReviewItem,
     DeviceState,
     IdentifierKind,
@@ -930,4 +931,106 @@ def update_unseen_devices(matched_ids, scanned_networks):
             and now - last_seen > retire_after
         ):
             device.Device_State = DeviceState.RETIRED
+            clear_device_parents(device.NetDiscoveryID)
             close_address(device)
+
+
+# ==========================================================
+# MANUAL PARENT RELATIONSHIPS
+# ==========================================================
+
+def parent_pairs():
+    """Load the configured child/parent graph once; never commits."""
+    return set(db.session.execute(sa.select(DeviceParent.Child_ID, DeviceParent.Parent_ID)).all())
+
+
+def validate_parent_graph(pairs):
+    """Reject cycles iteratively in O(devices + links), without recursion depth limits."""
+    children, incoming = {}, {}
+    for child, parent in pairs:
+        if child == parent:
+            raise ValueError("A device cannot be its own parent.")
+        incoming.setdefault(parent, 0)
+        incoming[child] = incoming.get(child, 0) + 1
+        children.setdefault(parent, []).append(child)
+    ready = [node for node, count in incoming.items() if count == 0]
+    visited = 0
+    while ready:
+        node = ready.pop()
+        visited += 1
+        for child in children.get(node, []):
+            incoming[child] -= 1
+            if incoming[child] == 0:
+                ready.append(child)
+    if visited != len(incoming):
+        raise ValueError("Parent relationships must not create a cycle.")
+
+
+def validate_parent_ids(device, ids):
+    """Validate a replacement parent set before mutating metadata or relationships."""
+    if (not isinstance(ids, list) or any(type(value) is not int or not 0 < value <= 2**63 - 1 for value in ids)
+            or len(set(ids)) != len(ids)):
+        raise ValueError("parent_device_ids must be a list of distinct positive integers.")
+    if device.Device_State in (DeviceState.RETIRED, DeviceState.MERGED):
+        raise ValueError("A retired or merged device cannot have its parents edited.")
+    rows = db.session.scalars(sa.select(NetworkDiscovery).where(NetworkDiscovery.NetDiscoveryID.in_(ids))).all()
+    if len(rows) != len(ids):
+        raise ValueError("One or more parent devices do not exist.")
+    if any(row.Device_State in (DeviceState.RETIRED, DeviceState.MERGED) for row in rows):
+        raise ValueError("A retired or merged device cannot be a parent.")
+    pairs = {(c, p) for c, p in parent_pairs() if c != device.NetDiscoveryID}
+    pairs.update((device.NetDiscoveryID, parent) for parent in ids)
+    validate_parent_graph(pairs)
+
+
+def replace_parent_ids(device_id, ids):
+    """Replace one device's links in the caller's transaction; never commits."""
+    db.session.execute(sa.delete(DeviceParent).where(DeviceParent.Child_ID == device_id))
+    db.session.add_all([DeviceParent(Child_ID=device_id, Parent_ID=parent) for parent in sorted(ids)])
+
+
+def clear_device_parents(device_id):
+    """Remove both ends of a retired device's links; return whether links changed."""
+    result = db.session.execute(sa.delete(DeviceParent).where(sa.or_(
+        DeviceParent.Child_ID == device_id, DeviceParent.Parent_ID == device_id)))
+    return bool(result.rowcount)
+
+
+def merged_parent_pairs(source_id, target_id):
+    """Plan a deduplicated merge, rejecting self-links/cycles before any mutation."""
+    pairs = parent_pairs()
+    updated = {(target_id if c == source_id else c, target_id if p == source_id else p) for c, p in pairs}
+    validate_parent_graph(updated)
+    return pairs, updated
+
+
+def parent_omission_reason(device):
+    """Explain why a configured parent cannot be used by Nagios, or return None."""
+    if device is None:
+        return "Parent device no longer exists."
+    state = monitoring_state(device)
+    if state not in ("monitored", "missing"):
+        return f"Parent is {state.replace('_', ' ')}."
+    if not device.IP_Address:
+        return "Parent has no known address."
+    return None
+
+
+def parent_summaries(device_id):
+    """Serialize one device's parent selections and eligibility without secrets."""
+    return parent_summaries_by_device([device_id]).get(device_id, [])
+
+
+def parent_summaries_by_device(device_ids):
+    """Load parent summaries in one query for a whole host page, avoiding N+1 reads."""
+    rows = db.session.execute(sa.select(DeviceParent.Child_ID, NetworkDiscovery).join(
+        DeviceParent, DeviceParent.Parent_ID == NetworkDiscovery.NetDiscoveryID
+    ).where(DeviceParent.Child_ID.in_(device_ids)).order_by(NetworkDiscovery.NetDiscoveryID)).all()
+    items = {}
+    for child, row in rows:
+        reason = parent_omission_reason(row)
+        items.setdefault(child, []).append({"id": row.NetDiscoveryID, "nagios_host_name": nagios_host_name(row),
+                      "display_name": row.Display_Name, "ip_address": row.IP_Address,
+                      "monitoring_state": monitoring_state(row),
+                      "nagios_eligible": reason is None, "omission_reason": reason})
+    return items

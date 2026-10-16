@@ -13,7 +13,7 @@ the owner to approve before any code is written (`AGENTS.md`; the same rule is
 noted in `docs/plans/DHCP_Device_Identity_Plan.md` §11).
 
 `Display_Requirements.md` covers the Dashboard and Network Health. This file covers
-**only** the Ports section of the Device Inventory page. The rest of that page (the
+the Ports, Monitoring and manual Parent devices sections of Device Inventory. The rest of that page (the
 host table, its filters, the status drawer and acknowledgement) is unchanged.
 
 As in `Display_Requirements.md`, layout, colour and component details are left to the
@@ -444,3 +444,31 @@ retired/merged states must be present. Hosts without a discovered-device record
 and service-detail views do not show the editor. Choices survive address/hostname
 changes and rescans; merges combine selections without duplicates; retiring
 removes that device's assignments. Pause preserves them.
+
+
+## 13. Manual parent devices and topology
+
+The host detail drawer shows **Parent devices** for every discovered device,
+including a device with no configured parents. Readers with Inventory access can
+see the choices and monitoring warnings; only `system.hosts.edit` may change them.
+A host without a discovery record has no parent editor. Retired/merged devices are
+read-only. The same editor appears in the Topology selected-device panel.
+
+An operator searches other eligible inventory devices by name/address and selects
+zero or more parents using checkboxes, then **Save parents**. **Clear all** clears
+the draft; saving an empty set explicitly means no parents. A gateway suggestion is
+advisory and never selected automatically. A selected paused/address-unknown parent
+warns that Nagios omits it. The server refuses self-links, duplicate IDs, missing/
+retired/merged parents and cycles through any parent path, showing its message and
+retaining the draft on failure. Loading, retry, empty, saving, failure and success
+states are visible. Applying failure rolls back the complete edit.
+
+Topology is supported at `/topology` with Inventory's viewing permission
+`system.network_health`. It shows all discovered devices and hosts exposed by
+Inventory, including unchecked devices, paused devices and roots. Relationships
+are configured reachability parents, not physical cables. The automatic hierarchy
+supports multiple parents; manual layout changes are disabled. Device details and
+manual parent relationships are the complete panel scope. Interface details,
+interface-to-parent mapping, traffic/utilization charts and new telemetry collection
+are excluded. Existing Inventory interfaces and Network Health bandwidth keep
+their own established behavior.

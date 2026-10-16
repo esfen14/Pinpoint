@@ -11,6 +11,9 @@ hosts.cfg and report whether Nagios was updated.
 
 Routes
 ------
+GET  /system/topology
+    Inventory devices and manually configured parent edges, with latest stored status.
+
 GET  /system/hosts/<id>/addresses
     Address history of a device (current address first).
 
@@ -18,7 +21,7 @@ GET  /system/hosts/<id>/identifiers
     Identity evidence and confidence of a device.
 
 PUT  /system/hosts/<id>
-    Change a device's display name and/or addressing mode.
+    Change a device's display name, addressing mode and/or manual parent set.
 
 POST /system/hosts/<id>/pause
 POST /system/hosts/<id>/resume
@@ -59,6 +62,8 @@ from app.logging.user_activity import create_user_log
 from app.api.plugin.reconcile import reconcile_plugin_monitoring
 from app.network_discovery.device_identity import (
     close_address,
+    parent_pairs, parent_summaries, parent_omission_reason, validate_parent_ids,
+    replace_parent_ids, clear_device_parents, merged_parent_pairs,
     monitoring_state,
     nagios_host_name,
     recompute_confidence,
@@ -84,6 +89,7 @@ from app.system_models import (
     DeviceIdentifier,
     DeviceReviewItem,
     DeviceState,
+    DeviceParent,
     IdentifierKind,
     HostAlertRecipient,
     NCPADeployment,
@@ -135,9 +141,52 @@ def apply_config_change():
     return {"config_applied": result["changed"], "config_ok": result["success"], "config_message": result["message"]}
 
 
+def apply_pending_parent_change(reconcile=False):
+    """Validate/apply uncommitted graph changes; rollback on failure, never commit."""
+    from app.network_discovery.create_host_cfg import regenerate_and_apply_config_status
+    added = []
+    if reconcile:
+        # Lifecycle edits still keep Plugin Manager's derived rows in sync,
+        # but the route owns the graph/port/config transaction.
+        from app.api.plugin.reconcile import desired_services, sync_rows
+        added, _ = sync_rows(desired_services())
+    db.session.flush()
+    status, message = regenerate_and_apply_config_status(commit_history=False)
+    if status == "failed":
+        db.session.rollback()
+        return error(f"Parent relationships could not be applied: {message}", 422)
+    db.session.info["parent_config_applied"] = status == "applied"
+    db.session.info["parent_config_result"] = {"config_ok": True, "config_applied": status == "applied", "config_message": message}
+    if reconcile:
+        from app.api.plugin.reconcile import set_plugin_states
+        for row in added:
+            row.Status = PluginConfigurationStatus.APPLIED
+            row.Applied_At = datetime.now(timezone.utc)
+        db.session.flush()
+        set_plugin_states()
+    return None
+
+
+def rollback_parent_change():
+    """Undo pending data and compensate a successful reload if the route commit fails."""
+    applied = db.session.info.pop("parent_config_applied", False)
+    db.session.info.pop("parent_config_result", None)
+    db.session.rollback()
+    if applied:
+        from app.network_discovery.create_host_cfg import regenerate_and_apply_config_status
+        status, _ = regenerate_and_apply_config_status(commit_history=False)
+        if status == "failed":
+            current_app.logger.error("Could not restore Nagios after a failed parent transaction.")
+        db.session.rollback()
+
+
 def serialize_device_summary(device):
+    """Return stable device identity, monitoring state and configured parent summaries."""
+    parents = parent_summaries(device.NetDiscoveryID)
     return {
         "id": device.NetDiscoveryID,
+        "parent_device_ids": [p["id"] for p in parents],
+        "parents": parents,
         "nagios_host_name": nagios_host_name(device),
         "display_name": device.Display_Name,
         "ip_address": device.IP_Address,
@@ -289,10 +338,12 @@ def edit_device(id):
     JSON Format
     {
         "display_name": "Front desk printer",
-        "addressing": "DHCP"
+        "addressing": "DHCP",
+        "parent_device_ids": [2, 3]
     }
     "addressing" is one of DHCP, STATIC, UNKNOWN. "display_name" may be null
-    to clear it.
+    to clear it. parent_device_ids replaces all parents; [] clears them and omission preserves them.
+    Invalid parents/cycles return 400; Nagios rejection returns 422 and rolls back the edit.
     """
     data = request.get_json()
     err = validate_json_data(data)
@@ -303,21 +354,42 @@ def edit_device(id):
     if err is not None:
         return err
 
+    # Validate all fields first: rejected requests must not dirty device metadata.
+    name = device.Display_Name
+    mode = device.Addressing
     if "display_name" in data:
         name = data["display_name"]
         if name is not None and (not isinstance(name, str) or len(name.strip()) > 100):
             return error("display_name must be text of at most 100 characters.", 400)
-        device.Display_Name = (name.strip() or None) if name is not None else None
-
+        name = (name.strip() or None) if name is not None else None
     if "addressing" in data:
         mode = AddressingMode.__members__.get(str(data["addressing"]).upper())
         if mode is None:
             return error("addressing must be DHCP, STATIC or UNKNOWN.", 400)
-        device.Addressing = mode
 
-    create_user_log(current_user.UserID, f"Edited device {nagios_host_name(device)}")
-    db.session.commit()
-    return success({"device": serialize_device_summary(device)}, message="Device updated.")
+    from app.network_discovery.create_host_cfg import config_write_lock
+    try:
+        with config_write_lock:
+            if "parent_device_ids" in data:
+                try:
+                    validate_parent_ids(device, data["parent_device_ids"])
+                except ValueError as exc:
+                    return error(str(exc), 400)
+                replace_parent_ids(id, data["parent_device_ids"])
+            device.Display_Name = name
+            device.Addressing = mode
+            if "parent_device_ids" in data:
+                problem = apply_pending_parent_change()
+                if problem is not None:
+                    return problem
+            create_user_log(current_user.UserID, f"Edited device {nagios_host_name(device)}")
+            db.session.commit()
+            db.session.info.pop("parent_config_applied", None)
+            return success({**db.session.info.pop("parent_config_result", {}), "device": serialize_device_summary(device)}, message="Device updated.")
+    except Exception:
+        rollback_parent_change()
+        current_app.logger.exception("Could not update device.")
+        return error("Unable to save device.", 500)
 
 
 @system_bp.post('/hosts/<int:id>/retire')
@@ -329,20 +401,33 @@ def retire_device(id):
     identifiers, address history and monitoring history are kept, and it
     comes back automatically if a later scan recognises it. No body.
     """
-    device, err = get_device_or_404(id)
-    if err is not None:
-        return err
+    from app.network_discovery.create_host_cfg import config_write_lock
+    try:
+        with config_write_lock:
+            device, err = get_device_or_404(id)
+            if err is not None:
+                return err
 
-    if device.Device_State in (DeviceState.RETIRED, DeviceState.MERGED):
-        return error("Device is already retired or merged.", 400)
+            if device.Device_State in (DeviceState.RETIRED, DeviceState.MERGED):
+                return error("Device is already retired or merged.", 400)
 
-    db.session.execute(sa.delete(HostAlertRecipient).where(HostAlertRecipient.NetDiscoveryID == id))
-    device.Device_State = DeviceState.RETIRED
-    close_address(device)
-    create_user_log(current_user.UserID, f"Retired device {nagios_host_name(device)}")
-    db.session.commit()
+            changed_parents = clear_device_parents(id)
+            db.session.execute(sa.delete(HostAlertRecipient).where(HostAlertRecipient.NetDiscoveryID == id))
+            device.Device_State = DeviceState.RETIRED
+            close_address(device)
+            if changed_parents:
+                problem = apply_pending_parent_change(reconcile=True)
+                if problem is not None:
+                    return problem
+            create_user_log(current_user.UserID, f"Retired device {nagios_host_name(device)}")
+            db.session.commit()
+            db.session.info.pop("parent_config_applied", None)
 
-    return success(apply_config_change(), message="Device retired.")
+            return success(db.session.info.pop("parent_config_result") if changed_parents else apply_config_change(), message="Device retired.")
+    except Exception:
+        rollback_parent_change()
+        current_app.logger.exception("Could not update device lifecycle.")
+        return error("Unable to update device lifecycle.", 500)
 
 
 @system_bp.post('/hosts/<int:id>/pause')
@@ -428,122 +513,143 @@ def merge_device(id):
     if target_id == id:
         return error("A device cannot be merged into itself.", 400)
 
-    source, err = get_device_or_404(id)
-    if err is not None:
-        return err
-    target = db.session.get(NetworkDiscovery, target_id)
-    if target is None:
-        return error("Target device not found.", 404)
+    from app.network_discovery.create_host_cfg import config_write_lock
+    try:
+        with config_write_lock:
+            source, err = get_device_or_404(id)
+            if err is not None:
+                return err
+            target = db.session.get(NetworkDiscovery, target_id)
+            if target is None:
+                return error("Target device not found.", 404)
 
-    if source.Device_State is DeviceState.MERGED:
-        return error("Device is already merged.", 400)
-    if target.Device_State in (DeviceState.MERGED, DeviceState.RETIRED):
-        return error("The target device is retired or merged.", 400)
+            if source.Device_State is DeviceState.MERGED:
+                return error("Device is already merged.", 400)
+            if target.Device_State in (DeviceState.MERGED, DeviceState.RETIRED):
+                return error("The target device is retired or merged.", 400)
 
-    source_name = nagios_host_name(source)
-    target_name = nagios_host_name(target)
+            try:
+                before_pairs, after_pairs = merged_parent_pairs(id, target_id)
+            except ValueError as exc:
+                return error(str(exc), 400)
+            changed_parents = before_pairs != after_pairs
+            if changed_parents:
+                db.session.execute(sa.delete(DeviceParent))
+                db.session.add_all([DeviceParent(Child_ID=c, Parent_ID=p) for c, p in sorted(after_pairs)])
 
-    # Recipient choices follow the surviving device; duplicate choices collapse.
-    target_recipients = set(db.session.scalars(
-        sa.select(HostAlertRecipient.UserID).where(HostAlertRecipient.NetDiscoveryID == target_id)
-    ))
-    for row in db.session.scalars(
-        sa.select(HostAlertRecipient).where(HostAlertRecipient.NetDiscoveryID == id)
-    ).all():
-        if row.UserID in target_recipients:
-            db.session.delete(row)
-        else:
-            row.NetDiscoveryID = target_id
+            source_name = nagios_host_name(source)
+            target_name = nagios_host_name(target)
 
-    # Identifiers: strong ones are unique, so they move as they are; a weak
-    # one the target already has is dropped.
-    target_identifiers = {
-        (row.Kind, row.Value)
-        for row in db.session.scalars(
-            sa.select(DeviceIdentifier).where(DeviceIdentifier.NetDiscoveryID == target_id)
-        ).all()
-    }
-    for row in db.session.scalars(
-        sa.select(DeviceIdentifier).where(DeviceIdentifier.NetDiscoveryID == id)
-    ).all():
-        if (row.Kind, row.Value) in target_identifiers:
-            db.session.delete(row)
-        else:
-            row.NetDiscoveryID = target_id
+            # Recipient choices follow the surviving device; duplicate choices collapse.
+            target_recipients = set(db.session.scalars(
+                sa.select(HostAlertRecipient.UserID).where(HostAlertRecipient.NetDiscoveryID == target_id)
+            ))
+            for row in db.session.scalars(
+                sa.select(HostAlertRecipient).where(HostAlertRecipient.NetDiscoveryID == id)
+            ).all():
+                if row.UserID in target_recipients:
+                    db.session.delete(row)
+                else:
+                    row.NetDiscoveryID = target_id
 
-    # Address history: the target keeps its own open row; moved rows are closed.
-    now = datetime.now(timezone.utc)
-    for row in db.session.scalars(
-        sa.select(DeviceAddressHistory).where(DeviceAddressHistory.NetDiscoveryID == id)
-    ).all():
-        row.NetDiscoveryID = target_id
-        if row.Closed_At is None:
-            row.Closed_At = now
+            # Identifiers: strong ones are unique, so they move as they are; a weak
+            # one the target already has is dropped.
+            target_identifiers = {
+                (row.Kind, row.Value)
+                for row in db.session.scalars(
+                    sa.select(DeviceIdentifier).where(DeviceIdentifier.NetDiscoveryID == target_id)
+                ).all()
+            }
+            for row in db.session.scalars(
+                sa.select(DeviceIdentifier).where(DeviceIdentifier.NetDiscoveryID == id)
+            ).all():
+                if (row.Kind, row.Value) in target_identifiers:
+                    db.session.delete(row)
+                else:
+                    row.NetDiscoveryID = target_id
 
-    # Ports: keep the target's row when both have the port.
-    for protocol in ("tcp", "udp"):
-        model = port_model(protocol)
-        target_ports = {
-            port for port in db.session.scalars(
-                sa.select(model.Port_Number).where(model.NetDiscoveryID == target_id)
-            ).all()
-        }
-        for port in db.session.scalars(
-            sa.select(model).where(model.NetDiscoveryID == id)
-        ).all():
-            if port.Port_Number in target_ports:
-                db.session.delete(port)
-            else:
-                port.NetDiscoveryID = target_id
+            # Address history: the target keeps its own open row; moved rows are closed.
+            now = datetime.now(timezone.utc)
+            for row in db.session.scalars(
+                sa.select(DeviceAddressHistory).where(DeviceAddressHistory.NetDiscoveryID == id)
+            ).all():
+                row.NetDiscoveryID = target_id
+                if row.Closed_At is None:
+                    row.Closed_At = now
 
-    # NCPA records move only if the target has none of its own.
-    for model, column in (
-        (SSHCredentials, SSHCredentials.NetworkDiscoveryID),
-        (NCPADeployment, NCPADeployment.NetworkDiscoveryID),
-    ):
-        target_has = db.session.scalar(sa.select(model).where(column == target_id)) is not None
-        if not target_has:
-            for row in db.session.scalars(sa.select(model).where(column == id)).all():
-                row.NetworkDiscoveryID = target_id
-    if source.NCPA_Eligible and not target.NCPA_Eligible:
-        target.NCPA_Eligible = True
+            # Ports: keep the target's row when both have the port.
+            for protocol in ("tcp", "udp"):
+                model = port_model(protocol)
+                target_ports = {
+                    port for port in db.session.scalars(
+                        sa.select(model.Port_Number).where(model.NetDiscoveryID == target_id)
+                    ).all()
+                }
+                for port in db.session.scalars(
+                    sa.select(model).where(model.NetDiscoveryID == id)
+                ).all():
+                    if port.Port_Number in target_ports:
+                        db.session.delete(port)
+                    else:
+                        port.NetDiscoveryID = target_id
 
-    for config in db.session.scalars(
-        sa.select(PluginConfiguration).where(PluginConfiguration.NetDiscoveryID == id)
-    ).all():
-        if config.Origin is PluginConfigurationOrigin.AUTO:
-            # Derived from ports: the reconciler rebuilds it for the target, and
-            # moving it could collide with the target's own row for that service.
-            db.session.delete(config)
-        elif config.Origin is PluginConfigurationOrigin.CUSTOM and db.session.scalar(
-            sa.select(PluginConfiguration.PluginConfigurationID).where(
-                PluginConfiguration.NetDiscoveryID == target_id,
-                PluginConfiguration.PluginID == config.PluginID,
-                PluginConfiguration.Nagios_Service_Name == config.Nagios_Service_Name,
-            )
-        ) is not None:
-            # The target already has a check of that name: moving this one would break the
-            # one-service-per-name rule, so the target's own check wins.
-            db.session.delete(config)
-        else:
-            config.NetDiscoveryID = target_id
+            # NCPA records move only if the target has none of its own.
+            for model, column in (
+                (SSHCredentials, SSHCredentials.NetworkDiscoveryID),
+                (NCPADeployment, NCPADeployment.NetworkDiscoveryID),
+            ):
+                target_has = db.session.scalar(sa.select(model).where(column == target_id)) is not None
+                if not target_has:
+                    for row in db.session.scalars(sa.select(model).where(column == id)).all():
+                        row.NetworkDiscoveryID = target_id
+            if source.NCPA_Eligible and not target.NCPA_Eligible:
+                target.NCPA_Eligible = True
 
-    # Review items about the duplicate are settled by merging it.
-    for item in db.session.scalars(
-        sa.select(DeviceReviewItem).where(DeviceReviewItem.Resolved_At.is_(None))
-    ).all():
-        if id in (item.Candidate_Device_IDs or []):
-            item.Resolved_At = now
+            for config in db.session.scalars(
+                sa.select(PluginConfiguration).where(PluginConfiguration.NetDiscoveryID == id)
+            ).all():
+                if config.Origin is PluginConfigurationOrigin.AUTO:
+                    # Derived from ports: the reconciler rebuilds it for the target, and
+                    # moving it could collide with the target's own row for that service.
+                    db.session.delete(config)
+                elif config.Origin is PluginConfigurationOrigin.CUSTOM and db.session.scalar(
+                    sa.select(PluginConfiguration.PluginConfigurationID).where(
+                        PluginConfiguration.NetDiscoveryID == target_id,
+                        PluginConfiguration.PluginID == config.PluginID,
+                        PluginConfiguration.Nagios_Service_Name == config.Nagios_Service_Name,
+                    )
+                ) is not None:
+                    # The target already has a check of that name: moving this one would break the
+                    # one-service-per-name rule, so the target's own check wins.
+                    db.session.delete(config)
+                else:
+                    config.NetDiscoveryID = target_id
 
-    source.Device_State = DeviceState.MERGED
-    source.Merged_Into_ID = target_id
-    db.session.flush()
-    recompute_confidence(target)
+            # Review items about the duplicate are settled by merging it.
+            for item in db.session.scalars(
+                sa.select(DeviceReviewItem).where(DeviceReviewItem.Resolved_At.is_(None))
+            ).all():
+                if id in (item.Candidate_Device_IDs or []):
+                    item.Resolved_At = now
 
-    create_user_log(current_user.UserID, f"Merged device {source_name} into {target_name}")
-    db.session.commit()
+            source.Device_State = DeviceState.MERGED
+            source.Merged_Into_ID = target_id
+            db.session.flush()
+            recompute_confidence(target)
 
-    return success(apply_config_change(), message="Devices merged.")
+            if changed_parents:
+                problem = apply_pending_parent_change(reconcile=True)
+                if problem is not None:
+                    return problem
+            create_user_log(current_user.UserID, f"Merged device {source_name} into {target_name}")
+            db.session.commit()
+            db.session.info.pop("parent_config_applied", None)
+
+            return success(db.session.info.pop("parent_config_result") if changed_parents else apply_config_change(), message="Devices merged.")
+    except Exception:
+        rollback_parent_change()
+        current_app.logger.exception("Could not update device lifecycle.")
+        return error("Unable to update device lifecycle.", 500)
 
 
 @system_bp.put('/hosts/<int:id>/ports/<proto>/<int:port>')
@@ -821,3 +927,66 @@ def resolve_review_item(id):
         db.session.commit()
 
     return success(message="Review item resolved.")
+
+
+# ==========================================================
+# TOPOLOGY READ MODEL
+# ==========================================================
+
+@system_bp.get('/topology')
+@login_required
+@require_permission('system.network_health')
+def get_topology():
+    """Return inventory devices, configured edges and an advisory gateway ID.
+
+    Device rows include stable IDs, existing display/OS/address details, the
+    latest stored Nagios host state (null when unchecked), monitoring state,
+    and all configured parent IDs. Also include Inventory hosts without a
+    discovered device (id null, never editable). Coordinates are a client
+    concern. Edges describe configuration, not physical links or live traffic.
+    Reads do not probe devices, modify relationships or regenerate Nagios.
+    """
+    from app.history_models import HostStatus
+    from app.api.system.network_profile import _gateway_device, _scanned_networks
+    try:
+        rows = db.session.scalars(sa.select(NetworkDiscovery).order_by(NetworkDiscovery.NetDiscoveryID)).all()
+        by_id = {row.NetDiscoveryID: row for row in rows}
+        latest = sa.select(HostStatus.Hostname, sa.func.max(HostStatus.Timestamp).label('ts')).group_by(HostStatus.Hostname).subquery()
+        snapshots = db.session.scalars(sa.select(HostStatus).join(latest, sa.and_(
+            HostStatus.Hostname == latest.c.Hostname, HostStatus.Timestamp == latest.c.ts
+        )).order_by(HostStatus.HostStatusID)).all()
+        statuses = {row.Hostname: row for row in snapshots}
+        pairs = sorted(parent_pairs())
+        ids_by_child, edges = {}, []
+        for child, parent in pairs:
+            ids_by_child.setdefault(child, []).append(parent)
+            reason = parent_omission_reason(by_id.get(parent))
+            edges.append({"child_id": child, "parent_id": parent,
+                          "nagios_eligible": reason is None, "omission_reason": reason})
+        devices = []
+        for row in rows:
+            name = nagios_host_name(row)
+            status = statuses.pop(name, None)
+            devices.append({"id": row.NetDiscoveryID, "nagios_host_name": name,
+                            "display_name": row.Display_Name, "ip_address": row.IP_Address,
+                            "os": row.OS_Type, "last_seen_at": row.Last_Seen_At.isoformat() if row.Last_Seen_At else None,
+                            "monitoring_state": monitoring_state(row),
+                            "host_state": status.Current_State.name if status else None,
+                            "last_check": status.Last_Check.isoformat() if status and status.Last_Check else None,
+                            "parent_device_ids": ids_by_child.get(row.NetDiscoveryID, []),
+                            "editable": row.Device_State not in (DeviceState.RETIRED, DeviceState.MERGED)})
+        for name, status in sorted(statuses.items()):
+            devices.append({"id": None, "nagios_host_name": name, "display_name": None,
+                            "ip_address": None, "os": None, "last_seen_at": None,
+                            "monitoring_state": None, "host_state": status.Current_State.name,
+                            "last_check": status.Last_Check.isoformat() if status.Last_Check else None,
+                            "parent_device_ids": [], "editable": False})
+        # Use the same advisory gateway derivation as Network Profile; never set a link.
+        active = [row for row in rows if row.Device_State is DeviceState.ACTIVE]
+        gateway_label = _gateway_device(_scanned_networks(), active)
+        from app.api.system.network_profile import _device_label
+        suggested = next((row.NetDiscoveryID for row in active if _device_label(row) == gateway_label), None)
+        return success({"devices": devices, "edges": edges, "suggested_gateway_id": suggested})
+    except Exception:
+        current_app.logger.exception("Could not load topology.")
+        return error("Unable to load topology.", 500)

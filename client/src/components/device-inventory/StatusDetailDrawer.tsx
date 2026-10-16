@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 
 import { apiDelete, apiGet, apiPost, errorMessage } from '../../lib/api'
 import { useCurrentUser } from '../../contexts/CurrentUserContext'
+import { DeviceParentSection } from './DeviceParentSection'
 import { DeviceMonitoringSection } from './DeviceMonitoringSection'
 import { DeviceRecipientsSection } from './DeviceRecipientsSection'
 import { DeviceInterfacesSection } from './DeviceInterfacesSection'
@@ -321,6 +322,10 @@ export function StatusDetailDrawer({ hostname, onClose, onMonitoringChanged }: P
                     </ul>
                   )}
                 </section>
+              )}
+
+              {!service && detail.device_id != null && (
+                <DeviceParentSection key={`parents-${detail.device_id}`} deviceId={detail.device_id} onChanged={onMonitoringChanged} />
               )}
 
               {!service && detail.device_id != null && hasPermission('system.hosts.alerts') && (

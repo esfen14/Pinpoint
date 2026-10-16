@@ -128,6 +128,10 @@ def _drop_empty_contact_groups(rendered):
 
 
 def create_host(host):
+    """Render a host with optional validated stable parent names; defaults stay identical."""
+    parents = host.get("parents", [])
+    if any(not isinstance(name, str) or not re.fullmatch(r"[A-Za-z0-9_.-]+", name) for name in parents):
+        raise ValueError("Invalid Nagios parent host name.")
     retry_interval, max_attempts = check_timing()
     # Hosts have never had an explicit retry_interval; write one only when it
     # differs from the default, so default output stays exactly as it was.
@@ -135,6 +139,7 @@ def create_host(host):
     policy = notification_policy()
     rendered = _load_template("host.cfg.tpl").format(
         host_name=host["host_name"],
+        parents_line=("\n    parents                         " + ",".join(parents)) if parents else "",
         alias=host["alias"],
         address=host["address"],
         contact_groups=host["contact_groups"],

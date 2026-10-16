@@ -5,6 +5,27 @@
 This file reports what is present in the repository. It is not a substitute for
 the normative behavior in the requirement specifications.
 
+## Manual topology (#117)
+
+Manual multiple-parent relationships, graph validation and eligibility-aware Nagios
+rendering are implemented on the issue branch, with a reversible multi-bind
+migration. The existing React Flow prototype is wired to real inventory/status data,
+with a shared Inventory/Topology parent editor and automatic non-editable layout.
+Local full verification and real routed Nagios default-three-attempt reachability,
+notification dispatch, pause, merge and retire checks pass. A continued real
+browser/Flask/Nagios run verifies both editors, reload/cross-page persistence, cycle
+errors, read-only controls and direct 403; it also fixed an Inventory save-confirmation
+unmount regression. See [the live browser report](../docs/test-runs/2026-10-15-issue-117-live-browser/REPORT.md)
+and [the routed report](../docs/test-runs/2026-10-15-issue-117-manual-topology/REPORT.md).
+The current-main integration preserves escalation/remediation rendering and joins
+the published migration histories without rewriting them; populated upgrades from
+both old heads and a real browser/Nagios retest pass. See [the main-sync report](../docs/test-runs/2026-10-15-issue-117-main-sync/REPORT.md).
+CI and human review are tracked on the implementation PR. One-attempt settings can
+emit transient child DOWN notifications before UNREACHABLE; notification guarantees
+and any main-config change are a separate [decision #173](https://github.com/esfen14/Pinpoint/issues/173).
+Parent links do not implement routing failover or guarantee immediate suppression
+under every Nagios cache/retry configuration.
+
 ## Implemented backend areas
 
 - Session login/logout and current-user identity.
@@ -152,9 +173,9 @@ implemented; existing harness improvements do not satisfy full acceptance.
 
 ## Explicit exclusions
 
-- Backend network-topology computation is not part of the current release.
-- The frontend topology view is not a supported current-release page. Source may
-  remain dormant for future development.
+- Automatic topology/parent inference, physical interface mapping and topology
+  interface/traffic panels are excluded. Manual multiple-parent topology is in
+  scope; graph positions are automatic and cannot be edited.
 - Nagios' native UI is not a Pinpoint operator surface.
 - Plugin Manager does not install arbitrary agents or plugins on monitored
   devices; it manages plugins on the Pinpoint/Nagios server.

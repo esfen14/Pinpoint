@@ -29,7 +29,7 @@ acknowledgements belong in `system.db` even though they relate to Nagios alerts.
 - Network profile: singleton `NetworkProfile` (`Id=1`) holding the editable name, reference and detail rows of the Network Health info card.
 - Audit/logging: `ActivityLog`, `ConfigurationChanges`, `ExportLog`.
 - Discovery: `NetworkDiscoveryStatus`, `SkippedService`, `NetworkDiscovery`,
-  `Open_TCP_Services`, `Open_UDP_Services`.
+  `Open_TCP_Services`, `Open_UDP_Services`, `DeviceParent` (manual reachability links).
 - NCPA deployment: `SSHCredentials`, `NCPADeploymentStatus` (one row per run,
   with `Reviewed_At`/`Reviewed_By`), `NCPADeploymentResult` (one row per device
   per run), `NCPADeployment` (each device's latest agent state and nullable installed `Port`),
@@ -783,6 +783,49 @@ source or retired device. Pause preserves choices for resume.
 
 NCPA inventory probing considers only devices with NCPA facts; an SNMP-only device with monitored interfaces does not require an NCPA deployment merely because `check_ncpa` is enabled globally.
 
+
+## Manual parent relationships
+
+`DeviceParent` (`DEVICE_PARENT`, default bind) stores manual reachability edges with
+composite primary key `(Child_ID, Parent_ID)`, foreign keys to stable device IDs,
+a parent index and a self-link check. New/upgraded devices have no parent links by
+default. Iterative graph validation rejects cycles through any parent path; a
+parent-set replacement is atomic and rejects duplicates, missing IDs and retired/
+merged parents. Discovery never infers parents. Merge rewrites both ends,
+deduplicates and refuses self-links/cycles; explicit and automatic retirement clear
+relationships in the retirement transaction. Pause preserves manual choices.
+
+Configuration loads parent pairs once and includes only names present in the candidate
+whose parent remains actively checked (including Missing, excluding paused, retired,
+merged and address-unknown). Parent host names must match `[A-Za-z0-9_.-]+`; no
+request strings enter a directive or shell command. Multiple parents become Nagios's
+comma-separated `parents` list. No eligible parents leaves the original host output
+unchanged. API summaries and topology edges explain omitted parents. Parent changes
+use the existing shared pre-apply validation, config lock and resource/host rollback.
+
+The topology read model uses existing inventory records and latest stored Nagios
+snapshots with a fixed number of database queries; it does not compute reachability,
+probe devices or collect interface/traffic telemetry. React computes graph positions.
+
+Migration `b117d9a2c041` follows `a129f6d23901`. It was generated with the
+repository's multi-bind Alembic environment and reviewed: only `DEVICE_PARENT`
+and its index/constraints are added on the default bind; history has no schema
+change. Run `flask db upgrade` for both binds. No permission is added. Downgrade
+removes parent relationships while retaining devices and monitoring history.
+The populated migration regression verifies default-empty parents, multiple-parent
+storage, foreign keys/uniqueness/self-link constraints and downgrade/re-upgrade.
+Parent transactions ask the shared writer to defer its history commit until the
+route commits the graph and audit entry; lifecycle edits also synchronize the
+existing Plugin Manager derived rows before committing.
+
+
+Nagios still owns state classification and notifications. Declaring multiple
+parents does not create alternate network routes. Cached parent states and a
+single check attempt can briefly classify a child DOWN before UNREACHABLE;
+see [the observed trial and follow-up](../docs/test-runs/2026-10-15-issue-117-manual-topology/REPORT.md).
+The default-three-attempt routed trial passed. No global cache, retry or notification
+setting is silently changed by selecting parents.
+
 ### Escalation rendering and recipient ownership
 
 `network_discovery/recipient_groups.py` is the shared Active/opted-in eligibility
@@ -819,3 +862,18 @@ whichever branch is missing and reaches one head on each bind. Downgrading only
 this join preserves both parents' schemas and existing escalation choices,
 remediation actions/runs, recipient selections, deployed NCPA ports, interfaces,
 polling preferences and history data.
+
+
+### Topology migration convergence
+
+Because main later added `a4c8e1b7d933` (maintenance windows) and
+`b8e3d5f2a417` (remediation restart), schema-free revision `d117f3b8a053` joins
+`c117e6a9d042` with `b8e3d5f2a417` so the tree again has a single head.
+
+Schema-free merge revision `c117e6a9d042` joins the published manual-parent
+revision `b117d9a2c041` and escalation/remediation head `99f584ed8151` without
+rewriting either ancestry. Normal multi-bind `flask db upgrade` applies the
+missing branch and reaches a single head on both binds. Populated upgrades from
+both prior heads preserve manual parent sets, escalation choices, remediation
+actions/runs and device/history data. Downgrading only the join retains both
+schemas and their rows.
