@@ -6,8 +6,10 @@ spool folder. A scheduler job calls ``process_spool`` every few seconds. Everyth
 file is untrusted: the file must be a regular file of the expected size owned by the trusted
 user, and its content is parsed strictly. For each valid HARD problem event (a SOFT state or a
 recovery to OK or UP is ignored) the consumer finds the
-enabled actions that cover it, applies the cooldown and hourly cap, writes one RemediationRun
-row per action, and only then runs the action type from app/remediation_actions.py.
+enabled actions that cover it, applies the safety controls (kill switch, Maintenance Mode,
+scheduled downtime, an acknowledged problem) and then the cooldown and hourly cap, writes one
+RemediationRun row per action (a skip is a row with its reason, never silent), and only then runs
+the action type from app/remediation_actions.py.
 
 Order for one event (so a crash can never run an action twice):
     1. save the run rows (``running`` or ``skipped_*``) and commit
@@ -29,6 +31,7 @@ import sqlalchemy as sa
 from flask import current_app
 
 from app import db
+from app.history_models import AcknowledgementType, HostStatus, ServiceStatus
 from app.remediation_actions import RunContext, run_action
 from app.system_models import (
     RemediationAction, RemediationEventState, RemediationEventStateType, RemediationOutcome,
@@ -181,6 +184,47 @@ def covers(action, event):
     return True
 
 
+def safety_state(event):
+    """
+    Return (in_downtime, acknowledged) for the object an event is about, from its newest Nagios
+    status snapshot. An object with no snapshot is neither.
+    """
+    if event["kind"] == "service":
+        newest = db.session.scalars(sa.select(ServiceStatus).where(
+            ServiceStatus.Hostname == event["host"], ServiceStatus.Service == event["service"],
+        ).order_by(ServiceStatus.Timestamp.desc(), ServiceStatus.ServiceStatusID.desc()).limit(1)).first()
+    else:
+        newest = db.session.scalars(sa.select(HostStatus).where(
+            HostStatus.Hostname == event["host"],
+        ).order_by(HostStatus.Timestamp.desc(), HostStatus.HostStatusID.desc()).limit(1)).first()
+    if newest is None:
+        return False, False
+    return (
+        (newest.Scheduled_Downtime_Depth or 0) > 0,
+        newest.Acknowledgement_Type != AcknowledgementType.NOACK,
+    )
+
+
+def safety_skip(action, settings, state):
+    """
+    Return (outcome, reason) when a safety control stops this action, else None. Order: the kill
+    switch, Maintenance Mode, scheduled downtime, an acknowledged problem. ``state`` is the
+    (in_downtime, acknowledged) pair from ``safety_state``.
+    """
+    if settings is not None and settings.Remediation_Enabled is False:
+        return (RemediationOutcome.SKIPPED_KILL_SWITCH,
+                "Automatic recovery is switched off (kill switch).")
+    if settings is not None and settings.Maintenance_Mode:
+        return (RemediationOutcome.SKIPPED_MAINTENANCE, "Maintenance Mode is on.")
+    in_downtime, acknowledged = state
+    if in_downtime:
+        return (RemediationOutcome.SKIPPED_DOWNTIME, "The problem is in scheduled downtime.")
+    if acknowledged and not action.Run_When_Acknowledged:
+        return (RemediationOutcome.SKIPPED_ACKNOWLEDGED,
+                "An operator has already acknowledged this problem.")
+    return None
+
+
 def skip_reason(action, event, now):
     """Return (outcome, reason) when the cooldown or hourly cap stops this run, else None."""
     cooldown_start = now - timedelta(seconds=action.Cooldown_Seconds)
@@ -223,6 +267,9 @@ def record_decisions(event, now):
     key = event_key(event)
     to_run = []
     actions = db.session.scalars(sa.select(RemediationAction).where(RemediationAction.Enabled.is_(True))).all()
+    # Read on every event, so a change to the kill switch applies on the next tick.
+    settings = db.session.get(SystemSettings, 1)
+    state = None
     for action in actions:
         if not covers(action, event):
             continue
@@ -231,7 +278,9 @@ def record_decisions(event, now):
         if already is not None:
             current_app.logger.info("Remediation: replayed event ignored for action %r", action.Name)
             continue
-        skipped = skip_reason(action, event, now)
+        if state is None:
+            state = safety_state(event)
+        skipped = safety_skip(action, settings, state) or skip_reason(action, event, now)
         row = RemediationRun(
             Event_Key=key, Action_Id=action.Id, Action_Name=action.Name, Hostname=event["host"],
             Service=event["service"], State=RemediationEventState(event["state"]),
