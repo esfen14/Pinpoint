@@ -351,14 +351,14 @@ export function StatusDetailDrawer({ hostname, onClose, onMonitoringChanged }: P
               )}
 
               {!service && detail.device_id != null && hasPermission('system.hosts') && (
+                <DeviceSnmpSection key={`snmp-${detail.device_id}`} deviceId={detail.device_id} hostname={hostname} />
+              )}
+              {!service && detail.device_id != null && hasPermission('system.hosts') && (
                 <DevicePortsSection key={detail.device_id} deviceId={detail.device_id} hostname={hostname} />
               )}
 
               {!service && detail.device_id != null && hasPermission('system.hosts') && (
                 <DeviceInterfacesSection key={`interfaces-${detail.device_id}`} deviceId={detail.device_id} hostname={hostname} />
-              )}
-              {!service && detail.device_id != null && hasPermission('system.hosts') && (
-                <DeviceSnmpSection key={`snmp-${detail.device_id}`} deviceId={detail.device_id} hostname={hostname} />
               )}
             </>
           )}

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Radio } from 'lucide-react'
 
 import { errorMessage } from '../../lib/api'
 import {
@@ -9,6 +9,7 @@ import {
   testDeviceSnmp,
 } from '../../lib/devicePluginVariablesApi'
 import { useCurrentUser } from '../../contexts/CurrentUserContext'
+import { DropdownSelect } from '../shared/DropdownSelect'
 import type {
   DeviceVariablesResponse,
   SnmpFormValues,
@@ -35,8 +36,27 @@ type Props = {
   hostname: string
 }
 
-const INPUT = 'w-full rounded-lg border border-[var(--border)] bg-transparent px-2.5 py-1.5 text-sm disabled:opacity-60'
+const VERSION_OPTIONS: { value: SnmpVersion; label: string }[] = [
+  { value: '', label: 'Default' },
+  { value: '1', label: 'Version 1' },
+  { value: '2c', label: 'Version 2c' },
+  { value: '3', label: 'Version 3 (user and passwords)' },
+]
+const LEVEL_OPTIONS: { value: SnmpSecurityLevel | ''; label: string }[] = [
+  { value: '', label: 'Choose…' },
+  ...SECURITY_LEVELS,
+]
+
+const INPUT = 'h-10 w-full rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 text-sm text-[var(--text)] disabled:cursor-not-allowed disabled:opacity-50'
 const BUTTON = 'flex items-center gap-1 rounded-lg border border-[var(--border)] px-3 py-1.5 text-xs font-medium hover:bg-[var(--hover)] disabled:opacity-50'
+
+// The badge text: what this device is polled with now.
+function modeLabel(saved: DeviceVariablesResponse): string {
+  const version = String(saved.variables.protocol ?? '')
+  if (version === '3') return `SNMP v3 · ${String(saved.variables.security_level ?? 'not set up')}`
+  if (version === '1' || version === '2c') return `SNMP v${version}`
+  return 'Default settings'
+}
 
 // The SNMP section of the device drawer: the version a device is polled with (default, v1, v2c or v3) and, for
 // v3, the user and credentials. Saving applies the Nagios config; the server decides everything, rejects an
@@ -214,28 +234,33 @@ export function DeviceSnmpSection({ deviceId, hostname }: Props) {
   }
 
   return (
-    <section>
-      <h3 className="mb-2 font-semibold">SNMP</h3>
-      <p className="mb-2 text-xs text-[var(--text-muted)]">
-        How {hostname} is polled over SNMP. Leave the version on Default to use the network-wide settings.
+    <section className="rounded-2xl border border-[#F4A90B]/40 bg-[#F4A90B]/5 p-4">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <h3 className="flex items-center gap-2 font-semibold">
+          <Radio className="h-4 w-4 text-[#F4A90B]" aria-hidden="true" />
+          SNMP monitoring
+        </h3>
+        <span className="rounded-full bg-[#F4A90B]/15 px-2.5 py-0.5 text-xs font-medium text-[#F4A90B]">
+          {modeLabel(saved)}
+        </span>
+      </div>
+      <p className="mb-3 text-xs text-[var(--text-muted)]">
+        This device answers SNMP. Choose how {hostname} is polled: version 1, 2c, or 3 with a user and passwords.
+        Leave the version on Default to use the network-wide settings.
         {!canEdit && ' You can view SNMP settings but not change them.'}
       </p>
 
       <div className="space-y-3">
         <div>
-          <label className="mb-1 block text-xs font-medium" htmlFor="snmp-version">SNMP version</label>
-          <select
-            id="snmp-version"
+          <p className="mb-1 text-xs font-medium">SNMP version</p>
+          <DropdownSelect<SnmpVersion>
+            label="SNMP version"
+            block
             value={form.version}
             disabled={disabled}
-            onChange={(event) => change({ version: event.target.value as SnmpVersion })}
-            className={INPUT}
-          >
-            <option value="">Default</option>
-            <option value="1">Version 1</option>
-            <option value="2c">Version 2c</option>
-            <option value="3">Version 3</option>
-          </select>
+            options={VERSION_OPTIONS}
+            onChange={(version) => change({ version })}
+          />
         </div>
 
         {form.version !== '3' && (
@@ -256,19 +281,15 @@ export function DeviceSnmpSection({ deviceId, hostname }: Props) {
         {form.version === '3' && (
           <>
             <div>
-              <label className="mb-1 block text-xs font-medium" htmlFor="snmp-level">Security level</label>
-              <select
-                id="snmp-level"
+              <p className="mb-1 text-xs font-medium">Security level</p>
+              <DropdownSelect<SnmpSecurityLevel | ''>
+                label="Security level"
+                block
                 value={form.securityLevel}
                 disabled={disabled}
-                onChange={(event) => change({ securityLevel: event.target.value as SnmpSecurityLevel | '' })}
-                className={INPUT}
-              >
-                <option value="">Choose…</option>
-                {SECURITY_LEVELS.map((level) => (
-                  <option key={level.value} value={level.value}>{level.label}</option>
-                ))}
-              </select>
+                options={LEVEL_OPTIONS}
+                onChange={(securityLevel) => change({ securityLevel })}
+              />
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium" htmlFor="snmp-user">SNMP v3 user</label>
@@ -285,16 +306,15 @@ export function DeviceSnmpSection({ deviceId, hostname }: Props) {
             {needsAuth(form) && (
               <>
                 <div>
-                  <label className="mb-1 block text-xs font-medium" htmlFor="snmp-auth-protocol">Authentication protocol</label>
-                  <select
-                    id="snmp-auth-protocol"
+                  <p className="mb-1 text-xs font-medium">Authentication protocol</p>
+                  <DropdownSelect<string>
+                    label="Authentication protocol"
+                    block
                     value={form.authProtocol}
                     disabled={disabled}
-                    onChange={(event) => change({ authProtocol: event.target.value })}
-                    className={INPUT}
-                  >
-                    {AUTH_PROTOCOLS.map((name) => <option key={name} value={name}>{name}</option>)}
-                  </select>
+                    options={AUTH_PROTOCOLS.map((name) => ({ value: name, label: name }))}
+                    onChange={(authProtocol) => change({ authProtocol })}
+                  />
                 </div>
                 {passwordField('auth_password', 'Authentication password', form.authPassword, (value) => change({ authPassword: value }))}
               </>
@@ -302,16 +322,15 @@ export function DeviceSnmpSection({ deviceId, hostname }: Props) {
             {needsPriv(form) && (
               <>
                 <div>
-                  <label className="mb-1 block text-xs font-medium" htmlFor="snmp-priv-protocol">Privacy protocol</label>
-                  <select
-                    id="snmp-priv-protocol"
+                  <p className="mb-1 text-xs font-medium">Privacy protocol</p>
+                  <DropdownSelect<string>
+                    label="Privacy protocol"
+                    block
                     value={form.privProtocol}
                     disabled={disabled}
-                    onChange={(event) => change({ privProtocol: event.target.value })}
-                    className={INPUT}
-                  >
-                    {PRIV_PROTOCOLS.map((name) => <option key={name} value={name}>{name}</option>)}
-                  </select>
+                    options={PRIV_PROTOCOLS.map((name) => ({ value: name, label: name }))}
+                    onChange={(privProtocol) => change({ privProtocol })}
+                  />
                 </div>
                 {passwordField('priv_password', 'Privacy password', form.privPassword, (value) => change({ privPassword: value }))}
               </>

@@ -29,8 +29,11 @@ function renderSection() {
   return render(<DeviceSnmpSection deviceId={4} hostname="switch-a" />)
 }
 
-const choose = (label: string | RegExp, value: string) =>
-  fireEvent.change(screen.getByLabelText(label), { target: { value } })
+// The shared dropdown: open the button named label, then click the option with this text.
+const choose = (label: string, option: string) => {
+  fireEvent.click(screen.getByRole('button', { name: label }))
+  fireEvent.click(screen.getByRole('option', { name: option }))
+}
 const type = (label: string | RegExp, value: string) => fireEvent.change(screen.getByLabelText(label), { target: { value } })
 
 beforeEach(() => {
@@ -53,7 +56,7 @@ describe('states of the section', () => {
     renderSection()
     expect(await screen.findByText('Device not found.')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
-    expect(await screen.findByLabelText('SNMP version')).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'SNMP version' })).toBeInTheDocument()
   })
 
   it('is not shown for a device without an SNMP port', async () => {
@@ -67,26 +70,40 @@ describe('states of the section', () => {
   it('shows the defaults as "Default" and the form read-only without edit permission', async () => {
     permissions.granted = new Set(['system.hosts'])
     renderSection()
-    expect(await screen.findByLabelText('SNMP version')).toBeDisabled()
+    expect(await screen.findByRole('button', { name: 'SNMP version' })).toBeDisabled()
     expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Test' })).not.toBeInTheDocument()
     expect(screen.getByText(/view SNMP settings but not change/i)).toBeInTheDocument()
   })
 })
 
+describe('visibility', () => {
+  it('announces SNMP monitoring with a badge for the current mode', async () => {
+    api.getDevicePluginVariables.mockResolvedValue(v3Saved)
+    renderSection()
+    expect(await screen.findByRole('heading', { name: 'SNMP monitoring' })).toBeInTheDocument()
+    expect(screen.getByText('SNMP v3 · authPriv')).toBeInTheDocument()
+  })
+
+  it('says Default settings when nothing is saved', async () => {
+    renderSection()
+    expect(await screen.findByText('Default settings')).toBeInTheDocument()
+  })
+})
+
 describe('version choice', () => {
   it('shows the community for v2c and no v3 fields', async () => {
     renderSection()
-    await screen.findByLabelText('SNMP version')
-    choose('SNMP version', '2c')
+    await screen.findByRole('button', { name: 'SNMP version' })
+    choose('SNMP version', 'Version 2c')
     expect(screen.getByLabelText('Community')).toBeInTheDocument()
     expect(screen.queryByLabelText('SNMP v3 user')).not.toBeInTheDocument()
   })
 
   it('shows the v3 fields for version 3 and hides the community', async () => {
     renderSection()
-    await screen.findByLabelText('SNMP version')
-    choose('SNMP version', '3')
+    await screen.findByRole('button', { name: 'SNMP version' })
+    choose('SNMP version', 'Version 3 (user and passwords)')
     expect(screen.getByLabelText('Security level')).toBeInTheDocument()
     expect(screen.getByLabelText('SNMP v3 user')).toBeInTheDocument()
     expect(screen.queryByLabelText('Community')).not.toBeInTheDocument()
@@ -94,14 +111,14 @@ describe('version choice', () => {
 
   it('shows only the fields the security level needs', async () => {
     renderSection()
-    await screen.findByLabelText('SNMP version')
-    choose('SNMP version', '3')
-    choose('Security level', 'noAuthNoPriv')
+    await screen.findByRole('button', { name: 'SNMP version' })
+    choose('SNMP version', 'Version 3 (user and passwords)')
+    choose('Security level', 'No authentication, no privacy')
     expect(screen.queryByLabelText('Authentication password')).not.toBeInTheDocument()
-    choose('Security level', 'authNoPriv')
+    choose('Security level', 'Authentication only')
     expect(screen.getByLabelText('Authentication password')).toBeInTheDocument()
     expect(screen.queryByLabelText('Privacy password')).not.toBeInTheDocument()
-    choose('Security level', 'authPriv')
+    choose('Security level', 'Authentication and privacy')
     expect(screen.getByLabelText('Privacy password')).toBeInTheDocument()
   })
 })
@@ -109,15 +126,15 @@ describe('version choice', () => {
 describe('validation before sending', () => {
   async function openV3() {
     renderSection()
-    await screen.findByLabelText('SNMP version')
-    choose('SNMP version', '3')
+    await screen.findByRole('button', { name: 'SNMP version' })
+    choose('SNMP version', 'Version 3 (user and passwords)')
   }
 
   it('blocks a missing security level, user and passwords with a message', async () => {
     await openV3()
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Choose a security level.')
-    choose('Security level', 'authPriv')
+    choose('Security level', 'Authentication and privacy')
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Enter the SNMP v3 user name.')
     type('SNMP v3 user', 'monitor')
@@ -141,9 +158,9 @@ describe('saving', () => {
   it('sends the v3 fields and passwords, then clears the password boxes', async () => {
     api.saveDevicePluginVariables.mockResolvedValue(v3Saved)
     renderSection()
-    await screen.findByLabelText('SNMP version')
-    choose('SNMP version', '3')
-    choose('Security level', 'authPriv')
+    await screen.findByRole('button', { name: 'SNMP version' })
+    choose('SNMP version', 'Version 3 (user and passwords)')
+    choose('Security level', 'Authentication and privacy')
     type('SNMP v3 user', ' monitor ')
     type('Authentication password', 'authsecret1')
     type('Privacy password', 'privsecret1')
@@ -185,7 +202,7 @@ describe('saving', () => {
     renderSection()
     await screen.findByLabelText('Authentication password')
     fireEvent.click(screen.getByRole('button', { name: 'Remove saved privacy password' }))
-    choose('Security level', 'authNoPriv')
+    choose('Security level', 'Authentication only')
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
     await waitFor(() => expect(api.saveDevicePluginVariables).toHaveBeenCalled())
     expect(api.saveDevicePluginVariables.mock.calls[0][2]).toEqual([])
@@ -193,8 +210,8 @@ describe('saving', () => {
 
   it('sends only the version and community for v2c', async () => {
     renderSection()
-    await screen.findByLabelText('SNMP version')
-    choose('SNMP version', '2c')
+    await screen.findByRole('button', { name: 'SNMP version' })
+    choose('SNMP version', 'Version 2c')
     type('Community', 'lab')
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
     await waitFor(() => expect(api.saveDevicePluginVariables).toHaveBeenCalledWith(4, { protocol: '2c', community: 'lab' }, []))
@@ -203,8 +220,8 @@ describe('saving', () => {
   it("shows the server's message when saving fails, keeping what was typed", async () => {
     api.saveDevicePluginVariables.mockRejectedValue(new ApiError('The settings could not be applied: nope', 422))
     renderSection()
-    await screen.findByLabelText('SNMP version')
-    choose('SNMP version', '2c')
+    await screen.findByRole('button', { name: 'SNMP version' })
+    choose('SNMP version', 'Version 2c')
     type('Community', 'lab')
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('nope')
@@ -215,7 +232,7 @@ describe('saving', () => {
 describe('test action', () => {
   it('reports success', async () => {
     renderSection()
-    await screen.findByLabelText('SNMP version')
+    await screen.findByRole('button', { name: 'SNMP version' })
     fireEvent.click(screen.getByRole('button', { name: 'Test' }))
     expect(await screen.findByRole('status')).toHaveTextContent('SNMP OK - 12345')
     expect(api.testDeviceSnmp).toHaveBeenCalledWith(4, {})
@@ -224,7 +241,7 @@ describe('test action', () => {
   it('reports the failure reason', async () => {
     api.testDeviceSnmp.mockResolvedValue({ ok: false, state: 'CRITICAL', message: 'The device did not answer in time.' })
     renderSection()
-    await screen.findByLabelText('SNMP version')
+    await screen.findByRole('button', { name: 'SNMP version' })
     fireEvent.click(screen.getByRole('button', { name: 'Test' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('The device did not answer in time.')
   })
@@ -232,7 +249,7 @@ describe('test action', () => {
   it('shows a request error', async () => {
     api.testDeviceSnmp.mockRejectedValue(new ApiError('Unknown variable.', 400))
     renderSection()
-    await screen.findByLabelText('SNMP version')
+    await screen.findByRole('button', { name: 'SNMP version' })
     fireEvent.click(screen.getByRole('button', { name: 'Test' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Unknown variable.')
   })
@@ -241,7 +258,7 @@ describe('test action', () => {
 describe('reset', () => {
   it('is offered only when something is saved and returns to the defaults', async () => {
     renderSection()
-    await screen.findByLabelText('SNMP version')
+    await screen.findByRole('button', { name: 'SNMP version' })
     expect(screen.getByRole('button', { name: 'Reset to defaults' })).toBeDisabled()
   })
 
@@ -252,6 +269,6 @@ describe('reset', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Reset to defaults' }))
     await waitFor(() => expect(api.resetDevicePluginVariables).toHaveBeenCalledWith(4))
     expect(await screen.findByRole('status')).toHaveTextContent('SNMP settings reset')
-    expect((screen.getByLabelText('SNMP version') as HTMLSelectElement).value).toBe('')
+    expect(screen.getByRole('button', { name: 'SNMP version' })).toHaveTextContent('Default')
   })
 })

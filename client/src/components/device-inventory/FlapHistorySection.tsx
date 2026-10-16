@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 
 import { apiGet, errorMessage } from '../../lib/api'
 import { useDisplayTime } from '../../hooks/useDisplayTime'
+import { DropdownSelect } from '../shared/DropdownSelect'
 
 type FlapItem = {
   type: 'host' | 'service'
@@ -69,16 +70,12 @@ export function FlapHistorySection({ hostname, service }: Props) {
     <section>
       <div className="mb-2 flex items-center justify-between gap-3">
         <h3 className="font-semibold">Flap history</h3>
-        <select
-          aria-label="Flap history window"
+        <DropdownSelect
+          label="Flap history window"
           value={hours}
-          onChange={(e) => setHours(Number(e.target.value))}
-          className="rounded-lg border border-[var(--border)] bg-[var(--input-bg)] px-2 py-1 text-xs text-[var(--text)]"
-        >
-          {WINDOWS.map((window) => (
-            <option key={window.hours} value={window.hours}>{window.label}</option>
-          ))}
-        </select>
+          options={WINDOWS.map((window) => ({ value: window.hours, label: window.label }))}
+          onChange={setHours}
+        />
       </div>
 
       {data?.global_flap_detection_enabled === false && (
