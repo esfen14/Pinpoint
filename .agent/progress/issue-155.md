@@ -73,15 +73,16 @@ One row per loop round, newest last.
 | 7 | Step 6: `GET`/`PUT /api/system/remediation/settings` (`enabled`, `retentionDays` 7 to 3650), per-field 400s, audit as `remediation_setting`, Settings page version untouched; 13 new tests | `pytest tests/unit/test_remediation_api.py -k settings` (red: 12 failed) then full file | 103 passed |
 | 8 | Step 7: types + API client; new `StatusPanel` (health values, stalled banner, kill switch with confirm both ways, view-only disabled); per-row "Paused by the kill switch"; `Run when acknowledged` checkbox + help text (and the enable switch now keeps it); new skip outcomes in labels/filter; 14 new tests, 2 existing adjusted | `npx vitest run src/test/RemediationPage.test.tsx` (red: 17 failed) then green; `npx tsc -b`; `npx eslint` on touched files | 41 passed; tsc clean; eslint 0 errors, 2 warnings (1 pre-existing `set-state-in-effect`, 1 same kind added) |
 | 9 | Step 8: spec files (Backend routes/outcomes/consumer, Data Model columns/state table/purge/migration, Frontend panel, Implementation Status incl. stale Maintenance `failed` note) and `docs/manuals/Automatic_Recovery.md` (kill switch, acknowledged, health panel, stalled checklist) | `scripts/verify.sh docs` | all docs checks pass except the known Windows `test_qa_queue.py` backslash failure |
+| 10 | Step 9 verification: `scripts/verify.sh backend`, `frontend`, `docs` run separately (`all` stops at the known docs failure) | backend: 116 failed 3630 passed 45 errors; the 26 failing files re-run on a clean origin/main worktree and on this branch give the same 114 failed / 32 errors; frontend alone: 69 files 864 tests passed, build ok, eslint 0 errors 30 warnings | no regression from this issue; failures are the Windows environment ones (temp-file locks, file modes, paths) |
 
 ## State for the next session
 
 Everything a fresh session needs to continue without redoing work.
 
-- Last check run (exact command): `scripts/verify.sh docs`
-- Result (first failing lines, or "green"): only `scripts/test_qa_queue.py::test_shared_preview_rebases_relative_evidence_links` (known Windows backslash failure on untouched main)
-- Hypothesis: n/a. Steps 1-8 done.
-- Next action (one specific step, not "continue"): plan step 9: run `scripts/verify.sh all` (backend + frontend), note only known Windows failures; re-read `gh issue view 155` and prove each requirement; a person runs the lab case (stop the consumer and watch `stalled`; flip the kill switch during a forced failure) and `docs/test-runs/` report from `TEMPLATE.md`; then delete this progress file and open the PR (compare link, no Claude attribution).
+- Last check run (exact command): `scripts/verify.sh frontend` (and backend/docs separately)
+- Result (first failing lines, or "green"): frontend green; backend and docs fail only on Windows-environment tests that fail identically on clean origin/main
+- Hypothesis: n/a. Code, tests and docs are complete.
+- Next action (one specific step, not "continue"): a person runs the lab case from section G on the appliance (stop the consumer and watch `stalled`; flip the kill switch during a forced failure) and writes `docs/test-runs/<date>-issue-155-remediation-safety/REPORT.md` from `docs/test-runs/TEMPLATE.md`. Then: re-run `gh issue view 155`, delete this progress file (`git rm`), push, open the PR (compare link and body, no Claude attribution). Until the lab report exists open it as a draft.
 
 ## Decisions and notes
 
