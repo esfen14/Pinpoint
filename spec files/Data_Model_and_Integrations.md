@@ -34,7 +34,7 @@ acknowledgements belong in `system.db` even though they relate to Nagios alerts.
   with `Reviewed_At`/`Reviewed_By`), `NCPADeploymentResult` (one row per device
   per run), `NCPADeployment` (each device's latest agent state and nullable installed `Port`),
   `NCPADevicePartition`.
-- Remediation: `RemediationAction` (`REMEDIATION_ACTION`): the admin-defined rule with `Name` (unique), `Action_Type` (`record_only` or `restart_local_service`; the second was added by migration `b8e3d5f2a417`), `Scope_Kind` (service or host), `Host_Pattern`, `Service_Pattern`, `Parameters` (JSON, validated per type), `Enabled`, `Max_Runs_Per_Hour`, `Cooldown_Seconds`, `Version` and `Updated_By`/`Updated_At`; and `RemediationRun` (`REMEDIATION_RUN`): one row per decision with `Event_Key` (sha256 of kind, host, service, state and last state change; unique together with `Action_Id`), `Action_Id` (a plain number, not a foreign key, so deleting an action keeps its runs), `Action_Name` (a copy), host, service, state, `State_Type`, `Attempt`, `Received_At`, `Started_At`, `Finished_At`, `Outcome`, `Reason` and `Output` (at most 1 KB, redacted). Both live in `system.db` because PinPoint writes them; `history.db` stays Nagios snapshots only. Migration `e4a7c1d9b305` creates both tables and the `remediation.view` and `remediation.manage` permissions, granted to the Administrator role.
+- Remediation: `RemediationAction` (`REMEDIATION_ACTION`): the admin-defined rule with `Name` (unique), `Action_Type` (`record_only` or `restart_local_service`; the second was added by migration `b8e3d5f2a417`), `Scope_Kind` (service or host), `Host_Pattern`, `Service_Pattern`, `Parameters` (JSON, validated per type), `Enabled`, `Max_Runs_Per_Hour`, `Cooldown_Seconds`, `Version` and `Updated_By`/`Updated_At`; and `RemediationRun` (`REMEDIATION_RUN`): one row per decision with `Event_Key` (sha256 of kind, host, service, state and last state change; unique together with `Action_Id`), `Action_Id` (a plain number, not a foreign key, so deleting an action keeps its runs), `Action_Name` (a copy), host, service, state, `State_Type`, `Attempt`, `Received_At`, `Started_At`, `Finished_At`, `Outcome`, `Reason` and `Output` (at most 1 KB, redacted). Both live in `system.db` because PinPoint writes them; `history.db` stays Nagios snapshots only. Migration `e4a7c1d9b305` creates both tables and the `remediation.view` and `remediation.manage` permissions, granted to the Administrator role. Migration `f155a3c7d2b1` (safety controls, #155) adds `SystemSettings.Remediation_Enabled` (the kill switch, default on) and `Remediation_Retention_Days` (default 90), `RemediationAction.Run_When_Acknowledged` (default off), the outcomes `skipped_kill_switch`, `skipped_maintenance`, `skipped_downtime` and `skipped_acknowledged`, and the one-row `RemediationConsumerState` table (`REMEDIATION_CONSUMER_STATE`, Id 1: `Last_Tick_At`, `Last_Error`, `Dropped_Count`, `Dropped_At`; written on every consumer tick, which is why it is not on the settings row). Existing rows keep today's behavior; the downgrade deletes runs with a new outcome and drops the added columns and table.
 - Settings: singleton `SystemSettings`, singleton `NotificationPolicy` (`NOTIFICATION_POLICY`, Id 1, migration `143c48cd6663`), one-per-user `UserPreferences`. `NotificationPolicy` stores weekday/HH:MM quiet windows as JSON, host/service option strings, a 0–1440-minute renotify interval, `Version`, and `Updated_By`; the migration seeds the historical 24x7/default-options/30-minute policy and removes the table on downgrade.
 - Notification escalations: `Escalation` (`ESCALATION`, migration `cd74e5f8a2d5`) stores `First_Notification` and `Last_Notification` (1–10000, first no greater than last), `Interval_Minutes` (0–1440), `Contact_Group` (an existing generated recipient group) and nullable `HostID` (stable `NetworkDiscovery` foreign key; null scopes to all Nagios hosts and services). Database checks enforce numeric ranges. An empty table preserves generated config byte-for-byte. Upgrade creates only this default-bind table; downgrade drops it without changing recipient/device/history records. Deploy with the existing multi-bind `flask db upgrade`; no new permission or `sync-permissions` change is needed.
 - Notifications/alerts: `NotificationCursor`, `AlertAcknowledgement`,
@@ -306,7 +306,10 @@ Nagios continues to own log rotation; Pinpoint does not modify its logs.
   `running` by a stop become `interrupted` and are never run again.
 
 The daily purge also deletes `RemediationRun` rows older than
-`Diagnostic_History_Retention_Days`.
+`Remediation_Retention_Days` and event files in the remediation spool older than 7 days
+(only files with the handler's names; other files are left alone). A spool of more than 1000
+files is cut back on every consumer tick, oldest first, and the number dropped is stored in
+`RemediationConsumerState` and logged.
 
 Saving a changed polling interval reschedules the existing `nagios_poll` job in
 place; the next run is one new interval after the save. Unchanged saves preserve
@@ -898,7 +901,8 @@ polling preferences and history data.
 
 Because main later added `a4c8e1b7d933` (maintenance windows) and
 `b8e3d5f2a417` (remediation restart), schema-free revision `d117f3b8a053` joins
-`c117e6a9d042` with `b8e3d5f2a417` so the tree again has a single head.
+`c117e6a9d042` with `b8e3d5f2a417` so the tree again has a single head. Remediation safety
+controls `f155a3c7d2b1` follows `d117f3b8a053`.
 
 Schema-free merge revision `c117e6a9d042` joins the published manual-parent
 revision `b117d9a2c041` and escalation/remediation head `99f584ed8151` without

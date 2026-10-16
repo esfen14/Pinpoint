@@ -54,7 +54,7 @@ one-row table; new skip outcomes are new `RemediationOutcome` members.
 5. [x] Heartbeat + health: record last tick/error each consumer run; `GET /api/system/remediation/health` (`remediation.view`) with last tick, backlog, oldest spool age, runs and caps in 24 h, `stalled`. Files: `server/app/remediation.py`, `server/app/api/system/remediation.py`, tests.
 6. [x] Settings routes: `GET`/`PUT /api/system/remediation/settings` (`remediation.manage` to write), validation, `ConfigurationChanges` audit, 403 path. Files: `server/app/api/system/remediation.py`, `server/tests/unit/test_remediation_api.py`.
 7. [x] Frontend: types + API client; health card with stalled banner; kill switch with confirmation and per-row state; `Run when acknowledged` option; skip reasons in `RunLog`/`RunDrawer`; loading/error/403 states. Files: `client/src/lib/remediationApi.ts`, `client/src/pages/RemediationPage.tsx`, `client/src/components/remediation/*`, `client/src/test/RemediationPage.test.tsx`.
-8. [ ] Docs: spec files (Backend, Data Model, Frontend, Implementation Status), page help text, admin note on a stalled consumer. Run `scripts/verify.sh docs`.
+8. [x] Docs: spec files (Backend, Data Model, Frontend, Implementation Status), page help text, admin note on a stalled consumer. Run `scripts/verify.sh docs`.
 9. [ ] Full verify (`scripts/verify.sh all`), delete progress file, PR. Lab report in `docs/test-runs/` needs the lab appliance: a person must run it (live lab is off limits unless the issue says so; it does, in section G, but ask first).
 
 ## Round log
@@ -72,15 +72,16 @@ One row per loop round, newest last.
 | 6 | resumed (new session); branch had no new commits on origin/main; re-ran remediation api+consumer tests | `pytest tests/unit/test_remediation_api.py tests/unit/test_remediation_consumer.py` | 167 passed 1 skipped |
 | 7 | Step 6: `GET`/`PUT /api/system/remediation/settings` (`enabled`, `retentionDays` 7 to 3650), per-field 400s, audit as `remediation_setting`, Settings page version untouched; 13 new tests | `pytest tests/unit/test_remediation_api.py -k settings` (red: 12 failed) then full file | 103 passed |
 | 8 | Step 7: types + API client; new `StatusPanel` (health values, stalled banner, kill switch with confirm both ways, view-only disabled); per-row "Paused by the kill switch"; `Run when acknowledged` checkbox + help text (and the enable switch now keeps it); new skip outcomes in labels/filter; 14 new tests, 2 existing adjusted | `npx vitest run src/test/RemediationPage.test.tsx` (red: 17 failed) then green; `npx tsc -b`; `npx eslint` on touched files | 41 passed; tsc clean; eslint 0 errors, 2 warnings (1 pre-existing `set-state-in-effect`, 1 same kind added) |
+| 9 | Step 8: spec files (Backend routes/outcomes/consumer, Data Model columns/state table/purge/migration, Frontend panel, Implementation Status incl. stale Maintenance `failed` note) and `docs/manuals/Automatic_Recovery.md` (kill switch, acknowledged, health panel, stalled checklist) | `scripts/verify.sh docs` | all docs checks pass except the known Windows `test_qa_queue.py` backslash failure |
 
 ## State for the next session
 
 Everything a fresh session needs to continue without redoing work.
 
-- Last check run (exact command): `npx vitest run src/test/RemediationPage.test.tsx` (from `client/`)
-- Result (first failing lines, or "green"): green, 41 passed
-- Hypothesis: n/a. Steps 1-7 done.
-- Next action (one specific step, not "continue"): plan step 8 docs: update `spec files/Backend_Modules_and_Routes.md` (routes `settings`, `health`; consumer description; outcomes list), `Data_Model_and_Integrations.md` (new columns, `REMEDIATION_CONSUMER_STATE`, purge text, migration `f155a3c7d2b1`), `Frontend_Modules_and_Routes.md` (StatusPanel), `Implementation_Status.md`; add an admin guide section (find the #121 "automatic recovery guide" under `docs/`); run `scripts/verify.sh docs`. Then step 9.
+- Last check run (exact command): `scripts/verify.sh docs`
+- Result (first failing lines, or "green"): only `scripts/test_qa_queue.py::test_shared_preview_rebases_relative_evidence_links` (known Windows backslash failure on untouched main)
+- Hypothesis: n/a. Steps 1-8 done.
+- Next action (one specific step, not "continue"): plan step 9: run `scripts/verify.sh all` (backend + frontend), note only known Windows failures; re-read `gh issue view 155` and prove each requirement; a person runs the lab case (stop the consumer and watch `stalled`; flip the kill switch during a forced failure) and `docs/test-runs/` report from `TEMPLATE.md`; then delete this progress file and open the PR (compare link, no Claude attribution).
 
 ## Decisions and notes
 
