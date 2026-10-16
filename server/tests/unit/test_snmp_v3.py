@@ -243,8 +243,9 @@ def generate(app, device, tmp_path, host_name="snmp-host", ip="10.0.0.70"):
         host_name, udp={"161": "snmp"}, net_discovery_id=device.NetDiscoveryID,
         plugin_variables=device.Plugin_Variables)}}
     resource = tmp_path / "resource.cfg"
-    resource.write_text("$USER1$=/usr/local/nagios/libexec\n")
-    resource.chmod(0o660)
+    if not resource.exists():
+        resource.write_text("$USER1$=/usr/local/nagios/libexec\n")
+        resource.chmod(0o660)
     with patched_config(app, HOST_CONFIG_DIR=tmp_path, NAGIOS_RESOURCE_CFG=str(resource),
                         SNMP_OIDS=[{"metric": "uptime", "oid": OID}], SNMP_COMMUNITY_STRING="public",
                         SNMP_PORT="161", NCPA_METRICS=[], NCPA_PORT="5693"):
@@ -307,6 +308,18 @@ class TestV3ConfigGeneration:
         db_session.session.commit()
         hosts, _resource = generate(app, device, tmp_path)
         assert "pinpoint_nd_snmp_v3" not in hosts and "check_snmp" not in hosts
+
+    def test_switching_back_to_v2c_frees_the_slots_and_keeps_other_lines(self, app, db_session, admin_user, tmp_path):
+        device = make_device(db_session, admin_user, "snmp-host", "10.0.0.70")
+        store_override(db_session, device, V3_AUTHPRIV)
+        _hosts, resource = generate(app, device, tmp_path)
+        assert PASSWORD in resource and resource.startswith("$USER1$=/usr/local/nagios/libexec\n")
+
+        store_override(db_session, device, {"protocol": "2c"})
+        hosts, resource = generate(app, device, tmp_path)
+        assert PASSWORD not in resource and PRIVACY not in resource
+        assert resource == "$USER1$=/usr/local/nagios/libexec\n# BEGIN PINPOINT\n# END PINPOINT\n"
+        assert "pinpoint_nd_snmp_v3" not in hosts
 
     def test_facts_hold_plaintext_only_for_version_3(self, app, db_session, admin_user):
         v3 = make_device(db_session, admin_user, "v3-host", "10.0.0.70")

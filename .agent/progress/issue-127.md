@@ -38,11 +38,11 @@ Requirement coverage (every requirement the issue states, and the check that pro
 Ordered steps the agent will take. Write the whole plan before changing code;
 revise it in place and say why in the round log. Name the files each step touches.
 
-1. [ ] Registry: SNMP v3 variables, validation, v3 command (plugin_registry.py, new snmp_v3.py)
-2. [ ] Variables API GET/PUT/DELETE + test endpoint (new api/system/device_plugin_variables.py, register in api/system/__init__.py)
-3. [ ] Secrets: encrypt v3 passwords, collect into resource slots, render v3 command through adapter (create_host_cfg.py, scripts/pinpoint_check_native.py)
-4. [ ] Interface discovery: clear message for v3 devices (interface_discovery.py)
-5. [ ] Frontend: DeviceSnmpSection.tsx, lib api, types, drawer wiring, tests
+1. [x] Registry: SNMP v3 variables, validation, v3 command (plugin_registry.py, new snmp_v3.py)
+2. [x] Variables API GET/PUT/DELETE + test endpoint (new api/system/device_plugin_variables.py, register in api/system/__init__.py)
+3. [x] Secrets: encrypt v3 passwords, collect into resource slots, render v3 command through adapter (create_host_cfg.py, scripts/pinpoint_check_native.py)
+4. [x] Interface discovery: clear message for v3 devices (interface_discovery.py)
+5. [x] Frontend: DeviceSnmpSection.tsx, lib api, types, drawer wiring, tests
 6. [ ] Specs, Implementation_Status, help text; scripts/verify.sh all
 
 ## Round log
@@ -51,16 +51,21 @@ One row per loop round, newest last.
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
-| 1 | | | |
+| 1 | Registry snmp_v3 definition, enums, validate_snmp_v3; device_plugin_variables.py; tests (written with the code, registry import test was red first) | pytest test_snmp_v3.py | green (45) |
+| 2 | v3 command generation: facts, slots, substitution, native adapter check_snmp support | pytest test_snmp_v3.py, test_native_resource_check.py | green |
+| 3 | Variables API + snmp_check test action (tests red first: 49 failed) | pytest test_device_plugin_variables.py | green (55) |
+| 4 | Interface discovery refuses v3 clearly | pytest test_interface_discovery.py | green |
+| 5 | Frontend DeviceSnmpSection + api + types + drawer wiring (tests red first) | vitest full | 745 passed; npm run build ok |
+| 6 | Specs (backend routes, data model, frontend, device inventory, status) | scripts/verify.sh docs | OK |
 
 ## State for the next session
 
 Everything a fresh session needs to continue without redoing work.
 
-- Last check run (exact command): none yet
-- Result (first failing lines, or "green"):
+- Last check run (exact command): cd client && npm run test; scripts/verify.sh docs
+- Result (first failing lines, or "green"): green. Full backend run in background (deselecting tests/unit/test_ssh_port.py::TestHelperListenerPortEdit: uses GNU sed, fails on macOS BSD sed, unrelated)
 - Hypothesis:
-- Next action (one specific step, not "continue"): step 1, write failing registry tests
+- Next action (one specific step, not "continue"): read /private/tmp/claude-501/backend_full.txt; if green run scripts/verify.sh frontend; then a person runs the lab (snmpd v3) and opens the PR
 
 ## Decisions and notes
 
