@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { AlertTriangle, CheckCircle2, HelpCircle, XCircle } from 'lucide-react'
 import { PageHeader } from '../components/shared/PageHeader'
 import { SummaryStatCard } from '../components/shared/SummaryStatCard'
+import { useForecasts } from '../hooks/useForecasts'
 import { ServiceStatusTable } from '../components/system-status/ServiceStatusTable'
 import { apiDelete, apiGet, apiPost, errorMessage } from '../lib/api'
 import { NagiosSyncNotice } from '../components/shared/NagiosSyncNotice'
@@ -22,6 +23,7 @@ function buildQuery(params: Record<string, string | number>) {
 }
 
 export function SystemStatusPage() {
+  const { data: forecasts } = useForecasts()
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [stateFilter, setStateFilter] = useState<'All' | ServiceState>('All')
@@ -191,6 +193,7 @@ export function SystemStatusPage() {
           onPageChange={setPage}
           onAcknowledge={(service) => setAckTarget(service)}
           onUnacknowledge={unacknowledgeService}
+          forecasts={forecasts}
         />
 
       </div>
