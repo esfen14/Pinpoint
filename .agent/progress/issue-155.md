@@ -52,7 +52,7 @@ one-row table; new skip outcomes are new `RemediationOutcome` members.
 3. [x] Action API: accept and return `runWhenAcknowledged`; outcome filter accepts the new outcomes; run items show them. Files: `server/app/api/system/remediation.py`, `server/tests/unit/test_remediation_api.py`.
 4. [x] Retention: purge uses `Remediation_Retention_Days`; delete spool files older than a fixed age; cap spool entries (oldest dropped, count recorded in the state row and logged). Files: `server/app/scheduler.py`, `server/app/remediation.py`, `server/tests/unit/test_scheduler.py`.
 5. [x] Heartbeat + health: record last tick/error each consumer run; `GET /api/system/remediation/health` (`remediation.view`) with last tick, backlog, oldest spool age, runs and caps in 24 h, `stalled`. Files: `server/app/remediation.py`, `server/app/api/system/remediation.py`, tests.
-6. [ ] Settings routes: `GET`/`PUT /api/system/remediation/settings` (`remediation.manage` to write), validation, `ConfigurationChanges` audit, 403 path. Files: `server/app/api/system/remediation.py`, `server/tests/unit/test_remediation_api.py`.
+6. [x] Settings routes: `GET`/`PUT /api/system/remediation/settings` (`remediation.manage` to write), validation, `ConfigurationChanges` audit, 403 path. Files: `server/app/api/system/remediation.py`, `server/tests/unit/test_remediation_api.py`.
 7. [ ] Frontend: types + API client; health card with stalled banner; kill switch with confirmation and per-row state; `Run when acknowledged` option; skip reasons in `RunLog`/`RunDrawer`; loading/error/403 states. Files: `client/src/lib/remediationApi.ts`, `client/src/pages/RemediationPage.tsx`, `client/src/components/remediation/*`, `client/src/test/RemediationPage.test.tsx`.
 8. [ ] Docs: spec files (Backend, Data Model, Frontend, Implementation Status), page help text, admin note on a stalled consumer. Run `scripts/verify.sh docs`.
 9. [ ] Full verify (`scripts/verify.sh all`), delete progress file, PR. Lab report in `docs/test-runs/` needs the lab appliance: a person must run it (live lab is off limits unless the issue says so; it does, in section G, but ask first).
@@ -69,15 +69,17 @@ One row per loop round, newest last.
 | 3 | Step 3: `runWhenAcknowledged` in `serialize_action`/`validate_action`/audit fields; new outcomes already filterable via enum; 7 new API tests | `pytest tests/unit/test_remediation_api.py` (red: 3 failed) then green | 77 passed |
 | 4 | Step 4: purge uses `Remediation_Retention_Days`; `purge_old_spool_files` (7 days) called from `_purge_old_data`; `drop_over_cap` (SPOOL_CAP 1000) in `process_spool` records `Dropped_Count`/`Dropped_At`; 6 new + 2 updated scheduler tests | `pytest tests/unit/test_scheduler.py tests/unit/test_remediation_consumer.py` (red: 6 failed) then green | 89 passed 1 skipped |
 | 5 | Step 5: `record_tick` heartbeat (good tick clears error; unreadable folder sets a fixed-sentence error), `health_snapshot`, `GET /api/system/remediation/health` (`remediation.view`); 12 new tests, health URL added to the login/permission list | `pytest tests/unit/test_remediation_consumer.py tests/unit/test_remediation_api.py` (red: 11 failed) then green | 167 passed 1 skipped |
+| 6 | resumed (new session); branch had no new commits on origin/main; re-ran remediation api+consumer tests | `pytest tests/unit/test_remediation_api.py tests/unit/test_remediation_consumer.py` | 167 passed 1 skipped |
+| 7 | Step 6: `GET`/`PUT /api/system/remediation/settings` (`enabled`, `retentionDays` 7 to 3650), per-field 400s, audit as `remediation_setting`, Settings page version untouched; 13 new tests | `pytest tests/unit/test_remediation_api.py -k settings` (red: 12 failed) then full file | 103 passed |
 
 ## State for the next session
 
 Everything a fresh session needs to continue without redoing work.
 
-- Last check run (exact command): `python -m pytest tests/unit/test_remediation_api.py tests/unit/test_remediation_consumer.py -q` (from `server/`)
-- Result (first failing lines, or "green"): green, 167 passed 1 skipped
-- Hypothesis: n/a. Session round limit (5) reached; steps 1-5 done and pushed.
-- Next action (one specific step, not "continue"): plan step 6: add failing tests in `server/tests/unit/test_remediation_api.py` for `GET`/`PUT /api/system/remediation/settings` (body `{"enabled": bool, "retentionDays": int}`; GET needs `remediation.view`, PUT needs `remediation.manage` -> 403 otherwise; 400 with `data.fields` for a non-bool or retention outside the bound (propose 7 to 3650); writes one `ConfigurationChanges` row per changed field, Conf_Type `remediation_setting`; honors `Audit_Logging`), then implement the two routes in `server/app/api/system/remediation.py`.
+- Last check run (exact command): `python -m pytest tests/unit/test_remediation_api.py -q` (from `server/`)
+- Result (first failing lines, or "green"): green, 103 passed
+- Hypothesis: n/a. Backend (steps 1-6) complete.
+- Next action (one specific step, not "continue"): plan step 7: read `client/src/pages/RemediationPage.tsx`, `client/src/lib/remediationApi.ts`, `client/src/components/remediation/*` and `client/src/test/RemediationPage.test.tsx`; add failing frontend tests first (health card + stalled banner, kill switch confirm dialog, run-when-acknowledged checkbox, skip reasons), then implement.
 
 ## Decisions and notes
 

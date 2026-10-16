@@ -502,3 +502,99 @@ def test_health_shows_the_last_error_without_a_path(logged_in_client, db_session
     data = health(logged_in_client)
     assert data["lastError"] == "The spool folder could not be read."
     assert str(tmp_path) not in str(data)
+
+
+# ==========================================================
+# KILL SWITCH AND RETENTION SETTINGS (issue #155)
+# ==========================================================
+
+SETTINGS_URL = f"{BASE}/settings"
+
+
+def saved_settings(db_session):
+    from app.system_models import SystemSettings
+    db_session.session.expire_all()
+    return db_session.session.get(SystemSettings, 1)
+
+
+def test_settings_default_to_switch_on_and_ninety_days(logged_in_client, db_session):
+    response = logged_in_client.get(SETTINGS_URL)
+    assert response.status_code == 200
+    assert response.get_json()["data"] == {"enabled": True, "retentionDays": 90}
+
+
+def test_settings_need_login_and_the_matching_permission(limited_client, db_session, regular_role):
+    assert limited_client.get(SETTINGS_URL).status_code == 403
+    assert limited_client.put(SETTINGS_URL, json={"enabled": False}).status_code == 403
+    grant(db_session, regular_role, "remediation.view")
+    assert limited_client.get(SETTINGS_URL).status_code == 200
+    assert limited_client.put(SETTINGS_URL, json={"enabled": False}).status_code == 403
+    assert saved_settings(db_session) is None or saved_settings(db_session).Remediation_Enabled is True
+
+
+def test_manage_can_switch_automatic_recovery_off_and_on(logged_in_client, db_session):
+    off = logged_in_client.put(SETTINGS_URL, json={"enabled": False})
+    assert off.status_code == 200 and off.get_json()["data"]["enabled"] is False
+    assert saved_settings(db_session).Remediation_Enabled is False
+    assert logged_in_client.get(SETTINGS_URL).get_json()["data"]["enabled"] is False
+    on = logged_in_client.put(SETTINGS_URL, json={"enabled": True})
+    assert on.get_json()["data"]["enabled"] is True
+
+
+def test_retention_can_be_changed_and_leaves_the_switch_alone(logged_in_client, db_session):
+    logged_in_client.put(SETTINGS_URL, json={"enabled": False})
+    response = logged_in_client.put(SETTINGS_URL, json={"retentionDays": 30})
+    assert response.get_json()["data"] == {"enabled": False, "retentionDays": 30}
+
+
+@pytest.mark.parametrize("body, field", [
+    ({"enabled": "no"}, "enabled"),
+    ({"enabled": 1}, "enabled"),
+    ({"retentionDays": 6}, "retentionDays"),
+    ({"retentionDays": 3651}, "retentionDays"),
+    ({"retentionDays": "90"}, "retentionDays"),
+    ({"retentionDays": True}, "retentionDays"),
+    ({"retentionDays": 30.5}, "retentionDays"),
+    ({"other": 1}, "other"),
+    ({}, "body"),
+])
+def test_bad_settings_are_a_400_naming_the_field_and_save_nothing(logged_in_client, db_session, body, field):
+    response = logged_in_client.put(SETTINGS_URL, json=body)
+    assert response.status_code == 400
+    assert field in response.get_json()["data"]["fields"]
+    settings = saved_settings(db_session)
+    assert settings is None or (settings.Remediation_Enabled is True and settings.Remediation_Retention_Days == 90)
+
+
+def test_a_non_object_body_is_a_400(logged_in_client):
+    assert logged_in_client.put(SETTINGS_URL, json=[1]).status_code == 400
+
+
+def test_each_changed_setting_is_audited_and_unchanged_ones_are_not(logged_in_client, db_session):
+    from app.system_models import ConfigurationChanges
+    logged_in_client.put(SETTINGS_URL, json={"enabled": False, "retentionDays": 90})
+    rows = db_session.session.query(ConfigurationChanges).all()
+    assert [(r.Conf_Type, r.Parameter_Name, r.Old_Value, r.New_Value) for r in rows] == [
+        ("remediation_setting", "enabled", "True", "False")]
+
+
+def test_settings_changes_are_not_audited_when_audit_logging_is_off(logged_in_client, db_session):
+    from app.system_models import ConfigurationChanges, SystemSettings
+    db_session.session.add(SystemSettings(Id=1, Audit_Logging=False))
+    db_session.session.commit()
+    logged_in_client.put(SETTINGS_URL, json={"enabled": False})
+    assert db_session.session.query(ConfigurationChanges).count() == 0
+    assert saved_settings(db_session).Remediation_Enabled is False
+
+
+def test_changing_the_switch_does_not_touch_the_settings_page_version(logged_in_client, db_session):
+    from app.system_models import SystemSettings
+    db_session.session.add(SystemSettings(Id=1, Version=7))
+    db_session.session.commit()
+    logged_in_client.put(SETTINGS_URL, json={"enabled": False})
+    assert saved_settings(db_session).Version == 7
+
+
+def test_the_general_settings_response_does_not_carry_the_remediation_fields(logged_in_client, db_session):
+    data = logged_in_client.get("/api/system").get_json()["data"]
+    assert "remediationEnabled" not in data and "remediationRetentionDays" not in data

@@ -14,6 +14,10 @@ PUT    /system/remediation/actions/<id>
     Replace an action; needs the current version, 409 when stale (remediation.manage).
 DELETE /system/remediation/actions/<id>
     Delete an action; its runs stay in the log (remediation.manage).
+GET    /system/remediation/settings
+    The kill switch and the run retention (remediation.view).
+PUT    /system/remediation/settings
+    Change them; each change is audited (remediation.manage).
 GET    /system/remediation/health
     The consumer's heartbeat, backlog and 24 hour counts, with a stalled flag (remediation.view).
 GET    /system/remediation/runs
@@ -55,6 +59,8 @@ LOGGED_FIELDS = (
     "name", "actionType", "scopeKind", "hostPattern", "servicePattern", "parameters", "enabled",
     "maxRunsPerHour", "cooldownSeconds", "runWhenAcknowledged",
 )
+MIN_RETENTION_DAYS = 7
+MAX_RETENTION_DAYS = 3650
 DEFAULT_PER_PAGE = 25
 MAX_PER_PAGE = 100
 
@@ -353,6 +359,90 @@ def delete_remediation_action(action_id):
     except Exception:
         db.session.rollback()
         current_app.logger.exception("Could not delete remediation action.")
+        return error("An unexpected error occurred.", 500)
+
+
+# ==========================================================
+# KILL SWITCH AND RETENTION
+# ==========================================================
+
+def serialize_settings(settings):
+    """Public shape of the two remediation settings."""
+    return {"enabled": settings.Remediation_Enabled, "retentionDays": settings.Remediation_Retention_Days}
+
+
+def settings_row():
+    """The SystemSettings singleton, created with its defaults when missing. The caller commits."""
+    settings = db.session.get(SystemSettings, 1)
+    if settings is None:
+        settings = SystemSettings(Id=1)
+        db.session.add(settings)
+        db.session.flush()
+    return settings
+
+
+@system_bp.get('/remediation/settings')
+@login_required
+@require_permission('remediation.view')
+def get_remediation_settings():
+    """Return {"enabled": bool, "retentionDays": int}: the kill switch and how long runs are kept."""
+    try:
+        settings = settings_row()
+        data = serialize_settings(settings)
+        db.session.commit()
+        return success(data)
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("Could not read the remediation settings.")
+        return error("An unexpected error occurred.", 500)
+
+
+@system_bp.put('/remediation/settings')
+@login_required
+@require_permission('remediation.manage')
+def update_remediation_settings():
+    """
+    Change the kill switch and/or the run retention.
+
+    JSON: {"enabled": false, "retentionDays": 90}; send either or both. "enabled" is true or
+    false; "retentionDays" is a whole number from 7 to 3650. Unknown fields are errors. The
+    switch applies on the consumer's next tick. Each changed value is written to the
+    configuration log when audit logging is on. Errors: 400 with data.fields.
+    """
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return bad_fields({"body": "Request body must be a JSON object."})
+    errors = {key: "Unknown field." for key in data if key not in ("enabled", "retentionDays")}
+    if "enabled" in data and type(data["enabled"]) is not bool:
+        errors["enabled"] = "Enabled must be true or false."
+    if "retentionDays" in data and (
+        not is_int(data["retentionDays"]) or not MIN_RETENTION_DAYS <= data["retentionDays"] <= MAX_RETENTION_DAYS
+    ):
+        errors["retentionDays"] = (
+            f"Retention must be a whole number of days from {MIN_RETENTION_DAYS} to {MAX_RETENTION_DAYS}.")
+    if not errors and not data:
+        errors["body"] = "Send enabled, retentionDays or both."
+    if errors:
+        return bad_fields(errors)
+    try:
+        settings = settings_row()
+        audit = bool(settings.Audit_Logging)
+        changes = []
+        if "enabled" in data and data["enabled"] != settings.Remediation_Enabled:
+            changes.append(("enabled", settings.Remediation_Enabled, data["enabled"]))
+            settings.Remediation_Enabled = data["enabled"]
+        if "retentionDays" in data and data["retentionDays"] != settings.Remediation_Retention_Days:
+            changes.append(("retentionDays", settings.Remediation_Retention_Days, data["retentionDays"]))
+            settings.Remediation_Retention_Days = data["retentionDays"]
+        if audit:
+            for name, old, new in changes:
+                create_configuration_log(current_user.UserID, "remediation_setting", name, str(old), str(new))
+        result = serialize_settings(settings)
+        db.session.commit()
+        return success(result, message="Settings updated.")
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("Could not update the remediation settings.")
         return error("An unexpected error occurred.", 500)
 
 
