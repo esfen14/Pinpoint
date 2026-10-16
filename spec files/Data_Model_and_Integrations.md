@@ -29,7 +29,7 @@ acknowledgements belong in `system.db` even though they relate to Nagios alerts.
 - Network profile: singleton `NetworkProfile` (`Id=1`) holding the editable name, reference and detail rows of the Network Health info card.
 - Audit/logging: `ActivityLog`, `ConfigurationChanges`, `ExportLog`.
 - Discovery: `NetworkDiscoveryStatus`, `SkippedService`, `NetworkDiscovery`,
-  `Open_TCP_Services`, `Open_UDP_Services`.
+  `Open_TCP_Services`, `Open_UDP_Services`, `DeviceParent` (manual reachability links).
 - NCPA deployment: `SSHCredentials` (also `Remote_Restart_Enabled`, default false, and `Remote_Restart_Services`, a JSON list of unit names, both added by `c7a1f4d92e60` for #8 Part 8.3), `NCPADeploymentStatus` (one row per run,
   with `Reviewed_At`/`Reviewed_By`), `NCPADeploymentResult` (one row per device
   per run), `NCPADeployment` (each device's latest agent state and nullable installed `Port`),
@@ -263,6 +263,36 @@ A new Nagios result can take up to one poll cycle to appear in Pinpoint, then
 up to one browser refresh cycle to appear in the dashboard. Discovery scans
 are not part of that latency or the check freshness threshold.
 
+## Appliance storage and Nagios log access
+
+`app/storage_usage.py` measures the SQLite files returned by
+`automation.database_file_paths()` (in-memory databases omitted),
+`DATABASE_BACKUP_DIR` and `NAGIOS_LOG_ARCHIVE_DIR`. File lengths use `os.stat`;
+folders sum regular-file lengths, skipping symlinks, with budgets of 10,000
+entries and 0.1 seconds per directory tree. `complete=false` marks a partial
+folder total, which the UI labels “At least”. Missing/unreadable paths have
+`bytes=null`, never a fabricated zero. `shutil.disk_usage` reports free/total
+bytes separately for every location, including split mounts. A missing path
+uses its nearest existing parent for disk space. No internal directory paths
+are returned. This is a current measurement on each dashboard-status request,
+independent of host count or monitoring plugin configuration; it creates no
+model or migration.
+
+`app/nagios_log.py` reads only the trusted `NAGIOS_LOG_PATH`, default
+`/usr/local/nagios/var/nagios.log`. It opens read-only, nonblocking, without
+following a final symlink, checks for a regular file and seeks to the last
+64 KiB. A clipped first record is discarded. It returns at most 500 lines
+(default 200) in file order, newest last, with optional exclusive `after` Unix
+seconds. Unterminated final lines are supported. Unknown/unparseable timestamps
+are omitted when `after` is positive. Missing, unreadable, symlinked and special
+files give an empty unavailable result. It never loads the whole log or accepts
+a path from HTTP. Host/service alert and current/initial state records keep
+validated host/service names, state/type/attempt fields; plugin output and all
+other messages, including commands and debug content, are replaced with
+redaction markers. Hostnames and addresses can remain visible. This
+conservative policy avoids guessing which free-form arguments are secrets.
+Nagios continues to own log rotation; Pinpoint does not modify its logs.
+
 ## Scheduler and retention
 
 `scheduler.py` runs:
@@ -368,6 +398,63 @@ its JSON shape already existed, and a device without an override renders exactly
   passwords; exhaustion refuses generation with the existing safe message (422 from the API).
 - **Interface discovery** uses `snmpwalk -v2c`, so a v3 device reports "supports SNMP v1 and v2c only".
 
+### Mail and web service checks (per device)
+
+Mail and web checks have options that an administrator sets per device and service, stored in
+`Plugin_Variables[<plugin>]` and written only through `device_plugin_variables.py` (no migration:
+the column and its JSON shape already existed). A device without an override renders exactly as
+before; `tests/unit/test_plugin_registry.py` (`TestUnchangedDefaults`) pins the command of every
+existing definition.
+
+| Service | Check | Variables (all optional, default in brackets) |
+|---|---|---|
+| `pop3` (110), `pop3s` (995, TLS) | `check_tcp -M crit [-S] -e` | `expected_text` (`+OK`), `warning`, `critical` |
+| `imap` (143), `imaps` (993, TLS) | `check_tcp -M crit [-S] -e` | `expected_text` (`* OK`), `warning`, `critical` |
+| `http`, `https` | `check_http` | `expected_text` (`-s`), `expected_status` (`-e`), `method` (`-j`), `virtual_host` (`-H`), plus the existing `url`, `warning`, `critical` (and `certificate_days` for https) |
+
+- **Mail.** `check_pop` and `check_imap` are not in the bundled catalog, so the four definitions
+  use `check_tcp`, which compares the greeting the server sends on connect with the expected text.
+  `-M crit` makes a wrong greeting CRITICAL (`check_tcp` reports it as WARNING by default). The TLS
+  variants add `-S`. They are reached by the service name `pop3`, `imap`, `pop3s` or `imaps`
+  (discovery names TLS-wrapped POP3 and IMAP that way). A port that was already monitored keeps the
+  plugin frozen when monitoring started (`generic tcp`); use **Set service** on it to switch.
+- **Web.** The new options render after the existing ones, so a default command is unchanged.
+  `virtual_host` cannot be an option of the standard command: `check_http -H` is the address there.
+  Once it is set, `command_definition_name()` selects `http_vhost` / `https_vhost`
+  (`WEB_VHOST_DEFINITIONS`, command `pinpoint_nd_http_vhost`, outside `PLUGIN_DEFINITIONS` like
+  `snmp_v3`), which passes the device address as `-I` and the virtual host as `-H`. Each device
+  setting applies to every port of that service on the device.
+- **Validation.** `validate_variable_value()` rejects, naming the variable and never its value:
+  the forbidden characters (single and double quotes, the backtick, `!`, `$`, `;` and the backslash, line breaks, NUL), an `expected_status` that is not
+  one to ten HTTP status codes from 100 to 599 separated by commas, a `method` outside
+  GET, HEAD, POST, PUT, DELETE, OPTIONS and PATCH (upper case), and a `virtual_host` that is not a
+  host name (letters, digits, `.`, `-`; up to 253 characters; it cannot start with `-`). Values are
+  single-quoted in the generated command line. The API answers 400 with `data.field`.
+- **Authentication headers and passwords for web checks are out of scope** (they need the secret
+  handling of Issue #16 first). Nothing else about the command, the secret slots or the Nagios
+  pre-apply validation changes.
+- **Decision on `nrpe`.** The `5666 -> nrpe` entries of `TCP_PORT_SERVICES` and `UDP_PORT_SERVICES`
+  are kept: no check depends on them, `test_discovery_settings.py` resolves them, and removing a
+  default would change what an upgraded installation proposes for the port. Remove them in a change
+  that owns that migration if the team wants them gone.
+
+#### Services checked at port level only
+
+The registry contains only plugins in the bundled catalog (`spec files/Plugins_List.md`); custom and
+community plugins are out of scope by team decision. A service without a bundled plugin is therefore
+checked by the generic `tcp` plugin, which proves that the port accepts a connection and nothing more:
+
+- **Database engines:** Microsoft SQL Server, Oracle and MongoDB (only MySQL and PostgreSQL have a
+  bundled plugin; `check_dbi` and `check_oracle` need credentials and are unavailable).
+- **Application servers:** JBoss, WebLogic and Citrix.
+- **Anything else** nmap names but the registry does not (for example `smtps`, `submission`,
+  `ldap` on a non-default setup without a base DN, `redis`): port level.
+
+These services still appear in Device Inventory and still alert when the port stops answering;
+what they lack is a check of the service's own reply. Web and API services are covered by `http`
+and `https` for the status code and the response text, not for authentication. The user guide is
+[Application checks](../docs/manuals/Application_Checks.md).
+
 ### Interface bandwidth
 
 Bandwidth is computed from stored samples; the Nagios checks are not changed.
@@ -414,7 +501,8 @@ ports; if the second step fails the port-number names are kept. `service_from_nm
 keeps nmap's evidence: `method="probed"` with a real name is a `FINGERPRINT`;
 `method="table"` (a lookup by port number) is a `PORT_HINT`; `unknown` and
 `tcpwrapped` (the port accepted and closed) are stored as `unknown` with a
-`PORT_HINT`; HTTP inside `tunnel="ssl"` is reported as `https`. Discovery then
+`PORT_HINT`; HTTP, POP3 and IMAP inside `tunnel="ssl"` are reported as `https`,
+`pop3s` and `imaps` (`TLS_SERVICE_NAMES` in `network_discovery.py`), so they get a TLS check. Discovery then
 decides each port's service name, strongest first:
 
 1. `USER`: a service an operator pinned on that device's port through
@@ -428,6 +516,10 @@ decides each port's service name, strongest first:
    read and never stored, so it cannot drift from `NCPA_PORT`; that port always
    takes `ncpa` because deployment configures the agent there and nmap
    fingerprints it as https.
+   The defaults are 22 `ssh`, 80 `http`, 443 `https`, 110 `pop3`, 143 `imap`, 993 `imaps`
+   and 995 `pop3s` (the four mail names were added by issue #131). Only a table that was
+   never saved from Settings picks up new defaults; a saved table is the administrator's
+   and is not changed.
 4. `PORT_HINT`: nmap's guess from the port number; never trusted on its own.
 
 **Not used as intended.** When nmap fingerprints a service that contradicts the
@@ -721,6 +813,49 @@ source or retired device. Pause preserves choices for resume.
 
 NCPA inventory probing considers only devices with NCPA facts; an SNMP-only device with monitored interfaces does not require an NCPA deployment merely because `check_ncpa` is enabled globally.
 
+
+## Manual parent relationships
+
+`DeviceParent` (`DEVICE_PARENT`, default bind) stores manual reachability edges with
+composite primary key `(Child_ID, Parent_ID)`, foreign keys to stable device IDs,
+a parent index and a self-link check. New/upgraded devices have no parent links by
+default. Iterative graph validation rejects cycles through any parent path; a
+parent-set replacement is atomic and rejects duplicates, missing IDs and retired/
+merged parents. Discovery never infers parents. Merge rewrites both ends,
+deduplicates and refuses self-links/cycles; explicit and automatic retirement clear
+relationships in the retirement transaction. Pause preserves manual choices.
+
+Configuration loads parent pairs once and includes only names present in the candidate
+whose parent remains actively checked (including Missing, excluding paused, retired,
+merged and address-unknown). Parent host names must match `[A-Za-z0-9_.-]+`; no
+request strings enter a directive or shell command. Multiple parents become Nagios's
+comma-separated `parents` list. No eligible parents leaves the original host output
+unchanged. API summaries and topology edges explain omitted parents. Parent changes
+use the existing shared pre-apply validation, config lock and resource/host rollback.
+
+The topology read model uses existing inventory records and latest stored Nagios
+snapshots with a fixed number of database queries; it does not compute reachability,
+probe devices or collect interface/traffic telemetry. React computes graph positions.
+
+Migration `b117d9a2c041` follows `a129f6d23901`. It was generated with the
+repository's multi-bind Alembic environment and reviewed: only `DEVICE_PARENT`
+and its index/constraints are added on the default bind; history has no schema
+change. Run `flask db upgrade` for both binds. No permission is added. Downgrade
+removes parent relationships while retaining devices and monitoring history.
+The populated migration regression verifies default-empty parents, multiple-parent
+storage, foreign keys/uniqueness/self-link constraints and downgrade/re-upgrade.
+Parent transactions ask the shared writer to defer its history commit until the
+route commits the graph and audit entry; lifecycle edits also synchronize the
+existing Plugin Manager derived rows before committing.
+
+
+Nagios still owns state classification and notifications. Declaring multiple
+parents does not create alternate network routes. Cached parent states and a
+single check attempt can briefly classify a child DOWN before UNREACHABLE;
+see [the observed trial and follow-up](../docs/test-runs/2026-10-15-issue-117-manual-topology/REPORT.md).
+The default-three-attempt routed trial passed. No global cache, retry or notification
+setting is silently changed by selecting parents.
+
 ### Escalation rendering and recipient ownership
 
 `network_discovery/recipient_groups.py` is the shared Active/opted-in eligibility
@@ -757,3 +892,18 @@ whichever branch is missing and reaches one head on each bind. Downgrading only
 this join preserves both parents' schemas and existing escalation choices,
 remediation actions/runs, recipient selections, deployed NCPA ports, interfaces,
 polling preferences and history data.
+
+
+### Topology migration convergence
+
+Because main later added `a4c8e1b7d933` (maintenance windows) and
+`b8e3d5f2a417` (remediation restart), schema-free revision `d117f3b8a053` joins
+`c117e6a9d042` with `b8e3d5f2a417` so the tree again has a single head.
+
+Schema-free merge revision `c117e6a9d042` joins the published manual-parent
+revision `b117d9a2c041` and escalation/remediation head `99f584ed8151` without
+rewriting either ancestry. Normal multi-bind `flask db upgrade` applies the
+missing branch and reaches a single head on both binds. Populated upgrades from
+both prior heads preserve manual parent sets, escalation choices, remediation
+actions/runs and device/history data. Downgrading only the join retains both
+schemas and their rows.

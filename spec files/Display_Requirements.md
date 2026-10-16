@@ -144,6 +144,34 @@ All nullable fields are `null` when the plugin is not configured
 
 ---
 
+### 1.1.1 Appliance storage
+
+The Dashboard status area includes a compact **Appliance storage** card,
+requiring `system.dashboard`, from `storage_usage` on the status response:
+
+```json
+{
+    "storage_usage": {
+        "databases": [{"name": "system.db", "bytes": 4096, "filesystem": {"free_bytes": 5000000000, "total_bytes": 20000000000}}],
+        "backups": {"bytes": 8192, "complete": true, "filesystem": {"free_bytes": 5000000000, "total_bytes": 20000000000}},
+        "archives": {"bytes": null, "complete": false, "filesystem": null}
+    }
+}
+```
+
+The existing `nagios` and `server_resources` values retain their contracts.
+Show each database filename and size, database backup and Nagios archive sizes,
+and free/total disk space for each location; different mounts must not be
+presented as one shared disk. Use IEC units (KiB/MiB/GiB). Warn when any
+measured filesystem has **less than 10% free**, with that threshold stated in
+the UI. Unknown values show “Unavailable”; partial folder totals show “At least”
+and “Partial folder scan”. With no configured database files, explain that
+state. Show loading and request-error states; hide the card without dashboard
+permission. Measurements require no monitoring plugins. The card follows the
+page refresh lifecycle.
+
+---
+
 ### 1.2 Summary Stat Cards
 
 Four at-a-glance counters giving the user the size and overall state of the

@@ -1246,3 +1246,72 @@ def test_ncpa_inventory_probe_uses_deployed_port_or_default(app, db_session, adm
         facts = module.load_host_plugin_facts(probe_ncpa=True)
     probe.assert_called_once_with("10.77.0.2", expected_port, "synthetic-inventory-token")
     assert facts[device.NetDiscoveryID]["ncpa"]["available_paths"] == frozenset({"cpu/percent"})
+
+
+# ==========================================================
+# Mail and web service checks (issue #131)
+# ==========================================================
+
+class TestMailAndWebChecks:
+
+    def test_mail_ports_get_a_protocol_aware_check(self, app, plugin_config):
+        host = make_host("mail-a", tcp={"110": "pop3", "143": "imap", "995": "pop3s", "993": "imaps"})
+        with app.app_context():
+            services = as_dict(build_host_services(host, {}, plugin_config))
+
+        assert services == {
+            "pop3-110-tcp": "pinpoint_nd_pop3!110!-e '+OK'",
+            "imap-143-tcp": "pinpoint_nd_imap!143!-e '* OK'",
+            "pop3s-995-tcp": "pinpoint_nd_pop3s!995!-e '+OK'",
+            "imaps-993-tcp": "pinpoint_nd_imaps!993!-e '* OK'",
+        }
+
+    def test_a_device_greeting_override_is_used(self, app, plugin_config):
+        host = make_host("mail-b", tcp={"143": "imap"}, plugin_variables={"imap": {"expected_text": "* OK Dovecot"}})
+        with app.app_context():
+            assert as_dict(build_host_services(host, {}, plugin_config)) == {
+                "imap-143-tcp": "pinpoint_nd_imap!143!-e '* OK Dovecot'"}
+
+    def test_an_unsafe_greeting_falls_back_to_the_generic_check(self, app, plugin_config, caplog):
+        host = make_host("mail-c", tcp={"110": "pop3"}, plugin_variables={"pop3": {"expected_text": "x';reboot'"}})
+        skipped = []
+        with app.app_context():
+            services = as_dict(build_host_services(host, {}, plugin_config, skipped))
+
+        assert services == {"pop3-110-tcp": "pinpoint_nd_tcp!110!"}
+        assert "reboot" not in caplog.text and "reboot" not in skipped[0]["reason"]
+
+    def test_web_checks_without_options_are_unchanged(self, app, plugin_config):
+        host = make_host("web-a", tcp={"80": "http", "443": "https"})
+        with app.app_context():
+            assert as_dict(build_host_services(host, {}, plugin_config)) == {
+                "http-80-tcp": "pinpoint_nd_http!80!", "https-443-tcp": "pinpoint_nd_https!443!"}
+
+    def test_web_options_render_into_the_check(self, app, plugin_config):
+        host = make_host("web-b", tcp={"80": "http"}, plugin_variables={
+            "http": {"expected_text": "Welcome", "expected_status": "200", "method": "GET"}})
+        with app.app_context():
+            assert as_dict(build_host_services(host, {}, plugin_config)) == {
+                "http-80-tcp": "pinpoint_nd_http!80!-s 'Welcome' -e '200' -j 'GET'"}
+
+    def test_a_virtual_host_selects_the_vhost_command(self, app, plugin_config):
+        host = make_host("web-c", tcp={"443": "https"}, plugin_variables={
+            "https": {"virtual_host": "www.example.com", "expected_status": "200,301"}})
+        with app.app_context():
+            assert as_dict(build_host_services(host, {}, plugin_config)) == {
+                "https-443-tcp": "pinpoint_nd_https_vhost!443!www.example.com!-e '200,301'"}
+
+    def test_generated_config_defines_the_commands_it_uses(self, app, db_session, all_monitoring_plugins, plugin_config, tmp_path):
+        discovered = {"10.0.0.0/24": {
+            "10.0.0.21": make_host("mail-d", tcp={"110": "pop3", "993": "imaps"}),
+            "10.0.0.22": make_host("web-d", tcp={"80": "http"}, plugin_variables={"http": {"virtual_host": "site.example.com"}}),
+        }}
+        with patched_config(app, HOST_CONFIG_DIR=tmp_path):
+            cfg_text = _create_host_cfg_file(discovered).read_text()
+
+        names = [n for n in re.findall(r"command_name\s+(\S+)", cfg_text) if not n.startswith("pinpoint_notify_")]
+        assert sorted(names) == ["pinpoint_nd_http_vhost", "pinpoint_nd_imaps", "pinpoint_nd_pop3"]
+        assert "$USER1$/check_tcp -H $HOSTADDRESS$ -S -M crit -p '$ARG1$' $ARG2$" in cfg_text
+        assert "$USER1$/check_http -I $HOSTADDRESS$ -p '$ARG1$' -H '$ARG2$' $ARG3$" in cfg_text
+        services = services_by_host(cfg_text)
+        assert services["web-d"] == {"http-80-tcp": "pinpoint_nd_http_vhost!80!site.example.com!"}

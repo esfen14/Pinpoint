@@ -85,6 +85,10 @@ class Config:
         "22": "ssh",
         "80": "http",
         "443": "https",
+        "110": "pop3",
+        "143": "imap",
+        "993": "imaps",
+        "995": "pop3s",
     }
     UDP_PORT_SERVICES = {
         "5666": "nrpe",
@@ -171,6 +175,9 @@ class Config:
     # applying generated host configs.
     NAGIOS_HOST_CFG = Path(os.environ.get('NAGIOS_HOST_CFG') or "/usr/local/nagios/etc/objects/hosts.cfg")
     NAGIOS_BIN = Path(os.environ.get('NAGIOS_BIN') or "/usr/local/nagios/bin/nagios")
+    # Trusted deployment paths only; never accepted from an HTTP request.
+    NAGIOS_LOG_PATH = Path(os.environ.get('NAGIOS_LOG_PATH') or "/usr/local/nagios/var/nagios.log")
+    NAGIOS_LOG_ARCHIVE_DIR = Path(os.environ.get('NAGIOS_LOG_ARCHIVE_DIR') or "/usr/local/nagios/var/archives")
     NAGIOS_MAIN_CFG = Path(os.environ.get('NAGIOS_MAIN_CFG') or "/usr/local/nagios/etc/nagios.cfg")
     # Nagios resource file: defines $USER1$..$USER256$ macros.  PinPoint writes
     # NCPA tokens and custom-check passwords into a managed block ($USER2$+)

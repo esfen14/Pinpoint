@@ -1,3 +1,4 @@
+import { StorageUsageCard } from '../components/dashboard/StorageUsageCard'
 import { useEffect, useState } from 'react'
 import { AlertTriangle, Gauge, Server, Wifi } from 'lucide-react'
 import { NetworkPerformanceSection } from '../components/dashboard/NetworkPerformanceSection'
@@ -13,7 +14,7 @@ import { DEFAULT_NETWORK_NAME, useNetworkProfile } from '../hooks/useNetworkProf
 import { formatDateTime } from '../utils/formatDateTime'
 import { trendBuckets } from '../utils/trendHours'
 import { fromPluginsResponse, type PluginGroup, type PluginsApiResponse } from '../types/networkHealth'
-import { apiDelete, apiGet, apiPost, errorMessage } from '../lib/api'
+import { apiDelete, apiGet, apiPost, ApiError, errorMessage } from '../lib/api'
 import { NagiosSyncNotice } from '../components/shared/NagiosSyncNotice'
 import { nagiosSyncNotice, type NagiosSyncResult } from '../types/nagiosSync'
 import {
@@ -36,6 +37,8 @@ export function DashboardPage() {
   const [lastRefreshed, setLastRefreshed] = useState(() => new Date())
 
   const [status, setStatus] = useState<DashboardStatus | null>(null)
+  const [statusLoading, setStatusLoading] = useState(true)
+  const [statusError, setStatusError] = useState<string | null>(null)
   const [summary, setSummary] = useState<DashboardSummary | null>(null)
   const [alerts, setAlerts] = useState<AlertRow[]>([])
   const [trends, setTrends] = useState<TrendsResponse | null>(null)
@@ -52,6 +55,19 @@ export function DashboardPage() {
 
   async function loadAll() {
     setLoadError(null)
+    setStatusLoading(true)
+    setStatusError(null)
+    // Status needs only system.dashboard; a denied/unavailable Network Health
+    // source must not hide local storage or the monitoring process state.
+    apiGet<Parameters<typeof fromDashboardStatusResponse>[0]>('/api/system/dashboard/status')
+      .then((data) => setStatus(fromDashboardStatusResponse(data)))
+      .catch((err: unknown) => {
+        setStatus(null)
+        setStatusError(err instanceof ApiError && err.status === 403
+          ? 'You do not have permission to view appliance storage.'
+          : 'Storage usage could not be refreshed.')
+      })
+      .finally(() => setStatusLoading(false))
 
     // Service Overview's "Services by Type" — optional, so a failure here
     // shows "Unavailable" in that section instead of failing the dashboard.
@@ -64,15 +80,13 @@ export function DashboardPage() {
       .catch(() => setNotifications(null))
 
     try {
-      const [statusData, summaryData, alertsData, trendsData, servicesData] = await Promise.all([
-        apiGet<Parameters<typeof fromDashboardStatusResponse>[0]>('/api/system/dashboard/status'),
+      const [summaryData, alertsData, trendsData, servicesData] = await Promise.all([
         apiGet<Parameters<typeof fromDashboardSummaryResponse>[0]>('/api/system/dashboard/summary'),
         apiGet<{ alerts: Parameters<typeof fromAlertRecord>[0][] }>('/api/system/dashboard/alerts?limit=10'),
         apiGet<Parameters<typeof fromTrendsResponse>[0]>(`/api/system/network-health/trends?hours=${trendHours}&buckets=${trendBuckets(trendHours)}`),
         apiGet<ServiceListResponse>('/api/system/network-health/services?per_page=100'),
       ])
 
-      setStatus(fromDashboardStatusResponse(statusData))
       setSummary(fromDashboardSummaryResponse(summaryData))
       setAlerts(alertsData.alerts.map(fromAlertRecord))
       setTrends(fromTrendsResponse(trendsData))
@@ -190,6 +204,8 @@ export function DashboardPage() {
               </div>
             </div>
           </div>
+
+          <StorageUsageCard usage={status?.storageUsage ?? null} isLoading={statusLoading} error={statusError} />
 
           <NagiosSyncNotice message={syncNotice} onDismiss={() => setSyncNotice(null)} />
 

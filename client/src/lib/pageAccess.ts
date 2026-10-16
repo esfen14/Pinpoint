@@ -8,6 +8,7 @@ export const PAGE_PERMISSIONS: Record<string, string | null> = {
   '/dashboard': 'system.dashboard',
   '/network-health': 'system.network_health',
   '/device-inventory': 'system.network_health',
+  '/topology': 'system.network_health',
   '/system-status': 'system.network_health',
   '/plugins': 'plugin.view',
   '/ncpa-deployment': 'system.deploy.ncpa',

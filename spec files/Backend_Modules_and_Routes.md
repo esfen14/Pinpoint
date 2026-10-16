@@ -178,7 +178,7 @@ An action body has `name` (3 to 60 letters, numbers, spaces, `.`, `_`, `-`; uniq
 
 | Method and path | Permission | Purpose |
 |---|---|---|
-| `GET /api/system/dashboard/status` | `system.dashboard` | Nagios process and monitoring-server resource health |
+| `GET /api/system/dashboard/status` | `system.dashboard` | Nagios process, monitoring-server resources and appliance storage_usage (per-database, backups, archives, free/total bytes per filesystem) |
 | `GET /api/system/dashboard/summary` | `system.dashboard` | Host/service counts, active-alert counts, ping and NCPA summaries |
 | `GET /api/system/dashboard/alerts` | `system.dashboard` | Active alerts from the latest snapshot, with acknowledgement filters |
 | `POST /api/system/dashboard/alerts/acknowledge` | `system.acknowledge_alerts` | Acknowledge one host or service alert; also sent to Nagios (`nagios_synced`, `nagios_message` in the response). A comment with a line break or NUL returns 400 |
@@ -320,11 +320,21 @@ is in `app/smtp_settings.py`; notification failures come from
 
 ### `app/api/system/device_identity.py`
 
+Device summaries include `parent_device_ids` and `parents` with ID, stable host name,
+display name, address, monitoring state, `nagios_eligible` and `omission_reason`.
+Parents can be paused or address-unknown at read time; stored choices remain visible
+while those references are omitted from Nagios. Merge re-points both relationship ends,
+deduplicates and rejects self-links/cycles; retirement clears both ends. Relationship
+changes on merge/retire apply before commit and roll back if rejected.
+
+
 | Method and path | Permission | Purpose |
 |---|---|---|
+| `GET /api/system/hosts/lookup` | `system.hosts` | Discovered-device picker, independent of Nagios snapshots and monitoring filters. Optional literal case-insensitive `search` (max 100 characters) matches display name, Nagios name, DNS name, IP or exact numeric ID. Returns up to 20 device summaries ordered by ID with `has_more`; merged records excluded, retired sources included |
+| `GET /api/system/topology` | `system.network_health` | All discovered devices plus latest Inventory hosts without device records, existing device details, latest stored host state/check time, monitoring state, parent IDs, editable lifecycle flag; configured edges include parent/child IDs and Nagios eligibility/omission reason. Advisory suggested gateway ID; no automatic inference or layout coordinates. Reads never probe target devices |
 | `GET /api/system/hosts/<id>/addresses` | `system.hosts` | Address history of a device |
 | `GET /api/system/hosts/<id>/identifiers` | `system.hosts` | Identity evidence and confidence |
-| `PUT /api/system/hosts/<id>` | `system.hosts.edit` | Change display name and/or addressing mode |
+| `PUT /api/system/hosts/<id>` | `system.hosts.edit` | Change display name, addressing mode and/or `parent_device_ids` (distinct positive integer list). Omitted parents preserve choices; empty clears. 400 for invalid/terminal/self/cyclic parents. Parent changes flush, validate/apply through the shared Nagios writer, then commit; failed apply returns 422 and rolls back the complete edit |
 | `POST /api/system/hosts/<id>/merge` | `system.hosts.edit` | Merge the device into another |
 | `POST /api/system/hosts/<id>/retire` | `system.hosts.edit` | Retire the device |
 | `POST /api/system/hosts/<id>/pause` | `system.hosts.edit` | Pause monitoring: clears `Include_Device_In_Scanning`, so the device leaves the Nagios config while scans still track it. 400 if the device is retired, merged or already paused. Returns `config_applied`, `config_ok`, `config_message` and the `device` summary (which now carries `monitoring_state` and `monitored`) |
@@ -351,7 +361,9 @@ shared writer: validated with the Nagios binary, rolled back if rejected).
 
 Per-device overrides of a registry plugin's variables, stored in
 `NetworkDiscovery.Plugin_Variables[<plugin>]` (the Device Inventory SNMP form uses it for the SNMP
-version and v3 credentials). A change is validated, written to the activity log (variable names,
+version and v3 credentials, and the Ports section's Check options form for the expected text,
+status codes, virtual host and method of `http` / `https` and the greeting of `pop3`, `imap`,
+`pop3s` and `imaps`; see "Mail and web service checks" in `Data_Model_and_Integrations.md`). A change is validated, written to the activity log (variable names,
 never values) and applied through `regenerate_and_apply_config_status()` under `config_write_lock`;
 if Nagios rejects it the change is rolled back and the response is 422. Validation reuses the
 registry (`validate_variable_value`, `validate_snmp_v3`, `editable_variables`), so it cannot drift
@@ -392,12 +404,23 @@ accepts an optional `data` argument for errors the client must act on.
 
 | Method and path | Permission | Purpose |
 |---|---|---|
+| `GET /api/system/log/nagios` | `system.logs` | Bounded redacted Nagios state-log tail; lines 1–500 (default 200), after Unix seconds, at most 64 KiB; fixed configured path, unreadable returns empty/unavailable |
 | `GET /api/system/log` | `system.logs` | User activity logs |
 | `GET /api/system/configurationchange` | `system.logs` | Configuration-change logs |
 | `GET /api/system/networkdiscovery` | `system.logs` | Discovery-run logs |
 | `GET /api/system/ncpadeployment` | `system.logs` | NCPA deployment logs |
 | `POST /api/system/exportlog` | Login | Record an export action |
 | `GET /api/system/exportlog` | `system.logs` | Export history |
+
+`GET /api/system/log/nagios` accepts only one `lines` (1–500, default 200)
+and one `after` (0–2**63-1 Unix seconds, default 0); unknown, duplicate or
+invalid parameters return 400. Response data is `{lines: string[], available:
+boolean, truncated: boolean, max_lines: 500, max_bytes: 65536}`. `after` is
+exclusive and applies within the bounded tail, not a full-history search.
+Unreadable logs give 200 with `available=false` and an empty list. Both login
+and `system.logs` are enforced. See the data spec for the conservative redaction
+policy and fixed path; responses can still contain hostnames and addresses.
+
 
 ### `app/api/system/report.py`
 

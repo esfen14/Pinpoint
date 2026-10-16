@@ -28,3 +28,6 @@ planning snapshots; executed results remain in `test-runs/`.
   test; reports say what happened.
 - Every plan names the spec it feeds. `scripts/verify.sh docs` checks that
   relative links in this folder still resolve.
+
+Appliance storage and bounded Nagios-log viewing are explained in
+[Storage and Nagios logs](manuals/Storage_and_Nagios_Logs.md).

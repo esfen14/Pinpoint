@@ -1,7 +1,10 @@
+import { DeviceIdentityReviews } from './DeviceIdentityReviews'
+import type { MergeResult } from '../../types/deviceIdentity'
 import { useEffect, useState } from 'react'
 
 import { apiDelete, apiGet, apiPost, errorMessage } from '../../lib/api'
 import { useCurrentUser } from '../../contexts/CurrentUserContext'
+import { DeviceParentSection } from './DeviceParentSection'
 import { DeviceMonitoringSection } from './DeviceMonitoringSection'
 import { DeviceRecipientsSection } from './DeviceRecipientsSection'
 import { DeviceInterfacesSection } from './DeviceInterfacesSection'
@@ -50,6 +53,7 @@ type Props = {
   onClose: () => void
   // Called after the device was paused or resumed, so the host table can load again.
   onMonitoringChanged?: () => void
+  onIdentityMerged?: (result: MergeResult) => void
 }
 
 const TIMESTAMP_LABELS: Record<string, string> = {
@@ -85,7 +89,7 @@ function threshold(value: number | null, unit: string | null) {
   return value == null ? '—' : `${value}${unit ?? ''}`
 }
 
-export function StatusDetailDrawer({ hostname, onClose, onMonitoringChanged }: Props) {
+export function StatusDetailDrawer({ hostname, onClose, onMonitoringChanged, onIdentityMerged }: Props) {
   const { formatDateTime } = useDisplayTime()
   const [service, setService] = useState<string | null>(null)
   const [detail, setDetail] = useState<Detail | null>(null)
@@ -198,6 +202,14 @@ export function StatusDetailDrawer({ hostname, onClose, onMonitoringChanged }: P
               </section>
 
               <NagiosSyncNotice message={syncNotice} onDismiss={() => setSyncNotice(null)} />
+
+              {!service && detail.device_id != null && hasPermission('system.discover') && (
+                <DeviceIdentityReviews deviceId={detail.device_id} onMerged={result => {
+                  setReloadKey(k => k + 1)
+                  onIdentityMerged?.(result)
+                  onMonitoringChanged?.()
+                }} />
+              )}
 
               <CheckNowButton hostname={hostname} service={service ?? undefined} />
 
@@ -321,6 +333,10 @@ export function StatusDetailDrawer({ hostname, onClose, onMonitoringChanged }: P
                     </ul>
                   )}
                 </section>
+              )}
+
+              {!service && detail.device_id != null && (
+                <DeviceParentSection key={`parents-${detail.device_id}`} deviceId={detail.device_id} onChanged={onMonitoringChanged} />
               )}
 
               {!service && detail.device_id != null && hasPermission('system.hosts.alerts') && (

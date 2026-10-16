@@ -125,7 +125,7 @@ def test_remote_migration_adds_the_device_columns_off_by_default(remote_report):
 
 
 def test_remote_migration_downgrade_drops_only_the_new_type_and_columns(remote_report):
-    assert remote_report["version_after_downgrade"] == [["b8e3d5f2a417"]]
+    assert remote_report["version_after_downgrade"] == [["d117f3b8a053"]]
     assert remote_report["names_after_downgrade"] == ["keep", "local"]
     assert "Remote_Restart_Enabled" not in remote_report["ssh_columns_after_downgrade"]
     assert remote_report["version_after_reupgrade"] == [["c7a1f4d92e60"]]

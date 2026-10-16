@@ -415,6 +415,18 @@ class NetworkDiscovery(db.Model):
     # Phase 10 (Plugin Manager): plugin configurations targeting this device.
     Plugin_Configurations: so.WriteOnlyMapped['PluginConfiguration'] = so.relationship(back_populates='Target_Device')
     
+class DeviceParent(db.Model):
+    """A manually configured reachability relationship between stable devices."""
+
+    __tablename__ = "DEVICE_PARENT"
+    __table_args__ = (sa.CheckConstraint('"Child_ID" != "Parent_ID"', name="ck_device_parent_not_self"),)
+
+    Child_ID: so.Mapped[int] = so.mapped_column(
+        sa.ForeignKey("NETWORK_DISCOVERY.NetDiscoveryID"), primary_key=True)
+    Parent_ID: so.Mapped[int] = so.mapped_column(
+        sa.ForeignKey("NETWORK_DISCOVERY.NetDiscoveryID"), primary_key=True, index=True)
+
+
 class HostAlertRecipient(db.Model):
     """A user selected for a stable device's alert email; eligibility stays on User."""
 

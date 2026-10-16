@@ -47,10 +47,12 @@ describe('pageAccess', () => {
     expect(firstAccessiblePage(['maintenance.manage'])).toBe('/maintenance')
   })
 
-  it('uses the System Status path and no longer recognizes topology', () => {
+  it('gates both System Status and Topology on network health permission', () => {
     expect(canAccessPage('/system-status', ['system.network_health'])).toBe(true)
     expect(canAccessPage('/system-status', [])).toBe(false)
-    expect(PAGE_PERMISSIONS).not.toHaveProperty('/topology')
+    expect(PAGE_PERMISSIONS['/topology']).toBe('system.network_health')
+    expect(canAccessPage('/topology', [])).toBe(false)
+    expect(canAccessPage('/topology', ['system.network_health'])).toBe(true)
   })
 
   it('always allows Settings', () => {

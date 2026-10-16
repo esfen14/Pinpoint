@@ -112,3 +112,14 @@ all five targets (about 2 minutes), Nagios config validation and reload through
 the shim, and `scripts/lab smoke` (9 of 9 checks pass from a fresh reset).
 **Not yet verified:** `scripts/lab break` and `fix`, `scripts/lab ui`,
 `scripts/lab sync`, plugin enablement with the lab targets, alert behavior, NCPA.
+
+
+## Controlled device identity review acceptance
+
+The opt-in `lab/identity_review_fixture.py` and Playwright `issue-164-live`
+project exercise identity review and merging on a fresh, exclusively owned
+Docker appliance. They use controlled reconciler observations and real Nagios,
+including the saved-merge configuration warning. See the [run report and
+reproduction steps](../test-runs/2026-10-15-issue-164-identity-review/REPORT.md).
+They do not establish physical DHCP behavior or installer acceptance. User-facing
+merge guidance is in [Device Identity Review](Device_Identity_Review.md).

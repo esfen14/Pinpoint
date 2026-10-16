@@ -49,3 +49,12 @@ export const LOG_ENDPOINTS: Record<LogCategory, string> = {
   ncpaDeployment: '/api/system/ncpadeployment',
   exportLog: '/api/system/exportlog',
 }
+
+// A bounded tail rather than a paginated audit category.
+export type NagiosLogResponse = {
+  lines: string[]
+  available: boolean
+  truncated: boolean
+  max_lines: number
+  max_bytes: number
+}

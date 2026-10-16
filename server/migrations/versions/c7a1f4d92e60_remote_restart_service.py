@@ -9,13 +9,13 @@ cannot hold, and drops the two columns.
 history.db is not touched.
 
 Revision ID: c7a1f4d92e60
-Revises: b8e3d5f2a417
+Revises: d117f3b8a053
 """
 from alembic import op
 import sqlalchemy as sa
 
 revision = 'c7a1f4d92e60'
-down_revision = 'b8e3d5f2a417'
+down_revision = 'd117f3b8a053'
 branch_labels = None
 depends_on = None
 
