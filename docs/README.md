@@ -31,3 +31,6 @@ planning snapshots; executed results remain in `test-runs/`.
 
 Appliance storage and bounded Nagios-log viewing are explained in
 [Storage and Nagios logs](manuals/Storage_and_Nagios_Logs.md).
+
+Automatic recovery rules and what PinPoint may restart are explained in
+[Automatic recovery](manuals/Automatic_Recovery.md).
