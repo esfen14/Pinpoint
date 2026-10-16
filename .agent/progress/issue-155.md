@@ -49,7 +49,7 @@ one-row table; new skip outcomes are new `RemediationOutcome` members.
 
 1. [x] Models + migration: `SystemSettings.Remediation_Enabled` (default true), `Remediation_Retention_Days` (default 90); `RemediationAction.Run_When_Acknowledged` (default false); new `RemediationOutcome` members `SKIPPED_KILL_SWITCH`, `SKIPPED_MAINTENANCE`, `SKIPPED_DOWNTIME`, `SKIPPED_ACKNOWLEDGED`; new singleton table `REMEDIATION_CONSUMER_STATE`. Files: `server/app/system_models.py`, new `server/migrations/versions/*`, `server/tests/unit/test_remediation_migration.py` (+ runner in `tests/support/`).
 2. [x] Skip checks in the consumer: kill switch, Maintenance Mode (all types), scheduled downtime, acknowledged (unless `Run_When_Acknowledged`), then cooldown/cap; one row per skip with its reason. Files: `server/app/remediation.py`, `server/tests/unit/test_remediation_consumer.py`.
-3. [ ] Action API: accept and return `runWhenAcknowledged`; outcome filter accepts the new outcomes; run items show them. Files: `server/app/api/system/remediation.py`, `server/tests/unit/test_remediation_api.py`.
+3. [x] Action API: accept and return `runWhenAcknowledged`; outcome filter accepts the new outcomes; run items show them. Files: `server/app/api/system/remediation.py`, `server/tests/unit/test_remediation_api.py`.
 4. [ ] Retention: purge uses `Remediation_Retention_Days`; delete spool files older than a fixed age; cap spool entries (oldest dropped, count recorded in the state row and logged). Files: `server/app/scheduler.py`, `server/app/remediation.py`, `server/tests/unit/test_scheduler.py`.
 5. [ ] Heartbeat + health: record last tick/error each consumer run; `GET /api/system/remediation/health` (`remediation.view`) with last tick, backlog, oldest spool age, runs and caps in 24 h, `stalled`. Files: `server/app/remediation.py`, `server/app/api/system/remediation.py`, tests.
 6. [ ] Settings routes: `GET`/`PUT /api/system/remediation/settings` (`remediation.manage` to write), validation, `ConfigurationChanges` audit, 403 path. Files: `server/app/api/system/remediation.py`, `server/tests/unit/test_remediation_api.py`.
@@ -66,15 +66,16 @@ One row per loop round, newest last.
 | 0 | Branch created from origin/main; plan written | none | n/a |
 | 1 | Step 1: models (`Remediation_Enabled`, `Remediation_Retention_Days`, `Run_When_Acknowledged`, 4 skip outcomes, `RemediationConsumerState`) + migration `f155a3c7d2b1` + runner/tests | `pytest tests/unit/test_remediation_migration.py` (red: revision missing) then green | 12 passed; consumer/API/scheduler/rehearsal tests 165 passed; `test_escalation_merge_migration.py` fails the same on clean main (Windows temp-file lock) |
 | 2 | Step 2: `safety_state`/`safety_skip` in `remediation.py`; kill switch, Maintenance (all types), downtime, acknowledged, then cooldown/cap; 10 new consumer tests; existing Maintenance test now expects `SKIPPED_MAINTENANCE` (issue requires it for every type) | `pytest tests/unit/test_remediation_consumer.py` (red: 9 failed) then green; plus actions/api/scheduler suites | 76 passed; 184 passed across 4 files |
+| 3 | Step 3: `runWhenAcknowledged` in `serialize_action`/`validate_action`/audit fields; new outcomes already filterable via enum; 7 new API tests | `pytest tests/unit/test_remediation_api.py` (red: 3 failed) then green | 77 passed |
 
 ## State for the next session
 
 Everything a fresh session needs to continue without redoing work.
 
-- Last check run (exact command): `python -m pytest tests/unit/test_remediation_consumer.py tests/unit/test_remediation_actions.py tests/unit/test_remediation_api.py tests/unit/test_scheduler.py -q` (from `server/`)
-- Result (first failing lines, or "green"): green, 184 passed 1 skipped
+- Last check run (exact command): `python -m pytest tests/unit/test_remediation_api.py -q` (from `server/`)
+- Result (first failing lines, or "green"): green, 77 passed
 - Hypothesis: n/a
-- Next action (one specific step, not "continue"): plan step 3: add failing tests in `server/tests/unit/test_remediation_api.py` for `runWhenAcknowledged` on create/update/serialize and the new outcome filter values, then edit `serialize_action`, `validate_action` and the outcome filter in `server/app/api/system/remediation.py`.
+- Next action (one specific step, not "continue"): plan step 4: add failing tests in `server/tests/unit/test_scheduler.py` (see its existing retention_purge tests) for `Remediation_Retention_Days` row purge, old spool file purge, and the spool cap that records `Dropped_Count`, then implement in `server/app/scheduler.py` and a helper in `server/app/remediation.py`.
 
 ## Decisions and notes
 

@@ -46,11 +46,11 @@ HOST_PATTERN_RE = re.compile(r"[A-Za-z0-9._*-]{1,100}", re.ASCII)
 SERVICE_PATTERN_RE = re.compile(r"[A-Za-z0-9 ._:/*-]{1,150}", re.ASCII)
 ACTION_FIELDS = {
     "name", "actionType", "scopeKind", "hostPattern", "servicePattern", "parameters", "enabled",
-    "maxRunsPerHour", "cooldownSeconds",
+    "maxRunsPerHour", "cooldownSeconds", "runWhenAcknowledged",
 }
 LOGGED_FIELDS = (
     "name", "actionType", "scopeKind", "hostPattern", "servicePattern", "parameters", "enabled",
-    "maxRunsPerHour", "cooldownSeconds",
+    "maxRunsPerHour", "cooldownSeconds", "runWhenAcknowledged",
 )
 DEFAULT_PER_PAGE = 25
 MAX_PER_PAGE = 100
@@ -73,6 +73,7 @@ def serialize_action(row):
         "enabled": row.Enabled,
         "maxRunsPerHour": row.Max_Runs_Per_Hour,
         "cooldownSeconds": row.Cooldown_Seconds,
+        "runWhenAcknowledged": row.Run_When_Acknowledged,
         "version": row.Version,
         "updatedAt": row.Updated_At.isoformat() if row.Updated_At else None,
         "updatedBy": row.Updated_By,
@@ -171,12 +172,17 @@ def validate_action(data, current_id=None):
     if not is_int(cooldown) or not 60 <= cooldown <= 86400:
         errors["cooldownSeconds"] = "Cooldown must be a whole number of seconds from 60 to 86400."
 
+    run_when_acknowledged = data.get("runWhenAcknowledged", False)
+    if type(run_when_acknowledged) is not bool:
+        errors["runWhenAcknowledged"] = "Run when acknowledged must be true or false."
+
     if errors:
         return None, errors
     return {
         "Name": name, "Action_Type": RemediationActionType(action_type), "Scope_Kind": RemediationScope(scope),
         "Host_Pattern": host_pattern, "Service_Pattern": service_pattern, "Parameters": parameters,
         "Enabled": enabled, "Max_Runs_Per_Hour": max_runs, "Cooldown_Seconds": cooldown,
+        "Run_When_Acknowledged": run_when_acknowledged,
     }, {}
 
 
@@ -259,8 +265,8 @@ def create_remediation_action():
 
     JSON: {"name": "restart-web", "actionType": "record_only", "scopeKind": "service",
     "hostPattern": "web-*", "servicePattern": "HTTP", "parameters": {}, "enabled": true,
-    "maxRunsPerHour": 2, "cooldownSeconds": 600}. Errors: 400 with data.fields, 422 when
-    Nagios rejects the config.
+    "maxRunsPerHour": 2, "cooldownSeconds": 600, "runWhenAcknowledged": false}. Errors: 400 with
+    data.fields, 422 when Nagios rejects the config.
     """
     data = request.get_json(silent=True)
     cleaned, errors = validate_action(data)

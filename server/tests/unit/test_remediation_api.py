@@ -375,3 +375,46 @@ def test_changes_are_written_to_the_configuration_log(logged_in_client, db_sessi
     types = {row.Conf_Type for row in db_session.session.query(ConfigurationChanges).all()}
     assert types == {"remediation_action"}
     assert db_session.session.query(ConfigurationChanges).count() >= 3
+
+
+# ==========================================================
+# SAFETY CONTROLS (issue #155): run when acknowledged, skip outcomes
+# ==========================================================
+
+def test_run_when_acknowledged_defaults_to_false_and_is_returned(logged_in_client):
+    body = create(logged_in_client).get_json()["data"]
+    assert body["runWhenAcknowledged"] is False
+
+
+def test_run_when_acknowledged_can_be_set_on_create_and_update(logged_in_client):
+    body = create(logged_in_client, runWhenAcknowledged=True).get_json()["data"]
+    assert body["runWhenAcknowledged"] is True
+    updated = logged_in_client.put(
+        f"{BASE}/actions/{body['id']}", json={**PAYLOAD, "version": body["version"], "runWhenAcknowledged": False})
+    assert updated.get_json()["data"]["runWhenAcknowledged"] is False
+
+
+def test_run_when_acknowledged_must_be_true_or_false(logged_in_client):
+    response = create(logged_in_client, runWhenAcknowledged="yes")
+    assert response.status_code == 400
+    assert "runWhenAcknowledged" in response.get_json()["data"]["fields"]
+
+
+def test_run_when_acknowledged_change_is_written_to_the_configuration_log(logged_in_client, db_session):
+    from app.system_models import ConfigurationChanges
+    create(logged_in_client, runWhenAcknowledged=True)
+    fields = [c.Parameter_Name for c in db_session.session.query(ConfigurationChanges).all()]
+    assert "runWhenAcknowledged" in fields
+
+
+@pytest.mark.parametrize("outcome", [
+    RemediationOutcome.SKIPPED_KILL_SWITCH, RemediationOutcome.SKIPPED_MAINTENANCE,
+    RemediationOutcome.SKIPPED_DOWNTIME, RemediationOutcome.SKIPPED_ACKNOWLEDGED,
+])
+def test_the_new_skip_outcomes_can_be_filtered_and_show_their_reason(logged_in_client, db_session, outcome):
+    row = add_run(db_session, outcome=outcome)
+    row.Reason = "why"
+    db_session.session.commit()
+    add_run(db_session, outcome=RemediationOutcome.SUCCEEDED, host="web-02")
+    items = logged_in_client.get(f"{BASE}/runs?outcome={outcome.value}").get_json()["data"]["items"]
+    assert [(i["outcome"], i["reason"]) for i in items] == [(outcome.value, "why")]
