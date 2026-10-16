@@ -51,7 +51,7 @@ one-row table; new skip outcomes are new `RemediationOutcome` members.
 2. [x] Skip checks in the consumer: kill switch, Maintenance Mode (all types), scheduled downtime, acknowledged (unless `Run_When_Acknowledged`), then cooldown/cap; one row per skip with its reason. Files: `server/app/remediation.py`, `server/tests/unit/test_remediation_consumer.py`.
 3. [x] Action API: accept and return `runWhenAcknowledged`; outcome filter accepts the new outcomes; run items show them. Files: `server/app/api/system/remediation.py`, `server/tests/unit/test_remediation_api.py`.
 4. [x] Retention: purge uses `Remediation_Retention_Days`; delete spool files older than a fixed age; cap spool entries (oldest dropped, count recorded in the state row and logged). Files: `server/app/scheduler.py`, `server/app/remediation.py`, `server/tests/unit/test_scheduler.py`.
-5. [ ] Heartbeat + health: record last tick/error each consumer run; `GET /api/system/remediation/health` (`remediation.view`) with last tick, backlog, oldest spool age, runs and caps in 24 h, `stalled`. Files: `server/app/remediation.py`, `server/app/api/system/remediation.py`, tests.
+5. [x] Heartbeat + health: record last tick/error each consumer run; `GET /api/system/remediation/health` (`remediation.view`) with last tick, backlog, oldest spool age, runs and caps in 24 h, `stalled`. Files: `server/app/remediation.py`, `server/app/api/system/remediation.py`, tests.
 6. [ ] Settings routes: `GET`/`PUT /api/system/remediation/settings` (`remediation.manage` to write), validation, `ConfigurationChanges` audit, 403 path. Files: `server/app/api/system/remediation.py`, `server/tests/unit/test_remediation_api.py`.
 7. [ ] Frontend: types + API client; health card with stalled banner; kill switch with confirmation and per-row state; `Run when acknowledged` option; skip reasons in `RunLog`/`RunDrawer`; loading/error/403 states. Files: `client/src/lib/remediationApi.ts`, `client/src/pages/RemediationPage.tsx`, `client/src/components/remediation/*`, `client/src/test/RemediationPage.test.tsx`.
 8. [ ] Docs: spec files (Backend, Data Model, Frontend, Implementation Status), page help text, admin note on a stalled consumer. Run `scripts/verify.sh docs`.
@@ -68,15 +68,16 @@ One row per loop round, newest last.
 | 2 | Step 2: `safety_state`/`safety_skip` in `remediation.py`; kill switch, Maintenance (all types), downtime, acknowledged, then cooldown/cap; 10 new consumer tests; existing Maintenance test now expects `SKIPPED_MAINTENANCE` (issue requires it for every type) | `pytest tests/unit/test_remediation_consumer.py` (red: 9 failed) then green; plus actions/api/scheduler suites | 76 passed; 184 passed across 4 files |
 | 3 | Step 3: `runWhenAcknowledged` in `serialize_action`/`validate_action`/audit fields; new outcomes already filterable via enum; 7 new API tests | `pytest tests/unit/test_remediation_api.py` (red: 3 failed) then green | 77 passed |
 | 4 | Step 4: purge uses `Remediation_Retention_Days`; `purge_old_spool_files` (7 days) called from `_purge_old_data`; `drop_over_cap` (SPOOL_CAP 1000) in `process_spool` records `Dropped_Count`/`Dropped_At`; 6 new + 2 updated scheduler tests | `pytest tests/unit/test_scheduler.py tests/unit/test_remediation_consumer.py` (red: 6 failed) then green | 89 passed 1 skipped |
+| 5 | Step 5: `record_tick` heartbeat (good tick clears error; unreadable folder sets a fixed-sentence error), `health_snapshot`, `GET /api/system/remediation/health` (`remediation.view`); 12 new tests, health URL added to the login/permission list | `pytest tests/unit/test_remediation_consumer.py tests/unit/test_remediation_api.py` (red: 11 failed) then green | 167 passed 1 skipped |
 
 ## State for the next session
 
 Everything a fresh session needs to continue without redoing work.
 
-- Last check run (exact command): `python -m pytest tests/unit/test_scheduler.py tests/unit/test_remediation_consumer.py -q` (from `server/`)
-- Result (first failing lines, or "green"): green, 89 passed 1 skipped
-- Hypothesis: n/a
-- Next action (one specific step, not "continue"): plan step 5: add failing tests (consumer: heartbeat written by `process_spool` incl. last error when the spool folder is unreadable; API: `GET /api/system/remediation/health` fields, `stalled` when heartbeat older than 3 x `REMEDIATION_POLL_SECONDS`, 403 without `remediation.view`), then implement `record_tick` in `server/app/remediation.py` and the route in `server/app/api/system/remediation.py`.
+- Last check run (exact command): `python -m pytest tests/unit/test_remediation_api.py tests/unit/test_remediation_consumer.py -q` (from `server/`)
+- Result (first failing lines, or "green"): green, 167 passed 1 skipped
+- Hypothesis: n/a. Session round limit (5) reached; steps 1-5 done and pushed.
+- Next action (one specific step, not "continue"): plan step 6: add failing tests in `server/tests/unit/test_remediation_api.py` for `GET`/`PUT /api/system/remediation/settings` (body `{"enabled": bool, "retentionDays": int}`; GET needs `remediation.view`, PUT needs `remediation.manage` -> 403 otherwise; 400 with `data.fields` for a non-bool or retention outside the bound (propose 7 to 3650); writes one `ConfigurationChanges` row per changed field, Conf_Type `remediation_setting`; honors `Audit_Logging`), then implement the two routes in `server/app/api/system/remediation.py`.
 
 ## Decisions and notes
 
@@ -87,3 +88,4 @@ Everything a fresh session needs to continue without redoing work.
 - Known pre-existing Windows failures: `tests/unit/test_automation.py::TestSecurityCheck::test_flags_broken_plugins_and_logs_summary`, `scripts/test_qa_queue.py`. `verify.sh` needs a `python3` shim outside the repo.
 - `test_escalation_merge_migration.py` (2 cases) fails on clean main under Windows: `PermissionError` deleting a locked temp `history.db` at subprocess exit; migrations themselves run. Not caused by this issue.
 - Spec text to fix in step 8: Data Model says the daily purge uses `Diagnostic_History_Retention_Days` for runs; it now uses `Remediation_Retention_Days`. Spool files older than 7 days are purged; the cap (1000) is enforced on every consumer tick, not daily, so a flood is bounded within 15 s.
+- Health `stalled` threshold uses `app.scheduler.REMEDIATION_POLL_SECONDS` (15) x 3 = 45 s; `lastError` is always a fixed sentence (no paths). Backlog/oldest age use one listing plus one `lstat` of the oldest file.

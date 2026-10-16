@@ -719,3 +719,46 @@ def test_a_spool_at_the_cap_drops_nothing(db_session, spool, monkeypatch):
     assert len(runs(db_session)) == 3
     state = db_session.session.get(RemediationConsumerState, 1)
     assert state is None or state.Dropped_Count == 0
+
+
+# ==========================================================
+# CONSUMER HEARTBEAT (issue #155)
+# ==========================================================
+
+def state_row(db_session):
+    from app.system_models import RemediationConsumerState
+    db_session.session.expire_all()
+    return db_session.session.get(RemediationConsumerState, 1)
+
+
+def test_every_tick_records_a_heartbeat_with_no_error(db_session, spool):
+    before = datetime.now(timezone.utc).replace(tzinfo=None)
+    remediation.process_spool(str(spool))
+    state = state_row(db_session)
+    assert state.Last_Tick_At >= before - timedelta(seconds=1)
+    assert state.Last_Error is None
+
+
+def test_an_unreadable_spool_folder_is_recorded_as_the_last_error_and_still_ticks(db_session, tmp_path):
+    remediation.process_spool(str(tmp_path / "nope"))
+    state = state_row(db_session)
+    assert state.Last_Tick_At is not None
+    assert state.Last_Error and "spool" in state.Last_Error.lower()
+    assert str(tmp_path) not in state.Last_Error  # no internal path in anything shown to operators
+
+
+def test_a_good_tick_clears_the_previous_error(db_session, spool, tmp_path):
+    remediation.process_spool(str(tmp_path / "nope"))
+    remediation.process_spool(str(spool))
+    assert state_row(db_session).Last_Error is None
+
+
+def test_a_failure_to_write_the_heartbeat_never_stops_the_consumer(db_session, spool, monkeypatch):
+    add_action(db_session)
+    put(spool, event())
+
+    def boom():
+        raise RuntimeError("db down")
+    monkeypatch.setattr(remediation, "get_state", boom)
+    remediation.process_spool(str(spool))
+    assert len(runs(db_session)) == 1

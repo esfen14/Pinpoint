@@ -66,6 +66,12 @@ EXECUTED = (
     RemediationOutcome.RUNNING, RemediationOutcome.SUCCEEDED, RemediationOutcome.FAILED,
     RemediationOutcome.TIMED_OUT, RemediationOutcome.INTERRUPTED,
 )
+# Outcomes where a decision was made and nothing was started.
+SKIPPED = (
+    RemediationOutcome.SKIPPED_COOLDOWN, RemediationOutcome.SKIPPED_HOURLY_CAP,
+    RemediationOutcome.SKIPPED_KILL_SWITCH, RemediationOutcome.SKIPPED_MAINTENANCE,
+    RemediationOutcome.SKIPPED_DOWNTIME, RemediationOutcome.SKIPPED_ACKNOWLEDGED,
+)
 RESULT_OUTCOMES = {
     "succeeded": RemediationOutcome.SUCCEEDED,
     "failed": RemediationOutcome.FAILED,
@@ -166,6 +172,67 @@ def get_state():
         state = RemediationConsumerState(Id=1, Dropped_Count=0)
         db.session.add(state)
     return state
+
+
+def record_tick(error=None):
+    """
+    Save the heartbeat: when the consumer last ran and its last error (None on a good tick).
+    The error is a fixed sentence, never a path or file content. A failure here is logged and
+    never stops the consumer.
+    """
+    try:
+        state = get_state()
+        state.Last_Tick_At = datetime.now(timezone.utc)
+        state.Last_Error = error
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("Remediation: could not save the consumer heartbeat")
+
+
+def as_utc(moment):
+    """A stored datetime as timezone-aware UTC (SQLite hands back naive ones)."""
+    return moment if moment.tzinfo else moment.replace(tzinfo=timezone.utc)
+
+
+def health_snapshot(spool_dir, poll_seconds, now=None):
+    """
+    The consumer's health for the Remediation page: one state row, one directory listing, and
+    counts over the last 24 hours. ``stalled`` means no heartbeat for more than three poll
+    intervals (or never). Nothing here scans history or reads event files.
+    """
+    now = now or datetime.now(timezone.utc)
+    state = db.session.get(RemediationConsumerState, 1)
+    last_tick = as_utc(state.Last_Tick_At) if state is not None and state.Last_Tick_At else None
+    stalled = last_tick is None or (now - last_tick).total_seconds() > 3 * poll_seconds
+    try:
+        names = sorted(name for name in os.listdir(spool_dir) if SPOOL_NAME_RE.fullmatch(name))
+    except OSError:
+        names = []
+    oldest_age = None
+    if names:
+        try:
+            oldest_age = max(0, int(now.timestamp() - os.lstat(os.path.join(spool_dir, names[0])).st_mtime))
+        except OSError:
+            oldest_age = None
+    since = now - timedelta(hours=24)
+
+    def count(outcomes):
+        return db.session.scalar(sa.select(sa.func.count()).select_from(RemediationRun).where(
+            RemediationRun.Received_At >= since, RemediationRun.Outcome.in_(outcomes))) or 0
+
+    return {
+        "lastTickAt": last_tick.isoformat() if last_tick else None,
+        "lastError": state.Last_Error if state is not None else None,
+        "stalled": stalled,
+        "backlog": len(names),
+        "oldestSpoolAgeSeconds": oldest_age,
+        "runsLast24h": count(EXECUTED),
+        "capsHitLast24h": count((RemediationOutcome.SKIPPED_HOURLY_CAP,)),
+        "skippedLast24h": count(SKIPPED),
+        "droppedTotal": (state.Dropped_Count or 0) if state is not None else 0,
+        "droppedAt": as_utc(state.Dropped_At).isoformat() if state is not None and state.Dropped_At else None,
+    }
 
 
 def drop_over_cap(spool_dir, names):
@@ -410,6 +477,7 @@ def process_spool(spool_dir=None):
     try:
         names = sorted(name for name in os.listdir(spool_dir) if SPOOL_NAME_RE.fullmatch(name))
     except OSError:
+        record_tick("The spool folder could not be read.")
         return summary
     uid = trusted_uid()
     try:
@@ -423,6 +491,7 @@ def process_spool(spool_dir=None):
         except Exception:
             db.session.rollback()
             current_app.logger.exception("Remediation: could not handle a spool file")
+    record_tick()
     return summary
 
 

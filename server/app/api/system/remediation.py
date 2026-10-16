@@ -14,6 +14,8 @@ PUT    /system/remediation/actions/<id>
     Replace an action; needs the current version, 409 when stale (remediation.manage).
 DELETE /system/remediation/actions/<id>
     Delete an action; its runs stay in the log (remediation.manage).
+GET    /system/remediation/health
+    The consumer's heartbeat, backlog and 24 hour counts, with a stalled flag (remediation.view).
 GET    /system/remediation/runs
     The run log, newest first, with filters and pagination (remediation.view).
 GET    /system/remediation/runs/<id>
@@ -35,6 +37,7 @@ from app.api.helper import error, success
 from app.api.helper.database_access.permissions import require_permission
 from app.api.system import system_bp
 from app.logging.configuration_changes import create_configuration_log
+from app import remediation
 from app.remediation import valid_name
 from app.system_models import (
     RemediationAction, RemediationActionType, RemediationOutcome, RemediationRun, RemediationScope,
@@ -350,6 +353,30 @@ def delete_remediation_action(action_id):
     except Exception:
         db.session.rollback()
         current_app.logger.exception("Could not delete remediation action.")
+        return error("An unexpected error occurred.", 500)
+
+
+# ==========================================================
+# CONSUMER HEALTH
+# ==========================================================
+
+@system_bp.get('/remediation/health')
+@login_required
+@require_permission('remediation.view')
+def get_remediation_health():
+    """
+    Return whether automatic recovery is working: lastTickAt, lastError (a fixed sentence),
+    stalled (no heartbeat for three poll intervals), backlog and oldestSpoolAgeSeconds (event
+    files waiting), runsLast24h, capsHitLast24h, skippedLast24h, droppedTotal and droppedAt.
+    Cheap by design: one state row, one folder listing and three counts.
+    """
+    try:
+        from app.scheduler import REMEDIATION_POLL_SECONDS
+        return success(remediation.health_snapshot(
+            current_app.config["REMEDIATION_SPOOL_DIR"], REMEDIATION_POLL_SECONDS))
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("Could not read the remediation health.")
         return error("An unexpected error occurred.", 500)
 
 
