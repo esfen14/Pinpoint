@@ -47,7 +47,7 @@ Design decisions (see notes): kill switch and retention live on `SystemSettings`
 through new `remediation.manage` routes, not the general Settings PUT; heartbeat lives in a new
 one-row table; new skip outcomes are new `RemediationOutcome` members.
 
-1. [ ] Models + migration: `SystemSettings.Remediation_Enabled` (default true), `Remediation_Retention_Days` (default 90); `RemediationAction.Run_When_Acknowledged` (default false); new `RemediationOutcome` members `SKIPPED_KILL_SWITCH`, `SKIPPED_MAINTENANCE`, `SKIPPED_DOWNTIME`, `SKIPPED_ACKNOWLEDGED`; new singleton table `REMEDIATION_CONSUMER_STATE`. Files: `server/app/system_models.py`, new `server/migrations/versions/*`, `server/tests/unit/test_remediation_migration.py` (+ runner in `tests/support/`).
+1. [x] Models + migration: `SystemSettings.Remediation_Enabled` (default true), `Remediation_Retention_Days` (default 90); `RemediationAction.Run_When_Acknowledged` (default false); new `RemediationOutcome` members `SKIPPED_KILL_SWITCH`, `SKIPPED_MAINTENANCE`, `SKIPPED_DOWNTIME`, `SKIPPED_ACKNOWLEDGED`; new singleton table `REMEDIATION_CONSUMER_STATE`. Files: `server/app/system_models.py`, new `server/migrations/versions/*`, `server/tests/unit/test_remediation_migration.py` (+ runner in `tests/support/`).
 2. [ ] Skip checks in the consumer: kill switch, Maintenance Mode (all types), scheduled downtime, acknowledged (unless `Run_When_Acknowledged`), then cooldown/cap; one row per skip with its reason. Files: `server/app/remediation.py`, `server/tests/unit/test_remediation_consumer.py`.
 3. [ ] Action API: accept and return `runWhenAcknowledged`; outcome filter accepts the new outcomes; run items show them. Files: `server/app/api/system/remediation.py`, `server/tests/unit/test_remediation_api.py`.
 4. [ ] Retention: purge uses `Remediation_Retention_Days`; delete spool files older than a fixed age; cap spool entries (oldest dropped, count recorded in the state row and logged). Files: `server/app/scheduler.py`, `server/app/remediation.py`, `server/tests/unit/test_scheduler.py`.
@@ -64,15 +64,16 @@ One row per loop round, newest last.
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 0 | Branch created from origin/main; plan written | none | n/a |
+| 1 | Step 1: models (`Remediation_Enabled`, `Remediation_Retention_Days`, `Run_When_Acknowledged`, 4 skip outcomes, `RemediationConsumerState`) + migration `f155a3c7d2b1` + runner/tests | `pytest tests/unit/test_remediation_migration.py` (red: revision missing) then green | 12 passed; consumer/API/scheduler/rehearsal tests 165 passed; `test_escalation_merge_migration.py` fails the same on clean main (Windows temp-file lock) |
 
 ## State for the next session
 
 Everything a fresh session needs to continue without redoing work.
 
-- Last check run (exact command): none yet
-- Result (first failing lines, or "green"): n/a
+- Last check run (exact command): `python -m pytest tests/unit/test_remediation_migration.py -q` (from `server/`)
+- Result (first failing lines, or "green"): green, 12 passed
 - Hypothesis: n/a
-- Next action (one specific step, not "continue"): plan step 1: write the migration test in `server/tests/unit/test_remediation_migration.py` for the new columns/table/outcome members, watch it fail, then edit `server/app/system_models.py` and add the migration.
+- Next action (one specific step, not "continue"): plan step 2: add failing tests to `server/tests/unit/test_remediation_consumer.py` for kill switch, maintenance (record_only action), downtime, acknowledged (and `Run_When_Acknowledged`), then implement in `record_decisions()` in `server/app/remediation.py`.
 
 ## Decisions and notes
 
@@ -81,3 +82,4 @@ Everything a fresh session needs to continue without redoing work.
 - Sensitive-module check: no command execution path changes and no untrusted input reaches a shell or Nagios config; spool deletion stays inside `REMEDIATION_SPOOL_DIR` and never follows symlinks. No Nagios config change, so no `regenerate_and_apply_config_status` needed for the new settings.
 - Acknowledgement/downtime state is read from the newest `ServiceStatus`/`HostStatus` row (history bind). Open question to confirm in code: that #132 acknowledgements reach `Acknowledgement_Type` via the status poll (the poll is the only writer in `app/nagios/status.py`).
 - Known pre-existing Windows failures: `tests/unit/test_automation.py::TestSecurityCheck::test_flags_broken_plugins_and_logs_summary`, `scripts/test_qa_queue.py`. `verify.sh` needs a `python3` shim outside the repo.
+- `test_escalation_merge_migration.py` (2 cases) fails on clean main under Windows: `PermissionError` deleting a locked temp `history.db` at subprocess exit; migrations themselves run. Not caused by this issue.
