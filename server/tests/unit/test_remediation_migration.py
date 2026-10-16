@@ -70,3 +70,31 @@ def test_upgrade_adds_both_permissions_and_grants_them_to_the_administrator(repo
 def test_downgrade_removes_the_permissions_and_their_grants_and_upgrade_restores_them(report):
     assert report["permissions_after_downgrade"] == {"existing": [], "administrator": []}
     assert report["permissions_after_reupgrade"] == {"existing": BOTH, "administrator": BOTH}
+
+
+# ==========================================================
+# restart_local_service migration (b8e3d5f2a417)
+# ==========================================================
+
+@pytest.fixture(scope="module")
+def restart_report():
+    result = subprocess.run(
+        [sys.executable, "tests/support/remediation_restart_migration_runner.py"],
+        cwd=SERVER_DIR, capture_output=True, text=True, timeout=180,
+    )
+    assert result.returncode == 0, result.stderr[-3000:]
+    body = result.stdout.split("REPORT_BEGIN")[1].split("REPORT_END")[0]
+    return json.loads(body)
+
+
+def test_restart_migration_keeps_existing_actions_and_accepts_the_new_type(restart_report):
+    assert restart_report["version"] == [["b8e3d5f2a417"]]
+    assert restart_report["kept_after_upgrade"] == ["keep"]
+    assert restart_report["names_with_restart"] == ["keep", "restart"]
+
+
+def test_restart_migration_downgrade_drops_only_the_new_type_and_upgrade_returns(restart_report):
+    assert restart_report["version_after_downgrade"] == [["a4c8e1b7d933"]]
+    assert restart_report["names_after_downgrade"] == ["keep"]
+    assert restart_report["version_after_reupgrade"] == [["b8e3d5f2a417"]]
+    assert restart_report["names_after_reupgrade"] == ["keep"]
