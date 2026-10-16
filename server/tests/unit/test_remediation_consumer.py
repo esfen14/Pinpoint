@@ -465,3 +465,77 @@ def test_the_scheduler_job_runs_the_consumer(app, monkeypatch):
     monkeypatch.setattr(remediation, "process_spool", lambda *a, **k: called.append(1) or {"processed": 0})
     scheduler._consume_remediation_spool()
     assert called == [1]
+
+
+# ==========================================================
+# restart_local_service through the consumer
+# ==========================================================
+
+RESTART_RUN = "app.remediation_actions.subprocess.run"
+
+
+def add_restart(db_session, **changes):
+    fields = dict(
+        Name="restart-nagios", Action_Type=RemediationActionType.RESTART_LOCAL_SERVICE,
+        Host_Pattern="nagios-host", Service_Pattern="Nagios Core", Parameters={"unit": "nagios"})
+    fields.update(changes)
+    return add_action(db_session, **fields)
+
+
+def nagios_event(**changes):
+    return event(**{"host": "nagios-host", "service": "Nagios Core", **changes})
+
+
+def test_a_hard_failure_restarts_once_and_a_repeat_within_cooldown_does_not(db_session, spool):
+    from types import SimpleNamespace
+    from unittest.mock import patch
+    add_restart(db_session)
+    put(spool, nagios_event(last_change=1760432100))
+    put(spool, nagios_event(last_change=1760432160))
+    with patch(RESTART_RUN, return_value=SimpleNamespace(returncode=0, stdout="", stderr="")) as run:
+        remediation.process_spool(str(spool))
+    first, second = runs(db_session)
+    assert run.call_count == 1
+    assert first.Outcome == RemediationOutcome.SUCCEEDED and "exit code 0" in first.Output
+    assert second.Outcome == RemediationOutcome.SKIPPED_COOLDOWN
+
+
+def test_the_hourly_cap_blocks_the_restart_and_says_why(db_session, spool):
+    from types import SimpleNamespace
+    from unittest.mock import patch
+    add_restart(db_session, Host_Pattern="nagios-*", Max_Runs_Per_Hour=1, Cooldown_Seconds=60)
+    put(spool, nagios_event(last_change=1760432100))
+    put(spool, nagios_event(host="nagios-two", last_change=1760432200))
+    with patch(RESTART_RUN, return_value=SimpleNamespace(returncode=0, stdout="", stderr="")) as run:
+        remediation.process_spool(str(spool))
+    first, second = runs(db_session)
+    assert run.call_count == 1
+    assert second.Outcome == RemediationOutcome.SKIPPED_HOURLY_CAP and second.Reason
+
+
+def test_maintenance_mode_blocks_the_restart_and_records_why(db_session, spool):
+    from unittest.mock import patch
+    from app.system_models import SystemSettings
+    settings = db_session.session.get(SystemSettings, 1) or SystemSettings(Id=1)
+    settings.Maintenance_Mode = True
+    db_session.session.add(settings)
+    db_session.session.commit()
+    add_restart(db_session)
+    put(spool, nagios_event())
+    with patch(RESTART_RUN) as run:
+        remediation.process_spool(str(spool))
+    (row,) = runs(db_session)
+    run.assert_not_called()
+    assert row.Outcome == RemediationOutcome.FAILED
+    assert "Maintenance Mode" in row.Output
+
+
+def test_a_failed_restart_records_the_exit_code(db_session, spool):
+    from types import SimpleNamespace
+    from unittest.mock import patch
+    add_restart(db_session)
+    put(spool, nagios_event())
+    with patch(RESTART_RUN, return_value=SimpleNamespace(returncode=1, stdout="", stderr="x")):
+        remediation.process_spool(str(spool))
+    (row,) = runs(db_session)
+    assert row.Outcome == RemediationOutcome.FAILED and "exit code 1" in row.Output

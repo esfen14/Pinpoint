@@ -85,6 +85,10 @@ class Config:
         "22": "ssh",
         "80": "http",
         "443": "https",
+        "110": "pop3",
+        "143": "imap",
+        "993": "imaps",
+        "995": "pop3s",
     }
     UDP_PORT_SERVICES = {
         "5666": "nrpe",
@@ -180,6 +184,9 @@ class Config:
     # so they are not exposed on process command lines or in world-readable
     # config files.  Override via NAGIOS_RESOURCE_CFG in the environment.
     NAGIOS_RESOURCE_CFG = Path(os.environ.get('NAGIOS_RESOURCE_CFG') or "/usr/local/nagios/etc/resource.cfg")
+
+    # Read-only bounded tail for SMTP notification failure diagnostics.
+    NAGIOS_LOG_FILE = Path(os.environ.get("NAGIOS_LOG_FILE") or "/usr/local/nagios/var/nagios.log")
 
     # Nagios external command pipe (command_file in nagios.cfg). PinPoint writes
     # one command per line (acknowledge, forced check) through app/nagios/commands.py.

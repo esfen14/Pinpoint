@@ -7,7 +7,7 @@ export function getSmtpSettings() {
 }
 
 export function saveSmtpSettings(values: SmtpSaveValues, version: number) {
-  return apiPut<SmtpSettings>('/api/system/smtp-settings', { provider: 'gmail', ...values, version })
+  return apiPut<SmtpSettings>('/api/system/smtp-settings', { ...values, provider: values.provider ?? 'gmail', version })
 }
 
 export function sendTestEmail() {

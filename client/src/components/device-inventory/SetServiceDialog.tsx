@@ -73,7 +73,7 @@ export function SetServiceDialog({ port, host, options, isSaving, error, onCance
         </p>
         {monitored && (
           <p className="text-xs text-amber-600 dark:text-amber-400">
-            Its Nagios service will be renamed (for example http-8080-tcp becomes ssh-8080-tcp). History stays under the old name.
+            The Nagios service for this port will be renamed (for example http-8080-tcp becomes ssh-8080-tcp). Its history stays under the old name.
           </p>
         )}
         {error && (

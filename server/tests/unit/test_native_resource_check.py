@@ -139,3 +139,75 @@ print('OK: rows | rows=2;10;20')
         release.touch()
         if parent.poll() is None:
             parent.kill(); parent.communicate()
+
+
+# ==========================================================
+# check_snmp: SNMP v3 passphrases (issue #127)
+# ==========================================================
+
+def snmp_plugin(tmp_path, expected_stdin):
+    plugin = tmp_path / "check_snmp"
+    plugin.write_text(f'''#!{sys.executable}
+import sys
+if '--help' in sys.argv:
+    print('--extra-opts=[section]@file')
+    sys.exit(0)
+assert '--extra-opts=pinpoint@-' in sys.argv
+assert not any('synthetic' in argument for argument in sys.argv)
+assert sys.stdin.read() == {expected_stdin!r}
+print('OK: 1 | uptime=1')
+''')
+    plugin.chmod(0o755)
+    return plugin
+
+
+def snmp_resource(tmp_path):
+    resource = tmp_path / "resource.cfg"
+    resource.write_text("# BEGIN PINPOINT\n$USER2$=synthetic-auth-pass\n$USER3$=synthetic-priv-pass\n# END PINPOINT\n")
+    resource.chmod(0o660)
+    return resource
+
+
+def snmp_arguments(resource, plugin, *slots):
+    return ["--resource-file", str(resource), "--plugin", str(plugin), *slots,
+            "-H", "127.0.0.1", "-p", "161", "-o", "1.3.6.1", "-P", "3", "-L", "authPriv", "-U", "monitor",
+            "-a", "SHA", "-x", "AES"]
+
+
+def test_snmp_v3_passphrases_reach_the_plugin_on_stdin_only(tmp_path):
+    resource = snmp_resource(tmp_path)
+    plugin = snmp_plugin(tmp_path, "[pinpoint]\nauthpasswd=synthetic-auth-pass\nprivpasswd=synthetic-priv-pass\n")
+    assert adapter().run(snmp_arguments(resource, plugin, "--auth-slot", "USER2", "--priv-slot", "USER3")) == (
+        "OK: 1 | uptime=1", 0)
+
+
+def test_snmp_auth_only_sends_just_the_auth_passphrase(tmp_path):
+    resource = snmp_resource(tmp_path)
+    plugin = snmp_plugin(tmp_path, "[pinpoint]\nauthpasswd=synthetic-auth-pass\n")
+    assert adapter().run(snmp_arguments(resource, plugin, "--auth-slot", "USER2"))[1] == 0
+
+
+def test_snmp_without_slots_runs_without_extra_opts(tmp_path):
+    resource = snmp_resource(tmp_path)
+    plugin = tmp_path / "check_snmp"
+    plugin.write_text(f"#!{sys.executable}\nimport sys\nassert not any('extra-opts' in a for a in sys.argv)\nprint('OK')\n")
+    plugin.chmod(0o755)
+    assert adapter().run(snmp_arguments(resource, plugin)) == ("OK", 0)
+
+
+def test_snmp_slot_flags_are_refused_for_other_plugins_and_bad_slots(tmp_path, inputs):
+    resource, plugin = inputs
+    assert adapter().run(arguments(inputs) + ["--auth-slot", "USER2"])[1] == 3
+    snmp = snmp_plugin(tmp_path, "")
+    assert adapter().run(snmp_arguments(resource, snmp, "--auth-slot", "USER1"))[1] == 3
+    assert adapter().run(snmp_arguments(resource, snmp, "--resource-slot", "USER2"))[1] == 3
+
+
+def test_snmp_output_that_echoes_a_passphrase_is_withheld(tmp_path):
+    resource = snmp_resource(tmp_path)
+    plugin = tmp_path / "check_snmp"
+    plugin.write_text(f"#!{sys.executable}\nimport sys\nif '--help' in sys.argv:\n    print('--extra-opts')\n    sys.exit(0)\n"
+                      "sys.stdin.read()\nprint('bad synthetic-priv-pass')\n")
+    plugin.chmod(0o755)
+    output, code = adapter().run(snmp_arguments(resource, plugin, "--auth-slot", "USER2", "--priv-slot", "USER3"))
+    assert code == 3 and "synthetic" not in output

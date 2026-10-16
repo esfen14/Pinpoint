@@ -22,7 +22,8 @@ requests use `src/lib/api.ts`; Plugin Manager wrappers live in
 | `/network-health` | `NetworkHealthPage` | `system.network_health` | Connected to summary and trends APIs; detailed host/service UI is supplied elsewhere |
 | `/device-inventory` | `DeviceInventoryPage` | `system.network_health` | Connected to the latest-host endpoints and acknowledgement API. The host table has an IP Address column (`—` for a host with no discovered device). The host drawer also shows a Ports section (see `Device_Inventory_Requirements.md`) for users with `system.hosts` when the host has a `device_id`; actions need `system.hosts.edit`. The host table has a Monitoring column and filter, and the drawer a Monitoring section with Pause / Resume (`Device_Inventory_Requirements.md` §12) |
 | `/history` | `HistoryPage` | `system.history` | Connected to the alert and notification history list and detail routes (`/api/system/history/...`); sidebar entry "History". Audited against `Alerts_Notifications_History_Requirements.md` in `docs/test-runs/2026-10-14-issue-133-history-audit/AUDIT.md`; supported sorting controls are present and cross-tab links now use Nagios `event_id` locators to expand the exact row beyond the default 24h range (#143); remaining history gaps are tracked in #142 and #144 |
-| `/system-status` | `SystemStatusPage` | `system.network_health` | The **System Status** page (sidebar label “System Status”): a service-status table with OK / Warning / Unknown / Critical counts, search, state filter, sort, paging and acknowledgement. It is a supported page. The network *topology view* is excluded from the release. |
+| `/topology` | `TopologyPage` | `system.network_health` | Real backend inventory and configured parent edges from `/api/system/topology`; automatic hierarchy including disconnected devices and shared children, read-only positions, device/relationship selection panels. Parent editing uses `system.hosts.edit` |
+| `/system-status` | `SystemStatusPage` | `system.network_health` | The **System Status** page (sidebar label “System Status”): a service-status table with OK / Warning / Unknown / Critical counts, search, state filter, sort, paging and acknowledgement. It is a supported page. Topology is a separate supported page. |
 | `/plugins` | `PluginsPage` | `plugin.view` | Connected to Plugin Manager inventory (category tabs All / Network Services / Device Availability / Network Protocols / Servers / Application / Other, filtered by the `group` query parameter so paging stays per tab; a Monitoring column and a banner while no plugin is enabled), plugin details with an enable confirmation that previews what will be monitored, the plugin's monitored services with live status and per-device stop/resume, scanning, and mutation APIs. There is no Currently Running tab (the tabs are categories only) and devices are never picked by hand |
 | `/ncpa-deployment` | `NcpaDeploymentPage` | `system.deploy.ncpa` | Warns, through `useNcpaPluginState`, when `check_ncpa` is not enabled in Plugin Manager (the agent's checks are monitored only while it is). Connected to the NCPA deployment routes: device list, deploy wizard (host-key trust, login checks, start), live run banner, Deployment History tab and run review drawer (`?tab=history&run=<id>`) |
 | `/maintenance` | `MaintenancePage` | `maintenance.manage` | **Maintenance** (sidebar). Lists maintenance windows (devices, next occurrence, repeats, status, reason) with create, edit and a two-step cancel, through `lib/maintenanceApi.ts` and `types/maintenance.ts`. Times are typed and shown in the Time Zone setting (`useDisplayTime`, `utils/maintenanceTime.ts`) and sent as UTC; the form checks what the server checks. A failed or retrying occurrence is shown with its reason, and a `nagios_synced: false` result is shown as a notice. A note explains that a window silences alerts and links to Settings → System, where the Maintenance Mode switch and the global banner say it only pauses PinPoint's jobs and link back here |
@@ -69,9 +70,9 @@ When adding a page:
 |---|---|
 | `components/dashboard/` | Dashboard metrics, resource views, alerts, charts, and outage presentation |
 | `components/network-health/` | Trend/metric cards, network health summaries, insight panels, and graph modal; `BandwidthCard` / `BandwidthChart` (Interface Bandwidth: device and interface selectors, a time range of 1 hour to 7 days, in and out lines whose unit scales from bit/s to Tbit/s, loading / error / no-device / no-interface / insufficient-data / no-data states and help text; loads its own data from `lib/bandwidthApi.ts`, so a failure never blanks the rest of the page, and reports the reading on screen to the page (`onReading`) for the side Bandwidth widget; the choosers are `components/shared/DropdownSelect.tsx`, the button-and-list dropdown that matches `TimeRangeSelect`; `TimeRangeSelect` takes an optional `options` list so the card can leave out the 5-minute range) |
-| `components/device-inventory/` | Host/device table; the host detail drawer; `DevicePortsSection` (a device's ports in groups with the reason each is or is not monitored, and the Monitor / Acknowledge / Ignore / Stop / Leave suggested / Resume / Set service / Remove pin actions with confirmations), `SetServiceDialog`, and `devicePortsLogic.ts` (grouping, which actions apply, wording); `DeviceInterfacesSection` (the drawer's Interfaces section for SNMP devices: name, index, speed and status of each interface, a Monitor checkbox per interface, and Refresh to read the list from the device; hidden for a device without SNMP; editing needs `system.hosts.edit`; data from `lib/bandwidthApi.ts`, types in `types/bandwidth.ts`); `DeviceMonitoringSection` (the monitoring label, its reason and Pause / Resume with confirmation) and `monitoringState.ts` (labels, reasons, styles, filter options). Data comes from `lib/devicePortsApi.ts`, `lib/deviceMonitoringApi.ts` and `hooks/useDevicePorts.ts` |
+| `components/device-inventory/` | Host/device table; the host detail drawer (all detail drawers, here and in Plugin Manager, NCPA deployment and Remediation, are built on `components/shared/DrawerShell.tsx`: sticky header, sections separated by divider lines, 15px text, 13px captions, 17px section headings); `DevicePortsSection` (a device's ports in groups with the reason each is or is not monitored, and the Monitor / Acknowledge / Ignore / Stop / Leave suggested / Resume / Set service / Remove pin actions with confirmations), `SetServiceDialog`, `CheckOptionsDialog` with `checkOptionsForm.ts` (the "Check options" action on a monitored HTTP, HTTPS, POP3, IMAP, POP3S or IMAPS port: expected text, status codes, virtual host and request method, or the expected greeting, saved per device and service through `lib/devicePluginVariablesApi.ts`; checked before sending, the server's 400 and 422 messages shown, Reset to defaults, read-only without `system.hosts.edit`), and `devicePortsLogic.ts` (grouping, which actions apply, wording); `DeviceInterfacesSection` (the drawer's Interfaces section for SNMP devices: name, index, speed and status of each interface, a Monitor checkbox per interface, and Refresh to read the list from the device; hidden for a device without SNMP; editing needs `system.hosts.edit`; data from `lib/bandwidthApi.ts`, types in `types/bandwidth.ts`); `DeviceSnmpSection` (the drawer's SNMP section for a device with an SNMP port: version Default / 1 / 2c / 3, the community, and for v3 the security level, user, authentication and privacy protocols and passwords; a saved password is only shown as "Saved", is kept when its box is blank and can be removed; required fields per level are checked before sending; Save, Test and Reset to defaults; viewing needs `system.hosts`, changing and Test need `system.hosts.edit`; rules in `snmpForm.ts`, data from `lib/devicePluginVariablesApi.ts`, types in `types/devicePluginVariables.ts`); `DeviceMonitoringSection` (the monitoring label, its reason and Pause / Resume with confirmation) and `monitoringState.ts` (labels, reasons, styles, filter options). Data comes from `lib/devicePortsApi.ts`, `lib/deviceMonitoringApi.ts` and `hooks/useDevicePorts.ts` |
 | `components/network-health/` | Trend/metric cards, network health summaries, insight panels, and graph modal |
-| `components/device-inventory/` | Host/device table; the host detail drawer; `DevicePortsSection` (a device's ports in groups with the reason each is or is not monitored, and the Monitor / Acknowledge / Ignore / Stop / Leave suggested / Resume / Set service / Remove pin actions with confirmations), `SetServiceDialog`, and `devicePortsLogic.ts` (grouping, which actions apply, wording); `FlapHistorySection` (in the host/service detail drawer, for users with `system.network_health`: how often the item was flagged as flapping in a chosen window of 1, 6, 24 or 168 hours, a warning when Nagios has flap detection off globally, from `GET /api/system/network-health/flapping`); the host and service tables have a "Flapping only" filter that sends `flapping=true`; `DeviceMonitoringSection` (the monitoring label, its reason and Pause / Resume with confirmation) and `monitoringState.ts` (labels, reasons, styles, filter options). Data comes from `lib/devicePortsApi.ts`, `lib/deviceMonitoringApi.ts` and `hooks/useDevicePorts.ts` |
+| `components/device-inventory/` | Host/device table; the host detail drawer; `DevicePortsSection` (a device's ports in groups with the reason each is or is not monitored, and the Monitor / Acknowledge / Ignore / Stop / Leave suggested / Resume / Set service / Remove pin actions with confirmations), `SetServiceDialog`, `CheckOptionsDialog` with `checkOptionsForm.ts` (the "Check options" action on a monitored HTTP, HTTPS, POP3, IMAP, POP3S or IMAPS port: expected text, status codes, virtual host and request method, or the expected greeting, saved per device and service through `lib/devicePluginVariablesApi.ts`; checked before sending, the server's 400 and 422 messages shown, Reset to defaults, read-only without `system.hosts.edit`), and `devicePortsLogic.ts` (grouping, which actions apply, wording); `FlapHistorySection` (in the host/service detail drawer, for users with `system.network_health`: how often the item was flagged as flapping in a chosen window of 1, 6, 24 or 168 hours, a warning when Nagios has flap detection off globally, from `GET /api/system/network-health/flapping`); the host and service tables have a "Flapping only" filter that sends `flapping=true`; `DeviceMonitoringSection` (the monitoring label, its reason and Pause / Resume with confirmation) and `monitoringState.ts` (labels, reasons, styles, filter options). Data comes from `lib/devicePortsApi.ts`, `lib/deviceMonitoringApi.ts` and `hooks/useDevicePorts.ts` |
 | `components/plugin-manager/` | Plugin inventory table, details drawer (enable preview dialog, "Not service-driven" state, attach notices), `PluginServicesSection` (paginated, searchable monitored services with status chips and Stop/Resume), `PluginCustomChecksSection` and `CustomCheckDialog` (a plugin's custom checks with Add, Change, Pause/Resume and Remove, shown only to `plugin.custom_check`, and only for plugins whose details report `custom_checks.supported`; password fields are masked, write-only and say where the password ends up; the drawer's "Not service-driven" note says why other plugins take none; for a plugin whose `custom_checks.target` is `server` the section is titled "Server checks" and the dialog has no device picker), and the disabled custom-upload modal |
 | `components/maintenance/` | Maintenance window form and table |
 | `components/ncpa-deployment/` | NCPA device table, deploy wizard, run banner, history table, run drawer, outcome badges and the header bell item |
@@ -156,6 +157,60 @@ any user's global email setting.
 
 Live browser coverage for host recipients is opt-in through `scripts/playwright-lab --project issue-79-live --project issue-79-restricted`. The tests save through the real recipient API/Nagios writer, reopen the drawer to verify persistence, clear the choices to verify default fallback, restore the original assignments, and verify that the restricted reader sees no editor and receives 403 for recipient reads/writes. They require two eligible lab accounts and discovered lab targets.
 
+
+## Manual parent editor and topology
+
+`DeviceParentSection` is shared by the host-only `StatusDetailDrawer` (when a
+stable device ID exists) and the selected-device topology panel. It shows configured
+parents to readers, a searchable checkbox multi-select/clear-all/save to
+`system.hosts.edit`, an advisory suggested gateway, monitoring warnings for omitted
+parents, loading/retry/empty states and server validation/apply errors. A rejected
+save retains the draft; a successful save refreshes the graph or Inventory table
+without unmounting the editor, so its success message remains visible. Retired and
+merged devices are read-only. Parent choices do not require access to the Ports or
+Interfaces sections.
+
+`lib/topologyApi.ts` uses the shared API client; `types/topology.ts` owns wire types.
+`lib/topologyLayout.ts` places each device once using iterative longest-path layers
+so a shared child appears below all its parents. Isolated roots and paused devices
+remain visible. React Flow retains pan/zoom/fit and device/edge/background selection;
+node dragging, handle connections, edge reconnection and the interactive layout
+control are disabled. Solid neutral edges mean an eligible configured parent;
+dashed amber edges explain omitted parents. Edge colors do not claim measured link
+health. The node labels distinguish missing checks/paused state from DOWN.
+
+Device selection shows available device identity/address/OS, monitoring status,
+last check/last seen and the shared parent editor. Connection selection names the
+parent/child and explains Nagios eligibility, with a button to select the child.
+No interface, power-state, utilization or traffic data is fabricated. Hosts without
+a discovery record remain visible but cannot edit parents. Refresh follows the
+shared Dashboard Refresh Rate (minutes, zero for Manual), plus an explicit Refresh
+button. The Topology route/sidebar/header and access guard remain separate from
+System Status. The page uses shared theme and timestamp preferences.
+
+## Email settings
+
+`components/settings/EmailSettings.tsx`, `lib/smtpSettingsApi.ts` and
+`types/smtpSettings.ts` own Settings → Email (`settings.email`). Provider choices
+are Gmail and Other SMTP relay. Gmail keeps its fixed host/port/security, app
+password instructions, sender warning and historical save body. Other SMTP relay
+shows editable host and port plus fixed STARTTLS security; host, integer port
+1–65535 and STARTTLS are validated before saving. Its username may be a relay
+account name; sender must be an email address accepted by the relay. Server 400
+messages appear in the save error state. Discard restores the saved provider and
+values. Loading, save/success/error and test-email states remain available.
+
+Passwords are masked and write-only, never loaded from the API or stored in
+browser storage. Blank preserves the saved credential; successful save clears
+the entered value. Gmail and custom provider help text are separate.
+
+The tab reads `lastMailFailure` from the settings GET and refreshes it every
+30 seconds while mounted without replacing unsaved edits. A present value shows
+the time using display preferences, sanitized reason and a Test email settings
+link. Null removes it; polling errors show a refresh error and retain the last
+observed indicator. Requests do not overlap. A successful test does not clear a
+historical failure; the tab explains this. See the
+[Email settings guide](../docs/manuals/Email_Settings.md).
 ### Escalation settings
 
 `SettingsPage` mounts `components/settings/EscalationSettings.tsx` after the
@@ -208,3 +263,16 @@ audit export retains its format choices and behavior.
 Live storage/log role journeys use the opt-in Playwright project `issue-124-live`
 (`client/e2e/storage-logs.lab.spec.ts`) with an exclusively owned appliance and
 private credential files. See the [acceptance report](../docs/test-runs/2026-10-15-issue-124-storage-logs/REPORT.md).
+
+## Device identity review
+
+`DeviceIdentityReviews` supplies the independent Needs Review table in
+`DeviceInventoryPage` and the participating-device notice in `StatusDetailDrawer`.
+Both require `system.discover` and open `IdentityReviewDrawer`, which loads
+identity evidence and address history on demand (`system.hosts`) and offers
+explicit source/target choices, discovered-record search and confirmation only
+with `system.hosts.edit` as well. `lib/deviceIdentityApi.ts` uses the shared API
+client for the existing review/evidence/merge routes and `/api/system/hosts/lookup`;
+`types/deviceIdentity.ts` owns the wire contracts and identity-kind filtering.
+See `Device_Inventory_Requirements.md` §14 for the permission, confirmation,
+keyboard, refresh and saved-configuration-warning requirements.

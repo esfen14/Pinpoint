@@ -47,8 +47,8 @@ export function DeviceRecipientsSection({ deviceId }: { deviceId: number }) {
 
   return (
     <section className="space-y-3">
-      <h3 className="font-semibold">Email alert recipients</h3>
-      <p className="text-xs text-[var(--text-muted)]">
+      <h3 className="text-[17px] font-semibold">Email alert recipients</h3>
+      <p className="text-[13px] text-[var(--text-muted)]">
         Choose who receives email alerts for this host and its services. Only active accounts with email alerts on receive them.
         Leave every box unchecked to use the default recipients.
       </p>
@@ -74,15 +74,15 @@ export function DeviceRecipientsSection({ deviceId }: { deviceId: number }) {
                   }} />
                 <span className="min-w-0 break-words">
                   {user.name} <span className="text-[var(--text-muted)]">({user.email})</span>
-                  {!user.eligible && <span className="block text-xs text-[var(--text-muted)]">Inactive or email alerts off; this account will not receive alerts.</span>}
+                  {!user.eligible && <span className="block text-[13px] text-[var(--text-muted)]">Inactive or email alerts off; this account will not receive alerts.</span>}
                 </span>
               </label>
             ))}
           </div>
-          {usingDefault && <p className="text-xs text-amber-700 dark:text-amber-400">Using the default recipients: all active accounts with email alerts on.</p>}
+          {usingDefault && <p className="text-[13px] text-amber-700 dark:text-amber-400">Using the default recipients: all active accounts with email alerts on.</p>}
           {data.editable && <button type="button" disabled={saving || unchanged}
             onClick={() => { void save() }}
-            className="rounded-lg bg-[#ffb100] px-3 py-1.5 text-xs font-semibold text-black disabled:opacity-50">
+            className="rounded-lg bg-[#ffb100] px-3 py-1.5 text-[13px] font-semibold text-black disabled:opacity-50">
             {saving ? 'Saving…' : 'Save recipients'}
           </button>}
           {saveError && <p role="alert" className="text-red-600 dark:text-red-400">{saveError}</p>}

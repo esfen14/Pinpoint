@@ -19,8 +19,10 @@ component. The installer is developed in a separate repository.
 - Pinpoint owns users, roles, settings, acknowledgements, discovery/deployment
   records, plugin administration, audit logs, and the web experience.
 - Nagios' native web UI is intentionally not the operator interface.
-- Network topology is excluded from the current release. Its source may remain
-  for future work, but it must not be presented as a supported feature.
+- Network topology is supported as a visualization of manually configured device
+  parent relationships, including multiple parents. Nagios owns reachability
+  decisions; React computes the automatic display layout. Automatic parent
+  inference, physical interface mapping and topology traffic panels are excluded.
 
 ## Runtime architecture
 

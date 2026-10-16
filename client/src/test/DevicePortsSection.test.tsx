@@ -295,7 +295,7 @@ describe('actions that ask first', () => {
     await open('Stop monitoring tcp/22 on web-01')
 
     const dialog = screen.getByRole('dialog', { name: 'Confirm Stop monitoring' })
-    expect(within(dialog).getByText('Stop monitoring ssh on web-01? Its Nagios service is removed; history is kept.')).toBeInTheDocument()
+    expect(within(dialog).getByText('Stop monitoring ssh on web-01? The Nagios service for this port is removed; its history is kept.')).toBeInTheDocument()
     expect(api.changePort).not.toHaveBeenCalled()
 
     fireEvent.click(within(dialog).getByRole('button', { name: 'Stop monitoring' }))
@@ -320,7 +320,7 @@ describe('actions that ask first', () => {
 
     await open('Leave suggested tcp/22 on web-01')
     expect(screen.getByText(
-      'Leave tcp/22 suggested? Its Nagios service is removed and no plugin will monitor it again until you do.')).toBeInTheDocument()
+      'Leave tcp/22 suggested? The Nagios service for this port is removed, and no plugin will monitor it again until you do.')).toBeInTheDocument()
     fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Leave suggested' }))
 
     await waitFor(() => expect(api.changePort).toHaveBeenCalledWith(4, 'tcp', 22, { state: 'SUGGESTED' }))
@@ -345,7 +345,7 @@ describe('actions that ask first', () => {
 
     const dialog = screen.getByRole('dialog', { name: 'Confirm Remove pin' })
     expect(within(dialog).getByText(/Let scans decide the service for tcp\/22 on web-01 again\?/)).toBeInTheDocument()
-    expect(within(dialog).getByText(/Its Nagios service is not changed/)).toBeInTheDocument()
+    expect(within(dialog).getByText(/The Nagios service for this port is not changed/)).toBeInTheDocument()
     fireEvent.click(within(dialog).getByRole('button', { name: 'Remove pin' }))
 
     await waitFor(() => expect(api.changePort).toHaveBeenCalledWith(4, 'tcp', 22, { unpin: true }))
@@ -468,13 +468,13 @@ describe('Set service', () => {
 
   it('warns that a monitored port\'s Nagios service will be renamed', async () => {
     const dialog = await openDialog()
-    expect(within(dialog).getByText(/Its Nagios service will be renamed/)).toBeInTheDocument()
-    expect(within(dialog).getByText(/History stays under the old name/)).toBeInTheDocument()
+    expect(within(dialog).getByText(/The Nagios service for this port will be renamed/)).toBeInTheDocument()
+    expect(within(dialog).getByText(/Its history stays under the old name/)).toBeInTheDocument()
   })
 
   it('does not warn about renaming for a port that is not monitored', async () => {
     const dialog = await openDialog({ state: 'SUGGESTED', reason: { code: 'guessed', text: 'g' } })
-    expect(within(dialog).queryByText(/Its Nagios service will be renamed/)).not.toBeInTheDocument()
+    expect(within(dialog).queryByText(/The Nagios service for this port will be renamed/)).not.toBeInTheDocument()
   })
 
   it('shows which check a known service leads to', async () => {

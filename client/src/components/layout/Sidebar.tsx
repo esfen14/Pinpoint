@@ -38,6 +38,11 @@ const navItems = [
   },
 
 {
+    to: '/topology',
+    label: 'Topology',
+    icon: Network,
+  },
+  {
     to: '/system-status',
     label: 'System Status',
     icon: Network,

@@ -26,8 +26,12 @@ from app.network_discovery.plugin_registry import (
     GENERIC_PLUGIN_FOR_TRANSPORT,
     PLUGIN_DEFINITIONS,
     PluginConfigurationError,
+    SNMP_V3_DEFINITION,
     Transport,
     build_service_checks,
+    command_definition_for,
+    command_definition_name,
+    validate_snmp_v3,
     COMMAND_TEMPLATE,
     find_plugin_by_name_or_alias,
     plugin_for_definition,
@@ -60,6 +64,7 @@ from app.network_discovery.interface_discovery import refresh_interfaces_after_s
 from app.network_discovery.plugin_settings import plugin_config
 from app.network_discovery import custom_checks
 from app.network_discovery import resource_macros
+from app.network_discovery.device_plugin_variables import decrypt_secrets
 from app.secrets_store import SecretsError
 from app.plugin_models import PluginConfiguration, PluginConfigurationOrigin
 import socket
@@ -232,6 +237,19 @@ def load_host_plugin_facts(probe_ncpa=False):
     ).all()
     for device_id, if_index in monitored_interfaces:
         facts.setdefault(device_id, {}).setdefault("snmp", {}).setdefault("interfaces", []).append(if_index)
+
+    # SNMP v3 passphrases an administrator saved for a device. They are decrypted here, held only in
+    # memory, and turned into resource-slot references before anything is written (see
+    # collect_snmp_secrets and apply_secret_substitutions).
+    for device_id, overrides in db.session.execute(
+        sa.select(NetworkDiscovery.NetDiscoveryID, NetworkDiscovery.Plugin_Variables)
+        .where(NetworkDiscovery.Plugin_Variables.is_not(None))
+    ).all():
+        snmp_override = overrides.get("snmp") if isinstance(overrides, dict) else None
+        if isinstance(snmp_override, dict) and str(snmp_override.get("protocol") or "") == "3":
+            snmp_secrets = decrypt_secrets(snmp_override)
+            if snmp_secrets:
+                facts.setdefault(device_id, {}).setdefault("snmp", {}).update(snmp_secrets)
     if probe_ncpa:
         devices = {device.NetDiscoveryID: device for device in db.session.scalars(
             sa.select(NetworkDiscovery).where(NetworkDiscovery.NetDiscoveryID.in_(facts))
@@ -349,6 +367,21 @@ def collect_ncpa_secrets(plugin_facts):
     return secrets
 
 
+def collect_snmp_secrets(plugin_facts):
+    """
+    Collect the SNMP v3 passphrases in *plugin_facts* into {macro_key: plaintext}, each key
+    "snmp_v3:{device_id}:{name}" (name is auth_password or priv_password). Only devices whose
+    protocol is 3 have any. Values are never logged.
+    """
+    secrets = {}
+    for device_id, facts in plugin_facts.items():
+        for name in SNMP_V3_DEFINITION.secret_variables:
+            value = facts.get("snmp", {}).get(name)
+            if value:
+                secrets[f"snmp_v3:{device_id}:{name}"] = value
+    return secrets
+
+
 def collect_custom_check_secrets(device_ids=None):
     """
     Collect all custom-check passwords from the database into
@@ -412,6 +445,9 @@ def apply_secret_substitutions(command, substitution_map):
     definition = PLUGIN_DEFINITIONS["ncpa"]
     if parts[0] == definition.command_name:
         secret_names = {"token"}
+    elif parts[0] == SNMP_V3_DEFINITION.command_name:
+        definition = SNMP_V3_DEFINITION
+        secret_names = set(definition.secret_variables)
     else:
         plugin_name = custom_checks.plugin_for_custom_command(parts[0])
         if plugin_name is None:
@@ -428,7 +464,7 @@ def apply_secret_substitutions(command, substitution_map):
             raise PluginConfigurationError("check_disk_smb lacks a secure credential input for its child process.")
         if macro is None or not re.fullmatch(r"\$USER[0-9]+\$", macro):
             raise PluginConfigurationError("Check requires a protected resource slot.")
-        return macro.strip("$") if definition.name == "ncpa" or secure_native else macro
+        return macro.strip("$") if definition.name in ("ncpa", "snmp_v3") or secure_native else macro
 
     for index, (_flag, name) in enumerate(definition.arguments, start=1):
         if name in secret_names and index < len(parts):
@@ -463,6 +499,25 @@ def render_ncpa_resource_command(resource_path):
                       "--plugin $USER1$/check_ncpa.py --resource-slot '$ARG2$' "
                       "-H $HOSTADDRESS$ -P '$ARG1$' -M '$ARG3$' $ARG4$"),
     )
+
+
+def render_snmp_v3_resource_command(resource_path):
+    """
+    Render the SNMP v3 command: check_snmp runs under the native adapter, which reads the
+    passphrases from the resource file and hands them over on stdin as extra-options, so neither
+    hosts.cfg nor check_snmp's own argument list holds them. (check_snmp still passes them to
+    snmpget, its helper, for the moment a check runs; see the Engineering Standards note.)
+    """
+    definition = SNMP_V3_DEFINITION
+    script = Path(__file__).resolve().parents[2] / "scripts" / "pinpoint_check_native.py"
+    paths = (str(script), str(resource_path))
+    if not script.is_file() or any(not re.fullmatch(r"/[A-Za-z0-9_./-]+", path) for path in paths):
+        raise PluginConfigurationError("Protected SNMP check paths are missing or unsafe.")
+    executable = f"$USER1$/{definition.executable or definition.check_plugin}"
+    line = definition.command_line.replace(
+        executable, f"/usr/bin/python3 -I {script} --resource-file {resource_path} --plugin {executable}", 1,
+    )
+    return COMMAND_TEMPLATE.format(command_name=definition.command_name, command_line=line)
 
 
 def render_native_resource_command(plugin_name, resource_path):
@@ -500,6 +555,12 @@ def plan_plugin_services(plugin_name, service_label, port, transport, facts, ove
         overrides=overrides.get(plugin_name),
     )
 
+    # SNMP version 3 uses its own command (no community, credentials as resource slots); a web
+    # check with a virtual host uses its *_vhost command (the address moves to -I).
+    command_plugin = command_definition_name(plugin_name, variables)
+    if command_plugin != plugin_name and plugin_name == "snmp":
+        validate_snmp_v3(variables)
+
     planned = []
     for check, service_variables in build_service_checks(plugin_name, variables):
         if check.skip_reason:
@@ -514,7 +575,7 @@ def plan_plugin_services(plugin_name, service_label, port, transport, facts, ove
         planned.append({
             "base_name": "-".join(name_parts),
             "transport": transport,
-            "check_command": resolve_plugin_command(plugin_name, service_variables, transport),
+            "check_command": resolve_plugin_command(command_plugin, service_variables, transport),
             "plugin": plugin_name,
             "port": int(service_variables.get("port", port)),
             "metric": check.metric,
@@ -737,6 +798,14 @@ def _create_host_cfg_file(discovered_hosts, skipped=None):
 
     cfg_path = HOST_CONFIG_DIR / filename
 
+    from app.network_discovery.device_identity import parent_pairs, parent_omission_reason
+    device_rows = {d.NetDiscoveryID: d for d in db.session.scalars(sa.select(NetworkDiscovery))}
+    generated_ids = {h["data"].get("net_discovery_id") for group in discovered_hosts.values() for h in group.values()}
+    parents_by_device = {}
+    for child, parent in sorted(parent_pairs()):
+        row = device_rows.get(parent)
+        if parent in generated_ids and parent_omission_reason(row) is None:
+            parents_by_device.setdefault(child, []).append(nagios_host_name(row))
     host_config = []
 
     host_config.append(
@@ -908,8 +977,12 @@ def _create_host_cfg_file(discovered_hosts, skipped=None):
         device_id: facts for device_id, facts in plugin_facts.items()
         if device_id in desired_device_ids
     })
+    snmp_secrets = collect_snmp_secrets({
+        device_id: facts for device_id, facts in plugin_facts.items()
+        if device_id in desired_device_ids
+    })
     custom_secrets = collect_custom_check_secrets(desired_device_ids)
-    all_secrets = {**ncpa_secrets, **custom_secrets}
+    all_secrets = {**ncpa_secrets, **snmp_secrets, **custom_secrets}
     try:
         existing_slots = resource_macros.read_slot_assignments(NAGIOS_RESOURCE_CFG)
         existing_slots = resource_macros.reclaim(set(existing_slots) - set(all_secrets), existing_slots)
@@ -924,7 +997,7 @@ def _create_host_cfg_file(discovered_hosts, skipped=None):
             "Cannot generate hosts.cfg: resource macro slot limit exceeded. %s", exc
         )
         raise
-    substitution_map = build_secret_substitution_map(slot_map, ncpa_secrets, custom_secrets)
+    substitution_map = build_secret_substitution_map(slot_map, {**ncpa_secrets, **snmp_secrets}, custom_secrets)
 
     # Plugins actually used by at least one service - each needs its own
     # `define command` object, rendered once at the end of the file.
@@ -945,6 +1018,7 @@ def _create_host_cfg_file(discovered_hosts, skipped=None):
             host["alias"] = "alias"
             host["address"] = ip
             device_id = host_data["data"].get("net_discovery_id")
+            host["parents"] = parents_by_device.get(device_id, [])
             members = alert_groups.get(f"pinpoint_host_{device_id}", [])
             host_contact_group = contact_group_name
             if members:
@@ -1024,7 +1098,7 @@ def _create_host_cfg_file(discovered_hosts, skipped=None):
             for service_name, command, plugin_name in host_services:
                 # Remember the plugin so its `define command` is written once
                 # in the "Define Commands" section at the end of the file.
-                used_plugins.add(plugin_name)
+                used_plugins.add(command_definition_for(command, plugin_name))
 
                 service = {
                     "host_name": host_data["data"]["hostname"],
@@ -1131,8 +1205,12 @@ def _create_host_cfg_file(discovered_hosts, skipped=None):
     )
 
     for plugin_name in sorted(used_plugins):
-        host_config.append(render_ncpa_resource_command(NAGIOS_RESOURCE_CFG)
-                           if plugin_name == "ncpa" else render_command_definition(plugin_name))
+        if plugin_name == "ncpa":
+            host_config.append(render_ncpa_resource_command(NAGIOS_RESOURCE_CFG))
+        elif plugin_name == SNMP_V3_DEFINITION.name:
+            host_config.append(render_snmp_v3_resource_command(NAGIOS_RESOURCE_CFG))
+        else:
+            host_config.append(render_command_definition(plugin_name))
         host_config.append(_add_space(2))
 
     for plugin_name in sorted(used_custom_plugins):
@@ -1556,7 +1634,7 @@ def _validate_config(cfg_path):
     finally:
         temp_cfg_path.unlink(missing_ok=True)
 
-def _apply_new_host_cfg(cfg_path, rollback_resources=None):
+def _apply_new_host_cfg(cfg_path, rollback_resources=None, commit_history=True):
     """
     Applies a validated candidate host config as the new live Nagios config.
 
@@ -1622,10 +1700,15 @@ def _apply_new_host_cfg(cfg_path, rollback_resources=None):
         return False, "Failed to apply Nagios configuration. Rolled back to the previous files."
 
     try:
-        migrate_legacy_service_history(_last_generated_names)
-        db.session.commit()
+        # Parent edits own their transaction: a successful reload must not commit
+        # the graph before its audit entry and route commit succeed.
+        with db.session.begin_nested():
+            migrate_legacy_service_history(_last_generated_names)
+        if commit_history:
+            db.session.commit()
     except Exception:
-        db.session.rollback()
+        if commit_history:
+            db.session.rollback()
         current_app.logger.exception("Could not carry service history over to the new service names.")
 
     return True, f"Applied {cfg_path} successfully. Backup stored at {backup_path}"
@@ -2137,7 +2220,7 @@ def resource_config_transaction():
     return resource_macros.ResourceTransaction(current_app.config["NAGIOS_RESOURCE_CFG"])
 
 
-def regenerate_and_apply_config_status():
+def regenerate_and_apply_config_status(commit_history=True):
     """Rebuild, validate and apply monitored configuration under the writer lock.
 
     Return applied, unchanged or failed with a safe message. Resource bytes are
@@ -2154,7 +2237,10 @@ def regenerate_and_apply_config_status():
             is_valid, result = _validate_config(new_cfg)
             if not is_valid:
                 return "failed", f"Config failed to validate: {result}"
-            applied, message = _apply_new_host_cfg(new_cfg, rollback_resources=resources.rollback)
+            if commit_history:
+                applied, message = _apply_new_host_cfg(new_cfg, rollback_resources=resources.rollback)
+            else:
+                applied, message = _apply_new_host_cfg(new_cfg, rollback_resources=resources.rollback, commit_history=False)
             if applied:
                 resources.commit()
             return ("applied" if applied else "failed"), message

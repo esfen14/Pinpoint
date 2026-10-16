@@ -142,6 +142,7 @@ Supported Python version: **3.14** (developed on 3.14.2).
 | `NAGIOS_LOG_ARCHIVE_DIR` | `/usr/local/nagios/var/archives` | Directory measured for Dashboard archive storage |
 | `NAGIOS_MAIN_CFG` | `/usr/local/nagios/etc/nagios.cfg` | no | Main Nagios config, used for `nagios -v` validation. |
 | `NAGIOS_BIN` | `/usr/local/nagios/bin/nagios` | no | Nagios binary, used for validation. |
+| `NAGIOS_LOG_FILE` | `/usr/local/nagios/var/nagios.log` | no | Read-only notification failure diagnostics; a missing or unreadable log gives an empty indicator. |
 | `NAGIOS_COMMAND_FILE` | `/usr/local/nagios/var/rw/nagios.cmd` | no | Nagios external command pipe; the service user must be in group `nagios` to write it. |
 | `REMEDIATION_SPOOL_DIR` | `/usr/local/nagios/var/spool/pinpoint-events` | no | Folder the Nagios event handler writes one small file per state change to; PinPoint's consumer reads and deletes them. The installer creates it (owner `nagios`, group `pinpoint`, mode 2770). |
 | `REMEDIATION_SPOOL_OWNER` | `nagios` | no | The only user whose spool files PinPoint trusts; a file owned by anyone else is discarded. |
