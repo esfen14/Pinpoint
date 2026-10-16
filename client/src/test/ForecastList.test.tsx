@@ -90,6 +90,16 @@ describe('ForecastList', () => {
     expect(screen.getByText(/estimate from a straight-line trend/i)).toBeInTheDocument()
   })
 
+  it('explains how the estimate is calculated and its limits', () => {
+    render(<ForecastList data={data([record()])} isLoading={false} error={null} now={NOW} />)
+    const help = screen.getByText('How is this calculated?').closest('details') as HTMLElement
+    expect(help).toHaveTextContent('straight line')
+    expect(help).toHaveTextContent('hourly averages')
+    expect(help).toHaveTextContent('90 days')
+    expect(help).toHaveTextContent('paused')
+    expect(help).toHaveTextContent('does not change')
+  })
+
   it('shows a loading state', () => {
     render(<ForecastList data={null} isLoading error={null} now={NOW} />)
     expect(screen.getByText('Loading forecasts…')).toBeInTheDocument()

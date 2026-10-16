@@ -137,6 +137,14 @@ Both routes use the standard success/error envelopes. GET returns `quietHours` (
 | `POST /api/system/maintenance/windows/<id>/cancel` | `maintenance.manage` | Cancel a window and delete its pending and running Nagios downtime (`nagios_synced` / `nagios_message` as above; the window is cancelled even when Nagios could not be told). 400 when already cancelled, 404 unknown. Audited |
 
 A window is Nagios scheduled downtime, not PinPoint's own Maintenance Mode (a `SystemSettings` flag that only pauses PinPoint's background jobs and is unchanged). Times are ISO 8601 in and out, stored as UTC; `timeZone` is only the zone a daily or weekly window repeats in, so it keeps its local time across a daylight-saving change. Nothing is sent to Nagios by these routes except the delete on edit and cancel; the scheduler job `maintenance_windows` (`app/maintenance.py`) schedules downtime shortly before each occurrence.
+### `app/api/system/forecast.py`
+
+| Method and path | Permission | Purpose |
+|---|---|---|
+| `GET /api/system/forecast` | `system.dashboard` or `system.services` (either) | The stored resource forecasts, soonest estimated crossing first. Query: `hostname` (optional), `limit` (1-500, default 100; 400 otherwise). Returns `forecasts` (`hostname`, `service_name`, `metric`, `kind` `warning`/`critical`, `threshold`, `crossing_at`, `slope_per_hour`, `r_squared`, `sample_count`, `window_hours`, `current_value`, `unit`, `computed_at`; timestamps ISO 8601 with a UTC offset) and `insufficient` (`hostname`, `service_name`, `metric`, `sample_count`, `window_hours`: series not yet watched long enough) |
+
+A forecast is a display-only estimate (`app/forecast.py`); the route reads `RESOURCE_FORECAST` only and nothing here changes a Nagios state or config. No permission was added. Notifications for forecasts are not part of this route.
+
 ### `app/api/system/escalations.py`
 
 | Method and path | Permission | Purpose |

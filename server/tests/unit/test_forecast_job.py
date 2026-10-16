@@ -148,9 +148,10 @@ class TestScope:
     def test_never_touches_nagios_or_history(self, db_session):
         seed_series(db_session, "web-01", "ncpa-disk-5693", DISK, 40.0, 0.3)
         before = db.session.scalar(sa.select(sa.func.count()).select_from(ServiceStatus))
-        with patch.object(nagios_commands, "_write_line") as pipe:
+        with patch.object(nagios_commands, "_write_line") as pipe,              patch("app.network_discovery.create_host_cfg.regenerate_and_apply_config_status") as regenerate:
             forecast.compute_forecasts()
         pipe.assert_not_called()
+        regenerate.assert_not_called()
         assert db.session.scalar(sa.select(sa.func.count()).select_from(ServiceStatus)) == before
 
 

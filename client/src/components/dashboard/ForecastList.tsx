@@ -68,6 +68,24 @@ export function ForecastList({ data, isLoading, error, now }: ForecastListProps)
         Each date is an estimate from a straight-line trend of recent readings, not a failure. It is shown only so you can act early.
       </p>
       {body}
+      <details className="mt-3 text-xs text-[var(--text-muted)]">
+        <summary className="cursor-pointer font-medium text-[var(--text)]">How is this calculated?</summary>
+        <div className="mt-2 space-y-1">
+          <p>
+            For disk space and memory used, PinPoint takes hourly averages of the last 3 days of readings and fits a
+            straight line through them. The date is where that line reaches the warning or critical level.
+          </p>
+          <p>
+            A trend needs at least 12 hourly readings spread over about a day and a half. There is no estimate when the
+            usage is flat, falling or erratic, after a cleanup or reset in the readings, when the level has already been
+            reached, or when it is more than 90 days away.
+          </p>
+          <p>
+            Devices that are paused, retired or merged are skipped. Estimates are recomputed every 30 minutes. They
+            only warn you early: an estimate does not change a service&apos;s status and sends no notification.
+          </p>
+        </div>
+      </details>
     </div>
   )
 }

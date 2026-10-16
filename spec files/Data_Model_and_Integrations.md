@@ -26,6 +26,7 @@ acknowledgements belong in `system.db` even though they relate to Nagios alerts.
 - Plugin settings: `PluginSettings` (`PLUGIN_SETTINGS`), one row per plugin definition (`Plugin_Name`, e.g. `snmp`) holding the variables saved from Settings -> Plugins in `Variables` (JSON), with `Version`/`Updated_By`. No row means the `config.py` defaults apply.
 - Device interfaces: `DeviceInterface` (`DEVICE_INTERFACE`, migration `b7d3f1a9c264`), one row per interface SNMP reports for a device (unique per `NetDiscoveryID` + `If_Index`): `Name`, `Speed_Bps` (null when unreported; `ifHighSpeed` is preferred over `ifSpeed`), `Admin_Status`, `Oper_Status`, `Monitored` (the administrator's choice, default false), `Present` (false once a refresh no longer finds a monitored interface) and `Last_Seen_At`. No rows means no change to the generated Nagios config.
 - Maintenance windows: `MaintenanceWindow` (`MAINTENANCE_WINDOW`, migration `a4c8e1b7d933`): `NetDiscoveryID` (a device, or null for every monitored device), `Start_At`/`End_At` (first occurrence, naive UTC), `Recurrence` (`none`, `daily`, `weekly`), `Recurrence_Until`, `Time_Zone` (IANA name the recurrence repeats in), `Comment`, `Status` (`active`, `cancelled`, `completed`), `Last_Occurrence_Sent`, `Created_By`/`Created_At`; and `MaintenanceOccurrence` (`MAINTENANCE_OCCURRENCE`), one row per occurrence handed to Nagios, unique per (`WindowID`, `Start_At`), with `Status` (`pending` while retrying, `sent`, `failed`, `cancelled`), `Attempts`, `Last_Error` and `Sent_At`. No rows means nothing changes. The downgrade drops both tables; run `flask sync-permissions` after upgrading to add `maintenance.manage` (Administrator only).
+- Resource forecasts: `ResourceForecast` (`RESOURCE_FORECAST`, migration `b7e2a9c4d518`), the latest forecast per host, service and metric (unique), replaced on every run with no history: `Kind` (`warning`/`critical` with `Threshold`, `Crossing_At` UTC, `Slope_Per_Hour`, `R_Squared`, `Current_Value`, or `insufficient` for a series too new to forecast, where those are null), `Sample_Count`, `Window_Hours`, `Unit`, `Computed_At`.
 - Network profile: singleton `NetworkProfile` (`Id=1`) holding the editable name, reference and detail rows of the Network Health info card.
 - Audit/logging: `ActivityLog`, `ConfigurationChanges`, `ExportLog`.
 - Discovery: `NetworkDiscoveryStatus`, `SkippedService`, `NetworkDiscovery`,
@@ -302,6 +303,7 @@ Nagios continues to own log rotation; Pinpoint does not modify its logs.
   `Diagnostic_History_Retention_Days`.
 - Settings-driven automation checks every `AUTOMATION_CHECK_MINUTES`.
 - Maintenance window dispatch every 60 seconds (`maintenance_windows`, `app/maintenance.py`).
+- Resource forecasts every 30 minutes (`resource_forecast`, `app/forecast.py`, `max_instances=1`, `coalesce=True`): see "Resource forecasts" below.
 - The remediation spool consumer every 15 seconds (`max_instances=1`); at startup, runs left
   `running` by a stop become `interrupted` and are never run again.
 
@@ -326,6 +328,23 @@ stops the other automated operations. Jobs are attributed to an active user for
 audit purposes.
 
 ## Maintenance windows and Nagios downtime
+
+### Resource forecasts
+
+`app/forecast.py` estimates when a disk or memory metric reaches its warning or critical
+threshold. It reads `ServicePerfData` joined to `ServiceStatus` in `history.db` for the NCPA
+metrics `disk/<partition>/used_percent` and `memory/virtual/percent` over the last 72 hours,
+averaged per hour in SQL (so a series is at most 72 points), and fits a least-squares line.
+The nearest threshold the latest value has not reached gets a crossing time. No forecast is
+made when there are fewer than 12 hourly points, they span less than half the window, the
+slope is flat or falling, R squared is under 0.8, one fall exceeds half the series range (a
+cleanup or reset), no threshold is left, or the crossing is more than 90 days away. A series
+with too little history is stored as `insufficient`. A run makes a fixed number of queries
+however many services exist (one for the series list, capped at `MAX_SERIES_PER_RUN` = 500,
+one for the hourly averages, one device lookup, one delete and one bulk insert) and skips
+paused, retired and merged devices. A forecast only reads `history.db` and writes
+`RESOURCE_FORECAST`; it never changes a Nagios state, config or notification. Delivering a
+forecast as a notification, with a horizon and on/off setting, is not implemented.
 
 `app/maintenance.py` turns a `MaintenanceWindow` into Nagios scheduled downtime through
 the command channel. The dispatcher runs every 60 seconds with the server's clock (the
