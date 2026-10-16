@@ -15,14 +15,15 @@ def test_cleanup_steps_continue_after_failure_without_secret_in_logs(app, caplog
     with app.app_context(), patch.object(worker, "connect_with_fingerprint_check", return_value=client), \
          patch.object(worker, "run_sudo_command", side_effect=[
              {"success": True}, {"success": False, "error": "private-secret"},
-             {"success": True}, {"success": True},
+             {"success": True}, {"success": True}, {"success": True},
          ]) as run:
         steps = worker.cleanup_ncpa_bootstrap("10.0.0.5", 22, "fp", "admin", "private-secret", True)
     assert steps == [
         {"step": "key", "ok": True}, {"step": "sudo_rule", "ok": False},
-        {"step": "helper", "ok": True}, {"step": "account", "ok": False, "skipped": True},
+        {"step": "helper", "ok": True}, {"step": "restart_rule", "ok": True},
+        {"step": "restart_helper", "ok": True}, {"step": "account", "ok": False, "skipped": True},
     ]
-    assert run.call_count == 3
+    assert run.call_count == 5
     assert all(call.kwargs["log_command"].startswith("NCPA cleanup ") for call in run.call_args_list)
     assert "private-secret" not in str(steps) + caplog.text
     client.close.assert_called_once()
@@ -37,8 +38,8 @@ def test_cleanup_uses_fixed_paths_and_quotes_key(app, monkeypatch, tmp_path):
          patch.object(worker, "run_sudo_command", return_value={"success": True}) as run:
         steps = worker.cleanup_ncpa_bootstrap("10.0.0.5", 22, "fp", "admin", "private-secret", True)
     assert all(step["ok"] for step in steps)
-    assert [step["step"] for step in steps] == ["key", "sudo_rule", "helper", "account"]
-    assert run.call_count == 4
+    assert [step["step"] for step in steps] == ["key", "sudo_rule", "helper", "restart_rule", "restart_helper", "account"]
+    assert run.call_count == 6
     assert "operator's-key" not in str([call.kwargs for call in run.call_args_list])
     assert "'\"'\"'" in run.call_args_list[0].args[1]
     for call in run.call_args_list:

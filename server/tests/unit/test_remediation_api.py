@@ -96,7 +96,7 @@ def test_manage_alone_cannot_read_the_run_log(limited_client, db_session, regula
 
 def test_action_types_describe_the_form(logged_in_client):
     items = logged_in_client.get(f"{BASE}/action-types").get_json()["data"]["items"]
-    assert [item["key"] for item in items] == ["record_only", "restart_local_service"]
+    assert [item["key"] for item in items] == ["record_only", "restart_local_service", "restart_remote_service"]
     assert set(items[0]) == {"key", "label", "description", "parameters"}
     restart = items[1]
     assert restart["parameters"][0]["choices"] == ["nagios"]

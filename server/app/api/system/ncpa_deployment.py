@@ -1005,6 +1005,88 @@ def cleanup_ncpa_deployment(device_id):
         entry["password"] = None
 
 
+# ==========================================================
+# REMOTE SERVICE RESTART SETTINGS (Issue #8 Part 8.3)
+# ==========================================================
+
+def remote_restart_payload(creds):
+    """The per-device remote restart settings; never includes keys or credentials."""
+    return {
+        "enabled": bool(creds.Remote_Restart_Enabled),
+        "services": list(creds.Remote_Restart_Services or []),
+        "trusted": bool(creds.Key_Installed and creds.Key_Fingerprint),
+    }
+
+
+def remote_restart_device(device_id):
+    """(device, creds, error response) for a device whose settings may be read or changed."""
+    device = db.session.get(NetworkDiscovery, device_id)
+    if device is None:
+        return None, None, error("Device not found.", 404)
+    creds = db.session.scalar(sa.select(SSHCredentials).where(SSHCredentials.NetworkDiscoveryID == device_id))
+    if creds is None:
+        return None, None, error("Confirm the device host key first.", 409)
+    return device, creds, None
+
+
+@system_bp.get('/deployment/ncpa/<int:device_id>/remote-restart')
+@login_required
+@require_permission('system.deploy.ncpa')
+def get_remote_restart(device_id):
+    """Read a device's remote restart switch and service list."""
+    _device, creds, failure = remote_restart_device(device_id)
+    if failure is not None:
+        return failure
+    return success(remote_restart_payload(creds))
+
+
+@system_bp.put('/deployment/ncpa/<int:device_id>/remote-restart')
+@login_required
+@require_permission('system.deploy.ncpa')
+def set_remote_restart(device_id):
+    """
+    Turn remote service restart on or off for one device and set the services it may restart.
+
+    JSON body: ``{"enabled": bool, "services": [unit, ...]}``. PinPoint refuses a device that is
+    not trusted. The device keeps its own copy of the list, written only by a (re)deployment with
+    the administrator's password, so a changed list takes effect on the device after a redeploy.
+    """
+    data = request.get_json(silent=True)
+    validation_error = validate_json_data(data)
+    if validation_error:
+        return validation_error
+    unknown = set(data) - {"enabled", "services"}
+    if unknown:
+        return error("Unexpected fields: " + ", ".join(sorted(unknown)) + ".", 400)
+    if type(data.get("enabled")) is not bool:
+        return error("enabled must be true or false.", 400)
+    from app.remote_restart import clean_services
+    services, problem = clean_services(data.get("services", []))
+    if problem:
+        return error(problem, 400)
+    try:
+        device, creds, failure = remote_restart_device(device_id)
+        if failure is not None:
+            return failure
+        if data["enabled"] and not (creds.Key_Installed and creds.Key_Fingerprint):
+            return error("The device must be trusted and deployed before remote restart can be turned on.", 409)
+        if data["enabled"] and not services:
+            return error("Choose at least one service before turning remote restart on.", 400)
+        list_changed = sorted(creds.Remote_Restart_Services or []) != services
+        creds.Remote_Restart_Enabled = data["enabled"]
+        creds.Remote_Restart_Services = services
+        create_user_log(current_user.UserID, f"Remote restart for device {device_id}: "
+                        f"{'on' if data['enabled'] else 'off'}, {len(services)} service(s)")
+        db.session.commit()
+        payload = remote_restart_payload(creds)
+        payload["redeploy_needed"] = bool(list_changed and data["enabled"])
+        return success(payload, message="Saved.")
+    except Exception:
+        db.session.rollback()
+        current_app.logger.error("Could not save remote restart settings for device %s.", device_id)
+        return error("The settings could not be saved.", 500)
+
+
 @system_bp.get('/deployment/ncpa/devices/trusted')
 @login_required
 @require_permission('system.deploy.ncpa')

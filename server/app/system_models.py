@@ -679,6 +679,10 @@ class SSHCredentials(db.Model):
     SSH_Port: so.Mapped[int] = so.mapped_column(sa.Integer())
     Key_Installed: so.Mapped[bool] = so.mapped_column(sa.Boolean(), default=False)
     Key_Fingerprint: so.Mapped[Optional[str]] = so.mapped_column()
+    # Part 8.3: an administrator turns remote restart on per device and lists the units it may
+    # restart. The device keeps its own copy of the list; the device's copy wins.
+    Remote_Restart_Enabled: so.Mapped[bool] = so.mapped_column(sa.Boolean(), default=False, server_default=sa.false())
+    Remote_Restart_Services: so.Mapped[Optional[list]] = so.mapped_column(sa.JSON())
     Created_At: so.Mapped[Optional[datetime]] = so.mapped_column(default=lambda: datetime.now(timezone.utc))
 
     # Foreign Key Field
@@ -1250,6 +1254,7 @@ class PasswordResetRequest(db.Model):
 class RemediationActionType(Enum):
     RECORD_ONLY = "record_only"
     RESTART_LOCAL_SERVICE = "restart_local_service"
+    RESTART_REMOTE_SERVICE = "restart_remote_service"
 
 
 class RemediationScope(Enum):

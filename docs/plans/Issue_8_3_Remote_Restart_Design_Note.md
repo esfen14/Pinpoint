@@ -67,6 +67,15 @@ Recommendation: **A**. It has one reviewed code path on the device, no wildcards
 4. Where does the on-device allowlist come from? Proposal: written by the same deployment step from the per-device allowlist an administrator sets in PinPoint.
 5. Is "paused" a device field or a monitoring state? Check `Device_Monitoring_State_Plan.md` before coding step 1 above.
 
+## 5a. As built (2026-10-16)
+
+- Option A as designed. Code: `server/app/remote_restart.py`; action `restart_remote_service`; migration `c7a1f4d92e60` (enum value, `SSH_CREDENTIALS.Remote_Restart_Enabled` and `Remote_Restart_Services`); settings route `GET`/`PUT /api/system/deployment/ncpa/<id>/remote-restart` under the existing `system.deploy.ncpa` permission.
+- The helper, its sudoers line and the device's list are installed by the NCPA bootstrap (`give_program_permissions`) for every deployed device; an empty list allows nothing. Cleanup removes them.
+- **Changing a device's list needs a redeploy with the administrator's password.** Only root can write the list on the device, which is the point of keeping it there. The route reports `redeploy_needed`. Choosing the list when enabling avoids repeating it.
+- Paused means `Include_Device_In_Scanning` is false (Device Inventory spec).
+- The device is found by `NetworkDiscovery.Nagios_Host_Name` equal to the event's host.
+- Not built: the page for these settings and the remediation form field for `unit` (API only).
+
 ## 6. Verification plan
 
 - Unit tests with SSH mocked: fingerprint mismatch, non-Active and paused device, unit not on the allowlist, action not enabled, timeout, no secret in output.
