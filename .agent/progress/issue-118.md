@@ -27,7 +27,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 ## Plan
 
-1. [ ] Add failing renderer tests in `server/tests/unit/test_create_host_cfg.py` for default-on, NCPA metric/port pairing, absent target and setting-off byte identity; implement in `server/app/network_discovery/create_host_cfg.py`, `host_config_templates.py`, `templates/servicedependency.cfg.tpl`, and `server/config.py`; run focused tests and `scripts/verify.sh backend`.
+1. [x] Add failing renderer tests in `server/tests/unit/test_create_host_cfg.py` for default-on, NCPA metric/port pairing, absent target and setting-off baseline service list; implement in `server/app/network_discovery/create_host_cfg.py`, `host_config_templates.py`, `templates/servicedependency.cfg.tpl`, and `server/config.py`; run focused tests and `scripts/verify.sh backend`.
 2. [ ] Run Nagios validation and a host-down notification/state trial using the isolated lab; write sanitized evidence in `docs/test-runs/2026-10-17-issue-118/REPORT.md` and add its index entry in `docs/test-runs/README.md`.
 3. [ ] Update `spec files/Data_Model_and_Integrations.md`, `Backend_Modules_and_Routes.md`, `Implementation_Status.md`, and the relevant user manual with the behavior and setting; run `scripts/verify.sh docs`.
 4. [ ] Re-read #118, run regressions including `test_plugin_reconcile.py` and `scripts/verify.sh all`, attach backend output, complete the security review, remove this progress file, and open a PR using `.github/pull_request_template.md`.
@@ -39,16 +39,18 @@ One row per loop round, newest last.
 | Round | Change made | Check run | Result |
 |---|---|---|
 | 0 | Scope clarified with user: Nagios native host suppression plus NCPA dependency, default on | Issue updated | Plan ready |
+| 1 | Added the user-approved NCPA TCP master service, notification-only dependencies, and strict default-on environment setting; off leaves the old service set | Focused renderer/reconcile (140 passed); `scripts/verify.sh backend` | 3751 passed, 14 skipped; backend OK |
 
 ## State for the next session
 
-- Last check run (exact command): `git status --short --branch`
-- Result (first failing lines, or "green"): green, new branch from `origin/main`.
-- Hypothesis: NCPA metric services currently have no separate port service, so generation must identify or create a valid master only when present.
-- Next action (one specific step, not "continue"): Add failing NCPA dependency renderer tests in `server/tests/unit/test_create_host_cfg.py`.
+- Last check run (exact command): `scripts/verify.sh backend`
+- Result (first failing lines, or "green"): green — 3751 passed, 14 skipped, backend OK.
+- Hypothesis: generated dependency objects are syntactically valid and Nagios already suppresses same-host service notifications, but both need a real lab observation.
+- Next action (one specific step, not "continue"): Run the isolated Docker lab, validate generated dependencies with Nagios, and record a host-down notification/state trial.
 
 ## Decisions and notes
 
 - The user approved verifying Nagios's built-in host-down suppression and implementing NCPA metric-to-port dependencies. The issue's explicit default-on setting takes precedence over its general backward-compatibility note. Issue body was updated accordingly.
 - `hostdependency` cannot reference services; no host dependency object will be generated.
+- The user approved a visible per-agent TCP port service as the master. The issue body records this decision. It is generated only while the feature is on and `check_tcp` is enabled.
 - Sensitive-module review will check Nagios object escaping, secret exposure, and pre-apply validation before the PR.
