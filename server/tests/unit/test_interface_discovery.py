@@ -200,6 +200,15 @@ class TestSettings:
         with pytest.raises(InterfaceDiscoveryError, match="SNMP is not monitored"):
             device_snmp_settings(device)
 
+    def test_a_v3_device_is_refused_with_a_clear_message(self, db_session, admin_user):
+        device = snmp_device(db_session, admin_user, plugin_variables={"snmp": {"protocol": "3"}})
+        with pytest.raises(InterfaceDiscoveryError, match="v1 and v2c only"):
+            device_snmp_settings(device)
+
+    def test_a_v2c_device_is_unchanged(self, db_session, admin_user):
+        device = snmp_device(db_session, admin_user, plugin_variables={"snmp": {"protocol": "2c", "community": "lab"}})
+        assert device_snmp_settings(device) == (161, "lab")
+
 
 class TestStore:
 

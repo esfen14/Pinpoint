@@ -347,6 +347,24 @@ shared writer: validated with the Nagios binary, rolled back if rejected).
 | `POST /api/system/hosts/<id>/interfaces/refresh` | `system.hosts.edit` | Read the list from the device over SNMP (`snmpwalk`, 20 s limit) and store it: new interfaces are added unmonitored, known ones updated with the monitoring choice kept, vanished ones removed unless monitored (kept with `present` false). 400 when SNMP is not monitored on the device, 502 with a plain-language reason when the device cannot be read; the community is never in the message. Same body as the list route |
 | `PUT /api/system/hosts/<id>/interfaces/<if_index>` | `system.hosts.edit` | Body `{"monitored": true/false}` (400 for anything else): start or stop monitoring one interface. 404 for an interface not in the list, 400 when SNMP is not monitored, the device no longer reports the interface, or 16 are already monitored. Response is the list body plus `config_applied`, `config_ok` (false only when the change was saved but Nagios was not brought up to date) and `config_message` |
 
+### `app/api/system/device_plugin_variables.py`
+
+Per-device overrides of a registry plugin's variables, stored in
+`NetworkDiscovery.Plugin_Variables[<plugin>]` (the Device Inventory SNMP form uses it for the SNMP
+version and v3 credentials). A change is validated, written to the activity log (variable names,
+never values) and applied through `regenerate_and_apply_config_status()` under `config_write_lock`;
+if Nagios rejects it the change is rolled back and the response is 422. Validation reuses the
+registry (`validate_variable_value`, `validate_snmp_v3`, `editable_variables`), so it cannot drift
+from what the generator renders. Secret variables (SNMP v3 `auth_password`, `priv_password`) are
+encrypted with `secrets_store` as `<name>_enc` and never returned.
+
+| Method and path | Permission | Purpose |
+|---|---|---|
+| `GET /api/system/hosts/<id>/plugin-variables/<plugin>` | `system.hosts` | `plugin`, `variables` (plain values), `secrets_set` (`{name: bool}`), `editable` and `in_use` (snmp only: the device has an SNMP port monitored; `null` for other plugins). 404 for an unknown device or a plugin that is not a registry definition |
+| `PUT /api/system/hosts/<id>/plugin-variables/<plugin>` | `system.hosts.edit` | Body `{"variables": {...}, "clear_secrets": [...]}`; an empty body resets. The plain variables replace the stored ones; a secret that is not sent keeps its value, `clear_secrets` removes one. Unknown keys, invalid values and a v3 field the security level needs are 400 with `data.field` naming the variable; a retired or merged device is 400; a body over 8 KiB is 400; 422 when Nagios rejects the config (change rolled back). SNMP: `protocol` is 1, 2c or 3; v3 needs `security_level`, `v3_user` and, per level, `auth_protocol`/`auth_password` and `priv_protocol`/`priv_password` (passwords 8 to 64 printable characters); fields a level does not use, and every v3 field of a v1/v2c device, are dropped with their stored passwords |
+| `DELETE /api/system/hosts/<id>/plugin-variables/<plugin>` | `system.hosts.edit` | Reset the override: the device returns to the defaults. Same 404, 400 and 422 rules |
+| `POST /api/system/hosts/<id>/plugin-variables/<plugin>/test` | `system.hosts.edit` | SNMP only (400 otherwise). Query the device once with `check_snmp` (uptime OID) using the settings in the body (or the saved ones when empty; a blank password uses the stored one). Saves and applies nothing. 200 with `ok`, `state` and `message`; an unreachable device is a failed result. v3 passphrases go to `check_snmp` on stdin as extra-options and are scrubbed from the message |
+
 ### `app/api/system/ncpa_deployment.py`
 
 | Method and path | Permission | Purpose |

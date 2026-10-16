@@ -241,6 +241,66 @@ def ncpa_checks(variables):
     return checks
 
 
+# SNMP versions check_snmp -P accepts, and the v3 fields it needs per security level (-L).
+SNMP_VERSIONS = ("1", "2c", "3")
+SNMP_SECURITY_LEVELS = ("noAuthNoPriv", "authNoPriv", "authPriv")
+SNMP_AUTH_PROTOCOLS = ("MD5", "SHA")
+SNMP_PRIV_PROTOCOLS = ("DES", "AES")
+SNMP_USER_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.@-]{0,31}$")
+SNMP_PASSWORD_LENGTH = (8, 64)
+SNMP_V3_REQUIRED = {
+    "noAuthNoPriv": ("v3_user",),
+    "authNoPriv": ("v3_user", "auth_protocol", "auth_password"),
+    "authPriv": ("v3_user", "auth_protocol", "auth_password", "priv_protocol", "priv_password"),
+}
+SNMP_V3_FIELDS = ("security_level", "v3_user", "auth_protocol", "auth_password", "priv_protocol", "priv_password")
+# Variables whose value must be one of a fixed set, for every plugin that declares them.
+ENUMERATED_VARIABLES = {
+    "protocol": SNMP_VERSIONS,
+    "security_level": SNMP_SECURITY_LEVELS,
+    "auth_protocol": SNMP_AUTH_PROTOCOLS,
+    "priv_protocol": SNMP_PRIV_PROTOCOLS,
+}
+
+
+class SnmpV3Error(PluginConfigurationError):
+    """A v3 setting is missing or invalid; field names the variable. The message never holds a value."""
+
+    def __init__(self, message, field):
+        super().__init__(message)
+        self.field = field
+
+
+def snmp_v3_requirements(security_level):
+    """The v3 variables a security level needs, or raise SnmpV3Error when the level is missing or unknown."""
+    if security_level not in SNMP_V3_REQUIRED:
+        raise SnmpV3Error("SNMP v3 needs a security level: noAuthNoPriv, authNoPriv or authPriv.", "security_level")
+    return SNMP_V3_REQUIRED[security_level]
+
+
+def validate_snmp_v3(variables):
+    """
+    Check that variables hold everything an SNMP v3 check needs for its security level, and raise
+    SnmpV3Error naming the first missing field. Used by the API, which rejects the request, and by
+    the config planner, which skips the port, so the two cannot drift apart.
+    """
+    for name in snmp_v3_requirements(variables.get("security_level")):
+        if variables.get(name) in (None, ""):
+            raise SnmpV3Error(f"SNMP v3 at this security level needs '{name}'.", name)
+
+
+def validate_snmp_password(password):
+    """Raise SnmpV3Error unless password is an acceptable SNMP v3 passphrase (8-64 printable characters, no edge spaces)."""
+    minimum, maximum = SNMP_PASSWORD_LENGTH
+    text = str(password)
+    if not minimum <= len(text) <= maximum:
+        raise SnmpV3Error(f"SNMP v3 passwords must be {minimum} to {maximum} characters.", "password")
+    if text != text.strip() or not all(32 <= ord(character) < 127 for character in text):
+        raise SnmpV3Error("SNMP v3 passwords must be printable ASCII without leading or trailing spaces.", "password")
+    if any(character in FORBIDDEN_VALUE_CHARACTERS for character in text):
+        raise SnmpV3Error("SNMP v3 passwords contain a forbidden character.", "password")
+
+
 @dataclass(frozen=True)
 class PluginDefinition:
     """
@@ -270,6 +330,9 @@ class PluginDefinition:
     command_prefix: str = COMMAND_NAME_PREFIX
     # False for a plugin that checks the machine Nagios runs on and takes no -H (server checks).
     takes_host: bool = True
+    # Variables that hold a credential: encrypted at rest, never returned by an API, and written
+    # to the command only as a resource-slot identifier (see create_host_cfg.apply_secret_substitutions).
+    secret_variables: tuple = ()
 
     @property
     def command_name(self):
@@ -338,6 +401,8 @@ PLUGIN_DEFINITIONS = {
                 "oids": "SNMP_OIDS",
             },
             checks=snmp_checks,
+            # v3 fields live on SNMP_V3_DEFINITION; the passwords are secrets of the plugin.
+            secret_variables=("auth_password", "priv_password"),
         ),
         PluginDefinition(
             name="ncpa",
@@ -499,6 +564,33 @@ PLUGIN_DEFINITIONS = {
     )
 }
 
+# The command an SNMP device uses once its version is 3. It is not a service of its own (a port is
+# never resolved to it), so it lives outside PLUGIN_DEFINITIONS; the "snmp" plugin selects it.
+# Passwords are options whose flag is the adapter's slot flag, replaced by a resource-slot
+# identifier before the command reaches hosts.cfg.
+SNMP_V3_DEFINITION = PluginDefinition(
+    name="snmp_v3",
+    check_plugin="check_snmp",
+    transports=(Transport.UDP,),
+    arguments=(("-p", "port"), ("-o", "oid")),
+    fixed_flags="-P 3",
+    options={
+        "security_level": "-L",
+        "v3_user": "-U",
+        "auth_protocol": "-a",
+        "priv_protocol": "-x",
+        "auth_password": "--auth-slot",
+        "priv_password": "--priv-slot",
+        "warning": "-w",
+        "critical": "-c",
+        "label": "-l",
+        "units": "-u",
+    },
+    defaults={"port": 161},
+    secret_variables=("auth_password", "priv_password"),
+)
+INTERNAL_DEFINITIONS = {SNMP_V3_DEFINITION.name: SNMP_V3_DEFINITION}
+
 GENERIC_PLUGIN_FOR_TRANSPORT = {
     Transport.TCP: "tcp",
     Transport.UDP: "udp",
@@ -514,10 +606,48 @@ def get_plugin_definition(plugin_name):
     Return the PluginDefinition registered under plugin_name (case-
     insensitive). Raises PluginConfigurationError if there is none.
     """
-    definition = PLUGIN_DEFINITIONS.get(str(plugin_name).lower())
+    key = str(plugin_name).lower()
+    definition = PLUGIN_DEFINITIONS.get(key) or INTERNAL_DEFINITIONS.get(key)
     if definition is None:
         raise PluginConfigurationError(f"Unknown plugin '{plugin_name}'.")
     return definition
+
+
+def command_definition_name(plugin_name, variables):
+    """
+    The definition whose command a plugin's services use with these variables: "snmp" becomes
+    "snmp_v3" once its protocol variable is 3, every other plugin is its own. v1 and v2c devices
+    keep the command they always had.
+    """
+    if plugin_name == "snmp" and str(variables.get("protocol") or "") == "3":
+        return SNMP_V3_DEFINITION.name
+    return plugin_name
+
+
+def command_definition_for(command, fallback):
+    """The definition name behind a check_command string, so its `define command` gets written; fallback if it is a plain one."""
+    name = str(command or "").split("!")[0]
+    if name.startswith(COMMAND_NAME_PREFIX) and name[len(COMMAND_NAME_PREFIX):] in INTERNAL_DEFINITIONS:
+        return name[len(COMMAND_NAME_PREFIX):]
+    return fallback
+
+
+def editable_variables(plugin_name):
+    """
+    The scalar variables an administrator may override per device for a registry plugin: its
+    arguments, options and defaults (and, for SNMP, the v3 fields), without the values the system
+    owns (a token, a metric path, one OID). Raises PluginConfigurationError for an unknown plugin.
+    """
+    definition = get_plugin_definition(plugin_name)
+    names = {variable for _flag, variable in definition.arguments}
+    names |= set(definition.options) | set(definition.defaults)
+    if plugin_name == "snmp":
+        names |= set(SNMP_V3_DEFINITION.options) | set(SNMP_V3_DEFINITION.defaults)
+    return names - NON_EDITABLE_VARIABLES
+
+
+# Values the system owns, or that exist once per service rather than per device.
+NON_EDITABLE_VARIABLES = frozenset({"token", "metric_path", "oid"})
 
 
 def find_plugin_by_name_or_alias(name):
@@ -601,7 +731,8 @@ def plugin_for_command(command_name):
     name = str(command_name or "").split("!")[0].strip()
     if not name.startswith(COMMAND_NAME_PREFIX):
         return None
-    definition = PLUGIN_DEFINITIONS.get(name[len(COMMAND_NAME_PREFIX):])
+    key = name[len(COMMAND_NAME_PREFIX):]
+    definition = PLUGIN_DEFINITIONS.get(key) or INTERNAL_DEFINITIONS.get(key)
     return definition.check_plugin if definition else None
 
 
@@ -643,6 +774,12 @@ def validate_variable_value(variable, value):
             raise PluginConfigurationError("Variable 'port' must be an integer between 1 and 65535.")
         return str(int(text))
 
+    if variable in ENUMERATED_VARIABLES and text not in ENUMERATED_VARIABLES[variable]:
+        raise PluginConfigurationError(
+            f"Variable '{variable}' must be one of: {', '.join(ENUMERATED_VARIABLES[variable])}."
+        )
+    if variable == "v3_user" and not SNMP_USER_PATTERN.match(text):
+        raise SnmpV3Error("Variable 'v3_user' must be 1 to 32 letters, digits, '.', '_', '@' or '-', starting with a letter or digit.", "v3_user")
     if any(character in FORBIDDEN_VALUE_CHARACTERS for character in text):
         raise PluginConfigurationError(f"Variable '{variable}' contains a forbidden character.")
     return text
