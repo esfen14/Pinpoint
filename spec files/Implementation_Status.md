@@ -85,7 +85,21 @@ under every Nagios cache/retry configuration.
   review, and trusted-device routes.
 - NCPA bootstrap probes log expected missing-account/key exits at INFO while
   preserving creation behavior; unexpected command failures remain ERROR (#47).
-- Activity, configuration, discovery, NCPA, and export logs.
+- Activity, configuration, discovery, NCPA, and export logs. Issue #124 adds a
+  read-only fixed-path Nagios log tail and a System Logs tab (200 lines by
+  default, caps 500 lines / 64 KiB, command/output redaction, permission and
+  unavailable states). Dashboard status now includes bounded database, backup
+  and archive storage measurements with per-location free disk and a below-10%
+  warning. No model/migration/permission changes. Paired installer changes live
+  on `issue-124-log-retention` in the separate installer repository: 100 MiB / 7-day
+  host journal defaults, administrator-policy preservation and weekly installer
+  log rotation. Automated tests cover helpers/APIs/UI and installer fixtures;
+  [exclusive VM acceptance](../docs/test-runs/2026-10-15-issue-124-storage-logs/REPORT.md)
+  verifies fresh deployment (60/0 health), bounded journal usage after volume,
+  actual rotation, administrator-policy preservation through upgrade, live APIs
+  and four browser role journeys. The post-setup installer healthcheck expects
+  hosts.cfg 664 while the existing writer uses 640 (installer #9); other 59
+  checks pass. Paired human review and interactive ISO boot remain unverified.
 - Availability, OS, network-service, device-service, alert, and notification
   report APIs. Host availability and hosts-by-OS reports use Nagios
   `archivejson.cgi` durations, matching Network Health; Nagios failure returns

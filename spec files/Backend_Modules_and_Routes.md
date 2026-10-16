@@ -178,7 +178,7 @@ An action body has `name` (3 to 60 letters, numbers, spaces, `.`, `_`, `-`; uniq
 
 | Method and path | Permission | Purpose |
 |---|---|---|
-| `GET /api/system/dashboard/status` | `system.dashboard` | Nagios process and monitoring-server resource health |
+| `GET /api/system/dashboard/status` | `system.dashboard` | Nagios process, monitoring-server resources and appliance storage_usage (per-database, backups, archives, free/total bytes per filesystem) |
 | `GET /api/system/dashboard/summary` | `system.dashboard` | Host/service counts, active-alert counts, ping and NCPA summaries |
 | `GET /api/system/dashboard/alerts` | `system.dashboard` | Active alerts from the latest snapshot, with acknowledgement filters |
 | `POST /api/system/dashboard/alerts/acknowledge` | `system.acknowledge_alerts` | Acknowledge one host or service alert; also sent to Nagios (`nagios_synced`, `nagios_message` in the response). A comment with a line break or NUL returns 400 |
@@ -403,12 +403,23 @@ accepts an optional `data` argument for errors the client must act on.
 
 | Method and path | Permission | Purpose |
 |---|---|---|
+| `GET /api/system/log/nagios` | `system.logs` | Bounded redacted Nagios state-log tail; lines 1–500 (default 200), after Unix seconds, at most 64 KiB; fixed configured path, unreadable returns empty/unavailable |
 | `GET /api/system/log` | `system.logs` | User activity logs |
 | `GET /api/system/configurationchange` | `system.logs` | Configuration-change logs |
 | `GET /api/system/networkdiscovery` | `system.logs` | Discovery-run logs |
 | `GET /api/system/ncpadeployment` | `system.logs` | NCPA deployment logs |
 | `POST /api/system/exportlog` | Login | Record an export action |
 | `GET /api/system/exportlog` | `system.logs` | Export history |
+
+`GET /api/system/log/nagios` accepts only one `lines` (1–500, default 200)
+and one `after` (0–2**63-1 Unix seconds, default 0); unknown, duplicate or
+invalid parameters return 400. Response data is `{lines: string[], available:
+boolean, truncated: boolean, max_lines: 500, max_bytes: 65536}`. `after` is
+exclusive and applies within the bounded tail, not a full-history search.
+Unreadable logs give 200 with `available=false` and an empty list. Both login
+and `system.logs` are enforced. See the data spec for the conservative redaction
+policy and fixed path; responses can still contain hostnames and addresses.
+
 
 ### `app/api/system/report.py`
 

@@ -1,3 +1,15 @@
+"""Pinpoint audit log categories and a bounded, redacted Nagios state-log tail.
+
+Routes
+------
+GET /api/system/log, /api/system/configurationchange, /api/system/networkdiscovery,
+    /api/system/ncpadeployment, /api/system/exportlog: paginated audit categories.
+GET /api/system/log/nagios: latest sanitized Nagios lines (system.logs).
+POST /api/system/exportlog: record an export.
+"""
+import re
+
+from app.nagios_log import read_nagios_log, MAX_LINES
 from datetime import datetime, timezone
 
 from flask import request, current_app
@@ -1072,3 +1084,38 @@ def export_logs():
             "An unexpected error occurred while retrieving export logs."
         )
         return error("An unexpected error occurred.", 500)
+
+
+# ==========================================================
+# NAGIOS LOG (READ ONLY)
+# ==========================================================
+
+@system_bp.get('/log/nagios')
+@login_required
+@require_permission("system.logs")
+def nagios_log():
+    """Return a fixed-file bounded tail, newest last, requiring system.logs.
+
+    Optional query: lines=1..500 (default 200); after=0..2**63-1 Unix seconds
+    (exclusive). Unknown/duplicate parameters return 400. Reads at most 64 KiB;
+    unreadable/missing/non-regular files return lines=[] and available=false.
+    Free-form messages, plugin output and commands are redacted; state records
+    can still contain hostnames, service names and addresses. Response data:
+    {lines: [str], available: bool, truncated: bool, max_lines: 500, max_bytes: 65536}.
+    """
+    if set(request.args) - {'lines', 'after'}:
+        return error('Only lines and after parameters are supported.', 400)
+    values = {}
+    for name, default, minimum, maximum in [('lines', 200, 1, MAX_LINES), ('after', 0, 0, 2**63 - 1)]:
+        entries = request.args.getlist(name)
+        if not entries:
+            values[name] = default
+            continue
+        raw = entries[0]
+        if len(entries) != 1 or not re.fullmatch(r'[0-9]{1,19}', raw):
+            return error(f'{name} must be an integer between {minimum} and {maximum}.', 400)
+        value = int(raw)
+        if value < minimum or value > maximum:
+            return error(f'{name} must be between {minimum} and {maximum}.', 400)
+        values[name] = value
+    return success(read_nagios_log(current_app.config['NAGIOS_LOG_PATH'], **values))

@@ -101,7 +101,18 @@ export function fromDashboardSummaryResponse(data: DashboardSummaryApiResponse):
 
 // --- GET /dashboard/status -----------------------------------------------
 
+export type StorageLocation = {
+  bytes: number | null
+  filesystem: { free_bytes: number; total_bytes: number } | null
+}
+export type StorageUsage = {
+  databases: (StorageLocation & { name: string })[]
+  backups: StorageLocation & { complete: boolean }
+  archives: StorageLocation & { complete: boolean }
+}
+
 export type DashboardStatus = {
+  storageUsage?: StorageUsage | null
   nagios: {
     running: boolean
     version: string | null
@@ -114,6 +125,7 @@ export type DashboardStatus = {
 }
 
 type DashboardStatusApiResponse = {
+  storage_usage?: StorageUsage
   nagios: {
     running: boolean
     version: string | null
@@ -127,6 +139,7 @@ type DashboardStatusApiResponse = {
 
 export function fromDashboardStatusResponse(data: DashboardStatusApiResponse): DashboardStatus {
   return {
+    storageUsage: data.storage_usage ?? null,
     nagios: {
       running: data.nagios.running,
       version: data.nagios.version,

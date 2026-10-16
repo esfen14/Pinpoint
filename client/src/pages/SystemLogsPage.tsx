@@ -1,3 +1,5 @@
+import { NagiosLogPanel } from '../components/system-logs/NagiosLogPanel'
+import { useCurrentUser } from '../contexts/CurrentUserContext'
 import { useEffect, useState } from 'react'
 import { Search } from 'lucide-react'
 import { PageHeader } from '../components/shared/PageHeader'
@@ -10,10 +12,13 @@ import { LOG_ENDPOINTS, type LogCategory, type LogEntry, type LogListResponse, t
 import { Pagination } from '../components/shared/Pagination'
 
 const PER_PAGE = 10
+type LogTab = LogCategory | 'nagios'
 
 export function SystemLogsPage() {
+  const { hasPermission } = useCurrentUser()
+  const canViewLogs = hasPermission('system.logs')
   const { settings } = useSystemSettings()
-  const [activeTab, setActiveTab] = useState<LogCategory>('activity')
+  const [activeTab, setActiveTab] = useState<LogTab>('activity')
   const [selectedLog, setSelectedLog] = useState<LogEntry | null>(null)
 
   const [query, setQuery] = useState('')
@@ -41,6 +46,8 @@ export function SystemLogsPage() {
   }, [activeTab, startDate, endDate])
 
   useEffect(() => {
+    if (activeTab === 'nagios' || !canViewLogs) return
+    const endpoint = LOG_ENDPOINTS[activeTab]
     let cancelled = false
 
     async function load() {
@@ -55,7 +62,7 @@ export function SystemLogsPage() {
         if (startDate) params.set('start_date', startDate)
         if (endDate) params.set('end_date', endDate)
 
-        const data = await apiGet<LogListResponse>(`${LOG_ENDPOINTS[activeTab]}?${params.toString()}`)
+        const data = await apiGet<LogListResponse>(`${endpoint}?${params.toString()}`)
         if (cancelled) return
         setItems(data.items)
         setMeta({ pages: data.pages, total: data.total, hasNext: data.has_next, hasPrev: data.has_prev })
@@ -71,10 +78,12 @@ export function SystemLogsPage() {
     return () => {
       cancelled = true
     }
-  }, [activeTab, page, debouncedQuery, startDate, endDate])
+  }, [activeTab, page, debouncedQuery, startDate, endDate, canViewLogs])
 
-  const getTabLabel = (tab: LogCategory) => {
+  const getTabLabel = (tab: LogTab) => {
     switch (tab) {
+      case 'nagios':
+        return 'Nagios log'
       case 'activity':
         return 'Activity Log'
       case 'configurationChange':
@@ -88,13 +97,15 @@ export function SystemLogsPage() {
     }
   }
 
+  if (!canViewLogs) return null
+
   return (
     <main className="ml-[220px] flex-1">
       <div className="space-y-6 p-6">
 
         <PageHeader title="System Logs" description="Monitor events and system activities." />
 
-        {loadError && (
+        {activeTab !== 'nagios' && loadError && (
           <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300">
             {loadError}
           </div>
@@ -102,7 +113,7 @@ export function SystemLogsPage() {
 
         {/* Tabs */}
         <div className="flex gap-6 border-b border-[var(--border)]">
-          {(['activity', 'configurationChange', 'networkDiscovery', 'ncpaDeployment', 'exportLog'] as LogCategory[]).map((tab) => (
+          {(['activity', 'configurationChange', 'networkDiscovery', 'ncpaDeployment', 'exportLog', 'nagios'] as LogTab[]).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -117,6 +128,7 @@ export function SystemLogsPage() {
           ))}
         </div>
 
+        {activeTab === 'nagios' ? <NagiosLogPanel /> : <>
         {/* Search + date range filter */}
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--input-bg)] px-3 py-2">
@@ -271,6 +283,7 @@ export function SystemLogsPage() {
             )}
           </div>
         </div>
+        </>}
 
       </div>
     </main>

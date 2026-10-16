@@ -138,6 +138,8 @@ Supported Python version: **3.14** (developed on 3.14.2).
 | `DATABASE_BACKUP_DIR` | `server/database-backups` | no | Where automatic database backups are written. |
 | `NAGIOS_HOST_CFG` | `/usr/local/nagios/etc/objects/hosts.cfg` | no | Hosts file that network discovery writes. |
 | `NAGIOS_RESOURCE_CFG` | `/usr/local/nagios/etc/resource.cfg` | no | Nagios resource file for the managed check-secret macro block; updates must preserve its owner, group and mode. |
+| `NAGIOS_LOG_PATH` | `/usr/local/nagios/var/nagios.log` | Fixed server-side Nagios log source; HTTP requests cannot override it |
+| `NAGIOS_LOG_ARCHIVE_DIR` | `/usr/local/nagios/var/archives` | Directory measured for Dashboard archive storage |
 | `NAGIOS_MAIN_CFG` | `/usr/local/nagios/etc/nagios.cfg` | no | Main Nagios config, used for `nagios -v` validation. |
 | `NAGIOS_BIN` | `/usr/local/nagios/bin/nagios` | no | Nagios binary, used for validation. |
 | `NAGIOS_LOG_FILE` | `/usr/local/nagios/var/nagios.log` | no | Read-only notification failure diagnostics; a missing or unreadable log gives an empty indicator. |
