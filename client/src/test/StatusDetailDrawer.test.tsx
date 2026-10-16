@@ -221,3 +221,23 @@ describe('StatusDetailDrawer recipients editor permission', () => {
     expect(screen.queryByText(/Recipients editor/)).not.toBeInTheDocument()
   })
 })
+
+
+describe('identity review notice', () => {
+  it('opens the same comparison flow for a participating device', async () => {
+    permissions.granted.add('system.discover')
+    api.apiGet.mockImplementation((path: string) => {
+      if (path === '/api/system/discover/review') return Promise.resolve({ items: [{
+        id: 3, kind: 'IDENTITY_CHANGED', message: 'Identity changed', created_at: '2026-10-15T00:00:00',
+        devices: [{ id: 4, display_name: 'Web', nagios_host_name: 'web-01', ip_address: '10.77.0.4', state: 'ACTIVE', monitoring_state: 'monitored' }],
+      }] })
+      if (path.endsWith('/identifiers')) return Promise.resolve({ device: { id: 4, nagios_host_name: 'web-01', monitoring_state: 'monitored' }, confidence: 'UNVERIFIED', identifiers: [] })
+      return Promise.resolve(detail())
+    })
+    render(<StatusDetailDrawer hostname="web-01" onClose={() => {}} />)
+    expect(await screen.findByText('This device needs identity review')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Review' }))
+    expect(screen.getByRole('dialog', { name: 'Review device identity' })).toBeInTheDocument()
+    expect(await screen.findByText('UNVERIFIED')).toBeInTheDocument()
+  })
+})

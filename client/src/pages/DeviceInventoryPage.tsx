@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
+import { DeviceIdentityReviews } from '../components/device-inventory/DeviceIdentityReviews'
+import type { MergeResult } from '../types/deviceIdentity'
 import { Activity, CheckCircle2, XCircle } from 'lucide-react'
 import { HostTable } from '../components/device-inventory/HostTable'
 import { StatusDetailDrawer } from '../components/device-inventory/StatusDetailDrawer'
@@ -24,6 +26,14 @@ function buildQuery(params: Record<string, string | number>) {
 export function DeviceInventoryPage() {
   const { settings } = useSystemSettings()
   const isLight = settings.theme === 'light'
+
+  const [reviewRevision, setReviewRevision] = useState(0)
+  function merged(result: MergeResult) {
+    setDetailHostname(null)
+    setReviewRevision(n => n + 1)
+    setSyncNotice(result.config_ok === false ? `Merge saved. Nagios configuration warning: ${result.config_message}` : 'Merge saved.')
+    void Promise.all([loadHosts(), loadCounts()])
+  }
 
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
@@ -179,6 +189,8 @@ export function DeviceInventoryPage() {
           />
         </div>
 
+        <DeviceIdentityReviews reloadKey={reviewRevision} onMerged={merged} />
+
         <HostTable
           hosts={hosts}
           title="All Hosts"
@@ -218,6 +230,7 @@ export function DeviceInventoryPage() {
       {detailHostname && (
         <StatusDetailDrawer
           hostname={detailHostname}
+          onIdentityMerged={merged}
           onClose={() => setDetailHostname(null)}
           onMonitoringChanged={() => { void Promise.all([loadHosts(), loadCounts()]) }}
         />

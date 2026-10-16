@@ -330,6 +330,7 @@ changes on merge/retire apply before commit and roll back if rejected.
 
 | Method and path | Permission | Purpose |
 |---|---|---|
+| `GET /api/system/hosts/lookup` | `system.hosts` | Discovered-device picker, independent of Nagios snapshots and monitoring filters. Optional literal case-insensitive `search` (max 100 characters) matches display name, Nagios name, DNS name, IP or exact numeric ID. Returns up to 20 device summaries ordered by ID with `has_more`; merged records excluded, retired sources included |
 | `GET /api/system/topology` | `system.network_health` | All discovered devices plus latest Inventory hosts without device records, existing device details, latest stored host state/check time, monitoring state, parent IDs, editable lifecycle flag; configured edges include parent/child IDs and Nagios eligibility/omission reason. Advisory suggested gateway ID; no automatic inference or layout coordinates. Reads never probe target devices |
 | `GET /api/system/hosts/<id>/addresses` | `system.hosts` | Address history of a device |
 | `GET /api/system/hosts/<id>/identifiers` | `system.hosts` | Identity evidence and confidence |

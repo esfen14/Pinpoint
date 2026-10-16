@@ -11,6 +11,8 @@ hosts.cfg and report whether Nagios was updated.
 
 Routes
 ------
+GET  /system/hosts/lookup
+    Search discovered records, including devices outside monitoring.
 GET  /system/topology
     Inventory devices and manually configured parent edges, with latest stored status.
 
@@ -199,6 +201,35 @@ def serialize_device_summary(device):
 # ==========================================================
 # READ
 # ==========================================================
+
+@system_bp.get('/hosts/lookup')
+@login_required
+@require_permission('system.hosts')
+def lookup_discovered_devices():
+    """Search discovered records by name, IP or stable ID, independently of Nagios.
+
+    Optional search is literal, case-insensitive text (at most 100 characters).
+    Returns up to 20 summaries in stable ID order and has_more. Merged records
+    are excluded; retired records remain available as merge sources.
+    """
+    search = request.args.get("search", "").strip()
+    if len(search) > 100:
+        return error("search must be at most 100 characters.", 400)
+    query = sa.select(NetworkDiscovery).where(NetworkDiscovery.Device_State != DeviceState.MERGED)
+    if search:
+        matches = [column.icontains(search, autoescape=True) for column in (
+            NetworkDiscovery.Display_Name, NetworkDiscovery.Nagios_Host_Name,
+            NetworkDiscovery.Hostname, NetworkDiscovery.IP_Address,
+        )]
+        if search.isascii() and search.isdecimal() and len(search) <= 18:
+            matches.append(NetworkDiscovery.NetDiscoveryID == int(search))
+        query = query.where(sa.or_(*matches))
+    rows = db.session.scalars(query.order_by(NetworkDiscovery.NetDiscoveryID).limit(21)).all()
+    items = []
+    for device in rows[:20]:
+        items.append(serialize_device_summary(device))
+    return success({"items": items, "has_more": len(rows) > 20})
+
 
 @system_bp.get('/hosts/<int:id>/addresses')
 @login_required
