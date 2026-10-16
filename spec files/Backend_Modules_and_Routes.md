@@ -351,7 +351,9 @@ shared writer: validated with the Nagios binary, rolled back if rejected).
 
 Per-device overrides of a registry plugin's variables, stored in
 `NetworkDiscovery.Plugin_Variables[<plugin>]` (the Device Inventory SNMP form uses it for the SNMP
-version and v3 credentials). A change is validated, written to the activity log (variable names,
+version and v3 credentials, and the Ports section's Check options form for the expected text,
+status codes, virtual host and method of `http` / `https` and the greeting of `pop3`, `imap`,
+`pop3s` and `imaps`; see "Mail and web service checks" in `Data_Model_and_Integrations.md`). A change is validated, written to the activity log (variable names,
 never values) and applied through `regenerate_and_apply_config_status()` under `config_write_lock`;
 if Nagios rejects it the change is rolled back and the response is 422. Validation reuses the
 registry (`validate_variable_value`, `validate_snmp_v3`, `editable_variables`), so it cannot drift

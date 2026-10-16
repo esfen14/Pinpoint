@@ -358,7 +358,7 @@ This document catalogs all 57 Nagios plugins with their exact output formats, pe
 | Flag | Long Option | Required | Description |
 |------|-------------|----------|-------------|
 | `-H` | `--hostname=STRING` | **Yes** | Virtual hostname (HTTP Host header) |
-| `-I` | `--IP-address=STRING` | No | Server IP address (overrides DNS) |
+| `-I` | `--IP-address=STRING` | No | Server IP address (overrides DNS). PinPoint passes the device address as `-H` unless a virtual host is set; then it passes `-I <device address> -H <virtual host>` |
 | `-u` | `--url=PATH` | No | URL path to request (default: /) |
 | `-p` | `--port=INTEGER` | No | Port (default: 80 or 443 with SSL) |
 | `-w` | `--warning=DOUBLE` | No | Warning response time threshold (seconds) |
@@ -1233,6 +1233,7 @@ memory/virtual/percent: `OK: Percent was 13.30 % | 'percent'=13.30%;60;90;`
 **Output Format**: `TCP {OK|WARNING|CRITICAL} - {N}.{N} second response time on {host} port {port} [{status}]`
 **Performance Data**: `time={N}s;{warn};{crit};0;{timeout}`
 **Status Keywords**: TCP OK, TCP WARNING, TCP CRITICAL
+**PinPoint use**: besides the generic port check, the `pop3`, `pop3s`, `imap` and `imaps` services run `check_tcp [-S] -M crit -e '<greeting>'` (no `check_pop` or `check_imap` is bundled). Services with no bundled plugin (SQL Server, Oracle, MongoDB, JBoss, WebLogic, Citrix) are checked at port level only; see `Data_Model_and_Integrations.md` "Services checked at port level only".
 
 **Arguments**:
 | Flag | Long Option | Required | Description |
