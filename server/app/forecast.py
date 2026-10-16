@@ -48,6 +48,14 @@ def as_utc(value: datetime) -> datetime:
     return value.astimezone(timezone.utc)
 
 
+def enough_data(samples: list[tuple[datetime, float]], window_hours: float) -> bool:
+    """True when there are enough samples, spread over enough of the window, to attempt a fit."""
+    if len(samples) < MIN_SAMPLES:
+        return False
+    times = [as_utc(at) for at, _ in samples]
+    return (max(times) - min(times)).total_seconds() / 3600 >= window_hours * MIN_WINDOW_COVERAGE
+
+
 def fit_forecast(
     samples: list[tuple[datetime, float]],
     warning: Optional[float],
@@ -74,15 +82,11 @@ def fit_forecast(
     if not samples or not thresholds:
         return None
 
+    if not enough_data(samples, window_hours):
+        return None
     ordered = sorted(((as_utc(at), float(value)) for at, value in samples), key=lambda pair: pair[0])
     count = len(ordered)
-    if count < MIN_SAMPLES:
-        return None
-
     now = as_utc(now)
-    span_hours = (ordered[-1][0] - ordered[0][0]).total_seconds() / 3600
-    if span_hours < window_hours * MIN_WINDOW_COVERAGE:
-        return None
 
     values = [value for _, value in ordered]
     # A cleanup or counter reset shows as one large fall; the line through it would mislead.
@@ -138,7 +142,8 @@ def fit_forecast(
 def compute_forecasts() -> int:
     """
     Recompute forecasts for disk and memory percent metrics and replace the stored set; return
-    how many were stored. Uses a fixed number of queries however many services exist: one for
+    how many forecasts were stored (series too new to forecast are stored too, as "insufficient",
+    but not counted). Uses a fixed number of queries however many services exist: one for
     the series list (capped at MAX_SERIES_PER_RUN, paused/retired/merged devices excluded), one
     for hourly averages of those series, then one delete and one batch insert. Commits; rolls
     back and re-raises on failure. Reads history.db only; never writes to Nagios.
@@ -192,6 +197,12 @@ def compute_forecasts() -> int:
         last = latest[key]
         result = fit_forecast(points, last.warning, last.critical, now, WINDOW_HOURS)
         if result is None:
+            if not enough_data(points, WINDOW_HOURS):
+                stored.append({
+                    "Hostname": key[0], "Service": key[1], "Metric": key[2], "Kind": "insufficient",
+                    "Sample_Count": len(points), "Window_Hours": WINDOW_HOURS, "Unit": last.unit,
+                    "Computed_At": now.replace(tzinfo=None),
+                })
             continue
         stored.append({
             "Hostname": key[0], "Service": key[1], "Metric": key[2], "Kind": result["kind"],
@@ -210,5 +221,5 @@ def compute_forecasts() -> int:
     except Exception:
         db.session.rollback()
         raise
-    return len(stored)
+    return sum(1 for row in stored if row["Kind"] != "insufficient")
 

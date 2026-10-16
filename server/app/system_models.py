@@ -591,7 +591,9 @@ class ResourceForecast(db.Model):
     The latest straight-line forecast of when one metric on one service reaches its warning or
     critical threshold (app/forecast.py). Only the newest forecast per host, service and metric
     is kept, replaced on every run; there is no forecast history. It is an estimate for display:
-    it never changes a Nagios state. Kind is "warning" or "critical"; Crossing_At is UTC.
+    it never changes a Nagios state. Kind is "warning" or "critical" (Crossing_At is UTC), or
+    "insufficient" for a series too new to forecast: only Sample_Count and Window_Hours are set,
+    so the UI can say "not enough data yet" instead of showing nothing.
     """
     __tablename__ = "RESOURCE_FORECAST"
     __table_args__ = (
@@ -602,14 +604,14 @@ class ResourceForecast(db.Model):
     Hostname: so.Mapped[str] = so.mapped_column(sa.String(100), index=True)
     Service: so.Mapped[str] = so.mapped_column(sa.String(150))
     Metric: so.Mapped[str] = so.mapped_column(sa.String(50))
-    Kind: so.Mapped[str] = so.mapped_column(sa.String(10))
-    Threshold: so.Mapped[float] = so.mapped_column(sa.Float())
-    Crossing_At: so.Mapped[datetime] = so.mapped_column(index=True)
-    Slope_Per_Hour: so.Mapped[float] = so.mapped_column(sa.Float())
-    R_Squared: so.Mapped[float] = so.mapped_column(sa.Float())
+    Kind: so.Mapped[str] = so.mapped_column(sa.String(12))
+    Threshold: so.Mapped[Optional[float]] = so.mapped_column(sa.Float())
+    Crossing_At: so.Mapped[Optional[datetime]] = so.mapped_column(index=True)
+    Slope_Per_Hour: so.Mapped[Optional[float]] = so.mapped_column(sa.Float())
+    R_Squared: so.Mapped[Optional[float]] = so.mapped_column(sa.Float())
     Sample_Count: so.Mapped[int] = so.mapped_column()
     Window_Hours: so.Mapped[float] = so.mapped_column(sa.Float())
-    Current_Value: so.Mapped[float] = so.mapped_column(sa.Float())
+    Current_Value: so.Mapped[Optional[float]] = so.mapped_column(sa.Float())
     Unit: so.Mapped[Optional[str]] = so.mapped_column(sa.String(5))
     Computed_At: so.Mapped[datetime] = so.mapped_column(default=lambda: datetime.now(timezone.utc))
 

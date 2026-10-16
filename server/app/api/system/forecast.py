@@ -8,7 +8,7 @@ Routes
 ------
 GET /system/forecast
     The stored forecasts, soonest crossing first, each with the window, sample count and slope
-    behind it. Query: hostname (optional), limit (1-500, default 100).
+    behind it, plus the series that do not have enough history yet. Query: hostname (optional), limit (1-500, default 100).
 """
 
 import sqlalchemy as sa
@@ -38,7 +38,8 @@ def list_forecasts():
     """
     Return the stored forecasts sorted by soonest estimated crossing.
 
-    Response: {"success": true, "data": {"forecasts": [{hostname, service_name, metric, kind
+    Response: {"success": true, "data": {"insufficient": [{hostname, service_name, metric,
+    sample_count, window_hours}], "forecasts": [{hostname, service_name, metric, kind
     ("warning" or "critical"), threshold, crossing_at, slope_per_hour, r_squared, sample_count,
     window_hours, current_value, unit, computed_at}]}}. Timestamps are ISO-8601 with a UTC offset.
     An empty list means nothing is on course to cross a threshold (or there is not enough data).
@@ -50,11 +51,19 @@ def list_forecasts():
     if not raw_limit.isdigit() or not 1 <= int(raw_limit) <= MAX_LIMIT:
         return error(f"limit must be a whole number from 1 to {MAX_LIMIT}.", 400)
 
-    query = sa.select(ResourceForecast).order_by(ResourceForecast.Crossing_At, ResourceForecast.ForecastID)
     hostname = request.args.get("hostname", "").strip()
-    if hostname:
-        query = query.where(ResourceForecast.Hostname == hostname)
-    rows = db.session.scalars(query.limit(int(raw_limit))).all()
+    limit = int(raw_limit)
+
+    def stored(*conditions):
+        """Forecast rows matching the conditions (and the optional host filter), soonest first, capped."""
+        query = sa.select(ResourceForecast).where(*conditions)
+        if hostname:
+            query = query.where(ResourceForecast.Hostname == hostname)
+        query = query.order_by(ResourceForecast.Crossing_At, ResourceForecast.ForecastID)
+        return db.session.scalars(query.limit(limit)).all()
+
+    rows = stored(ResourceForecast.Kind != "insufficient")
+    waiting = stored(ResourceForecast.Kind == "insufficient")
 
     forecasts = []
     for row in rows:
@@ -73,4 +82,13 @@ def list_forecasts():
             "unit": row.Unit,
             "computed_at": utc_isoformat(row.Computed_At),
         })
-    return success({"forecasts": forecasts})
+    insufficient = []
+    for row in waiting:
+        insufficient.append({
+            "hostname": row.Hostname,
+            "service_name": row.Service,
+            "metric": row.Metric,
+            "sample_count": row.Sample_Count,
+            "window_hours": row.Window_Hours,
+        })
+    return success({"forecasts": forecasts, "insufficient": insufficient})

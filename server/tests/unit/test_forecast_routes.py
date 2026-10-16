@@ -55,7 +55,7 @@ class TestList:
     def test_empty_is_an_empty_list(self, logged_in_client):
         body = logged_in_client.get(URL).get_json()
         assert body["success"] is True
-        assert body["data"] == {"forecasts": []}
+        assert body["data"] == {"forecasts": [], "insufficient": []}
 
     def test_sorted_by_soonest_crossing_with_the_basis(self, logged_in_client, db_session):
         add_forecast(db_session, "later", 200)
@@ -72,6 +72,23 @@ class TestList:
         assert first["r_squared"] == 0.97 and first["current_value"] == 61.5 and first["unit"] == "%"
         # The browser must read these as UTC, so the offset is always present.
         assert first["crossing_at"].endswith("+00:00") and first["computed_at"].endswith("+00:00")
+
+    def test_series_without_enough_data_are_listed_separately(self, logged_in_client, db_session):
+        add_forecast(db_session, "ready", 10)
+        db_session.session.add(ResourceForecast(
+            Hostname="new-01", Service="ncpa-disk-5693", Metric="disk/logical/|/used_percent",
+            Kind="insufficient", Sample_Count=5, Window_Hours=72.0, Unit="%",
+            Computed_At=datetime.now(timezone.utc).replace(tzinfo=None),
+        ))
+        db_session.session.commit()
+
+        data = logged_in_client.get(URL).get_json()["data"]
+
+        assert [i["hostname"] for i in data["forecasts"]] == ["ready"]
+        assert data["insufficient"] == [{
+            "hostname": "new-01", "service_name": "ncpa-disk-5693",
+            "metric": "disk/logical/|/used_percent", "sample_count": 5, "window_hours": 72.0,
+        }]
 
     def test_filter_by_host(self, logged_in_client, db_session):
         add_forecast(db_session, "a", 10)

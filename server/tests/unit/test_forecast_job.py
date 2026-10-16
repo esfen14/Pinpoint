@@ -70,6 +70,36 @@ class TestStoring:
         assert rows()[0].Sample_Count <= forecast.WINDOW_HOURS
 
 
+class TestNotEnoughData:
+
+    def test_a_new_series_is_recorded_as_waiting_not_forecast(self, db_session):
+        seed_series(db_session, "new-01", "ncpa-disk-5693", DISK, 40.0, 0.3, hours=5)
+
+        assert forecast.compute_forecasts() == 0
+
+        row, = rows()
+        assert (row.Hostname, row.Kind, row.Sample_Count) == ("new-01", "insufficient", 5)
+        assert row.Crossing_At is None and row.Slope_Per_Hour is None
+
+    def test_a_flat_series_with_enough_data_is_not_recorded(self, db_session):
+        seed_series(db_session, "web-01", "ncpa-disk-5693", DISK, 50.0, 0.0)
+        forecast.compute_forecasts()
+        assert rows() == []
+
+    def test_waiting_becomes_a_forecast_once_data_builds_up(self, db_session):
+        seed_series(db_session, "web-01", "ncpa-disk-5693", DISK, 40.0, 0.3, hours=5)
+        forecast.compute_forecasts()
+        assert [r.Kind for r in rows()] == ["insufficient"]
+
+        db_session.session.execute(sa.delete(ServicePerfData))
+        db_session.session.execute(sa.delete(ServiceStatus))
+        db_session.session.commit()
+        seed_series(db_session, "web-01", "ncpa-disk-5693", DISK, 40.0, 0.3)
+        forecast.compute_forecasts()
+
+        assert [r.Kind for r in rows()] == ["warning"]
+
+
 class TestReplacement:
 
     def test_a_second_run_keeps_one_row_per_series(self, db_session):
