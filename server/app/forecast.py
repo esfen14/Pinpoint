@@ -11,8 +11,16 @@ fit_forecast() is pure (no database) so its arithmetic can be tested directly.
 
 from __future__ import annotations
 
+from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from typing import Optional
+
+import sqlalchemy as sa
+
+from app import db
+from app.history_models import ServicePerfData, ServiceStatus
+from app.network_discovery.device_identity import unchecked_host_names
+from app.system_models import ResourceForecast
 
 # A fit needs enough samples spread over most of the window, and must explain the data.
 MIN_SAMPLES = 12
@@ -22,6 +30,15 @@ MIN_R_SQUARED = 0.8
 MAX_DROP_SHARE = 0.5
 # Further out than this is neither useful nor trustworthy.
 MAX_HORIZON_DAYS = 90
+# Hours of history one fit looks at. Samples are averaged per hour, so a series is at most this many points.
+WINDOW_HOURS = 72
+# Most host, service and metric series one run forecasts; the rest wait for a later run.
+MAX_SERIES_PER_RUN = 500
+# Metrics forecast first: NCPA disk used percent and memory percent. Nothing else is read.
+METRIC_FILTER = sa.or_(
+    ServicePerfData.Metric.like("disk/%/used_percent"),
+    ServicePerfData.Metric == "memory/virtual/percent",
+)
 
 
 def as_utc(value: datetime) -> datetime:
@@ -112,3 +129,86 @@ def fit_forecast(
             "current_value": latest,
         }
     return None
+
+
+# ==========================================================
+# JOB: forecast every bounded series and store the latest
+# ==========================================================
+
+def compute_forecasts() -> int:
+    """
+    Recompute forecasts for disk and memory percent metrics and replace the stored set; return
+    how many were stored. Uses a fixed number of queries however many services exist: one for
+    the series list (capped at MAX_SERIES_PER_RUN, paused/retired/merged devices excluded), one
+    for hourly averages of those series, then one delete and one batch insert. Commits; rolls
+    back and re-raises on failure. Reads history.db only; never writes to Nagios.
+    """
+    now = datetime.now(timezone.utc)
+    start = (now - timedelta(hours=WINDOW_HOURS)).replace(tzinfo=None)
+    skipped = unchecked_host_names()
+
+    series_query = (
+        sa.select(ServiceStatus.Hostname, ServiceStatus.Service, ServicePerfData.Metric)
+        .join(ServiceStatus, ServicePerfData.ServiceStatusID == ServiceStatus.ServiceStatusID)
+        .where(ServiceStatus.Timestamp >= start, METRIC_FILTER)
+        .group_by(ServiceStatus.Hostname, ServiceStatus.Service, ServicePerfData.Metric)
+        .order_by(ServiceStatus.Hostname, ServiceStatus.Service, ServicePerfData.Metric)
+        .limit(MAX_SERIES_PER_RUN)
+    )
+    if skipped:
+        series_query = series_query.where(ServiceStatus.Hostname.notin_(skipped))
+    series = {tuple(row) for row in db.session.execute(series_query).all()}
+
+    samples = defaultdict(list)
+    latest = {}
+    if series:
+        hour = sa.func.strftime("%Y-%m-%d %H", ServiceStatus.Timestamp)
+        hourly = (
+            sa.select(
+                ServiceStatus.Hostname, ServiceStatus.Service, ServicePerfData.Metric,
+                sa.type_coerce(sa.func.min(ServiceStatus.Timestamp), sa.DateTime()).label("at"),
+                sa.func.avg(ServicePerfData.Measured_Value).label("value"),
+                sa.func.max(ServicePerfData.Warning_Threshold).label("warning"),
+                sa.func.max(ServicePerfData.Critical_Threshold).label("critical"),
+                sa.func.max(ServicePerfData.Unit).label("unit"),
+            )
+            .join(ServiceStatus, ServicePerfData.ServiceStatusID == ServiceStatus.ServiceStatusID)
+            .where(
+                ServiceStatus.Timestamp >= start, METRIC_FILTER,
+                ServiceStatus.Hostname.in_({host for host, _, _ in series}),
+            )
+            .group_by(ServiceStatus.Hostname, ServiceStatus.Service, ServicePerfData.Metric, hour)
+            .order_by(sa.text("at"))
+        )
+        for row in db.session.execute(hourly).all():
+            key = (row.Hostname, row.Service, row.Metric)
+            if key not in series:
+                continue
+            samples[key].append((row.at, row.value))
+            latest[key] = row  # ordered by time, so the last row wins
+
+    stored = []
+    for key, points in samples.items():
+        last = latest[key]
+        result = fit_forecast(points, last.warning, last.critical, now, WINDOW_HOURS)
+        if result is None:
+            continue
+        stored.append({
+            "Hostname": key[0], "Service": key[1], "Metric": key[2], "Kind": result["kind"],
+            "Threshold": result["threshold"], "Crossing_At": result["crossing_at"].replace(tzinfo=None),
+            "Slope_Per_Hour": result["slope_per_hour"], "R_Squared": result["r_squared"],
+            "Sample_Count": result["sample_count"], "Window_Hours": result["window_hours"],
+            "Current_Value": result["current_value"], "Unit": last.unit,
+            "Computed_At": now.replace(tzinfo=None),
+        })
+
+    try:
+        db.session.execute(sa.delete(ResourceForecast))
+        if stored:
+            db.session.execute(sa.insert(ResourceForecast), stored)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+    return len(stored)
+

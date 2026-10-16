@@ -18,6 +18,8 @@ SUPPORTED_POLL_INTERVALS = (30, 60, 120, 300)
 MAINTENANCE_DISPATCH_SECONDS = 60
 settings_schedule_lock = RLock()
 REMEDIATION_POLL_SECONDS = 15
+# Forecasts change slowly and are built from hourly averages, so a half hour is plenty.
+FORECAST_MINUTES = 30
 
 _scheduler: BackgroundScheduler | None = None
 
@@ -87,6 +89,18 @@ def _consume_remediation_spool():
         except Exception:
             db.session.rollback()
             current_app.logger.exception("Unexpected error while consuming the remediation spool")
+
+
+def _compute_forecasts():
+    """Recompute disk and memory forecasts from stored performance data. It never raises."""
+    from app import forecast
+
+    with app.app_context():
+        try:
+            forecast.compute_forecasts()
+        except Exception:
+            db.session.rollback()
+            current_app.logger.exception("Unexpected error while computing forecasts")
 
 
 def _relocate_ncpa_devices():
@@ -251,6 +265,14 @@ def init_scheduler():
         "interval",
         seconds=REMEDIATION_POLL_SECONDS,
         id="remediation_spool",
+        max_instances=1,
+        coalesce=True,
+    )
+    _scheduler.add_job(
+        _compute_forecasts,
+        "interval",
+        minutes=FORECAST_MINUTES,
+        id="resource_forecast",
         max_instances=1,
         coalesce=True,
     )
