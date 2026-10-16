@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 
 import { apiGet, errorMessage } from '../../lib/api'
 import { useDisplayTime } from '../../hooks/useDisplayTime'
+import { DropdownSelect } from '../shared/DropdownSelect'
 
 type FlapItem = {
   type: 'host' | 'service'
@@ -68,26 +69,22 @@ export function FlapHistorySection({ hostname, service }: Props) {
   return (
     <section>
       <div className="mb-2 flex items-center justify-between gap-3">
-        <h3 className="font-semibold">Flap history</h3>
-        <select
-          aria-label="Flap history window"
+        <h3 className="text-[17px] font-semibold">Flap history</h3>
+        <DropdownSelect
+          label="Flap history window"
           value={hours}
-          onChange={(e) => setHours(Number(e.target.value))}
-          className="rounded-lg border border-[var(--border)] bg-[var(--input-bg)] px-2 py-1 text-xs text-[var(--text)]"
-        >
-          {WINDOWS.map((window) => (
-            <option key={window.hours} value={window.hours}>{window.label}</option>
-          ))}
-        </select>
+          options={WINDOWS.map((window) => ({ value: window.hours, label: window.label }))}
+          onChange={setHours}
+        />
       </div>
 
       {data?.global_flap_detection_enabled === false && (
-        <p className="mb-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-400">
+        <p className="mb-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[13px] text-amber-700 dark:text-amber-400">
           Flap detection is switched off in Nagios, so per-device flap settings have no effect and nothing new is flagged.
         </p>
       )}
 
-      {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="text-[13px] text-red-600 dark:text-red-400">{error}</p>}
       {!data && !error && <p className="text-[var(--text-muted)]">Loading…</p>}
       {data && !entry && (
         <p className="text-[var(--text-muted)]">Not flagged as flapping in this period.</p>
@@ -98,12 +95,12 @@ export function FlapHistorySection({ hostname, service }: Props) {
             Flagged as flapping in {entry.snapshots_flagged} {entry.snapshots_flagged === 1 ? 'check' : 'checks'}
             {entry.currently_flapping && <span className="ml-2 text-amber-600 dark:text-amber-400">Flapping now</span>}
           </p>
-          <p className="text-xs text-[var(--text-muted)]">
+          <p className="text-[13px] text-[var(--text-muted)]">
             First {formatDateTime(entry.first_flagged)} · last {formatDateTime(entry.last_flagged)}
           </p>
         </div>
       )}
-      <p className="mt-2 text-xs text-[var(--text-muted)]">
+      <p className="mt-2 text-[13px] text-[var(--text-muted)]">
         Based on status checks about a minute apart, so very quick flaps can be missed.
       </p>
     </section>

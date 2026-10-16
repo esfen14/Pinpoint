@@ -65,6 +65,12 @@ API structure beyond §8.
 - Below the Ports section the drawer shows an **Interfaces** section for a device with SNMP
   monitored (nothing for other devices): the interfaces the device reports, a Monitor choice
   for each and a Refresh button, with the same `system.hosts` / `system.hosts.edit` rules.
+- Below the Interfaces section the drawer shows an **SNMP** section for a device with an SNMP
+  port monitored: the SNMP version (Default, 1, 2c, 3), the community, and for version 3 the
+  security level, user, and the authentication and privacy protocols and passwords. Passwords
+  are never shown after saving. The section offers Save, Test and Reset to defaults, with the
+  same `system.hosts` / `system.hosts.edit` rules (Test needs edit). Routes:
+  [`Backend_Modules_and_Routes.md`](Backend_Modules_and_Routes.md) (`device_plugin_variables.py`).
   It is a separate section and does not change the Ports requirements; its behavior is in
   [`Display_Requirements.md`](Display_Requirements.md) §2.5.1 and
   [`Backend_Modules_and_Routes.md`](Backend_Modules_and_Routes.md) (`device_interfaces.py`).

@@ -15,7 +15,7 @@ line per sudoers entry with no wildcards, no secrets in logs.
 | 1 | Event spool folder | #120 | Done by hand on the lab appliance, not in the installer | Automatic recovery (#120, #121) |
 | 2 | Event handler executable | #120 | Done by hand, not in the installer | Same |
 | 3 | Narrower `nagios` group rights | #120 | Not started | Security review of #120 |
-| 4 | Restart sudoers rule | #121 Part 8.2 | Not started | `restart_local_service` |
+| 4 | Restart sudoers rule | #121 Part 8.2 | Done, merged in the installer repo (`setup/configure-pinpoint-privileges.sh`, `tests/restart-sudoers-tests.sh`) | `restart_local_service` |
 | 5 | Resource-file helper and sudo grant | #129 | Built, draft installer PR #7, not approved | NCPA/SMB secret transport on a real appliance |
 | 6 | Journald size limit and installer log rotation | #124 Part 11.1 | Not started | Disk safety |
 | 7 | Implicit TLS in the SMTP helper | #115 Part 2.1 | Conditional, only if the team wants it | Non-Gmail relays on port 465 |
