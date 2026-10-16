@@ -37,7 +37,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 ## Plan
 
-1. [ ] Pure forecast math: `server/app/forecast.py` (`fit_forecast`), test first in `server/tests/unit/test_forecast.py`.
+1. [x] Pure forecast math: `server/app/forecast.py` (`fit_forecast`), test first in `server/tests/unit/test_forecast.py`.
 2. [ ] Model `ResourceForecast` (default bind) in `server/app/system_models.py` plus multi-database migration with downgrade and a migration test.
 3. [ ] Job `compute_forecasts()` in `server/app/forecast.py`: bounded queries, service cap, skip paused/retired/merged devices, replace the latest row per host/service/metric; register in `server/app/scheduler.py`. Tests in `test_forecast_job.py`, including a query-count bound.
 4. [ ] Read route `GET /system/forecast` in `server/app/api/system/forecast.py`, registered in `server/app/api/system/__init__.py`; permission reuse; tests in `test_forecast_routes.py`.
@@ -53,13 +53,14 @@ One row per loop round, newest last.
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 0 | Plan written, branch created | none | n/a |
+| 1 | `fit_forecast` in `server/app/forecast.py` with 15 unit tests (failed first: module missing) | `python -m pytest tests/unit/test_forecast.py -q` in `server/` | 15 passed |
 
 ## State for the next session
 
-- Last check run (exact command): none yet
-- Result (first failing lines, or "green"): n/a
+- Last check run (exact command): `cd server && python -m pytest tests/unit/test_forecast.py -q`
+- Result (first failing lines, or "green"): green, 15 passed
 - Hypothesis: NCPA metric names are `disk/logical/<part>/used_percent` and `memory/virtual/percent` (see `server/tests/unit/test_dashboard.py:242`); `ServicePerfData` joins `ServiceStatus` for the timestamp.
-- Next action: step 1, write `server/tests/unit/test_forecast.py` for `fit_forecast`, run it and confirm it fails.
+- Next action: step 2. Add model `ResourceForecast` to `server/app/system_models.py`, write the migration test first (copy the pattern of `server/tests/unit/test_maintenance_migration.py`), then `flask db migrate --multidb` and review it. Head revision is `d117f3b8a053`.
 
 ## Decisions and notes
 
