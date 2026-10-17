@@ -38,6 +38,8 @@ Requirement coverage:
 
 | 2 | Opened draft PR https://github.com/esfen14/Pinpoint/pull/192; kept #173 open | `gh pr create --draft`; documentation gate from round 1 | Requested documentation complete; live reproduction and acceptance coverage still outstanding |
 
+| 3 | Added opt-in real routed acceptance driver, exact-setting procedure, test-guide routing and Option A expectations; first single-parent physical outage reproduces HARD DOWN notification then UNREACHABLE and recovery | `python3 -m py_compile server/tests/e2e/parent_reachability.py`; live driver running; full gate running | Single-parent pass observed; redundant-parent and full gate pending |
+
 ## State for the next session
 
 - Last check run (exact command): `scripts/verify.sh docs` and `git diff --check`
