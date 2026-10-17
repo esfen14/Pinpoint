@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { apiGet, apiPost } from '../../lib/api'
 import { useSystemSettings } from '../../contexts/SystemSettingsContext'
 import { useCurrentUser } from '../../contexts/CurrentUserContext'
-import { fromRawNotification, formatRelativeTime as formatNotificationTime, type NotificationItem, type NotificationsResponse } from '../../types/notification'
+import { fromRawNotification, formatRelativeTime as formatNotificationTime, notificationTitle as baseNotificationTitle, type NotificationItem, type NotificationsResponse } from '../../types/notification'
 import { useDiscoveryStatus, type DiscoveryStatus } from '../../hooks/useDiscoveryStatus'
 import { useNcpaDeploymentStatus } from '../../hooks/useNcpaDeploymentStatus'
 import { DeploymentStatusItem } from '../ncpa-deployment/DeploymentStatusItem'
@@ -192,9 +192,8 @@ function SourceBadge({ source }: { source: NotificationItem['source'] }) {
 }
 
 function notificationTitle(n: NotificationItem) {
-  if (n.source === 'pinpoint') return n.serviceName ?? 'Pinpoint notification'
-  const title = `${n.type} ${n.hostname || 'Unknown host'}${n.serviceName ? ` / ${n.serviceName}` : ''}`.trim()
-  return n.repeatCount > 1 ? `${title} (×${n.repeatCount})` : title
+  const title = baseNotificationTitle(n)
+  return n.source !== 'pinpoint' && n.repeatCount > 1 ? `${title} (×${n.repeatCount})` : title
 }
 
 function NotificationDetailModal({

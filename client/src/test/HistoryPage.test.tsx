@@ -118,3 +118,42 @@ describe('HistoryPage', () => {
     expect(await screen.findByText('web')).toBeInTheDocument()
   })
 })
+
+
+describe('HistoryPage: custom notifications', () => {
+  const COMMENT = 'PinPoint automatic recovery did not succeed: action restart-web ended failed (run 7).'
+  const customItem = { ...nagios, event_id: '1790000030:custom-id', timestamp: 1790000030, state: '', contact: 'nagiosadmin',
+    method: 'notify-service-by-email', message: 'HTTP CRITICAL - Connection refused', is_custom: true, comment: COMMENT }
+
+  it('labels the notification Custom and shows its comment in the list and the detail', async () => {
+    apiGet.mockImplementation((path: string) => {
+      if (path.includes('/notifications/detail')) return Promise.resolve({ ...customItem, contacts: ['nagiosadmin'], linked_alert: null })
+      if (path.includes('/notifications?')) return Promise.resolve(page([customItem]))
+      return Promise.resolve(page([alert]))
+    })
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByText('web')
+    await user.click(screen.getByRole('button', { name: 'Notifications History' }))
+    const row = (await screen.findByText(/notify-service-by-email/)).closest('tr') as HTMLElement
+    expect(row).toHaveTextContent('Custom')
+    expect(row).toHaveTextContent(COMMENT)
+    await user.click(row)
+    expect(await screen.findByText('Custom notification')).toBeInTheDocument()
+    expect(screen.getByText(COMMENT)).toBeInTheDocument()
+    expect(await screen.findByText('HTTP CRITICAL - Connection refused')).toBeInTheDocument()
+  })
+
+  it('leaves an ordinary notification unlabelled', async () => {
+    apiGet.mockImplementation((path: string) => {
+      if (path.includes('/notifications?')) return Promise.resolve(page([nagios]))
+      return Promise.resolve(page([alert]))
+    })
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByText('web')
+    await user.click(screen.getByRole('button', { name: 'Notifications History' }))
+    const row = (await screen.findByText(/email · Failure/)).closest('tr') as HTMLElement
+    expect(row).not.toHaveTextContent('Custom')
+  })
+})

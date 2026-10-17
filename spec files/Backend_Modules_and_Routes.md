@@ -205,7 +205,7 @@ An action body has `name` (3 to 60 letters, numbers, spaces, `.`, `_`, `-`; uniq
 | `POST /api/system/dashboard/alerts/acknowledge` | `system.acknowledge_alerts` | Acknowledge one host or service alert; also sent to Nagios (`nagios_synced`, `nagios_message` in the response). A comment with a line break or NUL returns 400 |
 | `POST /api/system/dashboard/alerts/acknowledge-all` | `system.acknowledge_alerts` | Acknowledge a supplied batch of alerts; `nagios_synced` is false if any command failed |
 | `DELETE /api/system/dashboard/alerts/acknowledge` | `system.acknowledge_alerts` | Remove one application acknowledgement and the Nagios one (`nagios_synced`) |
-| `GET /api/system/dashboard/notifications` | `system.dashboard` | Return the five latest Nagios notifications |
+| `GET /api/system/dashboard/notifications` | `system.dashboard` | Return the five latest Nagios notifications. A Nagios custom notification (archive `notification_type` 1024, `notificationtype: CUSTOM`) carries `is_custom: true` and a `comment`: the archive holds no comment text, so the server rebuilds it from the `RemediationRun` that sent it (same host and service, `Notify_State` sent, send time within 120 seconds of the notification; the nearest run wins). `comment` is null when no run here sent it; ordinary notifications carry `is_custom: false` and no `comment` (#153). |
 
 Detailed fields and behavior are normative in `Display_Requirements.md`.
 
@@ -262,8 +262,8 @@ each route's docstring.
 |---|---|---|
 | `GET /api/system/history/alerts` | `system.history` | Paginated Nagios state-change events |
 | `GET /api/system/history/alerts/detail` | `system.history` | Full detail for one alert event |
-| `GET /api/system/history/notifications` | `system.history` | Paginated notification events from Nagios and Pinpoint; every item has `source` (`nagios` or `pinpoint`), filterable with `source=`. Pinpoint items are finished network scans (`type: scan`, state SUCCESS/FAILED/CANCELLED) read from `NETWORK_DISCOVERY_STATUS`; host/service/contact/type filters exclude them |
-| `GET /api/system/history/notifications/detail` | `system.history` | Full detail for one notification event; Pinpoint events use `source=pinpoint&id=<DiscoveryStatusID>` |
+| `GET /api/system/history/notifications` | `system.history` | Paginated notification events from Nagios and Pinpoint; every item has `source` (`nagios` or `pinpoint`), filterable with `source=`. Pinpoint items are finished network scans (`type: scan`, state SUCCESS/FAILED/CANCELLED) read from `NETWORK_DISCOVERY_STATUS`; host/service/contact/type filters exclude them A custom notification carries `is_custom` and a `comment` rebuilt from the run that sent it, as for the Dashboard route above (#153). |
+| `GET /api/system/history/notifications/detail` | `system.history` | Full detail for one notification event; Pinpoint events use `source=pinpoint&id=<DiscoveryStatusID>`. A Nagios custom notification (archive `notification_type` 1024, `notificationtype: CUSTOM`) carries `is_custom: true` and a `comment`: the archive holds no comment text, so the server rebuilds it from the `RemediationRun` that sent it (same host and service, `Notify_State` sent, send time within 120 seconds of the notification; the nearest run wins). `comment` is null when no run here sent it; ordinary notifications carry `is_custom: false` and no `comment` (#153). |
 
 Alert list and detail annotate prior state and time in that state from preceding
 archive transitions for the same target; recovery detail computes the full
@@ -297,7 +297,7 @@ in the seed permission list. This is tracked in `Implementation_Status.md`.
 
 | Method and path | Permission | Purpose |
 |---|---|---|
-| `GET /api/system/notifications` | `system.notifications` | Recent notifications from Nagios (`source: nagios`) and Pinpoint itself (`source: pinpoint`, network scan results) annotated with per-user read state. Nagios field names are normalized (`normalize_notification`) and repeats of the same host/service in the same state are collapsed into one entry with `repeat_count` and `first_timestamp` (`collapse_repeats`); the history routes are not collapsed |
+| `GET /api/system/notifications` | `system.notifications` | Recent notifications from Nagios (`source: nagios`) and Pinpoint itself (`source: pinpoint`, network scan results) annotated with per-user read state. Nagios field names are normalized (`normalize_notification`) and repeats of the same host/service in the same state are collapsed into one entry with `repeat_count` and `first_timestamp` (`collapse_repeats`); the history routes are not collapsed A custom notification carries `is_custom` and a `comment` rebuilt from the run that sent it, as for the Dashboard route above (#153). |
 | `GET /api/system/notifications/unread-count` | `system.notifications` | Count collapsed entries after the user's cursor (matches the panel list) |
 | `POST /api/system/notifications/mark-read` | `system.notifications` | Advance the user's notification cursor |
 

@@ -39,6 +39,8 @@ MAX_ATTEMPTS = 3
 # At most this many pending notifications are handled per consumer tick.
 BATCH_SIZE = 50
 MAX_NAME_CHARS = 40
+# How far apart (in seconds) the archive's time and the time PinPoint wrote the command may be.
+MATCH_WINDOW_SECONDS = 120
 DEFAULT_REPEAT_COUNT = 3
 DEFAULT_REPEAT_WINDOW_HOURS = 24
 STOPPED_ERROR = "PinPoint stopped while sending the notification."
@@ -147,6 +149,53 @@ def build_comment(kind, action_name, outcome_code, run_id):
     else:
         text = f"PinPoint automatic recovery did not succeed: action {name} ended {code} (run {run})."
     return text[:commands.MAX_COMMENT_CHARS]
+
+
+# ==========================================================
+# FEED
+# ==========================================================
+
+def attach_comments(items, service_key):
+    """
+    Give each custom notification in a feed its comment text. Nagios does not keep the comment in
+    the archive, so the text is rebuilt from the run that sent the notification: same host and
+    service, a notification that was sent, and the send time within MATCH_WINDOW_SECONDS of the
+    item's ``timestamp`` (the nearest run wins). Only items with ``is_custom`` set are touched;
+    they always get a ``comment`` key (None when no run matches, for example a notification
+    someone sent by hand). ``service_key`` names the item key that holds the service. Never
+    raises: a database problem leaves every comment None. Returns the same list.
+    """
+    custom = [item for item in items if item.get("is_custom")]
+    if not custom:
+        return items
+    for item in custom:
+        item["comment"] = None
+    try:
+        stamps = [int(item.get("timestamp") or 0) for item in custom]
+        low = datetime.fromtimestamp(min(stamps) - MATCH_WINDOW_SECONDS, timezone.utc)
+        high = datetime.fromtimestamp(max(stamps) + MATCH_WINDOW_SECONDS, timezone.utc)
+        runs = db.session.scalars(sa.select(RemediationRun).where(
+            RemediationRun.Notify_State == RemediationNotifyState.SENT,
+            RemediationRun.Notify_At >= low, RemediationRun.Notify_At <= high,
+        ).limit(500)).all()
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("Remediation: could not match custom notifications to runs")
+        return items
+    for item in custom:
+        stamp = int(item.get("timestamp") or 0)
+        best, best_gap = None, MATCH_WINDOW_SECONDS + 1
+        for run in runs:
+            if run.Hostname != item.get("hostname") or run.Service != (item.get(service_key) or None):
+                continue
+            moment = run.Notify_At if run.Notify_At.tzinfo else run.Notify_At.replace(tzinfo=timezone.utc)
+            gap = abs(int(moment.timestamp()) - stamp)
+            if gap < best_gap:
+                best, best_gap = run, gap
+        if best is not None:
+            outcome = best.Outcome.value if best.Outcome is not None else "unknown"
+            item["comment"] = build_comment(best.Notify_Kind, best.Action_Name, outcome, best.Id)
+    return items
 
 
 # ==========================================================
