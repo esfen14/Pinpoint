@@ -281,7 +281,7 @@ class TestEditRole:
     def test_administrator_permissions_are_immutable_for_direct_api_requests(
         self, logged_in_client, db_session, admin_role, admin_user, seeded_permissions, change
     ):
-        admin_role.Name = "Administrator"
+        admin_role.Name = "Super Admin"
         db_session.session.commit()
         original = set(db.session.scalars(
             sa.select(RolePermission.PermissionID)
@@ -312,7 +312,7 @@ class TestEditRole:
     def test_administrator_same_permissions_in_reverse_order_allows_metadata_edit(
         self, logged_in_client, db_session, admin_role, admin_user
     ):
-        admin_role.Name = "Administrator"
+        admin_role.Name = "Super Admin"
         db_session.session.commit()
         original = list(db.session.scalars(
             sa.select(RolePermission.PermissionID)
@@ -320,7 +320,7 @@ class TestEditRole:
         ))
         response = logged_in_client.put(
             f"/api/user/roles/{admin_role.RoleID}",
-            json={"name": "Administrator", "description": "Updated", "permissions": list(reversed(original))},
+            json={"name": "Super Admin", "description": "Updated", "permissions": list(reversed(original))}
         )
         assert response.status_code == 200
         db.session.refresh(admin_role)
@@ -333,7 +333,7 @@ class TestEditRole:
     def test_administrator_cannot_be_renamed_to_evade_permission_lock(
         self, logged_in_client, db_session, admin_role, admin_user
     ):
-        admin_role.Name = "Administrator"
+        admin_role.Name = "Super Admin"
         db_session.session.commit()
         original = list(db.session.scalars(
             sa.select(RolePermission.PermissionID)
@@ -345,12 +345,12 @@ class TestEditRole:
         )
         assert response.status_code == 400
         db.session.refresh(admin_role)
-        assert admin_role.Name == "Administrator"
+        assert admin_role.Name == "Super Admin"
 
     def test_administrator_role_stays_protected_after_bootstrap_account_moves(
         self, logged_in_client, db_session, admin_role, admin_user
     ):
-        admin_role.Name = "Administrator"
+        admin_role.Name = "Super Admin"
         replacement = _make_role(db_session, "Replacement")
         original = set(db.session.scalars(
             sa.select(RolePermission.PermissionID)
@@ -365,7 +365,7 @@ class TestEditRole:
 
         response = logged_in_client.put(
             f"/api/user/roles/{admin_role.RoleID}",
-            json={"name": "Administrator", "description": "Changed", "permissions": []},
+            json={"name": "Super Admin", "description": "Changed", "permissions": []},
         )
         assert response.status_code == 400
         assert set(db.session.scalars(

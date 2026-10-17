@@ -79,11 +79,17 @@ See [the investigation](../docs/plans/Issue_191_Account_Creation_Investigation.m
   from its assigned role. Both routes reject before changing persisted data. The
   account and role responses mark the protected choices so their edit forms explain
   the restriction and disable unsafe status, role, and permission controls.
-  The built-in `Administrator` role additionally has an immutable permission set
+  The built-in `Super Admin` role additionally has an immutable permission set
   for every account assigned to it: direct API edits reject changed grants before
   saving metadata, while reordered unchanged grants permit description edits.
   Its name is fixed to preserve the role's built-in identity, and role management
-  displays all its permission controls read-only with an explanation.
+  displays all its permission controls read-only with an explanation. The role
+  was renamed from the legacy `Administrator` name; `flask sync-permissions`
+  renames an existing `Administrator` role to `Super Admin` (keeping its RoleID,
+  users and permissions) and, if a `Super Admin` role already exists, leaves the
+  legacy role under the distinct name `Administrator (Legacy)` rather than
+  merging roles or reassigning users. Fresh installs and repeated initialization
+  seed and look up the role by the new name without creating a duplicate.
 - Singleton system settings with personal/system separation and optimistic
   version conflict handling. The system Check interval (1/2/5/10/15 minutes),
   Retry interval (1 to 10 minutes) and Maximum check attempts (1 to 10)

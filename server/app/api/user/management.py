@@ -4,6 +4,7 @@ from app.api.helper.database_access.permissions import require_permission, user_
 from app.system_models import Permission, User, Role, RolePermission, UserStatus
 from app.api.helper import *
 from app.api.helper.database_access.user_access import get_super_admin, is_super_admin
+from app.api.commands.seed import BUILTIN_ROLE_NAME
 from app.api.helper.responses import success, error
 from flask import current_app
 
@@ -355,15 +356,18 @@ def edit_role(id):
             if err is not None:
                 return err
 
-        if role.Name == "Administrator":
+        if role.Name == BUILTIN_ROLE_NAME:
             if role_name != role.Name:
-                return error("The built-in Administrator role cannot be renamed.", 400)
+                return error(f"The built-in {BUILTIN_ROLE_NAME} role cannot be renamed.", 400)
             current_permission_ids = set(db.session.scalars(
                 sa.select(RolePermission.PermissionID)
                 .where(RolePermission.RoleID == id)
             ))
             if set(permissions) != current_permission_ids:
-                return error("The built-in Administrator role's permissions cannot be changed.", 400)
+                return error(
+                    f"The built-in {BUILTIN_ROLE_NAME} role's permissions cannot be changed.",
+                    400,
+                )
 
         if (
             super_admin is not None
