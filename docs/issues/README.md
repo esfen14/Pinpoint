@@ -7,7 +7,7 @@ These issues turn the gaps in [`docs/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../NAGIOS
 - `Issue #N` is the identifier from the feature-gap plan (§3). It is **not** a GitHub issue number. When an issue is filed on GitHub, record the GitHub number next to the plan identifier. Branches follow `.agent/workflows/work-issue.md` (`issue-<github number>-<slug>`).
 - There is exactly one issue per plan number, so `Issue #N` here is plan issue #N. Work that touches several layers is split into labelled **Parts** inside the issue (for example `Part 19.2`), and each part keeps its own acceptance criteria.
 - Part 14.1 (per-device plugin variables API) was added while writing these issues: the override it exposes is read by the config generator but nothing could write it.
-- The availability-target part of issue #21 (Parts 21.2 and 21.3) is blocked until the team decides whether it wants targets.
+- The owner rejected availability targets on 2026-10-17: issue #21 / GitHub #134 is documentation reconciliation only. Service-report data sources and the reporting revision are separate GitHub issues [#198](https://github.com/esfen14/Pinpoint/issues/198) and [#199](https://github.com/esfen14/Pinpoint/issues/199).
 
 ## Title format
 
@@ -66,7 +66,7 @@ These issues turn the gaps in [`docs/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../NAGIOS
 | [Issue #23](issue-023.md) | Waits for Issue #7 and Part 8.1. Remote services also wait for Part 8.3 (blocked by investigation). |
 | [Issue #24](issue-024.md) | Kill switch, retention and health can start after Issue #7. The acknowledgement check waits for Issue #19 and the downtime check for Issue #9. |
 | [Issue #25](issue-025.md) | **Awaiting a product decision.** Forecasting goes beyond Nagios Core, and the team must confirm it wants it and whether it may notify. Do not start until decided. |
-| [Issue #21](issue-021.md) | **Part 21.2 (System):** **Awaiting a product decision.** An availability target (a percentage that uptime is compared against) goes beyond Nagios Core, which only reports measured percentages. Do not start until the team confirms it wants targets. Scheduled or recurring reports by email are not planned here and would depend on Issue #2. **Part 21.3 (Web-Interface):** Same condition as Part 21.2. |
+| [Issue #21](issue-021.md) | Decision resolved on 2026-10-17: Parts 21.2 and 21.3 are excluded; measured uptime only. Part 21.1 reconciles documentation. Historical target proposals remain in the issue document for context and are not acceptance gates. |
 
 ## Suggested order
 

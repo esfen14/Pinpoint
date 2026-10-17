@@ -322,7 +322,7 @@ scheduled or recurring emailed reports are outside the supported scope.
 
 | View | API route (GET) | Displayed data |
 |---|---|---|
-| Host Availability | `/api/system/report/availability` | Hostname, state, uptime %, last check and last state change; summary cards show total hosts, Up, Down / Unreachable and overall uptime |
+| Host Availability | `/api/system/report/availability` | Hostname, state, uptime %, Snapshots (legacy label for known-state seconds), last check and last state change; summary cards show total hosts, Up, Down / Unreachable and overall uptime |
 | Network Services | `/api/system/report/network-services` | One row per service name: instance count, OK / Warning / Critical / Unknown counts and uptime %; summary cards show service and instance totals, OK, Warning / Critical and overall uptime |
 | Hosts by OS | `/api/system/report/hosts-by-os` | Flattened host rows with OS, hostname, state, uptime %, last check and last state change; no summary cards |
 | Device Services | `/api/system/report/device-services` | One row per host/service pair: hostname, service, state, uptime %, snapshot count, last check and last state change; no summary cards |
@@ -368,13 +368,13 @@ time zone. No report period metadata or summary cards are included in exports.
 | View | Filename stem | Export columns |
 |---|---|---|
 | Host Availability | `host-availability-report` | Hostname, State, Uptime %, Total Snapshots, Last Check, Last State Change |
-| Network Services | `network-services-report` | Service, Instances, OK, Warning, Critical, Unknown, Uptime % |
+| Network Services | `network-services-report` | Service, Total Instances, OK, Warning, Critical, Unknown, Uptime % |
 | Hosts by OS | `hosts-by-os-report` | OS, Hostname, State, Uptime %, Last Check, Last State Change |
 | Device Services | `device-services-report` | Hostname, Service, State, Uptime %, Snapshots, Last Check, Last State Change |
 | Alerts | `alerts-report` | Time, Hostname, Service, Previous State, New State, Output |
 | Notifications | `notifications-report` | Time, Hostname, Service, State, Contact, Message |
 
-The Host Availability export retains the legacy `Total Snapshots` label, but its
+Host Availability retains `Snapshots` on screen and `Total Snapshots` in exports, but its
 API `total_snapshots` value is known-state duration in seconds from Nagios,
 not a polling snapshot count. Export logging posts to `/api/system/exportlog`;
 a logging failure does not prevent the download.

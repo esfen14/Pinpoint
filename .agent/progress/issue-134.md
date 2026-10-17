@@ -5,11 +5,11 @@ Status: in-progress
 
 ## Finish condition
 
-- [ ] E / Part 21.1: both inventories accurately list all six views.
-- [ ] E / Part 21.1: each view names its API route.
-- [ ] E / Part 21.1: `scripts/verify.sh docs` passes.
-- [ ] C / Part 21.1: record displayed fields, period handling and export support; file defects separately.
-- [ ] F/G/H applicable evidence: full verification and sanitized report, including six-view appliance checks.
+- [x] E / Part 21.1: both inventories accurately list all six views.
+- [x] E / Part 21.1: each view names its API route.
+- [x] E / Part 21.1: `scripts/verify.sh docs` passes.
+- [x] C / Part 21.1: record displayed fields, period handling and export support; file defects separately.
+- [x] F/G/H applicable evidence: full verification and sanitized report, including six-view appliance checks.
 
 Requirement coverage:
 
@@ -26,7 +26,7 @@ Requirement coverage:
 ## Plan
 
 1. [x] Audit ReportsPage.tsx, components/reports, report types/exports and server/app/api/system/report.py; update spec files/Frontend_Modules_and_Routes.md, Implementation_Status.md and docs/issues/issue-021.md to record the product decision.
-2. [ ] Run docs and all verification, inspect six report views on a lab appliance if available, and record docs/test-runs evidence; report any defects separately.
+2. [x] Recheck source mappings; correct export heading in spec files/Frontend_Modules_and_Routes.md and stale target-decision references in docs/issues/README.md and docs/NAGIOS_CORE_FEATURE_GAP_PLAN.md; run docs/all verification, record docs/test-runs evidence and the six-view browser result; report defects separately.
 3. [x] On user steering, write docs/plans/Service_Reports_Nagios_Availability_Plan.md for the two service reports; do not implement or open the documentation PR until follow-up scope is settled.
 4. [ ] Re-read #134, prove applicable finish conditions, remove progress file when complete and open PR using the template; inspect CI.
 
@@ -34,16 +34,18 @@ Requirement coverage:
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| 2 | Corrected exact column labels/decision references and recorded real six-view/CSV/full-suite evidence | scripts/verify.sh all; Playwright /tmp/issue-134-reports-browser.cjs | green: 3991 backend, 912 frontend; six views and six CSV exports passed |
+| resumed | Pulled issue branch, re-read #134 and reran last check | scripts/verify.sh docs | green; full suite running |
 | Planning | Drafted the user-requested Nagios-backed service-report plan | scripts/verify.sh docs | green; no product implementation |
 | 1 | Source audit and documentation reconciliation; recorded rejection of targets | scripts/verify.sh docs | green |
 | Intake | Scope narrowed by explicit user decision | gh issue view 134 --json number,title,body,comments,state | Part 21.1 remains; targets rejected |
 
 ## State for the next session
 
-- Last check run (exact command): scripts/verify.sh docs
-- Result (first failing lines, or "green"): green
-- Hypothesis: six views already exist; inventories are stale. No application behavior change is needed.
-- Next action (one specific step, not "continue"): Resume #134 documentation verification separately; service-report implementation is now tracked in #198 and requires its own issue branch.
+- Last check run (exact command): scripts/verify.sh all > /tmp/issue-134-resume-all.log 2>&1
+- Result (first failing lines, or "green"): green; 3991 backend passed / 14 skipped; 912 frontend passed; build/lint passed (31 warnings)
+- Hypothesis: all applicable documentation scope is proven, including the user-authorized Playwright six-view/CSV checks. No application behavior changed.
+- Next action (one specific step, not "continue"): Re-read #134 for final requirement coverage, remove the progress file, push the docs/evidence change and open its PR; monitor required CI.
 
 ## Decisions and notes
 
@@ -68,3 +70,10 @@ Created approved follow-up implementation issue: https://github.com/esfen14/Pinp
 2026-10-17 reporting revision: Owner requested a Nagios-aligned report revision plan with citations and UI planning, tagged low-priority/enhancement/web-interface. Drafted docs/plans/Reports_Revision_Nagios_Alignment_Plan.md, citing official Core CGI docs and pinned 4.5.11 availability/trends/summary/histogram source. Scope preserves six reports, adds availability detail/timeline, summary and histogram, defines UI/export/source/completeness/verification requirements, and depends on #198. No app implementation. `scripts/verify.sh docs` passes. Publish as a separate implementation backlog issue using existing `Low Priority`, `enhancement`, `web-interface` labels.
 
 Filed reporting revision plan as https://github.com/esfen14/Pinpoint/issues/199 with Low Priority, enhancement and web-interface labels. Full plan/citations/UI wireframe/checklist are self-contained in the issue. #198 is its service-source dependency. No product implementation or PR in this turn.
+
+Resume decision: user asked to complete #134 after follow-up issues were filed. Resume the existing unticked verification step. Source reinspection found the Network Services export uses `Total Instances`, so fix that exact documentation heading. Update only the stale target-decision entries in the originating plan/index so they no longer invite implementing rejected targets. Browser verification remains pending because CUA has no enabled browser; clarification requested asynchronously.
+
+
+Live verification resolved: owner explicitly instructed Playwright. After matching vmlab's pre-config credential-state resolution (rather than the config override), login succeeded without account changes. Six report APIs returned populated 200 responses. Playwright opened all six views and checked all six CSV downloads' documented headers/content. Initial Notifications locator matched the header bell; the final complete repeat with a text-bearing-tab selector passed. Appliance commit 82ba9ce9 and Core4.5.11; all seven relevant report source files match this branch, tracked guest worktree clean. Documented Host Availability's existing on-screen Snapshots column and its known-seconds meaning. No product code changed; snapshot removal remains #198/#199. Full suite currently progressing past 88%; report still provisional until exit.
+
+Completed verification round: scripts/verify.sh all exited 0. Final issue body/comments re-read in /tmp/issue-134-final-issue.json; no new requirements/comments. Parts 21.2/21.3 are excluded by explicit owner decision; unchanged application means source/API/migration/help deliverables for those parts are not applicable. R134-DOCS, R134-ALL and the six live view+CSV cases are recorded in the sanitized report. XLS/PDF execution and interactive custom-date entry were not exercised (source inspection only); neither is an additional Part21.1 live acceptance gate. Existing lint warnings are not changed. Appliance restored to original poweroff state through guarded down.
