@@ -27,7 +27,7 @@ requests use `src/lib/api.ts`; Plugin Manager wrappers live in
 | `/plugins` | `PluginsPage` | `plugin.view` | Connected to Plugin Manager inventory (category tabs All / Network Services / Device Availability / Network Protocols / Servers / Application / Other, filtered by the `group` query parameter so paging stays per tab; a Monitoring column and a banner while no plugin is enabled), plugin details with an enable confirmation that previews what will be monitored, the plugin's monitored services with live status and per-device stop/resume, scanning, and mutation APIs. There is no Currently Running tab (the tabs are categories only) and devices are never picked by hand |
 | `/ncpa-deployment` | `NcpaDeploymentPage` | `system.deploy.ncpa` | Warns, through `useNcpaPluginState`, when `check_ncpa` is not enabled in Plugin Manager (the agent's checks are monitored only while it is). Connected to the NCPA deployment routes: device list, deploy wizard (host-key trust, login checks, start), live run banner, Deployment History tab and run review drawer (`?tab=history&run=<id>`) |
 | `/maintenance` | `MaintenancePage` | `maintenance.manage` | **Maintenance** (sidebar). Lists maintenance windows (devices, next occurrence, repeats, status, reason) with create, edit and a two-step cancel, through `lib/maintenanceApi.ts` and `types/maintenance.ts`. Times are typed and shown in the Time Zone setting (`useDisplayTime`, `utils/maintenanceTime.ts`) and sent as UTC; the form checks what the server checks. A failed or retrying occurrence is shown with its reason, and a `nagios_synced: false` result is shown as a notice. A note explains that a window silences alerts and links to Settings → System, where the Maintenance Mode switch and the global banner say it only pauses PinPoint's jobs and link back here |
-| `/ncpa-deployment` | `NcpaDeploymentPage` | `system.deploy.ncpa` | Warns, through `useNcpaPluginState`, when `check_ncpa` is not enabled in Plugin Manager (the agent's checks are monitored only while it is). Connected to the NCPA deployment routes: device list, deploy wizard (host-key trust, login checks, start), live run banner, Deployment History tab and run review drawer (`?tab=history&run=<id>`). Trusted failed devices (not deployed/healthy devices) have a Clean up dialog: it accepts ephemeral SSH credentials, optionally removes the deployment account after artifact removal, shows each cleanup step and refreshes the list; fields clear after every request. |
+| `/ncpa-deployment` | `NcpaDeploymentPage` | `system.deploy.ncpa` | Warns, through `useNcpaPluginState`, when `check_ncpa` is not enabled in Plugin Manager (the agent's checks are monitored only while it is). Connected to the NCPA deployment routes: device list, deploy wizard (host-key trust, login checks, start), live run banner, Deployment History tab and run review drawer (`?tab=history&run=<id>`). Trusted failed and deployed devices have a Clean up dialog: it accepts ephemeral SSH credentials, optionally removes the deployment account after artifact removal, shows each cleanup step and refreshes the list; fields clear after every request. |
 | `/remediation` | `RemediationPage` | `remediation.view` | Connected to `/api/system/remediation/...`; sidebar entry "Remediation". An Actions tab (banner "Actions run automatically when a service reaches a hard failure", an enable switch per action, an add/edit form built from the action types with server messages shown against the right field, delete with confirmation; with only `remediation.view` the list is read-only) and a Run log tab (filters for action, outcome, host and dates, pagination, skipped runs show their reason, a drawer with the redacted output). Changes need `remediation.manage`; 409 offers a reload and 422 shows the Nagios message |
 | `/reports` | `ReportsPage` | `system.report` | Connected for host availability and network-services views; backend exposes additional report routes |
 | `/system-logs` | `SystemLogsPage` | `system.logs` | Connected to five audit log categories and a bounded Nagios log tab |
@@ -276,3 +276,22 @@ client for the existing review/evidence/merge routes and `/api/system/hosts/look
 `types/deviceIdentity.ts` owns the wire contracts and identity-kind filtering.
 See `Device_Inventory_Requirements.md` §14 for the permission, confirmation,
 keyboard, refresh and saved-configuration-warning requirements.
+
+## Remote service restart controls (#182)
+
+On NCPA Deployment (`system.deploy.ncpa`), trusted device rows expose **Remote
+restart**, including already deployed devices. `RemoteRestartDialog` loads and
+saves the per-device enabled switch and up to 20 service names through
+`ncpaDeploymentApi` and `RemoteRestartSettings`. It shows loading, empty-list,
+load/retry, save/error, success and server permission states. Enabling requires a
+trusted deployment; the list can be prepared with the switch off. Settings cannot
+open during a deployment. Help explains the cleanup/redeploy requirement for old
+devices and changed lists. The Clean up dialog warns that remote restarts stop
+until redeployment and preserves ephemeral credential clearing.
+
+`ActionFormDialog` renders the typed parameter schema from the action-types API:
+local `unit` is a fixed-choice select, remote `unit` is a text field. Create and
+edit submit the entered parameters, show field-specific validation errors and
+clear old parameters when the action type changes. Existing remediation page
+view/manage guards continue to control access. See the
+[administrator guide](../docs/manuals/Remote_Service_Restart.md).

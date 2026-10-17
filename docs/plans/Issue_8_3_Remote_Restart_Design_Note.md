@@ -1,6 +1,6 @@
 # Issue #8 Part 8.3: remote service restart, design note
 
-Status: ACCEPTED 2026-10-16 (option A, second fixed helper; extra privilege on monitored devices approved; redeploy of existing devices accepted). No code has been written yet.
+Status: ACCEPTED 2026-10-16 (option A, second fixed helper; extra privilege on monitored devices approved; redeploy of existing devices accepted).
 Branch for the work: a new branch off the Part 8.1 branch (see "Sequencing").
 
 ## 1. What exists today (verified in source)
@@ -74,7 +74,7 @@ Recommendation: **A**. It has one reviewed code path on the device, no wildcards
 - **Changing a device's list needs a redeploy with the administrator's password.** Only root can write the list on the device, which is the point of keeping it there. The route reports `redeploy_needed`. Choosing the list when enabling avoids repeating it.
 - Paused means `Include_Device_In_Scanning` is false (Device Inventory spec).
 - The device is found by `NetworkDiscovery.Nagios_Host_Name` equal to the event's host.
-- Not built: the page for these settings and the remediation form field for `unit` (API only).
+- #182 owner decision (2026-10-17): include the device settings dialog and remediation `unit` field; support cleanup on trusted deployed devices with a redeployment warning. `RemediationRun.Action_Id` becomes a nullable foreign key with `ON DELETE SET NULL`, preserving snapshots and separating replacement-action limits.
 
 ## 6. Verification plan
 

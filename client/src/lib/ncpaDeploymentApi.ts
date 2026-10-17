@@ -1,11 +1,12 @@
 // Wrappers for the NCPA deployment routes (server/app/api/system/ncpa_deployment.py).
 // Credentials are only ever sent in request bodies, never in URLs.
-import { apiGet, apiPost } from './api'
+import { apiGet, apiPost, apiPut } from './api'
 import {
   fromRawDevice,
   fromRawRun,
   fromRawRunsPage,
   type CleanupResult,
+  type RemoteRestartSettings,
   type CredentialCheckResult,
   type DeploymentRun,
   type DeviceCredentials,
@@ -98,4 +99,12 @@ export async function getRun(runId: number): Promise<DeploymentRun> {
 
 export async function reviewRun(runId: number): Promise<DeploymentRun> {
   return fromRawRun(await apiPost<RawDeploymentRun>(`${BASE}/runs/${runId}/review`))
+}
+
+export function getRemoteRestart(deviceId: number) {
+  return apiGet<RemoteRestartSettings>(`${BASE}/${deviceId}/remote-restart`)
+}
+
+export function saveRemoteRestart(deviceId: number, input: { enabled: boolean; services: string[] }) {
+  return apiPut<RemoteRestartSettings>(`${BASE}/${deviceId}/remote-restart`, input)
 }

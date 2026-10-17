@@ -387,7 +387,7 @@ encrypted with `secrets_store` as `<name>_enc` and never returned.
 | `POST /api/system/deployment/ncpa/check-credentials` | `system.deploy.ncpa` | Test each device's login and sudo on its pinned SSH port without deploying; per-device result `ok`, `auth_failed`, `no_sudo`, `unreachable`, `host_key_changed`, `not_trusted`, `not_found` or `rate_limited` (one check per device per 3 s) |
 | `POST /api/system/deployment/ncpa/<device_id>/refresh-disks` | `system.deploy.ncpa` | Re-read the agent's logical disks, store them, regenerate the Nagios config |
 | `GET /api/system/deployment/ncpa/<device_id>/remote-restart`, `PUT /api/system/deployment/ncpa/<device_id>/remote-restart` | `system.deploy.ncpa` | Read or set a device's remote restart switch and service list. PUT body `{"enabled": bool, "services": [unit, ...]}`; units are plain names (letters, digits, `_ . @ -`, at most 63 characters, at most 20 per device); 400 for anything else, 409 for an untrusted device or turning it on with an empty list. `redeploy_needed` is true when the list changed, because the device's own copy is written only by a (re)deployment |
-| `POST /api/system/deployment/ncpa/<device_id>/cleanup` | `system.deploy.ncpa` | Body `{"username", "password", "remove_account"?}`: only a failed deployment on a trusted device with no running deployment; recheck SSH key before SSH and remove Pinpoint bootstrap key/rule/helper, optionally account. Response lists each step with `ok`/optional `skipped`, and `agent_status`; complete cleanup returns Pending NCPA, incomplete cleanup stays Deployment Failed with a safe error. An activity entry records the outcome; request credentials are cleared. Errors never contain credentials. |
+| `POST /api/system/deployment/ncpa/<device_id>/cleanup` | `system.deploy.ncpa` | Body `{"username", "password", "remove_account"?}`: a failed or deployed device with a confirmed SSH fingerprint and no running deployment; recheck SSH key before SSH and remove Pinpoint bootstrap key/rule/helper, optionally account. Response lists each step with `ok`/optional `skipped`, and `agent_status`; cleanup clears `Key_Installed` to block remote actions until redeployment; complete cleanup returns Pending NCPA, incomplete cleanup stays Deployment Failed with a safe error. An activity entry records the outcome; request credentials are cleared. Errors never contain credentials. |
 | `POST /api/system/deployment/ncpa/start` | `system.deploy.ncpa` | Validate credentials and devices, create the run with a Rejected or Pending result per device, and start the worker; 400 with `data.rejected` when no device can be deployed |
 | `POST /api/system/deployment/ncpa/stop` | `system.deploy.ncpa` | Request deployment cancellation; devices not started become Skipped |
 | `GET /api/system/deployment/ncpa/status` | `system.deploy.ncpa` | Latest run with per-device results, outcome counts, starter and review state |
@@ -541,3 +541,19 @@ only Active opted-in users appear in the generated group. When none selected
 qualify, the default applies. Retired/merged devices are readable but not editable
 (409); a missing device returns 404. Read access intentionally includes the user
 choices needed by this editor without requiring account-management permissions.
+
+### Remote restart execution and action deletion (#182)
+
+Remote restart uses the event's monitored device and its pinned SSH port. It
+refuses non-Active, paused, untrusted or disabled devices, off-list units,
+Maintenance Mode, cooldown and hourly caps. SSH socket, banner and authentication
+operations are bounded; a re-fetched key must match the stored fingerprint before
+it enters RejectPolicy's known-hosts table. The final connection also checks that
+key. Remote restart polls command completion against a 20-second deadline,
+discards stdout/stderr, closes SSH on timeout and records fixed outcomes. The
+bootstrap suppresses remote output and secures the allowlist directory before
+writing the root-owned file; sudoers is validated before replacement.
+
+Deleting a remediation action clears its runs' nullable `Action_Id` foreign key
+while preserving `Action_Name` and audit fields. The update and deletion share
+the Nagios apply transaction and roll back together on a rejected apply.

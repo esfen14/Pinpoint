@@ -43,12 +43,14 @@ Requirement coverage (every issue requirement):
 |---|---|---|---|
 | Intake | Owner selected UI implementation and FK fix; separate worktree created from origin/main | git log --oneline origin/main..origin/issue-8-3-remote-restart | Existing implementation identified; no prior #182 progress file |
 
+| 1 (checkpoint) | Incorporated accepted branch; added FK/data cleanup and UI; reproduced and fixed fingerprint race, unbounded exit wait and unsafe install logging; owner approved deployed cleanup | 196 focused backend tests; 13 migration tests; scripts/verify.sh docs; scripts/verify.sh frontend | 196 + 13 passed; docs green; 874 frontend passed/build/lint green (31 warnings). Full backend in progress with one failure pending final output. |
+
 ## State for the next session
 
-- Last check run (exact command): git log --oneline origin/main..origin/issue-8-3-remote-restart
-- Result: five branch commits, including accepted design, implementation, merge and partial lab report.
-- Hypothesis: Existing remote branch can be merged without reimplementing its completed behavior; FK must preserve runs on deletion and safely detach old orphan links.
-- Next action: Merge origin/issue-8-3-remote-restart into this branch and run focused existing regression tests.
+- Last check run (exact command): scripts/verify.sh frontend
+- Result: green: 874 tests passed, production build passed, lint 0 errors/31 warnings. docs and 13 migration tests also green. Full backend /tmp/issue182-backend-round1.log is still running; focused security/cleanup suite /tmp/issue182-round2-focused.log is still running.
+- Hypothesis: Core/UI changes are implemented; complete backend output will identify the one current failure. Fresh VM Ubuntu installation is still running (SSH so far answers from installer environment only).
+- Next action: Inspect /tmp/issue182-backend-round1.log and /tmp/issue182-round2-focused.log completion, fix the reported failure, then bootstrap the newly installed VM and provision Pinpoint.
 
 ## Decisions and notes
 
@@ -57,3 +59,9 @@ Requirement coverage (every issue requirement):
 - User-authorized issue scope includes remote-command security review. Existing accepted on-device design is retained pending inspection.
 - Requested target/lab preference asynchronously; no live mutation before ownership/target access is established.
 - Human reviewer approval is external and must never be claimed by the agent.
+
+- Owner approved cleanup on trusted deployed devices, with explicit warning/redeployment; issue #182 body updated with the two scope decisions and acceptance criteria.
+- Fresh VM: pinpoint-issue182-appliance, UUID 8e0417fe-2d5f-4473-a6b3-74d91edbe2f1; fresh ISO install, SSH 2282 and web 18882. Private runtime state /tmp/pinpoint-issue182-vmlab; config /tmp/issue182-vmlab.env. No existing appliance/target was mutated.
+- Boot initially failed due to KVM owning AMD-V. Owner authorized unloading only without running KVM guests, then ran sudo modprobe -r kvm_amd kvm themselves because this session has no passwordless sudo. Restore KVM after shutting down our test VM; may require owner terminal action.
+- Security review: docs/plans/Issue_182_Remote_Restart_Security_Review.md; human review remains external.
+- The action FK migration was generated with Flask-Migrate against both binds on disposable files, then reviewed/extended to null existing orphan links. No application database was modified.

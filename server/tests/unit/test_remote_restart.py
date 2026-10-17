@@ -525,3 +525,31 @@ def test_bootstrap_fails_cleanly_when_the_helper_cannot_be_installed(app, db_ses
     device = make_device(db_session, admin_user)
     outcome, error = run_bootstrap(app, device, MagicMock(return_value=False))
     assert "restart helper" in error
+
+
+def test_remote_exit_status_wait_has_an_actual_deadline(monkeypatch):
+    client = ssh_client(0)
+    channel = client.exec_command.return_value[1].channel
+    channel.exit_status_ready.return_value = False
+    channel.recv_ready.return_value = False
+    channel.recv_stderr_ready.return_value = False
+    clock = iter([0, 0, 21])
+    monkeypatch.setattr(remote_restart, 'monotonic', lambda: next(clock), raising=False)
+    monkeypatch.setattr(remote_restart, 'sleep', lambda _: None, raising=False)
+    with patch(DEPLOY, deploy_mock(client=client)):
+        outcome, _ = remote_restart.restart_remote_unit('10.0.20.11', 22, FINGERPRINT, 'apache2')
+    assert outcome == 'timed_out'
+    channel.recv_exit_status.assert_not_called()
+    client.close.assert_called_once()
+
+
+def test_restart_helper_install_suppresses_remote_output_and_secures_parent():
+    deploy = MagicMock()
+    deploy.DEPLOYMENT_USER = 'pinpoint-deployment'
+    deploy.run_sudo_command.return_value = {'success': True}
+    with patch(DEPLOY, deploy):
+        remote_restart.install_restart_helper(MagicMock(), 'private-password', ['apache2'])
+    call = deploy.run_sudo_command.call_args
+    assert call.kwargs['suppress_output'] is True
+    assert '/usr/bin/chown root:root /etc/pinpoint' in call.args[1]
+    assert '! -L /etc/pinpoint' in call.args[1]

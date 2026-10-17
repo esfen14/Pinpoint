@@ -952,7 +952,7 @@ def review_ncpa_deployment_run(run_id):
 @login_required
 @require_permission('system.deploy.ncpa')
 def cleanup_ncpa_deployment(device_id):
-    """Remove failed-install bootstrap artifacts on a trusted device.
+    """Remove bootstrap artifacts on a trusted failed or deployed device before redeployment.
 
     JSON body: ``{"username": str, "password": str, "remove_account"?: bool}``.
     Returns each step's result; no credential or remote output is returned.
@@ -975,8 +975,8 @@ def cleanup_ncpa_deployment(device_id):
         if device is None or not device.Include_Device_In_Scanning:
             return error("Device not found.", 404)
         creds, deployment = device_deployment_rows(device_id)
-        if deployment is None or deployment.Agent_Status is not AgentStatus.FAILED:
-            return error("Cleanup is only available after a failed deployment.", 409)
+        if deployment is None or deployment.Agent_Status not in (AgentStatus.FAILED, AgentStatus.DEPLOYED):
+            return error("Cleanup is only available for a failed or deployed device.", 409)
         if creds is None or not creds.Key_Fingerprint or not creds.SSH_Port:
             return error("Confirm the device host key before cleanup.", 409)
         fingerprint = get_host_key_fingerprint(device.IP_Address, creds.SSH_Port)
@@ -989,6 +989,9 @@ def cleanup_ncpa_deployment(device_id):
             device.IP_Address, creds.SSH_Port, creds.Key_Fingerprint,
             entry["username"], entry["password"], data.get("remove_account", False),
         )
+        # Even partial cleanup may remove the key or restart helper. Require a
+        # successful redeployment before remote actions can trust the installation.
+        creds.Key_Installed = False
         failed = any(not step["ok"] for step in steps)
         deployment.Agent_Status = AgentStatus.FAILED if failed else AgentStatus.PENDING_NCPA
         deployment.Error = "Cleanup incomplete; review the step results." if failed else None

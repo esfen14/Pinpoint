@@ -13,6 +13,7 @@ Two halves, both described in docs/plans/Issue_8_3_Remote_Restart_Design_Note.md
 """
 import re
 import shlex
+from time import monotonic, sleep
 
 import paramiko
 
@@ -106,8 +107,11 @@ def install_restart_helper(client, password, services):
     tmp_list = f"{REMOTE_RESTART_ALLOWLIST}.new"
 
     script = " && ".join([
+        f"[ ! -L {shlex.quote(REMOTE_RESTART_ALLOWLIST_DIR)} ]",
         f"/usr/bin/mkdir -p {shlex.quote(REMOTE_RESTART_ALLOWLIST_DIR)}",
+        f"/usr/bin/chown root:root {shlex.quote(REMOTE_RESTART_ALLOWLIST_DIR)}",
         f"/usr/bin/chmod 755 {shlex.quote(REMOTE_RESTART_ALLOWLIST_DIR)}",
+        f"/usr/bin/rm -f -- {shlex.quote(tmp_list)}",
         f"printf '%s' {shlex.quote(allowlist_text)} > {shlex.quote(tmp_list)}",
         f"/usr/bin/chown root:root {shlex.quote(tmp_list)}",
         f"/usr/bin/chmod 644 {shlex.quote(tmp_list)}",
@@ -122,7 +126,7 @@ def install_restart_helper(client, password, services):
         f"/bin/mv -f {shlex.quote(tmp_sudoers)} {shlex.quote(REMOTE_RESTART_SUDOERS)}",
     ])
     result = deploy.run_sudo_command(
-        client, f"/bin/sh -c {shlex.quote(script)}", password, log_command="install restart helper")
+        client, f"/bin/sh -c {shlex.quote(script)}", password, log_command="install restart helper", suppress_output=True)
     return result["success"]
 
 
@@ -154,7 +158,21 @@ def restart_remote_unit(ip_address, ssh_port, fingerprint, unit):
         _stdin, stdout, _stderr = client.exec_command(
             command, get_pty=False, timeout=RESTART_COMMAND_TIMEOUT_SECONDS)
         stdout.channel.settimeout(RESTART_COMMAND_TIMEOUT_SECONDS)
+        # Paramiko's recv_exit_status waits on an event; channel.settimeout does
+        # not bound that wait. Poll against a deadline and discard output so a
+        # full SSH window cannot keep the remote process stuck.
+        deadline = monotonic() + RESTART_COMMAND_TIMEOUT_SECONDS
+        while not stdout.channel.exit_status_ready():
+            if monotonic() >= deadline:
+                raise TimeoutError()
+            if stdout.channel.recv_ready():
+                stdout.channel.recv(32768)
+            if stdout.channel.recv_stderr_ready():
+                stdout.channel.recv_stderr(32768)
+            sleep(0.05)
         status = stdout.channel.recv_exit_status()
+    except paramiko.BadHostKeyException:
+        return "host_key_changed", deploy.HOST_KEY_CHANGED_MESSAGE
     except paramiko.AuthenticationException:
         return "failed", "The device refused the deployment key."
     except (TimeoutError, OSError, paramiko.SSHException) as error:

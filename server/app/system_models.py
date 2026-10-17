@@ -1328,8 +1328,8 @@ class RemediationAction(db.Model):
 class RemediationRun(db.Model):
     """
     One decision the consumer made about one event and one action, including skipped and
-    discarded ones. Action_Id is deliberately not a foreign key: deleting an action leaves
-    its runs, and Action_Name is a copy so the log still reads correctly. Kept on the
+    discarded ones. Deleting an action clears its foreign-key link while retaining its
+    runs and the Action_Name snapshot, so replacement actions never inherit history. Kept on the
     default bind because PinPoint writes it; history.db is for Nagios snapshots only.
     """
     __tablename__ = "REMEDIATION_RUN"
@@ -1337,7 +1337,9 @@ class RemediationRun(db.Model):
 
     Id: so.Mapped[int] = so.mapped_column(primary_key=True)
     Event_Key: so.Mapped[str] = so.mapped_column(sa.String(64), index=True)
-    Action_Id: so.Mapped[Optional[int]] = so.mapped_column(index=True)
+    Action_Id: so.Mapped[Optional[int]] = so.mapped_column(
+        sa.ForeignKey("REMEDIATION_ACTION.Id", name="fk_remediation_run_action", ondelete="SET NULL"), index=True
+    )
     Action_Name: so.Mapped[str] = so.mapped_column(sa.String(60))
     Hostname: so.Mapped[str] = so.mapped_column(sa.String(100), index=True)
     Service: so.Mapped[Optional[str]] = so.mapped_column(sa.String(150))

@@ -8,6 +8,7 @@ import base64
 import hmac 
 import secrets
 import shlex
+import socket
 import requests
 import os
 import re
@@ -239,7 +240,7 @@ def get_host_key_fingerprint(ip_address, ssh_port):
     """
     transport = None
     try:
-        transport = paramiko.Transport((ip_address, int(ssh_port)))
+        transport = paramiko.Transport(socket.create_connection((ip_address, int(ssh_port)), timeout=SSH_TIMEOUT))
         transport.start_client(timeout=SSH_TIMEOUT)
         key = transport.get_remote_server_key()
 
@@ -319,13 +320,18 @@ def connect_with_fingerprint_check(
 
     client.set_missing_host_key_policy( paramiko.RejectPolicy() ) 
     
-    transport = paramiko.Transport( 
-        (ip_address, int(ssh_port)) 
+    transport = paramiko.Transport(
+        socket.create_connection((ip_address, int(ssh_port)), timeout=SSH_TIMEOUT)
     ) 
 
     try: 
         transport.start_client(timeout=SSH_TIMEOUT) 
-        host_key = transport.get_remote_server_key() 
+        host_key = transport.get_remote_server_key()
+        fingerprint = base64.b64encode(hashlib.sha256(host_key.asbytes()).digest()).decode('ascii').rstrip('=')
+        if not hmac.compare_digest(fingerprint, expected_fingerprint):
+            current_app.logger.error("SSH host-key mismatch during connection.")
+            client.close()
+            return None
         # Stored under the name connect() looks it up by, or a non-22
         # port is rejected by RejectPolicy.
         client.get_host_keys().add( 
@@ -341,16 +347,23 @@ def connect_with_fingerprint_check(
     finally: 
         transport.close() 
 
-    client.connect( 
+    try:
+        client.connect(
             hostname=ip_address, 
             port=int(ssh_port), 
             username=username, 
             password=password,
             key_filename=private_key,
-            timeout=SSH_TIMEOUT, 
+            timeout=SSH_TIMEOUT,
+            banner_timeout=SSH_TIMEOUT,
+            auth_timeout=SSH_TIMEOUT,
             allow_agent=False, 
             look_for_keys=False
-    ) 
+        )
+
+    except Exception:
+        client.close()
+        raise
 
     return client
 

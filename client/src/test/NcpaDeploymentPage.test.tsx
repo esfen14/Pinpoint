@@ -16,6 +16,8 @@ const api = vi.hoisted(() => ({
   checkCredentials: vi.fn(),
   startDeployment: vi.fn(),
   cleanupDeployment: vi.fn(),
+  getRemoteRestart: vi.fn(),
+  saveRemoteRestart: vi.fn(),
 }))
 
 vi.mock('../lib/ncpaDeploymentApi', () => ({
@@ -113,14 +115,14 @@ describe('NcpaDeploymentPage', () => {
     expect(screen.getByRole('tab', { name: /Deployment History/ })).toHaveTextContent('1 to review')
   })
 
-  it('offers cleanup only on trusted failed devices, reports steps and clears credentials', async () => {
+  it('offers cleanup on trusted failed and deployed devices, reports steps and clears credentials', async () => {
     api.cleanupDeployment.mockResolvedValue({
       device_id: 3, agent_status: 'Pending NCPA',
       steps: [{ step: 'key', ok: true }, { step: 'sudo_rule', ok: true }, { step: 'helper', ok: true }],
     })
     renderPage()
     const failedRow = (await screen.findByText('app-03')).closest('tr')!
-    expect(within(screen.getByText('web-01').closest('tr')!).queryByRole('button', { name: /Clean up/ })).not.toBeInTheDocument()
+    expect(within(screen.getByText('web-01').closest('tr')!).getByRole('button', { name: /Clean up/ })).toBeInTheDocument()
     expect(within(screen.getByText('db-02').closest('tr')!).queryByRole('button', { name: /Clean up/ })).not.toBeInTheDocument()
     fireEvent.click(within(failedRow).getByRole('button', { name: /Clean up/ }))
     const dialog = screen.getByRole('dialog', { name: /Clean up/ })
@@ -194,4 +196,19 @@ describe('NcpaDeploymentPage', () => {
     expect(await screen.findByRole('region', { name: 'Deployment in progress' })).toHaveTextContent('0 / 2 devices')
     await waitFor(() => expect(screen.getByRole('button', { name: /Deploy NCPA/ })).toBeDisabled())
   })
+})
+
+
+it('opens remote restart settings from a deployed device', async () => {
+  api.getNcpaDevices.mockResolvedValue(DEVICES)
+  api.getLatestRun.mockResolvedValue(null)
+  api.getRuns.mockResolvedValue({ items: [], page: 1, pages: 1, total: 0, needsReview: 0 })
+  api.getRemoteRestart.mockResolvedValue({ enabled: true, services: ['apache2'], trusted: true })
+  renderPage()
+  const row = (await screen.findByText('web-01')).closest('tr')!
+  fireEvent.click(within(row).getByRole('button', { name: 'Remote restart' }))
+  expect(await screen.findByRole('dialog', { name: 'Remote restart: web-01' })).toBeInTheDocument()
+  expect(api.getRemoteRestart).toHaveBeenCalledWith(1)
+  expect(await screen.findByLabelText('Services allowed to restart')).toHaveValue('apache2')
+  expect(within(row).getByRole('button', { name: 'Clean up' })).toBeInTheDocument()
 })

@@ -375,3 +375,37 @@ def test_changes_are_written_to_the_configuration_log(logged_in_client, db_sessi
     types = {row.Conf_Type for row in db_session.session.query(ConfigurationChanges).all()}
     assert types == {"remediation_action"}
     assert db_session.session.query(ConfigurationChanges).count() >= 3
+
+
+def test_deleted_action_history_does_not_limit_a_replacement(logged_in_client, db_session):
+    from app.remediation import skip_reason
+
+    created = create(logged_in_client).get_json()["data"]
+    old = add_run(db_session, action_id=created["id"])
+    old.Started_At = datetime.now(timezone.utc)
+    db_session.session.commit()
+    assert logged_in_client.delete(f"{BASE}/actions/{created['id']}").status_code == 200
+    replacement = create(logged_in_client, name="replacement").get_json()["data"]
+    db_session.session.expire_all()
+    run = db_session.session.get(RemediationRun, old.Id)
+    assert run.Action_Id is None
+    assert run.Action_Name == "restart-web"
+    action = db_session.session.get(RemediationAction, replacement["id"])
+    assert skip_reason(action, {"host": "web-01", "service": "HTTP"}, datetime.now(timezone.utc)) is None
+
+
+def test_rejected_delete_preserves_run_link(logged_in_client, db_session, nagios_apply):
+    created = create(logged_in_client).get_json()["data"]
+    run = add_run(db_session, action_id=created["id"])
+    nagios_apply.return_value = ("failed", "Nagios said no")
+    assert logged_in_client.delete(f"{BASE}/actions/{created['id']}").status_code == 422
+    db_session.session.expire_all()
+    assert db_session.session.get(RemediationRun, run.Id).Action_Id == created["id"]
+
+
+def test_run_action_link_is_a_nullable_set_null_foreign_key():
+    foreign_keys = list(RemediationRun.__table__.c.Action_Id.foreign_keys)
+    assert len(foreign_keys) == 1
+    assert foreign_keys[0].target_fullname == "REMEDIATION_ACTION.Id"
+    assert foreign_keys[0].ondelete == "SET NULL"
+    assert RemediationRun.__table__.c.Action_Id.nullable
