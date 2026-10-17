@@ -196,7 +196,7 @@ def test_safety_migration_accepts_the_new_skip_outcomes(safety_report):
 
 
 def test_safety_migration_downgrades_and_upgrades_again(safety_report):
-    assert safety_report["version_after_downgrade"] == [["a182f6c9d301"]]
+    assert safety_report["version_after_downgrade"] == [["b7e2a9c4d518"]]
     assert safety_report["tables_after_downgrade"] == ["REMEDIATION_ACTION", "REMEDIATION_RUN"]
     assert not {"Remediation_Enabled", "Remediation_Retention_Days"} & set(
         safety_report["settings_columns_after_downgrade"])

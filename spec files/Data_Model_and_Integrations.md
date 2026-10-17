@@ -957,7 +957,7 @@ polling preferences and history data.
 Because main later added `a4c8e1b7d933` (maintenance windows) and
 `b8e3d5f2a417` (remediation restart), schema-free revision `d117f3b8a053` joins
 `c117e6a9d042` with `b8e3d5f2a417` so the tree again has a single head. Remediation safety
-controls `f155a3c7d2b1` follows `a182f6c9d301` (run-to-action link, which follows the remote
+controls `f155a3c7d2b1` follows `b7e2a9c4d518` (resource forecast, which follows the run-to-action link `a182f6c9d301`, which follows the remote
 restart revision `c7a1f4d92e60`), so the tree still has one head.
 
 Schema-free merge revision `c117e6a9d042` joins the published manual-parent
