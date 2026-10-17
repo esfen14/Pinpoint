@@ -6,7 +6,7 @@ app/forecast.py). A series too new to forecast is a row of Kind 'insufficient' w
 not touched. No permission is added: the route reuses system.dashboard and system.services.
 
 Revision ID: b7e2a9c4d518
-Revises: d117f3b8a053
+Revises: a182f6c9d301
 Create Date: 2026-10-17 09:00:00.000000
 
 """
@@ -16,7 +16,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = 'b7e2a9c4d518'
-down_revision = 'd117f3b8a053'
+down_revision = 'a182f6c9d301'
 branch_labels = None
 depends_on = None
 

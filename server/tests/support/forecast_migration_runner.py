@@ -27,7 +27,7 @@ with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as directory:
     with sqlite3.connect(system_db) as connection:
         columns = [row[1] for row in connection.execute("PRAGMA table_info(RESOURCE_FORECAST)")]
     with app.app_context():
-        flask_migrate.downgrade(directory="migrations", revision="d117f3b8a053")
+        flask_migrate.downgrade(directory="migrations", revision="a182f6c9d301")
     after_downgrade = tables()
     with app.app_context():
         flask_migrate.upgrade(directory="migrations", revision="head")
