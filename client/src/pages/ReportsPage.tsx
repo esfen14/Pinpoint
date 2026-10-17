@@ -62,6 +62,8 @@ export function ReportsPage() {
     const sequence = ++requestSequence.current
     if (view === 'network-services') setNetworkServices(null)
     if (period === 'custom' && (!customStart || !customEnd)) {
+      setIsLoading(false)
+      if (view !== 'availability' && view !== 'network-services') setRunKey((k) => k + 1)
       setStatusMessage({ type: 'error', text: 'Pick a start and end date for a custom range.' })
       return
     }
@@ -103,7 +105,11 @@ export function ReportsPage() {
   useEffect(() => {
     const viewChanged = previousView.current !== view
     previousView.current = view
-    if (viewChanged && view !== 'availability' && view !== 'network-services') return
+    if (viewChanged && view !== 'availability' && view !== 'network-services') {
+      requestSequence.current += 1
+      setIsLoading(false)
+      return
+    }
     loadReport()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, period])

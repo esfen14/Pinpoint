@@ -9,6 +9,8 @@ serve loopback only. --serve enables the local browser fixture on port 19198;
 there is no credential or production auth bypass outside this temporary app.
 """
 import argparse
+import csv
+import io
 from datetime import datetime, timezone
 import json
 import os
@@ -70,7 +72,22 @@ define command {{
  command_name fixture_host
  command_line /usr/local/nagios/libexec/check_dummy 0
 }}
+define command {{
+ command_name fixture_notify
+ command_line /bin/true
+}}
+define contact {{
+ contact_name fixture-contact
+ alias Fixture contact with no delivery
+ host_notification_period always
+ service_notification_period always
+ host_notification_options n
+ service_notification_options n
+ host_notification_commands fixture_notify
+ service_notification_commands fixture_notify
+}}
 define host {{
+ contacts fixture-contact
  host_name fixture-host
  alias Fixture host
  address 127.0.0.1
@@ -84,6 +101,7 @@ define host {{
  notifications_enabled 0
 }}
 define service {{
+ contacts fixture-contact
  host_name fixture-host
  service_description Recorded / service
  check_command fixture_check
@@ -144,6 +162,18 @@ check_result_path={core_dir}
         body = response[response.index(b'{'):]
         calls.append({'cgi': name, 'query': params.get('query'), 'seconds': round(time.monotonic()-began, 6), 'bytes': len(body)})
         return json.loads(body)
+
+    def native_avail(start, end):
+        params = {'host': 'fixture-host', 'service': 'Recorded / service',
+                  't1': start, 't2': end, 'timeperiod': 'custom', 'csvoutput': '',
+                  'assumeinitialstates': 'no', 'assumestateretention': 'yes',
+                  'assumestatesduringnotrunning': 'no', 'includesoftstates': 'no', 'backtrack': 4}
+        env = {**os.environ, 'NAGIOS_CGI_CONFIG': str(cgi_config), 'REQUEST_METHOD': 'GET', 'QUERY_STRING': urlencode(params)}
+        output = subprocess.run([str(cgi/'avail.cgi')], env=env, capture_output=True, timeout=10, check=True).stdout.decode()
+        rows = list(csv.DictReader(io.StringIO(output[output.index('HOST_NAME,'):]), skipinitialspace=True))
+        if not rows:
+            raise RuntimeError('Native availability CSV has no fixture row.')
+        return rows[0]
 
     def current_state():
         try:
@@ -246,6 +276,10 @@ check_result_path={core_dir}
         report_module.service_period = fixed_period
         native_payload = native('archivejson.cgi', {**ARCHIVE_OPTIONS, 'starttime': before, 'endtime': after})
         expected = summarize(normalize_services(native_payload, before, after))
+        native_csv = native_avail(before, after)
+        assert int(native_csv['TOTAL_TIME_OK']) == expected['ok_seconds']
+        assert int(native_csv['TOTAL_TIME_CRITICAL']) == expected['critical_seconds']
+        assert round(float(native_csv['PERCENT_KNOWN_TIME_OK'].rstrip('%')), 2) == expected['uptime_pct']
         assert expected['critical_seconds'] == recovered-critical
         assert expected['known_seconds'] == after-before
         assert expected['unaccounted_seconds'] == 0
@@ -263,6 +297,21 @@ check_result_path={core_dir}
                 assert 'snapshot' not in json.dumps(data).lower()
                 results.append({'view': view, 'case': 'live-recorded-outage', 'seconds': round(time.monotonic()-began, 6),
                                 'response_bytes': len(response.data), 'calls': used, 'expected': expected})
+                report_module.service_period = actual_period
+                missing_response = client.get('/api/system/report/'+view+'?period=custom&start=2001-01-01&end=2001-01-01')
+                assert missing_response.status_code == 200
+                missing = missing_response.get_json()['data']['summary']
+                assert missing['known_seconds'] == 0 and missing['uptime_pct'] is None
+                assert missing['no_recorded_data_seconds'] == 86400
+                missing_native = native_avail(978307200, 978393600)
+                assert int(missing_native['TOTAL_TIME_OK']) == 0
+                assert int(missing_native['TOTAL_TIME_UNDETERMINED']) == 86400
+                results.append({'view': view, 'case': 'missing-history', 'known_seconds': 0,
+                    'missing_seconds': 86400, 'native_avail_missing_seconds': 86400,
+                    'native_no_data_seconds': missing['no_data_seconds'],
+                    'engine_down_seconds': missing['nagios_not_running_seconds'],
+                    'unaccounted_seconds': missing['unaccounted_seconds']})
+                report_module.service_period = fixed_period
                 for period in ('last_24h', 'last_90d'):
                     count = len(calls); began = time.monotonic()
                     response = client.get('/api/system/report/'+view+'?period='+period)
@@ -272,7 +321,8 @@ check_result_path={core_dir}
                         'response_bytes': len(response.data), 'calls': calls[count:], 'known_seconds': summary['known_seconds'],
                         'missing_seconds': summary['no_recorded_data_seconds']})
         print(json.dumps({'core_version': '4.5.11', 'window': [before, after], 'outage_seconds': recovered-critical,
-                          'inventory': {'hosts': 1, 'services': 1}, 'results': results}), flush=True)
+                          'inventory': {'hosts': 1, 'services': 1},
+                          'native_avail': {key: native_csv[key] for key in ('TOTAL_TIME_OK', 'TOTAL_TIME_CRITICAL', 'PERCENT_KNOWN_TIME_OK')}, 'results': results}), flush=True)
         if serve:
             # Keep fixture/browser inputs alive for at most five minutes.
             from werkzeug.serving import make_server
