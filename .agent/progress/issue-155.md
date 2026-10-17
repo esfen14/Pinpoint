@@ -84,7 +84,7 @@ Everything a fresh session needs to continue without redoing work.
 - Last check run (exact command): `scripts/verify.sh frontend` (and backend/docs separately)
 - Result (first failing lines, or "green"): frontend green; backend and docs fail only on Windows-environment tests that fail identically on clean origin/main
 - Hypothesis: n/a. Code, tests and docs are complete.
-- Next action (one specific step, not "continue"): lab report written (docs/test-runs/2026-10-17-issue-155-remediation-safety/REPORT.md): E1, E4, E5, E6 validation+audit passed live. Still not run live: E2 (real host), E3, E6 403, E7-E9 browser. A person tick those in a browser/real host, add to the report, then `git rm` this file, push, mark the PR ready.
+- Next action (one specific step, not "continue"): E1, E2 (ack, Maintenance, downtime), E3, E4, E5, E6 validation+audit passed live (see report). Still not run live: E6 403 with a restricted account, E7-E9 in a browser. A person checks those, adds them to the report, then `git rm` this file, push, mark PR #194 ready.
 
 ## Decisions and notes
 
