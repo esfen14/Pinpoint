@@ -18,7 +18,9 @@ import pytest
 
 from app import automation
 from app.automation import (
+    BACKUP_FAILURE_ACTION,
     SECURITY_CHECK_ACTION,
+    backup_health,
     as_utc,
     backup_databases,
     get_automation_user_id,
@@ -251,6 +253,93 @@ class TestRunDueAutomation:
 
         assert started == []
         assert list_backups(backup_dir) == []
+
+    def test_failed_backup_writes_an_activity_log_entry(self, app, db_session, admin_user, tmp_path):
+        make_settings(db_session, Automatic_Backups=True, Maintenance_Mode=True, Updated_By=admin_user.UserID)
+
+        with patch.dict(app.config, {"DATABASE_BACKUP_DIR": tmp_path / "backups"}), \
+             patch.object(automation, "backup_databases", side_effect=sqlite3.OperationalError("disk full")):
+            started = run_due_automation(NOW)
+
+        assert started == []
+        entries = db_session.session.query(ActivityLog).filter(
+            ActivityLog.Action_Type.like(f"{BACKUP_FAILURE_ACTION}%")
+        ).all()
+        assert len(entries) == 1
+        assert entries[0].UserID == admin_user.UserID
+        assert "disk full" not in entries[0].Action_Type
+
+    def test_repeated_failures_log_once_per_backup_interval(self, app, db_session, admin_user, tmp_path):
+        make_settings(db_session, Automatic_Backups=True, Maintenance_Mode=True, Updated_By=admin_user.UserID)
+
+        with patch.dict(app.config, {"DATABASE_BACKUP_DIR": tmp_path / "backups"}), \
+             patch.object(automation, "backup_databases", side_effect=OSError("boom")):
+            run_due_automation(NOW)
+            run_due_automation(NOW + timedelta(minutes=5))
+            run_due_automation(NOW + timedelta(hours=1))
+
+        count = lambda: db_session.session.query(ActivityLog).filter(
+            ActivityLog.Action_Type.like(f"{BACKUP_FAILURE_ACTION}%")
+        ).count()
+        assert count() == 1
+
+    def test_failed_backup_without_eligible_user_does_not_crash(self, app, db_session, regular_user, tmp_path):
+        make_settings(db_session, Automatic_Backups=True, Maintenance_Mode=True)
+
+        with patch.dict(app.config, {"DATABASE_BACKUP_DIR": tmp_path / "backups"}), \
+             patch.object(automation, "backup_databases", side_effect=OSError("boom")):
+            assert run_due_automation(NOW) == []
+
+
+# ==========================================================
+# BACKUP HEALTH
+# ==========================================================
+
+class TestBackupHealth:
+    def make_backup(self, backup_dir, taken_at, size=100):
+        folder = backup_dir / taken_at.strftime(automation.BACKUP_FOLDER_FORMAT)
+        folder.mkdir(parents=True)
+        (folder / "system.db").write_bytes(b"x" * size)
+        return folder
+
+    def test_missing_folder_reports_zeros(self, tmp_path):
+        health = backup_health(tmp_path / "none", True, NOW)
+        assert health == {
+            "newest_backup_at": None,
+            "backup_count": 0,
+            "total_bytes": 0,
+            "automatic_backups": True,
+            "stale": True,
+        }
+
+    def test_empty_folder_with_automatic_backups_off_is_not_stale(self, tmp_path):
+        (tmp_path / "backups").mkdir()
+        health = backup_health(tmp_path / "backups", False, NOW)
+        assert health["backup_count"] == 0
+        assert health["newest_backup_at"] is None
+        assert health["stale"] is False
+        assert health["automatic_backups"] is False
+
+    def test_reports_newest_count_and_size(self, tmp_path):
+        self.make_backup(tmp_path, NOW - timedelta(days=2), size=100)
+        self.make_backup(tmp_path, NOW - timedelta(hours=3), size=250)
+        (tmp_path / "pre-restore-20260101-000000").mkdir()
+
+        health = backup_health(tmp_path, True, NOW)
+
+        assert health["newest_backup_at"] == (NOW - timedelta(hours=3)).isoformat()
+        assert health["backup_count"] == 2
+        assert health["total_bytes"] == 350
+        assert health["stale"] is False
+
+    def test_stale_only_after_twice_the_interval(self, tmp_path):
+        self.make_backup(tmp_path, NOW - timedelta(days=2))
+        assert backup_health(tmp_path, True, NOW)["stale"] is False
+        assert backup_health(tmp_path, True, NOW + timedelta(minutes=1))["stale"] is True
+
+    def test_old_backups_are_not_stale_when_automatic_backups_are_off(self, tmp_path):
+        self.make_backup(tmp_path, NOW - timedelta(days=30))
+        assert backup_health(tmp_path, False, NOW)["stale"] is False
 
 
 # ==========================================================

@@ -156,6 +156,7 @@ See [the investigation](../docs/plans/Issue_191_Account_Creation_Investigation.m
   Saves reschedule one existing job and restore its trigger/next run on failure;
   disabled scheduling stays disabled and startup uses the saved interval. General
   displays the actual saved check/poll and personal browser refresh schedules.
+- Database restore and backup health (#125): `flask restore-backup`, `backup_health` on the dashboard status route and a failed-backup activity-log entry; unit tests pass. Recovery runbook `docs/manuals/Backup_and_Restore.md`. No frontend display of `backup_health`. **Not yet verified on a fresh lab appliance** (`scripts/vmlab fresh`; no report in `docs/test-runs/`). Cold standby only; Nagios config and NCPA key are not backed up.
 - Scheduled Nagios polling, retention purges, backups, network scans, plugin
   update scans, and security validation.
 - Event handler framework (#120): admin-defined remediation actions (`record_only`, plus `restart_local_service` from #121 and `restart_remote_service` from #8 Part 8.3), the

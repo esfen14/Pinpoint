@@ -37,6 +37,22 @@ current-state inventory rather than treated as intended permission design.
 
 ## Operator CLI commands
 
+`app/api/commands/restore.py` provides `flask restore-backup <folder> --yes
+[--force]` (cold-standby recovery; runbook `docs/manuals/Backup_and_Restore.md`).
+The folder is a bare name in `YYYYMMDD-HHMMSS` form inside `DATABASE_BACKUP_DIR`,
+never a path. The logic is in `app/backup_restore.py`: it refuses a bad name, a
+symlink or a folder outside the backup directory, a missing database file, any
+file failing `PRAGMA integrity_check`, a missing `--yes`, and an active
+`pinpoint-gunicorn.service` (checked with a fixed `systemctl is-active --quiet`
+argument list; `--force` skips only this). It copies the current databases to
+`pre-restore-<timestamp>` (ignored by backup listing and rotation), stages each
+backup beside its target with the SQLite backup API, removes stale `-wal`/`-shm`/
+`-journal` files and renames each into place atomically; if the second rename
+fails the first is put back. It then prints the follow-up steps
+(`flask db upgrade --multidb`, `flask sync-permissions`, regenerate the Nagios
+config through the existing writer, start the service). Nothing is restored over
+a database that was not checked first.
+
 `app/api/commands/seed.py` provides `flask recover-bootstrap-admin` for an
 operator with local server access when the original bootstrap administrator has
 lost its password. It privately prompts for a confirmed temporary password and
@@ -197,7 +213,7 @@ An action body has `name` (3 to 60 letters, numbers, spaces, `.`, `_`, `-`; uniq
 
 | Method and path | Permission | Purpose |
 |---|---|---|
-| `GET /api/system/dashboard/status` | `system.dashboard` | Nagios process, monitoring-server resources and appliance storage_usage (per-database, backups, archives, free/total bytes per filesystem) |
+| `GET /api/system/dashboard/status` | `system.dashboard` | Nagios process, monitoring-server resources, appliance storage_usage (per-database, backups, archives, free/total bytes per filesystem) and `backup_health` (`newest_backup_at`, `backup_count`, `total_bytes`, `automatic_backups`, `stale`; `stale` is true only when automatic backups are on and the newest backup is missing or older than twice the daily interval; an empty or missing folder gives null/0) |
 | `GET /api/system/dashboard/summary` | `system.dashboard` | Host/service counts, active-alert counts, ping and NCPA summaries |
 | `GET /api/system/dashboard/alerts` | `system.dashboard` | Active alerts from the latest snapshot, with acknowledgement filters |
 | `POST /api/system/dashboard/alerts/acknowledge` | `system.acknowledge_alerts` | Acknowledge one host or service alert; also sent to Nagios (`nagios_synced`, `nagios_message` in the response). A comment with a line break or NUL returns 400 |
@@ -531,7 +547,8 @@ running. Check/retry settings, discovery and browser preferences remain independ
 | `remediation_actions.py` | The code-defined action types (`record_only`, and `restart_local_service` which runs `sudo -n /usr/bin/systemctl restart <unit>` as an argument list with no shell for a unit in `RESTARTABLE_UNITS`; it is refused for an unlisted unit or in Maintenance Mode, and records only the exit code, never command output): parameter schema and validation, `restart_remote_service` (#8 Part 8.3: restarts one unit on the device the event came from over SSH; see `remote_restart.py`; refused in Maintenance Mode, for a device that is not Active, is paused, is not trusted or has the switch off, and for a unit not on that device's list), and `run_action`, which enforces a timeout and turns a crash into a fixed message so no secret reaches the log. `RESTARTABLE_UNITS` and the installer sudoers drop-in must change together |
 | `remote_restart.py` | Remote service restart (#8 Part 8.3). Device side: the root-owned helper `/usr/local/sbin/pinpoint-service-restart`, its one sudoers line (`/etc/sudoers.d/pinpoint-service-restart`, checked with `visudo` before it replaces the live file) and the root-owned list `/etc/pinpoint/restartable-services`, installed by the NCPA bootstrap with the administrator's one-time password. PinPoint side: `restart_remote_unit` checks the stored host-key fingerprint, logs in with the deployment key and runs only `sudo -n <helper> <unit>`; the unit must match a plain-name pattern, and only fixed text is returned. Design: `docs/plans/Issue_8_3_Remote_Restart_Design_Note.md` |
 | `scripts/pinpoint_event_handler.py` | The Nagios event handler (standard library only): validates its arguments and writes one JSON file per event to the spool; never opens a shell or the network; installed by the installer at `/usr/local/sbin/pinpoint-event-handler` (`root:root`, 755) |
-| `automation.py` | Settings-driven discovery, plugin/security checks, and database backups |
+| `automation.py` | Settings-driven discovery, plugin/security checks, and database backups; `backup_health` for the dashboard; a failed scheduled backup writes one activity-log entry per day ("Scheduled database backup failed; see the application log", no exception text) |
+| `backup_restore.py` | Validation, integrity check, safety copy and atomic replacement used by `flask restore-backup`; also owns `BACKUP_FOLDER_FORMAT` |
 
 ## Shared statistics contract
 
