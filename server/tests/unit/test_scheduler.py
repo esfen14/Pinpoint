@@ -77,7 +77,7 @@ class TestPurgeRemediationRuns:
         from app.system_models import RemediationRun, SystemSettings
 
         now = datetime.now(timezone.utc)
-        db_session.session.add(SystemSettings(Id=1, Diagnostic_History_Retention_Days=90))
+        db_session.session.add(SystemSettings(Id=1, Remediation_Retention_Days=90))
         db_session.session.add(self._run("old", now - timedelta(days=91)))
         db_session.session.add(self._run("recent", now - timedelta(days=89)))
         db_session.session.commit()
@@ -92,8 +92,71 @@ class TestPurgeRemediationRuns:
         from app.system_models import RemediationRun, SystemSettings
 
         now = datetime.now(timezone.utc)
-        db_session.session.add(SystemSettings(Id=1, Diagnostic_History_Retention_Days=7))
+        db_session.session.add(SystemSettings(Id=1, Remediation_Retention_Days=7))
         db_session.session.add(self._run("eight-days", now - timedelta(days=8)))
+        db_session.session.commit()
+
+        scheduler._purge_old_data()
+
+        assert db_session.session.query(RemediationRun).count() == 0
+
+
+    def test_the_diagnostic_history_setting_no_longer_decides_run_retention(self, db_session):
+        from datetime import datetime, timedelta, timezone
+        from app.system_models import RemediationRun, SystemSettings
+
+        now = datetime.now(timezone.utc)
+        db_session.session.add(SystemSettings(
+            Id=1, Diagnostic_History_Retention_Days=7, Remediation_Retention_Days=30))
+        db_session.session.add(self._run("twenty-days", now - timedelta(days=20)))
+        db_session.session.commit()
+
+        scheduler._purge_old_data()
+
+        assert db_session.session.query(RemediationRun).count() == 1
+
+    def test_the_default_retention_is_still_ninety_days(self, db_session):
+        from app.system_models import SystemSettings
+
+        db_session.session.add(SystemSettings(Id=1))
+        db_session.session.commit()
+        assert db_session.session.get(SystemSettings, 1).Remediation_Retention_Days == 90
+
+
+class TestPurgeSpoolFiles:
+    """_purge_old_data removes spool files nobody handled for a long time (never newer or foreign ones)."""
+
+    @staticmethod
+    def _file(folder, name, age_days):
+        import os
+        import time
+        path = folder / name
+        path.write_text("{}")
+        stamp = time.time() - age_days * 86400
+        os.utime(path, (stamp, stamp))
+        return path
+
+    def test_old_event_files_are_removed_and_newer_or_other_files_are_kept(self, db_session, app, tmp_path):
+        from app.system_models import SystemSettings
+
+        app.config["REMEDIATION_SPOOL_DIR"] = str(tmp_path)
+        db_session.session.add(SystemSettings(Id=1))
+        db_session.session.commit()
+        self._file(tmp_path, "1760432100000000000-1.json", 8)
+        self._file(tmp_path, "1760432100000000000-2.json", 1)
+        self._file(tmp_path, "notes.txt", 30)
+
+        scheduler._purge_old_data()
+
+        assert sorted(p.name for p in tmp_path.iterdir()) == ["1760432100000000000-2.json", "notes.txt"]
+
+    def test_a_missing_spool_folder_does_not_stop_the_purge(self, db_session, app, tmp_path):
+        from datetime import datetime, timedelta, timezone
+        from app.system_models import RemediationRun, SystemSettings
+
+        app.config["REMEDIATION_SPOOL_DIR"] = str(tmp_path / "missing")
+        db_session.session.add(SystemSettings(Id=1, Remediation_Retention_Days=7))
+        db_session.session.add(TestPurgeRemediationRuns._run("old", datetime.now(timezone.utc) - timedelta(days=9)))
         db_session.session.commit()
 
         scheduler._purge_old_data()

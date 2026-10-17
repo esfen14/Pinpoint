@@ -35,11 +35,16 @@ with tempfile.TemporaryDirectory() as tmp:
         for i in range(1,4):
             populate(conn, 'NETWORK_DISCOVERY', {'NetDiscoveryID':i, 'DiscoveryStatusID':1, 'IP_Address':f'10.77.0.{i+2}', 'Network':'10.77.0.0/28', 'Nagios_Host_Name':f'legacy-{i}', 'Device_State':'ACTIVE'})
 
+    def existing_columns(conn, table):
+        """Column list for a snapshot, leaving out columns a later migration adds (not existing data)."""
+        return ', '.join(f'"{row[1]}"' for row in conn.execute(f'PRAGMA table_info("{table}")')
+                         if row[1] != 'Run_When_Acknowledged')
+
     def snapshot():
         """Read existing feature/device rows for exact preservation comparisons."""
         with sqlite3.connect(system_path) as conn:
             names = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
-            return {name: conn.execute(f'SELECT * FROM "{name}" ORDER BY 1,2').fetchall()
+            return {name: conn.execute(f'SELECT {existing_columns(conn, name)} FROM "{name}" ORDER BY 1,2').fetchall()
                     for name in ('DEVICE_PARENT', 'ESCALATION', 'REMEDIATION_ACTION', 'REMEDIATION_RUN', 'NETWORK_DISCOVERY') if name in names}
 
     def seed_features(conn):

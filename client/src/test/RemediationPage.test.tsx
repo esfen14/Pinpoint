@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '../lib/api'
 import { RemediationPage } from '../pages/RemediationPage'
-import type { RemediationAction, RemediationRun } from '../types/remediation'
+import type { RemediationAction, RemediationHealth, RemediationRun } from '../types/remediation'
 
 const api = vi.hoisted(() => ({
   getActionTypes: vi.fn(),
@@ -12,6 +12,9 @@ const api = vi.hoisted(() => ({
   deleteAction: vi.fn(),
   listRuns: vi.fn(),
   getRun: vi.fn(),
+  getHealth: vi.fn(),
+  getSettings: vi.fn(),
+  updateSettings: vi.fn(),
 }))
 
 vi.mock('../lib/remediationApi', async () => {
@@ -37,7 +40,7 @@ function action(overrides: Partial<RemediationAction> = {}): RemediationAction {
   return {
     id: 1, name: 'restart-web', actionType: 'record_only', scopeKind: 'service', hostPattern: 'web-*',
     servicePattern: 'HTTP', parameters: {}, enabled: true, maxRunsPerHour: 2, cooldownSeconds: 600,
-    version: 3, updatedAt: '2026-10-14T10:00:00', updatedBy: 1, ...overrides,
+    runWhenAcknowledged: false, version: 3, updatedAt: '2026-10-14T10:00:00', updatedBy: 1, ...overrides,
   }
 }
 
@@ -46,6 +49,13 @@ function run(overrides: Partial<RemediationRun> = {}): RemediationRun {
     id: 7, actionId: 1, actionName: 'restart-web', hostname: 'web-01', service: 'HTTP', state: 'CRITICAL',
     stateType: 'HARD', attempt: 3, receivedAt: '2026-10-14T10:00:00', startedAt: '2026-10-14T10:00:01',
     finishedAt: '2026-10-14T10:00:02', outcome: 'succeeded', reason: null, ...overrides,
+  }
+}
+
+function health(overrides: Partial<RemediationHealth> = {}): RemediationHealth {
+  return {
+    lastTickAt: '2026-10-14T10:00:00', lastError: null, stalled: false, backlog: 2, oldestSpoolAgeSeconds: 30,
+    runsLast24h: 5, capsHitLast24h: 1, skippedLast24h: 3, droppedTotal: 0, droppedAt: null, ...overrides,
   }
 }
 
@@ -60,6 +70,8 @@ beforeEach(() => {
   api.listActions.mockResolvedValue([action()])
   api.listRuns.mockResolvedValue(runList([run()]))
   api.getRun.mockResolvedValue({ ...run(), output: 'recorded' })
+  api.getHealth.mockResolvedValue(health())
+  api.getSettings.mockResolvedValue({ enabled: true, retentionDays: 90 })
   vi.spyOn(window, 'confirm').mockReturnValue(true)
 })
 
@@ -133,6 +145,7 @@ describe('Remediation page: actions', () => {
     expect(api.createAction).toHaveBeenCalledWith({
       name: 'restart-web', actionType: 'record_only', scopeKind: 'service', hostPattern: 'web-*',
       servicePattern: 'HTTP', parameters: {}, enabled: true, maxRunsPerHour: 3, cooldownSeconds: 900,
+      runWhenAcknowledged: false,
     })
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
     expect(await screen.findByText('restart-web')).toBeInTheDocument()
@@ -336,5 +349,164 @@ describe('Remediation page: run log', () => {
     permissions = ['remediation.view']
     await openRunLog()
     expect(await screen.findByText('web-01')).toBeInTheDocument()
+  })
+})
+
+// ==========================================================
+// SAFETY CONTROLS (issue #155)
+// ==========================================================
+
+describe('Remediation page: health and kill switch', () => {
+  const panel = async () => within(await screen.findByRole('region', { name: 'Automatic recovery status' }))
+
+  it('shows the live health values', async () => {
+    render(<RemediationPage />)
+    const status = await panel()
+    expect(await status.findByText('Events waiting')).toBeInTheDocument()
+    expect(status.getByTestId('health-backlog')).toHaveTextContent('2')
+    expect(status.getByTestId('health-runs')).toHaveTextContent('5')
+    expect(status.getByTestId('health-caps')).toHaveTextContent('1')
+    expect(status.getByTestId('health-skipped')).toHaveTextContent('3')
+    expect(screen.queryByText(/stopped checking in/i)).not.toBeInTheDocument()
+  })
+
+  it('shows a prominent banner when the consumer is stalled', async () => {
+    api.getHealth.mockResolvedValue(health({ stalled: true }))
+    render(<RemediationPage />)
+    expect(await screen.findByRole('alert')).toHaveTextContent(/stopped checking in/i)
+  })
+
+  it("shows the consumer's last error and any dropped events", async () => {
+    api.getHealth.mockResolvedValue(health({ lastError: 'The spool folder could not be read.', droppedTotal: 4 }))
+    render(<RemediationPage />)
+    const status = await panel()
+    expect(await status.findByText('The spool folder could not be read.')).toBeInTheDocument()
+    expect(status.getByTestId('health-dropped')).toHaveTextContent('4')
+  })
+
+  it('says so when the health cannot be loaded, without hiding the actions', async () => {
+    api.getHealth.mockRejectedValue(new ApiError('Boom', 500))
+    render(<RemediationPage />)
+    expect(await screen.findByText('restart-web')).toBeInTheDocument()
+    expect(await screen.findByText(/Unable to load the health of automatic recovery/i)).toBeInTheDocument()
+  })
+
+  it('shows a loading state before the health arrives', async () => {
+    api.getHealth.mockReturnValue(new Promise(() => {}))
+    render(<RemediationPage />)
+    expect(await screen.findByText(/Checking status/i)).toBeInTheDocument()
+  })
+
+  it('asks for confirmation before stopping all automatic recovery, then saves it', async () => {
+    api.updateSettings.mockResolvedValue({ enabled: false, retentionDays: 90 })
+    render(<RemediationPage />)
+    const toggle = await screen.findByRole('switch', { name: 'Automatic recovery' })
+    expect(toggle).toBeChecked()
+    fireEvent.click(toggle)
+    expect(window.confirm).toHaveBeenCalledWith(expect.stringMatching(/stops for every action/i))
+    await waitFor(() => expect(api.updateSettings).toHaveBeenCalledWith({ enabled: false }))
+    expect(await screen.findByRole('switch', { name: 'Automatic recovery' })).not.toBeChecked()
+  })
+
+  it('changes nothing when the confirmation is declined', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(false)
+    render(<RemediationPage />)
+    fireEvent.click(await screen.findByRole('switch', { name: 'Automatic recovery' }))
+    expect(api.updateSettings).not.toHaveBeenCalled()
+    expect(screen.getByRole('switch', { name: 'Automatic recovery' })).toBeChecked()
+  })
+
+  it('shows the saved state after a reload and marks each enabled action as paused', async () => {
+    api.getSettings.mockResolvedValue({ enabled: false, retentionDays: 90 })
+    render(<RemediationPage />)
+    expect(await screen.findByRole('switch', { name: 'Automatic recovery' })).not.toBeChecked()
+    const row = (await screen.findByText('restart-web')).closest('tr') as HTMLElement
+    expect(within(row).getByText(/Paused by the kill switch/i)).toBeInTheDocument()
+  })
+
+  it('turning it back on also asks first', async () => {
+    api.getSettings.mockResolvedValue({ enabled: false, retentionDays: 90 })
+    api.updateSettings.mockResolvedValue({ enabled: true, retentionDays: 90 })
+    render(<RemediationPage />)
+    fireEvent.click(await screen.findByRole('switch', { name: 'Automatic recovery' }))
+    expect(window.confirm).toHaveBeenCalledWith(expect.stringMatching(/resume/i))
+    await waitFor(() => expect(api.updateSettings).toHaveBeenCalledWith({ enabled: true }))
+  })
+
+  it('keeps the old state and shows the message when saving fails', async () => {
+    api.updateSettings.mockRejectedValue(new ApiError('You do not have permission', 403))
+    render(<RemediationPage />)
+    fireEvent.click(await screen.findByRole('switch', { name: 'Automatic recovery' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('You do not have permission')
+    expect(screen.getByRole('switch', { name: 'Automatic recovery' })).toBeChecked()
+  })
+
+  it('lets a view-only user see the switch but not change it', async () => {
+    permissions = ['remediation.view']
+    render(<RemediationPage />)
+    expect(await screen.findByRole('switch', { name: 'Automatic recovery' })).toBeDisabled()
+  })
+
+  it('shows a permission message when the settings are forbidden', async () => {
+    api.getSettings.mockRejectedValue(new ApiError('Forbidden', 403))
+    render(<RemediationPage />)
+    expect(await screen.findByText(/do not have permission to view the kill switch/i)).toBeInTheDocument()
+  })
+})
+
+describe('Remediation page: run when acknowledged', () => {
+  it('offers the option with help text, off by default, and sends it', async () => {
+    api.createAction.mockResolvedValue(action())
+    render(<RemediationPage />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Add action' }))
+    const dialog = screen.getByRole('dialog', { name: 'Add action' })
+    const box = within(dialog).getByRole('checkbox', { name: 'Run when acknowledged' })
+    expect(box).not.toBeChecked()
+    expect(within(dialog).getByText(/skipped when an operator has already acknowledged/i)).toBeInTheDocument()
+    fireEvent.click(box)
+    fireEvent.change(within(dialog).getByLabelText('Name'), { target: { value: 'ack-ok' } })
+    fireEvent.change(within(dialog).getByLabelText('Host pattern'), { target: { value: 'web-01' } })
+    fireEvent.change(within(dialog).getByLabelText('Service pattern'), { target: { value: 'HTTP' } })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save action' }))
+    await waitFor(() => expect(api.createAction).toHaveBeenCalled())
+    expect(api.createAction.mock.calls[0][0]).toMatchObject({ runWhenAcknowledged: true })
+  })
+
+  it('shows the saved value when editing', async () => {
+    api.listActions.mockResolvedValue([action({ runWhenAcknowledged: true })])
+    render(<RemediationPage />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit restart-web' }))
+    const dialog = screen.getByRole('dialog', { name: 'Edit action' })
+    expect(within(dialog).getByRole('checkbox', { name: 'Run when acknowledged' })).toBeChecked()
+  })
+
+  it('keeps the value when the enable switch is used', async () => {
+    api.listActions.mockResolvedValue([action({ runWhenAcknowledged: true })])
+    api.updateAction.mockResolvedValue(action({ enabled: false, runWhenAcknowledged: true, version: 4 }))
+    render(<RemediationPage />)
+    fireEvent.click(await screen.findByRole('switch', { name: 'Enable restart-web' }))
+    await waitFor(() => expect(api.updateAction).toHaveBeenCalled())
+    expect(api.updateAction.mock.calls[0][1]).toMatchObject({ runWhenAcknowledged: true })
+  })
+})
+
+describe('Remediation page: skip reasons in the run log', () => {
+  it('shows every new skip outcome with its reason and offers them as filters', async () => {
+    api.listRuns.mockResolvedValue(runList([
+      run({ id: 11, outcome: 'skipped_kill_switch', reason: 'Automatic recovery is switched off (kill switch).' }),
+      run({ id: 12, outcome: 'skipped_maintenance', reason: 'Maintenance Mode is on.', hostname: 'web-02' }),
+      run({ id: 13, outcome: 'skipped_downtime', reason: 'The problem is in scheduled downtime.', hostname: 'web-03' }),
+      run({ id: 14, outcome: 'skipped_acknowledged', reason: 'An operator has already acknowledged this problem.', hostname: 'web-04' }),
+    ]))
+    render(<RemediationPage />)
+    fireEvent.click(await screen.findByRole('tab', { name: 'Run log' }))
+    expect(await screen.findAllByText('Skipped (kill switch)')).not.toHaveLength(0)
+    expect(screen.getAllByText('Skipped (maintenance)')).not.toHaveLength(0)
+    expect(screen.getAllByText('Skipped (downtime)')).not.toHaveLength(0)
+    expect(screen.getAllByText('Skipped (acknowledged)')).not.toHaveLength(0)
+    expect(screen.getByText(/switched off \(kill switch\)/)).toBeInTheDocument()
+    expect(screen.getByText('Maintenance Mode is on.')).toBeInTheDocument()
+    const filter = screen.getByLabelText('Outcome')
+    expect(within(filter).getByRole('option', { name: 'Skipped (kill switch)' })).toBeInTheDocument()
   })
 })

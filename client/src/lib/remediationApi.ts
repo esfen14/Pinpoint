@@ -4,9 +4,11 @@ import type {
   FieldErrors,
   RemediationAction,
   RemediationActionInput,
+  RemediationHealth,
   RemediationRunDetail,
   RemediationRunFilters,
   RemediationRunList,
+  RemediationSettings,
 } from '../types/remediation'
 
 const BASE = '/api/system/remediation'
@@ -43,6 +45,18 @@ export function listRuns(filters: RemediationRunFilters) {
 
 export function getRun(id: number) {
   return apiGet<RemediationRunDetail>(`${BASE}/runs/${id}`)
+}
+
+export function getHealth() {
+  return apiGet<RemediationHealth>(`${BASE}/health`)
+}
+
+export function getSettings() {
+  return apiGet<RemediationSettings>(`${BASE}/settings`)
+}
+
+export function updateSettings(changes: Partial<RemediationSettings>) {
+  return apiPut<RemediationSettings>(`${BASE}/settings`, changes)
 }
 
 /** The per-field messages of a 400 response, or an empty object for any other error. */

@@ -46,11 +46,17 @@ def populate(conn, table, values):
     conn.execute(f'INSERT INTO "{table}" ({fields}) VALUES ({", ".join("?" for _ in values)})', list(values.values()))
 
 
+def existing_columns(conn, table):
+    """Column list for a snapshot, leaving out columns a later migration adds (not existing data)."""
+    return ', '.join(f'"{row[1]}"' for row in conn.execute(f'PRAGMA table_info("{table}")')
+                     if row[1] != 'Run_When_Acknowledged')
+
+
 def feature_rows():
     """Snapshot only existing feature tables so upgrade can add the other branch."""
     with sqlite3.connect(sysdb) as conn:
         names = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
-        return {name: conn.execute(f'SELECT * FROM "{name}" ORDER BY 1').fetchall()
+        return {name: conn.execute(f'SELECT {existing_columns(conn, name)} FROM "{name}" ORDER BY 1').fetchall()
                 for name in ('ESCALATION', 'REMEDIATION_ACTION', 'REMEDIATION_RUN') if name in names}
 
 

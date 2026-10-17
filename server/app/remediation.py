@@ -6,8 +6,10 @@ spool folder. A scheduler job calls ``process_spool`` every few seconds. Everyth
 file is untrusted: the file must be a regular file of the expected size owned by the trusted
 user, and its content is parsed strictly. For each valid HARD problem event (a SOFT state or a
 recovery to OK or UP is ignored) the consumer finds the
-enabled actions that cover it, applies the cooldown and hourly cap, writes one RemediationRun
-row per action, and only then runs the action type from app/remediation_actions.py.
+enabled actions that cover it, applies the safety controls (kill switch, Maintenance Mode,
+scheduled downtime, an acknowledged problem) and then the cooldown and hourly cap, writes one
+RemediationRun row per action (a skip is a row with its reason, never silent), and only then runs
+the action type from app/remediation_actions.py.
 
 Order for one event (so a crash can never run an action twice):
     1. save the run rows (``running`` or ``skipped_*``) and commit
@@ -29,14 +31,19 @@ import sqlalchemy as sa
 from flask import current_app
 
 from app import db
+from app.history_models import AcknowledgementType, HostStatus, ServiceStatus
 from app.remediation_actions import RemoteTarget, RunContext, run_action
 from app.system_models import (
-    RemediationAction, RemediationEventState, RemediationEventStateType, RemediationOutcome,
-    RemediationRun, RemediationScope, SystemSettings,
-    DeviceState, NetworkDiscovery, SSHCredentials,
+    DeviceState, NetworkDiscovery, RemediationAction, RemediationConsumerState, RemediationEventState,
+    RemediationEventStateType, RemediationOutcome, RemediationRun, RemediationScope, SSHCredentials,
+    SystemSettings,
 )
 
 MAX_FILES_PER_RUN = 200
+# A spool longer than this is a flood or a stalled consumer: the oldest files are dropped (and
+# counted). Event files nobody handled for SPOOL_MAX_AGE_DAYS are removed by the daily purge.
+SPOOL_CAP = 1000
+SPOOL_MAX_AGE_DAYS = 7
 MAX_FILE_BYTES = 2048
 MAX_HOST_LENGTH = 100
 MAX_SERVICE_LENGTH = 150
@@ -59,6 +66,12 @@ SERVICE_STATES = {"OK", "WARNING", "CRITICAL", "UNKNOWN"}
 EXECUTED = (
     RemediationOutcome.RUNNING, RemediationOutcome.SUCCEEDED, RemediationOutcome.FAILED,
     RemediationOutcome.TIMED_OUT, RemediationOutcome.INTERRUPTED,
+)
+# Outcomes where a decision was made and nothing was started.
+SKIPPED = (
+    RemediationOutcome.SKIPPED_COOLDOWN, RemediationOutcome.SKIPPED_HOURLY_CAP,
+    RemediationOutcome.SKIPPED_KILL_SWITCH, RemediationOutcome.SKIPPED_MAINTENANCE,
+    RemediationOutcome.SKIPPED_DOWNTIME, RemediationOutcome.SKIPPED_ACKNOWLEDGED,
 )
 RESULT_OUTCOMES = {
     "succeeded": RemediationOutcome.SUCCEEDED,
@@ -153,6 +166,125 @@ def remove(path):
         pass
 
 
+def get_state():
+    """Return the one consumer-state row (Id 1), creating it when missing. The caller commits."""
+    state = db.session.get(RemediationConsumerState, 1)
+    if state is None:
+        state = RemediationConsumerState(Id=1, Dropped_Count=0)
+        db.session.add(state)
+    return state
+
+
+def record_tick(error=None):
+    """
+    Save the heartbeat: when the consumer last ran and its last error (None on a good tick).
+    The error is a fixed sentence, never a path or file content. A failure here is logged and
+    never stops the consumer.
+    """
+    try:
+        state = get_state()
+        state.Last_Tick_At = datetime.now(timezone.utc)
+        state.Last_Error = error
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("Remediation: could not save the consumer heartbeat")
+
+
+def as_utc(moment):
+    """A stored datetime as timezone-aware UTC (SQLite hands back naive ones)."""
+    return moment if moment.tzinfo else moment.replace(tzinfo=timezone.utc)
+
+
+def health_snapshot(spool_dir, poll_seconds, now=None):
+    """
+    The consumer's health for the Remediation page: one state row, one directory listing, and
+    counts over the last 24 hours. ``stalled`` means no heartbeat for more than three poll
+    intervals (or never). Nothing here scans history or reads event files.
+    """
+    now = now or datetime.now(timezone.utc)
+    state = db.session.get(RemediationConsumerState, 1)
+    last_tick = as_utc(state.Last_Tick_At) if state is not None and state.Last_Tick_At else None
+    stalled = last_tick is None or (now - last_tick).total_seconds() > 3 * poll_seconds
+    try:
+        names = sorted(name for name in os.listdir(spool_dir) if SPOOL_NAME_RE.fullmatch(name))
+    except OSError:
+        names = []
+    oldest_age = None
+    if names:
+        try:
+            oldest_age = max(0, int(now.timestamp() - os.lstat(os.path.join(spool_dir, names[0])).st_mtime))
+        except OSError:
+            oldest_age = None
+    since = now - timedelta(hours=24)
+
+    def count(outcomes):
+        return db.session.scalar(sa.select(sa.func.count()).select_from(RemediationRun).where(
+            RemediationRun.Received_At >= since, RemediationRun.Outcome.in_(outcomes))) or 0
+
+    return {
+        "lastTickAt": last_tick.isoformat() if last_tick else None,
+        "lastError": state.Last_Error if state is not None else None,
+        "stalled": stalled,
+        "backlog": len(names),
+        "oldestSpoolAgeSeconds": oldest_age,
+        "runsLast24h": count(EXECUTED),
+        "capsHitLast24h": count((RemediationOutcome.SKIPPED_HOURLY_CAP,)),
+        "skippedLast24h": count(SKIPPED),
+        "droppedTotal": (state.Dropped_Count or 0) if state is not None else 0,
+        "droppedAt": as_utc(state.Dropped_At).isoformat() if state is not None and state.Dropped_At else None,
+    }
+
+
+def drop_over_cap(spool_dir, names):
+    """
+    Delete the oldest files when more than SPOOL_CAP are waiting, and record how many went in
+    the consumer state and the log. ``names`` is sorted oldest first; returns the names kept.
+    """
+    excess = len(names) - SPOOL_CAP
+    if excess <= 0:
+        return names
+    dropped = 0
+    for name in names[:excess]:
+        path = os.path.join(spool_dir, name)
+        remove(path)
+        if not os.path.lexists(path):
+            dropped += 1
+    state = get_state()
+    state.Dropped_Count = (state.Dropped_Count or 0) + dropped
+    state.Dropped_At = datetime.now(timezone.utc)
+    db.session.commit()
+    current_app.logger.warning("Remediation: the spool held more than %d files; dropped the %d oldest", SPOOL_CAP, dropped)
+    return names[excess:]
+
+
+def purge_old_spool_files(spool_dir=None, now=None):
+    """
+    Remove event files in the spool older than SPOOL_MAX_AGE_DAYS (stuck or unreadable ones; a
+    handled file is already gone). Other names are left alone. Returns the number removed.
+    """
+    spool_dir = spool_dir or current_app.config["REMEDIATION_SPOOL_DIR"]
+    cutoff = (now or datetime.now(timezone.utc)).timestamp() - SPOOL_MAX_AGE_DAYS * 86400
+    removed = 0
+    try:
+        names = [name for name in os.listdir(spool_dir) if SPOOL_NAME_RE.fullmatch(name)]
+    except OSError:
+        return removed
+    for name in names:
+        path = os.path.join(spool_dir, name)
+        try:
+            if os.lstat(path).st_mtime >= cutoff:
+                continue
+        except OSError:
+            continue
+        remove(path)
+        if not os.path.lexists(path):
+            removed += 1
+    if removed:
+        current_app.logger.info("Remediation: removed %d spool files older than %d days", removed, SPOOL_MAX_AGE_DAYS)
+    return removed
+
+
 # ==========================================================
 # DECISIONS
 # ==========================================================
@@ -180,6 +312,47 @@ def covers(action, event):
     if action.Scope_Kind == RemediationScope.SERVICE:
         return pattern_matches(action.Service_Pattern, event["service"])
     return True
+
+
+def safety_state(event):
+    """
+    Return (in_downtime, acknowledged) for the object an event is about, from its newest Nagios
+    status snapshot. An object with no snapshot is neither.
+    """
+    if event["kind"] == "service":
+        newest = db.session.scalars(sa.select(ServiceStatus).where(
+            ServiceStatus.Hostname == event["host"], ServiceStatus.Service == event["service"],
+        ).order_by(ServiceStatus.Timestamp.desc(), ServiceStatus.ServiceStatusID.desc()).limit(1)).first()
+    else:
+        newest = db.session.scalars(sa.select(HostStatus).where(
+            HostStatus.Hostname == event["host"],
+        ).order_by(HostStatus.Timestamp.desc(), HostStatus.HostStatusID.desc()).limit(1)).first()
+    if newest is None:
+        return False, False
+    return (
+        (newest.Scheduled_Downtime_Depth or 0) > 0,
+        newest.Acknowledgement_Type != AcknowledgementType.NOACK,
+    )
+
+
+def safety_skip(action, settings, state):
+    """
+    Return (outcome, reason) when a safety control stops this action, else None. Order: the kill
+    switch, Maintenance Mode, scheduled downtime, an acknowledged problem. ``state`` is the
+    (in_downtime, acknowledged) pair from ``safety_state``.
+    """
+    if settings is not None and settings.Remediation_Enabled is False:
+        return (RemediationOutcome.SKIPPED_KILL_SWITCH,
+                "Automatic recovery is switched off (kill switch).")
+    if settings is not None and settings.Maintenance_Mode:
+        return (RemediationOutcome.SKIPPED_MAINTENANCE, "Maintenance Mode is on.")
+    in_downtime, acknowledged = state
+    if in_downtime:
+        return (RemediationOutcome.SKIPPED_DOWNTIME, "The problem is in scheduled downtime.")
+    if acknowledged and not action.Run_When_Acknowledged:
+        return (RemediationOutcome.SKIPPED_ACKNOWLEDGED,
+                "An operator has already acknowledged this problem.")
+    return None
 
 
 def skip_reason(action, event, now):
@@ -224,6 +397,9 @@ def record_decisions(event, now):
     key = event_key(event)
     to_run = []
     actions = db.session.scalars(sa.select(RemediationAction).where(RemediationAction.Enabled.is_(True))).all()
+    # Read on every event, so a change to the kill switch applies on the next tick.
+    settings = db.session.get(SystemSettings, 1)
+    state = None
     for action in actions:
         if not covers(action, event):
             continue
@@ -232,7 +408,9 @@ def record_decisions(event, now):
         if already is not None:
             current_app.logger.info("Remediation: replayed event ignored for action %r", action.Name)
             continue
-        skipped = skip_reason(action, event, now)
+        if state is None:
+            state = safety_state(event)
+        skipped = safety_skip(action, settings, state) or skip_reason(action, event, now)
         row = RemediationRun(
             Event_Key=key, Action_Id=action.Id, Action_Name=action.Name, Hostname=event["host"],
             Service=event["service"], State=RemediationEventState(event["state"]),
@@ -332,14 +510,21 @@ def process_spool(spool_dir=None):
     try:
         names = sorted(name for name in os.listdir(spool_dir) if SPOOL_NAME_RE.fullmatch(name))
     except OSError:
+        record_tick("The spool folder could not be read.")
         return summary
     uid = trusted_uid()
+    try:
+        names = drop_over_cap(spool_dir, names)
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("Remediation: could not apply the spool cap")
     for name in names[:MAX_FILES_PER_RUN]:
         try:
             handle_file(os.path.join(spool_dir, name), uid, summary)
         except Exception:
             db.session.rollback()
             current_app.logger.exception("Remediation: could not handle a spool file")
+    record_tick()
     return summary
 
 

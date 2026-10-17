@@ -526,8 +526,8 @@ def test_maintenance_mode_blocks_the_restart_and_records_why(db_session, spool):
         remediation.process_spool(str(spool))
     (row,) = runs(db_session)
     run.assert_not_called()
-    assert row.Outcome == RemediationOutcome.FAILED
-    assert "Maintenance Mode" in row.Output
+    assert row.Outcome == RemediationOutcome.SKIPPED_MAINTENANCE
+    assert "Maintenance Mode" in row.Reason
 
 
 def test_a_failed_restart_records_the_exit_code(db_session, spool):
@@ -539,3 +539,226 @@ def test_a_failed_restart_records_the_exit_code(db_session, spool):
         remediation.process_spool(str(spool))
     (row,) = runs(db_session)
     assert row.Outcome == RemediationOutcome.FAILED and "exit code 1" in row.Output
+
+
+# ==========================================================
+# SAFETY CONTROLS (issue #155): kill switch and skip reasons
+# ==========================================================
+
+def set_settings(db_session, **fields):
+    from app.system_models import SystemSettings
+    settings = db_session.session.get(SystemSettings, 1) or SystemSettings(Id=1)
+    for name, value in fields.items():
+        setattr(settings, name, value)
+    db_session.session.add(settings)
+    db_session.session.commit()
+
+
+def seed_service(db_session, **kwargs):
+    from tests.support.seed_helpers import _make_service
+    from app.history_models import ServiceStateType
+    _make_service(db_session, hostname="web-01", service="HTTP", state=ServiceStateType.CRITICAL, **kwargs)
+    db_session.session.commit()
+
+
+def test_the_defaults_leave_a_covered_failure_running_as_before(db_session, spool):
+    set_settings(db_session)
+    add_action(db_session)
+    put(spool, event())
+    remediation.process_spool(str(spool))
+    (run,) = runs(db_session)
+    assert run.Outcome == RemediationOutcome.SUCCEEDED
+
+
+def test_kill_switch_off_records_one_skipped_run_and_runs_nothing(db_session, spool, monkeypatch):
+    set_settings(db_session, Remediation_Enabled=False)
+    add_action(db_session)
+    put(spool, event())
+    ran = []
+    monkeypatch.setattr(remediation, "run_action", lambda *a, **k: ran.append(a))
+    remediation.process_spool(str(spool))
+    (run,) = runs(db_session)
+    assert run.Outcome == RemediationOutcome.SKIPPED_KILL_SWITCH
+    assert run.Reason and "switch" in run.Reason.lower()
+    assert ran == []
+    assert left(spool) == []
+
+
+def test_kill_switch_takes_effect_on_the_next_tick_without_a_restart(db_session, spool):
+    add_action(db_session, Cooldown_Seconds=60)
+    set_settings(db_session, Remediation_Enabled=False)
+    put(spool, event(last_change=1760432100))
+    remediation.process_spool(str(spool))
+    set_settings(db_session, Remediation_Enabled=True)
+    put(spool, event(last_change=1760432200))
+    remediation.process_spool(str(spool))
+    first, second = runs(db_session)
+    assert first.Outcome == RemediationOutcome.SKIPPED_KILL_SWITCH
+    assert second.Outcome == RemediationOutcome.SUCCEEDED
+
+
+def test_a_skipped_run_from_the_kill_switch_does_not_start_a_cooldown(db_session, spool):
+    add_action(db_session)
+    set_settings(db_session, Remediation_Enabled=False)
+    put(spool, event(last_change=1760432100))
+    remediation.process_spool(str(spool))
+    set_settings(db_session, Remediation_Enabled=True)
+    put(spool, event(last_change=1760432200))
+    remediation.process_spool(str(spool))
+    assert [r.Outcome for r in runs(db_session)] == [
+        RemediationOutcome.SKIPPED_KILL_SWITCH, RemediationOutcome.SUCCEEDED]
+
+
+def test_maintenance_mode_skips_every_action_type_not_only_restarts(db_session, spool):
+    set_settings(db_session, Maintenance_Mode=True)
+    add_action(db_session)  # record_only
+    put(spool, event())
+    remediation.process_spool(str(spool))
+    (run,) = runs(db_session)
+    assert run.Outcome == RemediationOutcome.SKIPPED_MAINTENANCE
+    assert "Maintenance Mode" in run.Reason
+
+
+def test_scheduled_downtime_skips_with_its_own_reason(db_session, spool):
+    set_settings(db_session)
+    add_action(db_session)
+    seed_service(db_session, downtime_depth=1)
+    put(spool, event())
+    remediation.process_spool(str(spool))
+    (run,) = runs(db_session)
+    assert run.Outcome == RemediationOutcome.SKIPPED_DOWNTIME
+    assert "downtime" in run.Reason.lower()
+
+
+def test_an_acknowledged_problem_is_skipped_unless_the_action_opts_in(db_session, spool):
+    from app.history_models import AcknowledgementType
+    set_settings(db_session)
+    add_action(db_session, Name="skips")
+    add_action(db_session, Name="opts-in", Run_When_Acknowledged=True)
+    seed_service(db_session, ack_type=AcknowledgementType.NORMACK)
+    put(spool, event())
+    remediation.process_spool(str(spool))
+    by_name = {r.Action_Name: r for r in runs(db_session)}
+    assert by_name["skips"].Outcome == RemediationOutcome.SKIPPED_ACKNOWLEDGED
+    assert "acknowledged" in by_name["skips"].Reason.lower()
+    assert by_name["opts-in"].Outcome == RemediationOutcome.SUCCEEDED
+
+
+def test_the_newest_status_decides_acknowledgement_and_downtime(db_session, spool):
+    """An old acknowledged snapshot must not block a problem that is no longer acknowledged."""
+    from datetime import datetime, timedelta, timezone
+    from app.history_models import AcknowledgementType
+    from app.history_models import ServiceStateType
+    from tests.support.seed_helpers import _make_service
+    set_settings(db_session)
+    add_action(db_session)
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    _make_service(db_session, hostname="web-01", service="HTTP", state=ServiceStateType.CRITICAL,
+                  ts=now - timedelta(minutes=10), ack_type=AcknowledgementType.NORMACK, downtime_depth=1)
+    _make_service(db_session, hostname="web-01", service="HTTP", state=ServiceStateType.CRITICAL, ts=now)
+    db_session.session.commit()
+    put(spool, event())
+    remediation.process_spool(str(spool))
+    (run,) = runs(db_session)
+    assert run.Outcome == RemediationOutcome.SUCCEEDED
+
+
+def test_a_host_event_reads_the_host_status_for_downtime(db_session, spool):
+    from app.history_models import HostStateType
+    from tests.support.seed_helpers import _make_host
+    set_settings(db_session)
+    add_action(db_session, Scope_Kind=RemediationScope.HOST, Host_Pattern="web-*", Service_Pattern=None)
+    _make_host(db_session, hostname="web-01", state=HostStateType.DOWN, downtime_depth=2)
+    db_session.session.commit()
+    put(spool, event(kind="host", service=None, state="DOWN"))
+    remediation.process_spool(str(spool))
+    (run,) = runs(db_session)
+    assert run.Outcome == RemediationOutcome.SKIPPED_DOWNTIME
+
+
+def test_skip_precedence_is_kill_switch_then_maintenance_then_downtime_then_acknowledged(db_session, spool):
+    from app.history_models import AcknowledgementType
+    add_action(db_session, Cooldown_Seconds=60, Max_Runs_Per_Hour=60)
+    seed_service(db_session, downtime_depth=1, ack_type=AcknowledgementType.NORMACK)
+    expected = [
+        (dict(Remediation_Enabled=False, Maintenance_Mode=True), RemediationOutcome.SKIPPED_KILL_SWITCH),
+        (dict(Remediation_Enabled=True, Maintenance_Mode=True), RemediationOutcome.SKIPPED_MAINTENANCE),
+        (dict(Remediation_Enabled=True, Maintenance_Mode=False), RemediationOutcome.SKIPPED_DOWNTIME),
+    ]
+    for n, (settings, outcome) in enumerate(expected):
+        set_settings(db_session, **settings)
+        put(spool, event(last_change=1760432100 + n))
+        remediation.process_spool(str(spool))
+        assert runs(db_session)[-1].Outcome == outcome
+
+
+def test_a_spool_over_the_cap_drops_the_oldest_files_and_records_how_many(db_session, spool, monkeypatch):
+    from app.system_models import RemediationConsumerState
+    set_settings(db_session)
+    add_action(db_session, Cooldown_Seconds=60, Max_Runs_Per_Hour=60)
+    monkeypatch.setattr(remediation, "SPOOL_CAP", 3)
+    for n in range(5):
+        put(spool, event(last_change=1760432100 + n))
+    remediation.process_spool(str(spool))
+    # The two oldest were dropped unread; the three newest were handled.
+    assert [r.Outcome for r in runs(db_session)] == [RemediationOutcome.SUCCEEDED] + [
+        RemediationOutcome.SKIPPED_COOLDOWN] * 2
+    state = db_session.session.get(RemediationConsumerState, 1)
+    assert state.Dropped_Count == 2 and state.Dropped_At is not None
+    assert left(spool) == []
+
+
+def test_a_spool_at_the_cap_drops_nothing(db_session, spool, monkeypatch):
+    from app.system_models import RemediationConsumerState
+    set_settings(db_session)
+    add_action(db_session, Cooldown_Seconds=60, Max_Runs_Per_Hour=60)
+    monkeypatch.setattr(remediation, "SPOOL_CAP", 3)
+    for n in range(3):
+        put(spool, event(last_change=1760432100 + n))
+    remediation.process_spool(str(spool))
+    assert len(runs(db_session)) == 3
+    state = db_session.session.get(RemediationConsumerState, 1)
+    assert state is None or state.Dropped_Count == 0
+
+
+# ==========================================================
+# CONSUMER HEARTBEAT (issue #155)
+# ==========================================================
+
+def state_row(db_session):
+    from app.system_models import RemediationConsumerState
+    db_session.session.expire_all()
+    return db_session.session.get(RemediationConsumerState, 1)
+
+
+def test_every_tick_records_a_heartbeat_with_no_error(db_session, spool):
+    before = datetime.now(timezone.utc).replace(tzinfo=None)
+    remediation.process_spool(str(spool))
+    state = state_row(db_session)
+    assert state.Last_Tick_At >= before - timedelta(seconds=1)
+    assert state.Last_Error is None
+
+
+def test_an_unreadable_spool_folder_is_recorded_as_the_last_error_and_still_ticks(db_session, tmp_path):
+    remediation.process_spool(str(tmp_path / "nope"))
+    state = state_row(db_session)
+    assert state.Last_Tick_At is not None
+    assert state.Last_Error and "spool" in state.Last_Error.lower()
+    assert str(tmp_path) not in state.Last_Error  # no internal path in anything shown to operators
+
+
+def test_a_good_tick_clears_the_previous_error(db_session, spool, tmp_path):
+    remediation.process_spool(str(tmp_path / "nope"))
+    remediation.process_spool(str(spool))
+    assert state_row(db_session).Last_Error is None
+
+
+def test_a_failure_to_write_the_heartbeat_never_stops_the_consumer(db_session, spool, monkeypatch):
+    add_action(db_session)
+    put(spool, event())
+
+    def boom():
+        raise RuntimeError("db down")
+    monkeypatch.setattr(remediation, "get_state", boom)
+    remediation.process_spool(str(spool))
+    assert len(runs(db_session)) == 1

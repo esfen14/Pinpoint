@@ -933,6 +933,11 @@ class SystemSettings(db.Model):
     Log_Retention_Days: so.Mapped[int] = so.mapped_column(sa.Integer(), default=30)
     Diagnostic_History_Retention_Days: so.Mapped[int] = so.mapped_column(sa.Integer(), default=90)
 
+    # Automatic recovery safety controls. Changed only through /api/system/remediation/settings
+    # (remediation.manage), not the Settings page, so they are not part of to_dict().
+    Remediation_Enabled: so.Mapped[bool] = so.mapped_column(sa.Boolean(), default=True, server_default=sa.true())
+    Remediation_Retention_Days: so.Mapped[int] = so.mapped_column(sa.Integer(), default=90, server_default="90")
+
     # Concurrency + audit trail
     Version: so.Mapped[int] = so.mapped_column(sa.Integer(), default=1)
     Updated_At: so.Mapped[datetime] = so.mapped_column(
@@ -1327,6 +1332,10 @@ class RemediationOutcome(Enum):
     SKIPPED_COOLDOWN = "skipped_cooldown"
     SKIPPED_HOURLY_CAP = "skipped_hourly_cap"
     INTERRUPTED = "interrupted"
+    SKIPPED_KILL_SWITCH = "skipped_kill_switch"
+    SKIPPED_MAINTENANCE = "skipped_maintenance"
+    SKIPPED_DOWNTIME = "skipped_downtime"
+    SKIPPED_ACKNOWLEDGED = "skipped_acknowledged"
 
 
 class RemediationAction(db.Model):
@@ -1347,6 +1356,9 @@ class RemediationAction(db.Model):
     Enabled: so.Mapped[bool] = so.mapped_column(sa.Boolean(), default=False, server_default=sa.false())
     Max_Runs_Per_Hour: so.Mapped[int] = so.mapped_column(sa.Integer(), default=2, server_default="2")
     Cooldown_Seconds: so.Mapped[int] = so.mapped_column(sa.Integer(), default=600, server_default="600")
+    # False: skip a problem an operator has already acknowledged.
+    Run_When_Acknowledged: so.Mapped[bool] = so.mapped_column(
+        sa.Boolean(), default=False, server_default=sa.false())
     Version: so.Mapped[int] = so.mapped_column(sa.Integer(), default=1)
     Updated_By: so.Mapped[Optional[int]] = so.mapped_column(sa.ForeignKey(User.UserID), index=True)
     Updated_At: so.Mapped[datetime] = so.mapped_column(
@@ -1382,3 +1394,18 @@ class RemediationRun(db.Model):
     Outcome: so.Mapped[RemediationOutcome] = so.mapped_column(sa.Enum(RemediationOutcome), index=True)
     Reason: so.Mapped[Optional[str]] = so.mapped_column(sa.String(200))
     Output: so.Mapped[Optional[str]] = so.mapped_column(sa.String(1024))
+
+
+class RemediationConsumerState(db.Model):
+    """
+    One row (Id 1): when the spool consumer last ran, its last error, and how many spool files the
+    last overflow dropped. Read by the health route; written on every consumer tick, so it is
+    kept apart from SystemSettings and does not touch that row's Version.
+    """
+    __tablename__ = "REMEDIATION_CONSUMER_STATE"
+
+    Id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    Last_Tick_At: so.Mapped[Optional[datetime]] = so.mapped_column()
+    Last_Error: so.Mapped[Optional[str]] = so.mapped_column(sa.String(200))
+    Dropped_Count: so.Mapped[int] = so.mapped_column(sa.Integer(), default=0, server_default="0")
+    Dropped_At: so.Mapped[Optional[datetime]] = so.mapped_column()

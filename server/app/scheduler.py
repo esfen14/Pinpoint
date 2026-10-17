@@ -167,8 +167,10 @@ def _purge_old_data():
                 db.session.execute(sa.delete(ActivityLog).where(ActivityLog.LogID.in_(old_log_ids)))
 
             # --- Remediation run log (audit trail of automatic actions) ---
-            run_cutoff = now - timedelta(days=settings.Diagnostic_History_Retention_Days)
+            run_cutoff = now - timedelta(days=settings.Remediation_Retention_Days)
             db.session.execute(sa.delete(RemediationRun).where(RemediationRun.Received_At < run_cutoff))
+            from app import remediation
+            remediation.purge_old_spool_files()
 
             # --- Diagnostic history retention (Nagios snapshots) ----------
             diag_cutoff = now - timedelta(days=settings.Diagnostic_History_Retention_Days)

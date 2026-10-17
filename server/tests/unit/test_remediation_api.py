@@ -56,7 +56,7 @@ def add_run(db_session, action_id=1, name="restart-web", host="web-01", service=
 # PERMISSIONS
 # ==========================================================
 
-READ_URLS = [f"{BASE}/action-types", f"{BASE}/actions", f"{BASE}/runs", f"{BASE}/runs/1"]
+READ_URLS = [f"{BASE}/action-types", f"{BASE}/actions", f"{BASE}/runs", f"{BASE}/runs/1", f"{BASE}/health"]
 
 
 def test_every_route_needs_login(client, db_session):
@@ -375,6 +375,231 @@ def test_changes_are_written_to_the_configuration_log(logged_in_client, db_sessi
     types = {row.Conf_Type for row in db_session.session.query(ConfigurationChanges).all()}
     assert types == {"remediation_action"}
     assert db_session.session.query(ConfigurationChanges).count() >= 3
+
+
+# ===================================================
+
+
+# SAFETY CONTROLS (issue #155): run when acknowledged, skip outcomes
+# ==========================================================
+
+def test_run_when_acknowledged_defaults_to_false_and_is_returned(logged_in_client):
+    body = create(logged_in_client).get_json()["data"]
+    assert body["runWhenAcknowledged"] is False
+
+
+def test_run_when_acknowledged_can_be_set_on_create_and_update(logged_in_client):
+    body = create(logged_in_client, runWhenAcknowledged=True).get_json()["data"]
+    assert body["runWhenAcknowledged"] is True
+    updated = logged_in_client.put(
+        f"{BASE}/actions/{body['id']}", json={**PAYLOAD, "version": body["version"], "runWhenAcknowledged": False})
+    assert updated.get_json()["data"]["runWhenAcknowledged"] is False
+
+
+def test_run_when_acknowledged_must_be_true_or_false(logged_in_client):
+    response = create(logged_in_client, runWhenAcknowledged="yes")
+    assert response.status_code == 400
+    assert "runWhenAcknowledged" in response.get_json()["data"]["fields"]
+
+
+def test_run_when_acknowledged_change_is_written_to_the_configuration_log(logged_in_client, db_session):
+    from app.system_models import ConfigurationChanges
+    create(logged_in_client, runWhenAcknowledged=True)
+    fields = [c.Parameter_Name for c in db_session.session.query(ConfigurationChanges).all()]
+    assert "runWhenAcknowledged" in fields
+
+
+@pytest.mark.parametrize("outcome", [
+    RemediationOutcome.SKIPPED_KILL_SWITCH, RemediationOutcome.SKIPPED_MAINTENANCE,
+    RemediationOutcome.SKIPPED_DOWNTIME, RemediationOutcome.SKIPPED_ACKNOWLEDGED,
+])
+def test_the_new_skip_outcomes_can_be_filtered_and_show_their_reason(logged_in_client, db_session, outcome):
+    row = add_run(db_session, outcome=outcome)
+    row.Reason = "why"
+    db_session.session.commit()
+    add_run(db_session, outcome=RemediationOutcome.SUCCEEDED, host="web-02")
+    items = logged_in_client.get(f"{BASE}/runs?outcome={outcome.value}").get_json()["data"]["items"]
+    assert [(i["outcome"], i["reason"]) for i in items] == [(outcome.value, "why")]
+
+
+# ==========================================================
+# CONSUMER HEALTH (issue #155)
+# ==========================================================
+
+def set_state(db_session, **fields):
+    from app.system_models import RemediationConsumerState
+    row = db_session.session.get(RemediationConsumerState, 1) or RemediationConsumerState(Id=1, Dropped_Count=0)
+    for name, value in fields.items():
+        setattr(row, name, value)
+    db_session.session.add(row)
+    db_session.session.commit()
+
+
+def health(client):
+    response = client.get(f"{BASE}/health")
+    assert response.status_code == 200
+    return response.get_json()["data"]
+
+
+def test_view_alone_can_read_health(limited_client, db_session, regular_role):
+    grant(db_session, regular_role, "remediation.view")
+    assert limited_client.get(f"{BASE}/health").status_code == 200
+
+
+def test_a_recent_heartbeat_is_not_stalled(logged_in_client, db_session, tmp_path, app):
+    app.config["REMEDIATION_SPOOL_DIR"] = str(tmp_path)
+    set_state(db_session, Last_Tick_At=datetime.now(timezone.utc) - timedelta(seconds=10))
+    data = health(logged_in_client)
+    assert data["stalled"] is False
+    assert data["lastError"] is None and data["lastTickAt"]
+    assert data["backlog"] == 0 and data["oldestSpoolAgeSeconds"] is None
+
+
+def test_a_heartbeat_older_than_three_intervals_is_stalled(logged_in_client, db_session, tmp_path, app):
+    app.config["REMEDIATION_SPOOL_DIR"] = str(tmp_path)
+    set_state(db_session, Last_Tick_At=datetime.now(timezone.utc) - timedelta(seconds=50))  # 3 x 15 = 45
+    assert health(logged_in_client)["stalled"] is True
+
+
+def test_no_heartbeat_at_all_is_stalled(logged_in_client, db_session, tmp_path, app):
+    app.config["REMEDIATION_SPOOL_DIR"] = str(tmp_path)
+    data = health(logged_in_client)
+    assert data["stalled"] is True and data["lastTickAt"] is None
+
+
+def test_health_counts_the_backlog_and_the_oldest_file(logged_in_client, db_session, tmp_path, app):
+    import os
+    import time
+    app.config["REMEDIATION_SPOOL_DIR"] = str(tmp_path)
+    set_state(db_session, Last_Tick_At=datetime.now(timezone.utc))
+    for n, age in enumerate((120, 30)):
+        path = tmp_path / f"176043210000000000{n}-{n}.json"
+        path.write_text("{}")
+        os.utime(path, (time.time() - age, time.time() - age))
+    (tmp_path / "unrelated.txt").write_text("x")
+    data = health(logged_in_client)
+    assert data["backlog"] == 2
+    assert 110 <= data["oldestSpoolAgeSeconds"] <= 140
+
+
+def test_health_reports_runs_caps_and_drops_in_the_last_24_hours(logged_in_client, db_session, tmp_path, app):
+    app.config["REMEDIATION_SPOOL_DIR"] = str(tmp_path)
+    now = datetime.now(timezone.utc)
+    set_state(db_session, Last_Tick_At=now, Dropped_Count=4, Dropped_At=now)
+    add_run(db_session, outcome=RemediationOutcome.SUCCEEDED, received=now - timedelta(hours=1), key="a")
+    add_run(db_session, outcome=RemediationOutcome.FAILED, received=now - timedelta(hours=2), key="b")
+    add_run(db_session, outcome=RemediationOutcome.SKIPPED_HOURLY_CAP, received=now - timedelta(hours=3), key="c")
+    add_run(db_session, outcome=RemediationOutcome.SKIPPED_KILL_SWITCH, received=now - timedelta(hours=3), key="d")
+    add_run(db_session, outcome=RemediationOutcome.SUCCEEDED, received=now - timedelta(hours=30), key="e")
+    data = health(logged_in_client)
+    assert data["runsLast24h"] == 2          # started actions only
+    assert data["capsHitLast24h"] == 1
+    assert data["skippedLast24h"] == 2       # every skip, including the cap
+    assert data["droppedTotal"] == 4 and data["droppedAt"]
+
+
+def test_health_shows_the_last_error_without_a_path(logged_in_client, db_session, tmp_path, app):
+    app.config["REMEDIATION_SPOOL_DIR"] = str(tmp_path)
+    set_state(db_session, Last_Tick_At=datetime.now(timezone.utc), Last_Error="The spool folder could not be read.")
+    data = health(logged_in_client)
+    assert data["lastError"] == "The spool folder could not be read."
+    assert str(tmp_path) not in str(data)
+
+
+# ==========================================================
+# KILL SWITCH AND RETENTION SETTINGS (issue #155)
+# ==========================================================
+
+SETTINGS_URL = f"{BASE}/settings"
+
+
+def saved_settings(db_session):
+    from app.system_models import SystemSettings
+    db_session.session.expire_all()
+    return db_session.session.get(SystemSettings, 1)
+
+
+def test_settings_default_to_switch_on_and_ninety_days(logged_in_client, db_session):
+    response = logged_in_client.get(SETTINGS_URL)
+    assert response.status_code == 200
+    assert response.get_json()["data"] == {"enabled": True, "retentionDays": 90}
+
+
+def test_settings_need_login_and_the_matching_permission(limited_client, db_session, regular_role):
+    assert limited_client.get(SETTINGS_URL).status_code == 403
+    assert limited_client.put(SETTINGS_URL, json={"enabled": False}).status_code == 403
+    grant(db_session, regular_role, "remediation.view")
+    assert limited_client.get(SETTINGS_URL).status_code == 200
+    assert limited_client.put(SETTINGS_URL, json={"enabled": False}).status_code == 403
+    assert saved_settings(db_session) is None or saved_settings(db_session).Remediation_Enabled is True
+
+
+def test_manage_can_switch_automatic_recovery_off_and_on(logged_in_client, db_session):
+    off = logged_in_client.put(SETTINGS_URL, json={"enabled": False})
+    assert off.status_code == 200 and off.get_json()["data"]["enabled"] is False
+    assert saved_settings(db_session).Remediation_Enabled is False
+    assert logged_in_client.get(SETTINGS_URL).get_json()["data"]["enabled"] is False
+    on = logged_in_client.put(SETTINGS_URL, json={"enabled": True})
+    assert on.get_json()["data"]["enabled"] is True
+
+
+def test_retention_can_be_changed_and_leaves_the_switch_alone(logged_in_client, db_session):
+    logged_in_client.put(SETTINGS_URL, json={"enabled": False})
+    response = logged_in_client.put(SETTINGS_URL, json={"retentionDays": 30})
+    assert response.get_json()["data"] == {"enabled": False, "retentionDays": 30}
+
+
+@pytest.mark.parametrize("body, field", [
+    ({"enabled": "no"}, "enabled"),
+    ({"enabled": 1}, "enabled"),
+    ({"retentionDays": 6}, "retentionDays"),
+    ({"retentionDays": 3651}, "retentionDays"),
+    ({"retentionDays": "90"}, "retentionDays"),
+    ({"retentionDays": True}, "retentionDays"),
+    ({"retentionDays": 30.5}, "retentionDays"),
+    ({"other": 1}, "other"),
+    ({}, "body"),
+])
+def test_bad_settings_are_a_400_naming_the_field_and_save_nothing(logged_in_client, db_session, body, field):
+    response = logged_in_client.put(SETTINGS_URL, json=body)
+    assert response.status_code == 400
+    assert field in response.get_json()["data"]["fields"]
+    settings = saved_settings(db_session)
+    assert settings is None or (settings.Remediation_Enabled is True and settings.Remediation_Retention_Days == 90)
+
+
+def test_a_non_object_body_is_a_400(logged_in_client):
+    assert logged_in_client.put(SETTINGS_URL, json=[1]).status_code == 400
+
+
+def test_each_changed_setting_is_audited_and_unchanged_ones_are_not(logged_in_client, db_session):
+    from app.system_models import ConfigurationChanges
+    logged_in_client.put(SETTINGS_URL, json={"enabled": False, "retentionDays": 90})
+    rows = db_session.session.query(ConfigurationChanges).all()
+    assert [(r.Conf_Type, r.Parameter_Name, r.Old_Value, r.New_Value) for r in rows] == [
+        ("remediation_setting", "enabled", "True", "False")]
+
+
+def test_settings_changes_are_not_audited_when_audit_logging_is_off(logged_in_client, db_session):
+    from app.system_models import ConfigurationChanges, SystemSettings
+    db_session.session.add(SystemSettings(Id=1, Audit_Logging=False))
+    db_session.session.commit()
+    logged_in_client.put(SETTINGS_URL, json={"enabled": False})
+    assert db_session.session.query(ConfigurationChanges).count() == 0
+    assert saved_settings(db_session).Remediation_Enabled is False
+
+
+def test_changing_the_switch_does_not_touch_the_settings_page_version(logged_in_client, db_session):
+    from app.system_models import SystemSettings
+    db_session.session.add(SystemSettings(Id=1, Version=7))
+    db_session.session.commit()
+    logged_in_client.put(SETTINGS_URL, json={"enabled": False})
+    assert saved_settings(db_session).Version == 7
+
+
+def test_the_general_settings_response_does_not_carry_the_remediation_fields(logged_in_client, db_session):
+    data = logged_in_client.get("/api/system").get_json()["data"]
+    assert "remediationEnabled" not in data and "remediationRetentionDays" not in data
 
 
 def test_deleted_action_history_does_not_limit_a_replacement(logged_in_client, db_session):
