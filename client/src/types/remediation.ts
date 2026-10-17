@@ -28,6 +28,9 @@ export const OUTCOME_LABELS: Record<RemediationOutcome, string> = {
   skipped_acknowledged: 'Skipped (acknowledged)',
 }
 
+/** A Nagios host name and the service names seen on it, suggested in the action form. */
+export type RemediationTarget = { hostname: string; services: string[] }
+
 export type NotifyKind = 'failed' | 'capped' | 'repeated'
 export type NotifyState = 'pending' | 'sent' | 'failed'
 

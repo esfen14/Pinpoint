@@ -302,7 +302,12 @@ until redeployment and preserves ephemeral credential clearing.
 `ActionFormDialog` renders the typed parameter schema from the action-types API:
 local `unit` is a fixed-choice select, remote `unit` is a text field. Create and
 edit submit the entered parameters, show field-specific validation errors and
-clear old parameters when the action type changes. Existing remediation page
+clear old parameters when the action type changes.
+The **Device** and **Service** fields (the host and service patterns) are text
+inputs with suggestions from `GET /remediation/targets`: the device list, and the
+services of the device typed or of every device a pattern such as `web-*`
+matches. A pattern can still be typed, and the fields work without suggestions
+if the list fails to load. Existing remediation page
 view/manage guards continue to control access. See the
 [administrator guide](../docs/manuals/Remote_Service_Restart.md).
 

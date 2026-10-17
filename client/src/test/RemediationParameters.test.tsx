@@ -3,7 +3,7 @@ import { beforeEach, expect, it, vi } from 'vitest'
 import { ActionFormDialog } from '../components/remediation/ActionFormDialog'
 import type { ActionTypeInfo, RemediationAction } from '../types/remediation'
 import { ApiError } from '../lib/api'
-const api = vi.hoisted(() => ({ createAction: vi.fn(), updateAction: vi.fn() }))
+const api = vi.hoisted(() => ({ createAction: vi.fn(), updateAction: vi.fn(), getTargets: vi.fn() }))
 vi.mock('../lib/remediationApi', async () => ({ ...await vi.importActual('../lib/remediationApi'), ...api }))
 const types: ActionTypeInfo[] = [
   { key: 'record_only', label: 'Record only', description: 'Record.', parameters: [] },
@@ -17,7 +17,7 @@ const action: RemediationAction = {
 function show(existing: RemediationAction | null = null) {
   render(<ActionFormDialog types={types} action={existing} onClose={vi.fn()} onSaved={vi.fn()} onReload={vi.fn()} />)
 }
-beforeEach(() => { vi.resetAllMocks(); api.createAction.mockResolvedValue(action); api.updateAction.mockResolvedValue(action) })
+beforeEach(() => { vi.resetAllMocks(); api.getTargets.mockResolvedValue([]); api.createAction.mockResolvedValue(action); api.updateAction.mockResolvedValue(action) })
 
 it('sends the remote unit when creating an action', async () => {
   show()

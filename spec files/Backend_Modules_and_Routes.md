@@ -181,6 +181,7 @@ Allowlisted actions that run when a covered service or host reaches a HARD failu
 | Method and path | Permission | Purpose |
 |---|---|---|
 | `GET /api/system/remediation/action-types` | `remediation.view` | The action types an admin can pick, each with `key`, `label`, `description` and its parameter schema |
+| `GET /api/system/remediation/targets` | `remediation.view` | Suggestions for the action form: `items` of `hostname` (the Nagios host name of every device that is not merged, plus any host with a service snapshot) and `services` (the service names snapshotted on it in the last 7 days, sorted). Suggestions only; the patterns an action saves are still validated by create and update |
 | `GET /api/system/remediation/actions` | `remediation.view` | All actions, ordered by name |
 | `POST /api/system/remediation/actions` | `remediation.manage` | Create an action (`notifyOn`: which of `failed`, `capped` and `repeated` notify the operator through Nagios, default all three, may be empty, stored in a fixed order without duplicates, #153); 400 with `data.fields` (field name to message) on invalid input, 422 with Nagios feedback when the regenerated config is rejected (nothing is saved), 201 on success |
 | `PUT /api/system/remediation/actions/<id>` | `remediation.manage` | Replace an action; needs the current integer `version`; 400 with `data.fields`, 404, 409 on a stale version, 422 as for create |

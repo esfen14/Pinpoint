@@ -57,7 +57,7 @@ def add_run(db_session, action_id=1, name="restart-web", host="web-01", service=
 # ==========================================================
 
 READ_URLS = [f"{BASE}/action-types", f"{BASE}/actions", f"{BASE}/runs", f"{BASE}/runs/1", f"{BASE}/health",
-             f"{BASE}/last-runs"]
+             f"{BASE}/last-runs", f"{BASE}/targets"]
 
 
 def test_every_route_needs_login(client, db_session):
@@ -787,3 +787,35 @@ def test_last_runs_are_bounded(logged_in_client, db_session, monkeypatch):
     for n in range(4):
         add_run(db_session, service=f"svc-{n}", key=f"k{n}")
     assert len(logged_in_client.get(LAST_RUNS_URL).get_json()["data"]["items"]) == 2
+
+
+# ==========================================================
+# TARGETS (device and service suggestions for the form)
+# ==========================================================
+
+def test_targets_list_devices_with_the_services_seen_on_them(logged_in_client, db_session, admin_user):
+    from app.system_models import DeviceState, NetworkDiscovery
+    from tests.support.identity_helpers import NET, make_status
+    from tests.support.seed_helpers import _make_service, _ts
+
+    status = make_status(db_session, admin_user)
+    db_session.session.add(NetworkDiscovery(
+        Hostname="fileserver", Nagios_Host_Name="nas-01", IP_Address="10.0.0.5", Network=NET, DiscoveryStatusID=status))
+    db_session.session.add(NetworkDiscovery(
+        Hostname=None, IP_Address="10.0.0.8", Network=NET, DiscoveryStatusID=status))
+    db_session.session.add(NetworkDiscovery(
+        Hostname="gone", Nagios_Host_Name="gone-01", IP_Address="10.0.0.9", Network=NET, DiscoveryStatusID=status,
+        Device_State=DeviceState.MERGED))
+    _make_service(db_session, hostname="web-01", service="HTTP")
+    _make_service(db_session, hostname="web-01", service="HTTP", ts=_ts(-30))
+    _make_service(db_session, hostname="web-01", service="SSH")
+    _make_service(db_session, hostname="old-01", service="FTP", ts=_ts(-30 * 86400))
+    db_session.session.commit()
+
+    items = logged_in_client.get(f"{BASE}/targets").get_json()["data"]["items"]
+
+    assert items == [
+        {"hostname": "10.0.0.8", "services": []},
+        {"hostname": "nas-01", "services": []},
+        {"hostname": "web-01", "services": ["HTTP", "SSH"]},
+    ]

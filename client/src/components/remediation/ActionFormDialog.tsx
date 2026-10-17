@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { ApiError, errorMessage } from '../../lib/api'
-import { createAction, fieldErrors, updateAction } from '../../lib/remediationApi'
+import { createAction, fieldErrors, getTargets, updateAction } from '../../lib/remediationApi'
 import {
   NOTIFY_KINDS,
   type ActionTypeInfo,
@@ -9,6 +9,7 @@ import {
   type RemediationAction,
   type RemediationActionInput,
   type RemediationScope,
+  type RemediationTarget,
 } from '../../types/remediation'
 
 // What each "tell the operator" box says, in the order the server stores them.
@@ -31,6 +32,13 @@ type Props = {
 
 const inputClass =
   'h-10 w-full rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 text-sm text-[var(--text)] outline-none transition focus:border-[#ffb100]'
+
+/** Same rule as the server: equal to the pattern, where * matches any run of characters. */
+function patternMatches(pattern: string, value: string) {
+  if (!pattern) return false
+  const escaped = pattern.split('*').map((part) => part.replace(/[.+?^${}()|[\]\\]/g, '\\$&'))
+  return new RegExp(`^${escaped.join('.*')}$`).test(value)
+}
 
 type FieldProps = {
   id: string
@@ -97,6 +105,7 @@ export function ActionFormDialog({ types, action, onClose, onSaved, onReload }: 
   const [runWhenAcknowledged, setRunWhenAcknowledged] = useState(action?.runWhenAcknowledged ?? false)
   const [notifyOn, setNotifyOn] = useState<NotifyKind[]>(action?.notifyOn ?? NOTIFY_KINDS)
   const [parameters, setParameters] = useState<Record<string, unknown>>(action?.parameters ?? {})
+  const [targets, setTargets] = useState<RemediationTarget[]>([])
   const [errors, setErrors] = useState<FieldErrors>({})
   const [generalError, setGeneralError] = useState<string | null>(null)
   const [stale, setStale] = useState(false)
@@ -109,6 +118,25 @@ export function ActionFormDialog({ types, action, onClose, onSaved, onReload }: 
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
+
+  // Suggestions only: if the list cannot be loaded the fields still accept typed names and patterns.
+  useEffect(() => {
+    let cancelled = false
+    Promise.resolve()
+      .then(getTargets)
+      .then((items) => {
+        if (!cancelled) setTargets(items)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // Services of the devices the device field covers: one device, or every device a pattern matches.
+  const serviceOptions = [...new Set(
+    targets.filter((target) => patternMatches(hostPattern, target.hostname)).flatMap((target) => target.services),
+  )].sort()
 
   const selectedType = types.find((t) => t.key === actionType)
   const title = action ? 'Edit action' : 'Add action'
@@ -242,29 +270,37 @@ export function ActionFormDialog({ types, action, onClose, onSaved, onReload }: 
           </select>
         </Field>
 
-        <Field id="remediation-hostPattern" label="Host pattern" error={errors.hostPattern}>
+        <Field id="remediation-hostPattern" label="Device" error={errors.hostPattern}>
           <input
             id="remediation-hostPattern"
             className={inputClass}
+            list="remediation-device-options"
             value={hostPattern}
-            placeholder="web-01 or web-*"
+            placeholder="Pick a device, or type a pattern such as web-*"
             onChange={(e) => setHostPattern(e.target.value)}
             aria-describedby={describe('hostPattern')}
             aria-invalid={Boolean(errors.hostPattern)}
           />
+          <datalist id="remediation-device-options">
+            {targets.map((target) => <option key={target.hostname} value={target.hostname} />)}
+          </datalist>
         </Field>
 
         {scopeKind === 'service' && (
-          <Field id="remediation-servicePattern" label="Service pattern" error={errors.servicePattern}>
+          <Field id="remediation-servicePattern" label="Service" error={errors.servicePattern}>
             <input
               id="remediation-servicePattern"
               className={inputClass}
+              list="remediation-service-options"
               value={servicePattern}
-              placeholder="HTTP or HT*"
+              placeholder="Pick a service, or type a pattern such as HT*"
               onChange={(e) => setServicePattern(e.target.value)}
               aria-describedby={describe('servicePattern')}
               aria-invalid={Boolean(errors.servicePattern)}
             />
+            <datalist id="remediation-service-options">
+              {serviceOptions.map((service) => <option key={service} value={service} />)}
+            </datalist>
           </Field>
         )}
 

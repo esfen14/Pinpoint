@@ -6,6 +6,7 @@ import type { RemediationAction, RemediationHealth, RemediationRun } from '../ty
 
 const api = vi.hoisted(() => ({
   getActionTypes: vi.fn(),
+  getTargets: vi.fn(),
   listActions: vi.fn(),
   createAction: vi.fn(),
   updateAction: vi.fn(),
@@ -68,6 +69,7 @@ beforeEach(() => {
   permissions = ['remediation.view', 'remediation.manage']
   Object.values(api).forEach((fn) => fn.mockReset())
   api.getActionTypes.mockResolvedValue(TYPES)
+  api.getTargets.mockResolvedValue([{ hostname: 'web-01', services: ['HTTP', 'SSH'] }, { hostname: 'db-01', services: ['MySQL'] }])
   api.listActions.mockResolvedValue([action()])
   api.listRuns.mockResolvedValue(runList([run()]))
   api.getRun.mockResolvedValue({ ...run(), output: 'recorded' })
@@ -136,8 +138,8 @@ describe('Remediation page: actions', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Add action' }))
     const dialog = screen.getByRole('dialog', { name: 'Add action' })
     fireEvent.change(within(dialog).getByLabelText('Name'), { target: { value: 'restart-web' } })
-    fireEvent.change(within(dialog).getByLabelText('Host pattern'), { target: { value: 'web-*' } })
-    fireEvent.change(within(dialog).getByLabelText('Service pattern'), { target: { value: 'HTTP' } })
+    fireEvent.change(within(dialog).getByLabelText('Device'), { target: { value: 'web-*' } })
+    fireEvent.change(within(dialog).getByLabelText('Service'), { target: { value: 'HTTP' } })
     fireEvent.change(within(dialog).getByLabelText('Cooldown (seconds)'), { target: { value: '900' } })
     fireEvent.change(within(dialog).getByLabelText('Max runs per hour'), { target: { value: '3' } })
     fireEvent.click(within(dialog).getByRole('checkbox', { name: 'Enabled' }))
@@ -168,14 +170,14 @@ describe('Remediation page: actions', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Add action' }))
     const dialog = screen.getByRole('dialog', { name: 'Add action' })
     fireEvent.change(within(dialog).getByLabelText('Name'), { target: { value: 'restart-web' } })
-    fireEvent.change(within(dialog).getByLabelText('Host pattern'), { target: { value: 'web-*' } })
-    fireEvent.change(within(dialog).getByLabelText('Service pattern'), { target: { value: 'HTTP' } })
+    fireEvent.change(within(dialog).getByLabelText('Device'), { target: { value: 'web-*' } })
+    fireEvent.change(within(dialog).getByLabelText('Service'), { target: { value: 'HTTP' } })
     fireEvent.click(within(dialog).getByRole('button', { name: 'Save action' }))
     const nameField = within(dialog).getByLabelText('Name')
     expect(await within(dialog).findByText('An action with this name already exists.')).toBeInTheDocument()
     expect(nameField).toHaveAccessibleDescription('An action with this name already exists.')
-    expect(within(dialog).getByLabelText('Host pattern')).toHaveAccessibleDescription(/Host pattern must be/)
-    expect(within(dialog).getByLabelText('Service pattern')).not.toHaveAccessibleDescription(/\w/)
+    expect(within(dialog).getByLabelText('Device')).toHaveAccessibleDescription(/Host pattern must be/)
+    expect(within(dialog).getByLabelText('Service')).not.toHaveAccessibleDescription(/\w/)
     expect(screen.getByRole('dialog', { name: 'Add action' })).toBeInTheDocument()
   })
 
@@ -185,9 +187,9 @@ describe('Remediation page: actions', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Add action' }))
     const dialog = screen.getByRole('dialog', { name: 'Add action' })
     fireEvent.change(within(dialog).getByLabelText('Scope'), { target: { value: 'host' } })
-    expect(within(dialog).queryByLabelText('Service pattern')).not.toBeInTheDocument()
+    expect(within(dialog).queryByLabelText('Service')).not.toBeInTheDocument()
     fireEvent.change(within(dialog).getByLabelText('Name'), { target: { value: 'host-rule' } })
-    fireEvent.change(within(dialog).getByLabelText('Host pattern'), { target: { value: 'web-01' } })
+    fireEvent.change(within(dialog).getByLabelText('Device'), { target: { value: 'web-01' } })
     fireEvent.click(within(dialog).getByRole('button', { name: 'Save action' }))
     await waitFor(() => expect(api.createAction).toHaveBeenCalled())
     expect(api.createAction.mock.calls[0][0]).toMatchObject({ scopeKind: 'host', servicePattern: null })
@@ -466,8 +468,8 @@ describe('Remediation page: run when acknowledged', () => {
     expect(within(dialog).getByText(/skipped when an operator has already acknowledged/i)).toBeInTheDocument()
     fireEvent.click(box)
     fireEvent.change(within(dialog).getByLabelText('Name'), { target: { value: 'ack-ok' } })
-    fireEvent.change(within(dialog).getByLabelText('Host pattern'), { target: { value: 'web-01' } })
-    fireEvent.change(within(dialog).getByLabelText('Service pattern'), { target: { value: 'HTTP' } })
+    fireEvent.change(within(dialog).getByLabelText('Device'), { target: { value: 'web-01' } })
+    fireEvent.change(within(dialog).getByLabelText('Service'), { target: { value: 'HTTP' } })
     fireEvent.click(within(dialog).getByRole('button', { name: 'Save action' }))
     await waitFor(() => expect(api.createAction).toHaveBeenCalled())
     expect(api.createAction.mock.calls[0][0]).toMatchObject({ runWhenAcknowledged: true })
@@ -588,8 +590,8 @@ describe('Remediation page: notify the operator (action form)', () => {
     }
     expect(within(dialog).getByText(/Nagios sends the message to the contacts of that service/i)).toBeInTheDocument()
     fireEvent.change(within(dialog).getByLabelText('Name'), { target: { value: 'notify-ok' } })
-    fireEvent.change(within(dialog).getByLabelText('Host pattern'), { target: { value: 'web-01' } })
-    fireEvent.change(within(dialog).getByLabelText('Service pattern'), { target: { value: 'HTTP' } })
+    fireEvent.change(within(dialog).getByLabelText('Device'), { target: { value: 'web-01' } })
+    fireEvent.change(within(dialog).getByLabelText('Service'), { target: { value: 'HTTP' } })
     fireEvent.click(within(dialog).getByRole('button', { name: 'Save action' }))
     await waitFor(() => expect(api.createAction).toHaveBeenCalled())
     expect(api.createAction.mock.calls[0][0]).toMatchObject({ notifyOn: ['failed', 'capped', 'repeated'] })
@@ -602,8 +604,8 @@ describe('Remediation page: notify the operator (action form)', () => {
     const dialog = screen.getByRole('dialog', { name: 'Add action' })
     fireEvent.click(within(dialog).getByRole('checkbox', { name: 'The action fails' }))
     fireEvent.change(within(dialog).getByLabelText('Name'), { target: { value: 'quiet' } })
-    fireEvent.change(within(dialog).getByLabelText('Host pattern'), { target: { value: 'web-01' } })
-    fireEvent.change(within(dialog).getByLabelText('Service pattern'), { target: { value: 'HTTP' } })
+    fireEvent.change(within(dialog).getByLabelText('Device'), { target: { value: 'web-01' } })
+    fireEvent.change(within(dialog).getByLabelText('Service'), { target: { value: 'HTTP' } })
     fireEvent.click(within(dialog).getByRole('button', { name: 'Save action' }))
     await waitFor(() => expect(api.createAction).toHaveBeenCalled())
     expect(api.createAction.mock.calls[0][0]).toMatchObject({ notifyOn: ['capped', 'repeated'] })
@@ -716,5 +718,35 @@ describe('Remediation page: opened from a service row badge', () => {
     render(<RemediationPage />)
     expect(await screen.findByRole('tab', { name: 'Actions' })).toHaveAttribute('aria-selected', 'true')
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+})
+
+// ==========================================================
+// DEVICE AND SERVICE SUGGESTIONS
+// ==========================================================
+
+describe('device and service suggestions', () => {
+  const options = (dialog: HTMLElement, id: string) =>
+    Array.from(dialog.querySelectorAll(`#${id} option`)).map((o) => (o as HTMLOptionElement).value)
+
+  it('suggests devices, and the services of the device typed or matched by a pattern', async () => {
+    render(<RemediationPage />)
+    fireEvent.click(await screen.findByRole('button', { name: /add action/i }))
+    const dialog = await screen.findByRole('dialog')
+    await waitFor(() => expect(options(dialog, 'remediation-device-options')).toEqual(['web-01', 'db-01']))
+    expect(options(dialog, 'remediation-service-options')).toEqual([])
+    fireEvent.change(within(dialog).getByLabelText('Device'), { target: { value: 'web-01' } })
+    expect(options(dialog, 'remediation-service-options')).toEqual(['HTTP', 'SSH'])
+    fireEvent.change(within(dialog).getByLabelText('Device'), { target: { value: '*-01' } })
+    expect(options(dialog, 'remediation-service-options')).toEqual(['HTTP', 'MySQL', 'SSH'])
+  })
+
+  it('still lets a pattern be typed when the suggestions cannot load', async () => {
+    api.getTargets.mockRejectedValue(new Error('down'))
+    render(<RemediationPage />)
+    fireEvent.click(await screen.findByRole('button', { name: /add action/i }))
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.change(within(dialog).getByLabelText('Device'), { target: { value: 'web-*' } })
+    expect(within(dialog).getByLabelText('Device')).toHaveValue('web-*')
   })
 })

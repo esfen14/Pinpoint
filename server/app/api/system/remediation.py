@@ -6,6 +6,8 @@ Routes
 ------
 GET    /system/remediation/action-types
     The action types an admin can pick, with their parameter schema (remediation.view).
+GET    /system/remediation/targets
+    Nagios host names with their service names, to suggest in the form (remediation.view).
 GET    /system/remediation/actions
     All actions (remediation.view).
 POST   /system/remediation/actions
@@ -46,9 +48,11 @@ from app.api.system import system_bp
 from app.logging.configuration_changes import create_configuration_log
 from app import remediation
 from app.remediation import valid_name
+from app.history_models import ServiceStatus
+from app.network_discovery.device_identity import nagios_host_name
 from app.system_models import (
-    RemediationAction, RemediationActionType, RemediationOutcome, RemediationRun, RemediationScope,
-    SystemSettings,
+    DeviceState, NetworkDiscovery, RemediationAction, RemediationActionType, RemediationOutcome,
+    RemediationRun, RemediationScope, SystemSettings,
 )
 
 NAME_RE = re.compile(r"[A-Za-z0-9 ._-]{3,60}", re.ASCII)
@@ -65,6 +69,7 @@ LOGGED_FIELDS = (
 NOTIFY_KINDS = ("failed", "capped", "repeated")
 SETTINGS_FIELDS = ("enabled", "retentionDays", "repeatCount", "repeatWindowHours")
 LAST_RUNS_DAYS = 7
+TARGET_SERVICE_DAYS = 7
 MAX_LAST_RUNS = 500
 MIN_REPEAT_COUNT = 2
 MAX_REPEAT_COUNT = 20
@@ -269,6 +274,36 @@ def parse_day(text, name):
 def list_remediation_action_types():
     """Return the action types with their parameter schema, for the form."""
     return success({"items": registry.describe_types()})
+
+
+@system_bp.get('/remediation/targets')
+@login_required
+@require_permission('remediation.view')
+def list_remediation_targets():
+    """
+    Return the Nagios host names and, for each, the service names seen in the last
+    TARGET_SERVICE_DAYS days, so the form can suggest names instead of asking the admin to type them.
+    """
+    try:
+        since = datetime.now(timezone.utc) - timedelta(days=TARGET_SERVICE_DAYS)
+        services = {}
+        pairs = db.session.execute(
+            sa.select(ServiceStatus.Hostname, ServiceStatus.Service)
+            .where(ServiceStatus.Timestamp >= since).distinct()
+        ).all()
+        for hostname, service in pairs:
+            services.setdefault(hostname, set()).add(service)
+        names = set(services)
+        devices = db.session.scalars(
+            sa.select(NetworkDiscovery).where(NetworkDiscovery.Device_State != DeviceState.MERGED)
+        ).all()
+        names.update(nagios_host_name(device) for device in devices)
+        items = [{"hostname": name, "services": sorted(services.get(name, ()))} for name in sorted(names)]
+        return success({"items": items})
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("Could not list remediation targets.")
+        return error("An unexpected error occurred.", 500)
 
 
 @system_bp.get('/remediation/actions')
