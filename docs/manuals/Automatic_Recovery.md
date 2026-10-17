@@ -43,6 +43,10 @@ A rule acts only when a covered check reaches a **hard** failure. Recoveries and
 
 **Maintenance Mode** (Settings, System) blocks every rule and records **Skipped (maintenance)**. Only the exit code of the restart is recorded; the command's own output is never kept, and the recorded text never contains secrets.
 
+## Recover automatically for one service
+
+You can also switch automatic recovery on for a single service without opening **Remediation**. In **Device Inventory**, open a device, click the service, and use **Recover automatically**. Turn the switch on, choose how many times an hour PinPoint may restart it (1 to 6), and click **Save**. PinPoint warns you that it will restart the service on its own, picks the right action and service name itself, and shows the last result with a link to the run log. The switch is greyed out, with the reason, when PinPoint cannot restart that service: for example the device is paused, retired or not trusted, remote restart is off for it, or the service is not on the device's restart list. It is the same rule that appears on **Remediation**, so a change in either place shows in the other, and the **System Status** page marks the service **Recovers automatically**. You need **remediation.view** to see the control and **remediation.manage** to change it.
+
 ## Stop everything: the automatic recovery switch
 
 The status panel at the top of **Remediation** has an **Automatic recovery** switch. Switch it off during an incident and no rule runs on the next check, with no restart needed. Every covered failure is still written to the run log as **Skipped (kill switch)**, so you can see what would have happened. Switching it off or on asks for confirmation. Changing it needs **remediation.manage**, and each change is written to the configuration log.

@@ -220,6 +220,8 @@ matching `AcknowledgementType.NORMACK`. This path is injection-sensitive
 `app/nagios/notifications.py` reads `archivejson.cgi` for durable alert and
 notification event ranges.
 
+Per-service recovery (#154): `/api/system/remediation/services/...` stores nothing new. The switch is one `RemediationAction` with `Scope_Kind` service whose `Host_Pattern` and `Service_Pattern` are the exact Nagios host and service names, so the Remediation page and the config renderer see the same row. The server maps a check name to a unit by its first word (`ssh-22-tcp` gives `ssh`, plus the fixed `SERVICE_UNIT_ALIASES` in `app/remediation.py`, for example `ssh` and `sshd`) and uses a unit only when it is on that device's own restart list (`SSH_CREDENTIALS.Remote_Restart_Services`) or, for host `localhost`, in `RESTARTABLE_UNITS`. No model, migration or permission was added.
+
 Event handler: when at least one enabled `RemediationAction` exists and the program
 `/usr/local/sbin/pinpoint-event-handler` is a file on this machine,
 `host_config_templates.py` writes the commands `pinpoint_event_handler_service` and

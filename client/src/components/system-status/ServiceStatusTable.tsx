@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowUpDown, Filter, Search } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import type { ServiceRow, ServiceState } from '../../types/service'
 import { useDisplayTime } from '../../hooks/useDisplayTime'
 import { Pagination } from '../shared/Pagination'
 import { forecastBadgeFor, type ForecastData } from '../../types/forecast'
+import { recoveryKey } from '../../types/remediation'
 
 type ServiceStatusTableProps = {
   services: ServiceRow[]
@@ -31,6 +33,8 @@ type ServiceStatusTableProps = {
   // Disk and memory trend estimates. Optional: without them no badge is shown.
   forecasts?: ForecastData | null
   forecastNow?: Date
+  // Host and service pairs (see recoveryKey) that recover automatically. Optional: without it no mark is shown.
+  autoRecovery?: ReadonlySet<string>
 }
 
 function StatusPill({ status }: { status: ServiceState }) {
@@ -175,6 +179,7 @@ export function ServiceStatusTable({
   onUnacknowledge,
   forecasts,
   forecastNow,
+  autoRecovery,
 }: ServiceStatusTableProps) {
   const { formatDateTime } = useDisplayTime()
   const states: ('All' | ServiceState)[] = ['All', 'OK', 'WARNING', 'CRITICAL', 'UNKNOWN']
@@ -294,6 +299,15 @@ export function ServiceStatusTable({
                   <td className="px-4 py-3 text-gray-900 dark:text-white">
                     {s.service}
                     <ForecastBadge badge={forecastBadgeFor(forecasts, s.hostname, s.service, forecastNow ?? new Date())} />
+                    {autoRecovery?.has(recoveryKey(s.hostname, s.service)) && (
+                      <Link
+                        to="/remediation"
+                        title="PinPoint restarts this service on its own when the check fails. Open the Remediation page to see or change it."
+                        className="mt-1 block w-fit rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs text-emerald-700 dark:text-emerald-400"
+                      >
+                        Recovers automatically
+                      </Link>
+                    )}
                   </td>
                   <td className="px-4 py-3"><StatusWithDescription service={s} /></td>
                   <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{formatDateTime(s.lastCheck)}</td>
