@@ -24,7 +24,7 @@ Requirement coverage:
 
 1. [x] Document the user's Option A decision in `spec files/Device_Inventory_Requirements.md`, `spec files/Data_Model_and_Integrations.md`, `spec files/Implementation_Status.md`, and `docs/manuals/Notification_Policy.md`.
 2. [x] Run `scripts/verify.sh docs`, review the documentation diff, and checkpoint the scoped decision work.
-3. [ ] Open a draft PR recording that reproduction and acceptance coverage remain outstanding; do not close #173.
+3. [x] Open a draft PR recording that reproduction and acceptance coverage remain outstanding; do not close #173.
 
 ## Round log
 
@@ -34,12 +34,14 @@ Requirement coverage:
 
 | 1 | Documented Option A contract, classification conditions, timing/cache quirk and operator guidance in four files | `scripts/verify.sh docs`; `git diff --check` | green; no code or configuration changes |
 
+| 2 | Opened draft PR https://github.com/esfen14/Pinpoint/pull/192; kept #173 open | `gh pr create --draft`; documentation gate from round 1 | Requested documentation complete; live reproduction and acceptance coverage still outstanding |
+
 ## State for the next session
 
 - Last check run (exact command): `scripts/verify.sh docs` and `git diff --check`
 - Result (first failing lines, or "green"): green; all documentation checks and whitespace validation pass
 - Hypothesis: The requested documentation is complete; remaining issue finish conditions require separate live reproduction and acceptance work.
-- Next action: Open a draft PR for the completed decision documentation, leaving #173 open.
+- Next action: When full #173 work is resumed, inspect the earlier isolated routed driver and plan the exact-settings one-attempt reproduction before running it.
 
 ## Decisions and notes
 
