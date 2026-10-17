@@ -112,7 +112,7 @@ not required by the issue.
 
 ## Not installer work, but related
 
-- #167: `scripts/vmlab setup-admin` in this repository looks for `Username (email):`, but installer
-  commit `697869e` prints `Username (temporary placeholder email):`. The fix is in the vmlab script here.
+- #167: `scripts/vmlab setup-admin` in this repository accepts both `Username (email):` and installer
+  commit `697869e`'s `Username (temporary placeholder email):`; isolated command regressions cover both.
   The installer's labels should not change again without telling the lab script.
 - #130, #131, #127, #122, #117, #118, #153 to #156, #164 and #173 need no installer change.

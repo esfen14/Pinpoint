@@ -3,8 +3,9 @@
 Status: **working; clean appliance/base/five-target rebuild and real SSH/HTTP
 snapshot restoration verified for [#162](https://github.com/esfen14/Pinpoint/issues/162).
 See the [rebuild report](../test-runs/2026-10-15-issue-162-snapshot-rebuild/REPORT.md).
-The setup-admin label mismatch is tracked in [#167](https://github.com/esfen14/Pinpoint/issues/167);
-the rebuilt appliance completed setup through the supported API.** Design agreed
+The setup-admin label and stale-state regressions are fixed with isolated command tests
+([#167](https://github.com/esfen14/Pinpoint/issues/167)); the corrected helper has not
+been rerun on a live appliance. The rebuilt appliance completed setup through the supported API.** Design agreed
 2026-10-08. The first end-to-end run passed (create, provision, fresh install of `main`,
 healthcheck 59/0, discovery and monitoring of five targets, sync); see
 [`docs/test-runs/2026-10-08-vm-lab-first-run/`](../test-runs/2026-10-08-vm-lab-first-run/REPORT.md). Feeds
@@ -151,9 +152,21 @@ The original inherited disks were retired with explicit owner approval after the
 owner accepted the overwritten edits as unrecoverable. The new appliance uses a
 new UUID and a blank disk; it contains no inherited application data. The
 [endpoint marker trial and five-target smoke](../test-runs/2026-10-15-issue-162-snapshot-rebuild/REPORT.md)
-passed. Until #167 is fixed, a fresh-install setup requires the supported
-login/complete-setup API workflow if the helper does not recognize the installer
-label; stale host credential files alone do not prove setup is complete.
+passed. `scripts/vmlab setup-admin` recognizes both installer email labels:
+`Username (email):` and `Username (temporary placeholder email):`. It uses the
+installer login to complete first-run setup and stores the replacement email and
+password privately. Installer credential files are removed only after successful
+setup and local credential storage.
+
+If installer credentials are unavailable or incomplete, existing host files alone
+do not prove setup is complete. The helper signs in with the saved credentials at
+the configured web endpoint, then requires `/api/user/me` to explicitly report
+`needs_setup: false` and `must_change_password: false`. Rejected credentials,
+pending setup, missing flags or an unavailable endpoint produce an error instead
+of an already-configured message; saved state and guest credentials are preserved.
+After a fresh appliance, rerun setup with its installer credentials. If those are
+unavailable, complete setup through the supported login/complete-setup API workflow
+before retrying. The helper never prints email or password values.
 
 If the appliance or snapshot is missing, recreate the lane with steps 1 through
 5 below.  This is a setup/recovery operation, not a QA case: obtain the lab
@@ -175,9 +188,12 @@ and the tested commit in a new sanitized test-run report.
    test installer edits before pushing them.
 5. **Snapshot.** `scripts/vmlab provision` runs installer steps 1 to 5, powers off and
    takes `os-nagios-ready`.
-6. **First test.** `scripts/vmlab fresh`, then `scripts/vmlab creds`; sign in once at
-   `http://127.0.0.1:18080`. `scripts/vmlab setup-admin` sets a fresh administrator
-   password (stored privately, never printed) and `scripts/vmlab smoke` signs in with it.
+6. **First test.** `scripts/vmlab fresh`, then `scripts/vmlab setup-admin` to complete
+   first-run setup at the configured web endpoint (default `http://127.0.0.1:18080`).
+   The replacement email and password are stored privately in `admin-email` and
+   `admin-password` under the state directory; `scripts/vmlab smoke` signs in with
+   them. `scripts/vmlab creds` is an explicit manual alternative that prints the
+   installer's one-time login; it is not needed by `setup-admin`.
 
 What is not automated: the installer ISO's own install path (interactive screens, the
 late-commands that copy the setup files, the first-boot service and the setup wizard).
