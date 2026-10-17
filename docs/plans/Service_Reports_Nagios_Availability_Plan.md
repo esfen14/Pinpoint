@@ -1,15 +1,15 @@
 # Service reports from Nagios availability
 
-Status: draft — planning requested by the owner on 2026-10-17; no application
-implementation authorized or included in this document.
+Status: approved for an implementation issue by the owner on 2026-10-17;
+application implementation has not started.
 
 Context: GitHub [#134](https://github.com/esfen14/Pinpoint/issues/134), which
 originally reconciles report documentation and conditionally proposes targets.
 The owner rejected availability targets and subsequently requested a plan for
-moving the two database-backed service reports to Nagios. This is a proposed
+moving the two database-backed service reports to Nagios. This is a separate
 follow-up scope; do not represent it as already implemented or close #134 on the
-strength of this plan. Before implementation, give the change an issue with the
-finish conditions below (or explicitly amend #134).
+strength of this plan. Track implementation in the linked issue with the finish
+conditions below.
 
 Feeds these owning specifications when implemented:
 
@@ -118,11 +118,23 @@ rounded percentages.
 
 Preserve the existing route URLs, period metadata, grouping arrays and
 `uptime_pct` names. Add explicitly named duration fields in seconds to the
-instance, group and summary contracts. Replace the Device Services `Snapshots`
-column/export with `Recorded time` and add `No recorded data` duration; remove
-report use of `total_snapshots` in the same coordinated API/type/component
-change. Do not retain that name with a different meaning. Review callers first;
-if an external consumer depends on the field, agree a deprecation before removal.
+instance, group and summary contracts.
+
+### Remove snapshot counts explicitly
+
+Snapshot counts must be removed completely from both Network Services and
+Device Services reports, including nested instance rows, API response fields,
+TypeScript contracts/adapters, table columns, cards, help text and CSV/XLS/PDF
+exports. Remove `total_snapshots` and any equivalent snapshot-count field from
+these two report contracts. Do not keep a hidden compatibility count, rename a
+count as duration, or put seconds into the legacy `total_snapshots` field.
+Inspect and update every caller of these two report endpoints in the same
+change. This does not delete stored snapshots or change the general poller.
+
+Replace the Device Services `Snapshots` column/export with `Recorded time` and
+add `No recorded data` duration. Use explicit seconds in the API and clear units
+in the UI/exports. The existing Host Availability export's legacy count label is
+outside this two-service-report scope and must not be changed incidentally.
 
 ## Current status versus the report period
 
@@ -189,8 +201,14 @@ from a read route.
    `docs/test-runs/` report before declaring complete. No database migration,
    new permission, new dependency or monitoring-configuration change is planned.
 
-## Proposed finish conditions and evidence
+## Finish conditions and evidence
 
+- No snapshot-count field (including `total_snapshots`) exists anywhere in the
+  Network Services or Device Services report payloads, nested instances, types,
+  tables, cards, help or exports. API contract tests assert key absence, and
+  frontend/export tests assert the snapshot-count columns/labels are absent and
+  recorded-time/coverage durations have correct names and units. No stored
+  snapshot data or general polling behavior is removed.
 - Both service report uptime values and aggregate values come solely from Nagios
   archive durations. Tests seed conflicting or absent database snapshots and
   prove they have no effect.
@@ -212,8 +230,7 @@ from a read route.
   24-hour and 90-day windows and the supported lab inventory; document any
   performance limit rather than asserting untested large-scale capacity.
 - Both views' filters, sorting, pagination, custom ranges, rerun/error handling
-  and CSV/XLS/PDF paths have interaction coverage. No snapshot count is presented
-  as duration. Host/OS reports and alert/notification reports remain green.
+  and CSV/XLS/PDF paths have interaction coverage. Snapshot counts are absent, with duration/coverage fields in their place. Host/OS reports and alert/notification reports remain green.
 - On an exclusively owned lab, compare both views against the installed native
   Nagios availability output using identical windows, state filters and
   assumptions. Verify a brief recorded outage and missing history, and repeat a
