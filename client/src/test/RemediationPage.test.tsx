@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '../lib/api'
 import { RemediationPage } from '../pages/RemediationPage'
 import type { RemediationAction, RemediationHealth, RemediationRun } from '../types/remediation'
@@ -691,5 +691,30 @@ describe('Remediation page: repeat recovery limits', () => {
     render(<RemediationPage />)
     expect(await screen.findByText(/do not have permission to view the kill switch/i)).toBeInTheDocument()
     expect(screen.queryByLabelText('Repeat count')).not.toBeInTheDocument()
+  })
+})
+
+describe('Remediation page: opened from a service row badge', () => {
+  afterEach(() => window.history.pushState({}, '', '/'))
+
+  it('opens the run log and that run when the address names one', async () => {
+    window.history.pushState({}, '', '/remediation?run=7')
+    render(<RemediationPage />)
+    expect(await screen.findByRole('dialog', { name: 'Run 7' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Run log' })).toHaveAttribute('aria-selected', 'true')
+    await waitFor(() => expect(api.getRun).toHaveBeenCalledWith(7))
+  })
+
+  it('ignores an address that does not name a whole number', async () => {
+    window.history.pushState({}, '', '/remediation?run=abc')
+    render(<RemediationPage />)
+    expect(await screen.findByRole('tab', { name: 'Actions' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('opens nothing without the parameter', async () => {
+    render(<RemediationPage />)
+    expect(await screen.findByRole('tab', { name: 'Actions' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 })

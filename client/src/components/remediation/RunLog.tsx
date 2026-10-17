@@ -19,6 +19,8 @@ const PER_PAGE = 10
 type Props = {
   // For the Action filter.
   actions: RemediationAction[]
+  // A run to open straight away (from a link on a service row).
+  initialRunId?: number | null
 }
 
 const filterClass =
@@ -33,7 +35,7 @@ function outcomeStyle(outcome: RemediationOutcome): string {
 }
 
 // The run log: every decision the consumer made, including skipped runs and why.
-export function RunLog({ actions }: Props) {
+export function RunLog({ actions, initialRunId = null }: Props) {
   const { settings } = useSystemSettings()
   const [outcome, setOutcome] = useState<RemediationOutcome | ''>('')
   const [actionId, setActionId] = useState('')
@@ -47,7 +49,7 @@ export function RunLog({ actions }: Props) {
   const [pages, setPages] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [selectedRun, setSelectedRun] = useState<number | null>(null)
+  const [selectedRun, setSelectedRun] = useState<number | null>(initialRunId)
 
   useEffect(() => {
     const timeout = setTimeout(() => {

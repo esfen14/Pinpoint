@@ -16,6 +16,12 @@ import type {
 
 type Tab = 'actions' | 'runs'
 
+/** The run named by ?run=<id> in the address (from a service row badge), or null when absent or not a whole number. */
+function runFromAddress(): number | null {
+  const value = new URLSearchParams(window.location.search).get('run')
+  return value !== null && /^[1-9][0-9]{0,9}$/.test(value) ? Number(value) : null
+}
+
 // How often the health card refreshes; the consumer itself runs every 15 seconds.
 const HEALTH_REFRESH_MS = 15000
 
@@ -28,7 +34,8 @@ export function RemediationPage() {
   const { hasPermission } = useCurrentUser()
   const canManage = hasPermission('remediation.manage')
 
-  const [tab, setTab] = useState<Tab>('actions')
+  const [initialRun] = useState(runFromAddress)
+  const [tab, setTab] = useState<Tab>(initialRun !== null ? 'runs' : 'actions')
   const [actions, setActions] = useState<RemediationAction[]>([])
   const [types, setTypes] = useState<ActionTypeInfo[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -251,7 +258,7 @@ export function RemediationPage() {
           </section>
         )}
 
-        {tab === 'runs' && <RunLog actions={actions} />}
+        {tab === 'runs' && <RunLog actions={actions} initialRunId={initialRun} />}
       </div>
 
       {editing !== null && (

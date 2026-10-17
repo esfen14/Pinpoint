@@ -8,6 +8,11 @@ vi.mock('../contexts/SystemSettingsContext', () => ({
   useSystemSettings: () => ({ settings: { theme: 'dark' } }),
 }))
 
+// The last-recovery badge asks whether the user may view remediation; these tests are about the table, so they have no permissions.
+vi.mock('../contexts/CurrentUserContext', () => ({
+  useCurrentUser: () => ({ user: { permissions: [] }, isLoading: false, hasPermission: () => false }),
+}))
+
 const apiGet = vi.fn()
 
 vi.mock('../lib/api', async () => {

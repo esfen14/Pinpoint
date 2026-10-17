@@ -115,6 +115,57 @@ export interface RemediationRun {
   notifyAt: string | null
 }
 
+/** One item of GET /api/system/remediation/last-runs: the newest run for a host and service. */
+export interface LastRun {
+  runId: number
+  hostname: string
+  service: string | null
+  outcome: RemediationOutcome
+  notifyState: NotifyState | null
+  receivedAt: string
+}
+
+export interface RecoveryBadge {
+  text: string
+  title: string
+  tone: 'good' | 'bad' | 'neutral'
+}
+
+/** The compact note under a service name: what automatic recovery last did, and whether the operator was told. */
+export function recoveryBadgeFor(run: LastRun): RecoveryBadge {
+  let badge: RecoveryBadge
+  switch (run.outcome) {
+    case 'succeeded':
+      badge = { text: 'Auto-recovered', title: 'Automatic recovery restarted this service.', tone: 'good' }
+      break
+    case 'failed':
+    case 'timed_out':
+      badge = { text: 'Recovery failed', title: 'Automatic recovery tried and did not succeed.', tone: 'bad' }
+      break
+    case 'skipped_cooldown':
+    case 'skipped_hourly_cap':
+      badge = { text: 'Recovery limited', title: 'Automatic recovery was stopped by its cooldown or hourly limit.', tone: 'bad' }
+      break
+    case 'running':
+      badge = { text: 'Recovering', title: 'Automatic recovery is running now.', tone: 'neutral' }
+      break
+    case 'interrupted':
+      badge = { text: 'Recovery interrupted', title: 'PinPoint stopped while automatic recovery was running.', tone: 'bad' }
+      break
+    default:
+      badge = { text: 'Recovery skipped', title: 'Automatic recovery decided not to act on this problem.', tone: 'neutral' }
+  }
+  if (run.notifyState === 'sent') badge.title += ' The operator was notified.'
+  else if (run.notifyState === 'pending') badge.title += ' A notification is waiting to be sent.'
+  else if (run.notifyState === 'failed') badge.title += ' The notification failed.'
+  return badge
+}
+
+/** Key to look a service's last run up by host and name together. */
+export function lastRunKey(hostname: string, service: string | null): string {
+  return `${hostname}\u0000${service ?? ''}`
+}
+
 export interface RemediationRunDetail extends RemediationRun {
   output: string | null
 }
