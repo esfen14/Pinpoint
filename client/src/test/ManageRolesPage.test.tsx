@@ -39,7 +39,7 @@ describe('ManageRolesPage bootstrap administrator protection', () => {
         return Promise.resolve({
           items: [{
             id: 1,
-            name: 'Administrator',
+            name: 'Super Admin',
             description: 'Bootstrap role',
             is_active: true,
             is_locked: true,
@@ -58,7 +58,7 @@ describe('ManageRolesPage bootstrap administrator protection', () => {
       if (path === '/api/user/roles/1') {
         return Promise.resolve({
           id: 1,
-          name: 'Administrator',
+          name: 'Super Admin',
           description: 'Bootstrap role',
           is_active: true,
           permissions: [
@@ -71,7 +71,7 @@ describe('ManageRolesPage bootstrap administrator protection', () => {
     })
   })
 
-  it('explains and locks every built-in Administrator permission', async () => {
+  it('explains and locks every built-in Super Admin permission', async () => {
     const user = userEvent.setup()
     render(
       <MemoryRouter>
@@ -84,13 +84,13 @@ describe('ManageRolesPage bootstrap administrator protection', () => {
 
     expect(
       await screen.findByText(
-        'The built-in Administrator role has fixed permissions. They cannot be added, removed, or changed.',
+        'The built-in Super Admin role has fixed permissions. They cannot be added, removed, or changed.',
       ),
     ).toBeInTheDocument()
     for (const name of REQUIRED_PERMISSIONS) {
       expect(screen.getByRole('checkbox', { name })).toBeDisabled()
     }
     expect(screen.getByRole('checkbox', { name: 'system.dashboard' })).toBeDisabled()
-    expect(screen.getByDisplayValue('Administrator')).toBeDisabled()
+    expect(screen.getByDisplayValue('Super Admin')).toBeDisabled()
   })
 })

@@ -469,7 +469,7 @@ function EditRoleModal({
   onCancel: () => void
   onSaved: () => void
 }) {
-  const isBuiltInAdministrator = role.name === 'Administrator'
+  const isBuiltInAdministrator = role.name === 'Super Admin'
   const [form, setForm] = useState({
     name: role.name,
     description: role.description,
@@ -573,7 +573,7 @@ function EditRoleModal({
             <h3 className="mt-6 text-sm font-medium text-[var(--text)]">Permissions</h3>
             {isBuiltInAdministrator ? (
               <p className="mt-2 text-xs text-[var(--text-muted)]">
-                The built-in Administrator role has fixed permissions. They cannot be added, removed, or changed.
+                The built-in Super Admin role has fixed permissions. They cannot be added, removed, or changed.
               </p>
             ) : role.isLocked && (
               <p className="mt-2 text-xs text-[var(--text-muted)]">
@@ -603,7 +603,7 @@ function EditRoleModal({
                       disabled={isReadOnly}
                       title={
                         isBuiltInAdministrator
-                          ? 'The built-in Administrator role has fixed permissions.'
+                          ? 'The built-in Super Admin role has fixed permissions.'
                           : isRequiredForBootstrapAdmin
                           ? 'Required for the bootstrap administrator to manage accounts and roles.'
                           : undefined
