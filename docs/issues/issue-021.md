@@ -14,8 +14,12 @@
 
 **Plan reference:** Issue #21 in [`docs/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../NAGIOS_CORE_FEATURE_GAP_PLAN.md) §3. The number is a plan identifier, not a GitHub issue number.
 
-> **Blocked / conditional:** **Part 21.2 (System):** **Awaiting a product decision.** An availability target (a percentage that uptime is compared against) goes beyond Nagios Core, which only reports measured percentages. Do not start until the team confirms it wants targets. Scheduled or recurring reports by email are not planned here and would depend on Issue #2.  
-> **Part 21.3 (Web-Interface):** Same condition as Part 21.2.
+> **Product decision (2026-10-17, GitHub #134):** The owner rejected availability
+> targets: Pinpoint only needs to show measured uptime, which is already
+> implemented. Only Part 21.1 is in scope. Parts 21.2 and 21.3 and their target
+> settings, migrations, validation, indicators, exports and associated tests /
+> deliverables below are historical proposals and are not acceptance gates.
+> Scheduled or recurring emailed reports remain outside this issue.
 
 #### A. Problem Description
 
@@ -35,7 +39,7 @@ Once the backend can compare uptime with a target, the Reports page needs a way 
 
 Paths below were verified in the repository on 2026-10-13 unless marked *(proposed)*.
 
-- Part 21.1: `client/src/pages/ReportsPage.tsx` defines `VIEW_TABS` for all six views and the periods `last_24h`, `today`, `last_7d`, `last_30d`.
+- Part 21.1: `client/src/pages/ReportsPage.tsx` defines `VIEW_TABS` for all six views and the periods `last_24h`, `today`, `last_7d`, `last_30d`, `last_90d`, `custom`.
 - Part 21.1: `client/src/components/reports/ExtraReports.tsx` implements `hosts-by-os`, `device-services`, `alerts` and `notifications`; `HostAvailabilityReportTable.tsx` and `NetworkServicesReportTable.tsx` implement the other two.
 - Part 21.1: `server/app/api/system/report.py` has the six endpoints under `system.report`.
 - Part 21.1: `spec files/Implementation_Status.md` (row "Reports frontend breadth"), `Frontend_Modules_and_Routes.md` and `Display_Requirements.md` describe the Reports page.
