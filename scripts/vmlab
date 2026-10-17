@@ -403,12 +403,33 @@ case "$cmd" in
     # Take the installer's one-time administrator login, set a fresh password and keep it in
     # the private state folder, so the smoke test can sign in. Nothing secret is printed.
     need_config
+    umask 077
     mkdir -p "$state_dir"; chmod 700 "$state_dir"
     creds="$(vm_ssh 'sudo cat /root/pinpoint-install-credentials.txt' 2>/dev/null || true)"
-    email="$(printf '%s\n' "$creds" | awk '/^Username \(email\):/{getline; print; exit}')"
+    email="$(printf '%s\n' "$creds" | awk '/^Username \((email|temporary placeholder email)\):/{getline; print; exit}')"
     first="$(printf '%s\n' "$creds" | awk '/^Password:/{getline; print; exit}')"
     if [ -z "$email" ] || [ -z "$first" ]; then
-      [ -f "$state_dir/admin-email" ] && [ -f "$state_dir/admin-password" ] && { echo "admin login already set up ($(cat "$state_dir/admin-email"))"; exit 0; }
+      if [ -f "$state_dir/admin-email" ] && [ -f "$state_dir/admin-password" ]; then
+        preflight || die "cannot validate stored administrator state while endpoint ownership is ambiguous"
+        SETUP_URL="$(web_url)" SETUP_EMAIL="$(cat "$state_dir/admin-email")" SETUP_PASSWORD="$(cat "$state_dir/admin-password")" python3 -I -c '
+import os, sys
+sys.path.insert(0, sys.argv[1])
+import smoke
+try:
+    api = smoke.Client(os.environ["SETUP_URL"])
+    status, body = api.call("POST", "/api/user/login", {"email": os.environ["SETUP_EMAIL"], "password": os.environ["SETUP_PASSWORD"]})
+    if status != 200 or body.get("success") is not True:
+        sys.exit("stored administrator login is not valid for the configured endpoint")
+    status, body = api.call("GET", "/api/user/me")
+    data = body.get("data") or {}
+    if status != 200 or body.get("success") is not True or data.get("needs_setup") is not False or data.get("must_change_password") is not False:
+        sys.exit("stored administrator login has not confirmed completed first-run setup")
+except Exception:
+    sys.exit("could not validate stored administrator login against the configured endpoint")
+print("admin login already set up (validated against the configured endpoint)")
+' "$root/lab" || die "stored administrator state was not accepted; preserve installer credentials and complete setup on the current appliance"
+        exit 0
+      fi
       die "no installer credentials on the appliance and none stored; set VMLAB_ADMIN_EMAIL and VMLAB_ADMIN_PASSWORD yourself"
     fi
     new="Lab-$(head -c 24 /dev/urandom | base64 | tr -d '/+=' | head -c 18)9!"
@@ -417,28 +438,31 @@ case "$cmd" in
 import os, sys
 sys.path.insert(0, sys.argv[1])
 import smoke
-api = smoke.Client(os.environ["SETUP_URL"])
-status, body = api.call("POST", "/api/user/login", {"email": os.environ["SETUP_EMAIL"], "password": os.environ["SETUP_OLD"]})
-if status != 200:
-    sys.exit("login with the installer credentials failed (HTTP %s)" % status)
-needs_setup = bool((body.get("data") or {}).get("needs_setup"))
-passwords = {"current_password": os.environ["SETUP_OLD"],
-    "new_password": os.environ["SETUP_NEW"], "confirm_password": os.environ["SETUP_NEW"]}
-if needs_setup:
-    status, body = api.call("POST", "/api/user/complete-setup", dict(passwords, new_email=os.environ["SETUP_NEW_EMAIL"]))
-    what = "first-run setup"
-else:
-    status, body = api.call("POST", "/api/user/change-password", passwords)
-    what = "password change"
-if status != 200 or not body.get("success"):
-    sys.exit("%s failed (HTTP %s): %s" % (what, status, body.get("message")))
+try:
+    api = smoke.Client(os.environ["SETUP_URL"])
+    status, body = api.call("POST", "/api/user/login", {"email": os.environ["SETUP_EMAIL"], "password": os.environ["SETUP_OLD"]})
+    if status != 200 or body.get("success") is not True:
+        sys.exit("login with the installer credentials failed (HTTP %s)" % status)
+    needs_setup = bool((body.get("data") or {}).get("needs_setup"))
+    passwords = {"current_password": os.environ["SETUP_OLD"],
+        "new_password": os.environ["SETUP_NEW"], "confirm_password": os.environ["SETUP_NEW"]}
+    if needs_setup:
+        status, body = api.call("POST", "/api/user/complete-setup", dict(passwords, new_email=os.environ["SETUP_NEW_EMAIL"]))
+        what = "first-run setup"
+    else:
+        status, body = api.call("POST", "/api/user/change-password", passwords)
+        what = "password change"
+    if status != 200 or body.get("success") is not True:
+        sys.exit("%s failed (HTTP %s)" % (what, status))
+except Exception:
+    sys.exit("could not complete administrator setup against the configured endpoint")
 print("setup-email=" + (os.environ["SETUP_NEW_EMAIL"] if needs_setup else os.environ["SETUP_EMAIL"]))
 ' "$root/lab" > "$state_dir/.setup-out" || die "could not set up the administrator login"
     email="$(sed -n 's/^setup-email=//p' "$state_dir/.setup-out")"; rm -f "$state_dir/.setup-out"
     [ -n "$email" ] || die "setup did not report the administrator email"
     printf '%s' "$email" > "$state_dir/admin-email"; printf '%s' "$new" > "$state_dir/admin-password"; chmod 600 "$state_dir/admin-email" "$state_dir/admin-password"
     vm_ssh 'sudo rm -f /root/pinpoint-install-credentials.txt /var/lib/pinpoint/web-credentials-pending' 2>/dev/null || true
-    echo "administrator $email: new password stored in $state_dir/admin-password"
+    echo "administrator login stored privately in $state_dir/admin-email and $state_dir/admin-password"
     ;;
 
   setup-restricted)

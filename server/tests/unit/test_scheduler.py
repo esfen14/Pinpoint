@@ -27,6 +27,39 @@ class TestMaintenanceJob:
         from unittest.mock import patch
         with patch("app.maintenance.dispatch_due_windows", side_effect=RuntimeError("boom")):
             scheduler._dispatch_maintenance_windows()
+class TestForecastJob:
+
+    def test_job_runs_the_forecast(self, app):
+        from unittest.mock import patch
+        with patch("app.forecast.compute_forecasts", return_value=0) as compute:
+            scheduler._compute_forecasts()
+        compute.assert_called_once_with()
+
+    def test_job_never_raises(self, app):
+        from unittest.mock import patch
+        with patch("app.forecast.compute_forecasts", side_effect=RuntimeError("boom")):
+            scheduler._compute_forecasts()
+
+    def test_job_is_registered_once_at_a_bounded_interval(self, app):
+        from unittest.mock import MagicMock, patch
+        fake = MagicMock()
+        was_debug = app.debug
+        app.testing = False
+        app.debug = False
+        try:
+            with patch.object(scheduler, "BackgroundScheduler", return_value=fake),                  patch.object(scheduler, "_mark_interrupted_remediation_runs"),                  patch.object(scheduler, "persisted_poll_interval", return_value=60),                  patch.object(scheduler.atexit, "register"):
+                scheduler.init_scheduler()
+        finally:
+            app.testing = True
+            app.debug = was_debug
+            scheduler._scheduler = None
+        jobs = [c for c in fake.add_job.call_args_list if c.kwargs.get("id") == "resource_forecast"]
+        assert len(jobs) == 1
+        assert jobs[0].args[0] is scheduler._compute_forecasts
+        assert jobs[0].kwargs["max_instances"] == 1 and jobs[0].kwargs["coalesce"] is True
+        assert jobs[0].kwargs["minutes"] == scheduler.FORECAST_MINUTES
+
+
 class TestPurgeRemediationRuns:
     """_purge_old_data also bounds the remediation run log (an audit trail, not statistics)."""
 

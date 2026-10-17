@@ -156,8 +156,14 @@ of the old lab disks. Positive ownership proof passed on the newly created appli
 the original marker was restored through both actual SSH and HTTP endpoints,
 and the rebuilt five-target lab passed its scoped smoke test. See the
 [rebuild report](../docs/test-runs/2026-10-15-issue-162-snapshot-rebuild/REPORT.md).
-The separate setup-admin compatibility bug is tracked in #167; setup on the
-rebuilt appliance completed through the supported API.
+`scripts/vmlab setup-admin` accepts the installer's previous email label and its
+temporary-placeholder label, completes setup through the supported API and stores
+credentials privately without printing their values. If installer credentials
+cannot be parsed, it accepts saved host credentials only after signing in to the
+configured endpoint and confirming through `/api/user/me` that both `needs_setup`
+and `must_change_password` are explicitly false. Failed validation preserves host
+state and installer credentials and exits with an error. Isolated command tests
+cover these paths; the corrected helper has not been rerun on a live appliance.
 
 ### QA finding (qa-run) and agent loop safety constraints
 
@@ -202,7 +208,7 @@ See `.agent/workflows/fix-found.md` for commands and written boundary checks.
 
 | Stage | Command | Notes |
 |---|---|---|
-| Docs | `scripts/verify.sh docs` | VM ownership safety regression tests pass; agent progress files are well formed; relative links resolve; environment variables match the README table; browser routes match `App.tsx`, `pageAccess.ts` and the spec; traceability matrix matches test cases; fix-found queue and stop-rule contracts are present. Standard library only |
+| Docs | `scripts/verify.sh docs` | VM ownership safety and administrator setup regression tests pass; agent progress files are well formed; relative links resolve; environment variables match the README table; browser routes match `App.tsx`, `pageAccess.ts` and the spec; traceability matrix matches test cases; fix-found queue and stop-rule contracts are present. Standard library only |
 | Backend | `scripts/verify.sh backend` | Route and client-API drift checks, then `pytest tests/unit` in `server/` with `FLASK_DEBUG=1`; ~4 min, 2,167 passed / 14 skipped on 2026-10-08 |
 | Frontend | `scripts/verify.sh frontend` | `npm run test`, `npm run build`, `npm run lint` (errors fail; warnings do not) |
 | Everything | `scripts/verify.sh all` | Same stages as CI |

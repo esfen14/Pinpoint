@@ -3,6 +3,7 @@ import { ArrowUpDown, Filter, Search } from 'lucide-react'
 import type { ServiceRow, ServiceState } from '../../types/service'
 import { useDisplayTime } from '../../hooks/useDisplayTime'
 import { Pagination } from '../shared/Pagination'
+import { forecastBadgeFor, type ForecastData } from '../../types/forecast'
 
 type ServiceStatusTableProps = {
   services: ServiceRow[]
@@ -27,6 +28,9 @@ type ServiceStatusTableProps = {
   onPageChange: (page: number) => void
   onAcknowledge: (service: ServiceRow) => void
   onUnacknowledge: (service: ServiceRow) => void
+  // Disk and memory trend estimates. Optional: without them no badge is shown.
+  forecasts?: ForecastData | null
+  forecastNow?: Date
 }
 
 function StatusPill({ status }: { status: ServiceState }) {
@@ -136,6 +140,19 @@ function StatusWithDescription({ service }: { service: ServiceRow }) {
   )
 }
 
+/** Small note under a service name: its trend estimate, or that there is not enough data yet. */
+function ForecastBadge({ badge }: { badge: ReturnType<typeof forecastBadgeFor> }) {
+  if (!badge) return null
+  const style = badge.state === 'forecast'
+    ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400'
+    : 'bg-gray-500/10 text-gray-500 dark:text-gray-400'
+  return (
+    <span title={badge.title} className={`mt-1 block w-fit rounded-full px-2 py-0.5 text-xs ${style}`}>
+      {badge.text}
+    </span>
+  )
+}
+
 export function ServiceStatusTable({
   services,
   title = 'Service Status Details For All Hosts',
@@ -156,6 +173,8 @@ export function ServiceStatusTable({
   onPageChange,
   onAcknowledge,
   onUnacknowledge,
+  forecasts,
+  forecastNow,
 }: ServiceStatusTableProps) {
   const { formatDateTime } = useDisplayTime()
   const states: ('All' | ServiceState)[] = ['All', 'OK', 'WARNING', 'CRITICAL', 'UNKNOWN']
@@ -272,7 +291,10 @@ export function ServiceStatusTable({
                   className="border-b border-gray-100 transition hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/5"
                 >
                   <td className="px-4 py-3 text-gray-900 dark:text-white">{s.hostname}</td>
-                  <td className="px-4 py-3 text-gray-900 dark:text-white">{s.service}</td>
+                  <td className="px-4 py-3 text-gray-900 dark:text-white">
+                    {s.service}
+                    <ForecastBadge badge={forecastBadgeFor(forecasts, s.hostname, s.service, forecastNow ?? new Date())} />
+                  </td>
                   <td className="px-4 py-3"><StatusWithDescription service={s} /></td>
                   <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{formatDateTime(s.lastCheck)}</td>
                   <td className="px-4 py-3 text-gray-500 dark:text-gray-400">

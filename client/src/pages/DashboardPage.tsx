@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react'
 import { AlertTriangle, Gauge, Server, Wifi } from 'lucide-react'
 import { NetworkPerformanceSection } from '../components/dashboard/NetworkPerformanceSection'
 import { NetworkStatusOverview } from '../components/dashboard/NetworkStatusOverview'
+import { ForecastList } from '../components/dashboard/ForecastList'
+import { useForecasts } from '../hooks/useForecasts'
 import { RecentOutageTable } from '../components/dashboard/RecentOutageTable'
 import { RecentNotifications, type DashboardNotification } from '../components/dashboard/RecentNotifications'
 import { RescanButton } from '../components/dashboard/RescanButton'
@@ -32,6 +34,7 @@ import { fromServiceRecord, type ServiceListResponse, type ServiceRow } from '..
 const SEVERITY_RANK: Record<string, number> = { CRITICAL: 0, WARNING: 1, UNKNOWN: 2, OK: 3 }
 
 export function DashboardPage() {
+  const { data: forecastData, isLoading: forecastLoading, error: forecastError } = useForecasts()
   const { settings } = useSystemSettings()
   const networkProfile = useNetworkProfile()
   const [lastRefreshed, setLastRefreshed] = useState(() => new Date())
@@ -267,6 +270,8 @@ export function DashboardPage() {
               onHoursChange={setTrendHours}
             />
           )}
+
+          <ForecastList data={forecastData} isLoading={forecastLoading} error={forecastError} />
 
           <RecentOutageTable
             alerts={alerts}
