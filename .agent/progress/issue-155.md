@@ -84,7 +84,7 @@ Everything a fresh session needs to continue without redoing work.
 - Last check run (exact command): `scripts/verify.sh frontend` (and backend/docs separately)
 - Result (first failing lines, or "green"): frontend green; backend and docs fail only on Windows-environment tests that fail identically on clean origin/main
 - Hypothesis: n/a. Code, tests and docs are complete.
-- Next action (one specific step, not "continue"): everything proven live except E7-E9 (health card, kill switch confirmation + reload persistence, skip reasons in run log), which need a browser on the appliance. A person checks those, adds them to the report, then `git rm` this file, push, mark PR #194 ready.
+- Next action (one specific step, not "continue"): E7 card and E9 run log seen in a browser. Only E8 left: kill switch confirmation dialog and reload persistence. A person checks it, add to the report, then `git rm` this file, push, mark PR #194 ready.
 
 ## Decisions and notes
 
