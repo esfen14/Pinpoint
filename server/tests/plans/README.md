@@ -42,6 +42,9 @@ links by case ID (its section 7 records the decision for each); none is retired.
 - [STARTTLS SMTP Relay Acceptance](SMTP_Relay_Acceptance.md): issue #115 live
   helper/sudo, STARTTLS sink, real Nagios notification failures, browser polling
   and separately authorized inbox confirmation.
+- [Remote Restart Acceptance](REMOTE_RESTART_ACCEPTANCE.md): issue #182 real SSH/systemd
+  restart and refusal cases plus the opt-in Playwright settings, cleanup/redeployment,
+  action unit form and permission walkthrough.
 - [Historical test failures](historical/TEST_FAILURES.md): previous findings;
   historical counts are not the current collection inventory.
 

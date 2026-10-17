@@ -53,12 +53,14 @@ Requirement coverage (every issue requirement):
 
 | 4 final verification | Verified actual SSH stdout/stderr discard, source-identical helper after normal redeploy, deployed FK, disabled actions/switch, shut down both owned guests | scripts/verify.sh all; final cleanup/preflight; sudo -n modprobe kvm_amd | 3864 backend passed/14 skipped; 875 frontend passed; build/lint green (30 warnings); VMs off. KVM restore requires owner password. Draft PR #190 opened; browser and human review pending. |
 
+| 5 Playwright walkthrough (owner request) | Added opt-in issue-182-live project and three real Chromium cases; settings/real cleanup/redeployment, remote/local action forms and actual reader permissions; restored state and deactivated reader | bash /tmp/issue182-playwright.sh; scripts/test_playwright_safety.py; scripts/verify.sh frontend | 3 browser tests passed (26.0s); 8 scaffolding safety checks passed; 875 frontend tests/build/lint green. Only human review remains; current-head CI follows the checkpoint. |
+
 ## State for the next session
 
-- Last check run (exact command): scripts/verify.sh all
-- Result: green; 3864 backend passed/14 skipped, 875 frontend passed, build and lint passed (30 warnings, zero errors). Log: /tmp/issue182-resume-all.log. Final documentation-only changes verified separately before checkpoint.
-- Hypothesis: All observed backend/live/security behavior passes. Remaining acceptance needs an attached browser (RR-12) and external human security review; neither may be claimed from unit tests or source inspection.
-- Next action: Connect a browser and run RR-12 from server/tests/plans/REMOTE_RESTART_ACCEPTANCE.md on the retained isolated VMs; obtain human security review, inspect current-head CI for draft PR https://github.com/esfen14/Pinpoint/pull/190, then follow finish procedure. If still blocked with no new owner response, stop per workflow. Confirm the owner restored KVM before restarting VirtualBox (KVM must be unloaded again only with owner authorization and no KVM guests).
+- Last check run (exact command): scripts/verify.sh frontend
+- Result: green; 875 frontend tests, build and lint passed. Browser walkthrough: 3 real Chromium tests passed in 26.0s, no failures/skips; scaffolding safety 8 passed. Final docs verification follows. Prior unchanged-backend full gate: 3864 passed/14 skipped; prior head CI all green.
+- Hypothesis: All issue acceptance criteria are now verified, including RR-12. Human security review/reviewer approval remains external; the PR must remain draft with progress retained until that prerequisite is resolved.
+- Next action: Obtain human security review/reviewer approval for https://github.com/esfen14/Pinpoint/pull/190, inspect current-head CI, then follow the finish procedure. Browser connector absence is no longer a blocker: use the installed Playwright project with private credentials and the no-network socket tunnel if a repeat is requested.
 
 ## Decisions and notes
 
@@ -83,3 +85,7 @@ Requirement coverage (every issue requirement):
 - Person needed: attach an available browser for RR-12 and provide human security review before merge. No browser provider is connected. KVM restoration requested through async prompt after sudo reported password required; command is sudo modprobe kvm_amd.
 
 - Owner reports sudo modprobe kvm_amd returned without error (2026-10-17). Host readback in this session still shows neither kvm nor kvm_amd; restoration is reported but not independently confirmed. Restarting a terminal is not required for module loading. Leave all VMs off and verify host module state before future VM work.
+
+- Owner requested Playwright explicitly for RR-12. Resumed using installed Chromium in an isolated no-network container with a private socket to the owned appliance; no browser connector is required. New opt-in client/e2e/remote-restart.lab.spec.ts covers settings/errors/persistence, real cleanup/redeploy, action unit forms and a real read-only role.
+
+- RR-12 completed on owner request using Playwright directly; no browser connector needed. Reader account was created with remediation.view only, then deactivated; browser-created actions deleted and original settings/list restored. Both owned VMs shut down; no KVM modules were unloaded this round. New report: docs/test-runs/2026-10-17-issue-182-playwright/REPORT.md.

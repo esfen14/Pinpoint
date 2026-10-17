@@ -295,3 +295,9 @@ edit submit the entered parameters, show field-specific validation errors and
 clear old parameters when the action type changes. Existing remediation page
 view/manage guards continue to control access. See the
 [administrator guide](../docs/manuals/Remote_Service_Restart.md).
+
+The opt-in `issue-182-live` Playwright project covers these controls against an
+exclusively owned appliance through the no-network private socket bridge: settings
+loading/retry, real validation and persistence, cleanup/deployment wizard, remote
+and local unit forms, and real read-only permissions. See
+[the acceptance plan](../server/tests/plans/REMOTE_RESTART_ACCEPTANCE.md).

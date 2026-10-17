@@ -63,3 +63,7 @@ The setup helper expects an older installer credential label (existing #167). Fi
 - [x] No passwords, tokens, keys, SNMP communities or private key paths
 - [x] No addresses outside the documented lab range
 - [x] Evidence is referenced by name and location, not pasted
+
+## Subsequent browser verification
+
+RR-12 was completed in the [separate Playwright run](../2026-10-17-issue-182-playwright/REPORT.md): three browser tests passed. The original blocked result above is retained as the record of this earlier run.

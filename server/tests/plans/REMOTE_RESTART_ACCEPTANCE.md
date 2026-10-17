@@ -54,3 +54,22 @@ VMs through verified endpoints. Restore any host virtualization modules that the
 owner temporarily unloaded; if sudo is unavailable, ask the owner to restore
 them. Retain disks/state unless deletion was explicitly requested. Record every
 failure/blocker and safety deviation in a sanitized run report.
+
+## Playwright RR-12 runner
+
+`client/e2e/remote-restart.lab.spec.ts` is the opt-in `issue-182-live` project.
+Run only with `PINPOINT_ISSUE182_LIVE=1` after both owned VM endpoint preflights.
+Use the no-network Docker/Unix-socket bridge pattern in `scripts/playwright-lab`,
+pointing its host socket at the exclusively owned appliance HTTP port (18882
+for this run). The container browser uses only loopback 18080 through that socket.
+Supply administrator, read-only remediation-reader and target bootstrap credentials
+from private runtime state. The reader needs only `remediation.view`; no deployment
+or remediation-management permission. Authentication capture stays disabled.
+
+The three browser tests cover settings loading/retry (one explicitly injected
+load failure), real save validation and persistence, the visible cleanup warning,
+real cleanup and deployment wizard, remote/local unit creation/edit/reload, and
+real reader route/API authorization. Created actions remain disabled and are
+deleted in teardown. Restore the original service list and disabled switch;
+deactivate the reader fixture, shut down owned guests and retain sanitized report
+references. Screenshots and Playwright JSON stay in ignored `client/test-results/`.
