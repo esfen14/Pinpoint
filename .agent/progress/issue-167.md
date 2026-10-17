@@ -1,7 +1,7 @@
 # Issue #167: VM lab setup-admin misreads current installer label and accepts stale host login state
 
 Branch: `issue-167-setup-admin-state`
-Status: in-progress
+Status: ready-for-review
 
 ## Finish condition
 
@@ -40,15 +40,16 @@ One row per loop round, newest last.
 | 2 | Replaced obsolete setup workaround notices with current label parsing and saved-login validation contract; documented no live rerun | `scripts/verify.sh docs && git diff --check` | green |
 | 3 | Finish audit confirmed unchanged issue; strengthened secret-output and failure preservation coverage; installed checkout-local dependencies | `python3 -I scripts/test_vmlab_setup_admin.py && scripts/verify.sh docs && git diff --check` | green; 7 tests pass, including both labels and stale-state subcases |
 | 4 | Added preflight recheck before new saved-login API validation; regression reproduces changed ownership after credential read and blocks all API calls | `python3 -I scripts/test_vmlab_setup_admin.py` (red then green), `bash -n scripts/vmlab`, `scripts/verify.sh docs && git diff --check` | green; 8 tests pass; full verification is running backend and frontend stages independently of this docs-only change |
+| 5 | Completed required full verification; all finish conditions proven with current-session checks | `scripts/verify.sh all > /tmp/issue167-verify-all.log 2>&1` plus final docs-stage rerun after round 4 | green; 3,884 backend passed / 14 skipped; 879 frontend tests passed; build and lint passed; eight focused setup regressions and docs checks green |
 
 ## State for the next session
 
 Everything a fresh session needs to continue without redoing work.
 
-- Last check run (exact command): `python3 -I scripts/test_vmlab_setup_admin.py && bash -n scripts/vmlab && scripts/verify.sh docs && git diff --check`
-- Result (first failing lines, or "green"): green; 8 isolated setup tests, 18 ownership tests and all docs checks pass.
-- Hypothesis: all issue requirements have current-session focused proofs; required full verification and CI remain.
-- Next action (one specific step, not "continue"): inspect completion of `scripts/verify.sh all` (log `/tmp/issue167-verify-all.log`, exec session 27899), then remove the progress file and open the PR if green. Final docs checks were rerun after the scoped preflight recheck; backend/frontend files have not changed.
+- Last check run (exact command): `scripts/verify.sh all > /tmp/issue167-verify-all.log 2>&1`
+- Result (first failing lines, or "green"): green (exit 0); 3,884 backend tests passed / 14 existing skips; 879 frontend tests passed; production build and lint passed. Docs stage was also rerun successfully after the final ownership-guard change, with eight setup tests passing; backend/frontend files were unchanged.
+- Hypothesis: all four issue finish conditions are met; no product decision is needed. Live appliance rerun is explicitly unverified.
+- Next action (one specific step, not "continue"): delete the progress file, commit/push completion, create the ready PR from `/tmp/issue167-pr-body.md` and inspect CI until green.
 
 ## Decisions and notes
 
