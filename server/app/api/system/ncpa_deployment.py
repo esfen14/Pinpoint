@@ -43,12 +43,15 @@ GET    /system/deployment/ncpa/runs/<id>           – One run with per-device r
 POST   /system/deployment/ncpa/runs/<id>/review    – Mark a finished run as reviewed
 GET    /system/deployment/ncpa/devices/trusted     – Trust-confirmed devices ready for deploy
 POST   /system/deployment/ncpa/<id>/refresh-disks  – Re-read a deployed agent's disks
+GET    /system/deployment/ncpa/register-candidates – Active devices that can have an agent registered
+POST   /system/deployment/ncpa/<id>/register       – Register an agent the administrator installed
 POST   /system/deployment/ncpa/<id>/cleanup        – Remove failed-install bootstrap artifacts
 """
 
 from datetime import datetime, timezone, date
 from concurrent.futures import ThreadPoolExecutor
 import hmac
+import re
 import time
 
 from flask_login import login_required, current_user
@@ -68,10 +71,10 @@ from app.logging.user_activity import create_user_log
 from app.system_models import (
     NetworkDiscovery, SSHCredentials, NCPADeployment, AgentStatus, IdentifierKind,
     NCPADeploymentStatus, NCPADeploymentResult, DeploymentStatus, DeploymentOutcome,
-    ActivityLog, User,
+    ActivityLog, User, DeploymentMethod, DeviceState, NCPADevicePartition,
 )
 from app.network_discovery.device_identity import Evidence, record_device_evidence
-from app.network_discovery.port_lifecycle import device_ssh_port
+from app.network_discovery.port_lifecycle import device_ssh_port, mark_ncpa_port
 from app.ncpa_deployment.ncpa_deployment import *
 
 deploy_ncpa_thread = None
@@ -88,6 +91,7 @@ CREDENTIAL_CHECK_INTERVAL_SECONDS = 3
 MAX_DEVICES_PER_REQUEST = 50
 MAX_USERNAME_LENGTH = 64
 MAX_PASSWORD_LENGTH = 256
+NCPA_TOKEN_PATTERN = re.compile(r"^[0-9a-fA-F]{32}$")
 credential_check_times = {}
 credential_check_lock = threading.Lock()
 
@@ -1181,6 +1185,152 @@ def refresh_ncpa_disks(device_id):
         result = reconcile_plugin_monitoring(current_user.UserID)
         return success({
             "device_id": device_id,
+            "disks": disks,
+            "config_applied": result["changed"],
+            "message": result["message"],
+        })
+
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("An unexpected error occurred.")
+        return error("An unexpected error occurred.", 500)
+
+
+@system_bp.get('/deployment/ncpa/register-candidates')
+@login_required
+@require_permission('system.deploy.ncpa')
+def get_ncpa_register_candidates():
+    """
+    List the devices an administrator can register a manually installed
+    NCPA agent for: every Active device included in scanning that does not
+    already have a deployed agent, whether or not it is NCPA-eligible (for
+    example a Windows host with no SSH). Sorted by hostname. Reads only.
+
+    Response (200):
+        { "success": true, "data": { "devices": [ {
+            "device_id": int, "hostname": str, "ip_address": str,
+            "agent_status": "Pending NCPA" | "Deployment Failed" | "Excluded" | "Incompatible" | null
+        }, ... ] } }
+    """
+    try:
+        rows = db.session.execute(
+            sa.select(NetworkDiscovery, NCPADeployment.Agent_Status)
+            .outerjoin(NCPADeployment, NCPADeployment.NetworkDiscoveryID == NetworkDiscovery.NetDiscoveryID)
+            .where(NetworkDiscovery.Include_Device_In_Scanning.is_(True))
+            .where(NetworkDiscovery.Device_State == DeviceState.ACTIVE)
+            .where(sa.or_(NCPADeployment.Agent_Status.is_(None), NCPADeployment.Agent_Status != AgentStatus.DEPLOYED))
+            .order_by(NetworkDiscovery.Hostname.asc(), NetworkDiscovery.NetDiscoveryID.asc())
+        ).all()
+        return success({"devices": [
+            {
+                "device_id": device.NetDiscoveryID,
+                "hostname": device.Hostname,
+                "ip_address": device.IP_Address,
+                "agent_status": agent_status.value if agent_status else None,
+            }
+            for device, agent_status in rows
+        ]})
+
+    except Exception:
+        current_app.logger.exception("An unexpected error occurred.")
+        return error("An unexpected error occurred.", 500)
+
+
+@system_bp.post('/deployment/ncpa/<int:device_id>/register')
+@login_required
+@require_permission('system.deploy.ncpa')
+def register_manual_ncpa_agent(device_id):
+    """
+    Register an NCPA agent the administrator installed themselves (for
+    example on a Windows host), so it is monitored like a deployed one.
+
+    The agent is checked first with the token and port supplied: it must
+    answer and report at least one monitorable disk. Only then is anything
+    saved (the token and port, deployment method Manual, status Deployed,
+    the disk nodes, and the NCPA port as a monitored port), and the Nagios
+    config is regenerated through the shared plugin reconciler. A request
+    that fails validation or whose agent cannot be verified changes nothing.
+    The token is stored like a deployed agent's and is never returned or
+    logged.
+
+    Request body:
+        { "token": "<32 hex characters>", "port": int (optional, default NCPA_PORT) }
+
+    Response (200):
+        { "success": true, "data": { "device_id": int, "agent_status": "Deployed NCPA",
+                                      "port": int, "disks": [str],
+                                      "config_applied": bool, "message": str } }
+
+    Errors:
+        400 – Invalid body, token or port.
+        404 – Device not found, retired or not included in scanning.
+        409 – NCPA is already deployed on the device.
+        502 – The agent could not be reached with that token, or reported no disks.
+        500 – Unexpected error.
+    """
+    try:
+        data = request.get_json(silent=True)
+        validation_error = validate_json_data(data)
+        if validation_error:
+            return validation_error
+
+        token = data.get('token')
+        if not isinstance(token, str) or not NCPA_TOKEN_PATTERN.match(token):
+            return error("The NCPA token must be 32 hexadecimal characters.", 400)
+
+        port = data.get('port')
+        if port is None:
+            port = ncpa_port()
+        elif not isinstance(port, int) or isinstance(port, bool) or not 1 <= port <= 65535:
+            return error("The port must be a number between 1 and 65535.", 400)
+
+        device = db.session.get(NetworkDiscovery, device_id)
+        if (
+            device is None
+            or not device.Include_Device_In_Scanning
+            or device.Device_State in (DeviceState.RETIRED, DeviceState.MERGED)
+        ):
+            return error("Device not found.", 404)
+
+        deployment = db.session.scalar(
+            sa.select(NCPADeployment).where(NCPADeployment.NetworkDiscoveryID == device_id)
+        )
+        if deployment is not None and deployment.Agent_Status is AgentStatus.DEPLOYED:
+            return error("NCPA is already deployed on this device.", 409)
+
+        reachability = verify_ncpa_reachable(device.IP_Address, token, port=port)
+        if not reachability["success"]:
+            return error(reachability["message"], 502)
+
+        disks = discover_disk_nodes(device.IP_Address, token, port=port)
+        if not disks:
+            return error("The NCPA agent reported no monitorable disks.", 502)
+
+        if deployment is None:
+            deployment = NCPADeployment(NetworkDiscoveryID=device_id)
+            db.session.add(deployment)
+        deployment.Deployement_Method = DeploymentMethod.MANUAL
+        deployment.Token = token
+        deployment.Port = port
+        deployment.Agent_Status = AgentStatus.DEPLOYED
+        deployment.Error = None
+        device.NCPA_Eligible = True
+        db.session.flush()
+        db.session.execute(
+            sa.delete(NCPADevicePartition).where(NCPADevicePartition.NCPADeployID == deployment.NCPADeployID)
+        )
+        for name in disks:
+            db.session.add(NCPADevicePartition(Name=name, NCPADeployID=deployment.NCPADeployID))
+        mark_ncpa_port(device_id)
+        create_user_log(current_user.UserID, f"Registered manually installed NCPA agent for device {device_id}")
+        db.session.commit()
+
+        from app.api.plugin.reconcile import reconcile_plugin_monitoring
+        result = reconcile_plugin_monitoring(current_user.UserID)
+        return success({
+            "device_id": device_id,
+            "agent_status": AgentStatus.DEPLOYED.value,
+            "port": port,
             "disks": disks,
             "config_applied": result["changed"],
             "message": result["message"],

@@ -287,6 +287,20 @@ client for the existing review/evidence/merge routes and `/api/system/hosts/look
 See `Device_Inventory_Requirements.md` §14 for the permission, confirmation,
 keyboard, refresh and saved-configuration-warning requirements.
 
+## Manual agent registration (#130)
+
+On NCPA Deployment (`system.deploy.ncpa`), every device row whose agent is not
+already deployed has **Register agent**. `RegisterAgentDialog` asks for the NCPA
+token (32 hexadecimal characters) and an optional port, validates both before
+calling `registerManualAgent` (`POST .../<id>/register`), and shows loading,
+server error and success (status, disks found, config message) states. The token
+field is cleared after every call and the token is never kept in state or shown
+again. A collapsible panel explains installing NCPA on Windows. Registration
+reloads the device list. The page header also has **Register an agent I installed**,
+which opens the same dialog with a device picker loaded from
+`GET .../register-candidates` (active scanned devices that are not deployed,
+including hosts without SSH such as Windows servers); the deploy list is unchanged.
+
 ## Remote service restart controls (#182)
 
 On NCPA Deployment (`system.deploy.ncpa`), trusted device rows expose **Remote
