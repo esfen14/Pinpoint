@@ -35,11 +35,20 @@ and [the routed report](../docs/test-runs/2026-10-15-issue-117-manual-topology/R
 The current-main integration preserves escalation/remediation rendering and joins
 the published migration histories without rewriting them; populated upgrades from
 both old heads and a real browser/Nagios retest pass. See [the main-sync report](../docs/test-runs/2026-10-15-issue-117-main-sync/REPORT.md).
-CI and human review are tracked on the implementation PR. One-attempt settings can
-emit transient child DOWN notifications before UNREACHABLE; notification guarantees
-and any main-config change are a separate [decision #173](https://github.com/esfen14/Pinpoint/issues/173).
-Parent links do not implement routing failover or guarantee immediate suppression
-under every Nagios cache/retry configuration.
+CI and human review are tracked on the implementation PR. For
+[issue #173](https://github.com/esfen14/Pinpoint/issues/173), the user accepted
+Option A on 2026-10-17: temporary child DOWN notifications are allowed before
+Nagios confirms parent reachability. One-attempt monitoring remains supported;
+no cache, retry or notification configuration change is approved. The contract is
+in Device Inventory §13 and the data integration specification, with
+[operator guidance](../docs/manuals/Notification_Policy.md#parent-outages-and-temporary-child-down-alerts).
+The [#173 routed acceptance report](../docs/test-runs/2026-10-17-issue-173-parent-notifications/REPORT.md)
+records exact settings and observed single/redundant-parent HARD DOWN notifications
+followed by UNREACHABLE, no-parent DOWN controls, recovery and cleanup. The opt-in
+Core driver covers the accepted contract; no application runtime change is needed.
+Review readiness and CI are tracked on PR #192. Parent links do not implement
+routing failover or guarantee immediate suppression under every Nagios cache/retry
+configuration.
 
 ## Implemented backend areas
 
