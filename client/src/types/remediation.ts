@@ -28,6 +28,26 @@ export const OUTCOME_LABELS: Record<RemediationOutcome, string> = {
   skipped_acknowledged: 'Skipped (acknowledged)',
 }
 
+export type NotifyKind = 'failed' | 'capped' | 'repeated'
+export type NotifyState = 'pending' | 'sent' | 'failed'
+
+export const NOTIFY_KINDS: NotifyKind[] = ['failed', 'capped', 'repeated']
+
+/** Why the operator is told, in plain language (run drawer). */
+export const NOTIFY_KIND_LABELS: Record<NotifyKind, string> = {
+  failed: 'The action failed',
+  capped: 'Stopped by its limits',
+  repeated: 'Recovered repeatedly, fault persists',
+}
+
+/** The notification state of one run in plain language. A run with nothing due is "Not required". */
+export function notifyLabel(run: Pick<RemediationRun, 'notifyKind' | 'notifyState'>): string {
+  if (!run.notifyKind || !run.notifyState) return 'Not required'
+  if (run.notifyState === 'sent') return 'Operator notified'
+  if (run.notifyState === 'pending') return 'Notification pending'
+  return 'Notification failed'
+}
+
 export interface ActionTypeInfo {
   key: string
   label: string
@@ -53,6 +73,7 @@ export interface RemediationAction {
   maxRunsPerHour: number
   cooldownSeconds: number
   runWhenAcknowledged: boolean
+  notifyOn: NotifyKind[]
   version: number
   updatedAt: string | null
   updatedBy: number | null
@@ -86,6 +107,11 @@ export interface RemediationRun {
   finishedAt: string | null
   outcome: RemediationOutcome
   reason: string | null
+  notifyKind: NotifyKind | null
+  notifyState: NotifyState | null
+  notifyAttempts: number
+  notifyError: string | null
+  notifyAt: string | null
 }
 
 export interface RemediationRunDetail extends RemediationRun {

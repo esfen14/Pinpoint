@@ -7,6 +7,7 @@ import { formatServerDateTime } from '../../utils/formatDateTime'
 import { Pagination } from '../shared/Pagination'
 import {
   OUTCOME_LABELS,
+  notifyLabel,
   type RemediationAction,
   type RemediationOutcome,
   type RemediationRun,
@@ -153,6 +154,7 @@ export function RunLog({ actions }: Props) {
                 <th className="px-4 py-3 font-medium">State</th>
                 <th className="px-4 py-3 font-medium">Outcome</th>
                 <th className="px-4 py-3 font-medium">Reason</th>
+                <th className="px-4 py-3 font-medium">Operator</th>
                 <th className="px-4 py-3 font-medium"><span className="sr-only">Details</span></th>
               </tr>
             </thead>
@@ -172,6 +174,12 @@ export function RunLog({ actions }: Props) {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-[var(--text-muted)]">{run.reason ?? '—'}</td>
+                  <td className="px-4 py-3">
+                    <span className={run.notifyState === 'failed' ? 'text-red-700 dark:text-red-300' : 'text-[var(--text)]'}>
+                      {notifyLabel(run)}
+                    </span>
+                    {run.notifyError && <div className="text-xs text-[var(--text-muted)]">{run.notifyError}</div>}
+                  </td>
                   <td className="px-4 py-3">
                     <button
                       type="button"

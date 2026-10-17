@@ -52,8 +52,8 @@ Files are relative to `server/app` unless stated.
 4. [x] Escalation logic in a new `remediation_escalation.py`: outcome-to-trigger mapping (failed, timed_out -> failed; skipped_cooldown, skipped_hourly_cap -> capped), `Notify_On` filter, comment builder from fixed text + action name + outcome code + run id, bounded retry, repeat-window detection, idempotency by run id. Tests: `tests/unit/test_remediation_escalation.py`.
 5. [x] Wire it into `remediation.py` (`execute` and the skip rows in `record_decisions`), without letting a notification failure stop the consumer. Update `tests/unit/test_remediation_consumer.py`.
 6. [x] API: validate and persist `Notify_On` and the two settings; return notification state and error from the runs API. Files: `api/system/remediation.py`, `tests/unit/test_remediation_api.py`. Permission checks unchanged (`remediation.view`, `remediation.manage`).
-7. [ ] Feed: confirm `normalize_notification` / `collapse_repeats` keep the CUSTOM type and comment; add the label if missing. Files: `api/system/notifications.py` and its helper, `tests/unit/test_notifications.py`.
-8. [ ] Frontend types and run views: `RunLog.tsx`, `RunDrawer.tsx`, types, tests in `client/src/test/RemediationPage.test.tsx`.
+7. [ ] (BLOCKED on a lab capture, see Decisions) Feed: confirm `normalize_notification` / `collapse_repeats` keep the CUSTOM type and comment; add the label if missing. Files: `api/system/notifications.py` and its helper, `tests/unit/test_notifications.py`.
+8. [x] Frontend types and run views: `RunLog.tsx`, `RunDrawer.tsx`, types, tests in `client/src/test/RemediationPage.test.tsx`.
 9. [ ] Frontend form: `Notify_On` checkboxes in `ActionFormDialog.tsx` with help text; settings fields if placed on the Remediation status panel. Tests.
 10. [ ] Frontend badge and labels: `ServiceStatusTable.tsx` badge linking to the run, `RecentNotifications.tsx`, `HistoryPage.tsx`; 403 and empty states. Tests.
 11. [ ] Docs: the four spec files, help text, admin guide section; `scripts/verify.sh docs`.
@@ -71,15 +71,16 @@ One row per loop round, newest last.
 | 3 | Step 4: `server/app/remediation_escalation.py` (outcome mapping, `Notify_On` filter, fixed-text comment with a safe-character action name, `deliver` with write-ahead attempt count and 3 bounded attempts, `deliver_pending`, `fail_unfinished`, `check_repeat`); 53 tests in `tests/unit/test_remediation_escalation.py` | `pytest tests/unit/test_remediation_escalation.py -q` | collection error first (module missing), then 53 passed |
 | 4 | Step 5: wired into `remediation.py` (`record_decisions` marks cooldown and cap skips; new `mark_notification` after `execute` marks failed, timed out and repeated; `process_spool` calls `deliver_pending`) and `scheduler.py` (`fail_unfinished` at startup); 10 new consumer tests | `pytest tests/unit/test_remediation_consumer.py tests/unit/test_remediation_escalation.py -q` | 8 of 10 failed first (not wired), then 145 passed, 1 skipped |
 | 5 | Step 6: `api/system/remediation.py` accepts and returns `notifyOn` (default all three, may be empty, audited), returns `notifyKind/State/Attempts/Error/At` on every run, and the settings route takes `repeatCount` (2 to 20) and `repeatWindowHours` (1 to 168), audited; 10 new tests. Two existing tests that pin exact response shapes were updated for the added keys (settings body, run item fields) | `pytest tests/unit/test_remediation_api.py -q` | 10 failed first, then 128 passed |
+| 6 | resumed on a new session (pulled, last check re-run: 128 passed). Step 7 not started: no recorded sample of how the Nagios archive reports a CUSTOM notification, so the feed change needs a lab capture first. Did step 8 instead: `types/remediation.ts` (notify fields, `notifyLabel`, `NOTIFY_KIND_LABELS`), `RunLog.tsx` Operator column, `RunDrawer.tsx` notification rows; 6 new tests | `npx vitest run src/test/RemediationPage.test.tsx` and `npx tsc --noEmit -p tsconfig.app.json` | 6 failed first, then 47 passed; tsc clean after adding `notifyOn` to the fixture in `RemediationParameters.test.tsx` |
 
 ## State for the next session
 
 Everything a fresh session needs to continue without redoing work.
 
-- Last check run (exact command): `pytest tests/unit/test_remediation_api.py -q` (from `server/`, with `.venv/Scripts/python -m`)
-- Result (first failing lines, or "green"): green, 128 passed. 5 rounds used this session, so the loop stopped here.
-- Hypothesis: the backend (steps 2 to 6) is complete and covered by unit tests with the Nagios command layer mocked. Never run against a real Nagios yet.
-- Next action: plan step 7 (feed). Read `server/app/api/system/notifications.py` helpers `normalize_notification` and `collapse_repeats` (imported at its top) and write a failing test in `server/tests/unit/test_notifications.py` showing a Nagios CUSTOM notification keeps its type and comment text in the feed; then fix it. After that steps 8 to 10 (frontend), 11 (docs), 12 (verify all, lab, PR).
+- Last check run (exact command): `npx tsc --noEmit -p tsconfig.app.json` and `npx vitest run src/test/RemediationPage.test.tsx` (from `client/`)
+- Result (first failing lines, or "green"): green, 47 passed, tsc clean.
+- Hypothesis: the run views are done. The `Notify_On` form fields and the repeat settings still need UI; the action update path currently sends no `notifyOn`, so the API default (all three) would silently overwrite a saved choice until step 9 is done.
+- Next action: plan step 9. Failing tests first in `client/src/test/RemediationPage.test.tsx` (checkboxes with help text in the action form, saved values shown when editing, the enable switch keeps `notifyOn`, repeat count and window fields on the status panel), then `RemediationActionInput.notifyOn`, `ActionFormDialog.tsx`, `ActionsTable.tsx` (the switch builds its own input), `StatusPanel.tsx` and `types/remediation.ts` `RemediationSettings`.
 
 ## Decisions and notes
 
@@ -90,6 +91,7 @@ Questions for a person. The person said "let's start" without answering, so work
 3. **Lab.** The acceptance criteria and the report in `docs/test-runs/` need a real lab run (service custom notification, downtime suppression, unwritable pipe). The issue's section G asks for it, so confirm which lab to use (`scripts/vmlab` or the Docker lab) and that I may start it when the code is ready. Only the host form of the custom notification was verified on 2026-10-13.
 
 Notes:
+- Step 7 (feed) is blocked on data: this repo has no sample of the archivejson entry Nagios writes for a CUSTOM notification (field that holds the type, and where the comment text appears). Capture one on the lab (send a custom notification, query `archivejson.cgi?query=notificationlist`), save it under `docs/test-runs/`, then write the failing test from that real sample.
 - Existing tests that pin exact response shapes were updated for the added API fields (settings body and run item fields in `test_remediation_api.py`); the old keys are unchanged.
 - Known gap to mention in the PR: `server/tests/unit/test_nagios_commands.py` FIFO tests cannot run on Windows (`os.mkfifo`); the new command tests avoid the FIFO, so they run everywhere.
 - A cooldown or cap skip notifies on every blocked event (one per run row), as the issue asks. A flapping service could therefore send several; the cooldown and cap on the action limit the number of runs but not the skips. Raise this in the PR.

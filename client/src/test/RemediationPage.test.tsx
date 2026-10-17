@@ -40,7 +40,7 @@ function action(overrides: Partial<RemediationAction> = {}): RemediationAction {
   return {
     id: 1, name: 'restart-web', actionType: 'record_only', scopeKind: 'service', hostPattern: 'web-*',
     servicePattern: 'HTTP', parameters: {}, enabled: true, maxRunsPerHour: 2, cooldownSeconds: 600,
-    runWhenAcknowledged: false, version: 3, updatedAt: '2026-10-14T10:00:00', updatedBy: 1, ...overrides,
+    runWhenAcknowledged: false, notifyOn: ['failed', 'capped', 'repeated'], version: 3, updatedAt: '2026-10-14T10:00:00', updatedBy: 1, ...overrides,
   }
 }
 
@@ -48,7 +48,8 @@ function run(overrides: Partial<RemediationRun> = {}): RemediationRun {
   return {
     id: 7, actionId: 1, actionName: 'restart-web', hostname: 'web-01', service: 'HTTP', state: 'CRITICAL',
     stateType: 'HARD', attempt: 3, receivedAt: '2026-10-14T10:00:00', startedAt: '2026-10-14T10:00:01',
-    finishedAt: '2026-10-14T10:00:02', outcome: 'succeeded', reason: null, ...overrides,
+    finishedAt: '2026-10-14T10:00:02', outcome: 'succeeded', reason: null, notifyKind: null, notifyState: null,
+    notifyAttempts: 0, notifyError: null, notifyAt: null, ...overrides,
   }
 }
 
@@ -508,5 +509,68 @@ describe('Remediation page: skip reasons in the run log', () => {
     expect(screen.getByText('Maintenance Mode is on.')).toBeInTheDocument()
     const filter = screen.getByLabelText('Outcome')
     expect(within(filter).getByRole('option', { name: 'Skipped (kill switch)' })).toBeInTheDocument()
+  })
+})
+
+
+describe('Remediation page: operator notification in the run log', () => {
+  async function openRunLog() {
+    render(<RemediationPage />)
+    fireEvent.click(await screen.findByRole('tab', { name: 'Run log' }))
+  }
+
+  it('says "Not required" for a run that needed no notification', async () => {
+    await openRunLog()
+    const row = (await screen.findByText('web-01')).closest('tr') as HTMLElement
+    expect(within(row).getByText('Not required')).toBeInTheDocument()
+  })
+
+  it('says the operator was notified when the notification was sent', async () => {
+    api.listRuns.mockResolvedValue(runList([
+      run({ outcome: 'failed', notifyKind: 'failed', notifyState: 'sent', notifyAttempts: 1, notifyAt: '2026-10-14T10:00:03' }),
+    ]))
+    await openRunLog()
+    expect(await screen.findByText('Operator notified')).toBeInTheDocument()
+  })
+
+  it('shows a notification that is still waiting to be sent', async () => {
+    api.listRuns.mockResolvedValue(runList([
+      run({ outcome: 'failed', notifyKind: 'failed', notifyState: 'pending', notifyAttempts: 1, notifyError: 'The Nagios command pipe was not found.' }),
+    ]))
+    await openRunLog()
+    expect(await screen.findByText('Notification pending')).toBeInTheDocument()
+  })
+
+  it('shows a failed notification with its error', async () => {
+    api.listRuns.mockResolvedValue(runList([
+      run({ outcome: 'timed_out', notifyKind: 'failed', notifyState: 'failed', notifyAttempts: 3, notifyError: 'The Nagios command pipe was not found.' }),
+    ]))
+    await openRunLog()
+    const row = (await screen.findByText('web-01')).closest('tr') as HTMLElement
+    expect(within(row).getByText('Notification failed')).toBeInTheDocument()
+    expect(within(row).getByText('The Nagios command pipe was not found.')).toBeInTheDocument()
+  })
+
+  it('shows the notification details in the run drawer', async () => {
+    const detail = run({
+      outcome: 'skipped_hourly_cap', notifyKind: 'capped', notifyState: 'failed', notifyAttempts: 3,
+      notifyError: 'The Nagios command pipe could not be written.', notifyAt: null,
+    })
+    api.listRuns.mockResolvedValue(runList([detail]))
+    api.getRun.mockResolvedValue({ ...detail, output: null })
+    await openRunLog()
+    fireEvent.click(await screen.findByRole('button', { name: 'View run 7' }))
+    const drawer = await screen.findByRole('dialog', { name: 'Run 7' })
+    expect(await within(drawer).findByText('Notification failed')).toBeInTheDocument()
+    expect(within(drawer).getByText('Stopped by its limits')).toBeInTheDocument()
+    expect(within(drawer).getByText('The Nagios command pipe could not be written.')).toBeInTheDocument()
+    expect(within(drawer).getByText('3')).toBeInTheDocument()
+  })
+
+  it('shows "Not required" in the drawer when nothing was due', async () => {
+    await openRunLog()
+    fireEvent.click(await screen.findByRole('button', { name: 'View run 7' }))
+    const drawer = await screen.findByRole('dialog', { name: 'Run 7' })
+    expect(await within(drawer).findByText('Not required')).toBeInTheDocument()
   })
 })

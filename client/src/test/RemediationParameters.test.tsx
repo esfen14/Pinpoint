@@ -12,7 +12,7 @@ const types: ActionTypeInfo[] = [
 ]
 const action: RemediationAction = {
   id: 1, name: 'restart-web', actionType: 'restart_remote_service', scopeKind: 'host', hostPattern: 'web-*', servicePattern: null,
-  parameters: { unit: 'apache2' }, enabled: true, maxRunsPerHour: 2, cooldownSeconds: 600, runWhenAcknowledged: false, version: 4, updatedAt: null, updatedBy: null,
+  parameters: { unit: 'apache2' }, enabled: true, maxRunsPerHour: 2, cooldownSeconds: 600, runWhenAcknowledged: false, notifyOn: ['failed', 'capped', 'repeated'], version: 4, updatedAt: null, updatedBy: null,
 }
 function show(existing: RemediationAction | null = null) {
   render(<ActionFormDialog types={types} action={existing} onClose={vi.fn()} onSaved={vi.fn()} onReload={vi.fn()} />)
