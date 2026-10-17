@@ -30,7 +30,7 @@ function Stat({ label, value, testId, hint }: StatProps) {
   return (
     <div title={hint}>
       <dt className="text-xs text-[var(--text-muted)]">{label}</dt>
-      <dd data-testid={testId} className="mt-1 text-lg font-semibold text-[var(--text)]">
+      <dd data-testid={testId} className="mt-1 text-sm font-semibold leading-snug text-[var(--text)] tabular-nums">
         {value}
       </dd>
     </div>

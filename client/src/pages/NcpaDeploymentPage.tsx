@@ -5,6 +5,7 @@ import { PageHeader } from '../components/shared/PageHeader'
 import { SummaryStatCard } from '../components/shared/SummaryStatCard'
 import { NcpaDevicesTable } from '../components/ncpa-deployment/NcpaDevicesTable'
 import { RemoteRestartDialog } from '../components/ncpa-deployment/RemoteRestartDialog'
+import { RegisterAgentDialog } from '../components/ncpa-deployment/RegisterAgentDialog'
 import { CleanupDialog } from '../components/ncpa-deployment/CleanupDialog'
 import { DeploymentHistoryTable } from '../components/ncpa-deployment/DeploymentHistoryTable'
 import { DeploymentRunBanner } from '../components/ncpa-deployment/DeploymentRunBanner'
@@ -39,6 +40,8 @@ export function NcpaDeploymentPage() {
   const [wizard, setWizard] = useState<WizardOptions | null>(null)
   const [restartDevice, setRestartDevice] = useState<NcpaDevice | null>(null)
   const [cleanupDevice, setCleanupDevice] = useState<NcpaDevice | null>(null)
+  const [registerDevice, setRegisterDevice] = useState<NcpaDevice | null>(null)
+  const [registerOpen, setRegisterOpen] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const [historyKey, setHistoryKey] = useState(0)
   const [historyCounts, setHistoryCounts] = useState<{ total: number; needsReview: number } | null>(null)
@@ -157,8 +160,16 @@ export function NcpaDeploymentPage() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <PageHeader
           title="NCPA Deployment"
-          description="Install the NCPA agent on discovered Linux devices over SSH."
+          description="Install the NCPA agent on discovered Linux devices over SSH, or register an agent you installed yourself (for example on Windows)."
         />
+        <div className="flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          onClick={() => setRegisterOpen(true)}
+          className="flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-white/10 dark:text-gray-200 dark:hover:bg-white/10"
+        >
+          Register an agent I installed
+        </button>
         <button
           type="button"
           onClick={() => openWizard({})}
@@ -168,6 +179,7 @@ export function NcpaDeploymentPage() {
         >
           <ServerCog className="h-4 w-4" /> Deploy NCPA
         </button>
+        </div>
       </div>
 
       {loadError && (
@@ -250,6 +262,7 @@ export function NcpaDeploymentPage() {
           onRetry={(id) => openWizard({ initialSelection: [id] })}
           onCleanup={setCleanupDevice}
           onRemoteRestart={setRestartDevice}
+          onRegister={setRegisterDevice}
         />
       ) : (
         <DeploymentHistoryTable refreshKey={historyKey} onSelectRun={openRun} />
@@ -275,6 +288,15 @@ export function NcpaDeploymentPage() {
       )}
 
       {restartDevice && <RemoteRestartDialog key={restartDevice.id} deviceId={restartDevice.id} hostname={restartDevice.hostname} onClose={() => setRestartDevice(null)} />}
+
+      {(registerDevice || registerOpen) && (
+        <RegisterAgentDialog
+          key={registerDevice?.id ?? 'pick'}
+          device={registerDevice}
+          onClose={() => { setRegisterDevice(null); setRegisterOpen(false) }}
+          onRegistered={loadDevices}
+        />
+      )}
 
       {cleanupDevice && <CleanupDialog device={cleanupDevice} onClose={() => setCleanupDevice(null)} onChanged={loadDevices} />}
 

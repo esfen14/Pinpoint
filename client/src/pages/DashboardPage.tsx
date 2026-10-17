@@ -208,16 +208,6 @@ export function DashboardPage() {
             </div>
           </div>
 
-          <StorageUsageCard usage={status?.storageUsage ?? null} isLoading={statusLoading} error={statusError} />
-
-          <NagiosSyncNotice message={syncNotice} onDismiss={() => setSyncNotice(null)} />
-
-          {loadError && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300">
-              {loadError}
-            </div>
-          )}
-
           <div className="grid gap-[var(--dash-grid-gap-sm)] sm:grid-cols-2 xl:grid-cols-4">
             <SummaryStatCard
               title="Total Hosts"
@@ -248,6 +238,16 @@ export function DashboardPage() {
               gradient="linear-gradient(135deg,#EF4444,#DC2626)"
             />
           </div>
+
+          <StorageUsageCard usage={status?.storageUsage ?? null} isLoading={statusLoading} error={statusError} />
+
+          <NagiosSyncNotice message={syncNotice} onDismiss={() => setSyncNotice(null)} />
+
+          {loadError && (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300">
+              {loadError}
+            </div>
+          )}
 
           <div className="grid gap-[var(--dash-grid-gap)] lg:grid-cols-2">
             <NetworkStatusOverview
