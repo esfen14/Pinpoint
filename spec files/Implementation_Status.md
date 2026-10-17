@@ -42,10 +42,13 @@ Nagios confirms parent reachability. One-attempt monitoring remains supported;
 no cache, retry or notification configuration change is approved. The contract is
 in Device Inventory §13 and the data integration specification, with
 [operator guidance](../docs/manuals/Notification_Policy.md#parent-outages-and-temporary-child-down-alerts).
-The issue's exact-settings routed reproduction and regression/acceptance coverage
-remain outstanding; recording the decision does not close #173. Parent links do
-not implement routing failover or guarantee immediate suppression under every
-Nagios cache/retry configuration.
+The [#173 routed acceptance report](../docs/test-runs/2026-10-17-issue-173-parent-notifications/REPORT.md)
+records exact settings and observed single/redundant-parent HARD DOWN notifications
+followed by UNREACHABLE, no-parent DOWN controls, recovery and cleanup. The opt-in
+Core driver covers the accepted contract; no application runtime change is needed.
+Review readiness and CI are tracked on PR #192. Parent links do not implement
+routing failover or guarantee immediate suppression under every Nagios cache/retry
+configuration.
 
 ## Implemented backend areas
 

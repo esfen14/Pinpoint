@@ -6,18 +6,18 @@ Status: in-progress
 ## Finish condition
 
 - [x] Decide and document whether child-DOWN suppression is guaranteed for all supported retry settings or only after Nagios confirms parent reachability.
-- [ ] Reproduce the one-attempt transient with an isolated real Nagios routed network; preserve a sanitized report with exact Nagios/timing/cache settings, hard states and notification events.
+- [x] Reproduce the one-attempt transient with an isolated real Nagios routed network; preserve a sanitized report with exact Nagios/timing/cache settings, hard states and notification events.
 - [x] If a configuration change is approved, name its owning installer/application contract and preserve no-parent behavior; do not silently change Nagios main caching settings in #117.
-- [ ] Add appropriate regression/acceptance coverage and operator guidance for the agreed guarantee.
+- [x] Add appropriate regression/acceptance coverage and operator guidance for the agreed guarantee.
 
 Requirement coverage:
 
 | Issue requirement | Finish-condition item | Proof (test or command) |
 |---|---|---|
 | Choose notification guarantee | Decision and documentation | Device Inventory §13 and data integration specification |
-| Reproduce transient with exact settings and events | Isolated real routed reproduction | Outstanding; earlier #117 report is context only |
+| Reproduce transient with exact settings and events | Isolated real routed reproduction | New 2026-10-17 #173 report: five live cases pass with exact settings and event times |
 | Configuration ownership and no-parent behavior | Conditional configuration change | Option A authorizes documentation only; no configuration changes |
-| Coverage and guidance | Regression/acceptance coverage and operator guidance | Notification Policy manual; acceptance coverage remains outstanding |
+| Coverage and guidance | Regression/acceptance coverage and operator guidance | Notification Policy manual and opt-in routed Core driver; five acceptance cases pass |
 | Exclude inference, interface mapping and telemetry | Scope | Documentation-only diff |
 
 ## Plan
@@ -25,7 +25,7 @@ Requirement coverage:
 1. [x] Document the user's Option A decision in `spec files/Device_Inventory_Requirements.md`, `spec files/Data_Model_and_Integrations.md`, `spec files/Implementation_Status.md`, and `docs/manuals/Notification_Policy.md`.
 2. [x] Run `scripts/verify.sh docs`, review the documentation diff, and checkpoint the scoped decision work.
 3. [x] Open a draft PR recording that reproduction and acceptance coverage remain outstanding; do not close #173.
-4. [ ] Complete the remaining #173 finish conditions requested by the user: add an opt-in isolated routed acceptance driver in `server/tests/e2e/parent_reachability.py`, update `server/tests/plans/MANUAL_TOPOLOGY_ACCEPTANCE.md` and the test guide, reproduce one-attempt notifications and record exact settings/states/events in a new `docs/test-runs/` report.
+4. [x] Complete the remaining #173 finish conditions requested by the user: add an opt-in isolated routed acceptance driver in `server/tests/e2e/parent_reachability.py`, update `server/tests/plans/MANUAL_TOPOLOGY_ACCEPTANCE.md` and the test guide, reproduce one-attempt notifications and record exact settings/states/events in a new `docs/test-runs/` report.
 5. [ ] Update implementation status and issue checkboxes from observed evidence; run `scripts/verify.sh all`, remove progress scaffolding, and mark PR #192 ready after CI passes.
 
 ## Round log
@@ -40,12 +40,14 @@ Requirement coverage:
 
 | 3 | Added opt-in real routed acceptance driver, exact-setting procedure, test-guide routing and Option A expectations; first single-parent physical outage reproduces HARD DOWN notification then UNREACHABLE and recovery | `python3 -m py_compile server/tests/e2e/parent_reachability.py`; live driver running; full gate running | Single-parent pass observed; redundant-parent and full gate pending |
 
+| 4 | Final native-engine trial with normal active checking enabled passes both routed scenarios; committed report and operator contract now cover all #173 finish conditions | `python3 server/tests/e2e/parent_reachability.py --run --output-root /home/paeng/pinpoint-test-results/issue-173-20261017-active`; 39 parent regression tests | Five live cases pass; exact settings, hard states, notification events and cleanup recorded; full combined-tree gate running |
+
 ## State for the next session
 
 - Last check run (exact command): `scripts/verify.sh docs` and `git diff --check`
 - Result (first failing lines, or "green"): green; all documentation checks and whitespace validation pass
 - Hypothesis: The requested documentation is complete; remaining issue finish conditions require separate live reproduction and acceptance work.
-- Next action: When full #173 work is resumed, inspect the earlier isolated routed driver and plan the exact-settings one-attempt reproduction before running it.
+- Next action: Wait for combined-tree full verification, then update the issue checkboxes with the report evidence, remove progress scaffolding and mark PR #192 ready after CI.
 
 ## Decisions and notes
 
