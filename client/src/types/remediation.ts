@@ -91,6 +91,7 @@ export interface RemediationActionInput {
   maxRunsPerHour: number
   cooldownSeconds: number
   runWhenAcknowledged: boolean
+  notifyOn: NotifyKind[]
 }
 
 export interface RemediationRun {
@@ -150,10 +151,16 @@ export interface RemediationHealth {
   droppedAt: string | null
 }
 
-/** GET and PUT /api/system/remediation/settings: the kill switch and how long runs are kept. */
+/**
+ * GET and PUT /api/system/remediation/settings: the kill switch, how long runs are kept, and the
+ * repeat-recovery limits (this many successful recoveries of one service inside the window send
+ * one "repeated" notification).
+ */
 export interface RemediationSettings {
   enabled: boolean
   retentionDays: number
+  repeatCount: number
+  repeatWindowHours: number
 }
 
 /** Field name (for example "name" or "parameters.command") to the server's message. */

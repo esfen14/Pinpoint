@@ -120,6 +120,10 @@ export function RemediationPage() {
     }
   }
 
+  const saveRepeatLimits = async (repeatCount: number, repeatWindowHours: number) => {
+    setSettings(await updateSettings({ repeatCount, repeatWindowHours }))
+  }
+
   const typeLabels = Object.fromEntries(types.map((t) => [t.key, t.label]))
 
   const toggle = async (action: RemediationAction) => {
@@ -139,6 +143,7 @@ export function RemediationPage() {
           maxRunsPerHour: action.maxRunsPerHour,
           cooldownSeconds: action.cooldownSeconds,
           runWhenAcknowledged: action.runWhenAcknowledged,
+          notifyOn: action.notifyOn,
         },
         action.version,
       )
@@ -192,6 +197,7 @@ export function RemediationPage() {
           canManage={canManage}
           isSaving={switchSaving}
           onToggleKillSwitch={toggleKillSwitch}
+          onSaveRepeatLimits={saveRepeatLimits}
         />
 
         <div role="tablist" className="flex gap-6 border-b border-[var(--border)]">

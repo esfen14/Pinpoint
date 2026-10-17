@@ -54,7 +54,8 @@ Files are relative to `server/app` unless stated.
 6. [x] API: validate and persist `Notify_On` and the two settings; return notification state and error from the runs API. Files: `api/system/remediation.py`, `tests/unit/test_remediation_api.py`. Permission checks unchanged (`remediation.view`, `remediation.manage`).
 7. [ ] (BLOCKED on a lab capture, see Decisions) Feed: confirm `normalize_notification` / `collapse_repeats` keep the CUSTOM type and comment; add the label if missing. Files: `api/system/notifications.py` and its helper, `tests/unit/test_notifications.py`.
 8. [x] Frontend types and run views: `RunLog.tsx`, `RunDrawer.tsx`, types, tests in `client/src/test/RemediationPage.test.tsx`.
-9. [ ] Frontend form: `Notify_On` checkboxes in `ActionFormDialog.tsx` with help text; settings fields if placed on the Remediation status panel. Tests.
+9. [x] Frontend form: `Notify_On` checkboxes in `ActionFormDialog.tsx` with help text; settings fields if placed on the Remediation status panel. Tests.
+10a. [ ] (added, the original plan missed the data source) Backend: a read route that returns the newest run per host and service for the badge, `remediation.view` only, in `api/system/remediation.py` with tests in `tests/unit/test_remediation_api.py`; update the route catalog test data if `scripts/verify.sh backend` checks it.
 10. [ ] Frontend badge and labels: `ServiceStatusTable.tsx` badge linking to the run, `RecentNotifications.tsx`, `HistoryPage.tsx`; 403 and empty states. Tests.
 11. [ ] Docs: the four spec files, help text, admin guide section; `scripts/verify.sh docs`.
 12. [ ] `scripts/verify.sh all`; injection and secret-exposure review notes in the PR; lab report in `docs/test-runs/`; delete this file and open the PR.
@@ -72,15 +73,16 @@ One row per loop round, newest last.
 | 4 | Step 5: wired into `remediation.py` (`record_decisions` marks cooldown and cap skips; new `mark_notification` after `execute` marks failed, timed out and repeated; `process_spool` calls `deliver_pending`) and `scheduler.py` (`fail_unfinished` at startup); 10 new consumer tests | `pytest tests/unit/test_remediation_consumer.py tests/unit/test_remediation_escalation.py -q` | 8 of 10 failed first (not wired), then 145 passed, 1 skipped |
 | 5 | Step 6: `api/system/remediation.py` accepts and returns `notifyOn` (default all three, may be empty, audited), returns `notifyKind/State/Attempts/Error/At` on every run, and the settings route takes `repeatCount` (2 to 20) and `repeatWindowHours` (1 to 168), audited; 10 new tests. Two existing tests that pin exact response shapes were updated for the added keys (settings body, run item fields) | `pytest tests/unit/test_remediation_api.py -q` | 10 failed first, then 128 passed |
 | 6 | resumed on a new session (pulled, last check re-run: 128 passed). Step 7 not started: no recorded sample of how the Nagios archive reports a CUSTOM notification, so the feed change needs a lab capture first. Did step 8 instead: `types/remediation.ts` (notify fields, `notifyLabel`, `NOTIFY_KIND_LABELS`), `RunLog.tsx` Operator column, `RunDrawer.tsx` notification rows; 6 new tests | `npx vitest run src/test/RemediationPage.test.tsx` and `npx tsc --noEmit -p tsconfig.app.json` | 6 failed first, then 47 passed; tsc clean after adding `notifyOn` to the fixture in `RemediationParameters.test.tsx` |
+| 7 | Step 9: `ActionFormDialog.tsx` fieldset "Tell the operator when" with help text and `notifyOn` in the payload; the enable switch in `RemediationPage.tsx` now keeps `notifyOn` (without it the server default would have reset a saved choice); `StatusPanel.tsx` Repeat recovery section (count and window, save, read-only without manage); types updated; 14 new tests, 2 existing pinned expectations updated (create payload, settings mock) | `npx vitest run src/test/RemediationPage.test.tsx src/test/RemediationParameters.test.tsx` and `npx tsc --noEmit -p tsconfig.app.json` | 9 failed first, then 62 passed; tsc clean |
 
 ## State for the next session
 
 Everything a fresh session needs to continue without redoing work.
 
-- Last check run (exact command): `npx tsc --noEmit -p tsconfig.app.json` and `npx vitest run src/test/RemediationPage.test.tsx` (from `client/`)
-- Result (first failing lines, or "green"): green, 47 passed, tsc clean.
-- Hypothesis: the run views are done. The `Notify_On` form fields and the repeat settings still need UI; the action update path currently sends no `notifyOn`, so the API default (all three) would silently overwrite a saved choice until step 9 is done.
-- Next action: plan step 9. Failing tests first in `client/src/test/RemediationPage.test.tsx` (checkboxes with help text in the action form, saved values shown when editing, the enable switch keeps `notifyOn`, repeat count and window fields on the status panel), then `RemediationActionInput.notifyOn`, `ActionFormDialog.tsx`, `ActionsTable.tsx` (the switch builds its own input), `StatusPanel.tsx` and `types/remediation.ts` `RemediationSettings`.
+- Last check run (exact command): `npx vitest run src/test/RemediationPage.test.tsx src/test/RemediationParameters.test.tsx` and `npx tsc --noEmit -p tsconfig.app.json` (from `client/`)
+- Result (first failing lines, or "green"): green, 62 passed, tsc clean.
+- Hypothesis: only the service-row badge, the feed labels (blocked on a lab sample), docs, verify and lab remain.
+- Next action: plan step 10a. Write a failing API test in `server/tests/unit/test_remediation_api.py` for a new `GET /system/remediation/last-runs` (newest run per host and service, with outcome and notify state, `remediation.view`, 401/403 like the other routes), then add the route in `server/app/api/system/remediation.py`, then step 10 on the client (`ServiceStatusTable.tsx` badge that links to the run, hidden without `remediation.view`).
 
 ## Decisions and notes
 

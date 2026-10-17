@@ -72,7 +72,7 @@ beforeEach(() => {
   api.listRuns.mockResolvedValue(runList([run()]))
   api.getRun.mockResolvedValue({ ...run(), output: 'recorded' })
   api.getHealth.mockResolvedValue(health())
-  api.getSettings.mockResolvedValue({ enabled: true, retentionDays: 90 })
+  api.getSettings.mockResolvedValue({ enabled: true, retentionDays: 90, repeatCount: 3, repeatWindowHours: 24 })
   vi.spyOn(window, 'confirm').mockReturnValue(true)
 })
 
@@ -146,7 +146,7 @@ describe('Remediation page: actions', () => {
     expect(api.createAction).toHaveBeenCalledWith({
       name: 'restart-web', actionType: 'record_only', scopeKind: 'service', hostPattern: 'web-*',
       servicePattern: 'HTTP', parameters: {}, enabled: true, maxRunsPerHour: 3, cooldownSeconds: 900,
-      runWhenAcknowledged: false,
+      runWhenAcknowledged: false, notifyOn: ['failed', 'capped', 'repeated'],
     })
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
     expect(await screen.findByText('restart-web')).toBeInTheDocument()
@@ -572,5 +572,124 @@ describe('Remediation page: operator notification in the run log', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'View run 7' }))
     const drawer = await screen.findByRole('dialog', { name: 'Run 7' })
     expect(await within(drawer).findByText('Not required')).toBeInTheDocument()
+  })
+})
+
+
+describe('Remediation page: notify the operator (action form)', () => {
+  it('offers the three kinds with help text, all on by default, and sends them', async () => {
+    api.createAction.mockResolvedValue(action())
+    render(<RemediationPage />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Add action' }))
+    const dialog = screen.getByRole('dialog', { name: 'Add action' })
+    const group = within(dialog).getByRole('group', { name: 'Tell the operator when' })
+    for (const name of ['The action fails', 'The action is stopped by its limits', 'It keeps recovering the same service']) {
+      expect(within(group).getByRole('checkbox', { name })).toBeChecked()
+    }
+    expect(within(dialog).getByText(/Nagios sends the message to the contacts of that service/i)).toBeInTheDocument()
+    fireEvent.change(within(dialog).getByLabelText('Name'), { target: { value: 'notify-ok' } })
+    fireEvent.change(within(dialog).getByLabelText('Host pattern'), { target: { value: 'web-01' } })
+    fireEvent.change(within(dialog).getByLabelText('Service pattern'), { target: { value: 'HTTP' } })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save action' }))
+    await waitFor(() => expect(api.createAction).toHaveBeenCalled())
+    expect(api.createAction.mock.calls[0][0]).toMatchObject({ notifyOn: ['failed', 'capped', 'repeated'] })
+  })
+
+  it('sends only the kinds that stay ticked, in a fixed order', async () => {
+    api.createAction.mockResolvedValue(action())
+    render(<RemediationPage />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Add action' }))
+    const dialog = screen.getByRole('dialog', { name: 'Add action' })
+    fireEvent.click(within(dialog).getByRole('checkbox', { name: 'The action fails' }))
+    fireEvent.change(within(dialog).getByLabelText('Name'), { target: { value: 'quiet' } })
+    fireEvent.change(within(dialog).getByLabelText('Host pattern'), { target: { value: 'web-01' } })
+    fireEvent.change(within(dialog).getByLabelText('Service pattern'), { target: { value: 'HTTP' } })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save action' }))
+    await waitFor(() => expect(api.createAction).toHaveBeenCalled())
+    expect(api.createAction.mock.calls[0][0]).toMatchObject({ notifyOn: ['capped', 'repeated'] })
+  })
+
+  it('can turn every kind off', async () => {
+    api.listActions.mockResolvedValue([action({ notifyOn: ['failed'] })])
+    api.updateAction.mockResolvedValue(action({ notifyOn: [] }))
+    render(<RemediationPage />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit restart-web' }))
+    const dialog = screen.getByRole('dialog', { name: 'Edit action' })
+    fireEvent.click(within(dialog).getByRole('checkbox', { name: 'The action fails' }))
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save action' }))
+    await waitFor(() => expect(api.updateAction).toHaveBeenCalled())
+    expect(api.updateAction.mock.calls[0][1]).toMatchObject({ notifyOn: [] })
+  })
+
+  it('shows the saved choice when editing', async () => {
+    api.listActions.mockResolvedValue([action({ notifyOn: ['capped'] })])
+    render(<RemediationPage />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit restart-web' }))
+    const dialog = screen.getByRole('dialog', { name: 'Edit action' })
+    expect(within(dialog).getByRole('checkbox', { name: 'The action fails' })).not.toBeChecked()
+    expect(within(dialog).getByRole('checkbox', { name: 'The action is stopped by its limits' })).toBeChecked()
+    expect(within(dialog).getByRole('checkbox', { name: 'It keeps recovering the same service' })).not.toBeChecked()
+  })
+
+  it('keeps the choice when the enable switch is used', async () => {
+    api.listActions.mockResolvedValue([action({ notifyOn: ['failed'] })])
+    api.updateAction.mockResolvedValue(action({ enabled: false, notifyOn: ['failed'], version: 4 }))
+    render(<RemediationPage />)
+    fireEvent.click(await screen.findByRole('switch', { name: 'Enable restart-web' }))
+    await waitFor(() => expect(api.updateAction).toHaveBeenCalled())
+    expect(api.updateAction.mock.calls[0][1]).toMatchObject({ notifyOn: ['failed'] })
+  })
+
+  it('shows the server message against the field', async () => {
+    api.createAction.mockRejectedValue(new ApiError('Some fields are not valid.', 400, { fields: { notifyOn: 'Notify on must be a list of failed, capped or repeated.' } }))
+    render(<RemediationPage />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Add action' }))
+    const dialog = screen.getByRole('dialog', { name: 'Add action' })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save action' }))
+    expect(await within(dialog).findByText(/Notify on must be a list/)).toBeInTheDocument()
+  })
+})
+
+describe('Remediation page: repeat recovery limits', () => {
+  it('shows the saved count and window', async () => {
+    api.getSettings.mockResolvedValue({ enabled: true, retentionDays: 90, repeatCount: 5, repeatWindowHours: 48 })
+    render(<RemediationPage />)
+    expect(await screen.findByLabelText('Repeat count')).toHaveValue(5)
+    expect(screen.getByLabelText('Repeat window (hours)')).toHaveValue(48)
+    expect(screen.getByText(/recovers the same service this many times/i)).toBeInTheDocument()
+  })
+
+  it('saves both values', async () => {
+    api.updateSettings.mockResolvedValue({ enabled: true, retentionDays: 90, repeatCount: 4, repeatWindowHours: 12 })
+    render(<RemediationPage />)
+    fireEvent.change(await screen.findByLabelText('Repeat count'), { target: { value: '4' } })
+    fireEvent.change(screen.getByLabelText('Repeat window (hours)'), { target: { value: '12' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save repeat limits' }))
+    await waitFor(() => expect(api.updateSettings).toHaveBeenCalledWith({ repeatCount: 4, repeatWindowHours: 12 }))
+    expect(await screen.findByText('Repeat limits saved.')).toBeInTheDocument()
+  })
+
+  it('shows the server message when saving fails and keeps the typed values', async () => {
+    api.updateSettings.mockRejectedValue(new ApiError('Repeat count must be a whole number from 2 to 20.', 400))
+    render(<RemediationPage />)
+    fireEvent.change(await screen.findByLabelText('Repeat count'), { target: { value: '99' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save repeat limits' }))
+    expect(await screen.findByText(/Repeat count must be a whole number from 2 to 20/)).toBeInTheDocument()
+    expect(screen.getByLabelText('Repeat count')).toHaveValue(99)
+  })
+
+  it('is read-only for a user who can only view', async () => {
+    permissions = ['remediation.view']
+    render(<RemediationPage />)
+    expect(await screen.findByLabelText('Repeat count')).toBeDisabled()
+    expect(screen.getByLabelText('Repeat window (hours)')).toBeDisabled()
+    expect(screen.queryByRole('button', { name: 'Save repeat limits' })).not.toBeInTheDocument()
+  })
+
+  it('shows nothing to edit while the settings could not be loaded', async () => {
+    api.getSettings.mockRejectedValue(new ApiError('Forbidden', 403))
+    render(<RemediationPage />)
+    expect(await screen.findByText(/do not have permission to view the kill switch/i)).toBeInTheDocument()
+    expect(screen.queryByLabelText('Repeat count')).not.toBeInTheDocument()
   })
 })

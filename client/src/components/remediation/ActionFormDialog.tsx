@@ -1,13 +1,22 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { ApiError, errorMessage } from '../../lib/api'
 import { createAction, fieldErrors, updateAction } from '../../lib/remediationApi'
-import type {
-  ActionTypeInfo,
-  FieldErrors,
-  RemediationAction,
-  RemediationActionInput,
-  RemediationScope,
+import {
+  NOTIFY_KINDS,
+  type ActionTypeInfo,
+  type FieldErrors,
+  type NotifyKind,
+  type RemediationAction,
+  type RemediationActionInput,
+  type RemediationScope,
 } from '../../types/remediation'
+
+// What each "tell the operator" box says, in the order the server stores them.
+const NOTIFY_CHOICES: Record<NotifyKind, string> = {
+  failed: 'The action fails',
+  capped: 'The action is stopped by its limits',
+  repeated: 'It keeps recovering the same service',
+}
 
 type Props = {
   types: ActionTypeInfo[]
@@ -57,6 +66,7 @@ function buildInput(form: {
   maxRunsPerHour: number
   cooldownSeconds: number
   runWhenAcknowledged: boolean
+  notifyOn: NotifyKind[]
   parameters: Record<string, unknown>
 }): RemediationActionInput {
   return {
@@ -70,6 +80,7 @@ function buildInput(form: {
     maxRunsPerHour: form.maxRunsPerHour,
     cooldownSeconds: form.cooldownSeconds,
     runWhenAcknowledged: form.runWhenAcknowledged,
+    notifyOn: NOTIFY_KINDS.filter((kind) => form.notifyOn.includes(kind)),
   }
 }
 
@@ -84,6 +95,7 @@ export function ActionFormDialog({ types, action, onClose, onSaved, onReload }: 
   const [maxRunsPerHour, setMaxRunsPerHour] = useState(action?.maxRunsPerHour ?? 2)
   const [cooldownSeconds, setCooldownSeconds] = useState(action?.cooldownSeconds ?? 600)
   const [runWhenAcknowledged, setRunWhenAcknowledged] = useState(action?.runWhenAcknowledged ?? false)
+  const [notifyOn, setNotifyOn] = useState<NotifyKind[]>(action?.notifyOn ?? NOTIFY_KINDS)
   const [parameters, setParameters] = useState<Record<string, unknown>>(action?.parameters ?? {})
   const [errors, setErrors] = useState<FieldErrors>({})
   const [generalError, setGeneralError] = useState<string | null>(null)
@@ -110,7 +122,7 @@ export function ActionFormDialog({ types, action, onClose, onSaved, onReload }: 
     setStale(false)
     const input = buildInput({
       name, actionType, scopeKind, hostPattern, servicePattern, enabled, maxRunsPerHour, cooldownSeconds, runWhenAcknowledged,
-      parameters,
+      notifyOn, parameters,
     })
     try {
       if (action) await updateAction(action.id, input, action.version)
@@ -120,7 +132,7 @@ export function ActionFormDialog({ types, action, onClose, onSaved, onReload }: 
       const fields = fieldErrors(err)
       if (Object.keys(fields).length > 0) {
         setErrors(fields)
-        const known = new Set(['name', 'actionType', 'scopeKind', 'hostPattern', 'servicePattern', 'enabled', 'maxRunsPerHour', 'cooldownSeconds', 'runWhenAcknowledged', ...(selectedType?.parameters.map((parameter) => `parameters.${parameter.name}`) ?? [])])
+        const known = new Set(['name', 'actionType', 'scopeKind', 'hostPattern', 'servicePattern', 'enabled', 'maxRunsPerHour', 'cooldownSeconds', 'runWhenAcknowledged', 'notifyOn', ...(selectedType?.parameters.map((parameter) => `parameters.${parameter.name}`) ?? [])])
         const other = Object.entries(fields).filter(([key]) => !known.has(key))
         if (other.length > 0) setGeneralError(other.map(([key, message]) => `${key}: ${message}`).join(' '))
       } else {
@@ -301,6 +313,30 @@ export function ActionFormDialog({ types, action, onClose, onSaved, onReload }: 
           </p>
           {errors.runWhenAcknowledged && <p className="text-sm text-red-600">{errors.runWhenAcknowledged}</p>}
         </div>
+
+        <fieldset aria-describedby="remediation-notifyOn-help">
+          <legend className="mb-1 text-sm font-medium text-[var(--text)]">Tell the operator when</legend>
+          <div className="space-y-1">
+            {NOTIFY_KINDS.map((kind) => (
+              <label key={kind} className="flex items-center gap-2 text-sm text-[var(--text)]">
+                <input
+                  type="checkbox"
+                  checked={notifyOn.includes(kind)}
+                  onChange={(e) =>
+                    setNotifyOn((current) => (e.target.checked ? [...current, kind] : current.filter((k) => k !== kind)))
+                  }
+                />
+                {NOTIFY_CHOICES[kind]}
+              </label>
+            ))}
+          </div>
+          <p id="remediation-notifyOn-help" className="mt-1 text-sm text-[var(--text-muted)]">
+            When one of these happens PinPoint asks Nagios for a notification about the service. Nagios sends the message
+            to the contacts of that service by its own rules, so nothing is sent during scheduled downtime or when
+            notifications are off. Untick all three for an action that should stay quiet.
+          </p>
+          {errors.notifyOn && <p className="text-sm text-red-600">{errors.notifyOn}</p>}
+        </fieldset>
 
         <div className="flex justify-end gap-2 pt-2">
           <button type="button" onClick={onClose} className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm text-[var(--text)] hover:bg-[var(--hover)]">
