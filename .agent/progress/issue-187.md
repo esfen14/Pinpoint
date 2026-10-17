@@ -5,7 +5,7 @@ Status: in-progress
 
 ## Finish condition
 
-- [ ] Docker feasibility experiment documents real DHCP, running A-to-B move, appliance connectivity, cleanup, privilege/isolation/cost and design decision.
+- [x] Docker feasibility experiment documents real DHCP, running A-to-B move, appliance connectivity, cleanup, privilege/isolation/cost and design decision.
 - [ ] Opt-in controls create/manage isolated server, appliance interface and two persistent clients; capture evidence, reset and cleanly tear down owned resources.
 - [ ] Safety guards enforce one allocator, binding/isolation, separate management, infrastructure outside pool, ownership, approved range; static labs still work.
 - [ ] Live client-1 A-to-B and real discovery/Nagios/browser/history identity continuity pass.
@@ -29,7 +29,7 @@ Requirement coverage:
 
 ## Plan
 
-1. [ ] Run a throwaway Docker feasibility experiment and document evidence/decision in `docs/plans/DHCP_Lab_Extension_Proposal.md` and a new `docs/test-runs/.../REPORT.md`; check routes and lab ownership first.
+1. [x] Run a throwaway Docker feasibility experiment and document evidence/decision in `docs/plans/DHCP_Lab_Extension_Proposal.md` and a new `docs/test-runs/.../REPORT.md`; check routes and lab ownership first.
 2. [ ] Add failing lifecycle/safety tests under `server/tests/unit/` or `lab/tests/`, then implement the isolated opt-in lab in `lab/dhcp/` and `scripts/dhcp-lab` using the chosen design.
 3. [ ] Add failing bounded runner tests, then implement `lab/dhcp/acceptance.py` and a test plan under `server/tests/plans/` for the six cases and evidence collection.
 4. [ ] Update `docs/qa/QA_Journeys_and_Scope.md` for the approved range, then run the live clean-lab matrix with real discovery, Nagios and browser evidence; preserve raw logs off-repository and record actual pass/fail in `docs/test-runs/`.
@@ -40,15 +40,18 @@ Requirement coverage:
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| 1 | Proved Docker DHCP A-to-B with `CAP_NET_ADMIN`, documented privilege, isolation, cost, cleanup and failure/recovery; selected Docker | `bash /tmp/pinpoint-187-feasibility/run.sh`; `scripts/verify.sh docs` | Two final experiments green; docs green; no residual owned container/network |
 
 ## State for the next session
 
-- Last check run (exact command): `docker info --format '{{.ServerVersion}}'`
-- Result (first failing lines, or "green"): `29.7.2`; daemon reachable with escalation.
-- Hypothesis: A dedicated host bridge/veth connected to container namespaces can provide real DHCP without Docker IPAM on the test interface, but requires root/CAP_NET_ADMIN.
-- Next action (one specific step, not "continue"): Check route collisions and exclusive lab ownership, then run the throwaway DHCP experiment.
+- Last check run (exact command): `scripts/verify.sh docs`
+- Result (first failing lines, or "green"): green.
+- Hypothesis: The supported helper can own a switch container namespace and labeled management network, preserving real DHCP on added test interfaces without host network changes.
+- Next action (one specific step, not "continue"): Add failing lifecycle and safety tests for the Docker helper before implementing it.
 
 ## Decisions and notes
 
 - Issue finish condition covers all stated implementation requirements and phase-one exclusions.
 - No product discovery changes are planned unless the live run exposes a defect; such a defect requires a separate issue under this workflow.
+- Docker selected after two successful real A-to-B trials. The first attempt failed because dnsmasq could not reopen its old log file on restart; using a fresh log succeeded. Host sudo is unavailable, so the host-bridge candidate was rejected. The switch uses host PID visibility and `CAP_NET_ADMIN`, with its own network namespace and no host network.
+- `10.79.0.0/28` was used only for DHCP feasibility, with no scan. It must be added to approved QA scope before product discovery.

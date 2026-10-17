@@ -1,6 +1,6 @@
 # DHCP lab extension proposal
 
-**Status:** Proposed — planning only; no lab resources created or changed.  
+**Status:** Docker feasibility proven on 2026-10-17; supported lab and product acceptance remain pending (#187).  
 **Date:** 2026-10-15  
 **Tracking:** [Issue #177](https://github.com/esfen14/Pinpoint/issues/177)
 
@@ -74,6 +74,43 @@ including how changed reservations and an existing lease interact.
 DNS service is unnecessary for the first phase.
 
 ## Delivery options
+
+### Feasibility decision (2026-10-17)
+
+Choose the Docker option for implementation. A throwaway test used a dedicated
+switch container with `--network none`, host PID visibility and `CAP_NET_ADMIN`
+to create a bridge and move veth peers into the appliance and client network
+namespaces. The appliance and client kept separate Docker management interfaces.
+Docker assigned no address on their added `eth1` test interfaces. `dnsmasq`
+bound to the switch bridge at `10.79.0.1/28`; the appliance had static
+`10.79.0.2/28`, and `dhclient` received `10.79.0.5` then `10.79.0.6` on the
+same running client. The client released A before reacquiring; the server was
+stopped, its reservation changed and old lease cleared, then restarted. Both
+transactions had DISCOVER/OFFER/REQUEST/ACK, A was absent after B was installed,
+and the appliance pinged both addresses. The container ID and boot ID were
+unchanged. The trial repeated successfully with the switch limited to
+`CAP_NET_ADMIN`; full `--privileged` was unnecessary. This confirms **restart**
+of dnsmasq for reservation changes, not a SIGHUP-only reload recipe.
+
+The switch's host PID view and network capability are still significant
+privileges, so the mode must remain explicit and isolated. No host networking,
+host bridge or published DHCP port was used. Its bridge existed only inside the
+switch namespace; DHCP broadcasts could not reach physical, VPN or normal lab
+interfaces. The measured image was 350 MB, three idle containers used about
+1.3 MiB, 0.4 MiB and 2.2 MiB in a single Docker stats sample, and the final
+trial took about 13 seconds after image build. These are feasibility costs, not
+an estimate for a full appliance or acceptance run. All owned containers and
+the management network were removed, with no change to host IPv4 routes. The
+existing `pinpoint-lab` remained running and untouched. The exact experiment,
+including the first failed server restart due to an unwritable reused log
+file, is recorded in the [feasibility report](../test-runs/2026-10-17-issue-187-docker-feasibility/REPORT.md).
+
+The tested `10.79.0.0/28` is a feasibility segment only. It was selected after
+checking current host routes, active NetworkManager connections and Docker
+subnets (and the documented VM `10.77.0.0/28`). It is **not** an approved QA
+scan range until `QA_Journeys_and_Scope.md` is updated. The experiment performed
+no discovery scan. A production helper must also check routes and ownership
+again at each setup, and prove teardown of its own resources.
 
 **Docker option — first feasibility check, given the selected Docker lab.**
 Keep the normal fast lab unchanged and investigate a separate DHCP profile.
