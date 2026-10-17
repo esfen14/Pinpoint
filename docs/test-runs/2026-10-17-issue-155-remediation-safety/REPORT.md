@@ -1,0 +1,48 @@
+# Test run: 2026-10-17-issue-155-remediation-safety
+
+| | |
+|---|---|
+| Date | 2026-10-17 |
+| Commit tested | `b4bbefec` (branch `issue-155-remediation-safety-controls`, merged with main at `6bd763c`) |
+| Plan | Issue #155 section G, driven through the API on the appliance (no browser) |
+| Tester | Claude Code, with the owner's approval for each change on the appliance |
+| Environment | Ubuntu 22.04.5 lab appliance reached over Tailscale; Nagios Core 4.5.11; app deployed by copying the branch over the main build; database upgraded in place (migration `f155a3c7d2b1`, both databases) |
+| Raw evidence | Command output in the session transcript; not committed |
+
+## Result
+
+**Overall: Partial.** The kill switch, skip recording, stalled detection, interrupted-run handling, input validation and the audit trail were proven on the appliance. Maintenance, acknowledged and downtime skips, retention and spool cap, the 403 path and the browser checks were not run live and rest on unit and frontend tests.
+
+Totals: Pass 6, Fail 0, Blocked 0, Skipped 6.
+
+## Cases
+
+| Case | Result | Notes |
+|---|---|---|
+| Normal run (control) | Pass | A `record_only` action matched a fake HARD CRITICAL event and the run ended `succeeded`. |
+| E1 kill switch off | Pass | `PUT /api/system/remediation/settings {"enabled":false}`, then one event: run recorded as `skipped_kill_switch` with the reason text, nothing ran, no restart needed. Health showed 1 run and 1 skipped in 24 h. |
+| Switch back on | Pass | Next event ran and ended `succeeded`. |
+| E4 stalled | Pass | Web service stopped and a second copy started without the scheduler. Last tick froze; `stalled` was false 44 s later and true 74 s later (limit 45 s). |
+| E5 interrupted | Pass | A run left `running` became `interrupted` after a restart ("PinPoint stopped while this action was running."); still one row, not run again. |
+| E6 validation and audit | Pass | `retentionDays: 2` returned 400 (range 7 to 3650). Both switch changes appear in the configuration log as `remediation_setting`. |
+| E2 Maintenance / acknowledged / downtime | Skipped | Needs a real host in each state. Covered by unit tests. |
+| E3 retention and spool cap | Skipped | Not forced live. Covered by scheduler and consumer unit tests. |
+| E6 403 without permission | Skipped | No restricted account used. Covered by API unit tests. |
+| E7 health card, stalled banner | Skipped | Not checked in a browser. Frontend tests cover it. |
+| E8 confirmation and persistence | Skipped | Not checked in a browser. Persistence of the setting was seen through the API only. |
+| E9 skip reasons in run log | Skipped | The API returns them; the log display is covered by frontend tests. |
+
+## Deviations from the plan
+
+Everything was driven through the API from the appliance itself, with fake events written to the spool as the `nagios` user. No real host was taken down. The test action was deleted afterwards and the kill switch left on.
+
+## Follow-up
+
+- Defects found: none.
+- Cases to repeat in the next run: the Skipped rows, in particular E2 on real hosts and E7 to E9 in a browser.
+
+## Sanitization checklist
+
+- [x] No passwords, tokens, keys, SNMP communities or private key paths
+- [x] No addresses outside the documented lab range
+- [x] Evidence is referenced by name and location, not pasted
