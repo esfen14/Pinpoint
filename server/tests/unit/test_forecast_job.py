@@ -9,6 +9,7 @@ from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
 import sqlalchemy as sa
+import pytest
 
 from app import db, forecast
 from app.history_models import ServicePerfData, ServiceStatus
@@ -19,6 +20,12 @@ from tests.unit.test_create_host_cfg import make_device
 
 DISK = "disk/logical/|/used_percent"
 MEMORY = "memory/virtual/percent"
+
+
+@pytest.fixture(autouse=True)
+def reset_forecast_cursor(monkeypatch):
+    """Each test starts a new scheduler's traversal of eligible series."""
+    monkeypatch.setattr(forecast, "last_series", None, raising=False)
 
 
 def seed_series(db_session, host, service, metric, start, per_hour, hours=72, warn=80.0, crit=95.0):
@@ -184,3 +191,92 @@ class TestCost:
         large = self.count_queries(app)
 
         assert large == small
+
+    def test_mixed_row_shapes_keep_a_constant_statement_count(self, app, db_session):
+        now = datetime.now(timezone.utc)
+
+        def seed_mixed(first, stop):
+            for n in range(first, stop):
+                for hour in (range(71) if n % 2 == 0 else (0, 70)):
+                    row = _make_service(
+                        db_session, "same-host", f"disk-{n:03}",
+                        ts=now - timedelta(hours=71 - hour),
+                    )
+                    _make_service_perf(db_session, row, DISK, 40 + .3 * hour, "%", warn=80, crit=95)
+            db_session.session.commit()
+
+        seed_mixed(0, 6)
+        small = self.count_queries(app)
+        seed_mixed(6, 20)
+        large = self.count_queries(app)
+
+        assert small == large == 5
+        assert len(rows()) == 20
+        assert sum(row.Kind == "insufficient" for row in rows()) == 10
+        assert all(row.Crossing_At is None for row in rows() if row.Kind == "insufficient")
+
+    def test_hourly_query_fetches_only_selected_service_and_metric_tuples(self, db_session, monkeypatch):
+        for service, metric in (("disk-a", DISK), ("disk-a", MEMORY), ("disk-b", DISK)):
+            seed_series(db_session, "same-host", service, metric, 40, .3)
+        monkeypatch.setattr(forecast, "MAX_SERIES_PER_RUN", 1)
+        execute = db.session.execute
+        fetched = []
+
+        def record(statement, *args, **kwargs):
+            result = execute(statement, *args, **kwargs)
+            if isinstance(statement, sa.sql.Select) and "avg(" in str(statement).lower():
+                data = result.all()
+                fetched.extend(data)
+                result = type("Rows", (), {"all": lambda self: data})()
+            return result
+
+        with patch.object(db.session, "execute", side_effect=record):
+            forecast.compute_forecasts()
+
+        assert fetched
+        assert {(row.Hostname, row.Service, row.Metric) for row in fetched} == {
+            ("same-host", "disk-a", DISK),
+        }
+        assert len(fetched) <= 73
+
+
+class TestRotation:
+
+    def test_runs_cover_excess_series_and_wrap(self, db_session, monkeypatch):
+        for n in range(5):
+            seed_series(db_session, "same-host", f"disk-{n}", DISK, 40, .3)
+        monkeypatch.setattr(forecast, "MAX_SERIES_PER_RUN", 2)
+
+        batches = []
+        for _ in range(3):
+            assert forecast.compute_forecasts() == 2
+            batches.append({row.Service for row in rows()})
+
+        assert batches == [{"disk-0", "disk-1"}, {"disk-2", "disk-3"}, {"disk-4", "disk-0"}]
+
+    def test_non_forecast_series_also_advance_the_cursor(self, db_session, monkeypatch):
+        seed_series(db_session, "same-host", "a-flat", DISK, 40, 0)
+        seed_series(db_session, "same-host", "b-rising", DISK, 40, .3)
+        monkeypatch.setattr(forecast, "MAX_SERIES_PER_RUN", 1)
+
+        assert forecast.compute_forecasts() == 0
+        assert rows() == []
+        assert forecast.compute_forecasts() == 1
+        assert rows()[0].Service == "b-rising"
+
+    def test_commit_failure_preserves_rows_and_retries_the_same_batch(self, db_session, monkeypatch):
+        for n in range(3):
+            seed_series(db_session, "same-host", f"disk-{n}", DISK, 40, .3)
+        monkeypatch.setattr(forecast, "MAX_SERIES_PER_RUN", 1)
+        forecast.compute_forecasts()
+        cursor = forecast.last_series
+        before = [(row.Service, row.Computed_At) for row in rows()]
+
+        with patch.object(db.session, "commit", side_effect=RuntimeError("commit failed")):
+            with pytest.raises(RuntimeError, match="commit failed"):
+                forecast.compute_forecasts()
+
+        assert forecast.last_series == cursor
+        assert [(row.Service, row.Computed_At) for row in rows()] == before
+        assert forecast.compute_forecasts() == 1
+        assert rows()[0].Service == "disk-1"

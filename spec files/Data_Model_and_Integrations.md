@@ -339,10 +339,16 @@ The nearest threshold the latest value has not reached gets a crossing time. No 
 made when there are fewer than 12 hourly points, they span less than half the window, the
 slope is flat or falling, R squared is under 0.8, one fall exceeds half the series range (a
 cleanup or reset), no threshold is left, or the crossing is more than 90 days away. A series
-with too little history is stored as `insufficient`. A run makes a fixed number of queries
+with too little history is stored as `insufficient`. A run makes at most five SQL statements
 however many services exist (one for the series list, capped at `MAX_SERIES_PER_RUN` = 500,
-one for the hourly averages, one device lookup, one delete and one bulk insert) and skips
-paused, retired and merged devices. A forecast only reads `history.db` and writes
+one for the hourly averages of exactly the selected host/service/metric tuples, one device
+lookup, one delete and one bulk insert). Mixed forecast/insufficient rows use identical
+insert columns, including explicit nulls, so insertion remains one batch. Runs rotate in
+host/service/metric order, wrapping within the capped query, so eligible series beyond the
+cap receive a later turn. The process-local cursor advances only after commit, including
+when the batch produces no forecast; a scheduler restart begins traversal again. Each run
+replaces the previous batch's stored set (at most 500 rows), rather than retaining earlier
+batches. Paused, retired and merged devices are skipped. A forecast only reads `history.db` and writes
 `RESOURCE_FORECAST`; it never changes a Nagios state, config or notification. Delivering a
 forecast as a notification, with a horizon and on/off setting, is not implemented.
 

@@ -126,6 +126,7 @@ Basenames below live under `unit/`, except `integration/test_live_nagios.py`.
 | `test_ncpa.py` | Eligible/trusted devices, SSH fingerprint confirmation, deployment start/stop/status, and validation |
 | `test_automation.py` | Due-time helpers, automation-user selection, maintenance mode, backups, discovery/update scheduling, and security checks |
 | `test_data_polling.py`, `test_data_polling_migration.py` | Polling defaults, populated multi-bind migration round trip, strict API validation/permissions/version/audit, independent schedules, runtime reschedule/rollback, disabled/startup behavior and real scheduler overlap/coalescing |
+| `test_forecast.py`, `test_forecast_job.py`, `test_forecast_routes.py`, `test_forecast_migration.py` | Forecast arithmetic and rejection cases; hourly selection restricted to capped host/service/metric tuples; constant SQL statement count for mixed ready/insufficient rows; rotating capped batches, including flat series and failed-commit retry; replacement and paused devices; API ordering/permissions/limits and migration round trip |
 | `test_scheduler.py` | Scheduler suppression in the test environment and initialization behavior |
 
 ### Plugin Manager

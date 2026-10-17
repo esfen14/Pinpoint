@@ -34,6 +34,9 @@ MAX_HORIZON_DAYS = 90
 WINDOW_HOURS = 72
 # Most host, service and metric series one run forecasts; the rest wait for a later run.
 MAX_SERIES_PER_RUN = 500
+# Scheduler traversal state; a process restart begins at the first eligible series.
+# max_instances=1 prevents concurrent job runs from racing this cursor.
+last_series: Optional[tuple[str, str, str]] = None
 # Metrics forecast first: NCPA disk used percent and memory percent. Nothing else is read.
 METRIC_FILTER = sa.or_(
     ServicePerfData.Metric.like("disk/%/used_percent"),
@@ -145,28 +148,37 @@ def compute_forecasts() -> int:
     how many forecasts were stored (series too new to forecast are stored too, as "insufficient",
     but not counted). Uses a fixed number of queries however many services exist: one for
     the series list (capped at MAX_SERIES_PER_RUN, paused/retired/merged devices excluded), one
-    for hourly averages of those series, then one delete and one batch insert. Commits; rolls
-    back and re-raises on failure. Reads history.db only; never writes to Nagios.
+    for hourly averages of exactly those series, then one delete and one batch insert.
+    Successive runs rotate through eligible series using a process-local cursor, advanced
+    only after a successful commit. Restarting the scheduler restarts traversal. Commits;
+    rolls back and re-raises on failure. Reads history.db only; never writes to Nagios.
     """
+    global last_series
+
     now = datetime.now(timezone.utc)
     start = (now - timedelta(hours=WINDOW_HOURS)).replace(tzinfo=None)
     skipped = unchecked_host_names()
 
+    series_columns = (ServiceStatus.Hostname, ServiceStatus.Service, ServicePerfData.Metric)
+    ordering = list(series_columns)
+    if last_series is not None:
+        # Put the suffix after the cursor first, then wrap to the beginning in the same query.
+        ordering.insert(0, sa.case((sa.tuple_(*series_columns) > last_series, 0), else_=1))
     series_query = (
-        sa.select(ServiceStatus.Hostname, ServiceStatus.Service, ServicePerfData.Metric)
+        sa.select(*series_columns)
         .join(ServiceStatus, ServicePerfData.ServiceStatusID == ServiceStatus.ServiceStatusID)
         .where(ServiceStatus.Timestamp >= start, METRIC_FILTER)
         .group_by(ServiceStatus.Hostname, ServiceStatus.Service, ServicePerfData.Metric)
-        .order_by(ServiceStatus.Hostname, ServiceStatus.Service, ServicePerfData.Metric)
+        .order_by(*ordering)
         .limit(MAX_SERIES_PER_RUN)
     )
     if skipped:
         series_query = series_query.where(ServiceStatus.Hostname.notin_(skipped))
-    series = {tuple(row) for row in db.session.execute(series_query).all()}
+    selected = [tuple(row) for row in db.session.execute(series_query).all()]
 
     samples = defaultdict(list)
     latest = {}
-    if series:
+    if selected:
         hour = sa.func.strftime("%Y-%m-%d %H", ServiceStatus.Timestamp)
         hourly = (
             sa.select(
@@ -180,15 +192,13 @@ def compute_forecasts() -> int:
             .join(ServiceStatus, ServicePerfData.ServiceStatusID == ServiceStatus.ServiceStatusID)
             .where(
                 ServiceStatus.Timestamp >= start, METRIC_FILTER,
-                ServiceStatus.Hostname.in_({host for host, _, _ in series}),
+                sa.tuple_(*series_columns).in_(selected),
             )
             .group_by(ServiceStatus.Hostname, ServiceStatus.Service, ServicePerfData.Metric, hour)
             .order_by(sa.text("at"))
         )
         for row in db.session.execute(hourly).all():
             key = (row.Hostname, row.Service, row.Metric)
-            if key not in series:
-                continue
             samples[key].append((row.at, row.value))
             latest[key] = row  # ordered by time, so the last row wins
 
@@ -216,10 +226,18 @@ def compute_forecasts() -> int:
     try:
         db.session.execute(sa.delete(ResourceForecast))
         if stored:
-            db.session.execute(sa.insert(ResourceForecast), stored)
+            # Core executemany with identical columns avoids one ORM insert per alternating
+            # forecast/insufficient row. Explicit NULLs keep waiting-series fields empty.
+            nullable = dict.fromkeys((
+                "Threshold", "Crossing_At", "Slope_Per_Hour", "R_Squared", "Current_Value",
+            ))
+            db.session.execute(
+                sa.insert(ResourceForecast.__table__), [{**nullable, **row} for row in stored],
+            )
         db.session.commit()
     except Exception:
         db.session.rollback()
         raise
+    last_series = selected[-1] if selected else None
     return sum(1 for row in stored if row["Kind"] != "insufficient")
 

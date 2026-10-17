@@ -8,9 +8,9 @@ Status: in-progress
 The user's follow-up narrows this round to the three reproduced defects in PR #185.
 The original issue remains open for the real disk-fill comparison and its other merge requirements.
 
-- [ ] Constant SQL statement count for mixed ready/insufficient series.
-- [ ] Hourly fetches restricted to the selected series.
-- [ ] Repeated runs eventually process eligible series beyond the cap.
+- [x] Constant SQL statement count for mixed ready/insufficient series.
+- [x] Hourly fetches restricted to the selected series.
+- [x] Repeated runs eventually process eligible series beyond the cap.
 - [ ] Regression tests, seeded measurements and full local verification pass.
 
 Requirement coverage:
@@ -25,8 +25,8 @@ Requirement coverage:
 
 ## Plan
 
-1. [ ] Add failing regressions to server/tests/unit/test_forecast_job.py for all three defects and commit-failure cursor behavior.
-2. [ ] Fix server/app/forecast.py with exact series filtering, uniform insert column sets and transaction-aware in-process rotation; update owning specs and server/tests/README.md.
+1. [x] Add failing regressions to server/tests/unit/test_forecast_job.py for all three defects and commit-failure cursor behavior.
+2. [x] Fix server/app/forecast.py with exact series filtering, uniform insert column sets and transaction-aware in-process rotation; update owning specs and server/tests/README.md.
 3. [ ] Run focused tests, repeat seeded measurements, run scripts/verify.sh all, and record a new docs/test-runs retest report; checkpoint changes on existing draft PR #185.
 
 ## Round log
@@ -35,12 +35,14 @@ Requirement coverage:
 |---|---|---|---|
 | 0 | Resumed the existing draft branch and recorded the scoped fix plan | Prior run: scripts/verify.sh all; seeded measurements | Gate green; three supplemental defects reproduced |
 
+| 1 | Five regressions fail before fix; exact tuple filtering, uniform Core executemany and commit-aware cursor implemented; docs updated | Focused forecast/scheduler tests; homogeneous and mixed seeded scripts | 57 passed; mixed rows stay at 5 statements; 1,000 series processed in two capped batches fetching 35,500 hourly rows each |
+
 ## State for the next session
 
-- Last check run (exact command): bash scripts/verify.sh all
-- Result: Previous turn green (3,794 backend passed, 14 skipped; 881 frontend passed); supplemental seeded checks failed as recorded in the acceptance report.
-- Hypothesis: Heterogeneous ORM dictionaries split inserts; hostname-only SQL fetches extra series; fixed LIMIT without rotation starves later series.
-- Next action: Add and run the regression tests before changing app/forecast.py.
+- Last check run (exact command): FLASK_DEBUG=1 server/.venv/bin/python -m pytest -c server/pytest.ini server/tests/unit/test_forecast.py server/tests/unit/test_forecast_job.py server/tests/unit/test_forecast_routes.py server/tests/unit/test_forecast_migration.py server/tests/unit/test_scheduler.py -q --junitxml=test-results/pr-185-issue-156/fixed-focused.xml
+- Result: 57 passed in 5.68 s. Seeded mixed runs: five statements at 10/100/500 series; homogeneous 1,000-series runs cover all 1,000 in two batches.
+- Hypothesis: The three scoped defects are fixed; full regression verification remains.
+- Next action: Run scripts/verify.sh all on the checkpointed fix, then record the retest and check CI.
 
 ## Decisions and notes
 
