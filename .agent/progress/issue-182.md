@@ -1,7 +1,7 @@
 # Issue #182: Remote service restart, settings UI and run-history integrity
 
 Branch: `issue-182-remote-restart`
-Status: in-progress
+Status: blocked
 
 ## Finish condition
 
@@ -51,12 +51,14 @@ Requirement coverage (every issue requirement):
 
 | 3 live acceptance | Fresh appliance/isolated target, real NCPA install and trusted cleanup/redeploy; restart, cooldown/cap, trust/paused/disabled/maintenance, actual changed key, off-list, 20.29s deadline, hostile helper/direct-sudo refusal and deletion/replacement audit passed | /tmp/issue182-live.py; /tmp/issue182-output.py; focused backend | RR-01 to RR-11 pass (synthetic HARD event into real consumer; actual SSH/systemd), 301 focused tests pass. Browser unavailable; full gate running. |
 
+| 4 final verification | Verified actual SSH stdout/stderr discard, source-identical helper after normal redeploy, deployed FK, disabled actions/switch, shut down both owned guests | scripts/verify.sh all; final cleanup/preflight; sudo -n modprobe kvm_amd | 3864 backend passed/14 skipped; 875 frontend passed; build/lint green (30 warnings); VMs off. KVM restore requires owner password. Draft PR #190 opened; browser and human review pending. |
+
 ## State for the next session
 
-- Last check run (exact command): python3 /tmp/issue182-output.py
-- Result: green; actual remote stdout/stderr sentinel discarded while the unchanged original helper ran successfully. Core RR-01 through RR-11 also passed; /tmp/issue182-live-cases.log. Full current gate is running in /tmp/issue182-resume-all.log.
-- Hypothesis: Implementation meets the observed live backend/security cases. No browser provider is connected, so RR-12 cannot be claimed. Fresh installer requires the known #129 helper extension and setup label workaround (#167).
-- Next action: Complete final normal redeployment and disable remote restart, shut down only owned VMs and restore KVM if sudo permits; finish all gate, update evidence, checkpoint and open draft PR pending RR-12/browser and human review.
+- Last check run (exact command): scripts/verify.sh all
+- Result: green; 3864 backend passed/14 skipped, 875 frontend passed, build and lint passed (30 warnings, zero errors). Log: /tmp/issue182-resume-all.log. Final documentation-only changes verified separately before checkpoint.
+- Hypothesis: All observed backend/live/security behavior passes. Remaining acceptance needs an attached browser (RR-12) and external human security review; neither may be claimed from unit tests or source inspection.
+- Next action: Connect a browser and run RR-12 from server/tests/plans/REMOTE_RESTART_ACCEPTANCE.md on the retained isolated VMs; obtain human security review, inspect current-head CI for draft PR https://github.com/esfen14/Pinpoint/pull/190, then follow finish procedure. If still blocked with no new owner response, stop per workflow. Confirm the owner restored KVM before restarting VirtualBox (KVM must be unloaded again only with owner authorization and no KVM guests).
 
 ## Decisions and notes
 
@@ -76,3 +78,6 @@ Requirement coverage (every issue requirement):
 
 - Current live target is pinpoint-issue182-target, UUID b7173e43-6608-4f18-abe7-512fb97f2817, management ports SSH 2283/web 18883; isolated intnet pinpoint-issue182 and 10.77.0.2/28. Appliance uses same private intnet at 10.77.0.1/28. No pre-existing target was started.
 - Installer prerequisite #129 helper installed from b166953d2e7e5b4bae12bf723712224cc97fae94 with exact no-argument sudo rule after initial NCPA config apply failed. Normal cleanup/redeployment succeeded; base installer 697869e otherwise unchanged.
+
+- Final cleanup: both owned VMs powered off with no endpoint listeners; all actions and device restart disabled, paused/trust/maintenance flags and original SSH keys restored, helper bytes match source after final normal cleanup/redeploy. Retain disks and private runtime state.
+- Person needed: attach an available browser for RR-12 and provide human security review before merge. No browser provider is connected. KVM restoration requested through async prompt after sudo reported password required; command is sudo modprobe kvm_amd.
