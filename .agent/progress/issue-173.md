@@ -54,3 +54,5 @@ On 2026-10-17 the user chose Option A: allow a transient child DOWN notification
 The user subsequently requested all issue finish conditions completed and the PR ready for review. Scope is expanded to the isolated real Nagios reproduction already required by #173, acceptance coverage, full verification and review readiness. No shared lab or production configuration is authorized for mutation.
 
 Verification refinement: repeat the final driver with ordinary active host checking enabled, using forced active checks only to control ordering inside the regular 120-second interval. This avoids relying on disabled scheduling for the reproduction; the earlier controlled run remains raw evidence.
+
+Main sync: #118 merged during verification. Merged origin/main, preserving both its NCPA notification guidance and #173 parent guidance. Stopped the obsolete full-gate process before resolving the merge; rerun all checks on the combined tree. The routed Core fixture is independent of the application-only #118 changes.

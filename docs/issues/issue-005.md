@@ -14,7 +14,10 @@
 
 **Plan reference:** Issue #5 in [`docs/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../NAGIOS_CORE_FEATURE_GAP_PLAN.md) §3. The number is a plan identifier, not a GitHub issue number.
 
-> **Blocked / conditional:** Depends on Issue #4, which itself awaits a scope decision.
+> **Dependency satisfied:** Issue #4 was completed in GitHub issue #117. On
+> 2026-10-17 the user approved verifying Nagios's native same-host suppression
+> and adding a visible NCPA TCP port check as the dependency master. The
+> setting specifically defaults on; off preserves the prior generated config.
 
 #### A. Problem Description
 
@@ -36,11 +39,11 @@ Paths below were verified in the repository on 2026-10-13 unless marked *(propos
 
 **Backend / System**
 
-1. Add `servicedependency.cfg.tpl` and `hostdependency.cfg.tpl` *(proposed)* and render in `_create_host_cfg_file()`.
-2. Rule 1: each service on a host depends on the host being UP, with `notification_failure_criteria d,u` so service notifications stop while the host is down.
-3. Rule 2: each NCPA metric service depends on the device's NCPA port service being OK, with `notification_failure_criteria c,u`.
+1. Add `servicedependency.cfg.tpl` for NCPA metrics and render in `_create_host_cfg_file()`. Nagios has no host-to-service dependency object, so no `hostdependency` template is generated.
+2. Verify on the lab appliance that Nagios suppresses service notifications while their own host is DOWN.
+3. When dependency generation is on and NCPA metrics exist, generate a visible TCP service for the device's NCPA port. Each metric depends on that port service being OK, with `notification_failure_criteria c,u`.
 4. Generate rules only for services that exist in the same config, and skip a rule whose target is missing, so Nagios never rejects a dangling dependency.
-5. Add an on/off setting for dependency generation *(proposed field on `SystemSettings` or the notification policy of Issue #1)*, default on, and a migration if a column is added. Apply through `regenerate_and_apply_config_status()`.
+5. Add an on/off application configuration setting for NCPA dependency generation, default on. Apply generated changes through `regenerate_and_apply_config_status()`.
 
 #### D. Implementation Guidelines
 
@@ -50,7 +53,7 @@ General rules for every issue:
 
 - Reuse the existing modules named in section B instead of adding parallel ones.
 - Follow `spec files/Engineering_Standards.md`: route docstrings and banners, `success()`/`error()` envelopes, guard-clause validation, `db.session.rollback()` on every failed commit, TypeScript only in `client/src`.
-- Keep existing behavior unchanged by default. New settings must default to what the code does today, and an existing test must prove the default output is unchanged.
+- Keep existing behavior unchanged except for the new NCPA dependency, which explicitly defaults on. With the setting off, an existing test must prove the generated output is unchanged.
 - Any change under `app/network_discovery/`, `app/ncpa_deployment/` or a command execution path needs the injection and secret-exposure review required by Engineering Standards "Sensitive modules": no untrusted input in shell commands or Nagios config, no secrets in logs or responses, and Nagios pre-apply validation preserved.
 - New permissions are seeded in `server/app/api/commands/seed.py`, granted through `flask sync-permissions`, and wired to client page access where applicable. The client guard never replaces the server check.
 - Model changes need a multi-database migration (`flask db migrate --multidb`) that is reviewed, not hand-edited without reason, with a working downgrade.
@@ -61,8 +64,8 @@ General rules for every issue:
 
 #### E. Acceptance Criteria
 
-- [ ] Generated config contains the rule-1 dependency for each service, and Nagios validates it.
-- [ ] NCPA metric services carry a dependency on their port service when it exists, and none when it does not.
+- [ ] Nagios validates the generated config, and a live lab run proves service notifications are suppressed when their own host is DOWN.
+- [ ] NCPA metric services carry a dependency on their generated port service when it exists, and none when it does not; the generated port check is visible as a service.
 - [ ] With the setting off, config is unchanged from today.
 - [ ] On a lab appliance, taking a host down sends one host notification and none for its services.
 - [ ] Dashboard and Network Health still show every service's real state.

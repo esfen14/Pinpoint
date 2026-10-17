@@ -127,6 +127,14 @@ Security and system setting fields are restricted with `settings.security` and
 
 Both routes use the standard success/error envelopes. GET returns `quietHours` (weekday, `start`, `end` in 24-hour `HH:MM`), `hostOptions`, `serviceOptions`, `renotifyInterval`, `version` and `timeZone` (`Nagios server local time`). PUT accepts those editable fields plus the current integer `version`; `timeZone` is informational. Quiet windows cannot cross midnight or overlap on one weekday. The policy belongs to the default-bind singleton, and a successful save regenerates/validates/applies the shared Nagios candidate file before committing.
 
+Notification dependency generation is an application setting in `server/config.py`,
+`PINPOINT_NCPA_NOTIFICATION_DEPENDENCIES` (default on), rather than an editable
+notification-policy field. It adds a per-device NCPA TCP port check and
+notification-only service dependencies for existing NCPA metrics. Setting it
+off leaves the previous generated service set; a restart and the next shared
+Nagios config regeneration apply the new value. No new HTTP route or permission
+is introduced.
+
 ### `app/api/system/maintenance.py`
 
 | Method and path | Permission | Purpose |
