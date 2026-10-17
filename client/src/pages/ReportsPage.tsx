@@ -5,6 +5,7 @@ import { PageHeader } from '../components/shared/PageHeader'
 import { SummaryStatCard } from '../components/shared/SummaryStatCard'
 import { HostAvailabilityReportTable } from '../components/reports/HostAvailabilityReportTable'
 import { NetworkServicesReportTable } from '../components/reports/NetworkServicesReportTable'
+import { ServiceReportContext } from '../components/reports/ServiceReportContext'
 import { ExtraReports, type ExtraReportCard, type ExtraReportView } from '../components/reports/ExtraReports'
 import { apiGet, errorMessage } from '../lib/api'
 import {
@@ -58,6 +59,8 @@ export function ReportsPage() {
   }
 
   async function loadReport(showStatus = false) {
+    const sequence = ++requestSequence.current
+    if (view === 'network-services') setNetworkServices(null)
     if (period === 'custom' && (!customStart || !customEnd)) {
       setStatusMessage({ type: 'error', text: 'Pick a start and end date for a custom range.' })
       return
@@ -77,21 +80,25 @@ export function ReportsPage() {
         const data = await apiGet<Parameters<typeof fromHostAvailabilityResponse>[0]>(
           `/api/system/report/availability?${qs}`
         )
+        if (sequence !== requestSequence.current) return
         setAvailability(fromHostAvailabilityResponse(data))
       } else {
         const data = await apiGet<Parameters<typeof fromNetworkServicesResponse>[0]>(
           `/api/system/report/network-services?${qs}`
         )
+        if (sequence !== requestSequence.current) return
         setNetworkServices(fromNetworkServicesResponse(data))
       }
       if (showStatus) setStatusMessage({ type: 'success', text: 'Report generated successfully.' })
     } catch (err) {
+      if (sequence !== requestSequence.current) return
       setStatusMessage({ type: 'error', text: errorMessage(err, 'Could not run report. Please try again.') })
     } finally {
-      setIsLoading(false)
+      if (sequence === requestSequence.current) setIsLoading(false)
     }
   }
 
+  const requestSequence = useRef(0)
   const previousView = useRef(view)
   useEffect(() => {
     const viewChanged = previousView.current !== view
@@ -148,7 +155,7 @@ export function ReportsPage() {
                 gradient="linear-gradient(135deg,#EF4444,#DC2626)"
               />
               <SummaryStatCard
-                title="Uptime"
+                title="Availability"
                 value={availability?.summary.uptimePct != null ? `${availability.summary.uptimePct}%` : '—'}
                 subtitle="Across all hosts"
                 icon={Activity}
@@ -165,23 +172,23 @@ export function ReportsPage() {
                 gradient="linear-gradient(135deg,#FFB100,#F59E0B)"
               />
               <SummaryStatCard
-                title="OK"
+                title="Current OK"
                 value={String(networkServices?.summary.ok ?? 0)}
                 subtitle="Healthy instances"
                 icon={CheckCircle2}
                 gradient="linear-gradient(135deg,#22C55E,#16A34A)"
               />
               <SummaryStatCard
-                title="Warning / Critical"
+                title="Current Warning / Critical"
                 value={String((networkServices?.summary.warning ?? 0) + (networkServices?.summary.critical ?? 0))}
                 subtitle="Needs attention"
                 icon={XCircle}
                 gradient="linear-gradient(135deg,#EF4444,#DC2626)"
               />
               <SummaryStatCard
-                title="Uptime"
+                title="Availability"
                 value={networkServices?.summary.uptimePct != null ? `${networkServices.summary.uptimePct}%` : '—'}
-                subtitle="Across all instances"
+                subtitle="During recorded service time"
                 icon={Activity}
                 gradient="linear-gradient(135deg,#6B7280,#4B5563)"
               />
@@ -214,12 +221,14 @@ export function ReportsPage() {
             <>
               <input
                 type="date"
+                aria-label="Report start date"
                 value={customStart}
                 onChange={(e) => setCustomStart(e.target.value)}
                 className="h-10 rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 text-sm text-[var(--text)] outline-none transition duration-200 focus:border-[#ffb100]"
               />
               <input
                 type="date"
+                aria-label="Report end date"
                 value={customEnd}
                 onChange={(e) => setCustomEnd(e.target.value)}
                 className="h-10 rounded-xl border border-[var(--border)] bg-[var(--input-bg)] px-3 text-sm text-[var(--text)] outline-none transition duration-200 focus:border-[#ffb100]"
@@ -256,10 +265,12 @@ export function ReportsPage() {
           </div>
         )}
 
+        {view === 'network-services' && networkServices && <ServiceReportContext period={networkServices.period} current={networkServices.current_status} durations={networkServices.summary} />}
+
         {view === 'availability' ? (
           <HostAvailabilityReportTable hosts={availability?.hosts ?? []} isLoading={isLoading} />
         ) : view === 'network-services' ? (
-          <NetworkServicesReportTable services={networkServices?.services ?? []} isLoading={isLoading} />
+          <NetworkServicesReportTable observedAt={networkServices?.current_status.observed_at} services={networkServices?.services ?? []} isLoading={isLoading} />
         ) : (
           <ExtraReports view={view} query={buildPeriodQuery()} runKey={runKey} onStatus={setStatusMessage} onCards={setExtraCards} />
         )}

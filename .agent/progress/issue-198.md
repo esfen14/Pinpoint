@@ -1,7 +1,7 @@
 # Issue #198: Nagios availability for service reports
 
 Branch: `issue-198-service-availability`
-Status: blocked
+Status: in-progress
 
 ## Finish condition
 
@@ -64,10 +64,10 @@ Requirement coverage (the full issue plan is covered by the final deliverable â€
 
 ## Plan
 
-1. [ ] Probe exclusively owned installed Core read-only, record assumptions/shapes/timings and sanitized native fixtures in `server/tests/fixtures/` and `docs/test-runs/`; stop to resolve disproven assumptions before adapter code.
-2. [ ] Test first and implement strict shared service archive/current-status readers in `server/app/nagios/notifications.py` (focused module if warranted), with helper regressions in `server/tests/unit/`.
-3. [ ] Test first and replace only two service report aggregations in `server/app/api/system/report.py`, including bulk limits, dates, identity/coverage/error/permissions and regression tests.
-4. [ ] Test first and update `client/src/types/report.ts`, `pages/ReportsPage.tsx`, both service tables in `components/reports/`, `utils/exportData.ts` as needed, and interaction/export regressions in `client/src/test/`.
+1. [x] Probe exclusively owned installed Core read-only, record assumptions/shapes/timings and sanitized native fixtures in `server/tests/fixtures/` and `docs/test-runs/`; stop to resolve disproven assumptions before adapter code.
+2. [x] Test first and implement strict shared service archive/current-status readers in `server/app/nagios/notifications.py` (focused module if warranted), with helper regressions in `server/tests/unit/`.
+3. [x] Test first and replace only two service report aggregations in `server/app/api/system/report.py`, including bulk limits, dates, identity/coverage/error/permissions and regression tests.
+4. [x] Test first and update `client/src/types/report.ts`, `pages/ReportsPage.tsx`, both service tables in `components/reports/`, `utils/exportData.ts` as needed, and interaction/export regressions in `client/src/test/`.
 5. [ ] Update backend/data/frontend/status owning specs, operator help and test inventory; run focused and backend/frontend/docs/all checks; compare both deployed views against native Core, record exact evidence and performance in `docs/test-runs/`; finish acceptance audit and PR/CI.
 
 ## Round log
@@ -75,14 +75,16 @@ Requirement coverage (the full issue plan is covered by the final deliverable â€
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 1 | Read-only Core 4.5.11 contract probe; native fixtures and sanitized report; no application edits | CGI subprocess probes as www-data, live-now and fixed-window repeat; scripts/verify.sh docs green | Blocked: scheduled fields separate; all-zero missing coverage; historical/live-now discrepancy |
+| 2 | Added shared native duration/status adapter and both report route replacements, service tables/types/help/exports, owning specs and guide; native transition fixture | Helper/API/host/event focused suite: 97 pass; later helper/API: 45 pass; frontend stage green (8 new interactions); backend adapter stage 4014 passed/14 skipped; docs green | Green; final full gate must rerun current complete tree |
+| resumed | Owner approved corrections; restored active progress | scripts/verify.sh docs | green |
 | Intake | Isolated checkout from latest origin/main; requirement coverage and complete plan written before code | gh issue view 198 --json number,title,body,comments,state | Open; full finish conditions; scoped live checks authorized |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh docs`
-- Result (first failing lines, or "green"): green; verify: docs OK.
-- Hypothesis: Native scheduled state totals are separate, and zero-history/current-state synthesis prevents the proposed formula from guaranteeing measured-only coverage.
-- Next action (one specific step, not "continue"): Obtain the owner's decision on the three concrete corrections in the contract-probe report before adapter implementation.
+- Last check run (exact command): `scripts/verify.sh frontend`
+- Result (first failing lines, or "green"): green; tests/build/lint pass (existing warning-level lint findings remain).
+- Hypothesis: Ending strictly before native query time prevents the no-history pseudo-state path. Native injected-log fixture verifies 720 OK / 130 CRITICAL / 50 UNKNOWN / 100 engine-down seconds; normalized uptime is 80% of 900 recorded seconds.
+- Next action (one specific step, not "continue"): Run the isolated live installed-Core/application comparison and actual export serialization regressions, then scripts/verify.sh all on the complete tree.
 
 ## Decisions and notes
 
@@ -94,3 +96,9 @@ Requirement coverage (the full issue plan is covered by the final deliverable â€
 - Probe evidence: `docs/test-runs/2026-10-17-issue-198-contract-probe/REPORT.md`; five sanitized native fixtures in `server/tests/fixtures/nagios_service_availability/`.
 - Question for owner: approve adding scheduled durations to normalized states and explicitly accounting for unreported window seconds, then resolve the native current-state synthesis/fixed-window discrepancy before implementation? An alternate source or extra calls would require scope approval.
 - Step 1 remains unticked: shape capture is done, but retention/backtracking and no-history assumptions are unresolved. No application behavior changed.
+
+- Owner approved implementation/documentation on 2026-10-17 after explanation of maintenance inclusion and separate missing coverage. Corrections accepted together. Resolve Core pseudo-state by requesting only completed seconds (end strictly before request time), prove with a repeated native probe, and document exact adjusted window.
+
+- Probe discrepancy resolved for implementation: end < result.query_time is enforced, with last-completed-second resolution. Fixed-window repetition returned missing coverage consistently; native isolated CGI fixture parsed actual transition log syntax and produced expected scheduled/engine/UNKNOWN/boundary totals.
+- Dependency note: adapter/route/UI changes were verified together in one implementation round because the response contract changes atomically; no compatibility snapshot field retained. Broad adapter backend run collected 4014 tests before the new API test file existed; the final all gate must include that file.
+- Remote draft PR: https://github.com/esfen14/Pinpoint/pull/201 . No readiness or CI claim yet.

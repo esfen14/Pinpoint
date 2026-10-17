@@ -9,12 +9,9 @@ All routes accept a `period` query parameter:
     last_90d  - previous 90 days
     custom    - requires `start` and `end` (YYYY-MM-DD, both inclusive)
 
-Uptime % is computed from polling snapshots stored in HostStatus / ServiceStatus:
-    host uptime    % = (UP snapshots    / total snapshots) * 100
-    service uptime % = (OK snapshots    / total snapshots) * 100
-
-Routes that query Nagios CGI (alerts, notifications) return the raw Nagios
-data shaped into a consistent envelope.
+Host reports read Nagios archive host durations. Network/Device Services read
+bulk Nagios service archive durations plus separately observed current status.
+Alert/notification reports read Nagios archive events.
 
 Routes
 ------
@@ -29,13 +26,11 @@ GET /report/hosts-by-os
     counts and per-host breakdowns.
 
 GET /report/network-services
-    Network-wide service health overview. Aggregates ServiceStatus snapshots
-    per unique service name across all hosts, computing uptime % and current
-    state for each (host, service) instance.
+    Recorded service availability grouped by description across hosts; separate
+    current Nagios service status.
 
 GET /report/device-services
-    Per-device service health. Groups service snapshots by hostname, showing
-    all monitored services per host with uptime % and current state.
+    Recorded service availability grouped by hostname, with separate current status.
 
 GET /report/alerts
     Alert list and summary count fetched from Nagios archivejson.cgi.
@@ -57,7 +52,8 @@ from app import db
 from app.api.system import system_bp
 from app.api.helper import get_range_custom, success, error
 from app.api.helper.database_access.permissions import require_permission
-from app.history_models import HostStatus, ServiceStatus, ServiceStateType
+from app.history_models import HostStatus
+from app.nagios.service_availability import AvailabilityError, read_service_report, summarize
 from app.system_models import NetworkDiscovery
 from app.nagios.notifications import (
     request_alerts_range,
@@ -556,192 +552,101 @@ def report_hosts_by_os():
 # 3. Network Services Overview
 # ---------------------------------------------------------------------------
 
+def service_period():
+    """Resolve service-report seconds once, using server-local inclusive dates.
+
+    Rolling/today reports end at the last completed Unix second. Custom end
+    dates become the next midnight (exclusive), capped at that completed second.
+    This avoids Core's no-history current-state synthesis at query time.
+    """
+    period = request.args.get('period', 'last_24h').strip().lower()
+    now = datetime.now().astimezone()
+    completed = int(now.timestamp()) - 1
+    if period == 'custom':
+        try:
+            start_day = datetime.strptime(request.args.get('start', ''), '%Y-%m-%d')
+            end_day = datetime.strptime(request.args.get('end', ''), '%Y-%m-%d')
+        except ValueError:
+            raise ValueError('Custom start and end must be valid YYYY-MM-DD dates.') from None
+        if end_day < start_day:
+            raise ValueError('end_date must be on or after start_date')
+        start = int(start_day.astimezone().timestamp())
+        end = min(int((end_day + timedelta(days=1)).astimezone().timestamp()), completed)
+    elif period == 'today':
+        start = int(now.replace(hour=0, minute=0, second=0, microsecond=0).timestamp())
+        end = completed
+    elif period in {'last_24h', 'last_7d', 'last_30d', 'last_90d'}:
+        end = completed
+        days = {'last_24h': 1, 'last_7d': 7, 'last_30d': 30, 'last_90d': 90}[period]
+        start = end - days * 86400
+    else:
+        raise ValueError('Invalid period. Valid values: ' + ', '.join(sorted(VALID_PERIODS)))
+    if start >= end:
+        raise ValueError('The report requires a nonempty period before the current time.')
+    meta = {
+        'period': period, 'start': datetime.fromtimestamp(start).astimezone().isoformat(),
+        'end': datetime.fromtimestamp(end).astimezone().isoformat(),
+        'start_ts': start, 'end_ts': end, 'end_exclusive': True,
+        'time_zone': str(now.tzinfo),
+    }
+    return start, end, meta
+
+
+def service_counts(rows):
+    """Count separately observed current states across archive instances."""
+    counts = Counter(row['state'] for row in rows)
+    return {key: counts.get(state, 0) for key, state in (
+        ('ok', 'Ok'), ('warning', 'Warning'), ('critical', 'Critical'),
+        ('unknown', 'Unknown'), ('pending', 'Pending'), ('unavailable', None))}
+
+
+def service_report_response(group_by):
+    """Build either report from one shared archive/status read and bounded passes."""
+    try:
+        start, end, meta = service_period()
+    except (ValueError, OverflowError):
+        return error('Invalid report period or custom date range.', 400)
+    try:
+        rows, current = read_service_report(start, end)
+        grouped = {}
+        for row in rows:
+            grouped.setdefault(row[group_by], []).append(row)
+        groups = []
+        for name, instances in sorted(grouped.items()):
+            group = {group_by: name, **summarize(instances), **service_counts(instances)}
+            if group_by == 'service':
+                group.update(total_instances=len(instances), instances=instances)
+            else:
+                group['services'] = sorted(instances, key=lambda row: row['service'])
+            groups.append(group)
+        summary = {**summarize(rows), **service_counts(rows),
+            'total_hosts': len({row['hostname'] for row in rows}),
+            'total_services': len(grouped) if group_by == 'service' else len(rows),
+            'total_instances': len(rows)}
+        result = {'period': meta, 'current_status': current, 'summary': summary}
+        if group_by == 'service':
+            result['services'] = groups
+        else:
+            result.update(hosts=groups, total_hosts=summary['total_hosts'], total_services=len(rows))
+        return success(result)
+    except AvailabilityError:
+        return error('Unable to read service availability from Nagios. Please retry the report.', 502)
+    except Exception:
+        current_app.logger.error('Unexpected service availability report failure.')
+        return error('An unexpected error occurred.', 500)
+
+
 @system_bp.get('/report/network-services')
 @login_required
-@require_permission("system.report")
+@require_permission('system.report')
 def report_network_services():
+    """Return measured service durations grouped by exact service description.
+
+    Headline uptime is OK / known seconds, including scheduled states. UNKNOWN
+    is known; no-data/engine-down/unaccounted seconds are separate coverage.
+    Current state counts are observed now, regardless of the historical period.
     """
-    Network-wide service health overview within the selected period.
-
-    For each unique service name monitored across all hosts, aggregates all
-    ServiceStatus snapshots in the window and computes:
-        uptime % = (OK snapshots / total snapshots) * 100
-
-    "OK" is the healthy state for services (equivalent to "Up" for hosts).
-    The "current state" shown is taken from the most-recent snapshot for
-    each (hostname, service) pair.
-
-    Response shape:
-    {
-        "period": { ... },
-        "summary": {
-            "total_services":  n,    # unique service names
-            "total_instances": n,    # total (host, service) pairs
-            "ok":              n,    # instances currently OK
-            "warning":         n,
-            "critical":        n,
-            "unknown":         n,
-            "uptime_pct":      99.5  # across all instances
-        },
-        "services": [
-            {
-                "service":         "PING",
-                "total_instances": n,
-                "ok":              n,
-                "warning":         n,
-                "critical":        n,
-                "unknown":         n,
-                "uptime_pct":      99.5,
-                "instances": [
-                    {
-                        "hostname":          "...",
-                        "state":             "Ok|Warning|Critical|Unknown",
-                        "uptime_pct":        99.5,
-                        "total_snapshots":   n,
-                        "last_check":        "ISO-8601 | null",
-                        "last_state_change": "ISO-8601 | null",
-                        "plugin_output":     "..."
-                    },
-                    ...
-                ]
-            },
-            ...
-        ]
-    }
-    """
-    try:
-        start_ts, end_ts, start_dt, end_dt, err = _period_params()
-        if err:
-            return err
-
-        period = request.args.get("period", "last_24h").strip().lower()
-
-        # All service snapshots within the window
-        all_snapshots = db.session.execute(
-            sa.select(
-                ServiceStatus.Hostname,
-                ServiceStatus.Service,
-                ServiceStatus.Current_State,
-                ServiceStatus.Last_Check,
-                ServiceStatus.Last_State_Change,
-                ServiceStatus.Plugin_Output,
-            )
-            .where(
-                ServiceStatus.Timestamp >= start_dt,
-                ServiceStatus.Timestamp <= end_dt,
-            )
-            .order_by(
-                ServiceStatus.Service.asc(),
-                ServiceStatus.Hostname.asc(),
-                ServiceStatus.Last_Check.asc(),
-            )
-        ).all()
-
-        # Aggregate per (service, hostname)
-        # key: (service, hostname) -> stats dict
-        instance_stats: dict[tuple, dict] = {}
-
-        for snap in all_snapshots:
-            key = (snap.Service, snap.Hostname)
-            if key not in instance_stats:
-                instance_stats[key] = {
-                    "total": 0,
-                    "ok": 0,
-                    "last_check": None,
-                    "last_state_change": None,
-                    "state": None,
-                    "plugin_output": None,
-                }
-            s = instance_stats[key]
-            s["total"] += 1
-            if snap.Current_State == ServiceStateType.OK:
-                s["ok"] += 1
-            # Rows ordered by Last_Check asc → last iteration is most recent
-            s["last_check"] = snap.Last_Check
-            s["last_state_change"] = snap.Last_State_Change
-            s["state"] = snap.Current_State.value
-            s["plugin_output"] = snap.Plugin_Output
-
-        # Group instances by service name
-        service_groups: dict[str, list] = {}
-
-        for (service_name, hostname), s in sorted(instance_stats.items()):
-            total = s["total"]
-            ok = s["ok"]
-            uptime_pct = round((ok / total) * 100, 2) if total > 0 else None
-
-            service_groups.setdefault(service_name, []).append({
-                "hostname":          hostname,
-                "state":             s["state"] or "Unknown",
-                "uptime_pct":        uptime_pct,
-                "total_snapshots":   total,
-                "last_check":        s["last_check"].isoformat() if s["last_check"] else None,
-                "last_state_change": (
-                    s["last_state_change"].isoformat()
-                    if s["last_state_change"] else None
-                ),
-                "plugin_output":     s["plugin_output"],
-            })
-
-        # Build per-service summary rows
-        services = []
-        global_state_counts = Counter()
-        global_ok_snaps = 0
-        global_total_snaps = 0
-
-        for service_name, instances in sorted(service_groups.items()):
-            svc_total_snaps = sum(i["total_snapshots"] for i in instances)
-            svc_ok_snaps    = sum(
-                round((i["uptime_pct"] / 100) * i["total_snapshots"])
-                if i["uptime_pct"] is not None else 0
-                for i in instances
-            )
-            svc_uptime = (
-                round((svc_ok_snaps / svc_total_snaps) * 100, 2)
-                if svc_total_snaps > 0 else None
-            )
-
-            state_counter = Counter(i["state"] for i in instances)
-            global_state_counts.update(state_counter)
-            global_ok_snaps    += svc_ok_snaps
-            global_total_snaps += svc_total_snaps
-
-            services.append({
-                "service":         service_name,
-                "total_instances": len(instances),
-                "ok":              state_counter.get("Ok", 0),
-                "warning":         state_counter.get("Warning", 0),
-                "critical":        state_counter.get("Critical", 0),
-                "unknown":         state_counter.get("Unknown", 0),
-                "uptime_pct":      svc_uptime,
-                "instances":       instances,
-            })
-
-        total_instances = sum(s["total_instances"] for s in services)
-        overall_uptime = (
-            round((global_ok_snaps / global_total_snaps) * 100, 2)
-            if global_total_snaps > 0 else None
-        )
-
-        return success({
-            "period": _period_meta(period, start_dt, end_dt),
-            "summary": {
-                "total_services":  len(services),
-                "total_instances": total_instances,
-                "ok":              global_state_counts.get("Ok", 0),
-                "warning":         global_state_counts.get("Warning", 0),
-                "critical":        global_state_counts.get("Critical", 0),
-                "unknown":         global_state_counts.get("Unknown", 0),
-                "uptime_pct":      overall_uptime,
-            },
-            "services": services,
-        })
-
-    except Exception:
-        current_app.logger.exception(
-            "Unexpected error in report_network_services"
-        )
-        return error("An unexpected error occurred.", 500)
+    return service_report_response('service')
 
 
 # ---------------------------------------------------------------------------
@@ -750,142 +655,14 @@ def report_network_services():
 
 @system_bp.get('/report/device-services')
 @login_required
-@require_permission("system.report")
+@require_permission('system.report')
 def report_device_services():
+    """Return each archive host/service instance and per-device service availability.
+
+    Device uptime_pct describes its combined service durations, not host uptime.
+    Uses the identical calculation and current-status join as Network Services.
     """
-    Per-device service health within the selected period.
-
-    For each (hostname, service) pair, counts all snapshots in the window and
-    computes uptime % = (OK snapshots / total snapshots) * 100.
-    Results are grouped by hostname.
-
-    Response shape:
-    {
-        "period": { ... },
-        "total_hosts":    n,
-        "total_services": n,
-        "hosts": [
-            {
-                "hostname":   "...",
-                "uptime_pct": 99.5,   # host-level: across all its services
-                "services": [
-                    {
-                        "service":           "...",
-                        "state":             "Ok|Warning|Critical|Unknown",
-                        "uptime_pct":        99.5,
-                        "total_snapshots":   n,
-                        "last_check":        "ISO-8601 | null",
-                        "last_state_change": "ISO-8601 | null",
-                        "plugin_output":     "..."
-                    },
-                    ...
-                ]
-            },
-            ...
-        ]
-    }
-    """
-    try:
-        start_ts, end_ts, start_dt, end_dt, err = _period_params()
-        if err:
-            return err
-
-        period = request.args.get("period", "last_24h").strip().lower()
-
-        # All service snapshots within the window, ordered so last row per
-        # (hostname, service) is the most-recent one.
-        all_snapshots = db.session.execute(
-            sa.select(
-                ServiceStatus.Hostname,
-                ServiceStatus.Service,
-                ServiceStatus.Current_State,
-                ServiceStatus.Last_Check,
-                ServiceStatus.Last_State_Change,
-                ServiceStatus.Plugin_Output,
-            )
-            .where(
-                ServiceStatus.Timestamp >= start_dt,
-                ServiceStatus.Timestamp <= end_dt,
-            )
-            .order_by(
-                ServiceStatus.Hostname.asc(),
-                ServiceStatus.Service.asc(),
-                ServiceStatus.Last_Check.asc(),
-            )
-        ).all()
-
-        # Aggregate per (hostname, service)
-        instance_stats: dict[tuple, dict] = {}
-
-        for snap in all_snapshots:
-            key = (snap.Hostname, snap.Service)
-            if key not in instance_stats:
-                instance_stats[key] = {
-                    "total": 0, "ok": 0,
-                    "last_check": None, "last_state_change": None,
-                    "state": None, "plugin_output": None,
-                }
-            s = instance_stats[key]
-            s["total"] += 1
-            if snap.Current_State == ServiceStateType.OK:
-                s["ok"] += 1
-            s["last_check"] = snap.Last_Check
-            s["last_state_change"] = snap.Last_State_Change
-            s["state"] = snap.Current_State.value
-            s["plugin_output"] = snap.Plugin_Output
-
-        # Group by hostname
-        grouped: dict[str, list] = {}
-
-        for (hostname, service_name), s in sorted(instance_stats.items()):
-            total = s["total"]
-            ok = s["ok"]
-            uptime_pct = round((ok / total) * 100, 2) if total > 0 else None
-
-            grouped.setdefault(hostname, []).append({
-                "service":           service_name,
-                "state":             s["state"] or "Unknown",
-                "uptime_pct":        uptime_pct,
-                "total_snapshots":   total,
-                "last_check":        s["last_check"].isoformat() if s["last_check"] else None,
-                "last_state_change": (
-                    s["last_state_change"].isoformat()
-                    if s["last_state_change"] else None
-                ),
-                "plugin_output":     s["plugin_output"],
-            })
-
-        hosts = []
-        for hostname, services in sorted(grouped.items()):
-            # Host-level uptime: average across all its service snapshots
-            host_total = sum(svc["total_snapshots"] for svc in services)
-            host_ok = sum(
-                round((svc["uptime_pct"] / 100) * svc["total_snapshots"])
-                if svc["uptime_pct"] is not None else 0
-                for svc in services
-            )
-            host_uptime = (
-                round((host_ok / host_total) * 100, 2)
-                if host_total > 0 else None
-            )
-            hosts.append({
-                "hostname":   hostname,
-                "uptime_pct": host_uptime,
-                "services":   services,
-            })
-
-        return success({
-            "period": _period_meta(period, start_dt, end_dt),
-            "total_hosts":    len(hosts),
-            "total_services": sum(len(h["services"]) for h in hosts),
-            "hosts": hosts,
-        })
-
-    except Exception:
-        current_app.logger.exception(
-            "Unexpected error in report_device_services"
-        )
-        return error("An unexpected error occurred.", 500)
+    return service_report_response('hostname')
 
 
 # ---------------------------------------------------------------------------

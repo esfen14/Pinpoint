@@ -237,6 +237,54 @@ spool folder, the root-owned handler and narrower rights for the `nagios` group 
 Nagios server within status data. Changing either requires understanding its
 different purpose.
 
+## Service report history and coverage (#198)
+
+Network Services and Device Services read `archivejson.cgi` availability through
+`app/nagios/service_availability.py`, not `ServiceStatus` snapshot counts.
+Snapshots and the general poller remain available for their existing consumers.
+The exact `(host_name, description)` identifies a native instance; service
+names are preserved verbatim. Only configured objects in the archive response
+are counted; historical removed objects are not guaranteed.
+
+Explicit options: `availabilityobjecttype=services`, `statetypes=hard`,
+`assumeinitialstate=false`, `assumestateretention=true`,
+`assumestatesduringnagiosdowntime=false`, `backtrackedarchives=4`.
+There is no report-timeperiod restriction. Four preceding archives are searched
+for initial state; actual coverage depends on Nagios's rotation, retained logs,
+recorded checks and engine events, not Pinpoint snapshot retention. Missing logs
+cannot be recovered by these reports. Unlike existing host-report defaults, these
+service reports explicitly avoid assuming an initial state or state during engine
+downtime; this intentional difference is explained in the UI and operator guide.
+
+Native `time_STATE` and `scheduled_time_STATE` are separate accumulators in Core
+4.5.11. Add the matching scheduled component to each normalized state exactly
+once, preserving maintenance in headline availability. UNKNOWN is observed and
+belongs in known time. Native no-data and engine-down time are excluded. Native
+all-zero responses can leave the requested range unexplained, so expose
+`unaccounted_seconds = window - known - native_no_data - native_engine_down`.
+Total missing coverage is native no-data + engine downtime + unaccounted seconds.
+An unaccounted duration asserts no state or cause. Reject negative/nonfinite
+values, wrong shapes, duplicate identities, and totals exceeding the window.
+
+Core can synthesize current state for no-history objects when a range includes
+its query time, even with `assumeinitialstate=false`. Service reports request
+completed seconds, ending strictly before query time; the normalizer checks this
+against the millisecond native `result.query_time`. A clock disagreement fails
+closed. This avoids that pseudo-state path; it does not reconstruct unobserved
+outages or turn missing history into healthy time. Raw seconds are aggregated
+before percentages: Network Services by exact service description; Device Services
+by hostname. A device aggregate measures its services, not host uptime. A null
+percentage means no known time; zero-known instances still contribute coverage
+and instance counts.
+
+Current state/timestamps/output are fetched in one read-only bulk
+`statusjson.cgi?query=servicelist&details=true&formatoptions=enumerate` request.
+The reader never calls the snapshot-writing status poller. It joins full identity,
+retains pending/missing metadata as absent, and records a separate observation time.
+Historical archive failure aborts; current-status failure is a visible partial
+result. No new dependency, database model, migration, permission, credential,
+monitoring-config change or scheduler job is introduced.
+
 ## Aggregation rules
 
 - Latest state is selected per host and per `(host, service)` pair.

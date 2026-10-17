@@ -269,3 +269,18 @@ check OK, omitted an unsupported path with persisted skipped reasons, and
 measured small-lab Nagios load. Installation, independent-host scale and browser
 walkthrough remain unverified; see [the service report](../docs/test-runs/2026-10-14-issue-128-ncpa-services/REPORT.md)
 and [the capability report](../docs/test-runs/2026-10-14-issue-128-ncpa-probe/REPORT.md).
+
+## Service-report availability (#198)
+
+The issue branch replaces Network Services and Device Services snapshot counting
+with a shared strict Nagios duration reader, including scheduled components and
+separate native/unaccounted missing coverage. Current status is fetched in one
+separate bulk read; no status is inferred from availability. Both service-report
+contracts, tables and exports remove snapshot counts and expose seconds. Owning
+backend/data/frontend specifications and the [operator guide](../docs/manuals/Service_Reports.md)
+define exact semantics, completed-second windows, retention and Core assumptions.
+No snapshot storage or general polling behavior is removed. Focused helper/API
+and frontend interaction regressions pass; final broad verification and deployed
+comparison are still pending and must be recorded before review readiness.
+The initial [contract probe](../docs/test-runs/2026-10-17-issue-198-contract-probe/REPORT.md)
+is historical partial evidence, not final acceptance.

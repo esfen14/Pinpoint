@@ -323,17 +323,21 @@ scheduled or recurring emailed reports are outside the supported scope.
 | View | API route (GET) | Displayed data |
 |---|---|---|
 | Host Availability | `/api/system/report/availability` | Hostname, state, uptime %, Snapshots (legacy label for known-state seconds), last check and last state change; summary cards show total hosts, Up, Down / Unreachable and overall uptime |
-| Network Services | `/api/system/report/network-services` | One row per service name: instance count, OK / Warning / Critical / Unknown counts and uptime %; summary cards show service and instance totals, OK, Warning / Critical and overall uptime |
+| Network Services | `/api/system/report/network-services` | One row per service name: instance count, Current OK / Warning / Critical / Unknown / Pending / Unavailable counts, recorded-time availability %, recorded and missing seconds; summary cards show service and instance totals, OK, Warning / Critical and overall uptime |
 | Hosts by OS | `/api/system/report/hosts-by-os` | Flattened host rows with OS, hostname, state, uptime %, last check and last state change; no summary cards |
-| Device Services | `/api/system/report/device-services` | One row per host/service pair: hostname, service, state, uptime %, snapshot count, last check and last state change; no summary cards |
+| Device Services | `/api/system/report/device-services` | One row per host/service pair: hostname, service, current state, recorded-time availability %, recorded/missing seconds with no-data/engine-down/unaccounted components, observation time, current last check and state change; no summary cards |
 | Alerts | `/api/system/report/alerts` | Time, hostname, service, previous state, new state and output; cards count listed alerts, recoveries, problems and affected hosts |
 | Notifications | `/api/system/report/notifications` | Time, hostname, service, state, contact and message; cards count listed notifications, recoveries, problems and distinct nonempty contacts |
 
 Host Availability and Hosts by OS obtain host uptime from Nagios archive
 Up / (Up + Down + Unreachable) durations; unknown time is excluded and no known
 time yields a null uptime (shown as `—`). Network Services and Device Services
-compute service uptime from OK snapshots / all service snapshots in the selected
-window. Alerts and Notifications read Nagios archive events; their cards are
+compute availability from Nagios archive OK seconds / all known state seconds,
+including UNKNOWN and scheduled maintenance; missing coverage is excluded and
+zero known time yields null (`—`). Their shared `ServiceReportContext` explains
+the denominator, maintenance, missing components, configured-object/retention
+limits, period bounds and separately observed current status. Service-report
+wire types in `types/report.ts` contain explicit seconds and no snapshot counts. Alerts and Notifications read Nagios archive events; their cards are
 computed from the returned rows rather than the separate API `count` object.
 
 ### Periods and running reports
@@ -342,11 +346,19 @@ Every view sends `period` to its route. The shared selector offers `last_24h`
 (default), `today`, `last_7d`, `last_30d`, `last_90d` and `custom`. Rolling periods
 end at server now; Today starts at server-local midnight. Custom ranges send
 `start` and `end` as `YYYY-MM-DD`, inclusive, and require both dates. The backend
-validates periods and dates. Changing a view or period loads its report; after
+validates periods and dates. Service custom dates use the next midnight after
+the inclusive end date as an exclusive boundary. Service reports stop at the
+last completed second, and show exact offset-bearing bounds through display
+preferences. They explain server-local date interpretation and current-status
+observation time, including for a past period. Changing a view or period loads its report; after
 editing custom dates, **Run Report** loads the chosen range. It also reruns the
 current report. Host Availability and Network Services load in `ReportsPage`;
 the other four load in `ExtraReports` on view change or a changed run key.
 Tables have loading and empty states, and request errors appear above them.
+Service reruns clear old data before loading and hide export until a successful
+response. Network requests ignore superseded responses; extra views cancel stale
+requests. Current-status failure retains historical data with an explicit notice.
+Pending and missing states are distinct; absent check timestamps are not invented.
 
 ### Filtering and export support
 
@@ -368,9 +380,9 @@ time zone. No report period metadata or summary cards are included in exports.
 | View | Filename stem | Export columns |
 |---|---|---|
 | Host Availability | `host-availability-report` | Hostname, State, Uptime %, Total Snapshots, Last Check, Last State Change |
-| Network Services | `network-services-report` | Service, Total Instances, OK, Warning, Critical, Unknown, Uptime % |
+| Network Services | `network-services-report` | Service, Current status observed at, Total Instances, Current OK/Warning/Critical/Unknown/Pending/Unavailable, Availability during recorded time %, Recorded time (seconds), No recorded data (seconds), Nagios no data (seconds), Engine not running (seconds), Unaccounted time (seconds) |
 | Hosts by OS | `hosts-by-os-report` | OS, Hostname, State, Uptime %, Last Check, Last State Change |
-| Device Services | `device-services-report` | Hostname, Service, State, Uptime %, Snapshots, Last Check, Last State Change |
+| Device Services | `device-services-report` | Hostname, Service, Current state, Availability during recorded time %, Recorded time (seconds), No recorded data (seconds), Nagios no data (seconds), Engine not running (seconds), Unaccounted time (seconds), Current status observed at, Current last check, Current last state change |
 | Alerts | `alerts-report` | Time, Hostname, Service, Previous State, New State, Output |
 | Notifications | `notifications-report` | Time, Hostname, Service, State, Contact, Message |
 

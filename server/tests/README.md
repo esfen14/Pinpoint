@@ -107,6 +107,7 @@ Basenames below live under `unit/`, except `integration/test_live_nagios.py`.
 | `test_statistics.py` | Latest-state aggregations, counts, active alerts, ping/NCPA averages, Nagios-server resources, plugin groups, and trends |
 | `test_history.py` | Alert/notification history lists and details, filters, pagination, acknowledgement annotation, and auth guards |
 | `test_notifications.py` | Notification feed, unread count, per-user cursor, and mark-read behavior |
+| `test_service_availability.py`, `test_report_service_availability.py` | Native service duration shapes, scheduled/missing coverage, zero-known, weighted aggregates, completed-second guard, strict failure sanitization, read-only bulk status, identity/pending/missing behavior, snapshot independence, periods and permissions |
 | `test_report_notifications_alerts.py` | Nagios-backed alert and notification report periods, filters, response shapes, and upstream failures |
 | `test_status.py` | Nagios status/object CGI parsing, state mapping, performance data, max attempts, and safe check-command storage |
 | `integration/test_live_nagios.py` | Optional real-Nagios CGI and Flask-route integration checks |
