@@ -34,6 +34,7 @@ def assert_no_counts(value):
 def test_same_instances_weighted_totals_and_database_independence(logged_in_client, db_session):
     host = _make_host(db_session, 'snapshot-only')
     _make_service(db_session, host.Hostname, 'db-only', state=ServiceStateType.OK)
+    _make_service(db_session, 'host-a', 'service-1', state=ServiceStateType.OK)
     db_session.session.commit()
     with patch('app.api.system.report.read_service_report', return_value=(durations(), {
             'available': False, 'observed_at': None, 'notice': 'Current status unavailable.'})) as reader:

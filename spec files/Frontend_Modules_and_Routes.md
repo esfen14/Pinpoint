@@ -390,3 +390,12 @@ Host Availability retains `Snapshots` on screen and `Total Snapshots` in exports
 API `total_snapshots` value is known-state duration in seconds from Nagios,
 not a polling snapshot count. Export logging posts to `/api/system/exportlog`;
 a logging failure does not prevent the download.
+
+Service-report browser comparison is opt-in: Playwright project `issue-198-live`,
+`e2e/service-reports.lab.spec.ts`, accepts only `ISSUE198_LAB_URL=http://127.0.0.1:19198`.
+That URL must tunnel to `server/tests/e2e/service_reports_core.py --serve` on the
+exclusively reserved appliance. The fixture uses temporary databases, a separate
+Core with notifications disabled, and local fixture authentication; it is never
+a production authentication mode. The tests compare rendered service durations
+and recorded-time availability, and exercise real CSV/XLS downloads and PDF
+print output in Chromium.

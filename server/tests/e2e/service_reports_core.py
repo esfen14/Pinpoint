@@ -16,6 +16,8 @@ import json
 import os
 from pathlib import Path
 import pwd
+import re
+import shutil
 import secrets
 import signal
 import subprocess
@@ -38,9 +40,13 @@ def wait_until(check, seconds=30):
     raise RuntimeError('Live fixture condition did not converge.')
 
 
-def run(root, serve):
+def run(root, serve, evidence_dir):
     """Run a separate Core, native CGIs and real Flask routes with temporary state."""
     nagios = '/usr/local/nagios/bin/nagios'
+    version_output = subprocess.run([nagios, '--version'], capture_output=True, text=True, check=True).stdout
+    version = re.search(r'Nagios Core (\S+)', version_output).group(1)
+    if version != '4.5.11':
+        raise RuntimeError('This probe requires the approved Core 4.5.11 contract.')
     cgi = Path('/usr/local/nagios/sbin')
     core_dir = root / 'core'
     core_dir.mkdir()
@@ -320,7 +326,7 @@ check_result_path={core_dir}
                     results.append({'view': view, 'case': period, 'seconds': round(time.monotonic()-began, 6),
                         'response_bytes': len(response.data), 'calls': calls[count:], 'known_seconds': summary['known_seconds'],
                         'missing_seconds': summary['no_recorded_data_seconds']})
-        print(json.dumps({'core_version': '4.5.11', 'window': [before, after], 'outage_seconds': recovered-critical,
+        print(json.dumps({'core_version': version, 'window': [before, after], 'outage_seconds': recovered-critical,
                           'inventory': {'hosts': 1, 'services': 1},
                           'native_avail': {key: native_csv[key] for key in ('TOTAL_TIME_OK', 'TOTAL_TIME_CRITICAL', 'PERCENT_KNOWN_TIME_OK')}, 'results': results}), flush=True)
         if serve:
@@ -335,15 +341,24 @@ check_result_path={core_dir}
     finally:
         if http:
             http.shutdown()
-        os.killpg(process.pid, signal.SIGTERM)
+        try:
+            os.killpg(process.pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
         process.wait(timeout=15)
         output.close()
+        if evidence_dir:
+            evidence_dir.mkdir(mode=0o700, parents=False, exist_ok=False)
+            shutil.copytree(core_dir, evidence_dir / 'core')
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--serve', action='store_true')
+    parser.add_argument('--evidence-dir', type=Path, help='New private directory for synthetic Core logs/config/status after cleanup; must not exist.')
     args = parser.parse_args()
+    if args.evidence_dir and args.evidence_dir.exists():
+        parser.error('Evidence directory must not already exist.')
     with tempfile.TemporaryDirectory(prefix='issue198-live-') as folder:
         os.chmod(folder, 0o755)
-        run(Path(folder), args.serve)
+        run(Path(folder), args.serve, args.evidence_dir)

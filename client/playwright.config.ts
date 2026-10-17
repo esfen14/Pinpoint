@@ -15,6 +15,7 @@ export default defineConfig({
     video: 'off',
   },
   projects: [
+    { name: 'issue-198-live', testMatch: /service-reports\.lab\.spec\.ts/, use: { ...devices['Desktop Chrome'] } },
     { name: 'issue-182-live', testMatch: /remote-restart\.lab\.spec\.ts/, use: { ...devices['Desktop Chrome'] } },
     { name: 'issue-124-live', testMatch: /storage-logs\.lab\.spec\.ts/, use: { ...devices['Desktop Chrome'] } },
     { name: 'issue-164-live', testMatch: /device-identity\.lab\.spec\.ts/, use: { ...devices['Desktop Chrome'] } },

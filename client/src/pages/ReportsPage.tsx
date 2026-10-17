@@ -161,7 +161,7 @@ export function ReportsPage() {
                 gradient="linear-gradient(135deg,#EF4444,#DC2626)"
               />
               <SummaryStatCard
-                title="Availability"
+                title="Uptime"
                 value={availability?.summary.uptimePct != null ? `${availability.summary.uptimePct}%` : '—'}
                 subtitle="Across all hosts"
                 icon={Activity}

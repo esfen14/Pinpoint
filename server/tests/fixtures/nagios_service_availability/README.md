@@ -23,3 +23,13 @@ Do not treat the preliminary numbers as proven measured historical coverage.
 No runtime adapter has been written. The issue requires resolving contradicted
 design assumptions before implementation. See
 [the probe report](../../../../docs/test-runs/2026-10-17-issue-198-contract-probe/REPORT.md).
+
+`recorded-transitions.json` is captured from the same installed Core using
+separate temporary CGI inputs, with a supplied transition log. It covers an
+initial OK before the range, an OK transition exactly at start, a 30-second
+CRITICAL outage, 100 seconds scheduled maintenance (50 OK/50 CRITICAL), UNKNOWN,
+100 seconds engine downtime and WARNING exactly at the exclusive end. Expected
+normalized totals: 720 OK, 130 CRITICAL, 50 UNKNOWN, 100 missing; 80% availability
+during 900 recorded seconds. This fixture is a real CGI computation over supplied
+logs, not an assertion that the production monitor observed these events.
+The separate opt-in live harness records an actual check-result outage.

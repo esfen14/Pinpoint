@@ -17,7 +17,7 @@ Routes
 ------
 GET /report/availability
     Host availability report within the selected period. Computes uptime % per
-    host from HostStatus snapshots and returns a summary of Up/Down/Unreachable
+    host from Nagios archive durations and returns a summary of Up/Down/Unreachable
     counts alongside per-host details.
 
 GET /report/hosts-by-os
@@ -212,10 +212,9 @@ def report_host_availability():
     """
     Host availability within the selected period.
 
-    For each host, counts all HostStatus snapshots in the window and computes:
-        uptime % = (UP snapshots / total snapshots) * 100
-
-    The "current state" shown is taken from the most-recent snapshot.
+    For each host, reads Nagios archive durations and computes UP seconds /
+    known host-state seconds. Missing state/check metadata remains unknown/null;
+    the legacy total_snapshots field contains known-state seconds.
 
     Response shape:
     {
@@ -296,10 +295,9 @@ def report_hosts_by_os():
       - aggregate UP / DOWN / UNREACHABLE counts
       - an uptime percentage for the group
 
-    Uptime % per group = (UP snapshots in group / total snapshots in group) * 100
-    Hosts that have no HostStatus record in the window are listed separately
-    under os_type "Unknown" if their OS is not set, or under their OS with
-    state "No Data".
+    Uptime % per group = UP seconds / known host-state seconds * 100.
+    Only hosts returned by Nagios are included, with OS from NetworkDiscovery
+    or "Unknown". No database snapshot fallback is used.
 
     Response shape:
     {

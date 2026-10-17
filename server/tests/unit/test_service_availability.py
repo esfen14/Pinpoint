@@ -142,3 +142,26 @@ def test_native_recorded_transitions_before_and_at_bounds_brief_outage_and_downt
     assert measured['nagios_not_running_seconds'] == 100
     assert measured['unaccounted_seconds'] == 0
     assert measured['uptime_pct'] == 80
+
+
+def test_status_call_receives_only_remaining_request_budget(app):
+    with app.app_context(), patch('app.nagios.service_availability.time.monotonic', side_effect=[0, 0, 15]), patch(
+        'app.nagios.service_availability.requests.get', side_effect=[reply(envelope([row(time_ok=100)])),
+        reply({'result': {'type_code': 0}, 'data': {'servicelist': {}}})]
+    ) as get:
+        rows, context = read_service_report(0, 100)
+    assert get.call_args_list[0].kwargs['timeout'] == 10
+    assert get.call_args_list[1].kwargs['timeout'] == 5
+    assert rows[0]['state'] is None and context['available'] is True
+
+
+def test_exhausted_status_budget_and_empty_archive_never_make_extra_calls(app):
+    with app.app_context(), patch('app.nagios.service_availability.time.monotonic', side_effect=[0, 0, 21]), patch(
+        'app.nagios.service_availability.requests.get', return_value=reply(envelope([row(time_ok=100)]))
+    ) as get:
+        rows, context = read_service_report(0, 100)
+    assert get.call_count == 1 and context['available'] is False
+    assert rows[0]['uptime_pct'] == 100
+    with app.app_context(), patch('app.nagios.service_availability.requests.get', return_value=reply(envelope([]))) as get:
+        rows, context = read_service_report(0, 100)
+    assert rows == [] and get.call_count == 1
