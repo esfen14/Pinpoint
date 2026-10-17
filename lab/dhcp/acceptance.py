@@ -299,7 +299,10 @@ def run_cycle(number: int, *, full_matrix: bool, lease_seconds: int) -> tuple[li
             host = wait_up(api, device["nagios_host_name"], control.POOL[0])
             return {"device": device, "host": host}
         baseline: dict = {}
-        if record_case("initial discovery and check at A", lambda: baseline.update(initial())):
+        def initial_case():
+            baseline.update(initial())
+            return baseline
+        if record_case("initial discovery and check at A", initial_case):
             device_a = baseline["device"]
             before_check = baseline["host"]["last_check"]
         else:
@@ -340,7 +343,10 @@ def run_cycle(number: int, *, full_matrix: bool, lease_seconds: int) -> tuple[li
             host = wait_up(api, device_b["nagios_host_name"], control.POOL[1], newer_than=before_check)
             return {"device": device_b, "host": host, "before": first, "after": after}
         move_detail: dict = {}
-        move_ok = record_case("same-running-client A-to-B", lambda: move_detail.update(moved()))
+        def move_case():
+            move_detail.update(moved())
+            return move_detail
+        move_ok = record_case("same-running-client A-to-B", move_case)
 
         def reused():
             control.reserve("client2", control.POOL[0], data)
@@ -359,7 +365,10 @@ def run_cycle(number: int, *, full_matrix: bool, lease_seconds: int) -> tuple[li
             return {"device": other, "host": host,
                     "review_kinds": [item.get("kind") for item in review]}
         reuse_detail: dict = {}
-        reuse_ok = record_case("client-2 reuses released A", lambda: reuse_detail.update(reused()))
+        def reuse_case():
+            reuse_detail.update(reused())
+            return reuse_detail
+        reuse_ok = record_case("client-2 reuses released A", reuse_case)
 
         if move_ok and reuse_ok and marker_ok:
             record_case("browser Inventory and pre-move History",

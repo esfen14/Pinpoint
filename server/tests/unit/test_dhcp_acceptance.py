@@ -88,3 +88,10 @@ def test_pre_move_history_requires_real_down_host_event():
             ]}
 
     assert acceptance.pre_move_events(Api(), "dev-7")[0]["timestamp"] == 42
+
+
+def test_case_result_keeps_observed_details():
+    """The raw acceptance record must retain identity/check observations."""
+    results = []
+    assert acceptance.record(results, "move", lambda: {"device": {"id": 7}, "check": "fresh"})
+    assert results[0]["detail"] == {"device": {"id": 7}, "check": "fresh"}
