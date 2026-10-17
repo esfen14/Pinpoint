@@ -98,3 +98,35 @@ def test_restart_migration_downgrade_drops_only_the_new_type_and_upgrade_returns
     assert restart_report["names_after_downgrade"] == ["keep"]
     assert restart_report["version_after_reupgrade"] == [["b8e3d5f2a417"]]
     assert restart_report["names_after_reupgrade"] == ["keep"]
+
+
+# ==========================================================
+# restart_remote_service migration (c7a1f4d92e60)
+# ==========================================================
+
+@pytest.fixture(scope="module")
+def remote_report():
+    result = subprocess.run(
+        [sys.executable, "tests/support/remediation_remote_restart_migration_runner.py"],
+        cwd=SERVER_DIR, capture_output=True, text=True, timeout=180,
+    )
+    assert result.returncode == 0, result.stderr[-3000:]
+    body = result.stdout.split("REPORT_BEGIN")[1].split("REPORT_END")[0]
+    return json.loads(body)
+
+
+def test_remote_migration_adds_the_device_columns_off_by_default(remote_report):
+    assert remote_report["version"] == [["c7a1f4d92e60"]]
+    assert remote_report["kept_after_upgrade"] == ["keep", "local"]
+    assert remote_report["names_with_remote"] == ["keep", "local", "remote"]
+    columns = remote_report["ssh_columns"]
+    assert "Remote_Restart_Services" in columns
+    assert columns["Remote_Restart_Enabled"] in ("false", "0")
+
+
+def test_remote_migration_downgrade_drops_only_the_new_type_and_columns(remote_report):
+    assert remote_report["version_after_downgrade"] == [["d117f3b8a053"]]
+    assert remote_report["names_after_downgrade"] == ["keep", "local"]
+    assert "Remote_Restart_Enabled" not in remote_report["ssh_columns_after_downgrade"]
+    assert remote_report["version_after_reupgrade"] == [["c7a1f4d92e60"]]
+    assert remote_report["names_after_reupgrade"] == ["keep", "local"]

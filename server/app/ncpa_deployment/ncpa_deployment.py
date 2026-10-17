@@ -98,6 +98,10 @@ def cleanup_ncpa_bootstrap(ip_address, ssh_port, fingerprint, username, password
              + shlex.quote(public_key) + " " + shlex.quote(REMOTE_AUTHORIZED_KEYS)),
             ("sudo_rule", "/usr/bin/rm -f -- " + shlex.quote(REMOTE_SUDOERS)),
             ("helper", "/usr/bin/rm -f -- " + shlex.quote(REMOTE_HELPER)),
+            # Part 8.3: the remote-restart rule, helper and service list (see app/remote_restart.py).
+            ("restart_rule", "/usr/bin/rm -f -- /etc/sudoers.d/pinpoint-service-restart"),
+            ("restart_helper", "/usr/bin/rm -f -- /usr/local/sbin/pinpoint-service-restart "
+                               "/etc/pinpoint/restartable-services"),
         ]
         results = []
         for name, command in actions:
@@ -765,6 +769,14 @@ def give_program_permissions( device_id, ncpa_deployment_status_id, ip_address, 
 
         if ssh_credentials is None:
             return fail_device(device_id, ncpa_deployment_status_id, DeploymentOutcome.FAILED, "SSH credential record not found.")
+
+        # Part 8.3: the restart helper and the device's own service list. The list is whatever the
+        # administrator chose for this device (empty by default, which allows nothing); a redeploy
+        # is how a changed list reaches the device, because only root can write it there.
+        from app.remote_restart import clean_services, install_restart_helper
+        services, _ = clean_services(ssh_credentials.Remote_Restart_Services)
+        if not install_restart_helper(client, password, services):
+            return fail_device(device_id, ncpa_deployment_status_id, DeploymentOutcome.FAILED, "Unable to install the service restart helper.")
 
         ssh_credentials.Key_Installed = True
         db.session.commit()
