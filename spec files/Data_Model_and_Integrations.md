@@ -232,6 +232,38 @@ one file per event to `REMEDIATION_SPOOL_DIR`, and `app/remediation.py` decides 
 spool folder, the root-owned handler and narrower rights for the `nagios` group are installer work
 (see the installer instructions); the application never runs a command taken from an event.
 
+### Operator notification for automatic recovery (#153)
+
+Migration `e153c4a8b2d7` (after `f155a3c7d2b1`) adds `RemediationAction.Notify_On` (JSON list of
+`failed`, `capped` and `repeated`, default all three, may be empty), `RemediationRun.Notify_Kind`
+(`failed`, `capped` or `repeated`; null when no notification was due), `Notify_State`
+(`pending`, `sent`, `failed`; null when none was due), `Notify_Attempts` (default 0), `Notify_Error`
+(a fixed sentence, at most 200 characters) and `Notify_At`, and `SystemSettings.Remediation_Repeat_Count`
+(default 3, range 2 to 20) and `Remediation_Repeat_Window_Hours` (default 24, range 1 to 168).
+Existing rows keep today's behavior (nothing due, defaults as stated); the downgrade drops the
+added columns and keeps every run.
+
+`app/remediation_escalation.py` owns the rest. A run is marked for a notification when its outcome
+is `failed` or `timed_out` (kind `failed`), `skipped_cooldown` or `skipped_hourly_cap` (kind
+`capped`), or when it succeeds and the same action has now succeeded `Remediation_Repeat_Count`
+times for the same host and service inside the window with no `repeated` notification in the
+window (kind `repeated`), and only when the action's `Notify_On` lists that kind. The deliberate
+skips (kill switch, Maintenance Mode, downtime, acknowledged) never notify. The consumer marks the
+run in the same commit that records its outcome. Every consumer tick then calls `deliver_pending`:
+each attempt is counted and committed before it is sent, so a stop in the middle is never sent
+again (`fail_unfinished` runs at startup and fails such a run); a failed send keeps the run
+`pending` with a fixed error until `MAX_ATTEMPTS` (3) is reached, then `failed`. Nothing here raises,
+so a missing or unwritable command file is recorded on the run and the consumer carries on.
+
+The notification is a Nagios custom notification written through `app/nagios/commands.py`
+(`SEND_CUSTOM_SVC_NOTIFICATION` for a service, `SEND_CUSTOM_HOST_NOTIFICATION` for a host) with
+option `0`: the force option is never set, so Nagios still applies notification-enabled flags,
+scheduled downtime, timeperiods and escalations, and Nagios alone chooses the recipients. The
+comment is fixed text plus the action name (reduced to letters, digits and `. _ : / -`), the
+outcome code and the run id; plugin output and command output never reach it. Because the message
+is written to the Nagios archive, it appears in the notification feed without a PinPoint-owned
+notification table.
+
 `Config.NAGIOS_HOST` is the CGI network host. In contrast,
 `api/system/statistics.py` uses `NAGIOS_HOST = "localhost"` to identify the
 Nagios server within status data. Changing either requires understanding its
