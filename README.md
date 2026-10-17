@@ -179,7 +179,9 @@ flask db upgrade
   to run if any user already exists.
 - Existing install: back up both databases, then `flask db upgrade`, then
   `flask sync-permissions` (adds any permission introduced since the install and
-  grants it to Administrator; idempotent, never touches users or other roles).
+  grants it to the built-in `Super Admin` role; it also renames the built-in
+  role from its legacy `Administrator` name. Idempotent, never touches users or
+  other roles).
 - Bootstrap administrator recovery: an operator with local server access can
   run `flask recover-bootstrap-admin` from `server/` (activate its virtual
   environment first). It privately prompts twice for a policy-compliant
