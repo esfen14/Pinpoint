@@ -1,9 +1,24 @@
 # Implementation Status and Scope
 
-**Snapshot date:** 2026-10-10
+**Snapshot date:** 2026-10-17
 
 This file reports what is present in the repository. It is not a substitute for
 the normative behavior in the requirement specifications.
+
+## Isolated DHCP acceptance lab (#187)
+
+The opt-in Docker lab in `lab/dhcp/` supplies real IPv4 DHCP on an isolated
+`10.79.0.0/28` test bridge and a separate loopback management path. Its owned
+controller (`scripts/dhcp-lab`) provisions a static appliance/server and two
+persistent, distinct DHCP clients, checks route and resource collisions, moves
+client-1 from A to B and tears down only resources bearing its saved owner
+token. `scripts/dhcp-accept` runs bounded real discovery, Nagios, Inventory and
+History checks plus a second clean cycle; see the [acceptance plan](../server/tests/plans/DHCP_LAB_ACCEPTANCE.md).
+The ordinary static Docker and VM labs remain separate. This lab does not
+cover installer behavior, physical networks, routed discovery without a MAC,
+cloned identities, IPv6, DHCP failover or NCPA deployment. The live outcome is
+recorded in the issue #187 test-run report rather than inferred from the
+runner's presence.
 
 ## Manual topology (#117)
 

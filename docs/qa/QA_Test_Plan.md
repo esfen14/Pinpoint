@@ -972,6 +972,7 @@ the loop reuses and says what is retired.
 | `PLUGIN_DRIVEN_MONITORING_LAB_TEST_PLAN.md` | **Keep as appendix** (manual, upgrade and rollback cases the loop does not run) | J4 |
 | `PLUGIN_DRIVEN_MONITORING_ACCEPTANCE_TEST_PLAN.md` | **Keep as appendix;** its F-, L-, and permission cases are the deep versions of J4, J5, J9 | J4, J5, J9 |
 | `CUSTOM_CHECKS_AND_NCPA_ACCEPTANCE_TEST_PLAN.md` | **Keep as appendix;** N-04 and C-02 (Nagios accepts and runs what the code generates) are release-gating | J3, J4 |
+| `DHCP_LAB_ACCEPTANCE.md` | **Keep as opt-in appendix;** dedicated approved range and exclusive Docker owner are required, outside routine QA/CI scans | J2 identity coverage only when separately run |
 | `PLUGIN_DRIVEN_MONITORING_HARNESS_ADJUSTMENT_PLAN.md` | **Keep, not a test plan.** A proposal for the libvirt harness; nothing in it is run by the loop | none |
 | `TEST_APPROACH_ADJUSTMENT_PLAN.md` | **Keep, not a test plan.** The proposed deterministic browser-to-Nagios runner; superseded in spirit by #63's Playwright setup but not retired until that lands | none |
 | `historical/TEST_FAILURES.md` | **Keep as history** | none |
