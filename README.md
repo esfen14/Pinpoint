@@ -149,6 +149,7 @@ Supported Python version: **3.14** (developed on 3.14.2).
 | `NAGIOS_PLUGIN_DIR` | `/usr/local/nagios/libexec/` | no | Directory scanned by the Plugin Manager. |
 | `PINPOINT_SECRETS_KEY` | `SECRET_KEY` | no | Text the encryption key for stored custom-check passwords is derived from. Without it the key comes from `SECRET_KEY`. If the key changes, stored passwords cannot be read: those checks are left out of `hosts.cfg` until an administrator enters the password again. Keep it stable across upgrades, or set it separately so rotating `SECRET_KEY` does not discard passwords. |
 | `PINPOINT_PORT_ARCHIVE_AFTER_DAYS` | `30` | no | Days a port stays `MISSING` before it is archived and its service leaves Nagios. A number above zero; anything else stops startup. Mainly for shortening the wait in a test lab. |
+| `PINPOINT_NCPA_NOTIFICATION_DEPENDENCIES` | `on` | no | `on` generates a TCP listener service for each monitored NCPA port and makes that device's NCPA metric notifications depend on it; `off` preserves the previous service config. Accepts `on`/`off`, `true`/`false`, or `1`/`0`; anything else stops startup. Takes effect on the next shared Nagios config regeneration after restart. |
 
 For local development, put the values you need in `server/.env` (git-ignored),
 for example:

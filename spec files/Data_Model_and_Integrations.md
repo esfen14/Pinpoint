@@ -380,6 +380,20 @@ This path is injection-sensitive: it only calls the closed functions in `command
 candidate Nagios host configuration, validates it with the Nagios binary,
 backs up the running configuration, and applies only a valid candidate.
 
+By default, a device with generated NCPA metrics also gets a visible
+`pinpoint-ncpa-port-<port>-tcp` listener service when `check_tcp` is enabled.
+Each metric has a `servicedependency` on that exact service with
+`notification_failure_criteria c,u` and `execution_failure_criteria n`:
+failed/unknown port checks suppress metric notifications, while metric checks
+and their status snapshots continue. If the port service is absent, no rule is
+written. `PINPOINT_NCPA_NOTIFICATION_DEPENDENCIES=off` omits both the listener
+and these dependency objects, preserving the previous generated service list.
+The setting defaults on, is read at application startup, and takes effect on
+the next `regenerate_and_apply_config_status()` after restart. The shared
+writer still validates with Nagios and rolls back a rejected candidate. Nagios
+itself suppresses same-host service notifications while their host is DOWN;
+there is no cross-type host-to-service dependency object.
+
 `plugin_registry.py` is the registry and renderer used to resolve discovered
 services to supported plugins and variables. Unmonitorable discovered services
 are recorded as `SkippedService` entries rather than silently discarded.
