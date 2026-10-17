@@ -26,8 +26,8 @@ revise it in place and say why in the round log. Name the files each step touche
 
 1. [x] Add isolated failing tests for credential label parsing and host-state validation (`scripts/test_vmlab_setup_admin.py`).
 2. [x] Implement safe label parsing and endpoint/setup validation for existing state; wire tests into docs verification (`scripts/vmlab`, `scripts/verify.sh`).
-3. [ ] Update VM lab setup documentation and current implementation status (`docs/plans/VM_Lab_Plan.md`, `spec files/Implementation_Status.md`).
-4. [ ] Run focused regression and docs verification; record results (`scripts/test_vmlab_setup_admin.py`, progress file).
+3. [x] Update VM lab setup documentation, owning workflow specification and current implementation status (`docs/plans/VM_Lab_Plan.md`, `docs/plans/Installer_Handoff.md`, `spec files/Agent_Workflow_and_CI.md`, `spec files/Implementation_Status.md`).
+4. [x] Run focused regression and docs verification; record results (`scripts/test_vmlab_setup_admin.py`, progress file).
 
 ## Round log
 
@@ -38,14 +38,16 @@ One row per loop round, newest last.
 | Plan | Plan and requirement coverage recorded | Source/spec inspection | Ready to add failing regressions |
 | 1 | Added actual-command isolated regressions; recognized both labels; authenticated saved state and checked /me setup flags; sanitized output; wired verification | `python3 -I scripts/test_vmlab_setup_admin.py` (red then green), `bash -n scripts/vmlab`, `scripts/verify.sh docs` | Original command failed 8 subcases across 5 tests; fixed command passes all 5 tests and docs verification |
 
+| 2 | Replaced obsolete setup workaround notices with current label parsing and saved-login validation contract; documented no live rerun | `scripts/verify.sh docs && git diff --check` | green |
+
 ## State for the next session
 
 Everything a fresh session needs to continue without redoing work.
 
-- Last check run (exact command): `python3 -I scripts/test_vmlab_setup_admin.py && bash -n scripts/vmlab && scripts/verify.sh docs`
+- Last check run (exact command): `scripts/verify.sh docs && git diff --check`
 - Result (first failing lines, or "green"): green; 5 isolated setup tests, 18 ownership tests and all docs checks pass.
-- Hypothesis: both reported defects are fixed; documentation must now replace the obsolete workaround notice.
-- Next action (one specific step, not "continue"): update VM_Lab_Plan and owning workflow/status specifications with the validated saved-login behavior.
+- Hypothesis: implementation and documentation match all four issue requirements; finish audit and full verification remain.
+- Next action (one specific step, not "continue"): re-read issue 167, audit requirement proofs, prepare checkout-local dependencies and run `scripts/verify.sh all`.
 
 ## Decisions and notes
 
