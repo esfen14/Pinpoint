@@ -133,6 +133,10 @@ Where results go is defined in [`docs/test-runs/README.md`](../docs/test-runs/RE
 | Local lab (fast lane) | Docker | `scripts/lab up`, `scripts/lab smoke`; see [`docs/manuals/Local_Lab.md`](../docs/manuals/Local_Lab.md). A real Nagios and five target servers on an isolated network; not the installer, systemd, DHCP or NCPA installs |
 | Real appliance and VM lab | Installer build, VirtualBox (this laptop) or libvirt (the retained lab) | `scripts/vmlab` with the `demo/` target VMs; plan in [`docs/plans/VM_Lab_Plan.md`](../docs/plans/VM_Lab_Plan.md). The snapshot holds Ubuntu + Nagios only, so it cannot go stale. The libvirt e2e harness in `server/tests/e2e/network_discovery/` is separate. Manual or scheduled, never on pull requests from forks |
 
+The [DHCP lab extension proposal](../docs/plans/DHCP_Lab_Extension_Proposal.md)
+describes a possible future opt-in environment for real lease changes. It is
+planning only; neither current lab provides DHCP acceptance coverage.
+
 ### VM control preflight
 
 Before VM-lab mutation, `scripts/vmlab preflight` must prove one same-user
