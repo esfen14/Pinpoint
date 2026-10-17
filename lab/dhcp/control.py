@@ -75,17 +75,19 @@ def require_owned(labels: dict[str, str], token: str, role: str) -> None:
         raise ValueError(f"resource ownership mismatch for {role}")
 
 
-def render_dnsmasq(reservations: dict[str, str | None]) -> str:
+def render_dnsmasq(reservations: dict[str, str | None], lease_seconds: int = 600) -> str:
     """Render one segment-bound allocator with fixed infrastructure and known MACs."""
     active = [address for address in reservations.values() if address is not None]
     if len(active) != len(set(active)):
         raise ValueError("duplicate DHCP reservation")
     if any(address not in POOL for address in active):
         raise ValueError("reservation outside DHCP pool")
+    if not 60 <= lease_seconds <= 3600:
+        raise ValueError("DHCP lease must be 60..3600 seconds")
     lines = [
         "port=0", "interface=brdhcp", "bind-interfaces", "except-interface=lo",
         "dhcp-authoritative", "dhcp-ignore=tag:!known",
-        f"dhcp-range={POOL[0]},{POOL[1]},255.255.255.240,10m",
+        f"dhcp-range={POOL[0]},{POOL[1]},255.255.255.240,{lease_seconds}s",
         "dhcp-option=option:router", "dhcp-option=option:dns-server",
         "dhcp-leasefile=/tmp/dnsmasq.leases", "log-dhcp",
     ]
@@ -169,6 +171,7 @@ def preflight() -> None:
     if docker("network", "inspect", NETWORK, check=False).returncode == 0:
         raise ValueError(f"network {NETWORK} already exists")
     with socket.socket() as listener:
+        listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         listener.bind(("127.0.0.1", WEB_PORT))
 
 
@@ -262,7 +265,7 @@ def start_server(data: dict) -> None:
     if server_running():
         raise ValueError("DHCP allocator already running")
     data["generation"] = data.get("generation", 0) + 1
-    config = render_dnsmasq(data["reservations"])
+    config = render_dnsmasq(data["reservations"], data.get("lease_seconds", 600))
     log_path = f"/tmp/dnsmasq-{data['generation']}.log"
     config += f"log-facility={log_path}\n"
     docker("exec", "-i", name("switch"), "tee", "/tmp/dnsmasq.conf", input_text=config)
@@ -343,13 +346,14 @@ def wait_api() -> None:
     raise TimeoutError("appliance API did not become ready within 180 seconds")
 
 
-def setup() -> None:
+def setup(lease_seconds: int = 600) -> None:
     """Create the opt-in segment and obtain client-1's initial real A lease."""
     preflight()
     build_images()
     STATE_DIR.mkdir(mode=0o700, parents=True)
     data = {"version": 1, "token": secrets.token_hex(24),
-            "reservations": {"client1": POOL[0], "client2": None}, "generation": 0}
+            "reservations": {"client1": POOL[0], "client2": None}, "generation": 0,
+            "lease_seconds": lease_seconds}
     save_state(data)
     try:
         create_resources(data)
@@ -440,9 +444,11 @@ def main() -> int:
                                              "server-stop", "server-start", "client-restart"))
     parser.add_argument("client", nargs="?", choices=tuple(MACS))
     parser.add_argument("address", nargs="?", choices=POOL)
+    parser.add_argument("--lease-seconds", type=int, default=600,
+                        help="DHCP lease for up (60..3600 seconds; default 600)")
     args = parser.parse_args()
     if args.command == "up":
-        setup()
+        setup(args.lease_seconds)
         return 0
     data = state()
     if args.command == "down":

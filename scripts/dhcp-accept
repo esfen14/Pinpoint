@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Exclusive opt-in real DHCP acceptance. Never run on CI.
+set -euo pipefail
+root="$(cd "$(dirname "$0")/.." && pwd)"
+exec python3 -u -I "$root/lab/dhcp/acceptance.py" "$@"

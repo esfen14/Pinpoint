@@ -131,11 +131,12 @@ Where results go is defined in [`docs/test-runs/README.md`](../docs/test-runs/RE
 |---|---|---|
 | Unit and mocked API tests | Nothing | `scripts/verify.sh`, and CI on every PR |
 | Local lab (fast lane) | Docker | `scripts/lab up`, `scripts/lab smoke`; see [`docs/manuals/Local_Lab.md`](../docs/manuals/Local_Lab.md). A real Nagios and five target servers on an isolated network; not the installer, systemd, DHCP or NCPA installs |
+| Isolated DHCP acceptance | Docker with `CAP_NET_ADMIN` in a dedicated switch namespace | Opt-in `scripts/dhcp-lab` controls and `scripts/dhcp-accept`; see the [Local Lab manual](../docs/manuals/Local_Lab.md#isolated-dhcp-lab) and [acceptance plan](../server/tests/plans/DHCP_LAB_ACCEPTANCE.md). Real `dnsmasq` and `dhclient`, limited to approved `10.79.0.0/28`; never run in CI or on a physical/VPN subnet |
 | Real appliance and VM lab | Installer build, VirtualBox (this laptop) or libvirt (the retained lab) | `scripts/vmlab` with the `demo/` target VMs; plan in [`docs/plans/VM_Lab_Plan.md`](../docs/plans/VM_Lab_Plan.md). The snapshot holds Ubuntu + Nagios only, so it cannot go stale. The libvirt e2e harness in `server/tests/e2e/network_discovery/` is separate. Manual or scheduled, never on pull requests from forks |
 
-The [DHCP lab extension proposal](../docs/plans/DHCP_Lab_Extension_Proposal.md)
-describes a possible future opt-in environment for real lease changes. It is
-planning only; neither current lab provides DHCP acceptance coverage.
+The [DHCP lab design](../docs/plans/DHCP_Lab_Extension_Proposal.md) records the
+Docker feasibility decision and the separate lab's safety contract. The ordinary
+fast lab and VM demo continue to use static addresses.
 
 ### VM control preflight
 

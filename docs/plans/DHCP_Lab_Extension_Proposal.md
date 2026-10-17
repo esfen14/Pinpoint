@@ -1,6 +1,6 @@
 # DHCP lab extension proposal
 
-**Status:** Docker feasibility proven on 2026-10-17; supported lab and product acceptance remain pending (#187).  
+**Status:** Docker feasibility proven and isolated opt-in lab implemented on issue #187; see its [acceptance plan](../../server/tests/plans/DHCP_LAB_ACCEPTANCE.md) and [Local Lab manual](../manuals/Local_Lab.md#isolated-dhcp-lab) for current commands. Live product result is recorded separately in `docs/test-runs/`.
 **Date:** 2026-10-15  
 **Tracking:** [Issue #177](https://github.com/esfen14/Pinpoint/issues/177)
 
@@ -9,9 +9,9 @@ This plan feeds the discovery and identity contract in
 [Device Inventory requirements](../../spec%20files/Device_Inventory_Requirements.md),
 and the lab workflow in
 [Agent Workflow and CI](../../spec%20files/Agent_Workflow_and_CI.md).
-If implemented, update the [Local Lab manual](../manuals/Local_Lab.md) and
-[VM Lab Plan](VM_Lab_Plan.md) to describe the supported commands and limits.
-This proposal does not change product behavior or claim new test coverage.
+The [Local Lab manual](../manuals/Local_Lab.md#isolated-dhcp-lab) describes the
+supported commands and limits. The VM demo stays static. This design document
+does not change product behavior or by itself claim a passed acceptance run.
 
 ## Purpose
 
@@ -105,12 +105,12 @@ existing `pinpoint-lab` remained running and untouched. The exact experiment,
 including the first failed server restart due to an unwritable reused log
 file, is recorded in the [feasibility report](../test-runs/2026-10-17-issue-187-docker-feasibility/REPORT.md).
 
-The tested `10.79.0.0/28` is a feasibility segment only. It was selected after
+The tested `10.79.0.0/28` was selected after
 checking current host routes, active NetworkManager connections and Docker
-subnets (and the documented VM `10.77.0.0/28`). It is **not** an approved QA
-scan range until `QA_Journeys_and_Scope.md` is updated. The experiment performed
-no discovery scan. A production helper must also check routes and ownership
-again at each setup, and prove teardown of its own resources.
+subnets (and the documented VM `10.77.0.0/28`). It was added as a DHCP-only
+approved QA scan range before product discovery. The feasibility experiment
+performed no discovery scan. `scripts/dhcp-lab up` checks routes and ownership
+at every setup; `down` checks ownership and tears down its own resources.
 
 **Docker option — first feasibility check, given the selected Docker lab.**
 Keep the normal fast lab unchanged and investigate a separate DHCP profile.
