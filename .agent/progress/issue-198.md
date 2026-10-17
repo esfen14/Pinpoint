@@ -5,35 +5,35 @@ Status: in-progress
 
 ## Finish condition
 
-- [ ] No snapshot-count field (including `total_snapshots`) exists anywhere in the
+- [x] No snapshot-count field (including `total_snapshots`) exists anywhere in the
   Network Services or Device Services report payloads, nested instances, types,
   tables, cards, help or exports. API contract tests assert key absence, and
   frontend/export tests assert the snapshot-count columns/labels are absent and
   recorded-time/coverage durations have correct names and units. No stored
   snapshot data or general polling behavior is removed.
-- [ ] Both service report uptime values and aggregate values come solely from Nagios
+- [x] Both service report uptime values and aggregate values come solely from Nagios
   archive durations. Tests seed conflicting or absent database snapshots and
   prove they have no effect.
-- [ ] The same service instance has identical durations/uptime in both reports;
+- [x] The same service instance has identical durations/uptime in both reports;
   unequal-duration fixtures prove weighted totals and no rounded reconstruction.
-- [ ] Cover all-OK, mixed states, UNKNOWN, no known time, partially missing history,
+- [x] Cover all-OK, mixed states, UNKNOWN, no known time, partially missing history,
   engine downtime and scheduled downtime. A zero-known instance is excluded from
   the weighted denominator but remains visible in coverage/instance counts.
-- [ ] Cover one state beginning before the range, transitions exactly at the bounds,
+- [x] Cover one state beginning before the range, transitions exactly at the bounds,
   a brief Nagios-recorded outage between Pinpoint polls, custom inclusive dates,
   and malformed/negative/nonfinite values. Fixtures use the real native shape.
-- [ ] Current metadata is visibly distinct from historical uptime, joined by identity
+- [x] Current metadata is visibly distinct from historical uptime, joined by identity
   with correct pending/missing behavior. No last-check timestamp is fabricated.
-- [ ] Empty and failed archive responses have distinct outcomes; archive failure
+- [x] Empty and failed archive responses have distinct outcomes; archive failure
   never falls back to DB values. Status failure preserves historical data only
   with its explicit notice. Login and `system.report` permissions still apply.
-- [ ] Instrumented tests prove one archive request and at most one status request per
+- [x] Instrumented tests prove one archive request and at most one status request per
   report execution, independent of host count. Record latency/response size for
   24-hour and 90-day windows and the supported lab inventory; document any
   performance limit rather than asserting untested large-scale capacity.
-- [ ] Both views' filters, sorting, pagination, custom ranges, rerun/error handling
+- [x] Both views' filters, sorting, pagination, custom ranges, rerun/error handling
   and CSV/XLS/PDF paths have interaction coverage. Snapshot counts are absent, with duration/coverage fields in their place. Host/OS reports and alert/notification reports remain green.
-- [ ] On an exclusively owned lab, compare both views against the installed native
+- [x] On an exclusively owned lab, compare both views against the installed native
   Nagios availability output using identical windows, state filters and
   assumptions. Verify a brief recorded outage and missing history, and repeat a
   failing case once before filing a separate defect. Record exact tested commit,
@@ -77,15 +77,16 @@ Requirement coverage (the full issue plan is covered by the final deliverable â€
 | 1 | Read-only Core 4.5.11 contract probe; native fixtures and sanitized report; no application edits | CGI subprocess probes as www-data, live-now and fixed-window repeat; scripts/verify.sh docs green | Blocked: scheduled fields separate; all-zero missing coverage; historical/live-now discrepancy |
 | 2 | Added shared native duration/status adapter and both report route replacements, service tables/types/help/exports, owning specs and guide; native transition fixture | Helper/API/host/event focused suite: 97 pass; later helper/API: 45 pass; frontend stage green (8 new interactions); backend adapter stage 4014 passed/14 skipped; docs green | Green; final full gate must rerun current complete tree |
 | 3 | Native avail.cgi and browser comparison, real CSV/XLS/PDF exports; fixed invalid custom rerun stale data, added date/DST and exact-boundary coverage | scripts/verify.sh all: 4040 passed/14 skipped backend, 922 frontend, build/lint/docs green; focused latest tests 51 pass; Playwright 2 pass | Green; final evidence commit and remote CI pending |
+| 4 | Final corrected-isolation live/API/browser rerun on 3554f123; committed comparison evidence; main service socket recovered and preserved | Native/archive/API values agree: 5 OK / 4 CRITICAL / 9 known seconds, 55.56%; Playwright 2 pass; final cleanup assertion main socket inode unchanged; docs green | Product acceptance green; current remote CI/review readiness is final gate |
 | resumed | Owner approved corrections; restored active progress | scripts/verify.sh docs | green |
 | Intake | Isolated checkout from latest origin/main; requirement coverage and complete plan written before code | gh issue view 198 --json number,title,body,comments,state | Open; full finish conditions; scoped live checks authorized |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh frontend`
-- Result (first failing lines, or "green"): green; tests/build/lint pass (existing warning-level lint findings remain).
-- Hypothesis: Ending strictly before native query time prevents the no-history pseudo-state path. Native injected-log fixture verifies 720 OK / 130 CRITICAL / 50 UNKNOWN / 100 engine-down seconds; normalized uptime is 80% of 900 recorded seconds.
-- Next action (one specific step, not "continue"): Run the isolated live installed-Core/application comparison while the complete-tree all gate runs.
+- Last check run (exact command): `scripts/verify.sh docs`
+- Result (first failing lines, or "green"): green; final sanitized comparison report links and specifications pass.
+- Hypothesis: Implementation and local/live acceptance are complete; remote CI remains the final gate. Corrected private Core cleanup preserved the main query socket inode and raw synthetic evidence.
+- Next action (one specific step, not "continue"): Remove progress scaffolding for the completed implementation, push the final PR evidence/body, and observe required CI before marking PR #201 ready for human review.
 
 ## Decisions and notes
 

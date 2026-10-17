@@ -279,8 +279,12 @@ separate bulk read; no status is inferred from availability. Both service-report
 contracts, tables and exports remove snapshot counts and expose seconds. Owning
 backend/data/frontend specifications and the [operator guide](../docs/manuals/Service_Reports.md)
 define exact semantics, completed-second windows, retention and Core assumptions.
-No snapshot storage or general polling behavior is removed. Focused helper/API
-and frontend interaction regressions pass; final broad verification and deployed
-comparison are still pending and must be recorded before review readiness.
+No snapshot storage or general polling behavior is removed. The full local gate passes (4040 backend/922 frontend; 14 existing skips), with
+51 focused service regressions and two Chromium tests for both views and all
+exports. The [final comparison](../docs/test-runs/2026-10-17-issue-198-service-availability/REPORT.md)
+records installed Core 4.5.11 real brief-outage/missing-history agreement with
+native avail.cgi, small-inventory timings, and a corrected harness socket-isolation
+failure/recovery. Large real inventories, installer upgrade and production HTTP
+authentication remain untested; CI and human review are tracked on PR #201.
 The initial [contract probe](../docs/test-runs/2026-10-17-issue-198-contract-probe/REPORT.md)
 is historical partial evidence, not final acceptance.
