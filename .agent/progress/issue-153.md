@@ -1,7 +1,7 @@
 # Issue #153: System Implementation Add Failure Escalation and Outcome Visibility for Automatic Recovery
 
 Branch: `issue-153-failure-escalation`
-Status: blocked
+Status: in-progress
 <!-- Status is one of: in-progress | blocked | ready-for-review -->
 
 Plan issue #22 (Parts 22.1 System and 22.2 Web-Interface). Branched from `origin/main` at `7f5bc167`, which already contains #155 (#194), #156 and #182, so the migration head to extend is `f155a3c7d2b1`.
@@ -47,7 +47,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 Files are relative to `server/app` unless stated.
 
 1. [ ] Lab check first (needs a person, see Decisions): confirm `SEND_CUSTOM_SVC_NOTIFICATION;host;service;0;author;comment` is accepted by the lab Nagios, shows in `archivejson.cgi` as a CUSTOM notification, and is suppressed in downtime. Only the host form is verified so far (plan status log 2026-10-13).
-2. [ ] Command channel: add `send_custom_host_notification` and `send_custom_service_notification` to `nagios/commands.py` (closed allowlist, options fixed at 0, comment through `_wire_comment`, validated target). Tests in `tests/unit/test_nagios_commands.py`.
+2. [x] Command channel: add `send_custom_host_notification` and `send_custom_service_notification` to `nagios/commands.py` (closed allowlist, options fixed at 0, comment through `_wire_comment`, validated target). Tests in `tests/unit/test_nagios_commands.py`.
 3. [ ] Models and migration: `RemediationAction.Notify_On` (JSON list or three booleans, default all three), `RemediationRun.Notify_State` / `Notify_Error` / `Notify_Attempts` / notified-at, and two bounded `SystemSettings` columns for the repeat count and window; one multi-database migration after `f155a3c7d2b1` with downgrade. Files: `system_models.py`, `server/migrations/versions/<new>.py`, `tests/unit/test_remediation_migration.py` (or a new migration test), runner under `tests/support/`.
 4. [ ] Escalation logic in a new `remediation_escalation.py`: outcome-to-trigger mapping (failed, timed_out -> failed; skipped_cooldown, skipped_hourly_cap -> capped), `Notify_On` filter, comment builder from fixed text + action name + outcome code + run id, bounded retry, repeat-window detection, idempotency by run id. Tests: `tests/unit/test_remediation_escalation.py`.
 5. [ ] Wire it into `remediation.py` (`execute` and the skip rows in `record_decisions`), without letting a notification failure stop the consumer. Update `tests/unit/test_remediation_consumer.py`.
@@ -66,19 +66,20 @@ One row per loop round, newest last.
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 0 | Read the issue, specs and sources; wrote this plan; branched from `origin/main` | `gh issue view 153` | Plan written, no code changed |
+| 1 | Step 2: `send_custom_host_notification` and `send_custom_service_notification` in `nagios/commands.py` (option fixed at 0), tests in `TestCustomNotifications` | `server/.venv/Scripts/python -m pytest tests/unit/test_nagios_commands.py -q -k CustomNotifications` | 10 failed first (functions missing), then 10 passed |
 
 ## State for the next session
 
 Everything a fresh session needs to continue without redoing work.
 
-- Last check run (exact command): none yet (no code changed).
-- Result (first failing lines, or "green"): n/a
-- Hypothesis: the work is feasible on top of the existing command channel (`nagios/commands.py`), the consumer (`remediation.py`) and the run log UI; the feed reads Nagios `archivejson.cgi` so a custom notification appears there without a new PinPoint table.
-- Next action: after the person answers the questions below, start plan step 2 (write failing tests for `send_custom_service_notification` in `tests/unit/test_nagios_commands.py`).
+- Last check run (exact command): `server/.venv/Scripts/python -m pytest tests/unit/test_nagios_commands.py -q -k CustomNotifications`
+- Result (first failing lines, or "green"): green, 10 passed. The older FIFO tests in the same file error on Windows (`os.mkfifo` missing); they run on Linux CI only.
+- Hypothesis: the command layer is done; the rest builds on it.
+- Next action: plan step 3, write the failing migration test, then add `Notify_On`, the run notification fields and the two settings columns in `system_models.py` and a migration after `f155a3c7d2b1`.
 
 ## Decisions and notes
 
-Questions for a person (Status is blocked until answered):
+Questions for a person. The person said "let's start" without answering, so work proceeds on the proposed answers to 1 and 2; question 3 is asked again before the lab run (plan step 1 and 12):
 
 1. **Sensitive module.** This change adds a command that writes to the Nagios pipe, which Engineering Standards lists as a command execution path needing an explicit injection and secret-exposure review. Confirm that doing the review inside this PR (comment built from fixed text only, closed allowlist, no raw output) is acceptable.
 2. **Repeat settings.** Proposed: two bounded `SystemSettings` columns, `Remediation_Repeat_Count` (default 3, range 2 to 20) and `Remediation_Repeat_Window_Hours` (default 24, range 1 to 168), edited next to the existing Remediation settings. Confirm, or say where else they should live.
