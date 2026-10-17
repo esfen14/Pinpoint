@@ -25,6 +25,8 @@ Requirement coverage:
 1. [x] Document the user's Option A decision in `spec files/Device_Inventory_Requirements.md`, `spec files/Data_Model_and_Integrations.md`, `spec files/Implementation_Status.md`, and `docs/manuals/Notification_Policy.md`.
 2. [x] Run `scripts/verify.sh docs`, review the documentation diff, and checkpoint the scoped decision work.
 3. [x] Open a draft PR recording that reproduction and acceptance coverage remain outstanding; do not close #173.
+4. [ ] Complete the remaining #173 finish conditions requested by the user: add an opt-in isolated routed acceptance driver in `server/tests/e2e/parent_reachability.py`, update `server/tests/plans/MANUAL_TOPOLOGY_ACCEPTANCE.md` and the test guide, reproduce one-attempt notifications and record exact settings/states/events in a new `docs/test-runs/` report.
+5. [ ] Update implementation status and issue checkboxes from observed evidence; run `scripts/verify.sh all`, remove progress scaffolding, and mark PR #192 ready after CI passes.
 
 ## Round log
 
@@ -46,3 +48,5 @@ Requirement coverage:
 ## Decisions and notes
 
 On 2026-10-17 the user chose Option A: allow a transient child DOWN notification before Nagios confirms parent reachability. One-attempt monitoring remains supported; the default is three attempts. No immediate suppression guarantee, fixed convergence timeout, cache change, notification delay, or retry restriction is introduced. The user requested documenting the quirk, not completing the remaining live reproduction and acceptance work; keep #173 open.
+
+The user subsequently requested all issue finish conditions completed and the PR ready for review. Scope is expanded to the isolated real Nagios reproduction already required by #173, acceptance coverage, full verification and review readiness. No shared lab or production configuration is authorized for mutation.
