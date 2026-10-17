@@ -100,8 +100,8 @@ def config(directory, redundant):
             'host_name': name, 'alias': name, 'address': address,
             'check_command': 'ping-host', 'check_period': 'always',
             'max_check_attempts': 1, 'check_interval': 60, 'retry_interval': 1,
-            # Forced active checks provide controlled order; normal scheduling is disabled.
-            'active_checks_enabled': 0, 'passive_checks_enabled': 0,
+            # Forced checks control order while ordinary active checking remains enabled.
+            'active_checks_enabled': 1, 'passive_checks_enabled': 0,
             'notifications_enabled': 1, 'notification_period': 'always',
             'notification_options': 'd,u,r', 'notification_interval': 0,
             'first_notification_delay': 0, 'contacts': 'sink',

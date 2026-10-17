@@ -66,9 +66,9 @@ pytest collection, CI, installation or startup.
 
 Controlled timing: the runner sets `interval_length=2`, host `check_interval=60`
 (120 seconds), `retry_interval=1` (2 seconds), `max_check_attempts=1`, and both
-cache horizons to 15 seconds. Per-host scheduled active checks are disabled;
-forced **active** checks through the Core command FIFO control ordering. Passive
-checks are disabled. A fresh parent UP result is requested just before router
+cache horizons to 15 seconds. Normal active host checking remains enabled; forced **active** checks through
+the Core command FIFO control ordering and move the next regular check out by
+the 120-second interval. Passive checks are disabled. A fresh parent UP result is requested just before router
 power-off; child failure is processed inside that cached-UP window. Follow-up
 forced checks confirm parent loss and child UNREACHABLE. This deliberately exposes
 the supported quirk; it does not measure normal scheduler latency or establish a

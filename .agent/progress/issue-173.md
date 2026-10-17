@@ -52,3 +52,5 @@ Requirement coverage:
 On 2026-10-17 the user chose Option A: allow a transient child DOWN notification before Nagios confirms parent reachability. One-attempt monitoring remains supported; the default is three attempts. No immediate suppression guarantee, fixed convergence timeout, cache change, notification delay, or retry restriction is introduced. The user requested documenting the quirk, not completing the remaining live reproduction and acceptance work; keep #173 open.
 
 The user subsequently requested all issue finish conditions completed and the PR ready for review. Scope is expanded to the isolated real Nagios reproduction already required by #173, acceptance coverage, full verification and review readiness. No shared lab or production configuration is authorized for mutation.
+
+Verification refinement: repeat the final driver with ordinary active host checking enabled, using forced active checks only to control ordering inside the regular 120-second interval. This avoids relying on disabled scheduling for the reproduction; the earlier controlled run remains raw evidence.
