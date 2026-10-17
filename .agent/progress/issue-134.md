@@ -66,3 +66,5 @@ Created approved follow-up implementation issue: https://github.com/esfen14/Pinp
 
 
 2026-10-17 reporting revision: Owner requested a Nagios-aligned report revision plan with citations and UI planning, tagged low-priority/enhancement/web-interface. Drafted docs/plans/Reports_Revision_Nagios_Alignment_Plan.md, citing official Core CGI docs and pinned 4.5.11 availability/trends/summary/histogram source. Scope preserves six reports, adds availability detail/timeline, summary and histogram, defines UI/export/source/completeness/verification requirements, and depends on #198. No app implementation. `scripts/verify.sh docs` passes. Publish as a separate implementation backlog issue using existing `Low Priority`, `enhancement`, `web-interface` labels.
+
+Filed reporting revision plan as https://github.com/esfen14/Pinpoint/issues/199 with Low Priority, enhancement and web-interface labels. Full plan/citations/UI wireframe/checklist are self-contained in the issue. #198 is its service-source dependency. No product implementation or PR in this turn.

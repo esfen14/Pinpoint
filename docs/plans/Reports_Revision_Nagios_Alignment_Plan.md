@@ -1,7 +1,8 @@
 # Reports revision aligned with Nagios Core
 
 Status: proposed implementation backlog — requested 2026-10-17; no application
-changes made. Priority: Low. Labels: `Low Priority`, `enhancement`, `web-interface`.
+changes made. Implementation issue: [#199](https://github.com/esfen14/Pinpoint/issues/199).
+Priority: Low. Labels: `Low Priority`, `enhancement`, `web-interface`.
 
 Related work: [#134](https://github.com/esfen14/Pinpoint/issues/134) corrects
 existing report documentation; [#198](https://github.com/esfen14/Pinpoint/issues/198)
