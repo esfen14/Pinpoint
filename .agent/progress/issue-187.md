@@ -8,9 +8,9 @@ Status: in-progress
 - [x] Docker feasibility experiment documents real DHCP, running A-to-B move, appliance connectivity, cleanup, privilege/isolation/cost and design decision.
 - [x] Opt-in controls create/manage isolated server, appliance interface and two persistent clients; capture evidence, reset and cleanly tear down owned resources.
 - [x] Safety guards enforce one allocator, binding/isolation, separate management, infrastructure outside pool, ownership, approved range; static labs still work.
-- [ ] Live client-1 A-to-B and real discovery/Nagios/browser/history identity continuity pass.
-- [ ] Live client-2 A reuse and remaining bounded matrix pass, with clean repeat of primary cases.
-- [ ] Sanitized test-run report includes commit, owner, range, DHCP/client/OS/discovery/Nagios/browser/timing/cleanup evidence; raw logs stay on host.
+- [x] Live client-1 A-to-B and real discovery/Nagios/browser/history identity continuity pass.
+- [x] Live client-2 A reuse and remaining bounded matrix pass, with clean repeat of primary cases.
+- [x] Sanitized test-run report includes commit, owner, range, DHCP/client/OS/discovery/Nagios/browser/timing/cleanup evidence; raw logs stay on host.
 - [ ] Manuals, plans, owning specifications and status updated; changed-stage and all verification pass.
 
 Requirement coverage:
@@ -32,8 +32,8 @@ Requirement coverage:
 1. [x] Run a throwaway Docker feasibility experiment and document evidence/decision in `docs/plans/DHCP_Lab_Extension_Proposal.md` and a new `docs/test-runs/.../REPORT.md`; check routes and lab ownership first.
 2. [x] Add failing lifecycle/safety tests under `server/tests/unit/` or `lab/tests/`, then implement the isolated opt-in lab in `lab/dhcp/` and `scripts/dhcp-lab` using the chosen design.
 3. [x] Add failing bounded runner tests, then implement `lab/dhcp/acceptance.py` and a test plan under `server/tests/plans/` for the six cases and evidence collection.
-4. [ ] Run the live clean-lab matrix with real discovery, Nagios and browser evidence; preserve raw logs off-repository and record actual pass/fail in `docs/test-runs/` (the QA range approval moved before the first full setup).
-5. [ ] Update `docs/manuals/Local_Lab.md`, `docs/plans/VM_Lab_Plan.md` if applicable, `spec files/Agent_Workflow_and_CI.md`, `spec files/Data_Model_and_Integrations.md` if behavior changes, and `spec files/Implementation_Status.md`; run changed-stage gates.
+4. [x] Run the live clean-lab matrix with real discovery, Nagios and browser evidence; preserve raw logs off-repository and record actual pass/fail in `docs/test-runs/` (the QA range approval moved before the first full setup).
+5. [x] Update `docs/manuals/Local_Lab.md`, `docs/plans/VM_Lab_Plan.md` if applicable, `spec files/Agent_Workflow_and_CI.md`, `spec files/Data_Model_and_Integrations.md` if behavior changes, and `spec files/Implementation_Status.md`; run changed-stage gates.
 6. [ ] Re-read issue and prove each finish item, run `scripts/verify.sh all`, remove progress, push branch and open PR.
 
 ## Round log
@@ -43,13 +43,14 @@ Requirement coverage:
 | 1 | Proved Docker DHCP A-to-B with `CAP_NET_ADMIN`, documented privilege, isolation, cost, cleanup and failure/recovery; selected Docker | `bash /tmp/pinpoint-187-feasibility/run.sh`; `scripts/verify.sh docs` | Two final experiments green; docs green; no residual owned container/network |
 | 2 | Added opt-in controller, images, persistent distinct clients, ownership/collision checks, lease operations, evidence and teardown; approved DHCP-only QA range | Focused pytest (4 passed); live `up`, `move`, `reuse`, `client-restart`, `reset`, server stop/start, `down`; `scripts/verify.sh docs`; `scripts/verify.sh backend` | Live controls passed after management bridge correction; no owned resource residue; docs green; backend 3753 passed, 14 skipped |
 | 3 | Added bounded live runner, Playwright Inventory/History checkpoint and plan; corrected active-device lookup, host-state casing and browser readiness; documented controls | Focused pytest (11 passed), `scripts/verify.sh frontend`, `scripts/verify.sh docs`; full live matrix cycle 1 | Eight of nine cycle-1 cases pass; browser Inventory checked before client-2's first Nagios snapshot and failed. Runner now waits for that snapshot. Interrupted cycle 2 after preserving cycle-1 evidence; owned lab cleaned up. |
+| 4 | Retained case identity/check details in raw JSON; ran two clean live cycles; wrote sanitized report and updated manual, plan and specs | Focused pytest (12 passed), `scripts/verify.sh docs`, `scripts/dhcp-accept --lease-seconds 90`, `scripts/lab smoke` | All 9 full-matrix plus 5 clean-repeat cases pass, including both browser History checks; DHCP owner resources removed; ordinary static lab smoke 9/9. Full gate running. |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh frontend > /tmp/pinpoint-187-frontend.log 2>&1`
-- Result (first failing lines, or "green"): green; 0 errors, 1 existing lint warning.
-- Hypothesis: Waiting for client-2's fresh UP snapshot before starting Playwright will make Inventory show its A row; all other cycle-1 cases already passed.
-- Next action (one specific step, not "continue"): Re-run `scripts/dhcp-accept --lease-seconds 90` from a clean lab and inspect both cycles and browser screenshots.
+- Last check run (exact command): `scripts/lab smoke > /tmp/pinpoint-187-static-smoke.log 2>&1`
+- Result (first failing lines, or "green"): green; 9 passed, 0 failed.
+- Hypothesis: The implementation and report are complete; the remaining risk is repository-wide verification/CI.
+- Next action (one specific step, not "continue"): Inspect `scripts/verify.sh all` result, repair any failure, audit issue finish conditions, then push and open the PR.
 
 ## Decisions and notes
 

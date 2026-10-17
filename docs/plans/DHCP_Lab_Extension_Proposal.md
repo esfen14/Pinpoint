@@ -25,14 +25,15 @@ and browser/merge checks did not move a live target through DHCP. This extension
 would close that distinct gap; it does not retroactively turn those results into
 DHCP acceptance evidence.
 
-## Current baseline
+## Original baseline
 
 The Docker lab in `lab/compose.yaml` uses static Compose addresses on an isolated
 `10.78.0.0/24` bridge. Its target image and entrypoint do not run a DHCP client.
 The VM demo in `demo/demo_lab.py` also generates static netplan addresses on its
-`10.77.0.0/28` internal network. Neither is currently a DHCP test environment;
-the [Local Lab manual](../manuals/Local_Lab.md#what-it-cannot-test) explicitly
-excludes DHCP lease changes.
+`10.77.0.0/28` internal network. Neither of those ordinary environments is a
+DHCP test environment; the [Local Lab manual](../manuals/Local_Lab.md#what-it-cannot-test)
+excludes DHCP lease changes from the static lab and points to the separate
+opt-in DHCP lab.
 
 Docker normally assigns addresses itself through its networking system;
 changing a Compose address or reconnecting a container with another Docker IP
