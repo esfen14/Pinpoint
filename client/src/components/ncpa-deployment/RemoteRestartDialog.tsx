@@ -18,8 +18,6 @@ export function RemoteRestartDialog({ deviceId, hostname, onClose }: Props) {
 
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
-    setError(null)
     getRemoteRestart(deviceId).then((data) => {
       if (cancelled) return
       setSettings(data)
@@ -65,12 +63,12 @@ export function RemoteRestartDialog({ deviceId, hostname, onClose }: Props) {
         {loading && <p>Loading restart settings…</p>}
         {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
         {notice && <p role="status" className="text-sm text-emerald-700 dark:text-emerald-400">{notice}</p>}
-        {!loading && !settings && <button type="button" onClick={() => setRetry((value) => value + 1)}>Retry</button>}
+        {!loading && !settings && <button type="button" onClick={() => { setLoading(true); setError(null); setRetry((value) => value + 1) }}>Retry</button>}
         {!loading && settings && (
           <>
             {!settings.trusted && <p className="text-sm">Trust and deploy this device before enabling remote restart. You can prepare its service list now.</p>}
             <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={enabled} disabled={!settings.trusted || saving} onChange={(event) => setEnabled(event.target.checked)} />
+              <input type="checkbox" checked={enabled} disabled={(!settings.trusted && !enabled) || saving} onChange={(event) => setEnabled(event.target.checked)} />
               Allow remote service restart
             </label>
             <label htmlFor="restart-services" className="block text-sm">Services allowed to restart</label>

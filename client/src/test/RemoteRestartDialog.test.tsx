@@ -57,3 +57,13 @@ it('shows permission denial without exposing editable controls', async () => {
   expect(await screen.findByRole('alert')).toHaveTextContent(/permission/)
   expect(screen.queryByRole('button', { name: 'Save settings' })).not.toBeInTheDocument()
 })
+
+it('can turn an enabled policy off after deployment trust is lost', async () => {
+  api.getRemoteRestart.mockResolvedValue({ enabled: true, services: ['apache2'], trusted: false })
+  render(<RemoteRestartDialog deviceId={7} hostname="web-01" onClose={onClose} />)
+  const enabled = await screen.findByLabelText('Allow remote service restart')
+  expect(enabled).toBeEnabled()
+  fireEvent.click(enabled)
+  fireEvent.click(screen.getByRole('button', { name: 'Save settings' }))
+  await waitFor(() => expect(api.saveRemoteRestart).toHaveBeenCalledWith(7, { enabled: false, services: ['apache2'] }))
+})
