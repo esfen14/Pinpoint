@@ -289,11 +289,15 @@ function AddAccountModal({
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Options can arrive after the modal opens. Use the displayed default for
+  // validation and submission too, without overwriting an explicit selection.
+  const roleId = form.roleId || roleOptions[0]?.id || 0
+
   const formValid =
     form.firstName.trim() &&
     form.lastName.trim() &&
     form.email.trim() &&
-    form.roleId &&
+    roleOptions.some((role) => role.id === roleId) &&
     form.password === form.confirmPassword &&
     isPasswordValid(form.password, strongPasswordPolicy)
 
@@ -309,7 +313,7 @@ function AddAccountModal({
         password: form.password,
         confirm_password: form.confirmPassword,
         status: form.status,
-        role_id: form.roleId,
+        role_id: roleId,
         require_password_change: form.requirePasswordChange,
         ...(canEditAlerts ? { receive_email_alerts: form.receiveEmailAlerts } : {}),
       })
@@ -379,7 +383,7 @@ function AddAccountModal({
               ROLE
             </label>
             <select
-              value={form.roleId}
+              value={roleId}
               onChange={(e) => setForm({ ...form, roleId: Number(e.target.value) })}
               className={SELECT_CLASS}
             >
@@ -407,6 +411,12 @@ function AddAccountModal({
             </select>
           </div>
         </div>
+
+        {roleOptions.length === 0 && (
+          <p className="mt-2 text-center text-xs text-[var(--text-muted)]" role="status">
+            A role is required to save. Wait for roles to load; if none appear, check that an active role is available.
+          </p>
+        )}
 
         <div className="my-6 border-t border-[var(--border)]" />
 

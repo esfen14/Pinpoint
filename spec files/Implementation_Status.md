@@ -50,6 +50,20 @@ Review readiness and CI are tracked on PR #192. Parent links do not implement
 routing failover or guarantee immediate suppression under every Nagios cache/retry
 configuration.
 
+## Account creation (#191)
+
+The Add User dialog now uses the displayed default role for validation and
+submission even when roles load after the dialog opens. The previously stale
+zero role ID could keep Save disabled despite a visibly selected role. Isolated
+interaction tests cover the timing regression, sequential creation and list
+refresh, explicit role/status, no-role guidance and rejection/retry. A backend
+regression verifies two additional persisted accounts and a total of three.
+A [local Chromium/real Flask run](../docs/test-runs/2026-10-17-issue-191-accounts/REPORT.md)
+also confirms delayed-role creation, a second account and reload persistence
+with temporary SQLite and a stubbed Nagios writer. The API has no one-account cap. The exact trigger in the original report is
+unconfirmed; password policy and mismatch checks intentionally still block Save.
+See [the investigation](../docs/plans/Issue_191_Account_Creation_Investigation.md).
+
 ## Implemented backend areas
 
 - Session login/logout and current-user identity.
