@@ -657,6 +657,31 @@ class TestCreateAccount:
         )
         assert resp.status_code == 201
 
+    def test_administrator_can_create_multiple_persisted_accounts(
+        self, logged_in_client, db_session, admin_user, admin_role,
+    ):
+        for email in ("additional1@example.com", "additional2@example.com"):
+            response = logged_in_client.post(
+                "/api/user/accounts", json=self._payload(admin_role, email=email),
+            )
+            assert response.status_code == 201
+            assert response.get_json()["success"] is True
+
+        db_session.session.expire_all()
+        users = db_session.session.scalars(sa.select(User)).all()
+        assert {user.Email for user in users} == {
+            admin_user.Email, "additional1@example.com", "additional2@example.com",
+        }
+        for user in users:
+            if user.Email != admin_user.Email:
+                assert user.RoleID == admin_role.RoleID
+                assert user.Status == UserStatus.ACTIVE
+                assert user.Must_Change_Password is True
+
+        response = logged_in_client.get("/api/user/accounts")
+        assert response.status_code == 200
+        assert response.get_json()["data"]["total"] == 3
+
     def test_create_account_duplicate_email(self, logged_in_client, db_session, admin_user, admin_role):
         resp = logged_in_client.post(
             "/api/user/accounts",

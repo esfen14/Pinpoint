@@ -55,6 +55,15 @@ saved) and otherwise `ForcePasswordChange` when `mustChangePassword`. The Add
 User form has a "Require password change at first sign-in" checkbox, ticked by
 default, sent as `require_password_change`.
 
+Manage Accounts → Add User uses the first loaded active role as its default,
+including when the dialog was opened before role options arrived. Rendering,
+validation and submission use the same role ID; explicit role selections are
+preserved. Save remains disabled without an available role, with guidance to
+wait for loading or check active roles. Matching passwords must meet the active
+password policy. Successful creation closes the dialog and refreshes the list;
+a rejected save retains the draft and displays the server message. Further
+accounts can be created without reloading the page.
+
 When adding a page:
 
 1. Add the page component under `src/pages/`.
