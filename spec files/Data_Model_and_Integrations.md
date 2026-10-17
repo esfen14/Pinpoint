@@ -850,11 +850,24 @@ existing Plugin Manager derived rows before committing.
 
 
 Nagios still owns state classification and notifications. Declaring multiple
-parents does not create alternate network routes. Cached parent states and a
-single check attempt can briefly classify a child DOWN before UNREACHABLE;
-see [the observed trial and follow-up](../docs/test-runs/2026-10-15-issue-117-manual-topology/REPORT.md).
-The default-three-attempt routed trial passed. No global cache, retry or notification
-setting is silently changed by selecting parents.
+parents does not create alternate network routes. The accepted contract for #173
+is Option A: a transient child DOWN notification is allowed before Nagios confirms
+parent reachability. One-attempt monitoring remains supported. A recent cached UP
+parent result can cause a failing child to be classified DOWN; with
+`max_check_attempts=1`, that failure can immediately become HARD and notify under
+the configured notification policy. Later checks classify a still-failing child
+UNREACHABLE when all rendered parents are DOWN or UNREACHABLE. A parent still UP
+means a failing child is DOWN; a responding child is UP. This depends on subsequent
+checks and updated reachability information, not a fixed timeout.
+
+See [the observed trial and follow-up](../docs/test-runs/2026-10-15-issue-117-manual-topology/REPORT.md).
+The default-three-attempt routed trial passed; it does not prove immediate
+child-DOWN suppression for every timing/cache configuration. The check interval
+controls scheduled check frequency, while maximum attempts controls failure
+confirmation; discovery scans and Pinpoint data polling are independent.
+No cache, retry or notification setting is changed by this decision or by selecting
+parents, and hosts without eligible parents retain their existing behavior.
+See the [operator guidance](../docs/manuals/Notification_Policy.md#parent-outages-and-temporary-child-down-alerts).
 
 ### Escalation rendering and recipient ownership
 

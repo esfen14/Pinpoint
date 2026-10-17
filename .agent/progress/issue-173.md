@@ -5,9 +5,9 @@ Status: in-progress
 
 ## Finish condition
 
-- [ ] Decide and document whether child-DOWN suppression is guaranteed for all supported retry settings or only after Nagios confirms parent reachability.
+- [x] Decide and document whether child-DOWN suppression is guaranteed for all supported retry settings or only after Nagios confirms parent reachability.
 - [ ] Reproduce the one-attempt transient with an isolated real Nagios routed network; preserve a sanitized report with exact Nagios/timing/cache settings, hard states and notification events.
-- [ ] If a configuration change is approved, name its owning installer/application contract and preserve no-parent behavior; do not silently change Nagios main caching settings in #117.
+- [x] If a configuration change is approved, name its owning installer/application contract and preserve no-parent behavior; do not silently change Nagios main caching settings in #117.
 - [ ] Add appropriate regression/acceptance coverage and operator guidance for the agreed guarantee.
 
 Requirement coverage:
@@ -22,8 +22,8 @@ Requirement coverage:
 
 ## Plan
 
-1. [ ] Document the user's Option A decision in `spec files/Device_Inventory_Requirements.md`, `spec files/Data_Model_and_Integrations.md`, `spec files/Implementation_Status.md`, and `docs/manuals/Notification_Policy.md`.
-2. [ ] Run `scripts/verify.sh docs`, review the documentation diff, and checkpoint the scoped decision work.
+1. [x] Document the user's Option A decision in `spec files/Device_Inventory_Requirements.md`, `spec files/Data_Model_and_Integrations.md`, `spec files/Implementation_Status.md`, and `docs/manuals/Notification_Policy.md`.
+2. [x] Run `scripts/verify.sh docs`, review the documentation diff, and checkpoint the scoped decision work.
 3. [ ] Open a draft PR recording that reproduction and acceptance coverage remain outstanding; do not close #173.
 
 ## Round log
@@ -32,12 +32,14 @@ Requirement coverage:
 |---|---|---|---|
 | Plan | Recorded scoped documentation plan and user's choice | Read #173, existing routed report, specifications and Nagios host/cached-check documentation | Option A accepted; no monitoring policy/configuration change requested |
 
+| 1 | Documented Option A contract, classification conditions, timing/cache quirk and operator guidance in four files | `scripts/verify.sh docs`; `git diff --check` | green; no code or configuration changes |
+
 ## State for the next session
 
-- Last check run (exact command): `git status --short`
-- Result (first failing lines, or "green"): green; clean starting checkout
-- Hypothesis: Existing engine behavior needs an explicit documented guarantee and operator guidance.
-- Next action: Update the four documentation files named in plan step 1.
+- Last check run (exact command): `scripts/verify.sh docs` and `git diff --check`
+- Result (first failing lines, or "green"): green; all documentation checks and whitespace validation pass
+- Hypothesis: The requested documentation is complete; remaining issue finish conditions require separate live reproduction and acceptance work.
+- Next action: Open a draft PR for the completed decision documentation, leaving #173 open.
 
 ## Decisions and notes
 
