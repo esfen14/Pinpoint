@@ -16,7 +16,13 @@ class SetupAdminTests(unittest.TestCase):
         for name in ['scripts', 'lab', 'bin', 'state']:
             (self.root / name).mkdir()
         shutil.copyfile(Path(__file__).with_name('vmlab'), self.root / 'scripts/vmlab')
-        (self.root / 'scripts/vmlab_preflight.py').write_text('raise SystemExit(0)\n')
+        (self.root / 'scripts/vmlab_preflight.py').write_text('''import os
+from pathlib import Path
+path = Path(os.environ['FAKE_PREFLIGHT_COUNT'])
+count = int(path.read_text()) + 1 if path.exists() else 1
+path.write_text(str(count))
+raise SystemExit(int(count > int(os.environ['FAKE_PREFLIGHT_LIMIT'])))
+''')
         self.executable('VBoxManage', '#!/bin/sh\nexit 0\n')
         self.executable('ssh', '''#!/bin/sh
 case "$*" in
@@ -53,9 +59,10 @@ class Client:
         path.write_text(content)
         path.chmod(0o700)
 
-    def run_setup(self, responses, saved=False, credentials=''):
+    def run_setup(self, responses, saved=False, credentials='', preflight_limit=99):
         self.calls.unlink(missing_ok=True)
         (self.root / 'removed').unlink(missing_ok=True)
+        (self.root / 'preflight-count').unlink(missing_ok=True)
         self.responses.write_text(json.dumps(responses))
         self.credentials.write_text(credentials)
         if saved:
@@ -64,6 +71,7 @@ class Client:
         env = dict(os.environ, PATH=str(self.root / 'bin') + ':' + os.environ['PATH'],
                    VMLAB_CONFIG=str(self.root / 'config'), VMLAB_STATE_DIR=str(self.root / 'state'),
                    FAKE_CREDENTIALS=str(self.credentials), FAKE_REMOVED=str(self.root / 'removed'),
+                   FAKE_PREFLIGHT_COUNT=str(self.root / 'preflight-count'), FAKE_PREFLIGHT_LIMIT=str(preflight_limit),
                    FAKE_CALLS=str(self.calls), FAKE_RESPONSES=str(self.responses))
         result = subprocess.run(['bash', str(self.root / 'scripts/vmlab'), 'setup-admin'],
                                 env=env, capture_output=True, text=True, timeout=10)
@@ -131,6 +139,15 @@ class Client:
         result = self.run_setup({'/api/user/login': 'unavailable'}, saved=True)
         self.assertNotEqual(result.returncode, 0)
         self.assertNotIn('Traceback', result.stderr)
+
+    def test_changed_ownership_blocks_saved_login_validation(self):
+        result = self.run_setup({
+            '/api/user/login': [200, {'success': True}],
+            '/api/user/me': [200, {'success': True, 'data': {'needs_setup': False, 'must_change_password': False}}],
+        }, saved=True, preflight_limit=2)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(self.api_calls(), [])
+        self.assertFalse((self.root / 'removed').exists())
 
     def test_setup_failure_preserves_installer_credentials_and_saved_state(self):
         result = self.run_setup({

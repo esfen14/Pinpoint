@@ -410,6 +410,7 @@ case "$cmd" in
     first="$(printf '%s\n' "$creds" | awk '/^Password:/{getline; print; exit}')"
     if [ -z "$email" ] || [ -z "$first" ]; then
       if [ -f "$state_dir/admin-email" ] && [ -f "$state_dir/admin-password" ]; then
+        preflight || die "cannot validate stored administrator state while endpoint ownership is ambiguous"
         SETUP_URL="$(web_url)" SETUP_EMAIL="$(cat "$state_dir/admin-email")" SETUP_PASSWORD="$(cat "$state_dir/admin-password")" python3 -I -c '
 import os, sys
 sys.path.insert(0, sys.argv[1])
