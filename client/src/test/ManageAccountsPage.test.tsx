@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
@@ -270,6 +270,33 @@ describe('ManageAccountsPage', () => {
   })
 
   describe('Add User', () => {
+    it('can save when Add User opens before role options arrive', async () => {
+      let resolveRoles!: (value: { items: typeof ROLES }) => void
+      const pendingRoles = new Promise<{ items: typeof ROLES }>((resolve) => { resolveRoles = resolve })
+      apiGet.mockImplementation((path: string) =>
+        path === '/api/user/roles/options' ? pendingRoles : routeApi(path),
+      )
+      const user = userEvent.setup()
+      renderPage()
+      await user.click(screen.getByRole('button', { name: '+ Add User' }))
+      await user.type(screen.getByPlaceholderText('e.g. JUAN'), 'Ana')
+      await user.type(screen.getByPlaceholderText('e.g. CRUZ'), 'Reyes')
+      await user.type(screen.getByPlaceholderText('e.g. juan.cruz@email.com'), 'ana@example.com')
+      const [passwordInput, confirmInput] = document.querySelectorAll<HTMLInputElement>('input[type="password"]')
+      await user.type(passwordInput, 'StrongPass123!')
+      await user.type(confirmInput, 'StrongPass123!')
+      expect(screen.getByRole('button', { name: 'SAVE CHANGES' })).toBeDisabled()
+
+      await act(async () => resolveRoles({ items: ROLES }))
+
+      expect(screen.getAllByRole('combobox')[0]).toHaveValue('1')
+      expect(screen.getByRole('button', { name: 'SAVE CHANGES' })).toBeEnabled()
+      await user.click(screen.getByRole('button', { name: 'SAVE CHANGES' }))
+      await waitFor(() => expect(apiPost).toHaveBeenCalledWith(
+        '/api/user/accounts', expect.objectContaining({ role_id: 1 }),
+      ))
+    })
+
     async function openAndFill(password: string, confirm = password) {
       const user = userEvent.setup()
       await renderLoaded()

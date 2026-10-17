@@ -18,7 +18,7 @@ Status: in-progress
 
 ## Plan
 
-1. [ ] Investigate loading and validation in `client/src/pages/ManageAccountsPage.tsx` and `server/app/api/user/management.py`; reproduce with a failing regression in `client/src/test/ManageAccountsPage.test.tsx` and document findings in `docs/plans/Issue_191_Account_Creation_Investigation.md`.
+1. [x] Investigate loading and validation in `client/src/pages/ManageAccountsPage.tsx` and `server/app/api/user/management.py`; reproduce with a failing regression in `client/src/test/ManageAccountsPage.test.tsx` and document findings in `docs/plans/Issue_191_Account_Creation_Investigation.md`.
 2. [ ] Fix the confirmed UI defect in `ManageAccountsPage.tsx`; verify valid sequential UI creation, role/status choices, password validation and failed saves in the page tests, plus persisted creation in `server/tests/unit/test_management.py` if needed.
 3. [ ] Update `spec files/Frontend_Modules_and_Routes.md` and `spec files/Implementation_Status.md`, re-read issue, run `scripts/verify.sh all`, remove progress file and open PR; verify CI.
 
@@ -26,14 +26,16 @@ Status: in-progress
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| resumed | Read saved plan and reran last check | `git status --short` | green |
+| 1 | Added delayed-options UI regression; documented confirmed stale-role defect and limits of original-report reproduction | `cd client && npm run test -- src/test/ManageAccountsPage.test.tsx` | 1 failed as expected (Save remains disabled); 26 passed |
 | Intake | Inspected create route and page: no backend count cap; possible stale initial role ID when modal opens before options load | Source inspection | Needs executable reproduction |
 
 ## State for the next session
 
-- Last check run (exact command): `git status --short`
-- Result (first failing lines, or "green"): green; isolated worktree created from origin/main 8abddf55.
+- Last check run (exact command): `cd client && npm run test -- src/test/ManageAccountsPage.test.tsx`
+- Result (first failing lines, or "green"): 1 failed as expected: expect(element).toBeEnabled(); Save button disabled despite displayed role 1.
 - Hypothesis: modal role state initializes to zero during loading and never follows the arriving options; invalid passwords also intentionally disable Save.
-- Next action (one specific step, not "continue"): Add and run the delayed-role UI regression before changing production code.
+- Next action (one specific step, not "continue"): Use one effective role ID for AddAccountModal rendering, validation and payload, then rerun the regression.
 
 ## Decisions and notes
 
