@@ -9,7 +9,9 @@ recovery to OK or UP is ignored) the consumer finds the
 enabled actions that cover it, applies the safety controls (kill switch, Maintenance Mode,
 scheduled downtime, an acknowledged problem) and then the cooldown and hourly cap, writes one
 RemediationRun row per action (a skip is a row with its reason, never silent), and only then runs
-the action type from app/remediation_actions.py.
+the action type from app/remediation_actions.py. A failed or timed-out run, and a run stopped by
+the cooldown or hourly cap, are marked for an operator notification (app/remediation_escalation.py),
+which every tick then delivers through Nagios custom notifications.
 
 Order for one event (so a crash can never run an action twice):
     1. save the run rows (``running`` or ``skipped_*``) and commit
@@ -32,6 +34,7 @@ from flask import current_app
 
 from app import db
 from app.history_models import AcknowledgementType, HostStatus, ServiceStatus
+from app import remediation_escalation as escalation
 from app.remediation_actions import RemoteTarget, RunContext, run_action
 from app.system_models import (
     DeviceState, NetworkDiscovery, RemediationAction, RemediationConsumerState, RemediationEventState,
@@ -419,6 +422,8 @@ def record_decisions(event, now):
             Outcome=skipped[0] if skipped else RemediationOutcome.RUNNING,
             Reason=skipped[1] if skipped else None,
         )
+        if skipped:
+            escalation.mark_for_notification(row, escalation.kind_for_outcome(skipped[0]), action.Notify_On)
         db.session.add(row)
         db.session.flush()
         if not skipped:
@@ -454,6 +459,23 @@ def resolve_remote_target(hostname):
         services=tuple(creds.Remote_Restart_Services or ())), None
 
 
+def mark_notification(row):
+    """
+    After an action finishes, mark its run for an operator notification when it failed or timed
+    out, or when it has now succeeded often enough for the same object. Sets fields only; the
+    caller commits. An action deleted meanwhile asks for nothing.
+    """
+    action = db.session.get(RemediationAction, row.Action_Id) if row.Action_Id is not None else None
+    if action is None:
+        return
+    kind = escalation.kind_for_outcome(row.Outcome)
+    if kind is not None:
+        escalation.mark_for_notification(row, kind, action.Notify_On)
+        return
+    count, window_hours = escalation.repeat_settings()
+    escalation.check_repeat(row, action.Notify_On, count, window_hours, datetime.now(timezone.utc))
+
+
 def execute(run_id, name, action_type, parameters, event):
     """Run one action and write its outcome to the row; logs one line with no output or parameters."""
     row = db.session.get(RemediationRun, run_id)
@@ -473,6 +495,7 @@ def execute(run_id, name, action_type, parameters, event):
     row.Outcome = RESULT_OUTCOMES.get(result.outcome, RemediationOutcome.FAILED)
     row.Output = clean_output(result.output)
     row.Finished_At = datetime.now(timezone.utc)
+    mark_notification(row)
     db.session.commit()
     current_app.logger.info(
         "Remediation: action %r %s for %s%s", name, row.Outcome.value, event["host"],
@@ -524,6 +547,7 @@ def process_spool(spool_dir=None):
         except Exception:
             db.session.rollback()
             current_app.logger.exception("Remediation: could not handle a spool file")
+    escalation.deliver_pending()
     record_tick()
     return summary
 
