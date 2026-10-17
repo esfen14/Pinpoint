@@ -131,11 +131,12 @@ Where results go is defined in [`docs/test-runs/README.md`](../docs/test-runs/RE
 |---|---|---|
 | Unit and mocked API tests | Nothing | `scripts/verify.sh`, and CI on every PR |
 | Local lab (fast lane) | Docker | `scripts/lab up`, `scripts/lab smoke`; see [`docs/manuals/Local_Lab.md`](../docs/manuals/Local_Lab.md). A real Nagios and five target servers on an isolated network; not the installer, systemd, DHCP or NCPA installs |
+| Isolated DHCP acceptance | Docker with `CAP_NET_ADMIN` in a dedicated switch namespace | Opt-in `scripts/dhcp-lab` controls and `scripts/dhcp-accept`; see the [Local Lab manual](../docs/manuals/Local_Lab.md#isolated-dhcp-lab) and [acceptance plan](../server/tests/plans/DHCP_LAB_ACCEPTANCE.md). Real `dnsmasq` and `dhclient`, limited to approved `10.79.0.0/28`; never run in CI or on a physical/VPN subnet |
 | Real appliance and VM lab | Installer build, VirtualBox (this laptop) or libvirt (the retained lab) | `scripts/vmlab` with the `demo/` target VMs; plan in [`docs/plans/VM_Lab_Plan.md`](../docs/plans/VM_Lab_Plan.md). The snapshot holds Ubuntu + Nagios only, so it cannot go stale. The libvirt e2e harness in `server/tests/e2e/network_discovery/` is separate. Manual or scheduled, never on pull requests from forks |
 
-The [DHCP lab extension proposal](../docs/plans/DHCP_Lab_Extension_Proposal.md)
-describes a possible future opt-in environment for real lease changes. It is
-planning only; neither current lab provides DHCP acceptance coverage.
+The [DHCP lab design](../docs/plans/DHCP_Lab_Extension_Proposal.md) records the
+Docker feasibility decision and the separate lab's safety contract. The ordinary
+fast lab and VM demo continue to use static addresses.
 
 ### VM control preflight
 
@@ -176,7 +177,7 @@ The `.agent/workflows/qa-run.md` workflow automates the execution of the QA test
   issue, branch and attributable report. See [QA Run Queues](../docs/qa/QA_Run_Queues.md).
 - **Authority rules:** The behavioral specification wins; `Implementation_Status.md` records known gaps, not overrides. Conflicts without an explicit team decision require a `needs-decision` issue. Passing requires observed behavior.
 - **Reporting rules:** A test failure is repeated exactly once before filing. Maintainers must search open and closed issues first; file use the Task template containing case ID and evidence; sanitize evidence (never paste passwords, credentials, tokens, SNMP communities, or raw database dumps). Defects determined to be installer bugs are written as notes for the owner, not filed against the application.
-- **Safety boundaries:** Using `scripts/vmlab` and `scripts/lab` is permitted for QA sweeps; the libvirt e2e harness is strictly forbidden. Network scans MUST be tightly restricted to `10.77.0.0/28` using a guard; overlapping discoveries are banned (#59). One appliance is tested at a time, checking disk/RAM capacity before provisioning.
+- **Safety boundaries:** Using `scripts/vmlab` and `scripts/lab` is permitted for QA sweeps; the libvirt e2e harness is strictly forbidden. Ordinary VM network scans MUST be tightly restricted to `10.77.0.0/28` using a guard. The separate opt-in issue #187 DHCP Docker acceptance may scan only `10.79.0.0/28` after its controller proves collision-free routing and exclusive ownership; this does not authorize other QA suites or a physical/VPN range. Overlapping discoveries are banned (#59). One appliance is tested at a time, checking disk/RAM capacity before provisioning.
 - **Labels:** The loop uses `qa-found` for test plan failures and `needs-decision` for blocker/ambiguity issues.
 - **Severity rubric:**
   - **High:** Blocks entire journeys, unrecoverable crashes, security breaches, data corruption.

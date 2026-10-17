@@ -1,6 +1,6 @@
 # DHCP lab extension proposal
 
-**Status:** Proposed — planning only; no lab resources created or changed.  
+**Status:** Docker feasibility proven and isolated opt-in lab implemented on issue #187; see its [acceptance plan](../../server/tests/plans/DHCP_LAB_ACCEPTANCE.md) and [Local Lab manual](../manuals/Local_Lab.md#isolated-dhcp-lab) for current commands. Live product result is recorded separately in `docs/test-runs/`.
 **Date:** 2026-10-15  
 **Tracking:** [Issue #177](https://github.com/esfen14/Pinpoint/issues/177)
 
@@ -9,9 +9,9 @@ This plan feeds the discovery and identity contract in
 [Device Inventory requirements](../../spec%20files/Device_Inventory_Requirements.md),
 and the lab workflow in
 [Agent Workflow and CI](../../spec%20files/Agent_Workflow_and_CI.md).
-If implemented, update the [Local Lab manual](../manuals/Local_Lab.md) and
-[VM Lab Plan](VM_Lab_Plan.md) to describe the supported commands and limits.
-This proposal does not change product behavior or claim new test coverage.
+The [Local Lab manual](../manuals/Local_Lab.md#isolated-dhcp-lab) describes the
+supported commands and limits. The VM demo stays static. This design document
+does not change product behavior or by itself claim a passed acceptance run.
 
 ## Purpose
 
@@ -25,14 +25,15 @@ and browser/merge checks did not move a live target through DHCP. This extension
 would close that distinct gap; it does not retroactively turn those results into
 DHCP acceptance evidence.
 
-## Current baseline
+## Original baseline
 
 The Docker lab in `lab/compose.yaml` uses static Compose addresses on an isolated
 `10.78.0.0/24` bridge. Its target image and entrypoint do not run a DHCP client.
 The VM demo in `demo/demo_lab.py` also generates static netplan addresses on its
-`10.77.0.0/28` internal network. Neither is currently a DHCP test environment;
-the [Local Lab manual](../manuals/Local_Lab.md#what-it-cannot-test) explicitly
-excludes DHCP lease changes.
+`10.77.0.0/28` internal network. Neither of those ordinary environments is a
+DHCP test environment; the [Local Lab manual](../manuals/Local_Lab.md#what-it-cannot-test)
+excludes DHCP lease changes from the static lab and points to the separate
+opt-in DHCP lab.
 
 Docker normally assigns addresses itself through its networking system;
 changing a Compose address or reconnecting a container with another Docker IP
@@ -74,6 +75,43 @@ including how changed reservations and an existing lease interact.
 DNS service is unnecessary for the first phase.
 
 ## Delivery options
+
+### Feasibility decision (2026-10-17)
+
+Choose the Docker option for implementation. A throwaway test used a dedicated
+switch container with `--network none`, host PID visibility and `CAP_NET_ADMIN`
+to create a bridge and move veth peers into the appliance and client network
+namespaces. The appliance and client kept separate Docker management interfaces.
+Docker assigned no address on their added `eth1` test interfaces. `dnsmasq`
+bound to the switch bridge at `10.79.0.1/28`; the appliance had static
+`10.79.0.2/28`, and `dhclient` received `10.79.0.5` then `10.79.0.6` on the
+same running client. The client released A before reacquiring; the server was
+stopped, its reservation changed and old lease cleared, then restarted. Both
+transactions had DISCOVER/OFFER/REQUEST/ACK, A was absent after B was installed,
+and the appliance pinged both addresses. The container ID and boot ID were
+unchanged. The trial repeated successfully with the switch limited to
+`CAP_NET_ADMIN`; full `--privileged` was unnecessary. This confirms **restart**
+of dnsmasq for reservation changes, not a SIGHUP-only reload recipe.
+
+The switch's host PID view and network capability are still significant
+privileges, so the mode must remain explicit and isolated. No host networking,
+host bridge or published DHCP port was used. Its bridge existed only inside the
+switch namespace; DHCP broadcasts could not reach physical, VPN or normal lab
+interfaces. The measured image was 350 MB, three idle containers used about
+1.3 MiB, 0.4 MiB and 2.2 MiB in a single Docker stats sample, and the final
+trial took about 13 seconds after image build. These are feasibility costs, not
+an estimate for a full appliance or acceptance run. All owned containers and
+the management network were removed, with no change to host IPv4 routes. The
+existing `pinpoint-lab` remained running and untouched. The exact experiment,
+including the first failed server restart due to an unwritable reused log
+file, is recorded in the [feasibility report](../test-runs/2026-10-17-issue-187-docker-feasibility/REPORT.md).
+
+The tested `10.79.0.0/28` was selected after
+checking current host routes, active NetworkManager connections and Docker
+subnets (and the documented VM `10.77.0.0/28`). It was added as a DHCP-only
+approved QA scan range before product discovery. The feasibility experiment
+performed no discovery scan. `scripts/dhcp-lab up` checks routes and ownership
+at every setup; `down` checks ownership and tears down its own resources.
 
 **Docker option — first feasibility check, given the selected Docker lab.**
 Keep the normal fast lab unchanged and investigate a separate DHCP profile.

@@ -17,6 +17,7 @@ export default defineConfig({
   projects: [
     { name: 'issue-124-live', testMatch: /storage-logs\.lab\.spec\.ts/, use: { ...devices['Desktop Chrome'] } },
     { name: 'issue-164-live', testMatch: /device-identity\.lab\.spec\.ts/, use: { ...devices['Desktop Chrome'] } },
+    { name: 'issue-187-live', testMatch: /dhcp-history\.lab\.spec\.ts/, use: { ...devices['Desktop Chrome'] } },
     {
       name: 'issue-115-live',
       testMatch: /email-settings\.lab\.spec\.ts/,
