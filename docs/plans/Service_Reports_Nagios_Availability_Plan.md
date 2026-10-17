@@ -3,6 +3,8 @@
 Status: approved for an implementation issue by the owner on 2026-10-17;
 application implementation has not started.
 
+Implementation issue: [#198](https://github.com/esfen14/Pinpoint/issues/198).
+
 Context: GitHub [#134](https://github.com/esfen14/Pinpoint/issues/134), which
 originally reconciles report documentation and conditionally proposes targets.
 The owner rejected availability targets and subsequently requested a plan for

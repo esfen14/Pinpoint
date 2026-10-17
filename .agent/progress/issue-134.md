@@ -43,7 +43,7 @@ Requirement coverage:
 - Last check run (exact command): scripts/verify.sh docs
 - Result (first failing lines, or "green"): green
 - Hypothesis: six views already exist; inventories are stale. No application behavior change is needed.
-- Next action (one specific step, not "continue"): Present the saved service-report plan; establish an implementation issue with its acceptance criteria before changing application behavior.
+- Next action (one specific step, not "continue"): Resume #134 documentation verification separately; service-report implementation is now tracked in #198 and requires its own issue branch.
 
 ## Decisions and notes
 
@@ -61,3 +61,5 @@ Earlier full verification completed with 3985 backend passes, 14 skips, five fai
 
 
 2026-10-17: Owner approved turning the service-report plan into a separate implementation issue and explicitly required removal of snapshot counts. The plan now mandates removal from both service-report payloads (including nested instances), types, UI, help and exports, with absence assertions; it forbids hidden count aliases or reusing count fields for seconds. Stored snapshots/general polling stay outside scope. `scripts/verify.sh docs` passes. Next publication action: create the approved follow-up issue, record its URL and checkpoint; no application implementation in this turn.
+
+Created approved follow-up implementation issue: https://github.com/esfen14/Pinpoint/issues/198. Its self-contained body includes the complete plan, explicit snapshot-count removal, finish conditions, deliverables, and CI/live comparison gates. #134 remains the separate documentation issue. No product changes made.
