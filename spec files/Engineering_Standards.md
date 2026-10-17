@@ -176,6 +176,11 @@ Shared builders live in `tests/support/`; test approach documents live in
 Use the smallest relevant test target during iteration, then broaden verification
 in proportion to the change's risk.
 
+Generated configuration comparison tests must tolerate whitespace in the
+`# generated at ...` header when normalizing its timestamp. Exercise renders on
+opposite sides of a minute boundary with a controlled clock, and verify that a
+real configuration change still compares unequal after normalization.
+
 ## Running locally
 
 Backend:

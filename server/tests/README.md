@@ -116,7 +116,7 @@ Basenames below live under `unit/`, except `integration/test_live_nagios.py`.
 | File | Coverage |
 |---|---|
 | `test_network_discovery.py` | Discovery start/stop/status endpoints and job-state guards |
-| `test_create_host_cfg.py` | SNMP/NCPA/TCP/UDP service planning, per-host isolation, service naming, config generation, and stored command names |
+| `test_create_host_cfg.py` | SNMP/NCPA/TCP/UDP service planning, per-host isolation, service naming, config generation, stored command names, and NCPA port-backfill comparison across a controlled minute boundary with real configuration differences preserved |
 | `test_plugin_registry.py` | Plugin resolution, variable validation, command rendering, SNMP checks, and NCPA checks |
 | `test_skipped_services.py` | Persistence and log presentation for discovered ports that cannot become monitored services |
 | `test_ncpa_resource_check.py`, `test_native_resource_check.py` | Unprivileged resource input, safe errors/output, supported plugin interfaces, actual parent/child process secrecy and unsupported SMB refusal |
