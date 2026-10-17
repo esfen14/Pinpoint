@@ -47,12 +47,14 @@ Requirement coverage (every issue requirement):
 
 | 2 | Security fixes and trusted deployed cleanup verified; settings can revoke an enabled policy after installation trust is lost | Focused backend 298 tests; migration 13 tests; full backend; isolated backfilled-config rerun | Focused/migrations green. Full backend: 3859 passed/14 skipped; one unrelated timestamp-only failure. Isolated rerun green; follow-up filed. Frontend gate green; final all pending. |
 
+| Resumed 2026-10-17 | Confirmed all gate green from retained log, reran checkpoint regression, verified VM ownership and completed first-run setup through supported API | checkpoint regression; vmlab preflight; complete-setup API | 1 passed; ownership proved; setup succeeded. Helper parser expects old installer label (#167); used API without changing product. |
+
 ## State for the next session
 
 - Last check run (exact command): FLASK_DEBUG=1 server/.venv/bin/python -m pytest server/tests/unit/test_create_host_cfg.py::TestCreateHostCfgFile::test_backfilled_port_preserves_existing_ncpa_config -q
 - Result: green (isolated rerun, 1 passed). Full backend completed with one timestamp-only flake and 3859 passed/14 skipped; focused current backend 298 passed; migrations 13 passed; frontend 874 passed/build/lint green. New settings-revocation test 6 passed. See /tmp/issue182-*.log.
 - Hypothesis: Timestamp mismatch is unrelated (unchanged test/generator, wrong whitespace normalization, minute boundary); leave it to the follow-up. Fresh VM installation is still completing.
-- Next action: Wait for fresh Ubuntu installation to reboot; run vmlab prepare/provision/fresh against /tmp/issue182-vmlab.env, then execute real target restart/refusal cases. Run scripts/verify.sh all on the final tree.
+- Next action: Configure isolated issue182 appliance/target network, discover only 10.77.0.2, verify fingerprint, deploy NCPA, and execute remote restart acceptance cases. Retained /tmp/issue182-verify-all.log ends with verify: all OK.
 
 ## Decisions and notes
 
