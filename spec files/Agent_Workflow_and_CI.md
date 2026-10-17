@@ -284,6 +284,7 @@ This repository's side of the contract, all implemented as of 2026-10-08:
   placeholders, and the first sign-in must replace both through the setup window
   (`POST /api/user/complete-setup`). The VM lab's `setup-admin` completes it.
 - `PINPOINT_SCHEDULER=1` only for the Gunicorn service.
+- `flask restore-backup` (recovery runbook `docs/manuals/Backup_and_Restore.md`) checks `systemctl is-active --quiet pinpoint-gunicorn.service`, so the service unit name is part of the installer contract; the `pinpoint` account needs write access to its database files and `DATABASE_BACKUP_DIR`.
 - The `pinpoint` account may write `hosts.cfg` and `plugin-services.cfg`, runs
   `nagios -v`, and may `sudo systemctl reload nagios`. The issue #129 installer
   extension additionally grants only the root-owned `pinpoint-apply-resources`

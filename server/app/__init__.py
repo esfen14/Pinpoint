@@ -47,6 +47,7 @@ migrate = Migrate(app, db, render_as_batch=True)
 login = LoginManager(app)
 login.login_view = None
 
+from app.api.commands.restore import restore_backup_command
 from app.api.commands.seed import (
     seed_command,
     init_production_command,
@@ -59,6 +60,7 @@ app.cli.add_command(seed_command)
 app.cli.add_command(init_production_command)
 app.cli.add_command(recover_bootstrap_admin_command)
 app.cli.add_command(sync_permissions_command)
+app.cli.add_command(restore_backup_command)
 
 from app import system_models, history_models, plugin_models
 

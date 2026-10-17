@@ -327,7 +327,16 @@ reads the persisted interval when next started. No other job cadence changes.
 scans, and plugin security validation. Scheduled network discovery runs only if
 at least one scan has already been recorded; a fresh installation waits for an
 administrator to trigger the first scan manually. Maintenance mode permits backups but
-stops the other automated operations. Jobs are attributed to an active user for
+stops the other automated operations.
+
+Backups are folders `YYYYMMDD-HHMMSS` under `DATABASE_BACKUP_DIR`, one SQLite
+online-backup copy of each database, newest 7 kept. They are restored with
+`flask restore-backup` (`backup_restore.py`), which keeps the replaced files in
+`pre-restore-<timestamp>` in the same directory (not rotated). No model,
+migration or setting is added. Cold-standby recovery only: active/passive
+failover, Nagios configuration backup and the NCPA deployment key are not
+covered (`docs/manuals/Backup_and_Restore.md` lists what is not backed up,
+including `SECRET_KEY`). Jobs are attributed to an active user for
 audit purposes.
 
 ## Maintenance windows and Nagios downtime
