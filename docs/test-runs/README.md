@@ -48,6 +48,7 @@ table while you test, not afterward.
 
 | Run | Kind | Commit | Result | Report |
 |---|---|---|---|---|
+| [2026-10-17 pr-185-issue-156-retest](2026-10-17-pr-185-issue-156-retest/REPORT.md) | Forecast batching, exact-series fetch and fair-turn fixes; local regression/seeded retest | `298aa620` | Three defects fixed; full local gate passes (3,799 backend / 881 frontend); CI and real disk-fill comparison pending | [REPORT.md](2026-10-17-pr-185-issue-156-retest/REPORT.md) |
 | [2026-10-17 pr-185-issue-156](2026-10-17-pr-185-issue-156/REPORT.md) | Local automated and seeded forecast acceptance checks | `8c39c1ba` | Partial: three seeded job defects; live disk-fill comparison pending | [REPORT.md](2026-10-17-pr-185-issue-156/REPORT.md) |
 | [2026-10-15 issue-124-storage-logs](2026-10-15-issue-124-storage-logs/REPORT.md) | Exclusive VM fresh/upgrade, journal pressure, logrotate, storage/log APIs and four browser role journeys | app `f80d6c1f` → `5f0a7ef8`; installer `ffb4cc3c` | Partial: 16 scoped passes, full local gate green; unrelated healthcheck mode mismatch (installer #9); ISO boot skipped | [REPORT.md](2026-10-15-issue-124-storage-logs/REPORT.md) |
 | [2026-10-15 issue-164-final-refresh](2026-10-15-issue-164-final-refresh/REPORT.md) | Final candidate-summary consistency regression, full gate and repeated real Docker/browser journeys | `8c8ff608` | Pass: 6 scoped cases; 3302 backend / 702 frontend; normal+notice, source history retained and saved configuration warning | [REPORT.md](2026-10-15-issue-164-final-refresh/REPORT.md) |
