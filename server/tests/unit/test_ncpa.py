@@ -422,3 +422,143 @@ class TestRefreshDisks:
         with patch("app.api.system.ncpa_deployment.refresh_ncpa_partitions", return_value=[]):
             resp = logged_in_client.post(f"/api/system/deployment/ncpa/{device.NetDiscoveryID}/refresh-disks")
         assert resp.status_code == 502
+
+
+# ─── POST /api/system/deployment/ncpa/<device_id>/register ────────────────────
+
+class TestRegisterManualAgent:
+    TOKEN = "a1" * 16
+
+    def url(self, device):
+        return f"/api/system/deployment/ncpa/{device.NetDiscoveryID}/register"
+
+    def patches(self, reachable=True, disks=("C:",)):
+        return (
+            patch("app.api.system.ncpa_deployment.verify_ncpa_reachable",
+                  return_value={"success": reachable, "message": "NCPA is reachable and responding." if reachable else "Unable to connect to NCPA on port 5693."}),
+            patch("app.api.system.ncpa_deployment.discover_disk_nodes", return_value=list(disks)),
+            patch("app.api.plugin.reconcile.reconcile_plugin_monitoring",
+                  return_value={"success": True, "changed": True, "message": "ok"}),
+        )
+
+    def test_requires_permission(self, limited_client, db_session, admin_user):
+        resp = limited_client.post("/api/system/deployment/ncpa/1/register", json={"token": self.TOKEN})
+        assert resp.status_code == 403
+
+    @pytest.mark.parametrize("body", [
+        {"token": "short"}, {"token": "z" * 32}, {"token": 123},
+        {"token": "a1" * 16, "port": 0}, {"token": "a1" * 16, "port": 70000},
+        {"token": "a1" * 16, "port": "5693"}, {"token": "a1" * 16, "port": True},
+    ])
+    def test_invalid_input_is_400_and_saves_nothing(self, logged_in_client, db_session, admin_user, body):
+        device, _ = _make_ncpa_device(db_session, admin_user)
+        resp = logged_in_client.post(self.url(device), json=body)
+        assert resp.status_code == 400
+        assert db_session.session.query(NCPADeployment).count() == 0
+
+    def test_empty_body_is_400(self, logged_in_client, db_session, admin_user):
+        device, _ = _make_ncpa_device(db_session, admin_user)
+        assert logged_in_client.post(self.url(device), json={}).status_code == 400
+
+    def test_unknown_device_is_404(self, logged_in_client, db_session, admin_user):
+        resp = logged_in_client.post("/api/system/deployment/ncpa/99999/register", json={"token": self.TOKEN})
+        assert resp.status_code == 404
+
+    def test_retired_device_is_404(self, logged_in_client, db_session, admin_user):
+        from app.system_models import DeviceState
+        device, _ = _make_ncpa_device(db_session, admin_user)
+        device.Device_State = DeviceState.RETIRED
+        db_session.session.commit()
+        resp = logged_in_client.post(self.url(device), json={"token": self.TOKEN})
+        assert resp.status_code == 404
+
+    def test_already_deployed_is_409(self, logged_in_client, db_session, admin_user):
+        device, _ = _make_ncpa_device(db_session, admin_user)
+        db_session.session.add(NCPADeployment(
+            NetworkDiscoveryID=device.NetDiscoveryID, Token="t" * 32, Agent_Status=AgentStatus.DEPLOYED))
+        db_session.session.commit()
+        resp = logged_in_client.post(self.url(device), json={"token": self.TOKEN})
+        assert resp.status_code == 409
+
+    def test_unreachable_agent_is_rejected_and_nothing_saved(self, logged_in_client, db_session, admin_user):
+        device, _ = _make_ncpa_device(db_session, admin_user)
+        verify, disks, reconcile = self.patches(reachable=False)
+        with verify, disks, reconcile as reconciled:
+            resp = logged_in_client.post(self.url(device), json={"token": self.TOKEN})
+        assert resp.status_code == 502
+        assert "Unable to connect" in resp.get_json()["message"]
+        assert db_session.session.query(NCPADeployment).count() == 0
+        reconciled.assert_not_called()
+
+    def test_agent_without_disks_is_rejected_and_nothing_saved(self, logged_in_client, db_session, admin_user):
+        device, _ = _make_ncpa_device(db_session, admin_user)
+        verify, disks, reconcile = self.patches(disks=())
+        with verify, disks, reconcile:
+            resp = logged_in_client.post(self.url(device), json={"token": self.TOKEN})
+        assert resp.status_code == 502
+        assert db_session.session.query(NCPADeployment).count() == 0
+
+    def test_success_stores_agent_without_returning_token(self, logged_in_client, db_session, admin_user):
+        from app.system_models import DeploymentMethod, NCPADevicePartition
+        device, _ = _make_ncpa_device(db_session, admin_user)
+        verify, disks, reconcile = self.patches(disks=("C:", "D:"))
+        with verify as verified, disks, reconcile:
+            resp = logged_in_client.post(self.url(device), json={"token": self.TOKEN, "port": 5700})
+        assert resp.status_code == 200
+        body = resp.get_json()
+        assert self.TOKEN not in str(body)
+        assert body["data"]["agent_status"] == "Deployed NCPA"
+        assert body["data"]["disks"] == ["C:", "D:"] and body["data"]["port"] == 5700
+        verified.assert_called_once_with(device.IP_Address, self.TOKEN, port=5700)
+        deployment = db_session.session.query(NCPADeployment).one()
+        assert deployment.Agent_Status is AgentStatus.DEPLOYED
+        assert deployment.Deployement_Method is DeploymentMethod.MANUAL
+        assert deployment.Token == self.TOKEN and deployment.Port == 5700
+        names = {p.Name for p in db_session.session.query(NCPADevicePartition).all()}
+        assert names == {"C:", "D:"}
+
+    def test_failed_deployment_row_is_reused(self, logged_in_client, db_session, admin_user):
+        device, _ = _make_ncpa_device(db_session, admin_user)
+        db_session.session.add(NCPADeployment(
+            NetworkDiscoveryID=device.NetDiscoveryID, Agent_Status=AgentStatus.FAILED, Error="ssh failed"))
+        db_session.session.commit()
+        verify, disks, reconcile = self.patches()
+        with verify, disks, reconcile:
+            resp = logged_in_client.post(self.url(device), json={"token": self.TOKEN})
+        assert resp.status_code == 200
+        deployment = db_session.session.query(NCPADeployment).one()
+        assert deployment.Agent_Status is AgentStatus.DEPLOYED and deployment.Error is None
+
+
+# ─── GET /api/system/deployment/ncpa/register-candidates ──────────────────────
+
+class TestRegisterCandidates:
+    URL = "/api/system/deployment/ncpa/register-candidates"
+
+    def test_requires_permission(self, limited_client, db_session, admin_user):
+        assert limited_client.get(self.URL).status_code == 403
+
+    def test_lists_active_undeployed_devices_even_when_not_eligible(self, logged_in_client, db_session, admin_user):
+        device, _ = _make_ncpa_device(db_session, admin_user, ncpa_eligible=False)
+        resp = logged_in_client.get(self.URL)
+        assert resp.status_code == 200
+        devices = resp.get_json()["data"]["devices"]
+        assert [d["device_id"] for d in devices] == [device.NetDiscoveryID]
+        assert devices[0]["agent_status"] is None
+
+    def test_excludes_deployed_retired_and_unscanned(self, logged_in_client, db_session, admin_user):
+        from app.system_models import DeviceState
+        device, _ = _make_ncpa_device(db_session, admin_user)
+        db_session.session.add(NCPADeployment(
+            NetworkDiscoveryID=device.NetDiscoveryID, Token="t" * 32, Agent_Status=AgentStatus.DEPLOYED))
+        db_session.session.commit()
+        assert logged_in_client.get(self.URL).get_json()["data"]["devices"] == []
+        deployment = db_session.session.query(NCPADeployment).one()
+        deployment.Agent_Status = AgentStatus.FAILED
+        device.Device_State = DeviceState.RETIRED
+        db_session.session.commit()
+        assert logged_in_client.get(self.URL).get_json()["data"]["devices"] == []
+        device.Device_State = DeviceState.ACTIVE
+        device.Include_Device_In_Scanning = False
+        db_session.session.commit()
+        assert logged_in_client.get(self.URL).get_json()["data"]["devices"] == []

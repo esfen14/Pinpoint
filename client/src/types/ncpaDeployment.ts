@@ -234,3 +234,22 @@ export interface RemoteRestartSettings {
   trusted: boolean
   redeploy_needed?: boolean
 }
+
+/** Response of POST .../<id>/register; the token is never returned. */
+export type RegisterResult = {
+  device_id: number
+  agent_status: AgentStatus
+  port: number
+  disks: string[]
+  config_applied: boolean
+  message: string
+}
+
+/** A device an agent can be registered for (GET .../register-candidates). */
+export type RegisterCandidate = { id: number; hostname: string; ipAddress: string; agentStatus: AgentStatus | null }
+export type RawRegisterCandidate = {
+  device_id: number
+  hostname: string
+  ip_address: string
+  agent_status: AgentStatus | null
+}

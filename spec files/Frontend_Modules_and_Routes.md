@@ -29,7 +29,7 @@ requests use `src/lib/api.ts`; Plugin Manager wrappers live in
 | `/maintenance` | `MaintenancePage` | `maintenance.manage` | **Maintenance** (sidebar). Lists maintenance windows (devices, next occurrence, repeats, status, reason) with create, edit and a two-step cancel, through `lib/maintenanceApi.ts` and `types/maintenance.ts`. Times are typed and shown in the Time Zone setting (`useDisplayTime`, `utils/maintenanceTime.ts`) and sent as UTC; the form checks what the server checks. A failed or retrying occurrence is shown with its reason, and a `nagios_synced: false` result is shown as a notice. A note explains that a window silences alerts and links to Settings → System, where the Maintenance Mode switch and the global banner say it only pauses PinPoint's jobs and link back here |
 | `/ncpa-deployment` | `NcpaDeploymentPage` | `system.deploy.ncpa` | Warns, through `useNcpaPluginState`, when `check_ncpa` is not enabled in Plugin Manager (the agent's checks are monitored only while it is). Connected to the NCPA deployment routes: device list, deploy wizard (host-key trust, login checks, start), live run banner, Deployment History tab and run review drawer (`?tab=history&run=<id>`). Trusted failed and deployed devices have a Clean up dialog: it accepts ephemeral SSH credentials, optionally removes the deployment account after artifact removal, shows each cleanup step and refreshes the list; fields clear after every request. |
 | `/remediation` | `RemediationPage` | `remediation.view` | Connected to `/api/system/remediation/...`; sidebar entry "Remediation". Above both tabs a status panel shows the consumer's health (last check-in, events waiting, runs, limits hit, skipped and dropped in 24 hours, refreshed every 15 seconds), a red banner when the consumer has stopped checking in, and the automatic recovery switch (the kill switch): changing it asks for confirmation in both directions, needs `remediation.manage` (view-only users see it disabled) and its saved state shows after a reload. An Actions tab (banner "Actions run automatically when a service reaches a hard failure", an enable switch per action, an add/edit form built from the action types with server messages shown against the right field, delete with confirmation; with only `remediation.view` the list is read-only) and a Run log tab (filters for action, outcome, host and dates, pagination, skipped runs show their reason (including kill switch, maintenance, downtime and acknowledged), an Operator column saying "Operator notified", "Notification pending", "Notification failed" (with the error) or "Not required", a drawer with the redacted output and the notification details). The action form has a "Tell the operator when" group (the action fails, is stopped by its limits, keeps recovering the same service; all on by default, help text says Nagios chooses the recipients), and the status panel has a Repeat recovery section (count and window hours; read-only without `remediation.manage`). The bell, the Dashboard's Recent Notifications and the History notification list and detail label a Nagios custom notification ("Custom notification" in the bell title, "Custom" in the state column) and show its comment text before the plugin output (`types/notification.ts` `isCustom` and `comment`; the comment comes from the server, see Backend_Modules_and_Routes). An address like `/remediation?run=7` opens the Run log and that run's drawer (the badge on a service row links there). Changes need `remediation.manage`; 409 offers a reload and 422 shows the Nagios message |
-| `/reports` | `ReportsPage` | `system.report` | Connected for host availability and network-services views; backend exposes additional report routes |
+| `/reports` | `ReportsPage` | `system.report` | Six connected views: Host Availability, Network Services, Hosts by OS, Device Services, Alerts and Notifications; see Reports below |
 | `/system-logs` | `SystemLogsPage` | `system.logs` | Connected to five audit log categories and a bounded Nagios log tab |
 | `/accounts` | `ManageAccountsPage` | `account.view` | Connected to account/role APIs. The table shows each user's Email Alerts (On/Off); the add and edit forms show a "Send this user email alerts" checkbox only with `account.alerts`, and a failed Nagios apply is shown as a notice. The first account is marked by the account API as `is_super_admin`; its edit form keeps Status Active, disables the status selector, explains that the bootstrap administrator must retain account/role administration, and disables role options whose `preserves_bootstrap_admin_access` value is false |
 | `/manage-roles` | `ManageRolesPage` | `role.view` | Connected to role and permission APIs. The built-in `Super Admin` role shows every permission as read-only with an explanation, and its name cannot be edited. The bootstrap administrator's assigned role is marked as locked; its edit form disables the seven account/role administration permission controls and role deactivation, even when assigned to a different role |
@@ -89,7 +89,7 @@ When adding a page:
 | `components/ncpa-deployment/` | NCPA device table, deploy wizard, `CleanupDialog` for trusted failed devices with ephemeral credentials and per-step results, run banner, history table, run drawer, outcome badges and the header bell item |
 | `components/plugins/` | Older installed/available plugin table components; do not assume these drive the current page |
 | `components/remediation/` | `StatusPanel` (the health of the consumer, a stalled banner and the kill switch), `ActionsTable` (the actions with their enable switch and a "Paused by the kill switch" note), `ActionFormDialog` (add and edit, including the Run when acknowledged option, per-field server errors, reload prompt on 409), `RunLog` (filters, table with the Operator column, pagination) and `RunDrawer` (one run with its output and notification details). `components/system-status/ServiceStatusTable` shows a last-recovery badge under a service name (Auto-recovered, Recovery failed, Recovery limited, Recovery skipped) that links to the run; the data comes from `hooks/useLastRecoveries`, which only calls `/api/system/remediation/last-runs` for a user with `remediation.view` and stays silent when the call fails. Data comes from `lib/remediationApi.ts` and `types/remediation.ts` |
-| `components/reports/` | Host availability and network-services report tables |
+| `components/reports/` | Host availability and network-services tables; `ExtraReports.tsx` supplies Hosts by OS, Device Services, Alerts and Notifications |
 | `components/manage-accounts/` | Account management table/UI |
 | `components/settings/` | General, security, and system settings controls; the Network Discovery tab edits networks, scan ports and one Port → Service table per protocol (NCPA's port fixed, each entry showing the check it leads to); the Plugins tab (`PluginSettings`) shows one editable table per installed plugin: SNMP OIDs (description, OID) once `check_snmp` is installed and NCPA metrics (description, metric path, optional warning, critical, units, query args) once `check_ncpa` is installed. The NCPA table also offers Add process check: exact process name (24 safe characters) and expected count (0–1000000) produce a reviewable `processes` row with `name=<name>` query args and inclusive count thresholds; invalid names/counts and duplicate descriptions show an error, and the existing Save action persists the row. Help explains swap, editable sda disk-rate defaults, skipped paths and the load-average limitation. Cells edit in place, Add appends an empty row, rows can be removed, Reset restores the `config.py` defaults; each table warns when its plugin is not Enabled/Active and that a new or renamed description starts a new Nagios service; the Email tab (`EmailSettings`) edits the Gmail account notification mail uses: a locked Gmail preset (`smtp.gmail.com`, 587, STARTTLS), the Gmail address, a sender that follows it (warning when changed, because Gmail rewrites From), an "App password" field (`xxxx xxxx xxxx xxxx`, sent exactly as typed, write-only, blank keeps the saved one) with help text and a new-tab link to `https://myaccount.google.com/apppasswords`, and a "Send test email" card that shows a plain-language message for each failure (rejected login, blocked port, unknown host) with a technical explanation and the server's own response under "Details" |
 | `components/layout/` | Authenticated application shell and global session/access behavior |
@@ -287,6 +287,20 @@ client for the existing review/evidence/merge routes and `/api/system/hosts/look
 See `Device_Inventory_Requirements.md` §14 for the permission, confirmation,
 keyboard, refresh and saved-configuration-warning requirements.
 
+## Manual agent registration (#130)
+
+On NCPA Deployment (`system.deploy.ncpa`), every device row whose agent is not
+already deployed has **Register agent**. `RegisterAgentDialog` asks for the NCPA
+token (32 hexadecimal characters) and an optional port, validates both before
+calling `registerManualAgent` (`POST .../<id>/register`), and shows loading,
+server error and success (status, disks found, config message) states. The token
+field is cleared after every call and the token is never kept in state or shown
+again. A collapsible panel explains installing NCPA on Windows. Registration
+reloads the device list. The page header also has **Register an agent I installed**,
+which opens the same dialog with a device picker loaded from
+`GET .../register-candidates` (active scanned devices that are not deployed,
+including hosts without SSH such as Windows servers); the deploy list is unchanged.
+
 ## Remote service restart controls (#182)
 
 On NCPA Deployment (`system.deploy.ncpa`), trusted device rows expose **Remote
@@ -316,3 +330,91 @@ exclusively owned appliance through the no-network private socket bridge: settin
 loading/retry, real validation and persistence, cleanup/deployment wizard, remote
 and local unit forms, and real read-only permissions. See
 [the acceptance plan](../server/tests/plans/REMOTE_RESTART_ACCEPTANCE.md).
+
+
+## Reports
+
+`pages/ReportsPage.tsx` exposes six views, all requiring `system.report` in
+both the page guard and the server routes in `app/api/system/report.py`.
+Pinpoint shows measured uptime; availability targets, breach comparisons and
+scheduled or recurring emailed reports are outside the supported scope.
+
+| View | API route (GET) | Displayed data |
+|---|---|---|
+| Host Availability | `/api/system/report/availability` | Hostname, state, uptime %, Snapshots (legacy label for known-state seconds), last check and last state change; summary cards show total hosts, Up, Down / Unreachable and overall uptime |
+| Network Services | `/api/system/report/network-services` | One row per service name: instance count, Current OK / Warning / Critical / Unknown / Pending / Unavailable counts, recorded-time availability %, recorded and missing seconds; summary cards show service and instance totals, OK, Warning / Critical and overall uptime |
+| Hosts by OS | `/api/system/report/hosts-by-os` | Flattened host rows with OS, hostname, state, uptime %, last check and last state change; no summary cards |
+| Device Services | `/api/system/report/device-services` | One row per host/service pair: hostname, service, current state, recorded-time availability %, recorded/missing seconds with no-data/engine-down/unaccounted components, observation time, current last check and state change; no summary cards |
+| Alerts | `/api/system/report/alerts` | Time, hostname, service, previous state, new state and output; cards count listed alerts, recoveries, problems and affected hosts |
+| Notifications | `/api/system/report/notifications` | Time, hostname, service, state, contact and message; cards count listed notifications, recoveries, problems and distinct nonempty contacts |
+
+Host Availability and Hosts by OS obtain host uptime from Nagios archive
+Up / (Up + Down + Unreachable) durations; unknown time is excluded and no known
+time yields a null uptime (shown as `—`). Network Services and Device Services
+compute availability from Nagios archive OK seconds / all known state seconds,
+including UNKNOWN and scheduled maintenance; missing coverage is excluded and
+zero known time yields null (`—`). Their shared `ServiceReportContext` explains
+the denominator, maintenance, missing components, configured-object/retention
+limits, period bounds and separately observed current status. Service-report
+wire types in `types/report.ts` contain explicit seconds and no snapshot counts. Alerts and Notifications read Nagios archive events; their cards are
+computed from the returned rows rather than the separate API `count` object.
+
+### Periods and running reports
+
+Every view sends `period` to its route. The shared selector offers `last_24h`
+(default), `today`, `last_7d`, `last_30d`, `last_90d` and `custom`. Rolling periods
+end at server now; Today starts at server-local midnight. Custom ranges send
+`start` and `end` as `YYYY-MM-DD`, inclusive, and require both dates. The backend
+validates periods and dates. Service custom dates use the next midnight after
+the inclusive end date as an exclusive boundary. Service reports stop at the
+last completed second, and show exact offset-bearing bounds through display
+preferences. They explain server-local date interpretation and current-status
+observation time, including for a past period. Changing a view or period loads its report; after
+editing custom dates, **Run Report** loads the chosen range. It also reruns the
+current report. Host Availability and Network Services load in `ReportsPage`;
+the other four load in `ExtraReports` on view change or a changed run key.
+Tables have loading and empty states, and request errors appear above them.
+Service reruns clear old data before loading and hide export until a successful
+response. Network requests ignore superseded responses; extra views cancel stale
+requests. Current-status failure retains historical data with an explicit notice.
+Pending and missing states are distinct; absent check timestamps are not invented.
+
+### Filtering and export support
+
+All six tables page ten rows at a time, support search and a sort-direction
+control, and export the full filtered, sorted result rather than only the
+current page. Host Availability searches hostname and filters state; Network
+Services searches service name. Hosts by OS searches hostname/OS, Device
+Services searches host/service, Alerts searches host/service/output and
+Notifications searches host/service/contact; all four extra views filter state.
+Host and service tables sort by their respective names, Hosts by OS and Device
+Services by hostname, and event views by time (newest first by default).
+
+Each view uses `ExportMenu` and `utils/exportData.ts`, limited to the formats
+allowed by `SystemSettings.exportFormats`: CSV download, XLS download (an HTML
+table with an `.xls` extension), or a print view for saving as PDF. Exports use
+raw row timestamps; on-screen timestamps use the configured display format and
+time zone. No report period metadata or summary cards are included in exports.
+
+| View | Filename stem | Export columns |
+|---|---|---|
+| Host Availability | `host-availability-report` | Hostname, State, Uptime %, Total Snapshots, Last Check, Last State Change |
+| Network Services | `network-services-report` | Service, Current status observed at, Total Instances, Current OK/Warning/Critical/Unknown/Pending/Unavailable, Availability during recorded time %, Recorded time (seconds), No recorded data (seconds), Nagios no data (seconds), Engine not running (seconds), Unaccounted time (seconds) |
+| Hosts by OS | `hosts-by-os-report` | OS, Hostname, State, Uptime %, Last Check, Last State Change |
+| Device Services | `device-services-report` | Hostname, Service, Current state, Availability during recorded time %, Recorded time (seconds), No recorded data (seconds), Nagios no data (seconds), Engine not running (seconds), Unaccounted time (seconds), Current status observed at, Current last check, Current last state change |
+| Alerts | `alerts-report` | Time, Hostname, Service, Previous State, New State, Output |
+| Notifications | `notifications-report` | Time, Hostname, Service, State, Contact, Message |
+
+Host Availability retains `Snapshots` on screen and `Total Snapshots` in exports, but its
+API `total_snapshots` value is known-state duration in seconds from Nagios,
+not a polling snapshot count. Export logging posts to `/api/system/exportlog`;
+a logging failure does not prevent the download.
+
+Service-report browser comparison is opt-in: Playwright project `issue-198-live`,
+`e2e/service-reports.lab.spec.ts`, accepts only `ISSUE198_LAB_URL=http://127.0.0.1:19198`.
+That URL must tunnel to `server/tests/e2e/service_reports_core.py --serve` on the
+exclusively reserved appliance. The fixture uses temporary databases, a separate
+Core with notifications disabled, and local fixture authentication; it is never
+a production authentication mode. The tests compare rendered service durations
+and recorded-time availability, and exercise real CSV/XLS downloads and PDF
+print output in Chromium.

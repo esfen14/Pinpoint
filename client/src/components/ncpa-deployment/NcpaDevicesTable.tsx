@@ -14,6 +14,7 @@ type Props = {
   onRetry: (deviceId: number) => void
   onCleanup: (device: NcpaDevice) => void
   onRemoteRestart: (device: NcpaDevice) => void
+  onRegister: (device: NcpaDevice) => void
 }
 
 const BUTTON_SM =
@@ -32,6 +33,7 @@ export function NcpaDevicesTable({
   onRetry,
   onCleanup,
   onRemoteRestart,
+  onRegister,
 }: Props) {
   const [query, setQuery] = useState('')
   const q = query.trim().toLowerCase()
@@ -138,6 +140,11 @@ export function NcpaDevicesTable({
                     )}
                   </td>
                   <td className="px-4 py-3 text-right">
+                    {d.agentStatus !== 'Deployed NCPA' && (
+                      <button type="button" className={BUTTON_SM} disabled={isRunning} title={busyTitle} onClick={() => onRegister(d)} aria-label={`Register an agent I installed on ${d.hostname}`}>
+                        Register agent
+                      </button>
+                    )}
                     {d.trusted && (
                       <button type="button" className={BUTTON_SM} disabled={isRunning} title={busyTitle} onClick={() => onRemoteRestart(d)}>
                         Remote restart

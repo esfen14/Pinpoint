@@ -37,6 +37,22 @@ current-state inventory rather than treated as intended permission design.
 
 ## Operator CLI commands
 
+`app/api/commands/restore.py` provides `flask restore-backup <folder> --yes
+[--force]` (cold-standby recovery; runbook `docs/manuals/Backup_and_Restore.md`).
+The folder is a bare name in `YYYYMMDD-HHMMSS` form inside `DATABASE_BACKUP_DIR`,
+never a path. The logic is in `app/backup_restore.py`: it refuses a bad name, a
+symlink or a folder outside the backup directory, a missing database file, any
+file failing `PRAGMA integrity_check`, a missing `--yes`, and an active
+`pinpoint-gunicorn.service` (checked with a fixed `systemctl is-active --quiet`
+argument list; `--force` skips only this). It copies the current databases to
+`pre-restore-<timestamp>` (ignored by backup listing and rotation), stages each
+backup beside its target with the SQLite backup API, removes stale `-wal`/`-shm`/
+`-journal` files and renames each into place atomically; if the second rename
+fails the first is put back. It then prints the follow-up steps
+(`flask db upgrade --multidb`, `flask sync-permissions`, regenerate the Nagios
+config through the existing writer, start the service). Nothing is restored over
+a database that was not checked first.
+
 `app/api/commands/seed.py` provides `flask recover-bootstrap-admin` for an
 operator with local server access when the original bootstrap administrator has
 lost its password. It privately prompts for a confirmed temporary password and
@@ -199,7 +215,7 @@ An action body has `name` (3 to 60 letters, numbers, spaces, `.`, `_`, `-`; uniq
 
 | Method and path | Permission | Purpose |
 |---|---|---|
-| `GET /api/system/dashboard/status` | `system.dashboard` | Nagios process, monitoring-server resources and appliance storage_usage (per-database, backups, archives, free/total bytes per filesystem) |
+| `GET /api/system/dashboard/status` | `system.dashboard` | Nagios process, monitoring-server resources, appliance storage_usage (per-database, backups, archives, free/total bytes per filesystem) and `backup_health` (`newest_backup_at`, `backup_count`, `total_bytes`, `automatic_backups`, `stale`; `stale` is true only when automatic backups are on and the newest backup is missing or older than twice the daily interval; an empty or missing folder gives null/0) |
 | `GET /api/system/dashboard/summary` | `system.dashboard` | Host/service counts, active-alert counts, ping and NCPA summaries |
 | `GET /api/system/dashboard/alerts` | `system.dashboard` | Active alerts from the latest snapshot, with acknowledgement filters |
 | `POST /api/system/dashboard/alerts/acknowledge` | `system.acknowledge_alerts` | Acknowledge one host or service alert; also sent to Nagios (`nagios_synced`, `nagios_message` in the response). A comment with a line break or NUL returns 400 |
@@ -407,6 +423,8 @@ encrypted with `secrets_store` as `<name>_enc` and never returned.
 | `POST /api/system/deployment/ncpa/<device_id>/confirm-trust` | `system.deploy.ncpa` | Body `{"fingerprint"}`: save the key only if the live key on the device's SSH port still equals the one the user approved, pinning that port in `SSH_Port`; 409 with `data.fingerprint` when it changed, 502 when unreachable |
 | `POST /api/system/deployment/ncpa/check-credentials` | `system.deploy.ncpa` | Test each device's login and sudo on its pinned SSH port without deploying; per-device result `ok`, `auth_failed`, `no_sudo`, `unreachable`, `host_key_changed`, `not_trusted`, `not_found` or `rate_limited` (one check per device per 3 s) |
 | `POST /api/system/deployment/ncpa/<device_id>/refresh-disks` | `system.deploy.ncpa` | Re-read the agent's logical disks, store them, regenerate the Nagios config |
+| `GET /api/system/deployment/ncpa/register-candidates` | `system.deploy.ncpa` | Active scanned devices without a deployed agent, NCPA-eligible or not (#130), for the registration picker |
+| `POST /api/system/deployment/ncpa/<device_id>/register` | `system.deploy.ncpa` | Register an agent the administrator installed (#130): body `token` (32 hex characters) and optional `port`; the agent must answer and report a disk before anything is saved; stores method Manual, status Deployed, disks and the NCPA port, then reconciles Nagios. 400 invalid input, 404 unknown/retired device, 409 already deployed, 502 agent unreachable or no disks |
 | `GET /api/system/deployment/ncpa/<device_id>/remote-restart`, `PUT /api/system/deployment/ncpa/<device_id>/remote-restart` | `system.deploy.ncpa` | Read or set a device's remote restart switch and service list. PUT body `{"enabled": bool, "services": [unit, ...]}`; units are plain names (letters, digits, `_ . @ -`, at most 63 characters, at most 20 per device); 400 for anything else, 409 for an untrusted device or turning it on with an empty list. `redeploy_needed` is true when the list changed, because the device's own copy is written only by a (re)deployment |
 | `POST /api/system/deployment/ncpa/<device_id>/cleanup` | `system.deploy.ncpa` | Body `{"username", "password", "remove_account"?}`: a failed or deployed device with a confirmed SSH fingerprint and no running deployment; recheck SSH key before SSH and remove Pinpoint bootstrap key/rule/helper, optionally account. Response lists each step with `ok`/optional `skipped`, and `agent_status`; cleanup clears `Key_Installed` to block remote actions until redeployment; complete cleanup returns Pending NCPA, incomplete cleanup stays Deployment Failed with a safe error. An activity entry records the outcome; request credentials are cleared. Errors never contain credentials. |
 | `POST /api/system/deployment/ncpa/start` | `system.deploy.ncpa` | Validate credentials and devices, create the run with a Rejected or Pending result per device, and start the worker; 400 with `data.rejected` when no device can be deployed |
@@ -449,8 +467,8 @@ policy and fixed path; responses can still contain hostnames and addresses.
 |---|---|---|
 | `GET /api/system/report/availability` | `system.report` | Host availability for a period from Nagios `archivejson.cgi` durations; optional `hostname` scope is forwarded |
 | `GET /api/system/report/hosts-by-os` | `system.report` | The same Nagios-backed host availability grouped by OS |
-| `GET /api/system/report/network-services` | `system.report` | Network-wide service health report |
-| `GET /api/system/report/device-services` | `system.report` | Per-device service health report |
+| `GET /api/system/report/network-services` | `system.report` | Service availability from bulk Nagios archive durations, grouped by exact description; separate current bulk status |
+| `GET /api/system/report/device-services` | `system.report` | The same archive service instances grouped by hostname; device aggregate is service availability, not host uptime |
 | `GET /api/system/report/alerts` | `system.report` | Alert events/count from Nagios archives |
 | `GET /api/system/report/notifications` | `system.report` | Notification events/count from Nagios archives |
 
@@ -494,6 +512,60 @@ update/custom-plugin modules.
 | `POST /api/plugin/<plugin_id>/update` | `plugin.update` | Update from an archive |
 | `POST /api/plugin/<plugin_id>/update/rollback` | `plugin.update_rollback` | Restore the backed-up version |
 
+#### Service availability response contract
+
+The two service reports share `nagios/service_availability.py`, called on each
+execution. No `ServiceStatus` query, poller invocation, cache, scheduler or database
+fallback is used. One bulk archive request and at most one bulk detailed status
+request are made (none for empty history). Each call has a maximum 10-second
+connect/read timeout, the second limited by a shared 20-second timeout budget;
+there are no retries or redirects. This timeout budget is not a hard CPU or
+whole-response wall-clock deadline for a continuously streaming upstream.
+
+Existing URLs, grouping arrays and `uptime_pct` names remain. Network Services
+returns `services[]` with `service`, `total_instances`, current state counts and
+`instances[]`. Device Services returns `hosts[]` with `hostname`, `services[]`
+and service-duration aggregates; `total_hosts` and `total_services` remain.
+Both include `summary` with raw duration sums and counts. Distinct configured
+archive instances/hosts determine totals; no synthetic database-only rows exist.
+
+Instance, group and summary duration fields are numeric **seconds**:
+`ok_seconds`, `warning_seconds`, `critical_seconds`, `unknown_seconds`,
+`scheduled_ok_seconds`, `scheduled_warning_seconds`, `scheduled_critical_seconds`,
+`scheduled_unknown_seconds`, `known_seconds`, `no_data_seconds`,
+`nagios_not_running_seconds`, `unaccounted_seconds`, `no_recorded_data_seconds`
+and `window_seconds`. State totals already include their scheduled component;
+`known_seconds` sums the four states. `uptime_pct` is `100 * ok / known`, rounded
+to two decimals at output, null when known is zero. Aggregates sum raw seconds,
+never rounded percentages. `no_recorded_data_seconds = window_seconds - known`;
+its components are native no-data, engine downtime and the unaccounted remainder.
+A zero-history configured instance remains visible with null uptime and full
+missing coverage. No snapshot-count field, including `total_snapshots`, exists
+in either service-report contract. The host report's legacy field is unchanged.
+
+`current_status` contains `available`, `observed_at` (UTC ISO timestamp or null),
+and `notice` (null or sanitized status-unavailable text). Instance `state`,
+`last_check`, `last_state_change`, `plugin_output` come only from the separate
+bulk current service list, joined by exact `(hostname, service)` identity.
+Counts `ok`, `warning`, `critical`, `unknown`, `pending`, `unavailable` describe
+current status, even for past periods. Pending has null timestamps/output;
+missing has null metadata. A status failure preserves availability with null
+metadata and explicit notice. Archive timeout/auth/JSON/envelope/shape/identity/
+duration failures return a sanitized retryable 502; empty success returns an
+empty report. Every native duration must be finite, nonnegative and numeric;
+duplicate identities and duration sums exceeding the instance window are rejected.
+
+All six period values remain. Service custom dates use server-local midnight
+through the next midnight after the inclusive end date (exclusive boundary).
+Rolling/today/future-ended custom windows end at the last completed Unix second,
+strictly before the native query time, preventing Core's no-history current
+pseudo-state path. Empty/future-start/invalid bounds return 400 before I/O.
+Service `period` adds exact `start_ts`, `end_ts`, `end_exclusive=true`, `time_zone`;
+`start`/`end` contain UTC offsets. The same resolved window is used throughout;
+current status is explicitly an observation now, not a historical status query.
+The unchanged host/event routes retain their existing period behavior.
+
+
 ### Data polling settings contract
 
 `GET /api/system` includes `dataPollingInterval` in seconds. `PUT /api/system`
@@ -521,6 +593,7 @@ running. Check/retry settings, discovery and browser preferences remain independ
 | `api/helper/settings_flags.py` | Reads security/logging/session settings without importing route modules |
 | `api/helper/database_access/` | User, role, and permission lookup helpers |
 | `api/commands/seed.py` | Seeds permissions, roles, settings, and development users |
+| `nagios/service_availability.py` | Validates native service archive durations, sums weighted service availability and joins one read-only bulk current service list |
 | `nagios/status.py` | Polls status/object CGI data and writes snapshot models |
 | `api/plugin/plugin_descriptions.py` | One-line descriptions for the 58 bundled plugins; the scan fills a plugin's empty `Description` from it, and never overwrites an edited one |
 | `nagios/notifications.py` | Queries archive CGI alerts and notification events |
@@ -533,7 +606,8 @@ running. Check/retry settings, discovery and browser preferences remain independ
 | `remediation_actions.py` | The code-defined action types (`record_only`, and `restart_local_service` which runs `sudo -n /usr/bin/systemctl restart <unit>` as an argument list with no shell for a unit in `RESTARTABLE_UNITS`; it is refused for an unlisted unit or in Maintenance Mode, and records only the exit code, never command output): parameter schema and validation, `restart_remote_service` (#8 Part 8.3: restarts one unit on the device the event came from over SSH; see `remote_restart.py`; refused in Maintenance Mode, for a device that is not Active, is paused, is not trusted or has the switch off, and for a unit not on that device's list), and `run_action`, which enforces a timeout and turns a crash into a fixed message so no secret reaches the log. `RESTARTABLE_UNITS` and the installer sudoers drop-in must change together |
 | `remote_restart.py` | Remote service restart (#8 Part 8.3). Device side: the root-owned helper `/usr/local/sbin/pinpoint-service-restart`, its one sudoers line (`/etc/sudoers.d/pinpoint-service-restart`, checked with `visudo` before it replaces the live file) and the root-owned list `/etc/pinpoint/restartable-services`, installed by the NCPA bootstrap with the administrator's one-time password. PinPoint side: `restart_remote_unit` checks the stored host-key fingerprint, logs in with the deployment key and runs only `sudo -n <helper> <unit>`; the unit must match a plain-name pattern, and only fixed text is returned. Design: `docs/plans/Issue_8_3_Remote_Restart_Design_Note.md` |
 | `scripts/pinpoint_event_handler.py` | The Nagios event handler (standard library only): validates its arguments and writes one JSON file per event to the spool; never opens a shell or the network; installed by the installer at `/usr/local/sbin/pinpoint-event-handler` (`root:root`, 755) |
-| `automation.py` | Settings-driven discovery, plugin/security checks, and database backups |
+| `automation.py` | Settings-driven discovery, plugin/security checks, and database backups; `backup_health` for the dashboard; a failed scheduled backup writes one activity-log entry per day ("Scheduled database backup failed; see the application log", no exception text) |
+| `backup_restore.py` | Validation, integrity check, safety copy and atomic replacement used by `flask restore-backup`; also owns `BACKUP_FOLDER_FORMAT` |
 
 ## Shared statistics contract
 

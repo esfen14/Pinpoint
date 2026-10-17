@@ -1,0 +1,140 @@
+{
+  "format_version": 0,
+  "result": {
+    "query_time": 1792245480000,
+    "cgi": "archivejson.cgi",
+    "user": "fixture-user",
+    "query": "availability",
+    "query_status": "released",
+    "program_start": 1792245234000,
+    "last_data_update": 0,
+    "type_code": 0,
+    "type_text": "Success",
+    "message": ""
+  },
+  "data": {
+    "selectors": {
+      "availabilityobjecttype": 2,
+      "starttime": 978307200000,
+      "endtime": 978393600000,
+      "assumeinitialstate": false,
+      "assumestateretention": true,
+      "assumestateduringnagiosdowntime": false,
+      "statetypes": 1
+    },
+    "services": [
+      {
+        "host_name": "host-a",
+        "description": "service-1",
+        "time_ok": 0,
+        "time_warning": 0,
+        "time_critical": 0,
+        "time_unknown": 0,
+        "scheduled_time_ok": 0,
+        "scheduled_time_warning": 0,
+        "scheduled_time_critical": 0,
+        "scheduled_time_unknown": 0,
+        "time_indeterminate_nodata": 0,
+        "time_indeterminate_notrunning": 0
+      },
+      {
+        "host_name": "host-a",
+        "description": "service-2",
+        "time_ok": 0,
+        "time_warning": 0,
+        "time_critical": 0,
+        "time_unknown": 0,
+        "scheduled_time_ok": 0,
+        "scheduled_time_warning": 0,
+        "scheduled_time_critical": 0,
+        "scheduled_time_unknown": 0,
+        "time_indeterminate_nodata": 0,
+        "time_indeterminate_notrunning": 0
+      },
+      {
+        "host_name": "host-a",
+        "description": "service-3",
+        "time_ok": 0,
+        "time_warning": 0,
+        "time_critical": 0,
+        "time_unknown": 0,
+        "scheduled_time_ok": 0,
+        "scheduled_time_warning": 0,
+        "scheduled_time_critical": 0,
+        "scheduled_time_unknown": 0,
+        "time_indeterminate_nodata": 0,
+        "time_indeterminate_notrunning": 0
+      },
+      {
+        "host_name": "host-a",
+        "description": "service-4",
+        "time_ok": 0,
+        "time_warning": 0,
+        "time_critical": 0,
+        "time_unknown": 0,
+        "scheduled_time_ok": 0,
+        "scheduled_time_warning": 0,
+        "scheduled_time_critical": 0,
+        "scheduled_time_unknown": 0,
+        "time_indeterminate_nodata": 0,
+        "time_indeterminate_notrunning": 0
+      },
+      {
+        "host_name": "host-a",
+        "description": "service-5",
+        "time_ok": 0,
+        "time_warning": 0,
+        "time_critical": 0,
+        "time_unknown": 0,
+        "scheduled_time_ok": 0,
+        "scheduled_time_warning": 0,
+        "scheduled_time_critical": 0,
+        "scheduled_time_unknown": 0,
+        "time_indeterminate_nodata": 0,
+        "time_indeterminate_notrunning": 0
+      },
+      {
+        "host_name": "host-a",
+        "description": "service-6",
+        "time_ok": 0,
+        "time_warning": 0,
+        "time_critical": 0,
+        "time_unknown": 0,
+        "scheduled_time_ok": 0,
+        "scheduled_time_warning": 0,
+        "scheduled_time_critical": 0,
+        "scheduled_time_unknown": 0,
+        "time_indeterminate_nodata": 0,
+        "time_indeterminate_notrunning": 0
+      },
+      {
+        "host_name": "host-a",
+        "description": "service-7",
+        "time_ok": 0,
+        "time_warning": 0,
+        "time_critical": 0,
+        "time_unknown": 0,
+        "scheduled_time_ok": 0,
+        "scheduled_time_warning": 0,
+        "scheduled_time_critical": 0,
+        "scheduled_time_unknown": 0,
+        "time_indeterminate_nodata": 0,
+        "time_indeterminate_notrunning": 0
+      },
+      {
+        "host_name": "host-a",
+        "description": "service-8",
+        "time_ok": 0,
+        "time_warning": 0,
+        "time_critical": 0,
+        "time_unknown": 0,
+        "scheduled_time_ok": 0,
+        "scheduled_time_warning": 0,
+        "scheduled_time_critical": 0,
+        "scheduled_time_unknown": 0,
+        "time_indeterminate_nodata": 0,
+        "time_indeterminate_notrunning": 0
+      }
+    ]
+  }
+}

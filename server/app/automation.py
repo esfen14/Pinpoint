@@ -39,6 +39,7 @@ from app import app, db
 from app.api.plugin import service as plugin_service
 from app.api.plugin.manager import start_plugin_scan_thread
 from app.api.system.network_discovery import start_discovery_thread
+from app.backup_restore import BACKUP_FOLDER_FORMAT
 from app.logging.user_activity import create_user_log
 from app.plugin_models import Plugin, PluginScanStatus
 from app.system_models import (
@@ -64,9 +65,11 @@ SECURITY_CHECK_INTERVALS = {
 }
 
 BACKUP_INTERVAL = timedelta(days=1)
-BACKUP_FOLDER_FORMAT = "%Y%m%d-%H%M%S"
+
+BACKUP_STALE_FACTOR = 2
 
 SECURITY_CHECK_ACTION = "Scheduled security check"
+BACKUP_FAILURE_ACTION = "Scheduled database backup failed"
 AUTOMATION_PERMISSION = "system.discover"
 
 
@@ -177,6 +180,76 @@ def list_backups(backup_dir):
     return backups
 
 
+def last_backup_failure():
+    """When the most recent failed scheduled backup was logged, or None."""
+    return db.session.scalar(
+        sa.select(sa.func.max(ActivityLog.Performed_At))
+        .where(ActivityLog.Action_Type.like(f"{BACKUP_FAILURE_ACTION}%"))
+    )
+
+
+def backup_health(backup_dir, automatic_backups, now):
+    """
+    Summarise the backups in backup_dir for the dashboard status:
+    newest_backup_at (ISO-8601 UTC, or None), backup_count, total_bytes (size
+    of the backup files), automatic_backups, and stale. stale is True only
+    when automatic backups are on and the newest backup is missing or older
+    than BACKUP_STALE_FACTOR backup intervals; with them off nothing is
+    expected, so it is never stale. An empty or missing folder gives zeros.
+    """
+    backups = list_backups(backup_dir)
+
+    total_bytes = 0
+    for _, folder in backups:
+        for item in folder.iterdir():
+            try:
+                if item.is_file() and not item.is_symlink():
+                    total_bytes += item.stat().st_size
+            except OSError:
+                continue
+
+    newest = backups[-1][0] if backups else None
+    overdue = newest is None or now - newest > BACKUP_STALE_FACTOR * BACKUP_INTERVAL
+    return {
+        "newest_backup_at": newest.isoformat() if newest else None,
+        "backup_count": len(backups),
+        "total_bytes": total_bytes,
+        "automatic_backups": bool(automatic_backups),
+        "stale": bool(automatic_backups) and overdue,
+    }
+
+
+def get_backup_health():
+    """backup_health for the configured backup folder and the saved Automatic_Backups setting."""
+    settings = db.session.get(SystemSettings, 1)
+    return backup_health(
+        current_app.config["DATABASE_BACKUP_DIR"],
+        settings is not None and settings.Automatic_Backups,
+        datetime.now(timezone.utc),
+    )
+
+
+def record_backup_failure(settings, now):
+    """
+    Write an activity-log entry (attributed like other scheduled tasks) for a
+    failed scheduled backup. The scheduler retries every few minutes, so at
+    most one entry is written per backup interval. Never raises: the failure
+    is already in the application log. Commits.
+    """
+    try:
+        user_id = get_automation_user_id(settings)
+        if user_id is None:
+            return
+        previous = as_utc(last_backup_failure())
+        if previous is not None and now - previous < BACKUP_INTERVAL:
+            return
+        create_user_log(user_id, f"{BACKUP_FAILURE_ACTION}; see the application log")
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("Could not record the failed scheduled backup in the activity log.")
+
+
 # ==========================================================
 # TASKS
 # ==========================================================
@@ -277,7 +350,9 @@ def run_due_automation(now=None):
                     )
                     started.append("backup")
             except Exception:
+                db.session.rollback()
                 current_app.logger.exception("Scheduled database backup failed.")
+                record_backup_failure(settings, now)
 
         if settings.Maintenance_Mode:
             return started

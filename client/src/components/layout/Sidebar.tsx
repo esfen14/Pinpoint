@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import {
   Activity,
+  BarChart3,
   FileText,
+  HeartPulse,
   FolderOpen,
   HelpCircle,
   History,
@@ -45,7 +47,7 @@ const navItems = [
   {
     to: '/system-status',
     label: 'System Status',
-    icon: Network,
+    icon: HeartPulse,
   },
 
   {
@@ -76,7 +78,7 @@ const navItems = [
   {
     to: '/reports',
     label: 'Report',
-    icon: FileText,
+    icon: BarChart3,
   },
   {
     to: '/system-logs',

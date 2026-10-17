@@ -13,7 +13,10 @@ import {
   type NcpaDevice,
   type RawDeploymentRun,
   type RawNcpaDevice,
+  type RawRegisterCandidate,
   type RawRunsPage,
+  type RegisterCandidate,
+  type RegisterResult,
   type RejectedDevice,
   type RunsPage,
   type StartResult,
@@ -107,4 +110,15 @@ export function getRemoteRestart(deviceId: number) {
 
 export function saveRemoteRestart(deviceId: number, input: { enabled: boolean; services: string[] }) {
   return apiPut<RemoteRestartSettings>(`${BASE}/${deviceId}/remote-restart`, input)
+}
+
+/** Register an agent the administrator installed. The token is sent in the body only and never kept by the caller. */
+export function registerManualAgent(deviceId: number, token: string, port?: number): Promise<RegisterResult> {
+  return apiPost<RegisterResult>(`${BASE}/${deviceId}/register`, port === undefined ? { token } : { token, port })
+}
+
+/** Active devices without a deployed agent, whether or not NCPA-eligible (for example Windows hosts). */
+export async function getRegisterCandidates(): Promise<RegisterCandidate[]> {
+  const data = await apiGet<{ devices: RawRegisterCandidate[] }>(`${BASE}/register-candidates`)
+  return data.devices.map((d) => ({ id: d.device_id, hostname: d.hostname, ipAddress: d.ip_address, agentStatus: d.agent_status }))
 }

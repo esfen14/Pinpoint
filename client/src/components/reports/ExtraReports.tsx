@@ -7,6 +7,8 @@ import { apiGet, errorMessage } from '../../lib/api'
 import { formatServerDateTime } from '../../utils/formatDateTime'
 import { exportRows } from '../../utils/exportData'
 import { ExportMenu } from '../shared/ExportMenu'
+import type { DeviceServicesReport } from '../../types/report'
+import { ServiceReportContext } from './ServiceReportContext'
 import { Pagination } from '../shared/Pagination'
 
 
@@ -40,6 +42,7 @@ type Report = {
   columns: Column[]
   rows: Row[]
   cards: ExtraReportCard[]
+  serviceContext?: DeviceServicesReport
 }
 
 type NagiosEvent = Record<string, unknown>
@@ -112,23 +115,22 @@ function buildReport(view: ExtraReportView, data: Record<string, unknown>): Repo
   }
 
   if (view === 'device-services') {
-    const hosts = data.hosts as {
-      hostname: string
-      uptime_pct: number | null
-      services: {
-        service: string; state: string; uptime_pct: number | null; total_snapshots: number
-        last_check: string | null; last_state_change: string | null; plugin_output: string
-      }[]
-    }[]
+    const serviceData = data as unknown as DeviceServicesReport
+    const hosts = serviceData.hosts
     const rows: Row[] = []
     for (const host of hosts) {
       for (const svc of host.services) {
         rows.push({
           hostname: host.hostname,
           service: svc.service,
-          state: svc.state,
+          state: svc.state ?? 'Unavailable',
           uptime: svc.uptime_pct,
-          snapshots: svc.total_snapshots,
+          recorded: svc.known_seconds,
+          missing: svc.no_recorded_data_seconds,
+          noData: svc.no_data_seconds,
+          engineDown: svc.nagios_not_running_seconds,
+          unaccounted: svc.unaccounted_seconds,
+          observedAt: serviceData.current_status.observed_at,
           lastCheck: svc.last_check,
           lastStateChange: svc.last_state_change,
         })
@@ -141,19 +143,25 @@ function buildReport(view: ExtraReportView, data: Record<string, unknown>): Repo
       searchLabel: 'Search host or service',
       searchKeys: ['hostname', 'service'],
       filterKey: 'state',
-      filterLabel: 'State',
+      filterLabel: 'Current state',
       sortKey: 'hostname',
       columns: [
         { key: 'hostname', label: 'Hostname', kind: 'text' },
         { key: 'service', label: 'Service', kind: 'text' },
-        { key: 'state', label: 'State', kind: 'state' },
-        { key: 'uptime', label: 'Uptime %', kind: 'pct' },
-        { key: 'snapshots', label: 'Snapshots', kind: 'text' },
-        { key: 'lastCheck', label: 'Last Check', kind: 'datetime' },
-        { key: 'lastStateChange', label: 'Last State Change', kind: 'datetime' },
+        { key: 'state', label: 'Current state', kind: 'state' },
+        { key: 'uptime', label: 'Availability during recorded time %', kind: 'pct' },
+        { key: 'recorded', label: 'Recorded time (seconds)', kind: 'text' },
+        { key: 'missing', label: 'No recorded data (seconds)', kind: 'text' },
+        { key: 'noData', label: 'Nagios no data (seconds)', kind: 'text' },
+        { key: 'engineDown', label: 'Engine not running (seconds)', kind: 'text' },
+        { key: 'unaccounted', label: 'Unaccounted time (seconds)', kind: 'text' },
+        { key: 'observedAt', label: 'Current status observed at', kind: 'datetime' },
+        { key: 'lastCheck', label: 'Current last check', kind: 'datetime' },
+        { key: 'lastStateChange', label: 'Current last state change', kind: 'datetime' },
       ],
       rows,
       cards: [],
+      serviceContext: serviceData,
     }
   }
 
@@ -235,6 +243,7 @@ function buildReport(view: ExtraReportView, data: Record<string, unknown>): Repo
 function StateBadge({ state }: { state: string }) {
   if (!state) return <span className="text-gray-500 dark:text-gray-400">—</span>
   const good = isGood(state)
+  if (state === 'Unavailable' || state === 'Pending') return <span className="text-gray-500">{state}</span>
   const warn = state.toUpperCase() === 'WARNING' || state.toUpperCase() === 'UNKNOWN'
   const tone = good
     ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400'
@@ -339,6 +348,7 @@ export function ExtraReports({ view, query, runKey, onStatus, onCards }: Props) 
 
   return (
     <>
+      {report?.serviceContext && <ServiceReportContext period={report.serviceContext.period} current={report.serviceContext.current_status} durations={report.serviceContext.summary} />}
       <div className="rounded-2xl bg-white shadow-sm dark:bg-[#171B20]">
         <div className="relative flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 p-4 dark:border-white/10">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{report?.title ?? 'Report'}</h2>
@@ -358,6 +368,7 @@ export function ExtraReports({ view, query, runKey, onStatus, onCards }: Props) 
               <div className="relative">
                 <button
                   type="button"
+                  aria-label="Filter current state"
                   onClick={() => setShowFilter((v) => !v)}
                   className={`rounded-lg p-2 ${
                     showFilter || stateFilter !== 'All'
@@ -399,7 +410,8 @@ export function ExtraReports({ view, query, runKey, onStatus, onCards }: Props) 
             </button>
 
             <ExportMenu
-              allowedFormats={settings.exportFormats}
+              label
+              allowedFormats={isLoading || !report ? [] : settings.exportFormats}
               onExport={(format) => report && exportRows(exportData(), format, report.filename)}
             />
           </div>
