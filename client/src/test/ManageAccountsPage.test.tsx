@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
@@ -270,6 +270,33 @@ describe('ManageAccountsPage', () => {
   })
 
   describe('Add User', () => {
+    it('can save when Add User opens before role options arrive', async () => {
+      let resolveRoles!: (value: { items: typeof ROLES }) => void
+      const pendingRoles = new Promise<{ items: typeof ROLES }>((resolve) => { resolveRoles = resolve })
+      apiGet.mockImplementation((path: string) =>
+        path === '/api/user/roles/options' ? pendingRoles : routeApi(path),
+      )
+      const user = userEvent.setup()
+      renderPage()
+      await user.click(screen.getByRole('button', { name: '+ Add User' }))
+      await user.type(screen.getByPlaceholderText('e.g. JUAN'), 'Ana')
+      await user.type(screen.getByPlaceholderText('e.g. CRUZ'), 'Reyes')
+      await user.type(screen.getByPlaceholderText('e.g. juan.cruz@email.com'), 'ana@example.com')
+      const [passwordInput, confirmInput] = document.querySelectorAll<HTMLInputElement>('input[type="password"]')
+      await user.type(passwordInput, 'StrongPass123!')
+      await user.type(confirmInput, 'StrongPass123!')
+      expect(screen.getByRole('button', { name: 'SAVE CHANGES' })).toBeDisabled()
+
+      await act(async () => resolveRoles({ items: ROLES }))
+
+      expect(screen.getAllByRole('combobox')[0]).toHaveValue('1')
+      expect(screen.getByRole('button', { name: 'SAVE CHANGES' })).toBeEnabled()
+      await user.click(screen.getByRole('button', { name: 'SAVE CHANGES' }))
+      await waitFor(() => expect(apiPost).toHaveBeenCalledWith(
+        '/api/user/accounts', expect.objectContaining({ role_id: 1 }),
+      ))
+    })
+
     async function openAndFill(password: string, confirm = password) {
       const user = userEvent.setup()
       await renderLoaded()
@@ -300,6 +327,67 @@ describe('ManageAccountsPage', () => {
           require_password_change: true,
         })
       })
+    })
+
+    it('creates two more accounts and refreshes the table after each save', async () => {
+      canEditAccounts = true
+      accountsResponse = { items: [ACCOUNTS[0]] }
+      const saved = [ACCOUNTS[0]]
+      apiPost.mockImplementation(async (path, data) => {
+        if (path === '/api/user/accounts') {
+          saved.push(account(saved.length + 1, data.first_name, data.last_name, data.status, 'Viewer'))
+          accountsResponse = { items: [...saved] }
+        }
+        return {}
+      })
+      const user = await openAndFill('StrongPass123!')
+      await user.selectOptions(screen.getAllByRole('combobox')[0], '2')
+      await user.selectOptions(screen.getAllByRole('combobox')[1], 'inactive')
+      await user.click(screen.getByRole('button', { name: 'SAVE CHANGES' }))
+      expect(await screen.findByText('Ana Reyes')).toBeInTheDocument()
+      expect(tableNames()).toHaveLength(2)
+      expect(apiPost).toHaveBeenLastCalledWith('/api/user/accounts', expect.objectContaining({
+        role_id: 2, status: 'inactive',
+      }))
+
+      await user.click(screen.getByRole('button', { name: '+ Add User' }))
+      await user.type(screen.getByPlaceholderText('e.g. JUAN'), 'Ben')
+      await user.type(screen.getByPlaceholderText('e.g. CRUZ'), 'Cruz')
+      await user.type(screen.getByPlaceholderText('e.g. juan.cruz@email.com'), 'ben@example.com')
+      const [passwordInput, confirmInput] = document.querySelectorAll<HTMLInputElement>('input[type="password"]')
+      await user.type(passwordInput, 'StrongPass123!')
+      await user.type(confirmInput, 'StrongPass123!')
+      expect(screen.getByRole('button', { name: 'SAVE CHANGES' })).toBeEnabled()
+      await user.click(screen.getByRole('button', { name: 'SAVE CHANGES' }))
+      expect(await screen.findByText('Ben Cruz')).toBeInTheDocument()
+      expect(tableNames()).toHaveLength(3)
+      expect(apiPost).toHaveBeenCalledTimes(2)
+    })
+
+    it('explains why saving is blocked without any available roles', async () => {
+      apiGet.mockImplementation((path: string) =>
+        path === '/api/user/roles/options' ? Promise.resolve({ items: [] }) : routeApi(path),
+      )
+      await openAndFill('StrongPass123!')
+      expect(screen.getByRole('status')).toHaveTextContent('A role is required to save.')
+      expect(screen.getByRole('button', { name: 'SAVE CHANGES' })).toBeDisabled()
+      expect(apiPost).not.toHaveBeenCalled()
+    })
+
+    it('keeps entered values on server failure and allows a corrected retry', async () => {
+      apiPost.mockRejectedValueOnce(new Error('Email is already in use.'))
+      const user = await openAndFill('StrongPass123!')
+      await user.click(screen.getByRole('button', { name: 'SAVE CHANGES' }))
+      expect(await screen.findByText('Email is already in use.')).toBeInTheDocument()
+      const email = screen.getByPlaceholderText('e.g. juan.cruz@email.com')
+      expect(email).toHaveValue('ana@example.com')
+      await user.clear(email)
+      await user.type(email, 'another@example.com')
+      await user.click(screen.getByRole('button', { name: 'SAVE CHANGES' }))
+      await waitFor(() => expect(screen.queryByText('Create Password')).not.toBeInTheDocument())
+      expect(apiPost).toHaveBeenLastCalledWith('/api/user/accounts', expect.objectContaining({
+        email: 'another@example.com', password: 'StrongPass123!',
+      }))
     })
 
     it('sends require_password_change false when the checkbox is unticked', async () => {

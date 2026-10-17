@@ -4,6 +4,7 @@ import { CheckCircle2, KeyRound, Power, ServerCog, XCircle } from 'lucide-react'
 import { PageHeader } from '../components/shared/PageHeader'
 import { SummaryStatCard } from '../components/shared/SummaryStatCard'
 import { NcpaDevicesTable } from '../components/ncpa-deployment/NcpaDevicesTable'
+import { RemoteRestartDialog } from '../components/ncpa-deployment/RemoteRestartDialog'
 import { CleanupDialog } from '../components/ncpa-deployment/CleanupDialog'
 import { DeploymentHistoryTable } from '../components/ncpa-deployment/DeploymentHistoryTable'
 import { DeploymentRunBanner } from '../components/ncpa-deployment/DeploymentRunBanner'
@@ -36,6 +37,7 @@ export function NcpaDeploymentPage() {
   const [devicesKey, setDevicesKey] = useState(0)
   const [checked, setChecked] = useState<Set<number>>(new Set())
   const [wizard, setWizard] = useState<WizardOptions | null>(null)
+  const [restartDevice, setRestartDevice] = useState<NcpaDevice | null>(null)
   const [cleanupDevice, setCleanupDevice] = useState<NcpaDevice | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [historyKey, setHistoryKey] = useState(0)
@@ -247,6 +249,7 @@ export function NcpaDeploymentPage() {
           onVerify={(id) => openWizard({ initialSelection: [id], startStep: 1, verifyOnly: true })}
           onRetry={(id) => openWizard({ initialSelection: [id] })}
           onCleanup={setCleanupDevice}
+          onRemoteRestart={setRestartDevice}
         />
       ) : (
         <DeploymentHistoryTable refreshKey={historyKey} onSelectRun={openRun} />
@@ -270,6 +273,8 @@ export function NcpaDeploymentPage() {
           }}
         />
       )}
+
+      {restartDevice && <RemoteRestartDialog key={restartDevice.id} deviceId={restartDevice.id} hostname={restartDevice.hostname} onClose={() => setRestartDevice(null)} />}
 
       {cleanupDevice && <CleanupDialog device={cleanupDevice} onClose={() => setCleanupDevice(null)} onChanged={loadDevices} />}
 

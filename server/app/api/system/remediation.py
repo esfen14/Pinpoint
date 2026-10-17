@@ -332,6 +332,11 @@ def delete_remediation_action(action_id):
         if row is None:
             return error("Action not found.", 404)
         before = serialize_action(row)
+        # Keep audit snapshots and detach history even on SQLite connections that do
+        # not enable foreign-key enforcement. Rollback restores links if apply fails.
+        db.session.execute(sa.update(RemediationRun).where(
+            RemediationRun.Action_Id == action_id
+        ).values(Action_Id=None))
         db.session.delete(row)
         db.session.flush()
         ok, message = apply_config()

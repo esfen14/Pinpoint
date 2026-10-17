@@ -35,11 +35,34 @@ and [the routed report](../docs/test-runs/2026-10-15-issue-117-manual-topology/R
 The current-main integration preserves escalation/remediation rendering and joins
 the published migration histories without rewriting them; populated upgrades from
 both old heads and a real browser/Nagios retest pass. See [the main-sync report](../docs/test-runs/2026-10-15-issue-117-main-sync/REPORT.md).
-CI and human review are tracked on the implementation PR. One-attempt settings can
-emit transient child DOWN notifications before UNREACHABLE; notification guarantees
-and any main-config change are a separate [decision #173](https://github.com/esfen14/Pinpoint/issues/173).
-Parent links do not implement routing failover or guarantee immediate suppression
-under every Nagios cache/retry configuration.
+CI and human review are tracked on the implementation PR. For
+[issue #173](https://github.com/esfen14/Pinpoint/issues/173), the user accepted
+Option A on 2026-10-17: temporary child DOWN notifications are allowed before
+Nagios confirms parent reachability. One-attempt monitoring remains supported;
+no cache, retry or notification configuration change is approved. The contract is
+in Device Inventory §13 and the data integration specification, with
+[operator guidance](../docs/manuals/Notification_Policy.md#parent-outages-and-temporary-child-down-alerts).
+The [#173 routed acceptance report](../docs/test-runs/2026-10-17-issue-173-parent-notifications/REPORT.md)
+records exact settings and observed single/redundant-parent HARD DOWN notifications
+followed by UNREACHABLE, no-parent DOWN controls, recovery and cleanup. The opt-in
+Core driver covers the accepted contract; no application runtime change is needed.
+Review readiness and CI are tracked on PR #192. Parent links do not implement
+routing failover or guarantee immediate suppression under every Nagios cache/retry
+configuration.
+
+## Account creation (#191)
+
+The Add User dialog now uses the displayed default role for validation and
+submission even when roles load after the dialog opens. The previously stale
+zero role ID could keep Save disabled despite a visibly selected role. Isolated
+interaction tests cover the timing regression, sequential creation and list
+refresh, explicit role/status, no-role guidance and rejection/retry. A backend
+regression verifies two additional persisted accounts and a total of three.
+A [local Chromium/real Flask run](../docs/test-runs/2026-10-17-issue-191-accounts/REPORT.md)
+also confirms delayed-role creation, a second account and reload persistence
+with temporary SQLite and a stubbed Nagios writer. The API has no one-account cap. The exact trigger in the original report is
+unconfirmed; password policy and mismatch checks intentionally still block Save.
+See [the investigation](../docs/plans/Issue_191_Account_Creation_Investigation.md).
 
 ## Implemented backend areas
 
@@ -129,7 +152,7 @@ under every Nagios cache/retry configuration.
   displays the actual saved check/poll and personal browser refresh schedules.
 - Scheduled Nagios polling, retention purges, backups, network scans, plugin
   update scans, and security validation.
-- Event handler framework (#120): admin-defined remediation actions (`record_only`, plus `restart_local_service` from #121), the
+- Event handler framework (#120): admin-defined remediation actions (`record_only`, plus `restart_local_service` from #121 and `restart_remote_service` from #8 Part 8.3), the
   `/api/system/remediation` routes with `remediation.view` and `remediation.manage`, the handler
   script, the spool consumer with cooldown, hourly cap, replay protection and crash recovery, and
   Nagios config rendering that is byte-identical when no action is enabled.
@@ -190,6 +213,8 @@ under every Nagios cache/retry configuration.
 | Local service restart action (#121) | Part 8.1 implemented and unit tested (fixed unit list, no shell, Maintenance Mode, cooldown and cap). Not done: Part 8.2 (sudoers drop-in with `visudo -c`, the installer code is not in this repository), Part 8.3 (remote restart; needs a design note on the on-device helper first), the lab report, and the Remediation form does not yet render action parameters, so `unit` cannot be set from the page (API only). A Maintenance Mode refusal is recorded as outcome `failed` because a new outcome would need a frontend and migration change | Add the sudoers drop-in in the installer repository, run the lab case, render parameter fields in `ActionFormDialog.tsx`, then Part 8.3 |
 | Event handler framework (#120) | Implemented and unit tested (migration, registry, handler, consumer, config rendering, API, page). Run on a lab appliance on 2026-10-15 (`docs/test-runs/2026-10-15-issue-120-event-handler/REPORT.md`): a covered host's hard DOWN fired the handler through real Nagios and gave a run, repeats were skipped by the cooldown and the hourly cap, `nagios -v` passed, and the run found and fixed one defect (a recovery ran the action). A second run (`docs/test-runs/2026-10-15-issue-120-service-and-spool/REPORT.md`) added a service-scope action, forged, malformed, oversized, symlinked and replayed spool files, all handled safely. Not yet seen live: a SOFT state (needs an active check that really fails) and the page in a browser (checklist in section 8 of `docs/plans/Event_Handler_Design.md`). Two tests (a spool symlink and the file mode of the handler) are skipped on Windows and rely on Linux CI. Needs installer work in the other repository: the spool folder (`nagios:pinpoint`, 2770), the handler at `/usr/local/sbin/pinpoint-event-handler` (`root:root`, 755), and narrower rights for the `nagios` group. `restart_local_service` (#121 Part 8.1) restarts a listed host service (`nagios`) through `sudo -n systemctl restart`; it needs the installer sudoers drop-in, which is not yet written (#121 Part 8.2) | Deploy to a lab appliance after the installer pieces are applied, force a hard failure and recovery on one service, check exactly one run and the cooldown and cap skips, repeat with the installer-built spool folder and handler, a live SOFT state and a browser walk-through; add `restart_local_service` in #121 |
 | Resource forecasts (#156) | Display only: `app/forecast.py` (straight-line fit over 72 hours of hourly averages for NCPA disk and memory percent), the `resource_forecast` job every 30 minutes, `RESOURCE_FORECAST` (migration `b7e2a9c4d518`), `GET /api/system/forecast` (`system.dashboard` or `system.services`), the Dashboard "Running out soon" list and a badge on the service table; unit tests cover the fit, the job (replacement, paused devices, exact-tuple cap, constant mixed-row query count, rotating batches and failed-commit retry), the route, the migration and the UI states. Not done: notifying on a forecast with a horizon and on/off setting and their Settings page controls (decided out of scope on 2026-10-17; needs #132 and #153), native `check_disk` metrics, and the lab comparison of a forecast with a real disk fill (`docs/test-runs/`) | Open a follow-up issue for forecast notifications; run the lab fill test on an appliance |
+| Local service restart action (#121) | Part 8.1 implemented and unit tested (fixed unit list, no shell, Maintenance Mode, cooldown and cap). Not done: Part 8.2 (sudoers drop-in with `visudo -c`, the installer code is not in this repository), Part 8.3 (remote restart; needs a design note on the on-device helper first), the lab report, and live acceptance remains tracked separately. The Remediation form now renders local and remote `unit` parameters (#182). A Maintenance Mode refusal is recorded as outcome `failed` because a new outcome would need a frontend and migration change | Add the sudoers drop-in in the installer repository, run the lab case, complete #182 live acceptance and review |
+| Event handler framework (#120) | Implemented and unit tested (migration, registry, handler, consumer, config rendering, API, page). Run on a lab appliance on 2026-10-15 (`docs/test-runs/2026-10-15-issue-120-event-handler/REPORT.md`): a covered host's hard DOWN fired the handler through real Nagios and gave a run, repeats were skipped by the cooldown and the hourly cap, `nagios -v` passed, and the run found and fixed one defect (a recovery ran the action). A second run (`docs/test-runs/2026-10-15-issue-120-service-and-spool/REPORT.md`) added a service-scope action, forged, malformed, oversized, symlinked and replayed spool files, all handled safely. Not yet seen live: a SOFT state (needs an active check that really fails) and the page in a browser (checklist in section 8 of `docs/plans/Event_Handler_Design.md`). Two tests (a spool symlink and the file mode of the handler) are skipped on Windows and rely on Linux CI. Needs installer work in the other repository: the spool folder (`nagios:pinpoint`, 2770), the handler at `/usr/local/sbin/pinpoint-event-handler` (`root:root`, 755), and narrower rights for the `nagios` group. `restart_local_service` (#121 Part 8.1) restarts a listed host service (`nagios`) through `sudo -n systemctl restart`; it needs the installer sudoers drop-in, which is now merged in the installer repository (#121 Part 8.2). `restart_remote_service` (#8 Part 8.3) restarts a unit from a per-device list on a trusted, Active, unpaused device through a second root-owned helper installed by the NCPA bootstrap; it is unit tested with SSH mocked, security reviewed in #182 with fingerprint-race and exit-status-timeout regressions; fresh-VM real SSH/systemd restart, changed-key/on-device-list/refusal/deadline cases, helper privileges and audit-ID reuse passed on 2026-10-17 ([report](../docs/test-runs/2026-10-17-issue-182-remote-restart/REPORT.md)); the subsequent [Playwright walkthrough](../docs/test-runs/2026-10-17-issue-182-playwright/REPORT.md) passed settings/persistence/errors, real cleanup/redeployment, action unit fields and real read-only permissions; human review remains pending. Existing devices need cleanup/redeploy to receive the helper, and a changed list reaches a device only through cleanup/redeployment (only root can write it there). The NCPA Deployment settings dialog and remediation `unit` controls are included; trusted deployed devices support cleanup with an explicit redeployment warning. The run action link is a nullable foreign key, preserving audit snapshots while preventing replacement actions from inheriting deleted-action limits | Deploy to a lab appliance after the installer pieces are applied, force a hard failure and recovery on one service, check exactly one run and the cooldown and cap skips, repeat with the installer-built spool folder and handler, a live SOFT state and a browser walk-through; add `restart_local_service` in #121 |
 | Installer | Developed in another repository | Keep installer work out of this repository unless scope changes |
 
 ## Test approach status

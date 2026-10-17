@@ -31,11 +31,11 @@ acknowledgements belong in `system.db` even though they relate to Nagios alerts.
 - Audit/logging: `ActivityLog`, `ConfigurationChanges`, `ExportLog`.
 - Discovery: `NetworkDiscoveryStatus`, `SkippedService`, `NetworkDiscovery`,
   `Open_TCP_Services`, `Open_UDP_Services`, `DeviceParent` (manual reachability links).
-- NCPA deployment: `SSHCredentials`, `NCPADeploymentStatus` (one row per run,
+- NCPA deployment: `SSHCredentials` (also `Remote_Restart_Enabled`, default false, and `Remote_Restart_Services`, a JSON list of unit names, both added by `c7a1f4d92e60` for #8 Part 8.3), `NCPADeploymentStatus` (one row per run,
   with `Reviewed_At`/`Reviewed_By`), `NCPADeploymentResult` (one row per device
   per run), `NCPADeployment` (each device's latest agent state and nullable installed `Port`),
   `NCPADevicePartition`.
-- Remediation: `RemediationAction` (`REMEDIATION_ACTION`): the admin-defined rule with `Name` (unique), `Action_Type` (`record_only` or `restart_local_service`; the second was added by migration `b8e3d5f2a417`), `Scope_Kind` (service or host), `Host_Pattern`, `Service_Pattern`, `Parameters` (JSON, validated per type), `Enabled`, `Max_Runs_Per_Hour`, `Cooldown_Seconds`, `Version` and `Updated_By`/`Updated_At`; and `RemediationRun` (`REMEDIATION_RUN`): one row per decision with `Event_Key` (sha256 of kind, host, service, state and last state change; unique together with `Action_Id`), `Action_Id` (a plain number, not a foreign key, so deleting an action keeps its runs), `Action_Name` (a copy), host, service, state, `State_Type`, `Attempt`, `Received_At`, `Started_At`, `Finished_At`, `Outcome`, `Reason` and `Output` (at most 1 KB, redacted). Both live in `system.db` because PinPoint writes them; `history.db` stays Nagios snapshots only. Migration `e4a7c1d9b305` creates both tables and the `remediation.view` and `remediation.manage` permissions, granted to the Administrator role.
+- Remediation: `RemediationAction` (`REMEDIATION_ACTION`): the admin-defined rule with `Name` (unique), `Action_Type` (`record_only`, `restart_local_service` added by migration `b8e3d5f2a417`, or `restart_remote_service` added by `c7a1f4d92e60`), `Scope_Kind` (service or host), `Host_Pattern`, `Service_Pattern`, `Parameters` (JSON, validated per type), `Enabled`, `Max_Runs_Per_Hour`, `Cooldown_Seconds`, `Version` and `Updated_By`/`Updated_At`; and `RemediationRun` (`REMEDIATION_RUN`): one row per decision with `Event_Key` (sha256 of kind, host, service, state and last state change; unique together with `Action_Id`), `Action_Id` (nullable foreign key to `REMEDIATION_ACTION.Id`, `ON DELETE SET NULL`, migration `a182f6c9d301`; deleting an action keeps its runs and snapshots but detaches its cooldown/hourly history; upgrade clears existing orphan links without removing audit rows), `Action_Name` (a copy), host, service, state, `State_Type`, `Attempt`, `Received_At`, `Started_At`, `Finished_At`, `Outcome`, `Reason` and `Output` (at most 1 KB, redacted). Both live in `system.db` because PinPoint writes them; `history.db` stays Nagios snapshots only. Migration `e4a7c1d9b305` creates both tables and the `remediation.view` and `remediation.manage` permissions, granted to the Administrator role.
 - Settings: singleton `SystemSettings`, singleton `NotificationPolicy` (`NOTIFICATION_POLICY`, Id 1, migration `143c48cd6663`), one-per-user `UserPreferences`. `NotificationPolicy` stores weekday/HH:MM quiet windows as JSON, host/service option strings, a 0–1440-minute renotify interval, `Version`, and `Updated_By`; the migration seeds the historical 24x7/default-options/30-minute policy and removes the table on downgrade.
 - Notification escalations: `Escalation` (`ESCALATION`, migration `cd74e5f8a2d5`) stores `First_Notification` and `Last_Notification` (1–10000, first no greater than last), `Interval_Minutes` (0–1440), `Contact_Group` (an existing generated recipient group) and nullable `HostID` (stable `NetworkDiscovery` foreign key; null scopes to all Nagios hosts and services). Database checks enforce numeric ranges. An empty table preserves generated config byte-for-byte. Upgrade creates only this default-bind table; downgrade drops it without changing recipient/device/history records. Deploy with the existing multi-bind `flask db upgrade`; no new permission or `sync-permissions` change is needed.
 - Notifications/alerts: `NotificationCursor`, `AlertAcknowledgement`,
@@ -889,11 +889,24 @@ existing Plugin Manager derived rows before committing.
 
 
 Nagios still owns state classification and notifications. Declaring multiple
-parents does not create alternate network routes. Cached parent states and a
-single check attempt can briefly classify a child DOWN before UNREACHABLE;
-see [the observed trial and follow-up](../docs/test-runs/2026-10-15-issue-117-manual-topology/REPORT.md).
-The default-three-attempt routed trial passed. No global cache, retry or notification
-setting is silently changed by selecting parents.
+parents does not create alternate network routes. The accepted contract for #173
+is Option A: a transient child DOWN notification is allowed before Nagios confirms
+parent reachability. One-attempt monitoring remains supported. A recent cached UP
+parent result can cause a failing child to be classified DOWN; with
+`max_check_attempts=1`, that failure can immediately become HARD and notify under
+the configured notification policy. Later checks classify a still-failing child
+UNREACHABLE when all rendered parents are DOWN or UNREACHABLE. A parent still UP
+means a failing child is DOWN; a responding child is UP. This depends on subsequent
+checks and updated reachability information, not a fixed timeout.
+
+See [the observed trial and follow-up](../docs/test-runs/2026-10-15-issue-117-manual-topology/REPORT.md).
+The default-three-attempt routed trial passed; it does not prove immediate
+child-DOWN suppression for every timing/cache configuration. The check interval
+controls scheduled check frequency, while maximum attempts controls failure
+confirmation; discovery scans and Pinpoint data polling are independent.
+No cache, retry or notification setting is changed by this decision or by selecting
+parents, and hosts without eligible parents retain their existing behavior.
+See the [operator guidance](../docs/manuals/Notification_Policy.md#parent-outages-and-temporary-child-down-alerts).
 
 ### Escalation rendering and recipient ownership
 
@@ -946,3 +959,20 @@ missing branch and reaches a single head on both binds. Populated upgrades from
 both prior heads preserve manual parent sets, escalation choices, remediation
 actions/runs and device/history data. Downgrading only the join retains both
 schemas and their rows.
+
+## Remote restart policy and history integrity (#182)
+
+The NCPA bootstrap installs a root-owned second helper and sudoers rule for
+`restart_remote_service`, with a root-owned per-device allowlist. A saved list
+reaches the device through cleanup and redeployment. Trusted deployed devices,
+as well as failed deployments, support this workflow. Cleanup clears
+`SSHCredentials.Key_Installed` even when only some steps succeed, so remote
+restart remains blocked until deployment succeeds. The restart preference and
+service list are retained for redeployment.
+
+The run/action foreign key preserves `Action_Name` and all audit fields after
+an action is removed; its nullable link is cleared in the same transaction as
+action deletion, including when SQLite FK enforcement is off. Rejected Nagios
+configuration rolls back both deletion and detachment. Existing links to missing
+actions are cleared during upgrade; historical misattribution from IDs already
+reused before this migration cannot be reconstructed automatically.
