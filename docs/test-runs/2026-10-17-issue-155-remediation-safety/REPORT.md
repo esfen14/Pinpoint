@@ -11,9 +11,9 @@
 
 ## Result
 
-**Overall: Partial.** The kill switch, all four skip reasons, stalled detection, interrupted-run handling, retention, the spool cap, input validation and the audit trail were proven on the appliance. The 403 path and the browser checks (E7 to E9) were not run live and rest on unit and frontend tests.
+**Overall: Partial.** The kill switch, all four skip reasons, stalled detection, interrupted-run handling, retention, the spool cap, input validation and the audit trail were proven on the appliance. The 403 path was proven with a Staff user. Only the browser checks (E7 to E9) were not run live and rest on frontend tests.
 
-Totals: Pass 11, Fail 0, Blocked 0, Skipped 4.
+Totals: Pass 12, Fail 0, Blocked 0, Skipped 3.
 
 ## Cases
 
@@ -30,7 +30,7 @@ Totals: Pass 11, Fail 0, Blocked 0, Skipped 4.
 | E2 scheduled downtime | Pass | A real downtime window on `gateway` was created through the maintenance API. Once the status showed `in_downtime`, an event gave `skipped_downtime`. Window cancelled afterwards. |
 | E3 spool cap | Pass | 1010 event files written at once. The consumer kept the newest 1000 and dropped the 10 oldest; health showed `droppedTotal: 10` and a drop time. |
 | E3 retention | Pass | A run backdated 100 days and one 1 day old were inserted with retention at 90 days. Calling the purge job removed only the 100-day row. Test rows deleted afterwards. |
-| E6 403 without permission | Skipped | No restricted account used. Covered by API unit tests. |
+| E6 403 without permission | Pass | A temporary Staff user (random password, not recorded) got 403 on `PUT /api/system/remediation/settings` for both the kill switch and the retention days, and on the two GET routes. Settings afterwards still `enabled: true`, 90 days. The user was set to Inactive afterwards (there is no delete route). |
 | E7 health card, stalled banner | Skipped | Not checked in a browser. Frontend tests cover it. |
 | E8 confirmation and persistence | Skipped | Not checked in a browser. Persistence of the setting was seen through the API only. |
 | E9 skip reasons in run log | Skipped | The API returns them; the log display is covered by frontend tests. |
@@ -42,7 +42,7 @@ Everything was driven through the API from the appliance itself, with fake event
 ## Follow-up
 
 - Defects found: none.
-- Cases to repeat in the next run: the 403 without the permission, and E7 to E9 in a browser.
+- Cases to repeat in the next run: E7 to E9 in a browser.
 
 ## Sanitization checklist
 
