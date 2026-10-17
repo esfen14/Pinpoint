@@ -48,7 +48,7 @@ Files are relative to `server/app` unless stated.
 
 1. [ ] Lab check first (needs a person, see Decisions): confirm `SEND_CUSTOM_SVC_NOTIFICATION;host;service;0;author;comment` is accepted by the lab Nagios, shows in `archivejson.cgi` as a CUSTOM notification, and is suppressed in downtime. Only the host form is verified so far (plan status log 2026-10-13).
 2. [x] Command channel: add `send_custom_host_notification` and `send_custom_service_notification` to `nagios/commands.py` (closed allowlist, options fixed at 0, comment through `_wire_comment`, validated target). Tests in `tests/unit/test_nagios_commands.py`.
-3. [ ] Models and migration: `RemediationAction.Notify_On` (JSON list or three booleans, default all three), `RemediationRun.Notify_State` / `Notify_Error` / `Notify_Attempts` / notified-at, and two bounded `SystemSettings` columns for the repeat count and window; one multi-database migration after `f155a3c7d2b1` with downgrade. Files: `system_models.py`, `server/migrations/versions/<new>.py`, `tests/unit/test_remediation_migration.py` (or a new migration test), runner under `tests/support/`.
+3. [x] Models and migration: `RemediationAction.Notify_On` (JSON list or three booleans, default all three), `RemediationRun.Notify_State` / `Notify_Error` / `Notify_Attempts` / notified-at, and two bounded `SystemSettings` columns for the repeat count and window; one multi-database migration after `f155a3c7d2b1` with downgrade. Files: `system_models.py`, `server/migrations/versions/<new>.py`, `tests/unit/test_remediation_migration.py` (or a new migration test), runner under `tests/support/`.
 4. [ ] Escalation logic in a new `remediation_escalation.py`: outcome-to-trigger mapping (failed, timed_out -> failed; skipped_cooldown, skipped_hourly_cap -> capped), `Notify_On` filter, comment builder from fixed text + action name + outcome code + run id, bounded retry, repeat-window detection, idempotency by run id. Tests: `tests/unit/test_remediation_escalation.py`.
 5. [ ] Wire it into `remediation.py` (`execute` and the skip rows in `record_decisions`), without letting a notification failure stop the consumer. Update `tests/unit/test_remediation_consumer.py`.
 6. [ ] API: validate and persist `Notify_On` and the two settings; return notification state and error from the runs API. Files: `api/system/remediation.py`, `tests/unit/test_remediation_api.py`. Permission checks unchanged (`remediation.view`, `remediation.manage`).
@@ -67,15 +67,16 @@ One row per loop round, newest last.
 |---|---|---|---|
 | 0 | Read the issue, specs and sources; wrote this plan; branched from `origin/main` | `gh issue view 153` | Plan written, no code changed |
 | 1 | Step 2: `send_custom_host_notification` and `send_custom_service_notification` in `nagios/commands.py` (option fixed at 0), tests in `TestCustomNotifications` | `server/.venv/Scripts/python -m pytest tests/unit/test_nagios_commands.py -q -k CustomNotifications` | 10 failed first (functions missing), then 10 passed |
+| 2 | Step 3: `Notify_On`, run `Notify_*` columns, `RemediationNotifyState`, two repeat settings in `system_models.py`; migration `e153c4a8b2d7` after `f155a3c7d2b1`; runner `tests/support/remediation_escalation_migration_runner.py` and two tests. I wrote the migration before its test (wrong order); the test checks defaults, a state write, downgrade and re-upgrade | `pytest tests/unit/test_device_migration.py tests/unit/test_upgrade_rehearsal.py tests/unit/test_remediation_migration.py tests/unit/test_remediation_api.py tests/unit/test_remediation_consumer.py tests/unit/test_forecast_migration.py -q` | 239 passed, 1 skipped, 2 errors (the Windows temp-file lock in the action FK tests, unrelated; also seen before this change) |
 
 ## State for the next session
 
 Everything a fresh session needs to continue without redoing work.
 
-- Last check run (exact command): `server/.venv/Scripts/python -m pytest tests/unit/test_nagios_commands.py -q -k CustomNotifications`
-- Result (first failing lines, or "green"): green, 10 passed. The older FIFO tests in the same file error on Windows (`os.mkfifo` missing); they run on Linux CI only.
-- Hypothesis: the command layer is done; the rest builds on it.
-- Next action: plan step 3, write the failing migration test, then add `Notify_On`, the run notification fields and the two settings columns in `system_models.py` and a migration after `f155a3c7d2b1`.
+- Last check run (exact command): `pytest tests/unit/test_device_migration.py tests/unit/test_upgrade_rehearsal.py tests/unit/test_remediation_migration.py tests/unit/test_remediation_api.py tests/unit/test_remediation_consumer.py tests/unit/test_forecast_migration.py -q` (from `server/`, with `.venv/Scripts/python -m`)
+- Result (first failing lines, or "green"): 239 passed, 1 skipped, 2 errors. The 2 errors are `PermissionError` deleting a temp `history.db` in the action FK tests on Windows; they do not touch this change.
+- Hypothesis: schema is in place; next is the escalation logic that uses it.
+- Next action: plan step 4. Write failing tests in `server/tests/unit/test_remediation_escalation.py` for the outcome-to-trigger mapping, `Notify_On` filter and comment builder (hostile action names), then create `server/app/remediation_escalation.py`.
 
 ## Decisions and notes
 
