@@ -638,6 +638,44 @@ def build_host_services(host_data, facts, app_config, skipped=None, enabled_plug
     return [(service["name"], service["check_command"], service["plugin"]) for service in planned]
 
 
+def ncpa_notification_dependencies(host_name, services, enabled_plugins):
+    """Return generated TCP port checks and notification-only metric dependencies.
+
+    The port check is written only when check_tcp is enabled and a metric exists.
+    Dependency targets are selected from the final service list, so a disabled
+    or skipped master never creates a dangling Nagios object reference.
+    """
+    if "check_tcp" not in enabled_plugins:
+        return [], []
+    metric_ports = []
+    for name, _command, plugin in services:
+        if plugin != "ncpa":
+            continue
+        parts = name.rsplit("-", 2)
+        if len(parts) != 3 or parts[2] != "tcp" or not parts[1].isdigit():
+            continue
+        port = int(parts[1])
+        if 1 <= port <= 65535:
+            metric_ports.append((name, port))
+    if not metric_ports:
+        return [], []
+
+    existing = {name for name, _, _ in services}
+    ports = sorted({port for _, port in metric_ports})
+    generated = []
+    for port in ports:
+        name = f"pinpoint-ncpa-port-{port}-tcp"
+        if name not in existing:
+            generated.append((name, f"pinpoint_nd_tcp!{port}!", "tcp"))
+    targets = existing | {name for name, _, _ in generated}
+    dependencies = []
+    for metric_name, port in metric_ports:
+        target = f"pinpoint-ncpa-port-{port}-tcp"
+        if target in targets and target != metric_name:
+            dependencies.append(create_service_dependency(host_name, target, metric_name))
+    return generated, dependencies
+
+
 def plan_host_services(host_data, facts, app_config, skipped=None, enabled_plugins=None):
     """
     Plan every Nagios service for one host from its discovered TCP and UDP
@@ -1076,6 +1114,12 @@ def _create_host_cfg_file(discovered_hosts, skipped=None):
                 for entry in host_skipped:
                     skipped.append({**entry, "ip_address": ip})
 
+            dependency_blocks = []
+            if current_app.config.get("NCPA_NOTIFICATION_DEPENDENCIES", True):
+                port_services, dependency_blocks = ncpa_notification_dependencies(
+                    host["host_name"], host_services, enabled_plugins
+                )
+                host_services.extend(port_services)
             generated_names[host_data["data"]["hostname"]] = [name for name, _c, _p in host_services]
 
             # Custom checks follow the discovered services of their device. Their
@@ -1112,6 +1156,10 @@ def _create_host_cfg_file(discovered_hosts, skipped=None):
                 host_config.append(
                     create_service(service, apply_secret_substitutions(command, substitution_map))
                 )
+                host_config.append(_add_space(4))
+
+            for block in dependency_blocks:
+                host_config.append(block)
                 host_config.append(_add_space(4))
 
     # Server checks: services of the Nagios server's own host, which localhost.cfg defines. Only

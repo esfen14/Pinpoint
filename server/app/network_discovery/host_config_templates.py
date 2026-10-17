@@ -182,6 +182,15 @@ def create_service(service, service_command):
     if service.get("active_checks_enabled") is False:
         rendered = add_inactive_lines(rendered, service.get("notes") or "Address unknown")
     return rendered
+
+
+def create_service_dependency(host_name, master_service, dependent_service):
+    """Suppress one NCPA metric's alerts when its generated port check fails."""
+    return _load_template("servicedependency.cfg.tpl").format(
+        host_name=host_name,
+        master_service=master_service,
+        dependent_service=dependent_service,
+    )
     
 # ----------------------------------------------------------------------
 # Notification commands

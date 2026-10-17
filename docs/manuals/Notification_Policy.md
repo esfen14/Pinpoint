@@ -9,3 +9,10 @@ Administrators with **settings.system** can open **Settings → System → Notif
 Save applies the change to Nagios after configuration validation. If another administrator saved first, reload the policy before retrying. A failed Nagios apply leaves the previous policy in place and displays the error. Existing contacts still require an Active account with **Send this user email alerts** enabled, and delivery requires mail transport configured under **Settings → Email**.
 
 The **Show notification bell in the header** switch on the General tab only controls the in-app bell. It does **not** switch off Nagios alert email. The default notification policy has no quiet hours, uses the historical host/service state options, and preserves the existing generated configuration.
+
+When a monitored host is down, Nagios suppresses alert email for its services;
+their failing states still appear on Dashboard and Network Health. NCPA metric
+alerts are also suppressed while that device's NCPA port check is Critical or
+Unknown. An administrator can turn the NCPA dependency rule off with the
+`PINPOINT_NCPA_NOTIFICATION_DEPENDENCIES` production setting; it defaults on
+and takes effect on the next Nagios configuration regeneration after restart.
