@@ -86,7 +86,8 @@ Deliberate lab differences:
 
 - The installer and its setup wizard, systemd units, and the real `pinpoint`
   sudo rules.
-- DHCP lease changes and device identity across IP changes.
+- DHCP lease changes on the ordinary static lab. Use the separate opt-in
+  [DHCP lab](#isolated-dhcp-lab) for that acceptance path.
 - NCPA installation on a target: the targets have no init system, so treat NCPA
   deployment results here as unverified.
 - Performance and scale.
@@ -94,6 +95,41 @@ Deliberate lab differences:
 Cover these in the faithful lane: a snapshot of a real installed appliance in a
 VM (`server/tests/e2e/network_discovery/`, `demo/`). Record results of any
 lab run in [`docs/test-runs/`](../test-runs/README.md).
+
+## Isolated DHCP lab
+
+Issue #187 adds a separate Docker lab for real IPv4 DHCP lease changes. Its
+client test interfaces use `dhclient`, with `dnsmasq` serving only the two known
+MAC addresses on a bridge inside a dedicated switch network namespace. The
+appliance is static at `10.79.0.2/28`; the server is `10.79.0.1/28`; client-1
+starts at A (`10.79.0.5`) and can move to B (`10.79.0.6`); client-2 can reuse
+A. A separate Docker management network publishes the appliance only on
+`127.0.0.1:18087`. The ordinary `scripts/lab` environment stays independent.
+
+```bash
+scripts/dhcp-lab up                 # preflight, build, start, own the lab
+scripts/dhcp-lab status             # show owned resources and leases
+scripts/dhcp-lab move               # same running client-1: A to B
+scripts/dhcp-lab reuse              # client-2 acquires released A
+scripts/dhcp-lab evidence           # copy raw logs outside the repository
+scripts/dhcp-lab down               # collect evidence and remove owned resources
+scripts/dhcp-accept --lease-seconds 90 # two clean, bounded acceptance cycles
+```
+
+`scripts/dhcp-lab --help` lists the individual reserve, release, acquire,
+restart, server stop/start and reset commands. Run the acceptance command only
+when you exclusively own this lab and the approved QA scan range remains
+`10.79.0.0/28`. Setup checks host routes, Docker/VM networks, resource names,
+owner state and loopback port before creating anything. The runner checks the
+appliance discovery setting before each scan. `down` removes only resources
+carrying the saved owner token and records raw evidence under
+`~/pinpoint-test-results/issue-187-dhcp/`.
+
+The [acceptance plan](../../server/tests/plans/DHCP_LAB_ACCEPTANCE.md) gives
+case bounds and cleanup checks. This Docker lab covers client IPv4 lease moves,
+discovery, Nagios and browser identity/history; it does not exercise the
+installer, physical networks, routed discovery without a MAC, cloned
+identities, IPv6, DHCP failover or NCPA deployment.
 
 ## Troubleshooting
 

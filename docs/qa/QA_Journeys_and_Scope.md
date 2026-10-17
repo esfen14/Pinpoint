@@ -92,6 +92,11 @@ Each journey names the lowest environment that can verify it:
 
 - **mock**: Nagios and SMTP stubbed (backend unit tests, `scripts/verify.sh`).
 - **docker lab**: `scripts/lab` (fast lane; no systemd, installer or NCPA install).
+- **DHCP Docker lab**: `scripts/dhcp-lab` is the separate opt-in issue #187
+  acceptance environment. Its only approved discovery range is
+  `10.79.0.0/28`, after route-collision and exclusive-ownership checks. This
+  approval does not widen the ordinary Docker or VM QA scan ranges and does
+  not authorize scans on physical or VPN networks.
 - **vm lab**: `scripts/vmlab` (faithful lane; real installer steps, five target VMs on
   `10.77.0.0/28`; see `docs/plans/VM_Lab_Plan.md`).
 - **manual**: a human is needed.
