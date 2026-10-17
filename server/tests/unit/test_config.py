@@ -22,6 +22,7 @@ ENV_VARS = [
     "NAGIOS_PASSWORD",
     "PINPOINT_NETWORKS",
     "PINPOINT_PORT_ARCHIVE_AFTER_DAYS",
+    "PINPOINT_NCPA_NOTIFICATION_DEPENDENCIES",
 ]
 
 
@@ -110,3 +111,23 @@ class TestPortArchiveAfterDays:
     def test_bad_values_stop_startup(self, monkeypatch, value):
         with pytest.raises(ValueError, match="PINPOINT_PORT_ARCHIVE_AFTER_DAYS"):
             load_config(monkeypatch, PINPOINT_PORT_ARCHIVE_AFTER_DAYS=value)
+
+
+class TestNcpaNotificationDependencies:
+
+    def test_defaults_on(self, monkeypatch):
+        assert load_config(monkeypatch).NCPA_NOTIFICATION_DEPENDENCIES is True
+
+    @pytest.mark.parametrize("value, expected", [
+        ("on", True), ("true", True), ("1", True),
+        ("off", False), ("false", False), ("0", False),
+    ])
+    def test_explicit_on_off(self, monkeypatch, value, expected):
+        assert load_config(
+            monkeypatch, PINPOINT_NCPA_NOTIFICATION_DEPENDENCIES=value
+        ).NCPA_NOTIFICATION_DEPENDENCIES is expected
+
+    @pytest.mark.parametrize("value", ["", "yes", "enabled", "2"])
+    def test_invalid_value_stops_startup(self, monkeypatch, value):
+        with pytest.raises(ValueError, match="PINPOINT_NCPA_NOTIFICATION_DEPENDENCIES"):
+            load_config(monkeypatch, PINPOINT_NCPA_NOTIFICATION_DEPENDENCIES=value)
