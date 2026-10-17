@@ -56,7 +56,8 @@ def add_run(db_session, action_id=1, name="restart-web", host="web-01", service=
 # PERMISSIONS
 # ==========================================================
 
-READ_URLS = [f"{BASE}/action-types", f"{BASE}/actions", f"{BASE}/runs", f"{BASE}/runs/1", f"{BASE}/health"]
+READ_URLS = [f"{BASE}/action-types", f"{BASE}/actions", f"{BASE}/runs", f"{BASE}/runs/1", f"{BASE}/health",
+             f"{BASE}/last-runs"]
 
 
 def test_every_route_needs_login(client, db_session):
@@ -731,3 +732,58 @@ def test_a_repeat_setting_change_is_audited(logged_in_client, db_session):
     rows = db_session.session.query(ConfigurationChanges).all()
     assert [(r.Conf_Type, r.Parameter_Name, r.Old_Value, r.New_Value) for r in rows] == [
         ("remediation_setting", "repeatCount", "3", "4")]
+
+
+# ==========================================================
+# LAST RUN PER SERVICE (#153, the badge on a service row)
+# ==========================================================
+
+LAST_RUNS_URL = f"{BASE}/last-runs"
+
+
+def test_last_runs_need_the_view_permission(limited_client, db_session, regular_role):
+    assert limited_client.get(LAST_RUNS_URL).status_code == 403
+    grant(db_session, regular_role, "remediation.view")
+    assert limited_client.get(LAST_RUNS_URL).status_code == 200
+
+
+def test_last_runs_return_the_newest_run_for_each_host_and_service(logged_in_client, db_session):
+    now = datetime.now(timezone.utc)
+    add_run(db_session, outcome=RemediationOutcome.FAILED, received=now - timedelta(hours=3), key="a")
+    newest = add_run(db_session, outcome=RemediationOutcome.SUCCEEDED, received=now - timedelta(hours=1), key="b")
+    other = add_run(db_session, host="web-02", service="SSH", outcome=RemediationOutcome.FAILED, received=now, key="c")
+    items = logged_in_client.get(LAST_RUNS_URL).get_json()["data"]["items"]
+    by_key = {(i["hostname"], i["service"]): i for i in items}
+    assert set(by_key) == {("web-01", "HTTP"), ("web-02", "SSH")}
+    assert by_key[("web-01", "HTTP")]["runId"] == newest.Id and by_key[("web-01", "HTTP")]["outcome"] == "succeeded"
+    assert by_key[("web-02", "SSH")]["runId"] == other.Id
+
+
+def test_last_runs_carry_the_notification_state_and_no_output(logged_in_client, db_session):
+    from app.system_models import RemediationNotifyState
+    row = add_run(db_session, outcome=RemediationOutcome.FAILED, output="secret=abc")
+    row.Notify_Kind, row.Notify_State = "failed", RemediationNotifyState.SENT
+    db_session.session.commit()
+    (item,) = logged_in_client.get(LAST_RUNS_URL).get_json()["data"]["items"]
+    assert set(item) == {"runId", "hostname", "service", "outcome", "notifyState", "receivedAt"}
+    assert item["notifyState"] == "sent"
+    assert "secret" not in str(item)
+
+
+def test_last_runs_ignore_runs_older_than_seven_days(logged_in_client, db_session):
+    add_run(db_session, outcome=RemediationOutcome.FAILED, received=datetime.now(timezone.utc) - timedelta(days=8))
+    assert logged_in_client.get(LAST_RUNS_URL).get_json()["data"]["items"] == []
+
+
+def test_a_host_level_run_has_no_service(logged_in_client, db_session):
+    add_run(db_session, service=None, outcome=RemediationOutcome.FAILED)
+    (item,) = logged_in_client.get(LAST_RUNS_URL).get_json()["data"]["items"]
+    assert item["service"] is None
+
+
+def test_last_runs_are_bounded(logged_in_client, db_session, monkeypatch):
+    from app.api.system import remediation as module
+    monkeypatch.setattr(module, "MAX_LAST_RUNS", 2)
+    for n in range(4):
+        add_run(db_session, service=f"svc-{n}", key=f"k{n}")
+    assert len(logged_in_client.get(LAST_RUNS_URL).get_json()["data"]["items"]) == 2

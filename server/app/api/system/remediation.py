@@ -24,12 +24,15 @@ GET    /system/remediation/runs
     The run log, newest first, with filters and pagination (remediation.view).
 GET    /system/remediation/runs/<id>
     One run, including its (redacted) output (remediation.view).
+GET    /system/remediation/last-runs
+    The newest run for each host and service in the last 7 days, for the badge on a service row
+    (remediation.view).
 
 Creating, changing or deleting an action regenerates the Nagios config; a config Nagios
 rejects rolls the change back and returns 422.
 """
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import sqlalchemy as sa
 from flask import current_app, request
@@ -61,6 +64,8 @@ LOGGED_FIELDS = (
 )
 NOTIFY_KINDS = ("failed", "capped", "repeated")
 SETTINGS_FIELDS = ("enabled", "retentionDays", "repeatCount", "repeatWindowHours")
+LAST_RUNS_DAYS = 7
+MAX_LAST_RUNS = 500
 MIN_REPEAT_COUNT = 2
 MAX_REPEAT_COUNT = 20
 MIN_REPEAT_WINDOW_HOURS = 1
@@ -582,6 +587,41 @@ def list_remediation_runs():
     except Exception:
         db.session.rollback()
         current_app.logger.exception("Could not list remediation runs.")
+        return error("An unexpected error occurred.", 500)
+
+
+@system_bp.get('/remediation/last-runs')
+@login_required
+@require_permission('remediation.view')
+def list_last_remediation_runs():
+    """
+    Return the newest run for each host and service seen in the last 7 days (at most 500, newest
+    first), so a service row can show whether automatic recovery acted on it. Each item has
+    runId, hostname, service (null for a host), outcome, notifyState and receivedAt; never output.
+    """
+    try:
+        since = datetime.now(timezone.utc) - timedelta(days=LAST_RUNS_DAYS)
+        newest = sa.select(sa.func.max(RemediationRun.Id)).where(
+            RemediationRun.Received_At >= since,
+        ).group_by(RemediationRun.Hostname, RemediationRun.Service)
+        rows = db.session.scalars(
+            sa.select(RemediationRun).where(RemediationRun.Id.in_(newest))
+            .order_by(RemediationRun.Id.desc()).limit(MAX_LAST_RUNS)
+        ).all()
+        items = []
+        for row in rows:
+            items.append({
+                "runId": row.Id,
+                "hostname": row.Hostname,
+                "service": row.Service,
+                "outcome": row.Outcome.value,
+                "notifyState": row.Notify_State.value if row.Notify_State else None,
+                "receivedAt": row.Received_At.isoformat(),
+            })
+        return success({"items": items})
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("Could not list the last remediation runs.")
         return error("An unexpected error occurred.", 500)
 
 
