@@ -81,3 +81,5 @@ Requirement coverage (every issue requirement):
 
 - Final cleanup: both owned VMs powered off with no endpoint listeners; all actions and device restart disabled, paused/trust/maintenance flags and original SSH keys restored, helper bytes match source after final normal cleanup/redeploy. Retain disks and private runtime state.
 - Person needed: attach an available browser for RR-12 and provide human security review before merge. No browser provider is connected. KVM restoration requested through async prompt after sudo reported password required; command is sudo modprobe kvm_amd.
+
+- Owner reports sudo modprobe kvm_amd returned without error (2026-10-17). Host readback in this session still shows neither kvm nor kvm_amd; restoration is reported but not independently confirmed. Restarting a terminal is not required for module loading. Leave all VMs off and verify host module state before future VM work.

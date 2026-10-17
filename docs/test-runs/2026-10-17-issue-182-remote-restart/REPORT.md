@@ -55,7 +55,7 @@ The setup helper expects an older installer credential label (existing #167). Fi
 
 - Pending: RR-12 browser walkthrough, human security review and PR CI.
 - Both owned VMs shut down through the guarded controller; final preflight confirms poweroff and no endpoint listeners. Disks and private runtime state retained.
-- KVM restoration needs the owner: `sudo -n modprobe kvm_amd` refused because a password is required; requested owner terminal restoration.
+- KVM restoration needs the owner: `sudo -n modprobe kvm_amd` refused because a password is required; requested owner terminal restoration. Owner subsequently reported the command returned without error; this session still cannot confirm the modules in host readback. All VMs remain off.
 - Existing compatibility finding: [#167](https://github.com/esfen14/Pinpoint/issues/167).
 
 ## Sanitization checklist
