@@ -48,6 +48,8 @@ table while you test, not afterward.
 
 | Run | Kind | Commit | Result | Report |
 |---|---|---|---|---|
+| [2026-10-17 pr-185-issue-156-retest](2026-10-17-pr-185-issue-156-retest/REPORT.md) | Forecast batching, exact-series fetch and fair-turn fixes; local regression/seeded retest | `298aa620` | Three defects fixed; full local gate passes (3,799 backend / 881 frontend); CI and real disk-fill comparison pending | [REPORT.md](2026-10-17-pr-185-issue-156-retest/REPORT.md) |
+| [2026-10-17 pr-185-issue-156](2026-10-17-pr-185-issue-156/REPORT.md) | Local automated and seeded forecast acceptance checks | `8c39c1ba` | Partial: three seeded job defects; live disk-fill comparison pending | [REPORT.md](2026-10-17-pr-185-issue-156/REPORT.md) |
 | [2026-10-17 issue-182 Playwright](2026-10-17-issue-182-playwright/REPORT.md) | Real Chromium settings, cleanup/deployment wizard, action forms and read-only permissions | app `910d6f99`, harness in this change | Pass: all three RR-12 browser tests; human review pending | [REPORT.md](2026-10-17-issue-182-playwright/REPORT.md) |
 | [2026-10-17 issue-182 remote restart](2026-10-17-issue-182-remote-restart/REPORT.md) | Fresh appliance and real SSH/systemd acceptance | `910d6f99` | Partial: 11 live/API cases pass; browser and human review pending | [REPORT.md](2026-10-17-issue-182-remote-restart/REPORT.md) |
 | [2026-10-17 issue-191 accounts](2026-10-17-issue-191-accounts/REPORT.md) | Local Chromium + real Flask / temporary SQLite, stubbed Nagios writer | `2688e430` | Pass: delayed roles, two account creates, selected role/status and reload persistence | [REPORT.md](2026-10-17-issue-191-accounts/REPORT.md) |

@@ -172,6 +172,26 @@ describe('DashboardPage', () => {
     ]))
   })
 
+  it('shows the Running out soon list from the forecast route', async () => {
+    responses['/api/system/forecast'] = {
+      forecasts: [{
+        hostname: 'web-01', service_name: 'ncpa-disk-5693', metric: 'disk/logical/|/used_percent', kind: 'warning',
+        threshold: 80, crossing_at: '2099-01-01T00:00:00+00:00', slope_per_hour: 0.3, r_squared: 0.97,
+        sample_count: 70, window_hours: 72, current_value: 61.5, unit: '%', computed_at: '2026-10-17T11:30:00+00:00',
+      }],
+      insufficient: [],
+    }
+    await renderLoaded()
+    expect(await screen.findByRole('heading', { name: 'Running out soon' })).toBeInTheDocument()
+    expect(await screen.findByText(/Disk space used may reach its warning level \(80%\)/)).toBeInTheDocument()
+  })
+
+  it('shows the empty forecast state when nothing is on course to run out', async () => {
+    responses['/api/system/forecast'] = { forecasts: [], insufficient: [] }
+    await renderLoaded()
+    expect(await screen.findByText('Nothing is on course to reach a threshold.')).toBeInTheDocument()
+  })
+
   it('lists recent notifications with a link to the history page', async () => {
     await renderLoaded()
     expect(screen.getByText('Recent Notifications')).toBeInTheDocument()
