@@ -54,6 +54,8 @@ class Client:
         path.chmod(0o700)
 
     def run_setup(self, responses, saved=False, credentials=''):
+        self.calls.unlink(missing_ok=True)
+        (self.root / 'removed').unlink(missing_ok=True)
         self.responses.write_text(json.dumps(responses))
         self.credentials.write_text(credentials)
         if saved:
@@ -66,8 +68,9 @@ class Client:
         result = subprocess.run(['bash', str(self.root / 'scripts/vmlab'), 'setup-admin'],
                                 env=env, capture_output=True, text=True, timeout=10)
         output = result.stdout + result.stderr
-        for value in [self.saved_email, self.saved_password, self.installer_email,
-                      self.installer_password, 'synthetic-secret-from-transport']:
+        private_values = [path.read_text() for path in (self.root / 'state').glob('admin-*')]
+        for value in private_values + [self.saved_email, self.saved_password, self.installer_email,
+                                       self.installer_password, 'synthetic-secret-from-transport']:
             self.assertNotIn(value, output)
         return result
 
@@ -77,7 +80,6 @@ class Client:
     def test_previous_and_current_installer_labels_complete_setup(self):
         for label in ['Username (email):', 'Username (temporary placeholder email):']:
             with self.subTest(label=label):
-                self.calls.unlink(missing_ok=True)
                 result = self.run_setup({
                     '/api/user/login': [200, {'success': True, 'data': {'needs_setup': True}}],
                     '/api/user/complete-setup': [200, {'success': True}],
@@ -129,6 +131,21 @@ class Client:
         result = self.run_setup({'/api/user/login': 'unavailable'}, saved=True)
         self.assertNotEqual(result.returncode, 0)
         self.assertNotIn('Traceback', result.stderr)
+
+    def test_setup_failure_preserves_installer_credentials_and_saved_state(self):
+        result = self.run_setup({
+            '/api/user/login': [200, {'success': True, 'data': {'needs_setup': True}}],
+            '/api/user/complete-setup': [400, {'success': False, 'message': self.installer_password}],
+        }, saved=True, credentials=f'Username (temporary placeholder email):\n{self.installer_email}\nPassword:\n{self.installer_password}\n')
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual((self.root / 'state/admin-password').read_text(), self.saved_password)
+        self.assertFalse((self.root / 'removed').exists())
+
+    def test_missing_installer_and_host_credentials_fails_without_api_calls(self):
+        result = self.run_setup({})
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(self.api_calls(), [])
+        self.assertFalse((self.root / 'removed').exists())
 
 
 if __name__ == '__main__':
