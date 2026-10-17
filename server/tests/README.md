@@ -26,6 +26,7 @@ needed.
 |---|---|
 | `unit/` | Isolated regression suite, including unit tests and mocked Flask API/database integration tests; these are not all pure unit tests |
 | `integration/` | Explicitly selected live Nagios CGI tests; not full end-to-end acceptance |
+| `e2e/parent_reachability.py` | Opt-in disposable routed Docker/Core acceptance for #173 one-attempt DOWN notifications, UNREACHABLE convergence, redundant parents and no-parent control; see [Manual Topology Acceptance](plans/MANUAL_TOPOLOGY_ACCEPTANCE.md#one-attempt-notification-contract-173-option-a) |
 | `e2e/network_discovery/` | Opt-in live harness, fixtures, recovery scripts and self-tests, including plugin-driven monitoring scenarios (`scenario`, `enable-check`, permission matrix); the complete deterministic browser runner remains proposed |
 | `support/` | Shared isolated builders and migration subprocess helper |
 | `plans/` | Proposed test approach, live test plan and historical findings |
