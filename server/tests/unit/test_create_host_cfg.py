@@ -10,6 +10,8 @@ generated hosts.cfg defines each command once. Nagios itself is never run.
 """
 import re
 from contextlib import contextmanager
+from datetime import datetime
+from unittest.mock import patch
 
 import pytest
 
@@ -655,14 +657,27 @@ class TestCreateHostCfgFile:
         discovered = {"10.0.0.0/24": {
             "10.0.0.12": make_host("existing", tcp={"5693": "ncpa"}, net_discovery_id=device.NetDiscoveryID)
         }}
-        with patched_config(app, HOST_CONFIG_DIR=tmp_path):
+        with patched_config(app, HOST_CONFIG_DIR=tmp_path), patch(
+            "app.network_discovery.create_host_cfg.datetime"
+        ) as clock:
+            # Cross the minute boundary without waiting for wall-clock time.
+            clock.now.return_value = datetime(2026, 10, 17, 12, 19, 59)
             before = _create_host_cfg_file(discovered).read_text()
             deployment.Port = int(app.config["NCPA_PORT"])
             db_session.session.commit()
+            clock.now.return_value = datetime(2026, 10, 17, 12, 20, 0)
             after = _create_host_cfg_file(discovered).read_text()
-        assert re.sub(r"# generated at .*", "# generated at <time>", before) == re.sub(
-            r"# generated at .*", "# generated at <time>", after
-        )
+
+            # A real configuration change must survive timestamp normalization.
+            db_session.session.add(SystemSettings(Id=1, Check_Interval=10))
+            db_session.session.commit()
+            changed = _create_host_cfg_file(discovered).read_text()
+        assert "#   generated at 17-10-2026-12-19" in before
+        assert "#   generated at 17-10-2026-12-20" in after
+        timestamp_line = re.compile(r"^\s*#\s+generated at .*$", re.MULTILINE)
+        assert timestamp_line.sub("", before) == timestamp_line.sub("", after)
+        assert re.search(r"check_interval\s+10\b", changed)
+        assert timestamp_line.sub("", after) != timestamp_line.sub("", changed)
 
     def test_commands_defined_once_for_used_plugins_only(self, app, db_session, admin_user, plugin_config, tmp_path):
         discovered = {
