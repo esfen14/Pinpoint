@@ -11,7 +11,7 @@ Status: in-progress
 - [x] Live client-1 A-to-B and real discovery/Nagios/browser/history identity continuity pass.
 - [x] Live client-2 A reuse and remaining bounded matrix pass, with clean repeat of primary cases.
 - [x] Sanitized test-run report includes commit, owner, range, DHCP/client/OS/discovery/Nagios/browser/timing/cleanup evidence; raw logs stay on host.
-- [ ] Manuals, plans, owning specifications and status updated; changed-stage and all verification pass.
+- [x] Manuals, plans, owning specifications and status updated; changed-stage and all verification pass.
 
 Requirement coverage:
 
@@ -34,7 +34,7 @@ Requirement coverage:
 3. [x] Add failing bounded runner tests, then implement `lab/dhcp/acceptance.py` and a test plan under `server/tests/plans/` for the six cases and evidence collection.
 4. [x] Run the live clean-lab matrix with real discovery, Nagios and browser evidence; preserve raw logs off-repository and record actual pass/fail in `docs/test-runs/` (the QA range approval moved before the first full setup).
 5. [x] Update `docs/manuals/Local_Lab.md`, `docs/plans/VM_Lab_Plan.md` if applicable, `spec files/Agent_Workflow_and_CI.md`, `spec files/Data_Model_and_Integrations.md` if behavior changes, and `spec files/Implementation_Status.md`; run changed-stage gates.
-6. [ ] Re-read issue and prove each finish item, run `scripts/verify.sh all`, remove progress, push branch and open PR.
+6. [ ] Re-read issue and prove each finish item, run `scripts/verify.sh all`, remove progress, push branch and open PR (only PR creation remains).
 
 ## Round log
 
@@ -44,13 +44,14 @@ Requirement coverage:
 | 2 | Added opt-in controller, images, persistent distinct clients, ownership/collision checks, lease operations, evidence and teardown; approved DHCP-only QA range | Focused pytest (4 passed); live `up`, `move`, `reuse`, `client-restart`, `reset`, server stop/start, `down`; `scripts/verify.sh docs`; `scripts/verify.sh backend` | Live controls passed after management bridge correction; no owned resource residue; docs green; backend 3753 passed, 14 skipped |
 | 3 | Added bounded live runner, Playwright Inventory/History checkpoint and plan; corrected active-device lookup, host-state casing and browser readiness; documented controls | Focused pytest (11 passed), `scripts/verify.sh frontend`, `scripts/verify.sh docs`; full live matrix cycle 1 | Eight of nine cycle-1 cases pass; browser Inventory checked before client-2's first Nagios snapshot and failed. Runner now waits for that snapshot. Interrupted cycle 2 after preserving cycle-1 evidence; owned lab cleaned up. |
 | 4 | Retained case identity/check details in raw JSON; ran two clean live cycles; wrote sanitized report and updated manual, plan and specs | Focused pytest (12 passed), `scripts/verify.sh docs`, `scripts/dhcp-accept --lease-seconds 90`, `scripts/lab smoke` | All 9 full-matrix plus 5 clean-repeat cases pass, including both browser History checks; DHCP owner resources removed; ordinary static lab smoke 9/9. Full gate running. |
+| 5 | Audited issue finish conditions, linked opt-in plan in QA indexes and completed report | `scripts/verify.sh docs`; `scripts/verify.sh all` | Docs green; all green: backend 3761 passed/14 skipped, frontend 864 passed, build/lint zero errors. Ready to remove progress and open PR. |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/lab smoke > /tmp/pinpoint-187-static-smoke.log 2>&1`
-- Result (first failing lines, or "green"): green; 9 passed, 0 failed.
-- Hypothesis: The implementation and report are complete; the remaining risk is repository-wide verification/CI.
-- Next action (one specific step, not "continue"): Inspect `scripts/verify.sh all` result, repair any failure, audit issue finish conditions, then push and open the PR.
+- Last check run (exact command): `scripts/verify.sh all > /tmp/pinpoint-187-verify-all.log 2>&1`
+- Result (first failing lines, or "green"): green; backend 3761 passed/14 skipped, frontend 864 passed, build/lint zero errors.
+- Hypothesis: Local finish conditions are complete; pushed-tree CI remains to be observed.
+- Next action (one specific step, not "continue"): Remove this progress file, push the ready branch, open a PR, then observe its CI checks.
 
 ## Decisions and notes
 

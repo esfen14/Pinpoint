@@ -59,7 +59,9 @@ IPv6, DHCP failover, NCPA deployment or installer/systemd behavior.
 
 Both cycle teardowns and the no-owned-resource check passed. The ordinary
 static `scripts/lab smoke` passed 9/9 checks after DHCP teardown, including
-discovery and all five target rows. `scripts/verify.sh all` is pending.
+discovery and all five target rows. `scripts/verify.sh all` passed: 3,761
+backend tests passed with 14 skipped; 864 frontend tests passed across 69
+files; frontend build and lint completed with zero errors (existing warnings).
 
 ## Sanitization
 
