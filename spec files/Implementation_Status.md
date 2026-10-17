@@ -271,3 +271,22 @@ check OK, omitted an unsupported path with persisted skipped reasons, and
 measured small-lab Nagios load. Installation, independent-host scale and browser
 walkthrough remain unverified; see [the service report](../docs/test-runs/2026-10-14-issue-128-ncpa-services/REPORT.md)
 and [the capability report](../docs/test-runs/2026-10-14-issue-128-ncpa-probe/REPORT.md).
+
+## Service-report availability (#198)
+
+The issue branch replaces Network Services and Device Services snapshot counting
+with a shared strict Nagios duration reader, including scheduled components and
+separate native/unaccounted missing coverage. Current status is fetched in one
+separate bulk read; no status is inferred from availability. Both service-report
+contracts, tables and exports remove snapshot counts and expose seconds. Owning
+backend/data/frontend specifications and the [operator guide](../docs/manuals/Service_Reports.md)
+define exact semantics, completed-second windows, retention and Core assumptions.
+No snapshot storage or general polling behavior is removed. The full local gate passes (4040 backend/922 frontend; 14 existing skips), with
+51 focused service regressions and two Chromium tests for both views and all
+exports. The [final comparison](../docs/test-runs/2026-10-17-issue-198-service-availability/REPORT.md)
+records installed Core 4.5.11 real brief-outage/missing-history agreement with
+native avail.cgi, small-inventory timings, and a corrected harness socket-isolation
+failure/recovery. Large real inventories, installer upgrade and production HTTP
+authentication remain untested; CI and human review are tracked on PR #201.
+The initial [contract probe](../docs/test-runs/2026-10-17-issue-198-contract-probe/REPORT.md)
+is historical partial evidence, not final acceptance.

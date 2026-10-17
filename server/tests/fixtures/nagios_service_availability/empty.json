@@ -1,0 +1,28 @@
+{
+  "format_version": 0,
+  "result": {
+    "query_time": 1792245480000,
+    "cgi": "archivejson.cgi",
+    "user": "fixture-user",
+    "query": "availability",
+    "query_status": "released",
+    "program_start": 1792245234000,
+    "last_data_update": 1792245437000,
+    "type_code": 0,
+    "type_text": "Success",
+    "message": ""
+  },
+  "data": {
+    "selectors": {
+      "availabilityobjecttype": 2,
+      "starttime": 1792159056000,
+      "endtime": 1792245456000,
+      "hostname": "absent-host",
+      "assumeinitialstate": false,
+      "assumestateretention": true,
+      "assumestateduringnagiosdowntime": false,
+      "statetypes": 1
+    },
+    "services": []
+  }
+}

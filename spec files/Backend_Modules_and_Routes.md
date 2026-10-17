@@ -465,8 +465,8 @@ policy and fixed path; responses can still contain hostnames and addresses.
 |---|---|---|
 | `GET /api/system/report/availability` | `system.report` | Host availability for a period from Nagios `archivejson.cgi` durations; optional `hostname` scope is forwarded |
 | `GET /api/system/report/hosts-by-os` | `system.report` | The same Nagios-backed host availability grouped by OS |
-| `GET /api/system/report/network-services` | `system.report` | Network-wide service health report |
-| `GET /api/system/report/device-services` | `system.report` | Per-device service health report |
+| `GET /api/system/report/network-services` | `system.report` | Service availability from bulk Nagios archive durations, grouped by exact description; separate current bulk status |
+| `GET /api/system/report/device-services` | `system.report` | The same archive service instances grouped by hostname; device aggregate is service availability, not host uptime |
 | `GET /api/system/report/alerts` | `system.report` | Alert events/count from Nagios archives |
 | `GET /api/system/report/notifications` | `system.report` | Notification events/count from Nagios archives |
 
@@ -510,6 +510,60 @@ update/custom-plugin modules.
 | `POST /api/plugin/<plugin_id>/update` | `plugin.update` | Update from an archive |
 | `POST /api/plugin/<plugin_id>/update/rollback` | `plugin.update_rollback` | Restore the backed-up version |
 
+#### Service availability response contract
+
+The two service reports share `nagios/service_availability.py`, called on each
+execution. No `ServiceStatus` query, poller invocation, cache, scheduler or database
+fallback is used. One bulk archive request and at most one bulk detailed status
+request are made (none for empty history). Each call has a maximum 10-second
+connect/read timeout, the second limited by a shared 20-second timeout budget;
+there are no retries or redirects. This timeout budget is not a hard CPU or
+whole-response wall-clock deadline for a continuously streaming upstream.
+
+Existing URLs, grouping arrays and `uptime_pct` names remain. Network Services
+returns `services[]` with `service`, `total_instances`, current state counts and
+`instances[]`. Device Services returns `hosts[]` with `hostname`, `services[]`
+and service-duration aggregates; `total_hosts` and `total_services` remain.
+Both include `summary` with raw duration sums and counts. Distinct configured
+archive instances/hosts determine totals; no synthetic database-only rows exist.
+
+Instance, group and summary duration fields are numeric **seconds**:
+`ok_seconds`, `warning_seconds`, `critical_seconds`, `unknown_seconds`,
+`scheduled_ok_seconds`, `scheduled_warning_seconds`, `scheduled_critical_seconds`,
+`scheduled_unknown_seconds`, `known_seconds`, `no_data_seconds`,
+`nagios_not_running_seconds`, `unaccounted_seconds`, `no_recorded_data_seconds`
+and `window_seconds`. State totals already include their scheduled component;
+`known_seconds` sums the four states. `uptime_pct` is `100 * ok / known`, rounded
+to two decimals at output, null when known is zero. Aggregates sum raw seconds,
+never rounded percentages. `no_recorded_data_seconds = window_seconds - known`;
+its components are native no-data, engine downtime and the unaccounted remainder.
+A zero-history configured instance remains visible with null uptime and full
+missing coverage. No snapshot-count field, including `total_snapshots`, exists
+in either service-report contract. The host report's legacy field is unchanged.
+
+`current_status` contains `available`, `observed_at` (UTC ISO timestamp or null),
+and `notice` (null or sanitized status-unavailable text). Instance `state`,
+`last_check`, `last_state_change`, `plugin_output` come only from the separate
+bulk current service list, joined by exact `(hostname, service)` identity.
+Counts `ok`, `warning`, `critical`, `unknown`, `pending`, `unavailable` describe
+current status, even for past periods. Pending has null timestamps/output;
+missing has null metadata. A status failure preserves availability with null
+metadata and explicit notice. Archive timeout/auth/JSON/envelope/shape/identity/
+duration failures return a sanitized retryable 502; empty success returns an
+empty report. Every native duration must be finite, nonnegative and numeric;
+duplicate identities and duration sums exceeding the instance window are rejected.
+
+All six period values remain. Service custom dates use server-local midnight
+through the next midnight after the inclusive end date (exclusive boundary).
+Rolling/today/future-ended custom windows end at the last completed Unix second,
+strictly before the native query time, preventing Core's no-history current
+pseudo-state path. Empty/future-start/invalid bounds return 400 before I/O.
+Service `period` adds exact `start_ts`, `end_ts`, `end_exclusive=true`, `time_zone`;
+`start`/`end` contain UTC offsets. The same resolved window is used throughout;
+current status is explicitly an observation now, not a historical status query.
+The unchanged host/event routes retain their existing period behavior.
+
+
 ### Data polling settings contract
 
 `GET /api/system` includes `dataPollingInterval` in seconds. `PUT /api/system`
@@ -537,6 +591,7 @@ running. Check/retry settings, discovery and browser preferences remain independ
 | `api/helper/settings_flags.py` | Reads security/logging/session settings without importing route modules |
 | `api/helper/database_access/` | User, role, and permission lookup helpers |
 | `api/commands/seed.py` | Seeds permissions, roles, settings, and development users |
+| `nagios/service_availability.py` | Validates native service archive durations, sums weighted service availability and joins one read-only bulk current service list |
 | `nagios/status.py` | Polls status/object CGI data and writes snapshot models |
 | `api/plugin/plugin_descriptions.py` | One-line descriptions for the 58 bundled plugins; the scan fills a plugin's empty `Description` from it, and never overwrites an edited one |
 | `nagios/notifications.py` | Queries archive CGI alerts and notification events |

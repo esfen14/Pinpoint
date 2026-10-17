@@ -246,3 +246,20 @@ alert histograms, top alert producers, full outage timelines, downtime exclusion
 controls, database cleanup and replacement of the general status poller are not
 part of this two-report data-source change. Those can have their own product
 requirements after the measured availability foundation is correct.
+
+## Approved contract corrections (2026-10-17, issue #198)
+
+The owner requested implementation after reviewing the installed Core probe and
+the explanation of these corrections. Normalize each state as native `time_*`
+plus its separate `scheduled_time_*`; native scheduled durations are not included
+in the ordinary counters. Preserve both the normalized total and scheduled
+component. Expose unaccounted window seconds separately from native no-data and
+engine downtime, with total missing coverage equal to all three. Never infer a
+state or cause from that remainder. These corrections supersede the original
+coverage formula's assumption that native indeterminate fields explain all gaps.
+
+Completed-second service windows end strictly before Core's query time to prevent
+its no-history current pseudo-state path; validate that condition in the adapter.
+A historical zero row remains visible with null availability and missing coverage.
+The owning specifications describe the implemented contract; the original
+probe report remains an unchanged record of the initial findings.
