@@ -48,6 +48,8 @@ def run(root, serve, evidence_dir):
     if version != '4.5.11':
         raise RuntimeError('This probe requires the approved Core 4.5.11 contract.')
     cgi = Path('/usr/local/nagios/sbin')
+    live_query_socket = Path('/usr/local/nagios/var/rw/nagios.qh')
+    original_socket = live_query_socket.stat().st_ino if live_query_socket.exists() else None
     core_dir = root / 'core'
     core_dir.mkdir()
     user = pwd.getpwnam('nagios')
@@ -133,6 +135,9 @@ lock_file={core_dir}/nagios.pid
 temp_file={core_dir}/nagios.tmp
 log_archive_path={core_dir}/archives
 command_file={core_dir}/nagios.cmd
+query_socket={core_dir}/nagios.qh
+debug_file={core_dir}/debug.log
+use_syslog=0
 check_external_commands=0
 interval_length=1
 execute_service_checks=1
@@ -347,9 +352,17 @@ check_result_path={core_dir}
             pass
         process.wait(timeout=15)
         output.close()
+        socket_after = live_query_socket.stat().st_ino if live_query_socket.exists() else None
+        if socket_after != original_socket:
+            raise RuntimeError('The live Core query socket changed during the isolated fixture.')
+        print(json.dumps({'cleanup': {'isolated_core_stopped': process.returncode is not None,
+                                     'main_query_socket_preserved': True}}), flush=True)
         if evidence_dir:
             evidence_dir.mkdir(mode=0o700, parents=False, exist_ok=False)
-            shutil.copytree(core_dir, evidence_dir / 'core')
+            for name in ('nagios.cfg', 'objects.cfg', 'state', 'check.py', 'objects.cache', 'status.dat', 'nagios.log', 'process.log'):
+                path = core_dir / name
+                if path.is_file():
+                    shutil.copyfile(path, evidence_dir / name)
 
 
 if __name__ == '__main__':
