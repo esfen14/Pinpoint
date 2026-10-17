@@ -113,3 +113,29 @@ def test_one_bulk_archive_and_status_independent_of_hosts(logged_in_client, db_s
         response = logged_in_client.get(route)
     assert response.status_code == 200
     assert get.call_count == 2
+
+
+@pytest.mark.parametrize('zone,date,expected', [
+    ('UTC', '2024-03-10', 86400),
+    ('Asia/Kathmandu', '2024-03-10', 86400),
+    ('America/New_York', '2024-03-10', 82800),
+    ('America/New_York', '2024-11-03', 90000),
+])
+def test_custom_dates_use_server_calendar_including_dst(app, monkeypatch, zone, date, expected):
+    import os
+    import time
+    from app.api.system.report import service_period
+    original = os.environ.get('TZ')
+    try:
+        monkeypatch.setenv('TZ', zone)
+        time.tzset()
+        with app.test_request_context('/?period=custom&start='+date+'&end='+date):
+            start, end, meta = service_period()
+        assert end-start == expected
+        assert datetime.fromisoformat(meta['start']).utcoffset() is not None
+    finally:
+        if original is None:
+            os.environ.pop('TZ', None)
+        else:
+            os.environ['TZ'] = original
+        time.tzset()

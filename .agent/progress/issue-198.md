@@ -84,7 +84,7 @@ Requirement coverage (the full issue plan is covered by the final deliverable â€
 - Last check run (exact command): `scripts/verify.sh frontend`
 - Result (first failing lines, or "green"): green; tests/build/lint pass (existing warning-level lint findings remain).
 - Hypothesis: Ending strictly before native query time prevents the no-history pseudo-state path. Native injected-log fixture verifies 720 OK / 130 CRITICAL / 50 UNKNOWN / 100 engine-down seconds; normalized uptime is 80% of 900 recorded seconds.
-- Next action (one specific step, not "continue"): Run the isolated live installed-Core/application comparison and actual export serialization regressions, then scripts/verify.sh all on the complete tree.
+- Next action (one specific step, not "continue"): Run the isolated live installed-Core/application comparison while the complete-tree all gate runs.
 
 ## Decisions and notes
 
@@ -102,3 +102,5 @@ Requirement coverage (the full issue plan is covered by the final deliverable â€
 - Probe discrepancy resolved for implementation: end < result.query_time is enforced, with last-completed-second resolution. Fixed-window repetition returned missing coverage consistently; native isolated CGI fixture parsed actual transition log syntax and produced expected scheduled/engine/UNKNOWN/boundary totals.
 - Dependency note: adapter/route/UI changes were verified together in one implementation round because the response contract changes atomically; no compatibility snapshot field retained. Broad adapter backend run collected 4014 tests before the new API test file existed; the final all gate must include that file.
 - Remote draft PR: https://github.com/esfen14/Pinpoint/pull/201 . No readiness or CI claim yet.
+
+- Added actual CSV/XLS/PDF serialization checks on rows produced by both tables and timezone/DST date regressions. An expanded pagination assertion initially used visible page text instead of the existing accessible name; corrected to Page 2/Page 1, with no product change.

@@ -6,7 +6,7 @@ import { ReportsPage } from '../pages/ReportsPage'
 import { fromNetworkServicesResponse } from '../types/report'
 
 const mocks = vi.hoisted(() => ({ get: vi.fn(), export: vi.fn() }))
-vi.mock('../lib/api', () => ({ apiGet: mocks.get, errorMessage: (e: Error) => e.message }))
+vi.mock('../lib/api', () => ({ apiGet: mocks.get, apiPost: vi.fn().mockResolvedValue({}), errorMessage: (e: Error) => e.message }))
 vi.mock('../utils/exportData', () => ({ exportRows: mocks.export }))
 vi.mock('../contexts/SystemSettingsContext', () => ({ useSystemSettings: () => ({ settings: {
   exportFormats: ['CSV', 'XLS', 'PDF'], dateTimeFormat: 'YYYY-MM-DD HH:mm:ss', timeZone: 'UTC',
@@ -39,6 +39,40 @@ async function exportAs(format: string) {
   fireEvent.click(screen.getByRole('button', { name: format }))
 }
 
+async function verifyRealExport(rows: Record<string, unknown>[], format: 'CSV' | 'XLS' | 'PDF') {
+  const actual = await vi.importActual<typeof import('../utils/exportData')>('../utils/exportData')
+  let contents = ''
+  const blobs: Blob[] = []
+  const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+  const originalCreate = URL.createObjectURL, originalRevoke = URL.revokeObjectURL
+  URL.createObjectURL = (blob: Blob) => { blobs.push(blob); return 'blob:service-report' }
+  URL.revokeObjectURL = vi.fn()
+  const write = vi.fn((html: string) => { contents = html })
+  const print = vi.fn()
+  const open = vi.spyOn(window, 'open').mockReturnValue({ document: { write, close: vi.fn() }, focus: vi.fn(), print } as unknown as Window)
+  try {
+    actual.exportRows(rows, format, 'service-duration-test')
+    if (format === 'PDF') expect(print).toHaveBeenCalledOnce()
+    else {
+      expect(click).toHaveBeenCalledOnce()
+      contents = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(String(reader.result))
+        reader.onerror = reject
+        reader.readAsText(blobs[0])
+      })
+    }
+    expect(contents).toContain('Recorded time (seconds)')
+    expect(contents).toContain('No recorded data (seconds)')
+    expect(contents).toContain('Current')
+    expect(contents).not.toMatch(/snapshot/i)
+    expect(contents).toContain('100')
+  } finally {
+    URL.createObjectURL = originalCreate; URL.revokeObjectURL = originalRevoke
+    click.mockRestore(); open.mockRestore()
+  }
+}
+
 describe('service duration reports', () => {
   it.each(['CSV', 'XLS', 'PDF'])('network search/sort/pagination and full filtered %s export with seconds', async (format) => {
     const data = fromNetworkServicesResponse(network())
@@ -47,7 +81,11 @@ describe('service duration reports', () => {
     expect(screen.getByRole('columnheader', { name: 'No recorded data (seconds)' })).toBeInTheDocument()
     expect(screen.queryByText(/snapshot/i)).not.toBeInTheDocument()
     expect(within(screen.getByRole('table')).getAllByRole('row')).toHaveLength(11)
+    fireEvent.click(screen.getByRole('button', { name: 'Page 2', exact: true }))
+    expect(screen.getByText('svc-11')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Page 1', exact: true }))
     await exportAs(format)
+    await verifyRealExport(mocks.export.mock.calls[0][0], format as 'CSV' | 'XLS' | 'PDF')
     expect(mocks.export.mock.calls[0][0]).toHaveLength(12)
     const first = mocks.export.mock.calls[0][0][0]
     expect(first['Recorded time (seconds)']).toBe(100)
@@ -69,8 +107,14 @@ describe('service duration reports', () => {
     expect(screen.getByText('Pending')).toBeInTheDocument()
     expect(screen.getByText('Unavailable')).toBeInTheDocument()
     expect(screen.queryByText(/snapshot/i)).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Page 2', exact: true }))
+    expect(screen.getByText('svc-11')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Page 1', exact: true }))
+    fireEvent.click(screen.getByTitle('Sorted ascending'))
+    expect(screen.getByTitle('Sorted descending')).toBeInTheDocument()
     expect(screen.getAllByText(/availability during recorded time/i).length).toBeGreaterThan(0)
     await exportAs(format)
+    await verifyRealExport(mocks.export.mock.calls[0][0], format as 'CSV' | 'XLS' | 'PDF')
     expect(mocks.export.mock.calls[0][0]).toHaveLength(12)
     const first = mocks.export.mock.calls[0][0][0]
     expect(first['Unaccounted time (seconds)']).toBe(70)
