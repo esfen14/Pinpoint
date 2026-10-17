@@ -33,8 +33,8 @@ Requirement coverage:
 
 ## Plan
 
-1. [ ] Backend tests first: server/tests/unit/test_remediation_service_recovery.py
-2. [ ] Backend: GET/PUT /system/remediation/services/<host>/<path:service> in server/app/api/system/remediation.py (unit choice helper, docs)
+1. [x] Backend tests first: server/tests/unit/test_remediation_service_recovery.py
+2. [x] Backend: GET/PUT /system/remediation/services/<host>/<path:service> in server/app/api/system/remediation.py (unit choice helper, docs)
 3. [ ] Frontend tests first: client/src/test/ServiceRecoverySection.test.tsx
 4. [ ] Frontend: types/remediation.ts, lib/remediationApi.ts, components/device-inventory/ServiceRecoverySection.tsx, StatusDetailDrawer.tsx (service view), ServiceStatusTable read-only state
 5. [ ] Specs: Backend_Modules_and_Routes.md, Data_Model_and_Integrations.md, Frontend_Modules_and_Routes.md, Implementation_Status.md, admin guide paragraph
@@ -45,13 +45,14 @@ Requirement coverage:
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 0 | plan | - | - |
+| 1 | backend tests (67) then route + unit choice in api/system/remediation.py and app/remediation.py | pytest test_remediation_service_recovery + remediation/event handler/remote restart suites | 67 passed; 358 passed 1 skipped across related suites |
 
 ## State for the next session
 
-- Last check run (exact command): none
-- Result: n/a
+- Last check run (exact command): cd server; python -m pytest tests/unit/test_remediation_service_recovery.py tests/unit/test_remediation_api.py tests/unit/test_remediation_consumer.py tests/unit/test_event_handler_config.py tests/unit/test_remote_restart.py -q
+- Result: green
 - Hypothesis: n/a
-- Next action: step 1, write the backend test file
+- Next action: step 3, write client/src/test/ServiceRecoverySection.test.tsx (drawer service view + System Status row)
 
 ## Decisions and notes
 

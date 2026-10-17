@@ -14,6 +14,11 @@ PUT    /system/remediation/actions/<id>
     Replace an action; needs the current version, 409 when stale (remediation.manage).
 DELETE /system/remediation/actions/<id>
     Delete an action; its runs stay in the log (remediation.manage).
+GET    /system/remediation/services/<hostname>/<service_name>
+    The "Recover automatically" setting of one service (remediation.view).
+PUT    /system/remediation/services/<hostname>/<service_name>
+    Turn it on or off and set the restart limit; the server picks the action and unit
+    (remediation.manage).
 GET    /system/remediation/settings
     The kill switch and the run retention (remediation.view).
 PUT    /system/remediation/settings
@@ -28,6 +33,7 @@ GET    /system/remediation/runs/<id>
 Creating, changing or deleting an action regenerates the Nagios config; a config Nagios
 rejects rolls the change back and returns 422.
 """
+import hashlib
 import re
 from datetime import datetime, timedelta
 
@@ -40,6 +46,7 @@ from app import remediation_actions as registry
 from app.api.helper import error, success
 from app.api.helper.database_access.permissions import require_permission
 from app.api.system import system_bp
+from app.history_models import ServiceStatus
 from app.logging.configuration_changes import create_configuration_log
 from app import remediation
 from app.remediation import valid_name
@@ -61,6 +68,10 @@ LOGGED_FIELDS = (
 )
 MIN_RETENTION_DAYS = 7
 MAX_RETENTION_DAYS = 3650
+MIN_RESTARTS_PER_HOUR = 1
+MAX_RESTARTS_PER_HOUR = 6
+DEFAULT_RESTARTS_PER_HOUR = 2
+SERVICE_RECOVERY_FIELDS = {"enabled", "maxRestartsPerHour", "version"}
 DEFAULT_PER_PAGE = 25
 MAX_PER_PAGE = 100
 
@@ -364,6 +375,185 @@ def delete_remediation_action(action_id):
     except Exception:
         db.session.rollback()
         current_app.logger.exception("Could not delete remediation action.")
+        return error("An unexpected error occurred.", 500)
+
+
+# ==========================================================
+# PER-SERVICE "RECOVER AUTOMATICALLY"
+# ==========================================================
+
+def service_action_name(hostname, service_name):
+    """A readable, unique, valid action name for the action a service's switch creates."""
+    digest = hashlib.sha256(f"{hostname}|{service_name}".encode("utf-8")).hexdigest()[:8]
+    label = re.sub(r"[^A-Za-z0-9 ._-]", "-", f"Auto recover {hostname} {service_name}")[:48].rstrip()
+    return f"{label} {digest}"
+
+
+def find_service_action(hostname, service_name):
+    """The restart action scoped to exactly this host and service (made here or on the Remediation page), or None."""
+    return db.session.scalar(
+        sa.select(RemediationAction).where(
+            RemediationAction.Scope_Kind == RemediationScope.SERVICE,
+            RemediationAction.Host_Pattern == hostname,
+            RemediationAction.Service_Pattern == service_name,
+            RemediationAction.Action_Type.in_((
+                RemediationActionType.RESTART_LOCAL_SERVICE, RemediationActionType.RESTART_REMOTE_SERVICE)),
+        ).order_by(RemediationAction.Id).limit(1))
+
+
+def is_known_service(hostname, service_name):
+    """True when Nagios has reported this exact host and service."""
+    if not valid_name(hostname, 100) or not valid_name(service_name, 150):
+        return False
+    return db.session.scalar(
+        sa.select(ServiceStatus.ServiceStatusID).where(
+            ServiceStatus.Hostname == hostname, ServiceStatus.Service == service_name).limit(1)) is not None
+
+
+def service_recovery_problem(hostname, service_name):
+    """
+    Why a new rule cannot be switched on for this service, as (action_type, units, reason). The
+    reason is None when it can. Checked in order: the names fit a rule, the server can pick a valid
+    restart action and unit, and the event handler program is installed.
+    """
+    from app.network_discovery.host_config_templates import event_handler_path
+    if "*" in hostname or "*" in service_name or not HOST_PATTERN_RE.fullmatch(hostname) \
+            or not SERVICE_PATTERN_RE.fullmatch(service_name):
+        return None, [], "This host or service name cannot be used in an automatic recovery rule."
+    action_type, units, reason = remediation.choose_service_recovery(hostname, service_name)
+    if reason is None and event_handler_path() is None:
+        return None, [], "The event handler is not installed on this server, so automatic recovery cannot run."
+    return action_type, units, reason
+
+
+def serialize_service_recovery(hostname, service_name):
+    """
+    The public shape of one service's setting: whether it is on, its limit and version, the action
+    and unit that apply, whether it can be switched on (canEnable) and why not (reason), other
+    enabled actions that also cover the service, and the newest run.
+    """
+    action = find_service_action(hostname, service_name)
+    action_type, units, reason = service_recovery_problem(hostname, service_name)
+    unit = None
+    if action is not None:
+        action_type = action.Action_Type.value
+        unit = (action.Parameters or {}).get("unit")
+    elif units:
+        unit = units[0]
+    event = {"kind": "service", "host": hostname, "service": service_name}
+    others = []
+    for other in db.session.scalars(
+            sa.select(RemediationAction).where(RemediationAction.Enabled.is_(True)).order_by(RemediationAction.Name)):
+        if (action is None or other.Id != action.Id) and remediation.covers(other, event):
+            others.append({"id": other.Id, "name": other.Name})
+    last = db.session.scalar(
+        sa.select(RemediationRun).where(RemediationRun.Hostname == hostname, RemediationRun.Service == service_name)
+        .order_by(RemediationRun.Received_At.desc(), RemediationRun.Id.desc()).limit(1))
+    return {
+        "hostname": hostname,
+        "service": service_name,
+        "enabled": bool(action and action.Enabled),
+        "maxRestartsPerHour": action.Max_Runs_Per_Hour if action else DEFAULT_RESTARTS_PER_HOUR,
+        "version": action.Version if action else None,
+        "actionId": action.Id if action else None,
+        "actionType": action_type,
+        "unit": unit,
+        "canEnable": reason is None,
+        "reason": reason,
+        "otherActions": others,
+        "lastRun": serialize_run(last) if last else None,
+    }
+
+
+@system_bp.get('/remediation/services/<hostname>/<path:service_name>')
+@login_required
+@require_permission('remediation.view')
+def get_service_recovery(hostname, service_name):
+    """
+    Return one service's "Recover automatically" setting: enabled, maxRestartsPerHour, version
+    (null until it exists), actionId, actionType and unit (the server's choice), canEnable with a
+    plain reason when false, otherActions (other enabled actions that cover the service) and
+    lastRun. 404 when Nagios has not reported the service.
+    """
+    try:
+        if not is_known_service(hostname, service_name):
+            return error("Service not found.", 404)
+        return success(serialize_service_recovery(hostname, service_name))
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("Could not read the service recovery setting.")
+        return error("An unexpected error occurred.", 500)
+
+
+@system_bp.put('/remediation/services/<hostname>/<path:service_name>')
+@login_required
+@require_permission('remediation.manage')
+def update_service_recovery(hostname, service_name):
+    """
+    Turn "Recover automatically" on or off for one service and set its restart limit.
+
+    JSON: {"enabled": true, "maxRestartsPerHour": 2, "version": 1}. "version" is the current
+    version once the setting exists, and is left out until then. Nothing else is accepted: the
+    server picks the action type and unit, so a unit, command or path is a 400. This creates,
+    updates or disables exactly one action scoped to this host and service, the same row the
+    Remediation page shows. Errors: 400 with data.fields, 404, 409 when the version is stale,
+    422 when it cannot be switched on (data.reason) or Nagios rejects the config.
+    """
+    try:
+        if not is_known_service(hostname, service_name):
+            return error("Service not found.", 404)
+        data = request.get_json(silent=True)
+        if not isinstance(data, dict):
+            return bad_fields({"body": "Request body must be a JSON object."})
+        errors = {key: "Unknown field." for key in data if key not in SERVICE_RECOVERY_FIELDS}
+        if type(data.get("enabled")) is not bool:
+            errors["enabled"] = "Enabled must be true or false."
+        limit = data.get("maxRestartsPerHour")
+        if not is_int(limit) or not MIN_RESTARTS_PER_HOUR <= limit <= MAX_RESTARTS_PER_HOUR:
+            errors["maxRestartsPerHour"] = (
+                f"Restarts per hour must be a whole number from {MIN_RESTARTS_PER_HOUR} to {MAX_RESTARTS_PER_HOUR}.")
+        if errors:
+            return bad_fields(errors)
+
+        row = find_service_action(hostname, service_name)
+        version = data.get("version")
+        if (row is None and version is not None) or (row is not None and (not is_int(version) or version != row.Version)):
+            return error("This setting was changed by someone else. Reload and try again.", 409)
+        if row is None and not data["enabled"]:
+            return success(serialize_service_recovery(hostname, service_name), message="Recovery is off.")
+
+        before = serialize_action(row) if row is not None else None
+        if data["enabled"]:
+            action_type, units, reason = service_recovery_problem(hostname, service_name)
+            if reason is not None:
+                return error(reason, 422, {"reason": reason})
+            if row is None:
+                row = RemediationAction(
+                    Name=service_action_name(hostname, service_name), Scope_Kind=RemediationScope.SERVICE,
+                    Host_Pattern=hostname, Service_Pattern=service_name, Parameters={}, Version=1,
+                    Cooldown_Seconds=600, Run_When_Acknowledged=False)
+                db.session.add(row)
+            # Keep an action or unit an administrator chose on the Remediation page while it is still valid.
+            if row.Action_Type is None or row.Action_Type.value != action_type \
+                    or (row.Parameters or {}).get("unit") not in units:
+                row.Action_Type = RemediationActionType(action_type)
+                row.Parameters = {"unit": units[0]}
+        row.Enabled = data["enabled"]
+        row.Max_Runs_Per_Hour = limit
+        row.Updated_By = current_user.UserID
+        db.session.flush()
+        ok, message = apply_config()
+        if not ok:
+            db.session.rollback()
+            return error(f"The setting could not be applied: {message}", 422)
+        if before is not None:
+            row.Version += 1
+        log_changes(before, serialize_action(row))
+        db.session.commit()
+        return success(serialize_service_recovery(hostname, service_name), message="Setting saved.")
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("Could not update the service recovery setting.")
         return error("An unexpected error occurred.", 500)
 
 
