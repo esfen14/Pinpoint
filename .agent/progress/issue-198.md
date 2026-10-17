@@ -1,7 +1,7 @@
 # Issue #198: Nagios availability for service reports
 
 Branch: `issue-198-service-availability`
-Status: in-progress
+Status: blocked
 
 ## Finish condition
 
@@ -74,14 +74,15 @@ Requirement coverage (the full issue plan is covered by the final deliverable â€
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| 1 | Read-only Core 4.5.11 contract probe; native fixtures and sanitized report; no application edits | CGI subprocess probes as www-data, live-now and fixed-window repeat; scripts/verify.sh docs green | Blocked: scheduled fields separate; all-zero missing coverage; historical/live-now discrepancy |
 | Intake | Isolated checkout from latest origin/main; requirement coverage and complete plan written before code | gh issue view 198 --json number,title,body,comments,state | Open; full finish conditions; scoped live checks authorized |
 
 ## State for the next session
 
-- Last check run (exact command): `gh issue view 198 --json number,title,body,comments,state`
-- Result (first failing lines, or "green"): green; no existing issue branch or comments.
-- Hypothesis: Native CGI contract and initial-state assumptions must be observed before implementing duration normalization.
-- Next action (one specific step, not "continue"): Run VM preflight then a sanitized read-only installed Core archive/status contract probe.
+- Last check run (exact command): `scripts/verify.sh docs`
+- Result (first failing lines, or "green"): green; verify: docs OK.
+- Hypothesis: Native scheduled state totals are separate, and zero-history/current-state synthesis prevents the proposed formula from guaranteeing measured-only coverage.
+- Next action (one specific step, not "continue"): Obtain the owner's decision on the three concrete corrections in the contract-probe report before adapter implementation.
 
 ## Decisions and notes
 
@@ -89,3 +90,7 @@ Requirement coverage (the full issue plan is covered by the final deliverable â€
 - Owner confirmed existing VM lab exclusively available for this issue on 2026-10-17.
 - No migration, monitoring configuration change, destructive lab reset, snapshot fallback or availability targets are authorized/planned.
 - Owning spec sections: backend report route catalog; data current versus durable history and aggregation; frontend Reports; status report data sources/verification limits.
+
+- Probe evidence: `docs/test-runs/2026-10-17-issue-198-contract-probe/REPORT.md`; five sanitized native fixtures in `server/tests/fixtures/nagios_service_availability/`.
+- Question for owner: approve adding scheduled durations to normalized states and explicitly accounting for unreported window seconds, then resolve the native current-state synthesis/fixed-window discrepancy before implementation? An alternate source or extra calls would require scope approval.
+- Step 1 remains unticked: shape capture is done, but retention/backtracking and no-history assumptions are unresolved. No application behavior changed.
