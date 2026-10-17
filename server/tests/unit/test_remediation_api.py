@@ -301,7 +301,8 @@ def test_run_list_items_have_the_documented_fields_and_no_output(logged_in_clien
     add_run(db_session, output="recorded")
     item = logged_in_client.get(f"{BASE}/runs").get_json()["data"]["items"][0]
     assert set(item) == {"id", "actionId", "actionName", "hostname", "service", "state", "stateType", "attempt",
-                         "receivedAt", "startedAt", "finishedAt", "outcome", "reason"}
+                         "receivedAt", "startedAt", "finishedAt", "outcome", "reason", "notifyKind", "notifyState",
+                         "notifyAttempts", "notifyError", "notifyAt"}
     assert item["outcome"] == "succeeded" and item["state"] == "CRITICAL" and item["stateType"] == "HARD"
 
 
@@ -522,7 +523,8 @@ def saved_settings(db_session):
 def test_settings_default_to_switch_on_and_ninety_days(logged_in_client, db_session):
     response = logged_in_client.get(SETTINGS_URL)
     assert response.status_code == 200
-    assert response.get_json()["data"] == {"enabled": True, "retentionDays": 90}
+    assert response.get_json()["data"] == {
+        "enabled": True, "retentionDays": 90, "repeatCount": 3, "repeatWindowHours": 24}
 
 
 def test_settings_need_login_and_the_matching_permission(limited_client, db_session, regular_role):
@@ -546,7 +548,8 @@ def test_manage_can_switch_automatic_recovery_off_and_on(logged_in_client, db_se
 def test_retention_can_be_changed_and_leaves_the_switch_alone(logged_in_client, db_session):
     logged_in_client.put(SETTINGS_URL, json={"enabled": False})
     response = logged_in_client.put(SETTINGS_URL, json={"retentionDays": 30})
-    assert response.get_json()["data"] == {"enabled": False, "retentionDays": 30}
+    assert response.get_json()["data"] == {
+        "enabled": False, "retentionDays": 30, "repeatCount": 3, "repeatWindowHours": 24}
 
 
 @pytest.mark.parametrize("body, field", [
@@ -634,3 +637,97 @@ def test_run_action_link_is_a_nullable_set_null_foreign_key():
     assert foreign_keys[0].target_fullname == "REMEDIATION_ACTION.Id"
     assert foreign_keys[0].ondelete == "SET NULL"
     assert RemediationRun.__table__.c.Action_Id.nullable
+
+
+# ==========================================================
+# OPERATOR NOTIFICATION (#153)
+# ==========================================================
+
+def test_notify_on_defaults_to_all_three_kinds(logged_in_client):
+    body = create(logged_in_client).get_json()["data"]
+    assert body["notifyOn"] == ["failed", "capped", "repeated"]
+
+
+def test_notify_on_can_be_set_emptied_and_changed(logged_in_client):
+    body = create(logged_in_client, notifyOn=["failed"]).get_json()["data"]
+    assert body["notifyOn"] == ["failed"]
+    updated = logged_in_client.put(
+        f"{BASE}/actions/{body['id']}", json={**PAYLOAD, "version": body["version"], "notifyOn": []})
+    assert updated.get_json()["data"]["notifyOn"] == []
+
+
+def test_notify_on_is_stored_without_duplicates_in_a_fixed_order(logged_in_client):
+    body = create(logged_in_client, notifyOn=["repeated", "failed", "failed"]).get_json()["data"]
+    assert body["notifyOn"] == ["failed", "repeated"]
+
+
+@pytest.mark.parametrize("value", ["failed", ["nope"], ["failed", 1], [None], {"failed": True}, 5, True])
+def test_a_bad_notify_on_is_a_400_on_that_field(logged_in_client, value):
+    response = create(logged_in_client, notifyOn=value)
+    assert response.status_code == 400
+    assert "notifyOn" in response.get_json()["data"]["fields"]
+
+
+def test_a_notify_on_change_is_written_to_the_configuration_log(logged_in_client, db_session):
+    from app.system_models import ConfigurationChanges
+    body = create(logged_in_client).get_json()["data"]
+    db_session.session.query(ConfigurationChanges).delete()
+    db_session.session.commit()
+    logged_in_client.put(
+        f"{BASE}/actions/{body['id']}", json={**PAYLOAD, "version": body["version"], "notifyOn": ["failed"]})
+    rows = db_session.session.query(ConfigurationChanges).all()
+    assert [(r.Parameter_Name, r.New_Value) for r in rows] == [("notifyOn", "['failed']")]
+
+
+def test_a_run_shows_its_notification_state(logged_in_client, db_session):
+    from app.system_models import RemediationNotifyState
+    row = add_run(db_session, outcome=RemediationOutcome.FAILED)
+    row.Notify_Kind, row.Notify_State, row.Notify_Attempts = "failed", RemediationNotifyState.FAILED, 3
+    row.Notify_Error, row.Notify_At = "The Nagios command pipe was not found.", datetime.now(timezone.utc)
+    db_session.session.commit()
+    for url in (f"{BASE}/runs/{row.Id}", f"{BASE}/runs"):
+        data = logged_in_client.get(url).get_json()["data"]
+        item = data if "id" in data else data["items"][0]
+        assert (item["notifyKind"], item["notifyState"], item["notifyAttempts"]) == ("failed", "failed", 3)
+        assert item["notifyError"] == "The Nagios command pipe was not found."
+        assert item["notifyAt"]
+
+
+def test_a_run_with_no_notification_due_has_empty_notify_fields(logged_in_client, db_session):
+    row = add_run(db_session)
+    item = logged_in_client.get(f"{BASE}/runs/{row.Id}").get_json()["data"]
+    assert (item["notifyKind"], item["notifyState"], item["notifyAttempts"], item["notifyError"]) == (
+        None, None, 0, None)
+
+
+def test_repeat_settings_can_be_changed_and_leave_the_rest_alone(logged_in_client, db_session):
+    response = logged_in_client.put(SETTINGS_URL, json={"repeatCount": 5, "repeatWindowHours": 48})
+    assert response.get_json()["data"] == {
+        "enabled": True, "retentionDays": 90, "repeatCount": 5, "repeatWindowHours": 48}
+    settings = saved_settings(db_session)
+    assert (settings.Remediation_Repeat_Count, settings.Remediation_Repeat_Window_Hours) == (5, 48)
+
+
+@pytest.mark.parametrize("body, field", [
+    ({"repeatCount": 1}, "repeatCount"),
+    ({"repeatCount": 21}, "repeatCount"),
+    ({"repeatCount": "3"}, "repeatCount"),
+    ({"repeatCount": True}, "repeatCount"),
+    ({"repeatWindowHours": 0}, "repeatWindowHours"),
+    ({"repeatWindowHours": 169}, "repeatWindowHours"),
+    ({"repeatWindowHours": 2.5}, "repeatWindowHours"),
+])
+def test_bad_repeat_settings_are_a_400_and_save_nothing(logged_in_client, db_session, body, field):
+    response = logged_in_client.put(SETTINGS_URL, json=body)
+    assert response.status_code == 400
+    assert field in response.get_json()["data"]["fields"]
+    settings = saved_settings(db_session)
+    assert settings is None or (settings.Remediation_Repeat_Count, settings.Remediation_Repeat_Window_Hours) == (3, 24)
+
+
+def test_a_repeat_setting_change_is_audited(logged_in_client, db_session):
+    from app.system_models import ConfigurationChanges
+    logged_in_client.put(SETTINGS_URL, json={"repeatCount": 4})
+    rows = db_session.session.query(ConfigurationChanges).all()
+    assert [(r.Conf_Type, r.Parameter_Name, r.Old_Value, r.New_Value) for r in rows] == [
+        ("remediation_setting", "repeatCount", "3", "4")]

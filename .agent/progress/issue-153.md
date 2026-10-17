@@ -51,7 +51,7 @@ Files are relative to `server/app` unless stated.
 3. [x] Models and migration: `RemediationAction.Notify_On` (JSON list or three booleans, default all three), `RemediationRun.Notify_State` / `Notify_Error` / `Notify_Attempts` / notified-at, and two bounded `SystemSettings` columns for the repeat count and window; one multi-database migration after `f155a3c7d2b1` with downgrade. Files: `system_models.py`, `server/migrations/versions/<new>.py`, `tests/unit/test_remediation_migration.py` (or a new migration test), runner under `tests/support/`.
 4. [x] Escalation logic in a new `remediation_escalation.py`: outcome-to-trigger mapping (failed, timed_out -> failed; skipped_cooldown, skipped_hourly_cap -> capped), `Notify_On` filter, comment builder from fixed text + action name + outcome code + run id, bounded retry, repeat-window detection, idempotency by run id. Tests: `tests/unit/test_remediation_escalation.py`.
 5. [x] Wire it into `remediation.py` (`execute` and the skip rows in `record_decisions`), without letting a notification failure stop the consumer. Update `tests/unit/test_remediation_consumer.py`.
-6. [ ] API: validate and persist `Notify_On` and the two settings; return notification state and error from the runs API. Files: `api/system/remediation.py`, `tests/unit/test_remediation_api.py`. Permission checks unchanged (`remediation.view`, `remediation.manage`).
+6. [x] API: validate and persist `Notify_On` and the two settings; return notification state and error from the runs API. Files: `api/system/remediation.py`, `tests/unit/test_remediation_api.py`. Permission checks unchanged (`remediation.view`, `remediation.manage`).
 7. [ ] Feed: confirm `normalize_notification` / `collapse_repeats` keep the CUSTOM type and comment; add the label if missing. Files: `api/system/notifications.py` and its helper, `tests/unit/test_notifications.py`.
 8. [ ] Frontend types and run views: `RunLog.tsx`, `RunDrawer.tsx`, types, tests in `client/src/test/RemediationPage.test.tsx`.
 9. [ ] Frontend form: `Notify_On` checkboxes in `ActionFormDialog.tsx` with help text; settings fields if placed on the Remediation status panel. Tests.
@@ -70,15 +70,16 @@ One row per loop round, newest last.
 | 2 | Step 3: `Notify_On`, run `Notify_*` columns, `RemediationNotifyState`, two repeat settings in `system_models.py`; migration `e153c4a8b2d7` after `f155a3c7d2b1`; runner `tests/support/remediation_escalation_migration_runner.py` and two tests. I wrote the migration before its test (wrong order); the test checks defaults, a state write, downgrade and re-upgrade | `pytest tests/unit/test_device_migration.py tests/unit/test_upgrade_rehearsal.py tests/unit/test_remediation_migration.py tests/unit/test_remediation_api.py tests/unit/test_remediation_consumer.py tests/unit/test_forecast_migration.py -q` | 239 passed, 1 skipped, 2 errors (the Windows temp-file lock in the action FK tests, unrelated; also seen before this change) |
 | 3 | Step 4: `server/app/remediation_escalation.py` (outcome mapping, `Notify_On` filter, fixed-text comment with a safe-character action name, `deliver` with write-ahead attempt count and 3 bounded attempts, `deliver_pending`, `fail_unfinished`, `check_repeat`); 53 tests in `tests/unit/test_remediation_escalation.py` | `pytest tests/unit/test_remediation_escalation.py -q` | collection error first (module missing), then 53 passed |
 | 4 | Step 5: wired into `remediation.py` (`record_decisions` marks cooldown and cap skips; new `mark_notification` after `execute` marks failed, timed out and repeated; `process_spool` calls `deliver_pending`) and `scheduler.py` (`fail_unfinished` at startup); 10 new consumer tests | `pytest tests/unit/test_remediation_consumer.py tests/unit/test_remediation_escalation.py -q` | 8 of 10 failed first (not wired), then 145 passed, 1 skipped |
+| 5 | Step 6: `api/system/remediation.py` accepts and returns `notifyOn` (default all three, may be empty, audited), returns `notifyKind/State/Attempts/Error/At` on every run, and the settings route takes `repeatCount` (2 to 20) and `repeatWindowHours` (1 to 168), audited; 10 new tests. Two existing tests that pin exact response shapes were updated for the added keys (settings body, run item fields) | `pytest tests/unit/test_remediation_api.py -q` | 10 failed first, then 128 passed |
 
 ## State for the next session
 
 Everything a fresh session needs to continue without redoing work.
 
-- Last check run (exact command): `pytest tests/unit/test_remediation_consumer.py tests/unit/test_remediation_escalation.py -q` (from `server/`, with `.venv/Scripts/python -m`)
-- Result (first failing lines, or "green"): green, 145 passed, 1 skipped.
-- Hypothesis: the backend logic works end to end with the command layer mocked. Not yet exposed through the API.
-- Next action: plan step 6. Read `server/app/api/system/remediation.py` (action create/update validation, run serialization, settings route) and write failing tests in `server/tests/unit/test_remediation_api.py` for `Notify_On` validation (400 on unknown values), `notify` fields in the run JSON (`notifyKind`, `notifyState`, `notifyAttempts`, `notifyError`, `notifyAt`) and the two repeat settings with their bounds (2 to 20 and 1 to 168 hours).
+- Last check run (exact command): `pytest tests/unit/test_remediation_api.py -q` (from `server/`, with `.venv/Scripts/python -m`)
+- Result (first failing lines, or "green"): green, 128 passed. 5 rounds used this session, so the loop stopped here.
+- Hypothesis: the backend (steps 2 to 6) is complete and covered by unit tests with the Nagios command layer mocked. Never run against a real Nagios yet.
+- Next action: plan step 7 (feed). Read `server/app/api/system/notifications.py` helpers `normalize_notification` and `collapse_repeats` (imported at its top) and write a failing test in `server/tests/unit/test_notifications.py` showing a Nagios CUSTOM notification keeps its type and comment text in the feed; then fix it. After that steps 8 to 10 (frontend), 11 (docs), 12 (verify all, lab, PR).
 
 ## Decisions and notes
 
@@ -89,5 +90,8 @@ Questions for a person. The person said "let's start" without answering, so work
 3. **Lab.** The acceptance criteria and the report in `docs/test-runs/` need a real lab run (service custom notification, downtime suppression, unwritable pipe). The issue's section G asks for it, so confirm which lab to use (`scripts/vmlab` or the Docker lab) and that I may start it when the code is ready. Only the host form of the custom notification was verified on 2026-10-13.
 
 Notes:
+- Existing tests that pin exact response shapes were updated for the added API fields (settings body and run item fields in `test_remediation_api.py`); the old keys are unchanged.
+- Known gap to mention in the PR: `server/tests/unit/test_nagios_commands.py` FIFO tests cannot run on Windows (`os.mkfifo`); the new command tests avoid the FIFO, so they run everywhere.
+- A cooldown or cap skip notifies on every blocked event (one per run row), as the issue asks. A flapping service could therefore send several; the cooldown and cap on the action limit the number of runs but not the skips. Raise this in the PR.
 - The feed has no PinPoint notification table, so "visible in the in-app feed" is satisfied by Nagios writing the custom notification to its archive.
 - Ruled out: a PinPoint-only mail path (out of scope in the issue).
