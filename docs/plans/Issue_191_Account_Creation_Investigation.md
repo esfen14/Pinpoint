@@ -43,3 +43,8 @@ list refresh, explicit role/status choices, backend persistence of multiple
 accounts, and server rejection/retry without losing the form. These are isolated
 React interaction and Flask temporary-database tests, not a deployed appliance
 or real Nagios acceptance run. Full verification results are recorded in the PR.
+
+Observed results: the fixed page suite passes 30 tests; the backend management
+module passes 74. A real Chromium/local Flask run also passes delayed-role
+creation, a second account with Viewer/Inactive, and reload persistence (three
+total accounts). See [the scoped browser report](../test-runs/2026-10-17-issue-191-accounts/REPORT.md).

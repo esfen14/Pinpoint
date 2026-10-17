@@ -49,7 +49,9 @@ zero role ID could keep Save disabled despite a visibly selected role. Isolated
 interaction tests cover the timing regression, sequential creation and list
 refresh, explicit role/status, no-role guidance and rejection/retry. A backend
 regression verifies two additional persisted accounts and a total of three.
-The API has no one-account cap. The exact trigger in the original report is
+A [local Chromium/real Flask run](../docs/test-runs/2026-10-17-issue-191-accounts/REPORT.md)
+also confirms delayed-role creation, a second account and reload persistence
+with temporary SQLite and a stubbed Nagios writer. The API has no one-account cap. The exact trigger in the original report is
 unconfirmed; password policy and mismatch checks intentionally still block Save.
 See [the investigation](../docs/plans/Issue_191_Account_Creation_Investigation.md).
 

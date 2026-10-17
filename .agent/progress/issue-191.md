@@ -5,9 +5,9 @@ Status: in-progress
 
 ## Finish condition
 
-- [ ] Test the adding of accounts through the UI.
-- [ ] Administrator can now create more than 1 account.
-- [ ] Save Changes button should be clickable and can save the new account.
+- [x] Test the adding of accounts through the UI.
+- [x] Administrator can now create more than 1 account.
+- [x] Save Changes button should be clickable and can save the new account.
 
 | Issue requirement | Finish-condition item | Proof (test or command) |
 |---|---|---|
@@ -33,10 +33,10 @@ Status: in-progress
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh frontend`
-- Result (first failing lines, or "green"): green: 868 frontend tests, build, lint (0 errors; 30 existing warnings). Focused backend: 74 passed. Browser: two account creates and reload persistence passed with local real API/temp file SQLite, Nagios writer stubbed.
+- Last check run (exact command): `scripts/verify.sh all > /tmp/issue-191-all.log 2>&1`
+- Result (first failing lines, or "green"): running (session 71861); frontend stage separately green (868 tests/build/lint). Focused backend 74 passed. Real Chromium/local Flask/temp file SQLite: two creates and reload persistence passed.
 - Hypothesis: confirmed stale zero role ID; deriving the same role for render/validation/payload resolves the regression. No backend creation limit exists.
-- Next action (one specific step, not "continue"): Finish the already-running backend stage, record browser evidence and run the full all-stage gate.
+- Next action (one specific step, not "continue"): Poll session 71861 for the full gate result, then checkpoint and prepare the PR once green.
 
 ## Decisions and notes
 
@@ -44,3 +44,5 @@ Status: in-progress
 - Use isolated worktree `/tmp/pinpoint-issue-191`; copied existing dependency environments for local checks.
 - No VM/Docker lab operations or live Nagios tests are needed or authorized by the issue. UI interactions will run locally with isolated API fixtures; backend persistence uses temporary test databases.
 - Owning spec: Frontend Modules and Routes, accounts route and loading states. Preserve password policy and server authorization.
+
+- Re-read issue including comments before final verification: unchanged; all requirements covered by actual browser observations and committed regression tests. Replaced the separate partial backend stage with the full all-stage gate to avoid duplicate full runs.
