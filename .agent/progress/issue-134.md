@@ -25,7 +25,7 @@ Requirement coverage:
 
 ## Plan
 
-1. [ ] Audit ReportsPage.tsx, components/reports, report types/exports and server/app/api/system/report.py; update spec files/Frontend_Modules_and_Routes.md, Implementation_Status.md and docs/issues/issue-021.md to record the product decision.
+1. [x] Audit ReportsPage.tsx, components/reports, report types/exports and server/app/api/system/report.py; update spec files/Frontend_Modules_and_Routes.md, Implementation_Status.md and docs/issues/issue-021.md to record the product decision.
 2. [ ] Run docs and all verification, inspect six report views on a lab appliance if available, and record docs/test-runs evidence; report any defects separately.
 3. [ ] Re-read #134, prove applicable finish conditions, remove progress file when complete and open PR using the template; inspect CI.
 
@@ -33,14 +33,15 @@ Requirement coverage:
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| 1 | Source audit and documentation reconciliation; recorded rejection of targets | scripts/verify.sh docs | green |
 | Intake | Scope narrowed by explicit user decision | gh issue view 134 --json number,title,body,comments,state | Part 21.1 remains; targets rejected |
 
 ## State for the next session
 
-- Last check run (exact command): git worktree add -b issue-134-reports-documentation /tmp/pinpoint-issue-134 origin/main
+- Last check run (exact command): scripts/verify.sh docs
 - Result (first failing lines, or "green"): green
 - Hypothesis: six views already exist; inventories are stale. No application behavior change is needed.
-- Next action (one specific step, not "continue"): Complete the six-view source audit and update the frontend inventory.
+- Next action (one specific step, not "continue"): Run full verification and inspect report views on the available lab.
 
 ## Decisions and notes
 
