@@ -24,8 +24,8 @@ Requirement coverage (every requirement the issue states, and the check that pro
 Ordered steps the agent will take. Write the whole plan before changing code;
 revise it in place and say why in the round log. Name the files each step touches.
 
-1. [ ] Add isolated failing tests for credential label parsing and host-state validation (`scripts/test_vmlab_setup_admin.py`, `scripts/vmlab_setup_admin.py`).
-2. [ ] Implement safe label parsing and endpoint/setup validation for existing state (`scripts/vmlab`, `scripts/vmlab_setup_admin.py`).
+1. [x] Add isolated failing tests for credential label parsing and host-state validation (`scripts/test_vmlab_setup_admin.py`).
+2. [x] Implement safe label parsing and endpoint/setup validation for existing state; wire tests into docs verification (`scripts/vmlab`, `scripts/verify.sh`).
 3. [ ] Update VM lab setup documentation and current implementation status (`docs/plans/VM_Lab_Plan.md`, `spec files/Implementation_Status.md`).
 4. [ ] Run focused regression and docs verification; record results (`scripts/test_vmlab_setup_admin.py`, progress file).
 
@@ -35,18 +35,21 @@ One row per loop round, newest last.
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
-| 1 | Plan and requirement coverage recorded | Source/spec inspection | Ready to add failing regressions |
+| Plan | Plan and requirement coverage recorded | Source/spec inspection | Ready to add failing regressions |
+| 1 | Added actual-command isolated regressions; recognized both labels; authenticated saved state and checked /me setup flags; sanitized output; wired verification | `python3 -I scripts/test_vmlab_setup_admin.py` (red then green), `bash -n scripts/vmlab`, `scripts/verify.sh docs` | Original command failed 8 subcases across 5 tests; fixed command passes all 5 tests and docs verification |
 
 ## State for the next session
 
 Everything a fresh session needs to continue without redoing work.
 
-- Last check run (exact command): `rg -n "setup-admin|vmlab" 'spec files/Implementation_Status.md' 'spec files/Agent_Workflow_and_CI.md'`
-- Result (first failing lines, or "green"): confirmed issue is listed as open in Implementation_Status and setup-admin completes first-run setup.
-- Hypothesis: extract deterministic parsing/state decisions into a small Python helper imported by the script's inline Python, and verify stored credentials against the currently configured web endpoint before accepting them.
-- Next action (one specific step, not "continue"): add failing unit tests for both credential labels and rejection of stale/unconfigured login state.
+- Last check run (exact command): `python3 -I scripts/test_vmlab_setup_admin.py && bash -n scripts/vmlab && scripts/verify.sh docs`
+- Result (first failing lines, or "green"): green; 5 isolated setup tests, 18 ownership tests and all docs checks pass.
+- Hypothesis: both reported defects are fixed; documentation must now replace the obsolete workaround notice.
+- Next action (one specific step, not "continue"): update VM_Lab_Plan and owning workflow/status specifications with the validated saved-login behavior.
 
 ## Decisions and notes
 
 - Work is isolated in `/tmp/issue167` on the required issue branch. Existing root worktree edits remain untouched.
 - Do not operate the VM or Docker lab; this issue asks for isolated regressions and script/doc changes.
+- Plan refinement: actual-command tests use fake SSH/preflight/API boundaries, so no new production helper module is needed. Existing inline Python remains the smallest implementation.
+- Injection and secret review: credentials remain in environment/stdin/private state, never command arguments; no untrusted command interpolation added. Generic errors suppress API messages and transport details; setup state uses umask 077. No live lab calls occur in the tests.
