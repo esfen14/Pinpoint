@@ -5,10 +5,10 @@ Status: in-progress
 
 ## Finish condition
 
-- [ ] Save the proposal as a versioned document in `docs/plans/`, with proposed status, owning specification links, and an issue link; review and correct stale baseline claims.
-- [ ] Document opt-in isolation, Docker feasibility versus VM fallback, privileges, ownership, scan approval, and cleanup without claiming validation.
-- [ ] Specify repeatable real DHCP same-client A-to-B and different-client A-reuse acceptance, with identity, lease, OS, discovery, Nagios, browser/history and teardown evidence; distinguish simulated observations.
-- [ ] Keep the test matrix, bounded waits, failure evidence and exclusions for future implementation scope.
+- [x] Save the proposal as a versioned document in `docs/plans/`, with proposed status, owning specification links, and an issue link; review and correct stale baseline claims.
+- [x] Document opt-in isolation, Docker feasibility versus VM fallback, privileges, ownership, scan approval, and cleanup without claiming validation.
+- [x] Specify repeatable real DHCP same-client A-to-B and different-client A-reuse acceptance, with identity, lease, OS, discovery, Nagios, browser/history and teardown evidence; distinguish simulated observations.
+- [x] Keep the test matrix, bounded waits, failure evidence and exclusions for future implementation scope.
 - [ ] Run `scripts/verify.sh docs`; leave lab, #164 evidence and product behavior unchanged.
 
 Requirement coverage (every requirement the issue states, and the check that proves it):
@@ -23,7 +23,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 ## Plan
 
-1. [ ] Write `docs/plans/DHCP_Lab_Extension_Proposal.md` from the issue proposal, correcting baseline details against `lab/`, `demo/demo_lab.py`, `docs/manuals/Local_Lab.md`, `docs/plans/VM_Lab_Plan.md` and identity specifications. Verify with `scripts/verify.sh docs`.
+1. [x] Write `docs/plans/DHCP_Lab_Extension_Proposal.md` from the issue proposal, correcting baseline details against `lab/`, `demo/demo_lab.py`, `docs/manuals/Local_Lab.md`, `docs/plans/VM_Lab_Plan.md` and identity specifications. Verify with `scripts/verify.sh docs`.
 2. [ ] Link the proposal from `spec files/Agent_Workflow_and_CI.md` without changing current lab claims. Review finish-condition coverage and run `scripts/verify.sh docs` and `scripts/verify.sh all`.
 
 ## Round log
@@ -32,13 +32,14 @@ One row per loop round, newest last.
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| 1 | Saved and refined the future DHCP lab proposal, with relative specification links, current static lab baseline, real lease acceptance steps, deadlines and failure evidence. | `scripts/verify.sh docs` | Green: 174 relative-link documents and all docs checks passed. |
 
 ## State for the next session
 
-- Last check run (exact command): `git branch -a --list '*issue-177-*'`
-- Result (first failing lines, or "green"): green; new issue branch created from `origin/main`.
-- Hypothesis: The proposal can be recorded as a plan without changing lab or product behavior.
-- Next action (one specific step, not "continue"): Write `docs/plans/DHCP_Lab_Extension_Proposal.md` and run `scripts/verify.sh docs`.
+- Last check run (exact command): `scripts/verify.sh docs`
+- Result (first failing lines, or "green"): green.
+- Hypothesis: The remaining work is to link the proposal from the owning lab workflow specification and prove there are no lab/product changes.
+- Next action (one specific step, not "continue"): Add a proposal link to the test environments section of `spec files/Agent_Workflow_and_CI.md`.
 
 ## Decisions and notes
 
