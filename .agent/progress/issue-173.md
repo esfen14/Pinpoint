@@ -1,7 +1,7 @@
 # Issue #173: Decide child DOWN notification guarantee with one host check attempt
 
 Branch: `issue-173-document-parent-alert-quirk`
-Status: in-progress
+Status: ready-for-review
 
 ## Finish condition
 
@@ -26,7 +26,7 @@ Requirement coverage:
 2. [x] Run `scripts/verify.sh docs`, review the documentation diff, and checkpoint the scoped decision work.
 3. [x] Open a draft PR recording that reproduction and acceptance coverage remain outstanding; do not close #173.
 4. [x] Complete the remaining #173 finish conditions requested by the user: add an opt-in isolated routed acceptance driver in `server/tests/e2e/parent_reachability.py`, update `server/tests/plans/MANUAL_TOPOLOGY_ACCEPTANCE.md` and the test guide, reproduce one-attempt notifications and record exact settings/states/events in a new `docs/test-runs/` report.
-5. [ ] Update implementation status and issue checkboxes from observed evidence; run `scripts/verify.sh all`, remove progress scaffolding, and mark PR #192 ready after CI passes.
+5. [x] Update implementation status and issue checkboxes from observed evidence; run `scripts/verify.sh all`, remove progress scaffolding, and mark PR #192 ready after CI passes.
 
 ## Round log
 
@@ -42,12 +42,14 @@ Requirement coverage:
 
 | 4 | Final native-engine trial with normal active checking enabled passes both routed scenarios; committed report and operator contract now cover all #173 finish conditions | `python3 server/tests/e2e/parent_reachability.py --run --output-root /home/paeng/pinpoint-test-results/issue-173-20261017-active`; 39 parent regression tests | Five live cases pass; exact settings, hard states, notification events and cleanup recorded; full combined-tree gate running |
 
+| 5 | Full combined-tree gate passes; all four issue checkboxes updated with observed evidence; ready for final progress removal and review transition | `scripts/verify.sh all`; `scripts/verify.sh docs`; `git diff --check`; issue body reread | 3774 backend passed / 14 skipped, 864 frontend passed, build/lint/docs green; five live acceptance cases pass |
+
 ## State for the next session
 
 - Last check run (exact command): `scripts/verify.sh docs` and `git diff --check`
 - Result (first failing lines, or "green"): green; all documentation checks and whitespace validation pass
 - Hypothesis: The requested documentation is complete; remaining issue finish conditions require separate live reproduction and acceptance work.
-- Next action: Wait for combined-tree full verification, then update the issue checkboxes with the report evidence, remove progress scaffolding and mark PR #192 ready after CI.
+- Next action: Remove this scaffolding, push the final commit, mark PR #192 ready and verify final-head CI; do not merge.
 
 ## Decisions and notes
 

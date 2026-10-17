@@ -57,7 +57,6 @@ alone do not implement failover. No scans or host route commands were run.
 |---|---|---|---|
 | P173-01 | Pass | Real Core validation succeeds with zero errors; initial host observations all have `state_type=1` (HARD), `current_state=0` (UP) and nonzero active-check timestamps. `validation.txt`, `version.txt`, `settings.json`, `objects.cfg`, `observations.json`, root `metadata.json`. | — |
 | P173-02 | Pass | Single parent: child HARD DOWN notification at epoch 1792220691, parent HARD DOWN at 1792220697, child HARD UNREACHABLE notification at 1792220703, child HARD UP at 1792220713. `single/state-and-notification-events.log`, `single/observations.json`. | — |
-
 | P173-03 | Pass | With parent-a HARD DOWN, explicit routing through parent-b kept child HARD UP. After parent-b power-off, child HARD DOWN notification at 1792220741, parent-b HARD DOWN at 1792220747, child HARD UNREACHABLE notification at 1792220752. `redundant/observations.json`, `redundant/state-and-notification-events.log`. | — |
 | P173-04 | Pass | Same-target no-parent definition stayed HARD DOWN in both outages; restoring the selected router restored both definitions to HARD UP. Single recovery child/no-parent at 1792220713/1792220715; redundant recovery at 1792220759/1792220761. Both `observations.json` and event logs. | — |
 | P173-05 | Pass | Both `cleanup.json` files contain empty container/network lists; final Docker inventory contains no `pinpoint173-` resources. Shared lab containers were untouched. | — |
@@ -87,7 +86,7 @@ tree is verified separately.
 - The notification sink proves Core dispatch, not SMTP transport or inbox receipt.
   Browser, installer deployment and new application runtime behavior are outside
   this native-engine acceptance scope.
-- Full repository gate and PR CI are required separately before review readiness; no further native-engine reproduction or product decision remains for #173.
+- Full local `scripts/verify.sh all` passes on the combined branch: 3774 backend passed / 14 skipped, 864 frontend passed, build and lint passed (30 existing lint warnings and the bundle-size advisory). Documentation checks were rerun after the report edits. Final PR CI is tracked on [PR #192](https://github.com/esfen14/Pinpoint/pull/192); no further native-engine reproduction or product decision remains for #173.
 
 ## Sanitization checklist
 
