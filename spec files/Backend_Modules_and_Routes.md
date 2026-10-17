@@ -127,6 +127,14 @@ Security and system setting fields are restricted with `settings.security` and
 
 Both routes use the standard success/error envelopes. GET returns `quietHours` (weekday, `start`, `end` in 24-hour `HH:MM`), `hostOptions`, `serviceOptions`, `renotifyInterval`, `version` and `timeZone` (`Nagios server local time`). PUT accepts those editable fields plus the current integer `version`; `timeZone` is informational. Quiet windows cannot cross midnight or overlap on one weekday. The policy belongs to the default-bind singleton, and a successful save regenerates/validates/applies the shared Nagios candidate file before committing.
 
+Notification dependency generation is an application setting in `server/config.py`,
+`PINPOINT_NCPA_NOTIFICATION_DEPENDENCIES` (default on), rather than an editable
+notification-policy field. It adds a per-device NCPA TCP port check and
+notification-only service dependencies for existing NCPA metrics. Setting it
+off leaves the previous generated service set; a restart and the next shared
+Nagios config regeneration apply the new value. No new HTTP route or permission
+is introduced.
+
 ### `app/api/system/maintenance.py`
 
 | Method and path | Permission | Purpose |
@@ -389,7 +397,8 @@ encrypted with `secrets_store` as `<name>_enc` and never returned.
 | `POST /api/system/deployment/ncpa/<device_id>/confirm-trust` | `system.deploy.ncpa` | Body `{"fingerprint"}`: save the key only if the live key on the device's SSH port still equals the one the user approved, pinning that port in `SSH_Port`; 409 with `data.fingerprint` when it changed, 502 when unreachable |
 | `POST /api/system/deployment/ncpa/check-credentials` | `system.deploy.ncpa` | Test each device's login and sudo on its pinned SSH port without deploying; per-device result `ok`, `auth_failed`, `no_sudo`, `unreachable`, `host_key_changed`, `not_trusted`, `not_found` or `rate_limited` (one check per device per 3 s) |
 | `POST /api/system/deployment/ncpa/<device_id>/refresh-disks` | `system.deploy.ncpa` | Re-read the agent's logical disks, store them, regenerate the Nagios config |
-| `POST /api/system/deployment/ncpa/<device_id>/cleanup` | `system.deploy.ncpa` | Body `{"username", "password", "remove_account"?}`: only a failed deployment on a trusted device with no running deployment; recheck SSH key before SSH and remove Pinpoint bootstrap key/rule/helper, optionally account. Response lists each step with `ok`/optional `skipped`, and `agent_status`; complete cleanup returns Pending NCPA, incomplete cleanup stays Deployment Failed with a safe error. An activity entry records the outcome; request credentials are cleared. Errors never contain credentials. |
+| `GET /api/system/deployment/ncpa/<device_id>/remote-restart`, `PUT /api/system/deployment/ncpa/<device_id>/remote-restart` | `system.deploy.ncpa` | Read or set a device's remote restart switch and service list. PUT body `{"enabled": bool, "services": [unit, ...]}`; units are plain names (letters, digits, `_ . @ -`, at most 63 characters, at most 20 per device); 400 for anything else, 409 for an untrusted device or turning it on with an empty list. `redeploy_needed` is true when the list changed, because the device's own copy is written only by a (re)deployment |
+| `POST /api/system/deployment/ncpa/<device_id>/cleanup` | `system.deploy.ncpa` | Body `{"username", "password", "remove_account"?}`: a failed or deployed device with a confirmed SSH fingerprint and no running deployment; recheck SSH key before SSH and remove Pinpoint bootstrap key/rule/helper, optionally account. Response lists each step with `ok`/optional `skipped`, and `agent_status`; cleanup clears `Key_Installed` to block remote actions until redeployment; complete cleanup returns Pending NCPA, incomplete cleanup stays Deployment Failed with a safe error. An activity entry records the outcome; request credentials are cleared. Errors never contain credentials. |
 | `POST /api/system/deployment/ncpa/start` | `system.deploy.ncpa` | Validate credentials and devices, create the run with a Rejected or Pending result per device, and start the worker; 400 with `data.rejected` when no device can be deployed |
 | `POST /api/system/deployment/ncpa/stop` | `system.deploy.ncpa` | Request deployment cancellation; devices not started become Skipped |
 | `GET /api/system/deployment/ncpa/status` | `system.deploy.ncpa` | Latest run with per-device results, outcome counts, starter and review state |
@@ -511,7 +520,8 @@ running. Check/retry settings, discovery and browser preferences remain independ
 | `logging/` | Writes activity and subsystem audit records |
 | `scheduler.py` | Polling, retention purge, automation scheduling, and the remediation spool consumer (every 15 seconds; at startup it marks runs left `running` as `interrupted`) |
 | `remediation.py` | Reads the event handler spool (regular files under 2 KB owned by `REMEDIATION_SPOOL_OWNER`, at most 200 per run, symlinks never followed), parses each strictly, ignores SOFT states and recoveries (a HARD return to OK or UP never runs an action), matches enabled actions, applies the safety controls in order (the kill switch `Remediation_Enabled`, Maintenance Mode for every action type, scheduled downtime, and an acknowledged problem unless the action sets `Run_When_Acknowledged`; downtime and acknowledgement come from the newest Nagios status snapshot) and then the per-host-and-service cooldown and the per-action hourly cap, recording every skip with its reason, writes one `RemediationRun` row per decision, deletes the file, then runs the action; a replayed event runs nothing twice (unique `Event_Key` per action); a spool of more than 1000 files loses its oldest files (counted in the consumer state and logged); every tick, including one that finds the folder unreadable, saves a heartbeat that the health route reads |
-| `remediation_actions.py` | The code-defined action types (`record_only`, and `restart_local_service` which runs `sudo -n /usr/bin/systemctl restart <unit>` as an argument list with no shell for a unit in `RESTARTABLE_UNITS`; it is refused for an unlisted unit or in Maintenance Mode, and records only the exit code, never command output): parameter schema and validation, and `run_action`, which enforces a timeout and turns a crash into a fixed message so no secret reaches the log. `RESTARTABLE_UNITS` and the installer sudoers drop-in must change together |
+| `remediation_actions.py` | The code-defined action types (`record_only`, and `restart_local_service` which runs `sudo -n /usr/bin/systemctl restart <unit>` as an argument list with no shell for a unit in `RESTARTABLE_UNITS`; it is refused for an unlisted unit or in Maintenance Mode, and records only the exit code, never command output): parameter schema and validation, `restart_remote_service` (#8 Part 8.3: restarts one unit on the device the event came from over SSH; see `remote_restart.py`; refused in Maintenance Mode, for a device that is not Active, is paused, is not trusted or has the switch off, and for a unit not on that device's list), and `run_action`, which enforces a timeout and turns a crash into a fixed message so no secret reaches the log. `RESTARTABLE_UNITS` and the installer sudoers drop-in must change together |
+| `remote_restart.py` | Remote service restart (#8 Part 8.3). Device side: the root-owned helper `/usr/local/sbin/pinpoint-service-restart`, its one sudoers line (`/etc/sudoers.d/pinpoint-service-restart`, checked with `visudo` before it replaces the live file) and the root-owned list `/etc/pinpoint/restartable-services`, installed by the NCPA bootstrap with the administrator's one-time password. PinPoint side: `restart_remote_unit` checks the stored host-key fingerprint, logs in with the deployment key and runs only `sudo -n <helper> <unit>`; the unit must match a plain-name pattern, and only fixed text is returned. Design: `docs/plans/Issue_8_3_Remote_Restart_Design_Note.md` |
 | `scripts/pinpoint_event_handler.py` | The Nagios event handler (standard library only): validates its arguments and writes one JSON file per event to the spool; never opens a shell or the network; installed by the installer at `/usr/local/sbin/pinpoint-event-handler` (`root:root`, 755) |
 | `automation.py` | Settings-driven discovery, plugin/security checks, and database backups |
 
@@ -542,3 +552,19 @@ only Active opted-in users appear in the generated group. When none selected
 qualify, the default applies. Retired/merged devices are readable but not editable
 (409); a missing device returns 404. Read access intentionally includes the user
 choices needed by this editor without requiring account-management permissions.
+
+### Remote restart execution and action deletion (#182)
+
+Remote restart uses the event's monitored device and its pinned SSH port. It
+refuses non-Active, paused, untrusted or disabled devices, off-list units,
+Maintenance Mode, cooldown and hourly caps. SSH socket, banner and authentication
+operations are bounded; a re-fetched key must match the stored fingerprint before
+it enters RejectPolicy's known-hosts table. The final connection also checks that
+key. Remote restart polls command completion against a 20-second deadline,
+discards stdout/stderr, closes SSH on timeout and records fixed outcomes. The
+bootstrap suppresses remote output and secures the allowlist directory before
+writing the root-owned file; sudoers is validated before replacement.
+
+Deleting a remediation action clears its runs' nullable `Action_Id` foreign key
+while preserving `Action_Name` and audit fields. The update and deletion share
+the Nagios apply transaction and roll back together on a rejected apply.

@@ -32,10 +32,11 @@ from flask import current_app
 
 from app import db
 from app.history_models import AcknowledgementType, HostStatus, ServiceStatus
-from app.remediation_actions import RunContext, run_action
+from app.remediation_actions import RemoteTarget, RunContext, run_action
 from app.system_models import (
-    RemediationAction, RemediationConsumerState, RemediationEventState, RemediationEventStateType,
-    RemediationOutcome, RemediationRun, RemediationScope, SystemSettings,
+    DeviceState, NetworkDiscovery, RemediationAction, RemediationConsumerState, RemediationEventState,
+    RemediationEventStateType, RemediationOutcome, RemediationRun, RemediationScope, SSHCredentials,
+    SystemSettings,
 )
 
 MAX_FILES_PER_RUN = 200
@@ -426,15 +427,47 @@ def record_decisions(event, now):
     return to_run
 
 
+def resolve_remote_target(hostname):
+    """
+    Find the device an event came from and decide whether a remote action may touch it.
+    Returns (RemoteTarget, None) or (None, fixed refusal text). Checks, in order: the device
+    exists, is Active, is not paused, is trusted (key installed and fingerprint stored), and
+    has remote restart turned on.
+    """
+    device = db.session.scalar(
+        sa.select(NetworkDiscovery).where(NetworkDiscovery.Nagios_Host_Name == hostname))
+    if device is None:
+        return None, "Refused: no monitored device matches this host."
+    if device.Device_State is not DeviceState.ACTIVE:
+        return None, "Refused: the device is not active."
+    if not device.Include_Device_In_Scanning:
+        return None, "Refused: monitoring of the device is paused."
+    creds = db.session.scalar(
+        sa.select(SSHCredentials).where(SSHCredentials.NetworkDiscoveryID == device.NetDiscoveryID))
+    if creds is None or not creds.Key_Installed or not creds.Key_Fingerprint:
+        return None, "Refused: the device is not trusted for remote actions."
+    if not creds.Remote_Restart_Enabled:
+        return None, "Refused: remote restart is not turned on for this device."
+    ssh_port = creds.SSH_Port or int(current_app.config["SSH_PORT"])
+    return RemoteTarget(
+        ip_address=device.IP_Address, ssh_port=ssh_port, fingerprint=creds.Key_Fingerprint,
+        services=tuple(creds.Remote_Restart_Services or ())), None
+
+
 def execute(run_id, name, action_type, parameters, event):
     """Run one action and write its outcome to the row; logs one line with no output or parameters."""
     row = db.session.get(RemediationRun, run_id)
     row.Started_At = datetime.now(timezone.utc)
     db.session.commit()
     settings = db.session.get(SystemSettings, 1)
+    target, refusal = (None, None)
+    if action_type == "restart_remote_service":
+        target, refusal = resolve_remote_target(event["host"])
     context = RunContext(
         hostname=event["host"], service=event["service"], state=event["state"],
-        maintenance_mode=bool(settings and settings.Maintenance_Mode))
+        maintenance_mode=bool(settings and settings.Maintenance_Mode),
+        remote_target=target, remote_refusal=refusal,
+        app=current_app._get_current_object())
     result = run_action(action_type, parameters, context)
     row = db.session.get(RemediationRun, run_id)
     row.Outcome = RESULT_OUTCOMES.get(result.outcome, RemediationOutcome.FAILED)

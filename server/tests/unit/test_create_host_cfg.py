@@ -597,14 +597,56 @@ class TestCreateHostCfgFile:
         services = services_by_host(cfg_text)
 
         assert set(services["host-a"]) == {"snmp-uptime-161-udp", "snmp-memory_total-161-udp", "snmp-lan_status-161-udp"}
-        assert set(services["host-b"]) == {"ncpa-cpu-5693-tcp", "ncpa-memory-5693-tcp", "ncpa-disk_sda1-5693-tcp"}
+        assert set(services["host-b"]) == {"pinpoint-ncpa-port-5693-tcp", "ncpa-cpu-5693-tcp", "ncpa-memory-5693-tcp", "ncpa-disk_sda1-5693-tcp"}
         assert services["host-c"] == {"ssh-22-tcp": "pinpoint_nd_ssh!22!"}
         assert services["host-d"] == {"ntp-123-udp": "pinpoint_nd_ntp!123!"}
 
         assert all(cmd.startswith("pinpoint_nd_snmp!") for cmd in services["host-a"].values())
         # With resource macros, the NCPA token is replaced by a $USERn$ reference.
-        assert all(cmd.startswith("pinpoint_nd_ncpa!5693!USER") for cmd in services["host-b"].values())
+        assert services["host-b"]["pinpoint-ncpa-port-5693-tcp"] == "pinpoint_nd_tcp!5693!"
+        assert all(cmd.startswith("pinpoint_nd_ncpa!5693!USER") for name, cmd in services["host-b"].items() if name != "pinpoint-ncpa-port-5693-tcp")
         assert all("tokenB" not in cmd for cmd in services["host-b"].values())
+
+        dependencies = re.findall(r"define servicedependency\s*\{(.*?)\}", cfg_text, re.S)
+        assert len(dependencies) == 3
+        for metric in ("cpu", "memory", "disk_sda1"):
+            assert any(
+                re.search(r"host_name\s+host-b\b", block)
+                and re.search(r"service_description\s+pinpoint-ncpa-port-5693-tcp\b", block)
+                and re.search(rf"dependent_service_description\s+ncpa-{metric}-5693-tcp\b", block)
+                and re.search(r"notification_failure_criteria\s+c,u\b", block)
+                and re.search(r"execution_failure_criteria\s+n\b", block)
+                for block in dependencies
+            )
+
+    def test_ncpa_dependencies_off_preserves_previous_services(self, app, db_session, admin_user, plugin_config, tmp_path, ncpa_inventory):
+        device = make_device(db_session, admin_user, "host-b", "10.0.0.12")
+        make_ncpa_deployment(db_session, device, "tokenB", ["sda1"])
+        db_session.session.commit()
+        discovered = {"10.0.0.0/24": {
+            "10.0.0.12": make_host("host-b", tcp={"5693": "ncpa"}, net_discovery_id=device.NetDiscoveryID)
+        }}
+        with patched_config(app, HOST_CONFIG_DIR=tmp_path, NCPA_NOTIFICATION_DEPENDENCIES=False):
+            text = _create_host_cfg_file(discovered).read_text()
+        assert set(services_by_host(text)["host-b"]) == {
+            "ncpa-cpu-5693-tcp", "ncpa-memory-5693-tcp", "ncpa-disk_sda1-5693-tcp"
+        }
+        assert "define servicedependency" not in text
+
+    def test_ncpa_dependencies_skip_missing_port_target(self, app, db_session, admin_user, plugin_config, tmp_path, ncpa_inventory):
+        from unittest.mock import patch
+        device = make_device(db_session, admin_user, "host-b", "10.0.0.12")
+        make_ncpa_deployment(db_session, device, "tokenB")
+        db_session.session.commit()
+        discovered = {"10.0.0.0/24": {
+            "10.0.0.12": make_host("host-b", tcp={"5693": "ncpa"}, net_discovery_id=device.NetDiscoveryID)
+        }}
+        with patch("app.network_discovery.create_host_cfg.enabled_plugin_names", return_value={"check_ncpa"}), \
+                patched_config(app, HOST_CONFIG_DIR=tmp_path, NCPA_NOTIFICATION_DEPENDENCIES=True):
+            text = _create_host_cfg_file(discovered).read_text()
+        assert "ncpa-cpu-5693-tcp" in services_by_host(text)["host-b"]
+        assert "pinpoint-ncpa-port-5693-tcp" not in services_by_host(text)["host-b"]
+        assert "define servicedependency" not in text
 
     def test_backfilled_port_preserves_existing_ncpa_config(self, app, db_session, admin_user, plugin_config, tmp_path):
         device = make_device(db_session, admin_user, "existing", "10.0.0.12")

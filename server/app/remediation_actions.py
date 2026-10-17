@@ -6,8 +6,9 @@ Nagios event supplies is ever used as a command, script path or unit name. Each 
 parameter schema, a ``validate`` that returns cleaned values and one error per bad field,
 and a ``run`` that takes the validated parameters and a RunContext.
 
-Shipped here: ``record_only`` (changes nothing) and ``restart_local_service`` (restarts one
-unit from a fixed list on the PinPoint host). More recovery types are added to ACTION_TYPES
+Shipped here: ``record_only`` (changes nothing), ``restart_local_service`` (restarts one
+unit from a fixed list on the PinPoint host) and ``restart_remote_service`` (restarts one unit
+from a per-device list on a trusted monitored device over SSH). More recovery types are added to ACTION_TYPES
 through this same registry.
 """
 import subprocess
@@ -31,6 +32,15 @@ RESTART_SUBPROCESS_TIMEOUT_SECONDS = 20
 # ==========================================================
 
 @dataclass(frozen=True)
+class RemoteTarget:
+    """A trusted device a remote action may act on, read by the consumer before the action runs."""
+    ip_address: str
+    ssh_port: int
+    fingerprint: str
+    services: tuple
+
+
+@dataclass(frozen=True)
 class RunContext:
     """What an action may know about the event: names and state only, never raw spool text."""
     hostname: str
@@ -39,6 +49,12 @@ class RunContext:
     # Read by the consumer before the action runs, because the action runs in a worker thread
     # without an application context.
     maintenance_mode: bool = False
+    # Set for remote actions only. ``remote_target`` is None when the device may not be acted on,
+    # and ``remote_refusal`` then says why in fixed text. ``app`` lets the action open an
+    # application context in its worker thread (the SSH helpers log through current_app).
+    remote_target: Optional[RemoteTarget] = None
+    remote_refusal: Optional[str] = None
+    app: Any = None
 
 
 class ActionFailed(Exception):
@@ -129,6 +145,58 @@ def run_restart_local_service(params, context):
     return f"Restarted {unit}; exit code 0."
 
 
+# ==========================================================
+# restart_remote_service
+# ==========================================================
+
+def validate_restart_remote_service(params):
+    """
+    Accept only {"unit": <plain unit name>}. Which units a device really allows is checked at run
+    time against that device's own list, so only the name's shape is checked here.
+    Returns (cleaned, errors).
+    """
+    from app.remote_restart import valid_unit
+    if params is None:
+        params = {}
+    if not isinstance(params, dict):
+        return {}, {"parameters": "Parameters must be an object."}
+    errors = {key: "This action does not take this parameter." for key in params if key != "unit"}
+    unit = params.get("unit")
+    if not valid_unit(unit):
+        errors["unit"] = "Enter a plain service name such as nagios or apache2."
+    if errors:
+        return {}, errors
+    return {"unit": unit}, {}
+
+
+def run_restart_remote_service(params, context):
+    """
+    Restart one unit on the device the event came from, over SSH with the deployment key.
+    Refused in Maintenance Mode, for a device that is not active, trusted and enabled, and for a
+    unit not on that device's list. A changed host key stops the run. Only fixed text is recorded.
+    """
+    from app.remote_restart import restart_remote_unit, valid_unit
+    unit = params.get("unit")
+    if not valid_unit(unit):
+        raise ActionFailed("Refused: that is not a valid service name.")
+    if context.maintenance_mode:
+        raise ActionFailed("Refused: Maintenance Mode is on.")
+    target = context.remote_target
+    if target is None:
+        raise ActionFailed(context.remote_refusal or "Refused: this device cannot be restarted remotely.")
+    if unit not in target.services:
+        raise ActionFailed("Refused: that service is not on this device's restart list.")
+    if context.app is None:
+        raise ActionFailed("Refused: no application context for the remote restart.")
+    with context.app.app_context():
+        outcome, message = restart_remote_unit(target.ip_address, target.ssh_port, target.fingerprint, unit)
+    if outcome == "succeeded":
+        return message
+    if outcome == "timed_out":
+        raise ActionTimedOut(message)
+    raise ActionFailed(message)
+
+
 ACTION_TYPES = {
     "record_only": ActionType(
         key="record_only",
@@ -150,6 +218,18 @@ ACTION_TYPES = {
         }],
         validate=validate_restart_local_service,
         run=run_restart_local_service,
+    ),
+    "restart_remote_service": ActionType(
+        key="restart_remote_service",
+        label="Restart a service on the monitored device",
+        description="Restarts one service on the device where a check failed, over SSH, when the device is "
+                    "active, not paused, trusted and has remote restart turned on, and the service is on "
+                    "that device's list. A changed SSH host key stops it. Not run in Maintenance Mode.",
+        parameters=[{
+            "name": "unit", "label": "Service to restart", "type": "text", "required": True,
+        }],
+        validate=validate_restart_remote_service,
+        run=run_restart_remote_service,
     ),
 }
 

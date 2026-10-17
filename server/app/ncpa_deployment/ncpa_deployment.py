@@ -8,6 +8,7 @@ import base64
 import hmac 
 import secrets
 import shlex
+import socket
 import requests
 import os
 import re
@@ -98,6 +99,10 @@ def cleanup_ncpa_bootstrap(ip_address, ssh_port, fingerprint, username, password
              + shlex.quote(public_key) + " " + shlex.quote(REMOTE_AUTHORIZED_KEYS)),
             ("sudo_rule", "/usr/bin/rm -f -- " + shlex.quote(REMOTE_SUDOERS)),
             ("helper", "/usr/bin/rm -f -- " + shlex.quote(REMOTE_HELPER)),
+            # Part 8.3: the remote-restart rule, helper and service list (see app/remote_restart.py).
+            ("restart_rule", "/usr/bin/rm -f -- /etc/sudoers.d/pinpoint-service-restart"),
+            ("restart_helper", "/usr/bin/rm -f -- /usr/local/sbin/pinpoint-service-restart "
+                               "/etc/pinpoint/restartable-services"),
         ]
         results = []
         for name, command in actions:
@@ -235,7 +240,7 @@ def get_host_key_fingerprint(ip_address, ssh_port):
     """
     transport = None
     try:
-        transport = paramiko.Transport((ip_address, int(ssh_port)))
+        transport = paramiko.Transport(socket.create_connection((ip_address, int(ssh_port)), timeout=SSH_TIMEOUT))
         transport.start_client(timeout=SSH_TIMEOUT)
         key = transport.get_remote_server_key()
 
@@ -315,13 +320,18 @@ def connect_with_fingerprint_check(
 
     client.set_missing_host_key_policy( paramiko.RejectPolicy() ) 
     
-    transport = paramiko.Transport( 
-        (ip_address, int(ssh_port)) 
+    transport = paramiko.Transport(
+        socket.create_connection((ip_address, int(ssh_port)), timeout=SSH_TIMEOUT)
     ) 
 
     try: 
         transport.start_client(timeout=SSH_TIMEOUT) 
-        host_key = transport.get_remote_server_key() 
+        host_key = transport.get_remote_server_key()
+        fingerprint = base64.b64encode(hashlib.sha256(host_key.asbytes()).digest()).decode('ascii').rstrip('=')
+        if not hmac.compare_digest(fingerprint, expected_fingerprint):
+            current_app.logger.error("SSH host-key mismatch during connection.")
+            client.close()
+            return None
         # Stored under the name connect() looks it up by, or a non-22
         # port is rejected by RejectPolicy.
         client.get_host_keys().add( 
@@ -337,16 +347,23 @@ def connect_with_fingerprint_check(
     finally: 
         transport.close() 
 
-    client.connect( 
+    try:
+        client.connect(
             hostname=ip_address, 
             port=int(ssh_port), 
             username=username, 
             password=password,
             key_filename=private_key,
-            timeout=SSH_TIMEOUT, 
+            timeout=SSH_TIMEOUT,
+            banner_timeout=SSH_TIMEOUT,
+            auth_timeout=SSH_TIMEOUT,
             allow_agent=False, 
             look_for_keys=False
-    ) 
+        )
+
+    except Exception:
+        client.close()
+        raise
 
     return client
 
@@ -765,6 +782,14 @@ def give_program_permissions( device_id, ncpa_deployment_status_id, ip_address, 
 
         if ssh_credentials is None:
             return fail_device(device_id, ncpa_deployment_status_id, DeploymentOutcome.FAILED, "SSH credential record not found.")
+
+        # Part 8.3: the restart helper and the device's own service list. The list is whatever the
+        # administrator chose for this device (empty by default, which allows nothing); a redeploy
+        # is how a changed list reaches the device, because only root can write it there.
+        from app.remote_restart import clean_services, install_restart_helper
+        services, _ = clean_services(ssh_credentials.Remote_Restart_Services)
+        if not install_restart_helper(client, password, services):
+            return fail_device(device_id, ncpa_deployment_status_id, DeploymentOutcome.FAILED, "Unable to install the service restart helper.")
 
         ssh_credentials.Key_Installed = True
         db.session.commit()

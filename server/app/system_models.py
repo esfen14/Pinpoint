@@ -691,6 +691,10 @@ class SSHCredentials(db.Model):
     SSH_Port: so.Mapped[int] = so.mapped_column(sa.Integer())
     Key_Installed: so.Mapped[bool] = so.mapped_column(sa.Boolean(), default=False)
     Key_Fingerprint: so.Mapped[Optional[str]] = so.mapped_column()
+    # Part 8.3: an administrator turns remote restart on per device and lists the units it may
+    # restart. The device keeps its own copy of the list; the device's copy wins.
+    Remote_Restart_Enabled: so.Mapped[bool] = so.mapped_column(sa.Boolean(), default=False, server_default=sa.false())
+    Remote_Restart_Services: so.Mapped[Optional[list]] = so.mapped_column(sa.JSON())
     Created_At: so.Mapped[Optional[datetime]] = so.mapped_column(default=lambda: datetime.now(timezone.utc))
 
     # Foreign Key Field
@@ -1267,6 +1271,7 @@ class PasswordResetRequest(db.Model):
 class RemediationActionType(Enum):
     RECORD_ONLY = "record_only"
     RESTART_LOCAL_SERVICE = "restart_local_service"
+    RESTART_REMOTE_SERVICE = "restart_remote_service"
 
 
 class RemediationScope(Enum):
@@ -1335,8 +1340,8 @@ class RemediationAction(db.Model):
 class RemediationRun(db.Model):
     """
     One decision the consumer made about one event and one action, including skipped and
-    discarded ones. Action_Id is deliberately not a foreign key: deleting an action leaves
-    its runs, and Action_Name is a copy so the log still reads correctly. Kept on the
+    discarded ones. Deleting an action clears its foreign-key link while retaining its
+    runs and the Action_Name snapshot, so replacement actions never inherit history. Kept on the
     default bind because PinPoint writes it; history.db is for Nagios snapshots only.
     """
     __tablename__ = "REMEDIATION_RUN"
@@ -1344,7 +1349,9 @@ class RemediationRun(db.Model):
 
     Id: so.Mapped[int] = so.mapped_column(primary_key=True)
     Event_Key: so.Mapped[str] = so.mapped_column(sa.String(64), index=True)
-    Action_Id: so.Mapped[Optional[int]] = so.mapped_column(index=True)
+    Action_Id: so.Mapped[Optional[int]] = so.mapped_column(
+        sa.ForeignKey("REMEDIATION_ACTION.Id", name="fk_remediation_run_action", ondelete="SET NULL"), index=True
+    )
     Action_Name: so.Mapped[str] = so.mapped_column(sa.String(60))
     Hostname: so.Mapped[str] = so.mapped_column(sa.String(100), index=True)
     Service: so.Mapped[Optional[str]] = so.mapped_column(sa.String(150))

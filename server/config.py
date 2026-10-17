@@ -33,6 +33,18 @@ def env_positive_float(name, default):
     return number
 
 
+def env_bool(name, default):
+    """Read a strict on/off environment setting, failing startup on typos."""
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    if value.lower() in {"1", "true", "on"}:
+        return True
+    if value.lower() in {"0", "false", "off"}:
+        return False
+    raise ValueError(f"{name} must be on or off.")
+
+
 class Config:
     # No fallback: a secret committed to source lets anyone forge sessions.
     # app/__init__.py refuses to start without it outside debug mode.
@@ -68,6 +80,10 @@ class Config:
     # Port NCPA deployment configures the agent to listen on, and the port
     # Pinpoint uses to reach it.
     NCPA_PORT = "5693"
+    # Generate a TCP listener service and notification-only dependencies for
+    # NCPA metrics. Set PINPOINT_NCPA_NOTIFICATION_DEPENDENCIES=off to retain
+    # the previous service/config output at the next Nagios regeneration.
+    NCPA_NOTIFICATION_DEPENDENCIES = env_bool('PINPOINT_NCPA_NOTIFICATION_DEPENDENCIES', True)
 
     # How a discovered port's service name is decided, strongest first:
     #   1. a name an operator pinned on that device's port (never rescanned)

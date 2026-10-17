@@ -9,13 +9,13 @@ them) and drops the added columns and table.
 history.db is not touched.
 
 Revision ID: f155a3c7d2b1
-Revises: d117f3b8a053
+Revises: a182f6c9d301
 """
 from alembic import op
 import sqlalchemy as sa
 
 revision = 'f155a3c7d2b1'
-down_revision = 'd117f3b8a053'
+down_revision = 'a182f6c9d301'
 branch_labels = None
 depends_on = None
 

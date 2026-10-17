@@ -101,6 +101,66 @@ def test_restart_migration_downgrade_drops_only_the_new_type_and_upgrade_returns
 
 
 # ==========================================================
+# restart_remote_service migration (c7a1f4d92e60)
+# ==========================================================
+
+@pytest.fixture(scope="module")
+def remote_report():
+    result = subprocess.run(
+        [sys.executable, "tests/support/remediation_remote_restart_migration_runner.py"],
+        cwd=SERVER_DIR, capture_output=True, text=True, timeout=180,
+    )
+    assert result.returncode == 0, result.stderr[-3000:]
+    body = result.stdout.split("REPORT_BEGIN")[1].split("REPORT_END")[0]
+    return json.loads(body)
+
+
+def test_remote_migration_adds_the_device_columns_off_by_default(remote_report):
+    assert remote_report["version"] == [["c7a1f4d92e60"]]
+    assert remote_report["kept_after_upgrade"] == ["keep", "local"]
+    assert remote_report["names_with_remote"] == ["keep", "local", "remote"]
+    columns = remote_report["ssh_columns"]
+    assert "Remote_Restart_Services" in columns
+    assert columns["Remote_Restart_Enabled"] in ("false", "0")
+
+
+def test_remote_migration_downgrade_drops_only_the_new_type_and_columns(remote_report):
+    assert remote_report["version_after_downgrade"] == [["d117f3b8a053"]]
+    assert remote_report["names_after_downgrade"] == ["keep", "local"]
+    assert "Remote_Restart_Enabled" not in remote_report["ssh_columns_after_downgrade"]
+    assert remote_report["version_after_reupgrade"] == [["c7a1f4d92e60"]]
+    assert remote_report["names_after_reupgrade"] == ["keep", "local"]
+
+
+@pytest.fixture(scope="module")
+def action_fk_report():
+    result = subprocess.run(
+        [sys.executable, "tests/support/remediation_action_fk_migration_runner.py"],
+        cwd=SERVER_DIR, capture_output=True, text=True, timeout=180,
+    )
+    assert result.returncode == 0, result.stderr[-3000:]
+    return json.loads(result.stdout.split("REPORT_BEGIN")[1].split("REPORT_END")[0])
+
+
+def test_action_fk_migration_detaches_orphans_and_preserves_audit(action_fk_report):
+    assert action_fk_report['links'] == [[1], [None], [None]]
+    assert action_fk_report['fk_check'] == []
+    assert action_fk_report['invalid_refused'] is True
+    assert action_fk_report['after_delete'] == [
+        [None, 'existing', 'retained audit'], [None, 'deleted', 'retained audit'],
+        [None, 'unmatched', 'retained audit'],
+    ]
+    assert any(row[2:5] == ['REMEDIATION_ACTION', 'Action_Id', 'Id'] and row[6] == 'SET NULL'
+               for row in action_fk_report['foreign_keys'])
+
+
+def test_action_fk_downgrade_and_reupgrade_keep_all_runs(action_fk_report):
+    assert action_fk_report['downgrade_fk'] == []
+    assert action_fk_report['downgrade_rows'] == action_fk_report['reupgrade_rows'] == 3
+    assert action_fk_report['history_version'] == 'a182f6c9d301'
+
+
+# ==========================================================
 # safety controls migration (f155a3c7d2b1)
 # ==========================================================
 
@@ -136,7 +196,7 @@ def test_safety_migration_accepts_the_new_skip_outcomes(safety_report):
 
 
 def test_safety_migration_downgrades_and_upgrades_again(safety_report):
-    assert safety_report["version_after_downgrade"] == [["d117f3b8a053"]]
+    assert safety_report["version_after_downgrade"] == [["a182f6c9d301"]]
     assert safety_report["tables_after_downgrade"] == ["REMEDIATION_ACTION", "REMEDIATION_RUN"]
     assert not {"Remediation_Enabled", "Remediation_Retention_Days"} & set(
         safety_report["settings_columns_after_downgrade"])

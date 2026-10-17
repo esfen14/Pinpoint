@@ -8,7 +8,7 @@ from app import remediation_actions as registry
 
 
 def test_shipped_types():
-    assert list(registry.ACTION_TYPES) == ["record_only", "restart_local_service"]
+    assert list(registry.ACTION_TYPES) == ["record_only", "restart_local_service", "restart_remote_service"]
 
 
 def test_each_type_describes_itself_for_the_form():
