@@ -75,6 +75,7 @@ One row per loop round, newest last.
 | 9 | Step 8: spec files (Backend routes/outcomes/consumer, Data Model columns/state table/purge/migration, Frontend panel, Implementation Status incl. stale Maintenance `failed` note) and `docs/manuals/Automatic_Recovery.md` (kill switch, acknowledged, health panel, stalled checklist) | `scripts/verify.sh docs` | all docs checks pass except the known Windows `test_qa_queue.py` backslash failure |
 | 10 | Step 9 verification: `scripts/verify.sh backend`, `frontend`, `docs` run separately (`all` stops at the known docs failure) | backend: 116 failed 3630 passed 45 errors; the 26 failing files re-run on a clean origin/main worktree and on this branch give the same 114 failed / 32 errors; frontend alone: 69 files 864 tests passed, build ok, eslint 0 errors 30 warnings | no regression from this issue; failures are the Windows environment ones (temp-file locks, file modes, paths) |
 | 11 | Resumed; merged origin/main (16 commits); single migration head f155a3c7d2b1 confirmed | pytest migration+consumer+api+scheduler | 208 passed 1 skipped |
+| 12 | Deployed to the lab appliance; ran E1, E4, E5, E6 live; wrote the lab report | API-driven cases on the appliance | all passed; 6 cases not run live (see report) |
 
 ## State for the next session
 
@@ -83,7 +84,7 @@ Everything a fresh session needs to continue without redoing work.
 - Last check run (exact command): `scripts/verify.sh frontend` (and backend/docs separately)
 - Result (first failing lines, or "green"): frontend green; backend and docs fail only on Windows-environment tests that fail identically on clean origin/main
 - Hypothesis: n/a. Code, tests and docs are complete.
-- Next action (one specific step, not "continue"): a person runs the lab case from section G on the appliance (stop the consumer and watch `stalled`; flip the kill switch during a forced failure) and writes `docs/test-runs/<date>-issue-155-remediation-safety/REPORT.md` from `docs/test-runs/TEMPLATE.md`. Then: re-run `gh issue view 155`, delete this progress file (`git rm`), push, open the PR (compare link and body, no Claude attribution). Until the lab report exists open it as a draft.
+- Next action (one specific step, not "continue"): lab report written (docs/test-runs/2026-10-17-issue-155-remediation-safety/REPORT.md): E1, E4, E5, E6 validation+audit passed live. Still not run live: E2 (real host), E3, E6 403, E7-E9 browser. A person tick those in a browser/real host, add to the report, then `git rm` this file, push, mark the PR ready.
 
 ## Decisions and notes
 
