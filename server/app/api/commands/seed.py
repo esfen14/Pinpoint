@@ -66,14 +66,26 @@ PERMISSIONS = [
     "remediation.manage",
 ]
 
+# The built-in, privileged, system-management role. Its name is part of the
+# stored identity: lookups, seeding, protection checks and user-facing displays
+# all refer to it by this constant rather than a bare string.
+BUILTIN_ROLE_NAME = "Super Admin"
+# The name the built-in role had before the "Super Admin" rename. Existing
+# installations are upgraded to BUILTIN_ROLE_NAME by upgrade_builtin_role_name.
+LEGACY_BUILTIN_ROLE_NAME = "Administrator"
+# Applied when a pre-existing "Super Admin" role already occupies the name, so
+# the legacy role keeps its identity (RoleID, users, permissions) without
+# merging into an unrelated role.
+LEGACY_BUILTIN_ROLE_NAME_FALLBACK = "Administrator (Legacy)"
+
 ROLES = [
-    ("Administrator", "System Administrator"),
+    (BUILTIN_ROLE_NAME, "System Administrator"),
     ("Manager", "Department Manager"),
     ("Staff", "Regular Staff"),
 ]
 
 SEED_USERS = [
-("Admin", "User", "admin@test.com", "Administrator", UserStatus.ACTIVE),
+("Admin", "User", "admin@test.com", BUILTIN_ROLE_NAME, UserStatus.ACTIVE),
 ("John", "Doe", "john@test.com", "Manager", UserStatus.ACTIVE),
 ("Jane", "Smith", "jane@test.com", "Staff", UserStatus.INACTIVE),
 ("Michael", "Brown", "michael.brown@test.com", "Manager", UserStatus.ACTIVE),
@@ -174,20 +186,53 @@ def missing_permissions():
     return [name for name in PERMISSIONS if name not in existing]
 
 
+def upgrade_builtin_role_name():
+    """Rename the built-in role to ``BUILTIN_ROLE_NAME`` on an existing install.
+
+    Existing installations seeded the privileged role as ``Administrator``.
+    This renames it to ``Super Admin`` without changing its RoleID, users,
+    permissions or other records, so name-based lookups, seeding and protection
+    checks keep identifying the same role. It is safe to run repeatedly.
+
+    When a role already named ``Super Admin`` exists, the legacy role is not
+    merged into it: it is moved to a clearly distinct legacy name so no
+    unrelated role is touched and no user is silently reassigned.
+
+    Returns a dict describing the outcome.
+    """
+    legacy = get_role(LEGACY_BUILTIN_ROLE_NAME)
+    if legacy is None:
+        return {"renamed": False, "reason": "no legacy role"}
+
+    if get_role(BUILTIN_ROLE_NAME) is not None:
+        # Name already taken by an unrelated role; keep the legacy role's
+        # identity instead of merging or reassigning its users.
+        legacy.Name = LEGACY_BUILTIN_ROLE_NAME_FALLBACK
+        db.session.commit()
+        return {"renamed": False, "conflict": True,
+                "reason": f"{BUILTIN_ROLE_NAME} already exists"}
+
+    legacy.Name = BUILTIN_ROLE_NAME
+    db.session.commit()
+    return {"renamed": True, "reason": "renamed"}
+
+
 def sync_permissions():
     """
     Bring an existing database up to date with PERMISSIONS without touching
-    users, other roles or existing grants: insert any missing permission and
-    grant every permission to the Administrator role (the seed's policy).
-    Safe to run repeatedly.
+    users, other roles or existing grants: rename the built-in role to its
+    current name, insert any missing permission and grant every permission to
+    the built-in role (the seed's policy). Safe to run repeatedly.
 
     Returns (permissions_added, grants_added) as lists of names.
     """
+    upgrade_builtin_role_name()
+
     added = missing_permissions()
     seed_permissions()
 
     granted = []
-    admin = get_role("Administrator")
+    admin = get_role(BUILTIN_ROLE_NAME)
     if admin is not None:
         held = set(db.session.scalars(
             sa.select(Permission.Name)
@@ -238,8 +283,8 @@ def seed_roles():
             db.session.add(role)
             db.session.flush()  # get RoleID
 
-        # attach ALL permissions to Administrator only
-        if name == "Administrator":
+        # attach ALL permissions to the built-in role only
+        if name == BUILTIN_ROLE_NAME:
             for perm_name in PERMISSIONS:
                 perm = get_permission(perm_name)
                 if not perm:
@@ -359,7 +404,11 @@ def seed_command(remove, permissions_only, reset):
 @click.command("sync-permissions")
 @with_appcontext
 def sync_permissions_command():
-    """Add missing permissions and grant them to Administrator (upgrade step)."""
+    """Add missing permissions and grant them to the built-in role (upgrade step).
+
+    Also renames the built-in role to its current name (Super Admin) on
+    installations seeded under the old Administrator name.
+    """
     try:
         added, granted = sync_permissions()
     except Exception as e:
@@ -367,7 +416,7 @@ def sync_permissions_command():
         raise click.ClickException(f"Permission sync failed: {e}")
 
     click.echo(f"Permissions added: {', '.join(added) or 'none'}")
-    click.echo(f"Granted to Administrator: {', '.join(granted) or 'none'}")
+    click.echo(f"Granted to {BUILTIN_ROLE_NAME}: {', '.join(granted) or 'none'}")
 
 
 @click.command("recover-bootstrap-admin")
@@ -473,9 +522,9 @@ def init_production_command(admin_email, first_name, last_name, password_stdin):
         seed_roles()
         seed_system_settings()
 
-        role = get_role("Administrator")
+        role = get_role(BUILTIN_ROLE_NAME)
         if role is None:
-            raise RuntimeError("Administrator role was not created.")
+            raise RuntimeError(f"{BUILTIN_ROLE_NAME} role was not created.")
 
         admin = User(
             First_Name=first_name,
