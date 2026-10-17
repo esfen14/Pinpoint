@@ -24,7 +24,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 ## Plan
 
 1. [x] Write `docs/plans/DHCP_Lab_Extension_Proposal.md` from the issue proposal, correcting baseline details against `lab/`, `demo/demo_lab.py`, `docs/manuals/Local_Lab.md`, `docs/plans/VM_Lab_Plan.md` and identity specifications. Verify with `scripts/verify.sh docs`.
-2. [ ] Link the proposal from `spec files/Agent_Workflow_and_CI.md` without changing current lab claims. Review finish-condition coverage and run `scripts/verify.sh docs` and `scripts/verify.sh all`.
+2. [x] Link the proposal from `spec files/Agent_Workflow_and_CI.md` without changing current lab claims. Review finish-condition coverage and run `scripts/verify.sh docs`.
 
 ## Round log
 
@@ -33,13 +33,14 @@ One row per loop round, newest last.
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 1 | Saved and refined the future DHCP lab proposal, with relative specification links, current static lab baseline, real lease acceptance steps, deadlines and failure evidence. | `scripts/verify.sh docs` | Green: 174 relative-link documents and all docs checks passed. |
+| 2 | Linked the proposal from the owning lab workflow specification and reread the unchanged issue finish condition. | `scripts/verify.sh docs`; `git diff --check` | Green: docs verification and whitespace check passed. |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh docs`
+- Last check run (exact command): `git diff --check`
 - Result (first failing lines, or "green"): green.
-- Hypothesis: The remaining work is to link the proposal from the owning lab workflow specification and prove there are no lab/product changes.
-- Next action (one specific step, not "continue"): Add a proposal link to the test environments section of `spec files/Agent_Workflow_and_CI.md`.
+- Hypothesis: The draft satisfies the documentation requirements; final work is issue cross-linking, full CI-equivalent verification and PR creation.
+- Next action (one specific step, not "continue"): Add the proposal link to issue #177, then run `scripts/verify.sh all`.
 
 ## Decisions and notes
 
