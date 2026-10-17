@@ -35,7 +35,8 @@ links by case ID (its section 7 records the decision for each); none is retired.
   matrix and traceability reporting. Nothing in it is implemented yet.
 - [Manual Topology Acceptance](MANUAL_TOPOLOGY_ACCEPTANCE.md): issue #117 manual
   multiple-parent API/configuration, real isolated routed Nagios reachability, lifecycle
-  rollback and frontend regression checks.
+  rollback and frontend regression checks; includes #173 Option A one-attempt
+  notification acceptance with an opt-in disposable routed driver.
 - [Isolated DHCP Lab Acceptance](DHCP_LAB_ACCEPTANCE.md): issue #187 opt-in
   real lease-change, Pinpoint/Nagios identity and browser History matrix on
   the dedicated `10.79.0.0/28` Docker segment; never part of routine CI or QA scans.

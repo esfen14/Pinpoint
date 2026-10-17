@@ -474,6 +474,16 @@ interface-to-parent mapping, traffic/utilization charts and new telemetry collec
 are excluded. Existing Inventory interfaces and Network Health bandwidth keep
 their own established behavior.
 
+The accepted notification contract for manual parents (Option A, issue #173) allows
+an initial child **DOWN** notification before Nagios confirms parent reachability.
+Immediate child-DOWN suppression is not guaranteed for every supported retry/cache
+configuration; one-attempt monitoring remains supported. A failed child check is
+classified **UNREACHABLE** once Nagios determines that all its rendered parents are
+DOWN or UNREACHABLE. If at least one parent is UP, a failing child remains DOWN;
+a responding child is UP. UNREACHABLE is a host reachability state, not UNKNOWN.
+There is no fixed convergence timeout. See the
+[operator guidance](../docs/manuals/Notification_Policy.md#parent-outages-and-temporary-child-down-alerts).
+
 ## 14. Device identity review and manual merging
 
 The **Needs Review (count)** section appears separately from the host table for
