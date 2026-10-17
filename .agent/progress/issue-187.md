@@ -6,7 +6,7 @@ Status: in-progress
 ## Finish condition
 
 - [x] Docker feasibility experiment documents real DHCP, running A-to-B move, appliance connectivity, cleanup, privilege/isolation/cost and design decision.
-- [ ] Opt-in controls create/manage isolated server, appliance interface and two persistent clients; capture evidence, reset and cleanly tear down owned resources.
+- [x] Opt-in controls create/manage isolated server, appliance interface and two persistent clients; capture evidence, reset and cleanly tear down owned resources.
 - [ ] Safety guards enforce one allocator, binding/isolation, separate management, infrastructure outside pool, ownership, approved range; static labs still work.
 - [ ] Live client-1 A-to-B and real discovery/Nagios/browser/history identity continuity pass.
 - [ ] Live client-2 A reuse and remaining bounded matrix pass, with clean repeat of primary cases.
@@ -30,9 +30,9 @@ Requirement coverage:
 ## Plan
 
 1. [x] Run a throwaway Docker feasibility experiment and document evidence/decision in `docs/plans/DHCP_Lab_Extension_Proposal.md` and a new `docs/test-runs/.../REPORT.md`; check routes and lab ownership first.
-2. [ ] Add failing lifecycle/safety tests under `server/tests/unit/` or `lab/tests/`, then implement the isolated opt-in lab in `lab/dhcp/` and `scripts/dhcp-lab` using the chosen design.
+2. [x] Add failing lifecycle/safety tests under `server/tests/unit/` or `lab/tests/`, then implement the isolated opt-in lab in `lab/dhcp/` and `scripts/dhcp-lab` using the chosen design.
 3. [ ] Add failing bounded runner tests, then implement `lab/dhcp/acceptance.py` and a test plan under `server/tests/plans/` for the six cases and evidence collection.
-4. [ ] Update `docs/qa/QA_Journeys_and_Scope.md` for the approved range, then run the live clean-lab matrix with real discovery, Nagios and browser evidence; preserve raw logs off-repository and record actual pass/fail in `docs/test-runs/`.
+4. [ ] Run the live clean-lab matrix with real discovery, Nagios and browser evidence; preserve raw logs off-repository and record actual pass/fail in `docs/test-runs/` (the QA range approval moved before the first full setup).
 5. [ ] Update `docs/manuals/Local_Lab.md`, `docs/plans/VM_Lab_Plan.md` if applicable, `spec files/Agent_Workflow_and_CI.md`, `spec files/Data_Model_and_Integrations.md` if behavior changes, and `spec files/Implementation_Status.md`; run changed-stage gates.
 6. [ ] Re-read issue and prove each finish item, run `scripts/verify.sh all`, remove progress, push branch and open PR.
 
@@ -41,13 +41,14 @@ Requirement coverage:
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 1 | Proved Docker DHCP A-to-B with `CAP_NET_ADMIN`, documented privilege, isolation, cost, cleanup and failure/recovery; selected Docker | `bash /tmp/pinpoint-187-feasibility/run.sh`; `scripts/verify.sh docs` | Two final experiments green; docs green; no residual owned container/network |
+| 2 | Added opt-in controller, images, persistent distinct clients, ownership/collision checks, lease operations, evidence and teardown; approved DHCP-only QA range | Focused pytest (4 passed); live `up`, `move`, `reuse`, `client-restart`, `reset`, server stop/start, `down`; `scripts/verify.sh docs`; `scripts/verify.sh backend` | Live controls passed after management bridge correction; no owned resource residue; docs green; backend 3753 passed, 14 skipped |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh docs`
-- Result (first failing lines, or "green"): green.
-- Hypothesis: The supported helper can own a switch container namespace and labeled management network, preserving real DHCP on added test interfaces without host network changes.
-- Next action (one specific step, not "continue"): Add failing lifecycle and safety tests for the Docker helper before implementing it.
+- Last check run (exact command): `scripts/verify.sh backend > /tmp/pinpoint-187-backend.log 2>&1`
+- Result (first failing lines, or "green"): green: 3753 passed, 14 skipped in 419.47 seconds.
+- Hypothesis: The product acceptance runner can use actual discovery, identity/history and Nagios status APIs while the controller supplies bounded lease moves and raw logs.
+- Next action (one specific step, not "continue"): Add failing acceptance-runner tests for bounded waits and identity assertions, then implement `lab/dhcp/acceptance.py`.
 
 ## Decisions and notes
 
@@ -55,3 +56,6 @@ Requirement coverage:
 - No product discovery changes are planned unless the live run exposes a defect; such a defect requires a separate issue under this workflow.
 - Docker selected after two successful real A-to-B trials. The first attempt failed because dnsmasq could not reopen its old log file on restart; using a fresh log succeeded. Host sudo is unavailable, so the host-bridge candidate was rejected. The switch uses host PID visibility and `CAP_NET_ADMIN`, with its own network namespace and no host network.
 - `10.79.0.0/28` was used only for DHCP feasibility, with no scan. It must be added to approved QA scope before product discovery.
+- QA scope was updated before the first full controller setup or any product scan. This moved the documentation part of plan step 4 earlier to satisfy the scan-range safety requirement.
+- The first full setup acquired A but could not expose loopback API through an internal Docker management bridge; it timed out at 180 seconds and removed all owned resources. A dedicated ordinary Docker management bridge fixed loopback access. DHCP remains inside the switch namespace, never on that bridge.
+- Live control evidence: client1 A-to-B retained container ID, machine ID and SSH key across an independent restart; client2 had distinct MAC, machine ID and SSH key and obtained released A. Server leases showed both clients. `down` left no named containers, management network, state directory or host route change. Raw evidence is under `~/pinpoint-test-results/issue-187-dhcp/`.
