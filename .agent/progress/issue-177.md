@@ -1,7 +1,7 @@
 # Issue #177: document a future DHCP lab extension
 
 Branch: `issue-177-dhcp-lab-proposal`
-Status: in-progress
+Status: ready-for-review
 
 ## Finish condition
 
@@ -9,7 +9,7 @@ Status: in-progress
 - [x] Document opt-in isolation, Docker feasibility versus VM fallback, privileges, ownership, scan approval, and cleanup without claiming validation.
 - [x] Specify repeatable real DHCP same-client A-to-B and different-client A-reuse acceptance, with identity, lease, OS, discovery, Nagios, browser/history and teardown evidence; distinguish simulated observations.
 - [x] Keep the test matrix, bounded waits, failure evidence and exclusions for future implementation scope.
-- [ ] Run `scripts/verify.sh docs`; leave lab, #164 evidence and product behavior unchanged.
+- [x] Run `scripts/verify.sh docs`; leave lab, #164 evidence and product behavior unchanged.
 
 Requirement coverage (every requirement the issue states, and the check that proves it):
 
@@ -34,13 +34,14 @@ One row per loop round, newest last.
 |---|---|---|---|
 | 1 | Saved and refined the future DHCP lab proposal, with relative specification links, current static lab baseline, real lease acceptance steps, deadlines and failure evidence. | `scripts/verify.sh docs` | Green: 174 relative-link documents and all docs checks passed. |
 | 2 | Linked the proposal from the owning lab workflow specification and reread the unchanged issue finish condition. | `scripts/verify.sh docs`; `git diff --check` | Green: docs verification and whitespace check passed. |
+| Finish | Linked the versioned proposal from issue #177, reviewed the tracked diff and reran the full CI-equivalent checks. | `scripts/verify.sh all`; `git diff --name-only origin/main...HEAD`; `gh issue view 177 --json body,comments` | Green: 3,749 backend passed / 14 skipped, frontend test/build/lint passed (warnings only); only the proposal, spec link and progress file changed. |
 
 ## State for the next session
 
-- Last check run (exact command): `git diff --check`
+- Last check run (exact command): `scripts/verify.sh all`
 - Result (first failing lines, or "green"): green.
-- Hypothesis: The draft satisfies the documentation requirements; final work is issue cross-linking, full CI-equivalent verification and PR creation.
-- Next action (one specific step, not "continue"): Add the proposal link to issue #177, then run `scripts/verify.sh all`.
+- Hypothesis: All five documentation finish conditions are proven; the work is ready for review.
+- Next action (one specific step, not "continue"): Delete the progress file, push the final commit and open the PR.
 
 ## Decisions and notes
 
