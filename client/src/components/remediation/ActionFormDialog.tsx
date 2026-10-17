@@ -81,6 +81,7 @@ export function ActionFormDialog({ types, action, onClose, onSaved, onReload }: 
   const [enabled, setEnabled] = useState(action?.enabled ?? false)
   const [maxRunsPerHour, setMaxRunsPerHour] = useState(action?.maxRunsPerHour ?? 2)
   const [cooldownSeconds, setCooldownSeconds] = useState(action?.cooldownSeconds ?? 600)
+  const [parameters, setParameters] = useState<Record<string, unknown>>(action?.parameters ?? {})
   const [errors, setErrors] = useState<FieldErrors>({})
   const [generalError, setGeneralError] = useState<string | null>(null)
   const [stale, setStale] = useState(false)
@@ -106,7 +107,7 @@ export function ActionFormDialog({ types, action, onClose, onSaved, onReload }: 
     setStale(false)
     const input = buildInput({
       name, actionType, scopeKind, hostPattern, servicePattern, enabled, maxRunsPerHour, cooldownSeconds,
-      parameters: action?.parameters ?? {},
+      parameters,
     })
     try {
       if (action) await updateAction(action.id, input, action.version)
@@ -116,7 +117,7 @@ export function ActionFormDialog({ types, action, onClose, onSaved, onReload }: 
       const fields = fieldErrors(err)
       if (Object.keys(fields).length > 0) {
         setErrors(fields)
-        const known = new Set(['name', 'actionType', 'scopeKind', 'hostPattern', 'servicePattern', 'enabled', 'maxRunsPerHour', 'cooldownSeconds'])
+        const known = new Set(['name', 'actionType', 'scopeKind', 'hostPattern', 'servicePattern', 'enabled', 'maxRunsPerHour', 'cooldownSeconds', ...(selectedType?.parameters.map((parameter) => `parameters.${parameter.name}`) ?? [])])
         const other = Object.entries(fields).filter(([key]) => !known.has(key))
         if (other.length > 0) setGeneralError(other.map(([key, message]) => `${key}: ${message}`).join(' '))
       } else {
@@ -174,7 +175,11 @@ export function ActionFormDialog({ types, action, onClose, onSaved, onReload }: 
             id="remediation-actionType"
             className={inputClass}
             value={actionType}
-            onChange={(e) => setActionType(e.target.value)}
+            onChange={(e) => {
+              setActionType(e.target.value)
+              setParameters({})
+              setErrors({})
+            }}
             aria-describedby={describe('actionType')}
           >
             {types.map((t) => (
@@ -185,6 +190,29 @@ export function ActionFormDialog({ types, action, onClose, onSaved, onReload }: 
           </select>
           {selectedType && <p className="mt-1 text-sm text-[var(--text-muted)]">{selectedType.description}</p>}
         </Field>
+
+        {selectedType?.parameters.map((parameter) => {
+          const field = `parameters.${parameter.name}`
+          const id = `remediation-${field}`
+          const value = typeof parameters[parameter.name] === 'string' ? String(parameters[parameter.name]) : ''
+          const shared = {
+            id, className: inputClass, value,
+            'aria-describedby': describe(field), 'aria-invalid': Boolean(errors[field]),
+            required: parameter.required,
+            onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+              setParameters((current) => ({ ...current, [parameter.name]: event.target.value })),
+          }
+          return (
+            <Field key={field} id={id} label={parameter.label} error={errors[field]}>
+              {parameter.type === 'choice' ? (
+                <select {...shared}>
+                  <option value="">Choose a service</option>
+                  {parameter.choices?.map((choice) => <option key={choice} value={choice}>{choice}</option>)}
+                </select>
+              ) : <input {...shared} placeholder="apache2" />}
+            </Field>
+          )
+        })}
 
         <Field id="remediation-scopeKind" label="Scope" error={errors.scopeKind}>
           <select

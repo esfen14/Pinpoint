@@ -226,3 +226,11 @@ export function describeCounts(counts: RunCounts): string {
     .filter(Boolean)
     .join(', ')
 }
+
+/** Per-device restart policy; a changed on-device list requires administrator redeployment. */
+export interface RemoteRestartSettings {
+  enabled: boolean
+  services: string[]
+  trusted: boolean
+  redeploy_needed?: boolean
+}

@@ -42,8 +42,9 @@ export function CleanupDialog({ device, onClose, onChanged }: Props) {
   return (
     <div role="dialog" aria-modal="true" aria-label={`Clean up ${device.hostname}`} className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-lg space-y-4 rounded-xl bg-white p-6 shadow-xl dark:bg-[#171B20] dark:text-white">
-        <h2 className="text-lg font-semibold">Clean up failed deployment: {device.hostname}</h2>
-        <p className="text-sm">Only the Pinpoint deployment key, sudo rule and helper will be removed from {device.ipAddress}. The saved SSH host key is rechecked before connecting. This does not uninstall NCPA.</p>
+        <h2 className="text-lg font-semibold">Clean up deployment: {device.hostname}</h2>
+        <p className="text-sm">The Pinpoint deployment key, sudo rules, helpers and restart service list will be removed from {device.ipAddress}. The saved SSH host key is rechecked before connecting. This does not uninstall NCPA.</p>
+        <p className="text-sm">Remote service restarts stop working after cleanup. Redeploy NCPA to install the helpers and apply the saved service list.</p>
         <p className="text-xs">Trusted SSH key: SHA256:{device.fingerprint}</p>
         <form onSubmit={submit} className="space-y-3">
           <label className="block text-sm">SSH username

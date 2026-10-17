@@ -24,7 +24,13 @@ export interface ActionTypeInfo {
   key: string
   label: string
   description: string
-  parameters: unknown[]
+  parameters: {
+    name: string
+    label: string
+    type: 'choice' | 'text'
+    choices?: string[]
+    required?: boolean
+  }[]
 }
 
 export interface RemediationAction {

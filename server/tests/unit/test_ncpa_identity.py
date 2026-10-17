@@ -412,7 +412,7 @@ class TestSshProbe:
         transport.get_remote_server_key.return_value.asbytes.return_value = b"host-key-bytes"
         expected = base64.b64encode(hashlib.sha256(b"host-key-bytes").digest()).decode().rstrip("=")
 
-        with app.app_context(), patch("paramiko.Transport", return_value=transport):
+        with app.app_context(), patch.object(ncpa.socket, "create_connection", return_value=MagicMock()), patch("paramiko.Transport", return_value=transport):
             probe = identity_probes.ssh_host_key_fingerprint("10.0.0.5")
             deployment = ncpa.get_host_key_fingerprint("10.0.0.5", 22)
 

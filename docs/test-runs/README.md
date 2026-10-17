@@ -48,6 +48,8 @@ table while you test, not afterward.
 
 | Run | Kind | Commit | Result | Report |
 |---|---|---|---|---|
+| [2026-10-17 issue-182 Playwright](2026-10-17-issue-182-playwright/REPORT.md) | Real Chromium settings, cleanup/deployment wizard, action forms and read-only permissions | app `910d6f99`, harness in this change | Pass: all three RR-12 browser tests; human review pending | [REPORT.md](2026-10-17-issue-182-playwright/REPORT.md) |
+| [2026-10-17 issue-182 remote restart](2026-10-17-issue-182-remote-restart/REPORT.md) | Fresh appliance and real SSH/systemd acceptance | `910d6f99` | Partial: 11 live/API cases pass; browser and human review pending | [REPORT.md](2026-10-17-issue-182-remote-restart/REPORT.md) |
 | [2026-10-17 issue-191 accounts](2026-10-17-issue-191-accounts/REPORT.md) | Local Chromium + real Flask / temporary SQLite, stubbed Nagios writer | `2688e430` | Pass: delayed roles, two account creates, selected role/status and reload persistence | [REPORT.md](2026-10-17-issue-191-accounts/REPORT.md) |
 | [2026-10-17 issue-173 parent notifications](2026-10-17-issue-173-parent-notifications/REPORT.md) | Isolated real routed Core single/redundant-parent one-attempt notifications, no-parent control, recovery and cleanup | `f45126c0` | Pass: five scoped native-engine cases; accepted transient DOWN before UNREACHABLE | [REPORT.md](2026-10-17-issue-173-parent-notifications/REPORT.md) |
 | [2026-10-17 issue-118](2026-10-17-issue-118/REPORT.md) | Docker Nagios dependency validation and real host-down notification/state trial | `986ac2b6` | Pass for scoped checks: 3 dependencies validate; 1 host event, 0 service events; both Pinpoint APIs show 3 critical services | [REPORT.md](2026-10-17-issue-118/REPORT.md) |

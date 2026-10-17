@@ -13,6 +13,7 @@ type Props = {
   onVerify: (deviceId: number) => void
   onRetry: (deviceId: number) => void
   onCleanup: (device: NcpaDevice) => void
+  onRemoteRestart: (device: NcpaDevice) => void
 }
 
 const BUTTON_SM =
@@ -30,6 +31,7 @@ export function NcpaDevicesTable({
   onVerify,
   onRetry,
   onCleanup,
+  onRemoteRestart,
 }: Props) {
   const [query, setQuery] = useState('')
   const q = query.trim().toLowerCase()
@@ -136,6 +138,11 @@ export function NcpaDevicesTable({
                     )}
                   </td>
                   <td className="px-4 py-3 text-right">
+                    {d.trusted && (
+                      <button type="button" className={BUTTON_SM} disabled={isRunning} title={busyTitle} onClick={() => onRemoteRestart(d)}>
+                        Remote restart
+                      </button>
+                    )}
                     {d.deployable && !d.trusted ? (
                       <button type="button" className={BUTTON_SM} disabled={isRunning} title={busyTitle} onClick={() => onVerify(d.id)}>
                         <KeyRound className="h-3.5 w-3.5" /> Verify
@@ -149,6 +156,10 @@ export function NcpaDevicesTable({
                           Clean up
                         </button>}
                       </span>
+                    ) : d.trusted && d.agentStatus === 'Deployed NCPA' ? (
+                      <button type="button" className={BUTTON_SM} disabled={isRunning} title={busyTitle} onClick={() => onCleanup(d)}>
+                        Clean up
+                      </button>
                     ) : null}
                   </td>
                 </tr>

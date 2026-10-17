@@ -231,15 +231,20 @@ class TestSshConnection:
     def test_connect_uses_the_port_and_registers_the_key_under_its_name(self, app, port, key_name):
         client = MagicMock()
         transport = MagicMock()
+        transport.get_remote_server_key.return_value.asbytes.return_value = b"trusted-key"
+        import base64, hashlib
+        expected = base64.b64encode(hashlib.sha256(b"trusted-key").digest()).decode().rstrip("=")
         with app.app_context(), \
              patch.object(ncpa, "verify_host_fingerprint", return_value=True) as verify, \
              patch.object(ncpa.paramiko, "SSHClient", return_value=client), \
+             patch.object(ncpa.socket, "create_connection", return_value=MagicMock()) as connection, \
              patch.object(ncpa.paramiko, "Transport", return_value=transport) as transport_cls:
-            result = ncpa.connect_with_fingerprint_check("10.0.0.5", port, "user", "fp", password="pw")
+            result = ncpa.connect_with_fingerprint_check("10.0.0.5", port, "user", expected, password="pw")
 
         assert result is client
-        verify.assert_called_once_with("10.0.0.5", port, "fp")
-        transport_cls.assert_called_once_with(("10.0.0.5", port))
+        verify.assert_called_once_with("10.0.0.5", port, expected)
+        connection.assert_called_once_with(("10.0.0.5", port), timeout=ncpa.SSH_TIMEOUT)
+        transport_cls.assert_called_once_with(connection.return_value)
         assert client.get_host_keys().add.call_args.args[0] == key_name
         assert client.connect.call_args.kwargs["port"] == port
 
@@ -394,3 +399,19 @@ class TestHelperListenerPortEdit:
         result, _ = self.edit(app, tmp_path, "[api]\ncommunity_string = old\n")
         assert result.returncode == 1
         assert "Could not set the NCPA listener port." in result.stderr
+
+
+def test_key_changed_between_probe_and_connection_is_not_trusted(app):
+    client = MagicMock()
+    transport = MagicMock()
+    transport.get_remote_server_key.return_value.asbytes.return_value = b'changed-key'
+    with app.app_context(), \
+         patch.object(ncpa, 'verify_host_fingerprint', return_value=True), \
+         patch.object(ncpa.paramiko, 'SSHClient', return_value=client), \
+         patch.object(ncpa.socket, 'create_connection', return_value=MagicMock()), \
+         patch.object(ncpa.paramiko, 'Transport', return_value=transport):
+        result = ncpa.connect_with_fingerprint_check('10.0.0.5', 22, 'user', 'original-fingerprint')
+    assert result is None
+    client.connect.assert_not_called()
+    client.get_host_keys().add.assert_not_called()
+    transport.close.assert_called_once()
