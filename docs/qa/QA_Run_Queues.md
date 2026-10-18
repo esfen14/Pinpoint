@@ -385,3 +385,9 @@ Five Staff permission adapters are source-complete, with no new live results.
 Offline `scripts/playwright-lab --qa-preview` prepares one queue/journal-bound
 transport plan without reading credential values or running commands. Live
 supervision, actual preflight/ownership/recovery and all live cards remain pending.
+
+The [supervisor lifecycle core](Automation_Readiness.md#supervisor-lifecycle-core)
+adds tested durable locks/action consumption and halted-state handling through
+a synthetic driver. It has no production driver or live CLI. Queues and offline
+journals alone still cannot start a run; actual runtime proofs, process control,
+recovery and a reviewed live start remain required.

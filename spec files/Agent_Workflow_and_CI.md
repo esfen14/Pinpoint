@@ -205,6 +205,16 @@ reports. App/spec conflicts remain decisions, not automatic passes.
   before private-state/socket/Docker work. Live locking, deployed-version proof,
   slot consumption, dispatch and recovery remain pending; executing printed argv
   manually is not a supported workflow or authorization.
+- **Supervisor lifecycle core:** `scripts/qa_supervisor.py` has no live CLI or
+  production driver. A separately bound explicit start/expiry, cooperative UUID
+  lock, fresh matching runtime-driver receipts and durable fsynced running entry
+  precede driver invocation. Restart/replay, missing supervised prior results and
+  exhausted persisted budgets block. Cancellation/cleanup/proof/result failures
+  persist a lab halt; validated restored FAIL remains FAIL. The existing item
+  validator checks returned evidence. Synthetic-driver tests prove lifecycle
+  sequencing only. Production proof acquisition, bounded process-tree termination,
+  shared controller lock integration, parsing/sanitization and verified recovery
+  remain pending. Never treat offline receipts or callbacks as live proof.
 - **Partial-pass investigation:** Every catalog partial needs an evidence review,
   duplicate search, linked issue/disposition and next action in the
   [partial-pass register](../docs/qa/Partial_Pass_Investigations.md). The

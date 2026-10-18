@@ -123,3 +123,54 @@ the preview/legacy rejection paths without external commands. Those Node
 tests use Playwright `--list` with no browser or credentials: they prove exact
 one-case/five-case collection, no setup dependencies/retries and rejected invalid
 selection/private paths. They are harness checks, not live acceptance evidence.
+
+## Supervisor lifecycle core
+
+`scripts/qa_supervisor.py` provides an importable lifecycle core with **no live
+command entry and no production driver**. Isolated tests supply a synthetic driver;
+none of these tests accesses Docker, SSH, sockets, a browser or an appliance.
+
+The core requires a separate reviewed `supervised live` start grant bound to queue
+hash, owner, set, session, target revision, canonical lab UUID and expiry. An offline
+journal remains offline: the core neither changes its authorization mode nor
+mutates it. A future application of a grant must still correspond to an actual
+human-approved start. The grant structure is an identity/expiry check, not a signed
+authorization system or proof of human consent.
+
+Every checkout must share one private canonical ledger directory for the lab.
+Under an exclusive nonblocking OS lock for its UUID, the core revalidates scope,
+paths and fresh driver receipts twice before consuming an action. Receipts must
+match UUID, loopback origin and target revision and affirm runtime identity,
+exclusive use, clean deployment, baseline and recovery. Their acquisition is the
+trusted driver's responsibility; passing booleans does not establish real proof.
+Any prior result in the offline source journal must match the durable supervised
+result for that exact queue/set/case; offline results alone cannot skip execution.
+
+The private ledger uses atomic replacement and file/directory fsync. A case is
+persisted as running **before** the driver is invoked. Case replay is rejected even
+under a new session; five-batch counters persist per queue/set/owner/session. A
+running entry after restart blocks further dispatch. Corrupt state, unsafe file
+permissions, symlink/hardlink files and incomplete checkpoints fail closed. No
+implicit reset, recovery clearing, diagnostic repeat or next-case substitution is
+implemented. A validated restored product FAIL is retained as FAIL; lifecycle
+completion does not mean the product passed.
+
+The trusted driver interface consists of `verify(plan)`, `run(plan, remaining)`,
+`cancel(plan)` and `cleanup(plan)`. The core checks remaining case time, passes the
+budget to the driver, measures returned elapsed time, invokes cancellation after
+exceptions/timeouts/interruption, and always attempts cleanup. Successful cleanup
+requires a fresh matching receipt within the step budget; result evidence then
+passes the existing per-expected-item validator. Unresolved run/cleanup/proof or
+malformed result leaves a durable lab halt with a generic reason, not exception
+text that may expose credentials. Sanitizing assertion observations remains the
+trusted result-parser/driver's responsibility.
+
+This does not yet enforce production subprocess timeouts: a trusted driver must
+bound each call and terminate its entire process group/container before reporting
+cancellation/cleanup success. A blocking Python callback cannot be forcibly stopped
+by these elapsed-time checks. Likewise, OS locks coordinate only participants using
+the same ledger; the existing VM controllers and other users do not yet honor it.
+Connecting those controls, actual deployed-version/endpoint proof, baseline and
+restoration checks, private raw output parsing and crash recovery requires the
+production integration work still unchecked in the readiness plan. No default
+ledger directory is created and no supported CLI can call a live driver yet.

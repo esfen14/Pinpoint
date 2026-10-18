@@ -12,6 +12,8 @@ Status: in-progress
 - [x] Migrate legacy validators/rendering/docs links without weakening coverage or rewriting historical outcomes.
 - [x] Update reports/workflows/specs and pass isolated checks/docs gate.
 - [x] Open reviewable PR with pending human decisions, adapter coverage and separately gated live work.
+- [x] Implement the supervisor lifecycle core with separate start binding, cooperative UUID lock, fsynced action consumption, persistent replay/budget checks and halted failures; prove with 14 synthetic-driver contracts.
+- [ ] Complete production supervisor-driver integration and live validation: actual controller/deployment/baseline proofs, shared locks, bounded process-tree control, sanitized result parsing and verified recovery. This is part of overall readiness, not a claim that the offline milestone executes cases.
 
 | Issue requirement | Finish-condition item | Proof |
 |---|---|---|
@@ -59,10 +61,10 @@ and require separately authorized live evidence where needed.
 
 ## State for the next session
 
-- Last check: `scripts/verify.sh docs > /tmp/issue-206-transport-docs.log 2>&1` (86 isolated checks), `bash -n scripts/playwright-lab` and `git diff --check`; offline transport tests use synthetic files and no external Docker/socket/VM calls. Final observed result and current-head CI are recorded in PR #207.
-- Prior coverage head `60d622c`: all three CI jobs passed. Local backend passed 4310/14 skips; combined full run hit intermittent unchanged RemediationPage test #210, then focused/full frontend stages passed. No clean single-invocation all-pass claim for that follow-up.
-- Result: five source-complete permission adapters, 234 unmapped definitions; queue/card bindings and JSON-only transport preparation exist. Transport preview verifies current opened offline case and unconsumed fixed slot, private paths and metadata without reading credential values. Legacy runner rejects current-case config/project/env before credential/socket/Docker work. No live case execution.
-- Next action: implement live supervisor contract for exclusive lab lock, actual deployed-version/baseline proof, durable action consumption, cancellation/timeout and cleanup/recovery. This requires a distinct live session contract; never promote offline journal attestations into authorization. Keep actual live cards and pilot start pending until those checks and reviewed scope exist.
+- Last relevant check: `scripts/verify.sh docs > /tmp/issue-206-supervisor-docs.log 2>&1`, with 100 isolated contracts including 14 supervisor tests; `git diff --check` and shell syntax checks. Observed final result and exact-head CI proof are recorded in draft PR #207.
+- Result: driver-independent supervisor lifecycle core implements separate grant identity, cooperative UUID lock, fsynced consumption before dispatch, persistent replay/budget and interrupted/halted states, fresh receipt validation and expected-item result checks. Fake-driver tests only; no production driver or live command entry. Existing transport/config blocks remain enforced.
+- Finish-condition checklist: updated both here and in the overall readiness plan. Tested lifecycle core is checked; production integration and all live validation remain unchecked. Original-checkout progress copies are synchronized after checkpoint.
+- Next action: implement and test the production runtime-driver contract for real controller/deployed-version/baseline proof, shared controller locking, bounded process-tree cancellation, private result parsing and verified recovery. Do not promote offline attestations or synthesize live proof; actual case cards and explicit pilot start remain pending.
 
 ## Decisions and notes
 
@@ -156,9 +158,23 @@ Continue authorized implementation without contacting the lab. Existing controll
 preflight and SSH/deployment helpers do not expose one proved runtime driver;
 implement and test lifecycle invariants before wiring any production dispatch.
 
-1. [ ] Add `scripts/qa_supervisor.py` lifecycle core and isolated fake-driver tests: separate explicit grant, queue/journal binding, canonical private shared ledger/OS lab lock, fresh matching driver receipts and durable action consumption before driver invocation.
-2. [ ] Persist interrupted/running/failed-cleanup states, prevent replay/session counter resets, enforce timing/cancellation/cleanup and use existing expected-item result validation. No production driver or live CLI in this milestone.
-3. [ ] Add docs gate/fingerprints, document trusted-driver and cooperative-lock limits, update checklist/progress and verify/checkpoint #207. Synchronize original-checkout progress; CI proof remains in PR description.
+1. [x] Add `scripts/qa_supervisor.py` lifecycle core and isolated fake-driver tests: separate explicit grant, queue/journal binding, canonical private shared ledger/OS lab lock, fresh matching driver receipts and durable action consumption before driver invocation.
+2. [x] Persist interrupted/running/failed-cleanup states, prevent replay/session counter resets, enforce timing/cancellation/cleanup and use existing expected-item result validation. No production driver or live CLI in this milestone.
+3. [x] Add docs gate/fingerprints, document trusted-driver and cooperative-lock limits, update checklist/progress and verify/checkpoint #207. Synchronize original-checkout progress; CI proof remains in PR description.
 
 Next action: failing lifecycle contracts using synthetic transport fixtures and
 a fake driver; no real process, bridge, Docker, SSH or appliance call.
+
+Supervisor rounds 1–2: first test-first run failed because the module was absent.
+Fourteen fake-driver contracts now prove durable consume-before-run, independent
+lock exclusion, wrong/expired grant rejection, matching fresh receipts, replay
+across sessions, restart blocks, corrupt-state/write-failure rejection, persistent
+five-batch budget, cancellation/cleanup and halt states, retained product FAIL and
+rejection of unsupported prior offline results. A symlink-lock failure initially
+surfaced raw OSError; the helper now rejects it with a generic validation error.
+No raw driver exception text is saved. Production driver calls still need process
+deadlines; measuring return time alone cannot terminate a hung callback.
+
+User reminder: update the finish-condition checklist. Added explicit checked
+lifecycle-core and unchecked production/live-proof items at the top of both
+progress files; retain incomplete broader readiness conditions.

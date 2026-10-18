@@ -37,6 +37,8 @@ docs() {
   python3 -I "$root/scripts/test_qa_coverage.py"
   echo "==> docs: offline container transport and current-case bypass rejection"
   python3 -I "$root/scripts/test_qa_transport.py"
+  echo "==> docs: durable supervisor lifecycle with synthetic driver only"
+  python3 -I "$root/scripts/test_qa_supervisor.py"
   echo "==> docs: VM control and endpoint ownership safety"
   python3 -I "$root/scripts/test_vmlab_preflight.py"
   echo "==> docs: VM administrator setup compatibility and saved login validation"

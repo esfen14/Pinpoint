@@ -48,6 +48,13 @@ offline journal case; its legacy execution path rejects the new config. The
 preview reads credential metadata only and is explicitly not live authorization.
 Never execute printed Docker argv manually or bypass the gate with a host browser. Actual live cards, preflight and explicit start remain required.
 
+The driver-independent `qa_supervisor.py` lifecycle core is tested with a synthetic
+driver only; it has no production driver or live command entry. Its durable UUID
+lock/ledger and grant checks do not establish real ownership, deployment or human
+consent. Never fabricate proof receipts, clear a halted ledger or manually invoke
+transport argv to bypass missing production integration. A running/interrupted
+entry requires separately reviewed recovery; restored product FAIL remains FAIL.
+
 ## Mandatory partial-pass investigation
 
 Before treating the remaining queue as complete, review every catalog partial

@@ -278,6 +278,16 @@ product case opening. The [partial-pass register](../docs/qa/Partial_Pass_Invest
 links reported confirmation defect #208 and unexplained-result clarification #209;
 neither is a fresh runtime reproduction.
 
+`scripts/qa_supervisor.py` now implements the driver-independent lifecycle core:
+separate start grant, cooperative lab UUID lock, private atomic/fsynced ledger,
+durable pre-dispatch consumption, persistent batch budgets/replay rejection and
+halted interruption/cleanup states. Fourteen synthetic-driver regressions include
+proof drift, prior-offline-result rejection, failures and no secret exception
+persistence. No production driver/live entry exists. Actual deployment/controller
+proof, shared-lock adoption, bounded process-tree cancellation, evidence parser
+and recovery remain unimplemented; elapsed checks cannot interrupt a hanging
+Python callback. This does not authorize or demonstrate live case execution.
+
 The [historical evidence inventory/review](../docs/qa/Historical_Evidence_Review.md)
 links 41 post-cutoff-directory-date reports and six partial current-case mappings.
 October 15 remains a provisional cutoff. No full-case inherited PASS is accepted.
