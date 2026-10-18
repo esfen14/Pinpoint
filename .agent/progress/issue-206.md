@@ -123,3 +123,15 @@ current-head CI are running. New source tests, coverage register and guide are
 committed in #207. Progress copies are synchronized into the original checkout;
 implementation source remains isolated. Final green proof must be checked in
 the PR rather than inferred from this checkpoint.
+
+## Transport preparation session (2026-10-18)
+
+User requested continuation. Inspection confirms the journal deliberately rejects
+live authorization; it cannot be promoted into a dispatcher by passing environment
+variables. Continue the transport portion offline, without lab or credential reads.
+
+1. [ ] Add `scripts/qa_transport.py` and isolated contracts for a queue/journal-bound transport preview: exact current case, immutable sources, unconsumed action slot, fresh offline attestations, private fresh artifact path, read-only sources and minimal credential mounts. No subprocess/live dispatch or authorization from previews.
+2. [ ] Add `scripts/playwright-lab --qa-preview QUEUE JOURNAL STATE_DIR BRIDGE_DIR`; reject current-case config/environment bypasses in the legacy execution path before Docker/socket/credential work. Exercise the shell entry with fake commands only.
+3. [ ] Wire docs-gate checks, fingerprint transport sources, update workflow/status/readiness docs and progress, verify and checkpoint to draft PR #207. Live preflight, ownership lock/deployed version proof, recovery supervisor and explicit started live cards remain pending.
+
+Next action: failing transport validation tests, then smallest implementation.
