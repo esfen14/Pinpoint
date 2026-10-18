@@ -183,3 +183,15 @@ Checklist verification-note correction: the overall plan no longer labels the
 later combined local run green. It retains #210's intermittent failure and
 separately attributes passing stage reruns and the earlier clean baseline. This
 is a documentation accuracy correction; no test/product behavior changed.
+
+## Runtime process/result components session (2026-10-18)
+
+Continue production-driver preparation offline. Existing deployment helpers do not
+yet prove running frontend/backend identity for a target SHA; do not invent that
+proof or enable a live entry. Implement concrete runtime components first.
+
+1. [ ] Add `scripts/qa_process.py` with bounded isolated process-group execution, private non-overwriting raw logs, environment control, process-tree termination/reaping and sanitized errors; test with local Python fixture processes, never VM/Docker/browser commands.
+2. [ ] Add `scripts/qa_results.py` strict one-case Playwright parsing: approved configuration, one non-retried attempt, attachment/item identity and private-path limits, complete PASS plus cleanup proof; unavailable/failed assertions without explicit item evidence remain inconclusive. Test synthetic reports, never acceptance runs.
+3. [ ] Wire docs gate/fingerprints, document supported versus pending capability, update finish conditions in both progress files, verify/checkpoint and synchronize original checkout. Runtime identity proof, driver integration and live validation remain unchecked.
+
+Next action: failing process and report-parser contracts; no live command wiring.
