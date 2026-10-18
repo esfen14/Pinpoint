@@ -484,7 +484,7 @@ start. No actual handoff was applied during preparation. See
 ## Issue #214 seven-case execution readiness (2026-10-18)
 
 The current seven-case preparation snapshot is
-[`2026-10-18-modules-2-9-adapters-v8.json`](queues/2026-10-18-modules-2-9-adapters-v8.json)
+[`2026-10-18-modules-2-9-adapters-v11.json`](queues/2026-10-18-modules-2-9-adapters-v11.json)
 with two named sets: `modules-2-9-adapters-01` (five cases) and
 `modules-2-9-adapters-02` (two cases). Both pass queue freshness/scope checks.
 Their source-bound v6 cards contain reviewed action vectors, timeouts, cleanup,

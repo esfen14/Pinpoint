@@ -63,7 +63,7 @@ fixture-input files for the two QA accounts and the device/port labels were
 absent at inspection time. No credential values were read, and no accounts,
 roles, ports, alerts, or other appliance records were created or changed.
 
-Queue v4, `2026-10-18-modules-2-9-adapters-v4.json`, splits the seven exact
+Queue v10, `2026-10-18-modules-2-9-adapters-v10.json`, splits the seven exact
 IDs into two runner-compatible named sets: set 01 has five cases in one batch;
 set 02 has two cases in one batch. Each card now binds its source adapter,
 per-case timeout, expected-item evidence path, private control/bridge paths,
@@ -85,6 +85,30 @@ matching card's fixture status, then refresh/review the queue hashes and
 preflight immediately before start. Cases that cannot meet a prerequisite stay
 blocked; do not create or mutate shared appliance state as an improvised setup.
 The two named sets require separate explicit starts under the shared workflow.
+
+### Creation feasibility for the requested fixtures
+
+The current supervised pilot launches only the seven case adapters; it has no
+fixture-provisioning action. Do not create records by direct SQL, API calls,
+shell commands, or a host browser to get around that boundary.
+
+| Fixture | Can it be created safely for this run? | Reason / required path |
+|---|---|---|
+| `qa-accounts` role and user (TC-ACC-08) | Only after setup support and a reviewed setup start | UI creation is possible in the product, but the role/user and login audit entries persist. The adapter only observes them and will not create, edit, or deactivate them. Use a disposable isolated QA appliance or explicitly accept these persistent records in a reviewed setup card. |
+| `qa-view` role and user (TC-ROL-04) | Only after setup support and a reviewed setup start | Same persistence boundary; permissions must be independently verified before the case. Do not adjust an existing role or account. |
+| Lifecycle port groups and held mismatch (TC-DI-02/03) | Must be observed on an existing fixture host or built in an isolated appliance | Port states come from discovery/monitoring data. Creating them would need network discovery and port lifecycle mutations, neither supported by this read-only run. Never repurpose a real/shared device. |
+| TCP/UDP service options (TC-DI-08) | Usually observed, not seeded | Select existing editable, non-archived ports on a reviewed fixture host. The case adapter blocks port writes and cancels dialogs. If none match, prepare a disposable host with real listeners in a separate reviewed lab setup. |
+| No ping and no NCPA (TC-DASH-07) | Cannot be manufactured safely in the current shared lab | This is a negative environment property. Removing monitoring checks or deployments would alter appliance state and is prohibited by this run. It must already be true on the selected appliance. |
+| Qualifying alert history (TC-HIS-04) | Cannot be manufactured for this run | The requirement is a real alert event older than 25 hours within the rolling 30 days. Do not insert/edit history timestamps or change the clock; select a naturally qualifying event or wait for one. |
+
+Therefore a single “create all fixtures” operation is not available. To make
+the whole seven-case queue runnable, use an isolated QA appliance prepared with
+the role/account and real port fixtures, and verify that its dashboard/history
+already satisfy the two environment-dependent cases. Otherwise only the cases
+whose existing fixtures can be proved are eligible; missing fixture cases stay
+blocked. No snapshot is needed just to run the read-only cases, but fixture
+provisioning on the shared lab must be treated as a separate state-changing
+setup with its own recovery and approval.
 
 The first batch contains four complete adapters and partial TC-ACC-10; the complete adapters depend on these unverified states:
 

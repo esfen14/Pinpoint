@@ -114,7 +114,7 @@ queue is retained as historical candidate inventory, not the active run scope.
 ### Latest seven-case queue preparation (2026-10-18)
 
 The active preparation artifact is now
-[`2026-10-18-modules-2-9-adapters-v4.json`](queues/2026-10-18-modules-2-9-adapters-v4.json)
+[`2026-10-18-modules-2-9-adapters-v11.json`](queues/2026-10-18-modules-2-9-adapters-v11.json)
 with its [Markdown preview](queues/2026-10-18-modules-2-9-adapters-v4.md).
 It has two named sets because the supervised runner accepts one set of at most
 five cases per invocation: set 01 contains ACC-08, ROL-04, DI-02, DI-03 and
@@ -131,5 +131,5 @@ are not confirmed, the no-ping/no-NCPA baseline is not confirmed, and the
 qualifying real history event is not confirmed. The per-case evidence checklist
 is in the [fixture plan](Module_2-9_Fixture_Plan.md). No fixture setup, test
 browser, case action, or result has occurred. The former v3 queue/card drafts
-are superseded by v8 for preparation; no start record has been created for
+are superseded by v10 for preparation; no start record has been created for
 either v4 set.
