@@ -118,6 +118,8 @@ def parse_catalog(text: str) -> dict:
             expectations = [l[2:].strip() for l in expected.splitlines() if l.startswith('- ')]
         if not steps or not expectations:
             raise ValueError(f'{case_id}: missing steps/expected results')
+        priority=re.search(r'\*\*Priority:\*\*\s*([HML])\b',body)
+        if not priority:raise ValueError(f'{case_id}: missing priority')
         reqs = e2e_reqs.get(case_id, []) if e2e else expand_ids(body.split('\n',1)[0], True)
         if not reqs: raise ValueError(f'{case_id}: no requirements')
         a,b = verdict(summary),verdict(detail)
@@ -127,12 +129,15 @@ def parse_catalog(text: str) -> dict:
         # Conservatively isolate operations whose outcome can affect another case.
         singleton = (e2e or phase in (11,14,15) or case_id == 'TC-NFR-11'
                      or bool(re.search(r'\b(stop|restart|delete|remove|deploy|cancel|disconnect|break|shutdown)\b', steps, re.I)))
-        cases[case_id] = dict(title=h['title'], module='E2E' if e2e else case_id.split('-')[1],
+        cases[case_id] = dict(title=h['title'], priority=priority[1], module='E2E' if e2e else case_id.split('-')[1],
             module_title='End-to-end' if e2e else mod[2], phase=phase, order=position,
             requirements=reqs, summary_result=summary, detailed_result=detail,
             status=status, steps=steps, expectations=expectations,
             procedure=h[0]+'\n\n'+body, dependencies=dependencies.get(case_id,[]),
-            global_context=global_context, singleton=singleton,
+            global_context=global_context,
+            module_context=(definitions[mod.start():next(x.start() for x in headers if x.start()>mod.start())]
+                            if not e2e else 'E2E requires the documented fresh/restored appliance and complete integrated sequence.'),
+            singleton=singleton,
             source_hash=digest(text), procedure_hash=digest(body))
     if set(summaries) != {k for k in cases if k.startswith('TC-')}:
         raise ValueError('Module summary IDs differ from definitions')

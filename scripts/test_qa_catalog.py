@@ -11,6 +11,8 @@ class CatalogTests(unittest.TestCase):
     def test_real_counts_order_and_full_procedures(self):
         cases = cat.load_catalog()
         self.assertEqual(len(cases), 239)
+        self.assertEqual(len({r for c in cases.values() for r in c['requirements']}),193)
+        self.assertIn(cases['TC-DI-05']['priority'],('H','M','L'))
         self.assertEqual(sum(k.startswith('E2E-') for k in cases), 8)
         self.assertEqual(cases['TC-AUTH-01']['status'], 'pass')
         self.assertEqual(cases['TC-DI-05']['module'], 'DI')

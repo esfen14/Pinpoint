@@ -120,6 +120,21 @@ def authorize_action(q:dict,s:dict,argv:list[str]) -> None:
     s['active_case']['actions'].append({'at':now(),'argv':argv})
 
 
+
+def block_case(q:dict,s:dict,case_id:str,reason:str) -> None:
+    """Account for an unattempted blocked slot without inventing an adapter or observation."""
+    selected=active_set(q,s)
+    if not reason.strip() or s['active_case'] or not s['active_batch']:
+        raise ValueError('Block requires a reason, an open batch and no active attempt')
+    batch=next(b for b in selected['batches'] if b['id']==s['active_batch'])
+    done={r['case'] for r in s['results']};todo=[k for k in batch['ids'] if k not in done]
+    if not todo or todo[0]!=case_id:raise ValueError('Only the next fixed case can be blocked')
+    s['results'].append(dict(case=case_id,batch=s['active_batch'],attempt=0,result='BLOCKED',
+        evidence={},restored=True,reason=reason,at=now(),elapsed_seconds=0))
+    if set(batch['ids'])<={r['case'] for r in s['results']}:
+        s['events'].append({'at':now(),'event':'batch-closed','batch':s['active_batch']});s['active_batch']=None
+
+
 def record_result(q:dict,s:dict,result:str,evidence:dict,restored:bool,reason:str='') -> None:
     """Require complete observed item evidence for PASS and stop on failed cleanup."""
     selected=active_set(q,s)
@@ -160,6 +175,7 @@ def main() -> int:
     st.add_argument('--confirmed-start',action='store_true')
     batch=cmd.add_parser('batch');batch.add_argument('--id',required=True)
     case=cmd.add_parser('case');case.add_argument('--id',required=True)
+    block=cmd.add_parser('block');block.add_argument('--id',required=True);block.add_argument('--reason',required=True)
     action=cmd.add_parser('action');action.add_argument('--argv-json',required=True)
     result=cmd.add_parser('result');result.add_argument('--input',type=Path,required=True)
     halt=cmd.add_parser('halt');halt.add_argument('--reason',required=True)
@@ -177,6 +193,7 @@ def main() -> int:
             if s.get('journal_hash')!=queue.cat.digest({k:v for k,v in s.items() if k!='journal_hash'}):raise ValueError('Journal checksum changed')
             if a.command=='batch':begin_batch(q,s,a.id)
             elif a.command=='case':begin_case(q,s,a.id)
+            elif a.command=='block':block_case(q,s,a.id,a.reason)
             elif a.command=='action':authorize_action(q,s,json.loads(a.argv_json))
             elif a.command=='result':
                 r=json.loads(a.input.read_text());record_result(q,s,r['result'],r['evidence'],r['restored'],r.get('reason',''))

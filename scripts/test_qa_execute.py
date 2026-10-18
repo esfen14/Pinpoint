@@ -76,6 +76,27 @@ class ExecutorTests(unittest.TestCase):
             x.authorize_action(q,s,argv)
             with self.assertRaises(ValueError):x.authorize_action(q,s,argv)
 
+    def test_missing_adapter_can_be_recorded_blocked_without_execution(self):
+        with tempfile.TemporaryDirectory() as d:
+            q,p=self.fixture(Path(d));q['sets'][0]['cases'][0]['execution']={};x.queue.seal(q)
+            s=x.start(q,'set','Paeng','session',p,True);x.begin_batch(q,s,q['sets'][0]['batches'][0]['id'])
+            with self.assertRaises(ValueError):x.begin_case(q,s,'TC-DI-06')
+            x.block_case(q,s,'TC-DI-06','No complete adapter; no attempt made')
+            self.assertEqual(s['results'][0]['attempt'],0)
+            self.assertEqual(s['results'][0]['result'],'BLOCKED')
+            self.assertIsNone(s['active_batch'])
+
+    def test_actual_five_blocked_batches_exhaust_the_session(self):
+        with tempfile.TemporaryDirectory() as d:
+            _,p=self.fixture(Path(d));catalog=x.queue.load_catalog()
+            q=x.queue.prepare(['set:Paeng:SEQ'],catalog,'a'*40)
+            s=x.start(q,'set','Paeng','session',p,True)
+            for batch in q['sets'][0]['batches'][:5]:
+                x.begin_batch(q,s,batch['id'])
+                x.block_case(q,s,batch['ids'][0],'Unmapped fixture; no execution')
+            self.assertEqual(len(s['batches_started']),5)
+            with self.assertRaises(ValueError):x.begin_batch(q,s,q['sets'][0]['batches'][5]['id'])
+
     def test_no_pass_on_failure_missing_or_outside_evidence(self):
         with tempfile.TemporaryDirectory() as d:
             q,p=self.fixture(Path(d));s=x.start(q,'set','Paeng','session',p,True)

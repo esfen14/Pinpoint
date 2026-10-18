@@ -22,6 +22,17 @@ def cell(value) -> str:
     return ' '.join(str(value).replace('|',r'\|').split())
 
 
+
+def references() -> dict:
+    """Freeze the normative/specification and execution-rule sources for preparation."""
+    paths=list((ROOT/'spec files').glob('*.md'))+[ROOT/'.agent/workflows/qa-run.md',
+        ROOT/'docs/qa/QA_Run_Queues.md',ROOT/'docs/qa/QA_Journeys_and_Scope.md',
+        ROOT/'scripts/qa_catalog.py',ROOT/'scripts/qa_queue.py',ROOT/'scripts/qa_evidence.py',
+        ROOT/'scripts/qa_execute.py',ROOT/'scripts/playwright-lab',ROOT/'client/playwright.config.ts',
+        ROOT/'client/package.json',ROOT/'client/package-lock.json']+list((ROOT/'client/e2e').glob('*.ts'))
+    return {p.relative_to(ROOT).as_posix():cat.digest(p.read_text()) for p in sorted(paths)}
+
+
 def seal(value:dict) -> dict:
     """Record a content checksum; review/start authorization is a separate operation."""
     value['scope_hash']=cat.digest({k:v for k,v in value.items() if k!='scope_hash'})
@@ -77,6 +88,13 @@ def prepare(selections:list[str], catalog:dict, target_revision:str,
     """Expand module/ID selectors once and snapshot eligible cases plus exclusions."""
     if purpose not in ('untested','recheck','retest'):raise ValueError('Unknown purpose')
     evidence=evidence or {};cards=cards or {};sets=[]
+    if not isinstance(cards,dict) or any(k not in catalog or not isinstance(v,dict) for k,v in cards.items()):
+        raise ValueError('Cards must be a dictionary keyed only by current case IDs')
+    if evidence:
+        spec=importlib.util.spec_from_file_location('ev',Path(__file__).with_name('qa_evidence.py'))
+        ev=importlib.util.module_from_spec(spec);spec.loader.exec_module(ev)
+        evidence=ev.validate_review(dict(version=1,target_revision=target_revision,
+            cutoff_approved=all(e.get('cutoff_approved') is True for e in evidence.values()),entries=list(evidence.values())),catalog,target_revision)
     modules={c['module'] for c in catalog.values()}
     for selection in selections:
         parts=selection.split(':')
@@ -118,14 +136,26 @@ def prepare(selections:list[str], catalog:dict, target_revision:str,
     revision=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
     result=seal(dict(version=2,prepared_at=datetime.now(timezone.utc).isoformat(),
                      catalog=str(cat.PLAN.relative_to(ROOT)),source_revision=revision,
-                     target_revision=target_revision,sets=sets))
+                     target_revision=target_revision,references=references(),evidence=evidence,sets=sets))
     validate(result);return result
 
 
-def check(value:dict,catalog:dict,run:str|None=None) -> list[str]:
+def check(value:dict,catalog:dict,run:str|None=None,evidence_root:Path=ROOT) -> list[str]:
     """Check full selected source snapshots; never add newly eligible cases."""
     errors=[]
-    for s in selected_sets(value,run):
+    if value.get('references')!=references():errors.append('Specifications/execution rules changed; prepare and review a replacement')
+    sets=selected_sets(value,run)
+    relevant={c['id'] for s in sets for c in s['cases']}|{c['id'] for s in sets for c in s['exclusions']}
+    evidence={k:e for k,e in value.get('evidence',{}).items() if k in relevant}
+    if evidence:
+        spec=importlib.util.spec_from_file_location('ev',Path(__file__).with_name('qa_evidence.py'))
+        ev=importlib.util.module_from_spec(spec);spec.loader.exec_module(ev)
+        try:
+            ev.validate_review(dict(version=1,target_revision=value['target_revision'],
+                cutoff_approved=all(e.get('cutoff_approved') is True for e in evidence.values()),entries=list(evidence.values())),
+                catalog,value['target_revision'],evidence_root)
+        except (ValueError,OSError,KeyError) as exc:errors.append(f'Historical evidence changed/invalid: {exc}')
+    for s in sets:
         for saved in s['cases']:
             current=catalog.get(saved['id'])
             original={k:v for k,v in saved.items() if k not in ('id','execution','reuse')}
@@ -147,7 +177,7 @@ def preview(value:dict,run:str|None=None) -> str:
             lines.extend(['',f"### Card: {c['id']} — {c['title']}",'',
                           f"Historical summary: {cell(c['summary_result'])}; detail: {cell(c['detailed_result'])}.",
                           f"Phase: {c['phase']}; singleton: {c['singleton']}; requirements: {', '.join(c['requirements'])}",
-                          '', 'Prerequisites:', *c['dependencies'],'',c['procedure'],'',
+                          '', 'Module setup/notes:',c['module_context'],'', 'Prerequisites:', *c['dependencies'],'',c['procedure'],'',
                           'Expected-item evidence checklist:',''])
             lines += [f'- E{i}: {e}' for i,e in enumerate(c['expectations'],1)]
             lines += ['', 'Execution adapter/card (empty means BLOCKED):','```json',json.dumps(c['execution'],indent=2),'```']

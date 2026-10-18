@@ -14,10 +14,10 @@ class EvidenceTests(unittest.TestCase):
     def fixture(self,root):
         p=root/'docs/test-runs/2026-10-17-example/REPORT.md';p.parent.mkdir(parents=True)
         p.write_text('Revision `abcdef1234`\nObserved real permission denied.\n')
-        c={'TC-X-01':{'procedure_hash':'case','expectations':['permission denied']}}
+        c={'TC-X-01':{'procedure_hash':'case','source_hash':'catalog','expectations':['permission denied']}}
         e=dict(case_id='TC-X-01',classification='accepted historical coverage',reviewed_by='Reviewer',
           impact_review='Relevant source and dependencies unchanged against target',reviewed_at='2026-10-18',
-          case_hash='case',report=p.relative_to(root).as_posix(),report_sha256=hashlib.sha256(p.read_bytes()).hexdigest(),
+          case_hash='case',catalog_hash='catalog',report=p.relative_to(root).as_posix(),report_sha256=hashlib.sha256(p.read_bytes()).hexdigest(),
           tested_revision='abcdef1234',execution_date='2026-10-17',covered_items={'E1':'Observed real permission denied.'},
           environment_compatible=True,requirements_unchanged=True)
         return c,dict(version=1,target_revision='a'*40,cutoff_approved=True,entries=[e])

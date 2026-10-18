@@ -1,5 +1,6 @@
 """Module queues: disjoint ownership, immutable scope and conservative evidence reuse."""
 import copy
+import hashlib
 import importlib.util
 from pathlib import Path
 import subprocess
@@ -50,6 +51,12 @@ class QAQueueTests(unittest.TestCase):
         self.assertEqual(queue.check(q,changed),[])
         self.assertEqual(len(q['sets'][0]['cases']),1)
 
+    def test_normative_source_change_invalidates_scope(self):
+        from unittest.mock import patch
+        q=queue.prepare(['one:A:DI'],self.catalog(),'a'*40)
+        with patch.object(queue,'references',return_value={'different':'source'}):
+            self.assertTrue(queue.check(q,self.catalog()))
+
     def test_tamper_and_legacy_rejected(self):
         q=queue.prepare(['one:A:DI'],self.catalog(),'a'*40)
         for mutate in [lambda v:v.update(version=1),lambda v:v['sets'][0].update(owner=''),
@@ -67,6 +74,29 @@ class QAQueueTests(unittest.TestCase):
             self.assertEqual(r.returncode,0,r.stderr)
             self.assertIn('TC-DI-06',out.with_suffix('.md').read_text())
             self.assertNotEqual(subprocess.run(args,capture_output=True).returncode,0)
+            base=[sys.executable,'-I',str(queue.ROOT/'scripts/qa_queue.py')]
+            for action in ('show','check'):
+                r=subprocess.run(base+[action,'--queue',str(out),'--run','one'],capture_output=True,text=True)
+                self.assertEqual(r.returncode,0,r.stderr)
+
+    def test_accepted_exclusions_revalidate_report_and_global_catalog_changes(self):
+        with tempfile.TemporaryDirectory(dir=queue.ROOT/'docs/test-runs') as d:
+            root=Path(d);report=root/'REPORT.md';report.write_text('Tested `1234567`\nitem observed\n')
+            catalog=self.catalog();case=catalog['TC-DI-06']
+            record=dict(case_id='TC-DI-06',classification='accepted historical coverage',
+                reviewed_by='Synthetic test reviewer',reviewed_at='2026-10-18',impact_review='Synthetic unchanged-source review',
+                case_hash=case['procedure_hash'],catalog_hash=case['source_hash'],report=report.relative_to(queue.ROOT).as_posix(),
+                report_sha256=hashlib.sha256(report.read_bytes()).hexdigest(),tested_revision='1234567',execution_date='2026-10-17',
+                covered_items={f'E{i}':'item observed' for i,_ in enumerate(case['expectations'],1)},
+                environment_compatible=True,requirements_unchanged=True,cutoff_approved=True)
+            q=queue.prepare(['one:A:DI'],catalog,'a'*40,evidence={'TC-DI-06':record})
+            self.assertNotIn('TC-DI-06',[c['id'] for c in q['sets'][0]['cases']])
+            self.assertEqual(queue.check(q,catalog),[])
+            report.write_text(report.read_text()+'changed')
+            self.assertTrue(queue.check(q,catalog))
+            report.write_text('Tested `1234567`\nitem observed\n')
+            changed=copy.deepcopy(catalog);changed['TC-DI-06']['source_hash']='changed requirements'
+            self.assertTrue(queue.check(q,changed))
 
     def test_workflow_requires_explicit_start_and_fixed_scope(self):
         s=(queue.ROOT/'.agent/workflows/qa-run.md').read_text()

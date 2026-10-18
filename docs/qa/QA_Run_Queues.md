@@ -346,10 +346,14 @@ vectors, positive case/step timeout seconds, observed `prerequisites`, `recovery
 Prepare/review a new queue when cards change; never patch started scope in place.
 
 `scripts/qa_execute.py --help` describes the **offline-only** journal interface:
-start, open batch/case, validate action and record result/halt/show. It validates
+start, open batch/case, validate action and record result/block/halt/show. It validates
 an explicit-start flag and recent preflight attestations but never performs live
 preflight or runs a command. No command here starts a real browser or scan.
-There is no automatic resume/recovery dispatcher yet. Each expected-item record
+An unattempted missing-adapter case can be recorded with `block` in its fixed slot;
+this is attempt zero, not a completed test. The journal supports the initial attempt
+only; any workflow-authorized diagnostic repeat needs a separately attributable
+report/card rather than an implicit action retry. There is no automatic
+resume/recovery dispatcher yet. Each expected-item record
 requires a verdict, observed value and existing evidence reference; PASS needs every
 item passed within timeout and `restored: true`. Hidden/reordered action repeats and
 sixth batches are rejected. A failed cleanup halts the journal.

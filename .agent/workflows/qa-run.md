@@ -83,7 +83,9 @@ The offline `scripts/qa_execute.py` checks immutable scope, owner/start attestat
 card completeness, adapter content hashes, exact ordered action vectors, batch budget,
 per-item evidence references and cleanup status. It does not execute those actions,
 verify live lab assertions or sandbox arbitrary shell access. Missing adapters block
-execution. Resume/recovery automation and the atomic scan guard remain pending;
+execution; use the offline journal block entry for unattempted slots. The current
+journal supports initial attempts only; record any authorized diagnostic repeat
+separately rather than relaunching an action slot. Resume/recovery automation and the atomic scan guard remain pending;
 use reviewed supervised execution only. Prompts and checksums are not a security
 boundary against an agent with unrestricted file/shell access.
 

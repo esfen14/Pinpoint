@@ -312,6 +312,7 @@ execution and missing mandatory evidence block the affected cases.
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| Offline implementation #206 | Parser/queues/evidence/session validation and documentation migration implemented in the isolated issue checkout | `scripts/verify.sh docs` and syntax/whitespace checks | Green; broad regression/PR still in progress; live readiness remains pending |
 | Batch/guardrail documentation | Updated QA workflow/guide and owning specifications for owner/module assignments, up to 25 ordinary cases in five fixed batches, execution cards and explicit stop actions; added independent-enforcement tasks here | Nine fix-found contracts; one queue workflow contract; changed-document link/guardrail assertions; `git diff --check`; `scripts/verify.sh docs` | Focused checks passed; full docs gate still blocked by the same 11 legacy links. Documentation only; no implementation or live QA started |
 | Tool-stack planning | Added explicit tool-by-test-type matrix, AI execution flow, existing versus planned capability, exact selection, retry and artifact-isolation tasks | Plan local-link/tool-stack assertions and `git diff --check` | Passed; planning only, no implementation or test execution |
 | Evidence-reuse planning | Added provisional October 15 cutoff, case-to-report matching, version/impact review, separate reused-coverage totals and rerun triggers; no mapping accepted or case executed | Updated-plan local-link/policy assertions and `git diff --check` | Passed; planning only |
@@ -319,9 +320,9 @@ execution and missing mandatory evidence block the affected cases.
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh docs`, after workflow contract tests and edited-document local-link/batch/guardrail assertions; final whitespace check: `git diff --check`.
-- Result: Plan checks passed. Docs verification stopped on 11 existing links to deleted legacy QA documents, beginning with `AGENTS.md -> docs/qa/QA_Test_Plan.md`; migration is listed in phase 4. The issue-progress validator reports zero issue files because this descriptive planning filename is intentionally outside its `issue-*.md` scope; the plan was checked separately. Readiness work has not started.
-- Next action: Follow issue-206 progress for offline implementation review/publication; then prepare separately reviewed adapter/lab/pilot scope. Cutoff and human-result conflicts remain pending decisions.
+- Last check run: `scripts/verify.sh docs` (green, 65 isolated checks); `scripts/verify.sh all` is running in the isolated issue checkout.
+- Result: Offline catalog/queues/evidence/session validation and docs migration are implemented. See issue-206 progress for final regression/PR state. No live cases have been executed.
+- Next action: Complete issue-206 validation/publication, then prepare separate current-case adapter/lab/pilot scope. Human-result conflicts and the provisional cutoff still need explicit review.
 
 ## Decisions and notes
 

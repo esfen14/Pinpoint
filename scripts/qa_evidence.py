@@ -25,9 +25,9 @@ def report_path(value:str, root:Path=ROOT) -> Path:
     return resolved
 
 
-def load_review(path:Path,catalog:dict,target_revision:str,root:Path=ROOT) -> dict:
+def validate_review(value:dict,catalog:dict,target_revision:str,root:Path=ROOT) -> dict:
     """Validate reviewer decisions and complete item-level coverage before queue reuse."""
-    value=json.loads(path.read_text())
+    if not isinstance(value,dict):raise ValueError('Evidence review must be an object')
     if value.get('version')!=1 or value.get('target_revision')!=target_revision:
         raise ValueError('Evidence review must be version 1 for this exact target revision')
     if not isinstance(value.get('cutoff_approved'),bool):raise ValueError('Record cutoff approval explicitly')
@@ -50,6 +50,8 @@ def load_review(path:Path,catalog:dict,target_revision:str,root:Path=ROOT) -> di
         day=date.fromisoformat(entry.get('execution_date',''))
         if entry['classification']=='accepted historical coverage':
             if not value['cutoff_approved']:raise ValueError('Cutoff decision is still provisional')
+            if entry.get('catalog_hash')!=catalog[k]['source_hash']:
+                raise ValueError('Catalog requirements/prerequisites changed since evidence review')
             if day<date.fromisoformat(CUTOFF) and not entry.get('approved_cutoff_exception'):
                 raise ValueError('Pre-cutoff evidence needs an explicit reviewed exception')
             required={f'E{i}' for i in range(1,len(catalog[k]['expectations'])+1)}
@@ -65,8 +67,13 @@ def load_review(path:Path,catalog:dict,target_revision:str,root:Path=ROOT) -> di
                     and re.fullmatch(r'https://github.com/[^/]+/[^/]+/pull/\d+',fix.get('pr',''))
                     and fix.get('issue') and fix.get('timeline_review')):
                 raise ValueError('Retest requires reviewed merged product fix and closed finding')
-        result[k]=entry
+        result[k]={**entry,'cutoff_approved':value['cutoff_approved']}
     return result
+
+
+def load_review(path:Path,catalog:dict,target_revision:str,root:Path=ROOT) -> dict:
+    """Load an explicit evidence-review document, preserving its cutoff decision."""
+    return validate_review(json.loads(path.read_text()),catalog,target_revision,root)
 
 
 def inventory(root:Path=ROOT,cutoff:str=CUTOFF) -> list:

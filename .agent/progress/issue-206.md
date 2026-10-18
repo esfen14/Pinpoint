@@ -33,6 +33,7 @@ Status: in-progress
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| 5 | Self-review added stale accepted-evidence checks (including excluded cases), normative/harness fingerprints, blocked-slot accounting, priority/module context and actual five-batch exhaustion tests | Final `scripts/verify.sh docs`; Python syntax; `git diff --check`; `scripts/verify.sh all` running | Docs green with 65 isolated checks; broad regression still running; no live QA |
 | 4 | Migrated source/derived/evidence validators and tests, fixed current/historical links, updated report templates/workflows/specs and docs gate | `scripts/verify.sh docs` | Green: all links and 61 isolated checks pass; no live operations |
 | 3 | Added offline session/card/evidence validator with explicit start/owner checks, bounded batches, unchanged adapters, exact action slots and cleanup halt | `python3 -I scripts/test_qa_execute.py` | 7 tests pass; no dispatcher/subprocess exists; live preflight and recovery remain separately gated |
 | 2 | Migrated module/person queue v2 and reviewer-bound evidence validation; inventoried 41 reports and attached six partial candidate mappings | `python3 -I scripts/test_qa_queue.py`; `python3 -I scripts/test_qa_evidence.py` | 8 queue and 3 evidence tests pass; no historical PASS inferred; docs migration remains round 4 |
@@ -41,9 +42,9 @@ Status: in-progress
 
 ## State for the next session
 
-- Last check run: `scripts/verify.sh docs`
-- Result: Docs gate green, including source mappings, derived status, queue/evidence/offline execution and existing safety checks.
-- Next action: Self-review freshness/blocking edge cases, recheck finish conditions, run required validation and open a reviewable PR.
+- Last check run: `scripts/verify.sh docs` (green); `scripts/verify.sh all` running with log `/tmp/issue-206-verify-all.log`
+- Result: Docs gate green with 65 isolated checks; full gate backend currently running without observed failure.
+- Next action: Inspect full regression completion, open/update draft PR and check its CI; preserve all remaining live-readiness tasks in the overall plan.
 
 ## Decisions and notes
 
