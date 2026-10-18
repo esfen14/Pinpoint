@@ -48,7 +48,7 @@ User addition: investigate partial passes so issues can be filed.
 2. [x] File attributed acknowledgement confirmation defect [#208](https://github.com/esfen14/Pinpoint/issues/208) and missing-observation clarification [#209](https://github.com/esfen14/Pinpoint/issues/209).
 3. [x] Add review-only `investigate` queues, partial-only validation, executor rejection and mandatory linked dispositions; preserve the catalog.
 4. [x] Verify docs gate, selection/conflict/tampering and execution rejection checks; no live QA.
-5. [ ] Checkpoint/push to PR #207 and inspect new-head CI.
+5. [x] Checkpoint/push to PR #207. Final-head CI status is recorded in the PR; inspect it before merging.
 
 Follow-up round 1: docs gate passes with 68 isolated checks (including two new
 regressions); `git diff --check` passes. ACK source corroborates the human note;
@@ -59,7 +59,8 @@ and require separately authorized live evidence where needed.
 
 ## State for the next session
 
-- Last check run: `scripts/verify.sh all` (green, `/tmp/issue-206-verify-all.log`), followed by final docs gate (66 checks) and syntax/whitespace validation for QA-only hardening.
+- Partial-pass follow-up: docs gate passes with 68 isolated checks and the original catalog is byte-for-byte unchanged. #208/#209 record initial triage; live verification/evidence clarification remain pending in those issues. Pushed to draft PR #207; final-head CI proof is maintained in its description.
+- Last full product check run: `scripts/verify.sh all` (green, `/tmp/issue-206-verify-all.log`), followed by final docs gate (66 checks) and syntax/whitespace validation for QA-only hardening.
 - Result: 4310 backend tests passed (14 skips), 1003 frontend passed, build/lint pass with 33 existing warnings and zero errors; final docs checks pass. Draft PR: https://github.com/esfen14/Pinpoint/pull/207. Final-head CI remains to inspect after this checkpoint.
 - Next action: Inspect final-head CI on PR #207, then continue current-case adapter/coverage preparation from the overall readiness checklist. Live preflight, atomic scan guarding and pilot runs remain separately gated; no launch authorization is inferred.
 
