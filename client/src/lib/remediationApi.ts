@@ -10,6 +10,8 @@ import type {
   RemediationRunList,
   RemediationSettings,
   RemediationTarget,
+  ServiceRecovery,
+  ServiceRecoveryInput,
 } from '../types/remediation'
 
 const BASE = '/api/system/remediation'
@@ -62,6 +64,20 @@ export function getSettings() {
 
 export function updateSettings(changes: Partial<RemediationSettings>) {
   return apiPut<RemediationSettings>(`${BASE}/settings`, changes)
+}
+
+function servicePath(hostname: string, service: string) {
+  const encodedService = service.split('/').map(encodeURIComponent).join('/')
+  return `${BASE}/services/${encodeURIComponent(hostname)}/${encodedService}`
+}
+
+export function getServiceRecovery(hostname: string, service: string) {
+  return apiGet<ServiceRecovery>(servicePath(hostname, service))
+}
+
+export function saveServiceRecovery(hostname: string, service: string, input: ServiceRecoveryInput) {
+  const { version, ...rest } = input
+  return apiPut<ServiceRecovery>(servicePath(hostname, service), version === null ? rest : { ...rest, version })
 }
 
 /** The per-field messages of a 400 response, or an empty object for any other error. */

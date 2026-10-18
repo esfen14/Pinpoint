@@ -35,6 +35,7 @@ from flask import current_app
 from app import db
 from app.history_models import AcknowledgementType, HostStatus, ServiceStatus
 from app import remediation_escalation as escalation
+from app import remediation_actions as registry
 from app.remediation_actions import RemoteTarget, RunContext, run_action
 from app.system_models import (
     DeviceState, NetworkDiscovery, RemediationAction, RemediationConsumerState, RemediationEventState,
@@ -474,6 +475,61 @@ def mark_notification(row):
         return
     count, window_hours = escalation.repeat_settings()
     escalation.check_repeat(row, action.Notify_On, count, window_hours, datetime.now(timezone.utc))
+# Check names are mapped to systemd units by their first word (``ssh-22-tcp`` -> ``ssh``). A few
+# common services run under a different unit name on different systems, so those words list every
+# unit name worth trying. The mapping only narrows what an administrator already allowed: a unit
+# is used only when it is on the device's own restart list (or PinPoint's fixed host list).
+SERVICE_UNIT_ALIASES = {
+    "ssh": ("ssh", "sshd"),
+    "http": ("apache2", "httpd", "nginx"),
+    "https": ("apache2", "httpd", "nginx"),
+    "dns": ("bind9", "named", "dnsmasq", "unbound"),
+    "smtp": ("postfix", "exim4"),
+    "ftp": ("vsftpd", "proftpd"),
+    "mysql": ("mysql", "mysqld", "mariadb"),
+    "postgresql": ("postgresql",),
+    "snmp": ("snmpd",),
+}
+SERVER_HOST_NAME = "localhost"
+
+
+def unit_candidates(service):
+    """Unit names worth trying for a check name, best first: its alias list, then the word itself."""
+    from app.remote_restart import valid_unit
+    word = re.split(r"[-\s_/:]", service.strip().lower(), maxsplit=1)[0]
+    candidates = list(SERVICE_UNIT_ALIASES.get(word, ()))
+    if word and word not in candidates and valid_unit(word):
+        candidates.append(word)
+    return candidates
+
+
+def choose_service_recovery(hostname, service):
+    """
+    Decide which restart action fits one service. Returns (action_type, units, None) with every
+    valid unit, best first, or (None, [], reason) with a plain sentence for the operator. The
+    PinPoint host (``localhost``) uses the fixed local unit list; any other host must be an active,
+    unpaused, trusted device with remote restart on, and the unit must be on its own list.
+    """
+    candidates = unit_candidates(service)
+    if hostname == SERVER_HOST_NAME:
+        units = [unit for unit in candidates if unit in registry.RESTARTABLE_UNITS]
+        if not units:
+            return None, [], ("PinPoint can restart only these services on its own host: "
+                              + ", ".join(registry.RESTARTABLE_UNITS) + ". This check does not match one.")
+        return "restart_local_service", units, None
+    target, refusal = resolve_remote_target(hostname)
+    if target is None:
+        return None, [], plain_refusal(refusal)
+    units = [unit for unit in candidates if unit in target.services]
+    if not units:
+        return None, [], "No service on this device's restart list matches this check."
+    return "restart_remote_service", units, None
+
+
+def plain_refusal(refusal):
+    """A refusal sentence without its ``Refused: `` lead-in."""
+    text = refusal.removeprefix("Refused: ")
+    return text[:1].upper() + text[1:]
 
 
 def execute(run_id, name, action_type, parameters, event):

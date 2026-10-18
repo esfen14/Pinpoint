@@ -219,3 +219,36 @@ export interface RemediationSettings {
 
 /** Field name (for example "name" or "parameters.command") to the server's message. */
 export type FieldErrors = Record<string, string>
+
+/** GET and PUT /api/system/remediation/services/<host>/<service>: one service's "Recover automatically" setting. */
+export interface ServiceRecovery {
+  hostname: string
+  service: string
+  enabled: boolean
+  maxRestartsPerHour: number
+  /** Null until the setting exists; send it back on every change. */
+  version: number | null
+  actionId: number | null
+  actionType: string | null
+  /** The unit the server chose (read-only; the request never carries one). */
+  unit: string | null
+  canEnable: boolean
+  /** Why the switch cannot be turned on, in plain words. */
+  reason: string | null
+  otherActions: { id: number; name: string }[]
+  lastRun: RemediationRun | null
+}
+
+export interface ServiceRecoveryInput {
+  enabled: boolean
+  maxRestartsPerHour: number
+  version: number | null
+}
+
+export const MIN_RESTARTS_PER_HOUR = 1
+export const MAX_RESTARTS_PER_HOUR = 6
+
+/** Key for a set of services that recover automatically (host and service never contain a tab). */
+export function recoveryKey(hostname: string, service: string) {
+  return `${hostname}\t${service}`
+}
