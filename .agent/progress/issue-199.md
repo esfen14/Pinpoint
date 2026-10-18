@@ -3,6 +3,9 @@
 Branch: `issue191-reports_alignment` (user-directed; NOT committed or pushed, user finalizes)
 Status: in-progress
 
+## Scope update (2026-10-18)
+User then asked to do all remaining items. Done in the working tree (uncommitted): contract probe, Reports requirements spec, report_events.py + three routes, alert/notification filters, drawer, analysis views, export context, tests, lab report. Not done: maintenance live check, scale, real export download, PR/CI.
+
 ## Scope agreed with user
 Phases 1-3 only: Reports spec, backend semantic tests, host/OS snapshot-count removal, shared applied-query controls. No live lab, no new endpoints, no commits/pushes/checkpoints.
 
@@ -25,7 +28,7 @@ Full list is in the issue (16 items). Delivered this session: snapshot-count rem
 
 ## State for the next session
 - Last check: verify.sh docs/frontend; frontend tsc fails only on e2e (@playwright/test not installed); docs fails at qa_transport (path resolve).
-- Next action: write the focused Reports requirements spec and route it from AGENTS.md; then phase 4 (needs #198 contract probe of installed JSON API).
+- Next action: run scripts/verify.sh backend/frontend/docs with PATH including server/venv/bin; fill final numbers in the lab report and PR text; human review. Remaining open: scheduled-maintenance live case, scale, real export downloads.
 
 ## Decisions and notes
 Remaining phases (interval detail, summary, histogram, live-lab evidence) are out of this session.

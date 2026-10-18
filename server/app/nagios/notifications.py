@@ -44,11 +44,16 @@ def _request_archive(query, params, result_key=None):
 '''
 
 # ======================= ALERTS =====================================
-def request_alerts_range(start_ts, end_ts, hostname=None, service=None):
-    """Query alerts for an arbitrary UNIX timestamp range."""
+def request_alerts_range(start_ts, end_ts, hostname=None, service=None, extra=None):
+    """Query alerts for an arbitrary UNIX timestamp range.
+
+    ``extra`` carries optional native filters (objecttypes, statetypes, hoststates,
+    servicestates) validated by the route; omitted, the result is unfiltered.
+    """
     params = {
         "starttime": start_ts,
         "endtime": end_ts,
+        **(extra or {}),
     }
 
     if hostname:
@@ -76,22 +81,37 @@ def request_alert_count_range(start_ts, end_ts, hostname=None, service=None):
 
 
 # ======================= AVAILABILITY ===============================
+# Explicit availability assumptions shared by the host report, the service
+# report and the availability detail drawer (#199). Core's defaults assume an
+# initial state; these do not, so time before the first recorded transition is
+# "no recorded data" rather than a guessed state.
+AVAILABILITY_ASSUMPTIONS = {
+    "statetypes": "hard",
+    "assumeinitialstate": "false",
+    "assumestateretention": "true",
+    "assumestatesduringnagiosdowntime": "false",
+    "backtrackedarchives": 4,
+}
+
+
 def request_host_availability_range(start_ts, end_ts, hostname=None):
     """
     Query per-host availability for a UNIX timestamp range.
 
-    Returns the list under ``data.hosts`` with Nagios' duration fields, or
-    ``None`` when Nagios cannot be reached or returns an invalid response.
-    An optional hostname is passed to archivejson so callers can limit the
-    report without filtering a different source locally.
+    Returns a list of Nagios duration rows, or ``None`` when Nagios cannot be
+    reached or returns an invalid response. With a hostname the CGI answers with
+    a single ``host`` object (not ``hosts``); it is returned as a one-row list.
     """
     params = {
+        **AVAILABILITY_ASSUMPTIONS,
         "availabilityobjecttype": "hosts",
         "starttime": start_ts,
         "endtime": end_ts,
     }
     if hostname:
         params["hostname"] = hostname
+        row = _request_archive("availability", params, result_key="host")
+        return None if not isinstance(row, dict) else [row]
 
     return _request_archive("availability", params, result_key="hosts")
 
@@ -109,11 +129,16 @@ def request_notifications_last(day=None):
     # Bug fix: was querying "alertlist" — notifications use "notificationlist"
     return _request_archive("notificationlist",params)
 
-def request_notifications_range(start_ts, end_ts, hostname=None, service=None):
-    """Query notifications for an arbitrary UNIX timestamp range."""
+def request_notifications_range(start_ts, end_ts, hostname=None, service=None, extra=None):
+    """Query notifications for an arbitrary UNIX timestamp range.
+
+    ``extra`` carries optional native filters (objecttypes, contactname,
+    hostnotificationtypes, servicenotificationtypes) validated by the route.
+    """
     params = {
         "starttime": start_ts,
         "endtime": end_ts,
+        **(extra or {}),
     }
 
     if hostname:
@@ -172,7 +197,7 @@ def _timestamp_seconds(value) -> int:
 
 
 # archivejson sends states as bit flags (host 1/2/4, service 8/16/32/64) and
-# state types as soft=1, hard=2; plain 0-3 codes are accepted too.
+# state types as soft/hard numbers (see normalize_alert); plain 0-3 codes are accepted too.
 _HOST_STATES = {0: "UP", 1: "UP", 2: "DOWN", 4: "UNREACHABLE"}
 _SERVICE_STATES = {0: "OK", 8: "OK", 16: "WARNING", 32: "CRITICAL", 64: "UNKNOWN", 1: "WARNING", 2: "CRITICAL", 3: "UNKNOWN"}
 
@@ -222,7 +247,14 @@ def normalize_notification(raw: dict) -> dict:
     }
 
 
-def normalize_alert(raw: dict) -> dict:
+# Numeric archive state type that means HARD. Core 4.5.11 sends HARD=1, SOFT=2 (probed, #199).
+# History still maps 2 to HARD (its existing behavior, not changed by #199), so the legacy
+# value is the default; the Reports readers pass REPORT_HARD_STATE_TYPE.
+LEGACY_HARD_STATE_TYPE = 2
+REPORT_HARD_STATE_TYPE = 1
+
+
+def normalize_alert(raw: dict, hard_state_type: int = LEGACY_HARD_STATE_TYPE) -> dict:
     """
     Return one archivejson alertlist entry with canonical keys: hostname,
     service_description (None for host alerts), state, last_state, state_type
@@ -236,7 +268,7 @@ def normalize_alert(raw: dict) -> dict:
 
     state_type = raw.get("state_type")
     if isinstance(state_type, int):
-        state_type = "hard" if state_type == 2 else "soft"
+        state_type = "hard" if state_type == hard_state_type else "soft"
 
     return {
         **raw,

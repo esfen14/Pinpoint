@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import { ArrowUpDown, Search } from 'lucide-react'
 import { useSystemSettings } from '../../contexts/SystemSettingsContext'
-import { exportRows } from '../../utils/exportData'
+import { exportRows, type ExportMeta } from '../../utils/exportData'
 import { ExportMenu } from '../shared/ExportMenu'
 import type { ServiceRow } from '../../types/report'
 import { Pagination } from '../shared/Pagination'
@@ -11,6 +11,10 @@ type NetworkServicesReportTableProps = {
   isLoading: boolean
   observedAt?: string | null
   title?: string
+  // Opens the availability detail drawer for one exact service instance.
+  onDetails?: (hostname: string, service: string) => void
+  stale?: boolean
+  meta?: ExportMeta
 }
 
 const PAGE_SIZE = 10
@@ -20,11 +24,15 @@ export function NetworkServicesReportTable({
   isLoading,
   title = 'Network Services Report',
   observedAt = null,
+  onDetails,
+  stale = false,
+  meta,
 }: NetworkServicesReportTableProps) {
   const { settings } = useSystemSettings()
   const [query, setQuery] = useState('')
   const [sortAsc, setSortAsc] = useState(true)
   const [page, setPage] = useState(1)
+  const [expanded, setExpanded] = useState<string | null>(null)
 
   const filtered = useMemo(() => {
     let result = services
@@ -86,12 +94,17 @@ export function NetworkServicesReportTable({
 
           <ExportMenu
             label
-            allowedFormats={isLoading || services.length === 0 ? [] : settings.exportFormats}
-            onExport={(format) => exportRows(exportData, format, 'network-services-report')}
+            allowedFormats={stale || isLoading || services.length === 0 ? [] : settings.exportFormats}
+            onExport={(format) => exportRows(exportData, format, 'network-services-report', meta)}
           />
         </div>
       </div>
 
+      {stale && (
+        <p role="alert" className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+          The last run failed. These rows are from an earlier run and cannot be exported. Run the report again.
+        </p>
+      )}
       <div className="overflow-x-auto">
         <table className="w-full min-w-275 text-left text-sm">
           <thead className="border-b border-gray-200 text-gray-500 dark:border-white/10 dark:text-gray-500">
@@ -106,21 +119,23 @@ export function NetworkServicesReportTable({
               <th className="px-4 py-3">Current Pending / Unavailable</th>
               <th className="px-4 py-3">Recorded time (seconds)</th>
               <th className="px-4 py-3">No recorded data (seconds)</th>
+              {onDetails && <th className="px-4 py-3">Instances</th>}
             </tr>
           </thead>
 
           <tbody>
             {isLoading ? (
-              <tr><td colSpan={10} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">Loading…</td></tr>
+              <tr><td colSpan={onDetails ? 11 : 10} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">Loading…</td></tr>
             ) : paginated.length === 0 ? (
               <tr>
-                <td colSpan={10} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                <td colSpan={onDetails ? 11 : 10} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                   {query ? 'No services match your search' : 'No data in this period'}
                 </td>
               </tr>
             ) : (
               paginated.map((svc) => (
-                <tr key={svc.service} className="border-b border-gray-100 hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/5">
+                <Fragment key={svc.service}>
+                <tr className="border-b border-gray-100 hover:bg-gray-50 dark:border-white/5 dark:hover:bg-white/5">
                   <td className="px-4 py-3 text-gray-900 dark:text-white">{svc.service}</td>
                   <td className="px-4 py-3 text-gray-900 dark:text-white">{svc.totalInstances}</td>
                   <td className="px-4 py-3 text-emerald-600 dark:text-emerald-400">{svc.ok}</td>
@@ -131,7 +146,33 @@ export function NetworkServicesReportTable({
                   <td className="px-4 py-3">{svc.pending} / {svc.unavailable}</td>
                   <td className="px-4 py-3">{svc.known_seconds}</td>
                   <td className="px-4 py-3">{svc.no_recorded_data_seconds}</td>
+                  {onDetails && (
+                    <td className="px-4 py-3">
+                      <button type="button" aria-expanded={expanded === svc.service}
+                        onClick={() => setExpanded(expanded === svc.service ? null : svc.service)}
+                        className="text-[#ffb100] underline">
+                        {expanded === svc.service ? 'Hide' : 'Show'} {svc.totalInstances}
+                      </button>
+                    </td>
+                  )}
                 </tr>
+                {onDetails && expanded === svc.service && (
+                  <tr className="border-b border-gray-100 bg-gray-50 dark:border-white/5 dark:bg-white/5">
+                    <td colSpan={11} className="px-8 py-3">
+                      <ul className="space-y-1">
+                        {svc.instances.map((i) => (
+                          <li key={i.hostname} className="flex flex-wrap items-center gap-3">
+                            <span>{i.hostname}</span>
+                            <span className="text-gray-500 dark:text-gray-400">{i.uptime_pct == null ? '—' : `${i.uptime_pct}%`} of known time</span>
+                            <button type="button" onClick={() => onDetails(i.hostname, svc.service)}
+                              aria-label={`Details for ${i.hostname} ${svc.service}`} className="text-[#ffb100] underline">Details</button>
+                          </li>
+                        ))}
+                      </ul>
+                    </td>
+                  </tr>
+                )}
+                </Fragment>
               ))
             )}
           </tbody>

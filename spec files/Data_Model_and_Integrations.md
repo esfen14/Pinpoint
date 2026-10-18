@@ -271,6 +271,19 @@ notification table.
 Nagios server within status data. Changing either requires understanding its
 different purpose.
 
+## Report event readers (#199)
+
+`app/nagios/report_events.py` reads `archivejson.cgi` lists (`alertlist`,
+`statechangelist`) page by page (`start`/`count`) for the availability detail, alert
+summary and alert histogram. The contract probed on Core 4.5.11 (millisecond
+timestamps, state bitmasks, state type HARD=1/SOFT=2, a synthetic initial entry per
+range, single `host`/`service` objects for exact availability queries) is in
+[Reports Requirements](Reports_Requirements.md#probed-archive-contract-core-4511-read-only-2026-10-18).
+Host availability shares the explicit assumptions of the service reports
+(`AVAILABILITY_ASSUMPTIONS` in `app/nagios/notifications.py`). Limits: 15 s per call,
+30 s per report, 500-row pages, 45 requests, 20,000 events, 90 days. No database
+access, writes, migrations, jobs or snapshot fallback.
+
 ## Service report history and coverage (#198)
 
 Network Services and Device Services read `archivejson.cgi` availability through
