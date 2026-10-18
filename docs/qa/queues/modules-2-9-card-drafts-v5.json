@@ -1,0 +1,314 @@
+{
+  "TC-ACC-08": {
+    "readiness": "BLOCKED: current fixture, reviewer, bounded outputs and live preflight are unverified",
+    "coverage_hash": "a8fab40be27e163e4826b730441f19d5a1b5c96a16cb58009c610732a89ed5cb",
+    "selection": {
+      "path": "client/e2e/qa-modules-2-9.lab.spec.ts",
+      "title": "TC-ACC-08: \"Send this user email alerts\" depends on permission",
+      "project": "qa-modules-2-9",
+      "config": "client/playwright.modules.qa.config.ts"
+    },
+    "mode": "scripted automation",
+    "adapter": "/home/paeng/Documents/Capstone-FIles/Capstone-Project/Network-Diagnosis-System-qa214/client/e2e/qa-modules-2-9.lab.spec.ts",
+    "adapter_hash": "49f82ae6f6996d784082d575da9013a7a4827100fc797d5e47c73848977b43bc",
+    "actions": [
+      [
+        "scripts/playwright-lab",
+        "--config=playwright.modules.qa.config.ts",
+        "--project=qa-modules-2-9",
+        "e2e/qa-modules-2-9.lab.spec.ts",
+        "--grep=(?:^| )TC\\-ACC\\-08:\\ \"Send\\ this\\ user\\ email\\ alerts\"\\ depends\\ on\\ permission$",
+        "--workers=1",
+        "--retries=0"
+      ]
+    ],
+    "reviewed_by": "",
+    "timeout_seconds": null,
+    "step_timeout_seconds": null,
+    "human_required": true,
+    "prerequisites": [
+      "An initialized Super Admin account with account.view and account.alerts.",
+      "A pre-created qa-accounts role with account.view and account.edit but not account.alerts, plus an initialized user assigned to that role.",
+      "Credentials for both users remain in the approved private store; no account or role is created or edited by this adapter."
+    ],
+    "recovery": [
+      "No account or role writes. After each session, POST logout, verify GET /api/user/me returns 401, and dispose the browser context. Preserve login/logout audit entries."
+    ],
+    "evidence_dir": "",
+    "write_paths": [],
+    "container_image_id": null
+  },
+  "TC-ROL-04": {
+    "readiness": "BLOCKED: current fixture, reviewer, bounded outputs and live preflight are unverified",
+    "coverage_hash": "ebaa57e3b93b4eecd8d73ebea1b413588a489ca152af73f8cfa00337950353fb",
+    "selection": {
+      "path": "client/e2e/qa-modules-2-9.lab.spec.ts",
+      "title": "TC-ROL-04: A dashboard-only user is limited to the Dashboard",
+      "project": "qa-modules-2-9",
+      "config": "client/playwright.modules.qa.config.ts"
+    },
+    "mode": "scripted automation",
+    "adapter": "/home/paeng/Documents/Capstone-FIles/Capstone-Project/Network-Diagnosis-System-qa214/client/e2e/qa-modules-2-9.lab.spec.ts",
+    "adapter_hash": "49f82ae6f6996d784082d575da9013a7a4827100fc797d5e47c73848977b43bc",
+    "actions": [
+      [
+        "scripts/playwright-lab",
+        "--config=playwright.modules.qa.config.ts",
+        "--project=qa-modules-2-9",
+        "e2e/qa-modules-2-9.lab.spec.ts",
+        "--grep=(?:^| )TC\\-ROL\\-04:\\ A\\ dashboard\\-only\\ user\\ is\\ limited\\ to\\ the\\ Dashboard$",
+        "--workers=1",
+        "--retries=0"
+      ]
+    ],
+    "reviewed_by": "",
+    "timeout_seconds": null,
+    "step_timeout_seconds": null,
+    "human_required": true,
+    "prerequisites": [
+      "An initialized qa-view user with system.dashboard and no permissions for the catalog protected pages/APIs.",
+      "The qa-view credentials remain in the approved private store; no role or account is created or edited by this adapter."
+    ],
+    "recovery": [
+      "No account or role writes. POST logout, verify GET /api/user/me returns 401, and dispose the browser context. Preserve login/logout audit entries."
+    ],
+    "evidence_dir": "",
+    "write_paths": [],
+    "container_image_id": null
+  },
+  "TC-DI-02": {
+    "readiness": "BLOCKED: current fixture, reviewer, bounded outputs and live preflight are unverified",
+    "coverage_hash": "f57b781aae0c73417b3d498fa1b4b4d475107b576dc3667d196888cb43c80334",
+    "selection": {
+      "path": "client/e2e/qa-modules-2-9.lab.spec.ts",
+      "title": "TC-DI-02: Port groups and their order",
+      "project": "qa-modules-2-9",
+      "config": "client/playwright.modules.qa.config.ts"
+    },
+    "mode": "scripted automation",
+    "adapter": "/home/paeng/Documents/Capstone-FIles/Capstone-Project/Network-Diagnosis-System-qa214/client/e2e/qa-modules-2-9.lab.spec.ts",
+    "adapter_hash": "49f82ae6f6996d784082d575da9013a7a4827100fc797d5e47c73848977b43bc",
+    "actions": [
+      [
+        "scripts/playwright-lab",
+        "--config=playwright.modules.qa.config.ts",
+        "--project=qa-modules-2-9",
+        "e2e/qa-modules-2-9.lab.spec.ts",
+        "--grep=(?:^| )TC\\-DI\\-02:\\ Port\\ groups\\ and\\ their\\ order$",
+        "--workers=1",
+        "--retries=0"
+      ]
+    ],
+    "reviewed_by": "",
+    "timeout_seconds": null,
+    "step_timeout_seconds": null,
+    "human_required": true,
+    "prerequisites": [
+      "PINPOINT_QA_DEVICE_HOST identifies a previously reviewed discovered device; no scan or device creation is performed.",
+      "The device has existing Monitored, Suggested, Ignored/Stopped, and Archived ports. The private fixture fact is rechecked before execution.",
+      "An initialized Super Admin account is available from the approved private credential store with system.network_health and system.hosts."
+    ],
+    "recovery": [
+      "No inventory, port, plugin, or service writes. POST logout, verify GET /api/user/me returns 401, and dispose the browser context; preserve expected login/logout audit entries."
+    ],
+    "evidence_dir": "",
+    "write_paths": [],
+    "container_image_id": null
+  },
+  "TC-DI-03": {
+    "readiness": "BLOCKED: current fixture, reviewer, bounded outputs and live preflight are unverified",
+    "coverage_hash": "bea9833bc91fa9bc118e839dd946f187970e6dc29216305bc0159c1b9f3c570a",
+    "selection": {
+      "path": "client/e2e/qa-modules-2-9.lab.spec.ts",
+      "title": "TC-DI-03: One reason per port",
+      "project": "qa-modules-2-9",
+      "config": "client/playwright.modules.qa.config.ts"
+    },
+    "mode": "scripted automation",
+    "adapter": "/home/paeng/Documents/Capstone-FIles/Capstone-Project/Network-Diagnosis-System-qa214/client/e2e/qa-modules-2-9.lab.spec.ts",
+    "adapter_hash": "49f82ae6f6996d784082d575da9013a7a4827100fc797d5e47c73848977b43bc",
+    "actions": [
+      [
+        "scripts/playwright-lab",
+        "--config=playwright.modules.qa.config.ts",
+        "--project=qa-modules-2-9",
+        "e2e/qa-modules-2-9.lab.spec.ts",
+        "--grep=(?:^| )TC\\-DI\\-03:\\ One\\ reason\\ per\\ port$",
+        "--workers=1",
+        "--retries=0"
+      ]
+    ],
+    "reviewed_by": "",
+    "timeout_seconds": null,
+    "step_timeout_seconds": null,
+    "human_required": true,
+    "prerequisites": [
+      "PINPOINT_QA_DEVICE_HOST identifies a previously reviewed discovered device; no scan or device creation is performed.",
+      "PINPOINT_QA_HELD_MISMATCH_PORT identifies a preexisting Suggested port that is both held and flagged Not used as intended, with mismatch unacknowledged.",
+      "An initialized Super Admin account is available from the approved private credential store with system.network_health and system.hosts."
+    ],
+    "recovery": [
+      "No inventory, port, plugin, or service writes. POST logout, verify GET /api/user/me returns 401, and dispose the browser context; preserve expected login/logout audit entries."
+    ],
+    "evidence_dir": "",
+    "write_paths": [],
+    "container_image_id": null
+  },
+  "TC-DI-07": {
+    "readiness": "BLOCKED: uppercase input mismatch and failure-result handling require review; unsupported by live dispatcher",
+    "coverage_hash": "4c124e2cc2b63651c7f0195237404a8ba028c14de82e3aa3e1f68a4a5a911c30",
+    "selection": {
+      "path": "client/e2e/qa-modules-2-9.lab.spec.ts",
+      "title": "TC-DI-07: Service name rules in Set service",
+      "project": "qa-modules-2-9",
+      "config": "client/playwright.modules.qa.config.ts"
+    },
+    "mode": "scripted automation",
+    "adapter": "/home/paeng/Documents/Capstone-FIles/Capstone-Project/Network-Diagnosis-System-qa214/client/e2e/qa-modules-2-9.lab.spec.ts",
+    "adapter_hash": "49f82ae6f6996d784082d575da9013a7a4827100fc797d5e47c73848977b43bc",
+    "actions": [
+      [
+        "scripts/playwright-lab",
+        "--config=playwright.modules.qa.config.ts",
+        "--project=qa-modules-2-9",
+        "e2e/qa-modules-2-9.lab.spec.ts",
+        "--grep=(?:^| )TC\\-DI\\-07:\\ Service\\ name\\ rules\\ in\\ Set\\ service$",
+        "--workers=1",
+        "--retries=0"
+      ]
+    ],
+    "reviewed_by": "",
+    "timeout_seconds": null,
+    "step_timeout_seconds": null,
+    "human_required": true,
+    "prerequisites": [
+      "PINPOINT_QA_DEVICE_HOST identifies a reviewed existing discovered device; no scan or device creation is performed.",
+      "PINPOINT_QA_DI07_PORT identifies a non-archived editable port on that device whose current service name is not ssh.",
+      "PINPOINT_QA_DI07_SSH_PORT identifies a second non-archived editable port on that device whose current service name is exactly ssh.",
+      "An initialized Super Admin credential is available privately with system.hosts.edit; both fixture labels are private same-owner files."
+    ],
+    "recovery": [
+      "Read-only validation. A Playwright route guard blocks every PUT to the port change endpoint; cancel both dialogs, verify no write was attempted, POST logout and verify GET /api/user/me returns 401. Preserve expected login/logout audit entries."
+    ],
+    "evidence_dir": "",
+    "write_paths": [],
+    "container_image_id": null
+  },
+  "TC-DI-08": {
+    "readiness": "BLOCKED: current fixture, reviewer, bounded outputs and live preflight are unverified",
+    "coverage_hash": "aa49889ca5aa4eb1997a091bcb21c413f4655ef49d17359301e66bdf0206ff26",
+    "selection": {
+      "path": "client/e2e/qa-modules-2-9.lab.spec.ts",
+      "title": "TC-DI-08: The Checked by line",
+      "project": "qa-modules-2-9",
+      "config": "client/playwright.modules.qa.config.ts"
+    },
+    "mode": "scripted automation",
+    "adapter": "/home/paeng/Documents/Capstone-FIles/Capstone-Project/Network-Diagnosis-System-qa214/client/e2e/qa-modules-2-9.lab.spec.ts",
+    "adapter_hash": "49f82ae6f6996d784082d575da9013a7a4827100fc797d5e47c73848977b43bc",
+    "actions": [
+      [
+        "scripts/playwright-lab",
+        "--config=playwright.modules.qa.config.ts",
+        "--project=qa-modules-2-9",
+        "e2e/qa-modules-2-9.lab.spec.ts",
+        "--grep=(?:^| )TC\\-DI\\-08:\\ The\\ Checked\\ by\\ line$",
+        "--workers=1",
+        "--retries=0"
+      ]
+    ],
+    "reviewed_by": "",
+    "timeout_seconds": null,
+    "step_timeout_seconds": null,
+    "human_required": true,
+    "prerequisites": [
+      "PINPOINT_QA_DEVICE_HOST identifies a reviewed existing discovered device; no scan or device creation is performed.",
+      "PINPOINT_QA_TCP_PORT identifies a non-archived, editable TCP port on that device whose service options include http.",
+      "PINPOINT_QA_UDP_PORT identifies a non-archived, editable UDP port on that device; both port rows offer Set service.",
+      "An initialized Super Admin credential is available privately with system.hosts.edit; fixture labels are private same-owner files."
+    ],
+    "recovery": [
+      "Read-only dialog interaction. A Playwright route guard blocks every PUT to the port change endpoint; cancel both dialogs, verify no write was attempted, POST logout and verify GET /api/user/me returns 401. Preserve expected login/logout audit entries."
+    ],
+    "evidence_dir": "",
+    "write_paths": [],
+    "container_image_id": null
+  },
+  "TC-HIS-04": {
+    "readiness": "BLOCKED: current fixture, reviewer, bounded outputs and live preflight are unverified",
+    "coverage_hash": "a79d53246107d6d7b0f5928eb254e993945e747a476aed7b9af9f9549643509a",
+    "selection": {
+      "path": "client/e2e/qa-modules-2-9.lab.spec.ts",
+      "title": "TC-HIS-04: Date range rules (API)",
+      "project": "qa-modules-2-9",
+      "config": "client/playwright.modules.qa.config.ts"
+    },
+    "mode": "scripted automation",
+    "adapter": "/home/paeng/Documents/Capstone-FIles/Capstone-Project/Network-Diagnosis-System-qa214/client/e2e/qa-modules-2-9.lab.spec.ts",
+    "adapter_hash": "49f82ae6f6996d784082d575da9013a7a4827100fc797d5e47c73848977b43bc",
+    "actions": [
+      [
+        "scripts/playwright-lab",
+        "--config=playwright.modules.qa.config.ts",
+        "--project=qa-modules-2-9",
+        "e2e/qa-modules-2-9.lab.spec.ts",
+        "--grep=(?:^| )TC\\-HIS\\-04:\\ Date\\ range\\ rules\\ \\(API\\)$",
+        "--workers=1",
+        "--retries=0"
+      ]
+    ],
+    "reviewed_by": "",
+    "timeout_seconds": null,
+    "step_timeout_seconds": null,
+    "human_required": true,
+    "prerequisites": [
+      "An initialized Super Admin account is available privately with system.history.",
+      "Existing alert history has at least one real event older than 25 hours but within the rolling 30-day range; no history is seeded or edited.",
+      "The API is served from the reviewed target and the device/server clocks differ by no more than the stated 5-minute tolerance."
+    ],
+    "recovery": [
+      "Read-only GET requests only. No history, acknowledgement, or alert data is changed. POST logout, verify GET /api/user/me returns 401, dispose the browser context, and preserve expected login/logout audit entries."
+    ],
+    "evidence_dir": "",
+    "write_paths": [],
+    "container_image_id": null
+  },
+  "TC-DASH-07": {
+    "readiness": "BLOCKED: current fixture, reviewer, bounded outputs and live preflight are unverified",
+    "coverage_hash": "e5fa12320ebb2fc4caaf7fb59cf2bf2d14d7b792b78801dbfc4ff28a7bf26ed3",
+    "selection": {
+      "path": "client/e2e/qa-modules-2-9.lab.spec.ts",
+      "title": "TC-DASH-07: \"No data\" instead of blank cards",
+      "project": "qa-modules-2-9",
+      "config": "client/playwright.modules.qa.config.ts"
+    },
+    "mode": "scripted automation",
+    "adapter": "/home/paeng/Documents/Capstone-FIles/Capstone-Project/Network-Diagnosis-System-qa214/client/e2e/qa-modules-2-9.lab.spec.ts",
+    "adapter_hash": "49f82ae6f6996d784082d575da9013a7a4827100fc797d5e47c73848977b43bc",
+    "actions": [
+      [
+        "scripts/playwright-lab",
+        "--config=playwright.modules.qa.config.ts",
+        "--project=qa-modules-2-9",
+        "e2e/qa-modules-2-9.lab.spec.ts",
+        "--grep=(?:^| )TC\\-DASH\\-07:\\ \"No\\ data\"\\ instead\\ of\\ blank\\ cards$",
+        "--workers=1",
+        "--retries=0"
+      ]
+    ],
+    "reviewed_by": "",
+    "timeout_seconds": null,
+    "step_timeout_seconds": null,
+    "human_required": true,
+    "prerequisites": [
+      "No host has a ping check and no NCPA host/data exists; these lab facts must be independently reviewed before start. The adapter does not alter them.",
+      "An initialized Super Admin account is available in the approved private credential store."
+    ],
+    "recovery": [
+      "Read-only Dashboard visit. POST logout, verify GET /api/user/me returns 401, and dispose the browser context; preserve expected login/logout audit entries."
+    ],
+    "evidence_dir": "",
+    "write_paths": [],
+    "container_image_id": null
+  }
+}

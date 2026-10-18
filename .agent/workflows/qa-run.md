@@ -42,7 +42,16 @@ and source-reviewed coverage record for each selected ID. `qa_coverage.py check`
 rejects stale source claims. Queue preparation/checking and the offline journal
 reject execution cards not bound to an implemented mapping and its exact command.
 A card template is deliberately BLOCKED; never substitute guessed prerequisites,
-reviewer, timeouts or output paths. Seven permission adapters have source coverage. The bounded live launcher supports only TC-SS-04, TC-ACC-09 and TC-NCPA-08; the proposed next untested batch is the latter two.
+reviewer, timeouts or output paths. Seven permission adapters have source coverage.
+The bounded supervised live launcher supports TC-SS-04, TC-ACC-09, TC-NCPA-08,
+and the seven complete read-only Module 2–9 adapters TC-ACC-08, TC-ROL-04,
+TC-DI-02, TC-DI-03, TC-DI-08, TC-HIS-04 and TC-DASH-07. TC-ACC-10 is partial and unsupported;
+TC-DI-07 has a source adapter but stays outside the live allowlist until its
+uppercase expectation discrepancy and failure-result handling are resolved. Other
+Module 2–9 cases still need complete reviewed adapters/cards. The direct
+legacy launcher rejects both current-case configs; only `qa_pilot.py run` may
+dispatch the fixed supported IDs after reviewed cards, current baseline and
+explicit named set start.
 The isolated launcher supports a JSON-only `--qa-preview`, bound to one opened
 offline journal case; its legacy execution path rejects the new config. The
 preview reads credential metadata only and is explicitly not live authorization.
@@ -59,18 +68,20 @@ The supervisor and mutating `vmlab` entries now share a cooperative host claim.
 Never delete its lock/store or call a direct controller to bypass a busy claim.
 `vmlab preflight --json` supplies host observations only: it cannot prove the
 running frontend/backend revision, baseline, restoration or permission to start.
-The bounded permission driver is described below; other production integration remains blocked.
+The bounded supervised driver supports three permission cases and seven complete
+read-only Module 2–9 cases; other production integration remains blocked.
 The concrete container lifecycle component also has no live CLI/default driver.
 Its consumed-slot/image/cleanup contracts and synthetic worker checks do not
 authorize calling it manually. Keep actual bridge/runtime/baseline proof and
 the explicit named start separate from offline implementation success.
 Owned bridge and deployment-observer components require trusted integration;
-use the bounded permission path below only for its three literal supported IDs.
+use the permission path below only for its three literal IDs and the module path
+only for its seven literal read-only IDs.
 Observer disk matches/candidate process metadata always leave runtime/served
 identity false and the verified running revision null. Never promote them into a
 live proof receipt or manually start a bridge to bypass the missing driver/card.
 
-## Bounded permission entry
+## Bounded supervised current-case entry
 
 `python3 -I scripts/qa_pilot.py inspect` is read-only preparation: it checks a
 private reviewed controlled-deployment baseline, host/guest process identity,
@@ -79,8 +90,9 @@ actual served bytes and cached image/browser without starting either. Positive
 inspection fields are not live authorization or evidence that a case passed.
 The standalone deployment observer continues to return false/null readiness.
 
-Only `qa_pilot.py run` may launch one fixed batch of supported permission IDs
-(TC-SS-04, TC-ACC-09, TC-NCPA-08), after its reviewed queue/cards and explicit
+Only `qa_pilot.py run` may launch one fixed batch of supported IDs: the three
+permission cases above and the seven complete read-only module cases listed in
+the source coverage register. It requires a reviewed queue/cards and explicit
 user start. It uses one case/driver/container at a time, saves each result before
 opening the next, and stops on every non-PASS. No automatic retry or resume.
 The next untested queue contains only TC-ACC-09 and TC-NCPA-08; the accepted

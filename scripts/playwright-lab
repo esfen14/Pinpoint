@@ -16,7 +16,7 @@ if [ -n "${PINPOINT_QA_CASES:-}" ] || [ -n "${PINPOINT_QA_RUN_DIR:-}" ]; then
 fi
 for arg in "$@"; do
   case "$arg" in
-    *playwright.qa.config*|*qa-permissions*|--qa-*)
+    *playwright.qa.config*|*qa-permissions*|*playwright.modules.qa.config*|*qa-modules-2-9*|--qa-*)
       echo "current-case live dispatch is blocked; use --qa-preview for offline preparation" >&2; exit 2 ;;
   esac
 done

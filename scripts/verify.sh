@@ -78,7 +78,7 @@ frontend() {
   cd "$root/client"
   echo "==> frontend: offline current-case selection and Playwright collection (no browser)"
   ./node_modules/.bin/tsc -p tsconfig.qa.json
-  node --test qa/selection.node.mjs qa/timing.node.mjs
+  node --test qa/selection.node.mjs qa/module-selection.node.mjs qa/timing.node.mjs
   npm run test
   npm run build
   echo "==> frontend: lint (errors block; warnings are tracked in Implementation_Status.md)"

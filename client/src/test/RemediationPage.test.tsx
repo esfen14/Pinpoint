@@ -665,7 +665,8 @@ describe('Remediation page: repeat recovery limits', () => {
   it('saves both values', async () => {
     api.updateSettings.mockResolvedValue({ enabled: true, retentionDays: 90, repeatCount: 4, repeatWindowHours: 12 })
     render(<RemediationPage />)
-    fireEvent.change(await screen.findByLabelText('Repeat count'), { target: { value: '4' } })
+    await waitFor(() => expect(screen.getByLabelText('Repeat count')).toHaveValue(3))
+    fireEvent.change(screen.getByLabelText('Repeat count'), { target: { value: '4' } })
     fireEvent.change(screen.getByLabelText('Repeat window (hours)'), { target: { value: '12' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save repeat limits' }))
     await waitFor(() => expect(api.updateSettings).toHaveBeenCalledWith({ repeatCount: 4, repeatWindowHours: 12 }))
@@ -675,7 +676,9 @@ describe('Remediation page: repeat recovery limits', () => {
   it('shows the server message when saving fails and keeps the typed values', async () => {
     api.updateSettings.mockRejectedValue(new ApiError('Repeat count must be a whole number from 2 to 20.', 400))
     render(<RemediationPage />)
-    fireEvent.change(await screen.findByLabelText('Repeat count'), { target: { value: '99' } })
+    // The field exists before the saved value is copied into it, and an edit made in that gap is overwritten.
+    await waitFor(() => expect(screen.getByLabelText('Repeat count')).toHaveValue(3))
+    fireEvent.change(screen.getByLabelText('Repeat count'), { target: { value: '99' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save repeat limits' }))
     expect(await screen.findByText(/Repeat count must be a whole number from 2 to 20/)).toBeInTheDocument()
     expect(screen.getByLabelText('Repeat count')).toHaveValue(99)

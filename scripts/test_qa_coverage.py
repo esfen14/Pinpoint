@@ -82,7 +82,19 @@ class CoverageTests(unittest.TestCase):
         self.assertTrue(card['human_required'])
         self.assertIsNone(card['timeout_seconds'])
         self.assertFalse(card['reviewed_by'])
-        self.assertFalse(card['prerequisites'])
+        self.assertEqual(card['prerequisites'],r['cases']['TC-SS-04']['prerequisites'])
+
+    def test_module_cards_carry_exact_fixture_gates_but_remain_blocked(self):
+        r=c.load()
+        expected={'TC-ACC-08','TC-ROL-04','TC-DI-02','TC-DI-03','TC-DASH-07'}
+        for case_id in expected:
+            with self.subTest(case=case_id):
+                card=c.card_template(r['cases'][case_id])
+                self.assertIn('BLOCKED',card['readiness'])
+                self.assertEqual(card['prerequisites'],r['cases'][case_id]['prerequisites'])
+                self.assertEqual(card['recovery'],r['cases'][case_id]['recovery'])
+                self.assertTrue(card['human_required'])
+                self.assertFalse(card['reviewed_by'])
 
     def test_full_registry_includes_all_cases_without_inventing_coverage(self):
         catalog=c.catalog.load_catalog();r=c.blank_registry(catalog);c.validate(r,catalog)
