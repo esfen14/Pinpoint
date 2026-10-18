@@ -35,6 +35,8 @@ docs() {
   echo "==> docs: current-case automation coverage and source-binding contracts"
   python3 -I "$root/scripts/qa_coverage.py" check
   python3 -I "$root/scripts/test_qa_coverage.py"
+  echo "==> docs: offline container transport and current-case bypass rejection"
+  python3 -I "$root/scripts/test_qa_transport.py"
   echo "==> docs: VM control and endpoint ownership safety"
   python3 -I "$root/scripts/test_vmlab_preflight.py"
   echo "==> docs: VM administrator setup compatibility and saved login validation"

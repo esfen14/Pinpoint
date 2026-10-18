@@ -133,6 +133,8 @@ a browser, provision a guest, recover a lab, or prove the scan guard is enforced
 
 The separate [current-case adapter configuration](Automation_Readiness.md) has
 source-reviewed permission adapters and exact offline collection tests. It is
-not yet integrated into `scripts/playwright-lab`; direct host execution with live
-credentials remains prohibited. Its private per-run environment/mount contract
-must be implemented in a reviewed launcher before live use.
+integrated into `scripts/playwright-lab` only as an offline `--qa-preview` of its
+private environment/mount contract. The legacy runner rejects live use of the new
+config. Direct host execution with live credentials remains prohibited; actual
+ownership/deployed-version proof, exclusive lock and recovery supervision are
+required before a reviewed live dispatcher can use that contract.

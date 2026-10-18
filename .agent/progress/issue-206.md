@@ -59,10 +59,10 @@ and require separately authorized live evidence where needed.
 
 ## State for the next session
 
-- Last relevant checks: `scripts/verify.sh docs` (77 isolated checks) and `scripts/verify.sh frontend` (1003 Vitest tests, five offline Node/Playwright collection checks, QA type check, build/lint; zero errors and 33 existing warnings). Both green.
-- Full check: `scripts/verify.sh all > /tmp/issue-206-coverage-all.log 2>&1` running at the coverage checkpoint. Final result and current-head CI proof are maintained in draft PR #207, not inferred from an earlier revision.
-- Result: five source-complete permission adapters, 234 explicitly unmapped definitions. Source registry, exact selection, draft-card blocking and queue/journal bindings pass isolated checks. No live browser/lab test executed. Initial partial triage remains #208/#209; original human catalog unchanged.
-- Next action: inspect final PR CI/full-gate proof, then implement reviewed current-case selection/private artifact integration in the isolated launcher with ownership, target-version and recovery enforcement. Actual live cards/preflight, atomic scan guarding and pilot execution still require their separate reviewed scope/start.
+- Last check: `scripts/verify.sh docs > /tmp/issue-206-transport-docs.log 2>&1` (86 isolated checks), `bash -n scripts/playwright-lab` and `git diff --check`; offline transport tests use synthetic files and no external Docker/socket/VM calls. Final observed result and current-head CI are recorded in PR #207.
+- Prior coverage head `60d622c`: all three CI jobs passed. Local backend passed 4310/14 skips; combined full run hit intermittent unchanged RemediationPage test #210, then focused/full frontend stages passed. No clean single-invocation all-pass claim for that follow-up.
+- Result: five source-complete permission adapters, 234 unmapped definitions; queue/card bindings and JSON-only transport preparation exist. Transport preview verifies current opened offline case and unconsumed fixed slot, private paths and metadata without reading credential values. Legacy runner rejects current-case config/project/env before credential/socket/Docker work. No live case execution.
+- Next action: implement live supervisor contract for exclusive lab lock, actual deployed-version/baseline proof, durable action consumption, cancellation/timeout and cleanup/recovery. This requires a distinct live session contract; never promote offline journal attestations into authorization. Keep actual live cards and pilot start pending until those checks and reviewed scope exist.
 
 ## Decisions and notes
 
@@ -130,8 +130,22 @@ User requested continuation. Inspection confirms the journal deliberately reject
 live authorization; it cannot be promoted into a dispatcher by passing environment
 variables. Continue the transport portion offline, without lab or credential reads.
 
-1. [ ] Add `scripts/qa_transport.py` and isolated contracts for a queue/journal-bound transport preview: exact current case, immutable sources, unconsumed action slot, fresh offline attestations, private fresh artifact path, read-only sources and minimal credential mounts. No subprocess/live dispatch or authorization from previews.
-2. [ ] Add `scripts/playwright-lab --qa-preview QUEUE JOURNAL STATE_DIR BRIDGE_DIR`; reject current-case config/environment bypasses in the legacy execution path before Docker/socket/credential work. Exercise the shell entry with fake commands only.
-3. [ ] Wire docs-gate checks, fingerprint transport sources, update workflow/status/readiness docs and progress, verify and checkpoint to draft PR #207. Live preflight, ownership lock/deployed version proof, recovery supervisor and explicit started live cards remain pending.
+1. [x] Add `scripts/qa_transport.py` and isolated contracts for a queue/journal-bound transport preview: exact current case, immutable sources, unconsumed action slot, fresh offline attestations, private fresh artifact path, read-only sources and minimal credential mounts. No subprocess/live dispatch or authorization from previews.
+2. [x] Add `scripts/playwright-lab --qa-preview QUEUE JOURNAL STATE_DIR BRIDGE_DIR`; reject current-case config/environment bypasses in the legacy execution path before Docker/socket/credential work. Exercise the shell entry with fake commands only.
+3. [x] Wire docs-gate checks, fingerprint transport sources, update workflow/status/readiness docs and progress, verify and checkpoint to draft PR #207. Live preflight, ownership lock/deployed version proof, recovery supervisor and explicit started live cards remain pending.
 
 Next action: failing transport validation tests, then smallest implementation.
+
+Transport round 1: test-first run failed because `qa_transport.py` was missing.
+Nine isolated transport tests now pass, including no credential file opens,
+stale/modified journal/source rejection, invalid budgets/result order, used slots,
+private permissions, symlink/mount delimiter rejection, retained evidence, draft
+cards, offline-to-live promotion and supported shell routing. Preview creates no
+socket, consumes no journal slot, writes no evidence and starts no external tool.
+
+Transport round 2: wired docs gate/fingerprints (including bridge implementation),
+updated guide/workflow/status/checklist. Read-only container/source and minimal
+credential exposure are a proposed transport contract, not proved live isolation.
+Live lock/deployment/recovery supervisor remains unimplemented. Shell syntax and
+whitespace checks pass; relevant docs gate and final-head CI proof are maintained
+in draft PR #207. Scope remains offline implementation only.

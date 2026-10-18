@@ -264,8 +264,14 @@ The [source coverage register](../docs/qa/Automation_Coverage.md) accounts for a
 `qa_coverage.py` validates hashes/review/item coverage and binds cards to exact
 selection. `playwright.qa.config.ts` has one worker, zero retries, no setup
 dependencies/captures and private unique outputs; offline collection is checked.
-The existing lab launcher does not yet forward/mount its selection/output contract,
-so new-config live execution and all live cards remain blocked. No new case result
+The isolated launcher now has a JSON-only `--qa-preview` for the selection/output
+contract, validated against one unconsumed opened journal case. Its proposed mounts
+keep source/root read-only and expose separate private evidence and only two Staff
+credential files, with no credential value reads during preparation. Nine synthetic
+transport tests cover stale scope, slot/budget/state, private paths, forbidden
+config fallthrough and offline/live distinction. Live locking, target-version proof,
+durable action consumption and recovery supervision remain absent; the legacy
+runner rejects the new config. New-config live execution and all live cards remain blocked. No new case result
 is claimed. See [adapter preparation](../docs/qa/Automation_Readiness.md). Review-only `investigate`
 queues now retain human partials for mandatory evidence/issue triage and reject
 product case opening. The [partial-pass register](../docs/qa/Partial_Pass_Investigations.md)

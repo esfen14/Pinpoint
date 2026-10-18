@@ -43,8 +43,10 @@ rejects stale source claims. Queue preparation/checking and the offline journal
 reject execution cards not bound to an implemented mapping and its exact command.
 A card template is deliberately BLOCKED; never substitute guessed prerequisites,
 reviewer, timeouts or output paths. Five permission adapters exist in source only.
-Their new config is not yet supported by the isolated launcher; do not bypass it
-with a host browser. Actual live cards, preflight and explicit start remain required.
+The isolated launcher supports a JSON-only `--qa-preview`, bound to one opened
+offline journal case; its legacy execution path rejects the new config. The
+preview reads credential metadata only and is explicitly not live authorization.
+Never execute printed Docker argv manually or bypass the gate with a host browser. Actual live cards, preflight and explicit start remain required.
 
 ## Mandatory partial-pass investigation
 

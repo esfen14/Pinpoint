@@ -382,4 +382,6 @@ cases can be assigned but cannot execute. Complete source coverage alone does no
 make a live card ready. Supplied cards must bind `coverage_hash` and `selection` to
 the reviewed record and its exact argv; no default project list is accepted.
 Five Staff permission adapters are source-complete, with no new live results.
-The launcher integration and all live cards remain pending.
+Offline `scripts/playwright-lab --qa-preview` prepares one queue/journal-bound
+transport plan without reading credential values or running commands. Live
+supervision, actual preflight/ownership/recovery and all live cards remain pending.

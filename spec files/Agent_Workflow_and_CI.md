@@ -196,7 +196,15 @@ reports. App/spec conflicts remain decisions, not automatic passes.
   cards bind its digest, adapter identity and exact argv. Unmapped/partial cards
   cannot open a case. The journal requires recorded action slots before PASS.
   Five Staff permission adapters have isolated offline collection/type checks;
-  no live execution is implied. Their launcher integration remains pending.
+  no live execution is implied. `scripts/qa_transport.py` and the runner's
+  `--qa-preview` validate one unconsumed opened offline case and produce a JSON-only
+  container contract: read-only source/root, isolated network, private separate
+  evidence, and only two Staff credential mounts. Metadata checks never read
+  credential values. Invalid/stale journals, private paths, used slots or draft
+  cards reject the preview. The legacy runner rejects the current-case config
+  before private-state/socket/Docker work. Live locking, deployed-version proof,
+  slot consumption, dispatch and recovery remain pending; executing printed argv
+  manually is not a supported workflow or authorization.
 - **Partial-pass investigation:** Every catalog partial needs an evidence review,
   duplicate search, linked issue/disposition and next action in the
   [partial-pass register](../docs/qa/Partial_Pass_Investigations.md). The

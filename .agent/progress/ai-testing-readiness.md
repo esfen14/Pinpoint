@@ -33,14 +33,14 @@ claim that the product passes or that every case can run without human involveme
 - Forty-one post-cutoff-directory-date reports are inventoried; six current-case
   mappings are partial. No inherited full-case PASS or cutoff decision is invented.
 - All 239 definitions now have explicit source-coverage records: five Staff permission adapters implemented in source, 234 unmapped. Registry and queue/card binding reject changed sources, incomplete coverage and broader selections.
-- The separate Playwright config has exact IDs, no setup dependency/retry/capture, one worker and private unique artifacts. Type checks and five offline collection/selection tests pass. Its live launcher integration and all live cards remain blocked; no browser was launched.
+- The separate Playwright config has exact IDs, no setup dependency/retry/capture, one worker and private unique artifacts. Type checks and five offline collection/selection tests pass. An offline queue/journal-bound transport preview now defines the private environment/mount contract and rejects legacy live fallthrough. Live supervision and all live cards remain blocked; no browser was launched.
 - Offline session validation rejects missing owner/start/preflight attestations,
   incomplete/changed adapters, wrong action slots, exhausted budgets, incomplete
   PASS evidence and failed cleanup. It dispatches no live commands and is not an
   OS sandbox. Live adapter completion, preflight, enforced scan guard, recovery/resume
   and pilot runs remain separate pending work.
 - Current/historical links and docs checks have migrated. `scripts/verify.sh docs`
-  is green (77 isolated checks). Full local verification passed 4310 backend and
+  is green (86 isolated checks). Full local verification passed 4310 backend and
   1003 frontend tests, build and lint (zero errors). [Draft PR #207](https://github.com/esfen14/Pinpoint/pull/207)
   contains the offline milestone; final-head CI is checked separately.
 
@@ -110,7 +110,8 @@ that proposal if this choice is approved; it is not automatically superseded.
 - [ ] Verify Docker, VirtualBox where needed, Node/Python, `socat`, Chromium system libraries, private credential files and the Unix-socket bridge during an authorized environment preflight.
 - [ ] Add a case-to-tool/spec/project mapping for every selected ID, including required fixtures, assertion method, evidence output and cleanup. Record reuse rather than claiming every existing spec covers the new case in full.
 - [x] Bind reviewed source mappings/cards to exact file, title, project, config and command; reject unmapped/partial or stale mappings. Offline collection proves one-case/five-case selection with no old setup projects.
-- [ ] Integrate immutable current-case selection and private artifact mounts into the no-network launcher, with actual ownership/target/preflight proof. The current launcher does not forward the new config environment and cannot run these adapters yet.
+- [x] Add an offline queue/journal-bound transport preview with exact selection, private non-overwriting evidence mounts, read-only source/root, minimal Staff credential exposure and rejected legacy launch fallthrough.
+- [ ] Implement the live no-network supervisor with exclusive lab lock, actual ownership/target/preflight proof, durable slot consumption and recovery. A JSON-only offline transport preview now carries the environment/mount contract; live locking, deployed-version proof, action consumption and recovery supervision remain pending.
 - [x] Add a dedicated current-case configuration with one worker, zero retries even under CI, no setup dependencies and no default selection; verify with offline collection.
 - [ ] Prove the reviewed live launcher preserves those limits and separate diagnostic attempts; the legacy config still has different retry behavior and is not inherited by this adapter configuration.
 - [ ] Persist unique run-specific JSON/download/journal outputs before reset or another launch; the current single `playwright-results.json` path must not overwrite earlier run evidence.
@@ -336,6 +337,7 @@ execution and missing mandatory evidence block the affected cases.
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| Transport preparation | Added offline queue/journal-bound minimal container preview, private mount/credential metadata guards and blocked legacy current-case fallthrough | Nine synthetic transport checks, docs gate and shell syntax/whitespace | Local verification recorded in issue progress; no credential values, live socket, Docker, browser or lab operation |
 | Coverage/adapters implementation | Added all-case source registry, five permission adapters, exact offline collection/private artifacts and queue/card source binding; draft cards fail closed | Docs gate (77 isolated checks), frontend gate (1003 existing tests plus five Node checks), QA type check | Green locally; full verification and final-head CI recorded separately; no browser/lab execution |
 | Checklist audit | Checked verified offline substeps, split partial aggregates and retained open case mapping, reuse approval, live enforcement and pilot requirements; synchronize main-checkout plan | Source/test/report review; `scripts/verify.sh docs`; final-head CI review | Docs gate passed (68 isolated checks); no live QA |
 | Offline implementation #206 | Parser/queues/evidence/session validation and documentation migration implemented in the isolated issue checkout | `scripts/verify.sh docs` and syntax/whitespace checks | Green: 4310 backend/1003 frontend plus build/lint; draft PR #207 published, final-head CI to inspect; live readiness remains pending |
@@ -347,7 +349,7 @@ execution and missing mandatory evidence block the affected cases.
 ## State for the next session
 
 - Checklist audited after the partial-pass follow-up: completed offline work is checked below its owning phase; incomplete aggregates are split rather than marked wholly done.
-- Last check run: `scripts/verify.sh all` (green), followed by final `scripts/verify.sh docs` (77 isolated checks) after coverage/adapter preparation; frontend gate includes QA type checking and five offline Node selection tests.
+- Last check run: `scripts/verify.sh all` (green), followed by final `scripts/verify.sh docs` (86 isolated checks) after offline transport preparation; frontend gate includes QA type checking and five offline Node selection tests.
 - Result: 4310 backend tests passed (14 skips), 1003 frontend tests passed, build and lint passed with zero errors. Offline milestone is in draft PR #207; inspect its final-head CI. No live cases have been executed.
 - Next action: Continue current-case adapter/coverage preparation from this checklist after reviewing #207. Next implementation is isolated launcher selection/artifact integration with ownership/recovery enforcement. Live preflight/scan guard/recovery and the pilot still require their reviewed scope/start. Human-result conflicts and the provisional cutoff remain explicit review items.
 

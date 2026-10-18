@@ -65,14 +65,47 @@ the impact before refreshing hashes; regeneration alone is not a coverage review
 
 ## Remaining live requirements
 
-The existing `scripts/playwright-lab` does **not** forward `PINPOINT_QA_CASES` or
-`PINPOINT_QA_RUN_DIR` into its container or mount the new private artifact path.
-The new config therefore fails closed through the current launcher. Do not work
-around this by launching a host browser with credentials or relaxing isolation.
-A future reviewed launcher must bind those values to the immutable queue/card,
-provide private per-run mounts, verify deployed version and exclusive ownership,
-then launch only the approved exact selection through the no-network boundary.
-An environment variable or config file is not runtime authorization or an OS sandbox.
+The isolated runner now has an **offline preview entry point**. For a queue with
+an opened offline case, complete reviewed source-bound card and fresh synthetic
+or independently obtained offline attestations, use:
+
+```bash
+scripts/playwright-lab --qa-preview QUEUE_JSON JOURNAL_JSON PRIVATE_STATE_DIR PRIVATE_BRIDGE_DIR
+```
+
+This prints JSON only. `scripts/qa_transport.py` checks queue/journal identity,
+source freshness, owner, fixed batch order/budget, completed prior slots, fresh
+offline preflight attestations and an unconsumed initial action before preparing
+one current-case container plan. It does not read credential values, consume the
+action slot, create directories/sockets, contact the lab or execute the plan.
+Missing cards or observations block the preview; do not invent them to get output.
+
+The proposed transport passes exactly that case ID and `/evidence` into the new
+config, mounts source read-only, mounts only the two needed Staff credential files
+read-only, and reserves a separate writable evidence mount. It uses network none,
+read-only container root, dropped capabilities, no-new-privileges and temporary
+scratch space. Existing evidence is never overwritten. State/evidence/bridge paths
+must be disjoint from each other and the checkout, same-owner, private and free
+of symlinks or Docker mount delimiters; evidence and bridge directories must be
+empty. Only credential file metadata is inspected, never its values. Runtime
+image/browser availability, compatibility and private evidence retention still
+need proof; the container image uses the existing tag, not a digest pin.
+
+The preview explicitly returns `live_authorized: false` and BLOCKED readiness.
+The legacy launch path rejects `playwright.qa.config` arguments and current-case
+environment variables before reading private state or invoking socket/Docker tools.
+It cannot execute a preview. Do not run the printed Docker argv by hand or work
+around this gate with a host browser. Argument checks are fail-closed routing for
+this supported entry point, not a sandbox against arbitrary shell access or an
+agent writing another config.
+
+A future live supervisor must hold the exclusive lab lock, prove actual runtime
+ownership, deployed revision and restoration baseline, durably consume the action
+slot before launch, enforce cancellation/timeout and halt on unresolved recovery.
+It must then revalidate unchanged scope/files, create the private origin bridge,
+execute only the approved selection and persist result/cleanup evidence. An offline
+journal's attestation cannot substitute for these checks. Preview metadata may
+contain local private paths; keep it outside committed evidence.
 
 No live card is complete yet. Actual account readiness, target revision, lab claim,
 preflight, output lifetime, interruption/recovery and set start must be reviewed and
@@ -85,7 +118,8 @@ checks do not establish discovery, NCPA, report content, performance or E2E cove
 
 `scripts/verify.sh docs` checks the registry/derived view and isolated Python
 contracts. `scripts/verify.sh frontend` type-checks the new config/adapter and runs
-`node --test qa/selection.node.mjs` before existing frontend checks. Those Node
+`node --test qa/selection.node.mjs` before existing frontend checks. Nine additional Python transport tests use synthetic private files and exercise
+the preview/legacy rejection paths without external commands. Those Node
 tests use Playwright `--list` with no browser or credentials: they prove exact
 one-case/five-case collection, no setup dependencies/retries and rejected invalid
 selection/private paths. They are harness checks, not live acceptance evidence.
