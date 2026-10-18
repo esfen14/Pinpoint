@@ -9,6 +9,7 @@ import { exportRows } from '../../utils/exportData'
 import { ExportMenu } from '../shared/ExportMenu'
 import type { DeviceServicesReport } from '../../types/report'
 import { ServiceReportContext } from './ServiceReportContext'
+import { NoRecordedDataNotice } from './NoRecordedDataNotice'
 import { Pagination } from '../shared/Pagination'
 
 
@@ -43,6 +44,8 @@ type Report = {
   rows: Row[]
   cards: ExtraReportCard[]
   serviceContext?: DeviceServicesReport
+  // Rows exist but none has recorded time in the period (Hosts by OS).
+  noRecordedTime?: boolean
 }
 
 type NagiosEvent = Record<string, unknown>
@@ -111,6 +114,7 @@ function buildReport(view: ExtraReportView, data: Record<string, unknown>): Repo
       ],
       rows,
       cards: [],
+      noRecordedTime: rows.length > 0 && rows.every((r) => r.uptime == null),
     }
   }
 
@@ -417,6 +421,7 @@ export function ExtraReports({ view, query, runKey, onStatus, onCards }: Props) 
           </div>
         </div>
 
+        {!isLoading && report?.noRecordedTime && <NoRecordedDataNotice />}
         <div className="overflow-x-auto">
           <table className="w-full min-w-275 text-left text-sm">
             <thead className="border-b border-gray-200 text-gray-500 dark:border-white/10 dark:text-gray-500">

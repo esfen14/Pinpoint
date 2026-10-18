@@ -437,6 +437,14 @@ measured small-lab Nagios load. Installation, independent-host scale and browser
 walkthrough remain unverified; see [the service report](../docs/test-runs/2026-10-14-issue-128-ncpa-services/REPORT.md)
 and [the capability report](../docs/test-runs/2026-10-14-issue-128-ncpa-probe/REPORT.md).
 
+## Host reports for a period with no data (#229)
+
+Host Availability and Hosts by OS now say "No data in this period" when no listed host has
+recorded state time, instead of showing a table of dashes, and Host Availability no longer
+shows the success banner in that case. The wording still differs between the six tabs (see
+[Reports](Frontend_Modules_and_Routes.md#reports)); the lab re-run of TC-RPT-06 on a deployed
+build is pending.
+
 ## Service-report availability (#198)
 
 The issue branch replaces Network Services and Device Services snapshot counting

@@ -410,6 +410,15 @@ API `total_snapshots` value is known-state duration in seconds from Nagios,
 not a polling snapshot count. Export logging posts to `/api/system/exportlog`;
 a logging failure does not prevent the download.
 
+No-data wording (#229): a period with no events shows "No data in this period" on Alerts
+and Notifications (an empty table). Network Services and Device Services show their
+"No recorded data: …" coverage note. Host Availability and Hosts by OS keep listing the hosts
+that were asked about, but when no listed host has any recorded state time (Host Availability
+`total_snapshots` 0 for every row, Hosts by OS uptime empty for every row) a notice above the
+table says "No data in this period. Nagios has no recorded history for these hosts in the
+selected period.", and Host Availability does not show "Report generated successfully.". The
+wording differs by view; the empty-list text "No data in this period" is shared.
+
 Service-report browser comparison is opt-in: Playwright project `issue-198-live`,
 `e2e/service-reports.lab.spec.ts`, accepts only `ISSUE198_LAB_URL=http://127.0.0.1:19198`.
 That URL must tunnel to `server/tests/e2e/service_reports_core.py --serve` on the

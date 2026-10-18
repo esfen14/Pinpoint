@@ -6,6 +6,7 @@ import { exportRows } from '../../utils/exportData'
 import { ExportMenu } from '../shared/ExportMenu'
 import type { HostAvailabilityRow } from '../../types/report'
 import { Pagination } from '../shared/Pagination'
+import { NoRecordedDataNotice } from './NoRecordedDataNotice'
 
 type HostAvailabilityReportTableProps = {
   hosts: HostAvailabilityRow[]
@@ -140,6 +141,7 @@ export function HostAvailabilityReportTable({
         </div>
       </div>
 
+      {!isLoading && hosts.length > 0 && hosts.every((h) => h.totalSnapshots === 0) && <NoRecordedDataNotice />}
       <div className="overflow-x-auto">
         <table className="w-full min-w-275 text-left text-sm">
           <thead className="border-b border-gray-200 text-gray-500 dark:border-white/10 dark:text-gray-500">
