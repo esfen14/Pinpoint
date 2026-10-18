@@ -194,3 +194,24 @@ test('TC-DI-03: One reason per port', async ({ page }, info) => {
   // qa-evidence:TC-DI-03:E2
   await observe(info, 'TC-DI-03', 'E2', 'The reason explains the expected/found names and says monitoring waits for acknowledgement.');
 });
+
+test('TC-DASH-07: "No data" instead of blank cards', async ({ page }, info) => {
+  await signInSuperAdmin(page);
+  await page.goto('/dashboard');
+
+  const latencyTitle = page.getByText('Network Latency', { exact: true });
+  await expect(latencyTitle).toBeVisible();
+  const latencyCard = latencyTitle.locator('..').locator('..');
+  await expect(latencyCard.getByText('No data', { exact: true })).toBeVisible();
+
+  const performanceTitle = page.getByRole('heading', { name: 'Network Performance', exact: true });
+  const performance = performanceTitle.locator('..').locator('..');
+  await expect(performance).toBeVisible();
+  await expect(performance.getByText('No data', { exact: true })).toHaveCount(2);
+  // qa-evidence:TC-DASH-07:E1
+  await observe(info, 'TC-DASH-07', 'E1', 'Network Latency and both Network Performance metrics show No data.');
+
+  await expect(page.getByRole('heading', { name: 'Average Resource Utilization', exact: true })).toHaveCount(0);
+  // qa-evidence:TC-DASH-07:E2
+  await observe(info, 'TC-DASH-07', 'E2', 'Average Resource Utilization is absent without NCPA data.');
+});

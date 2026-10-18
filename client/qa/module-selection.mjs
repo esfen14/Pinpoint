@@ -7,6 +7,7 @@ export const CASES = Object.freeze({
   'TC-ROL-04': 'TC-ROL-04: A dashboard-only user is limited to the Dashboard',
   'TC-DI-02': 'TC-DI-02: Port groups and their order',
   'TC-DI-03': 'TC-DI-03: One reason per port',
+  'TC-DASH-07': 'TC-DASH-07: "No data" instead of blank cards',
 });
 
 export function moduleSelection(env) {

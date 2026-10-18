@@ -73,8 +73,16 @@ The replacement untested queue must exclude both IDs and retain these report lin
 
 On 2026-10-18 at 10:54 UTC, the read-only `scripts/vmlab preflight --json`
 reported the same lab UUID (`351eb491-f5e1-4854-a7e4-68309ad774ad`) running with
-host ownership and loopback endpoint checks passing. It returned
-`live_authorized: false` and did not establish the served application revision or
-current controlled baseline. The last recorded target (`299ab3ba…`) is historical
-and cannot be assumed current. No broader current-case launcher exists yet, so
-this observation does not make any Module 2–9 case executable.
+host ownership and loopback endpoint checks passing. The supported read-only
+`scripts/qa_pilot.py inspect` then passed against the reviewed controlled baseline
+and confirmed that the served deployment still matches target
+`299ab3ba7203c89a3ca5d8fabea42d9e5f239be2`. It launched no case/browser/transport
+and reports no live authorization. A source comparison from that target to the
+current repository base (`0f0d563e…`) found changes in DashboardPage,
+DeviceInventoryPage and StatusDetailDrawer only for the unacknowledgement
+confirmation prompt; that behavior is outside the five current module adapters.
+
+The current baseline does not establish the required `qa-accounts`/`qa-view`
+accounts, device/port fixture for TC-DI-02/03, or no-ping/no-NCPA fixture for
+TC-DASH-07. TC-ACC-10 also remains unmapped. No broader current-case launcher
+exists yet, so no Module 2–9 batch is ready to open.
