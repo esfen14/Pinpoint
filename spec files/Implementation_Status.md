@@ -442,11 +442,16 @@ and [the capability report](../docs/test-runs/2026-10-14-issue-128-ncpa-probe/RE
 The deployment API and UI now distinguish a successful agent installation from a
 failed Nagios configuration attachment; per-device outcomes stay tied to the
 agent install, and safe fixed errors identify the attachment stage. Focused
-backend/frontend regressions pass. The live QA run confirms the installed
-restricted helper, a successful NCPA deployment and CPU/memory/disk metrics in
-Network Health, but the reported helper rejection did not recur; exact diagnosis
-of that earlier failure remains open pending a sanitized capture from the
-originating environment. See [the issue #234 report](../docs/test-runs/2026-10-19-issue-234-ncpa-helper/REPORT.md).
+backend/frontend regressions pass. A supported QA run confirms helper compatibility, successful NCPA deployment and
+CPU/memory/disk metrics in Network Health. Read-only diagnostics on the originating
+appliance then confirmed the reported helper rejection at 18:21 UTC (app
+`65a5862c`) and that the current helper plus its exact sudoers drop-in were
+created at 18:33 UTC. Their current metadata and helper-source hash match the
+restricted installer helper from PR #7 (`b166953d`). The old app logs only a
+generic helper rejection, and the appliance has no base-installer stamp, so the
+exact low-level rejection and full installer release remain unavailable. See
+[the live QA report](../docs/test-runs/2026-10-19-issue-234-ncpa-helper/REPORT.md)
+and [the originating-appliance diagnostics](../docs/test-runs/2026-10-19-issue-234-origin-lab/REPORT.md).
 
 ## Host-report current state (#228)
 
