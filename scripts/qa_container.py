@@ -159,7 +159,7 @@ class ContainerRuntime:
         elapsed=(datetime.now(timezone.utc)-consumed).total_seconds()
         if not 0<=elapsed<plan['remaining_seconds']:raise ValueError('Consumed case budget expired')
         deadline=time.monotonic()+min(timeout,plan['remaining_seconds']-elapsed)
-        self.used=True;failed=False;exit_code=None;started=None;create_called=False
+        self.used=True;failed=False;exit_code=None;started=None;finished=None;run_elapsed=None;create_called=False
         try:
             self.persist('creating',plan,image)
             index=expected.index(t.IMAGE)
@@ -173,7 +173,10 @@ class ContainerRuntime:
             if self.inspected(plan,image,deadline)['Running']:raise ValueError('Container started outside lifecycle')
             if self.bridge.verify(plan,ledger,uuid) is not True:raise ValueError('Bridge custody lost before attach')
             started=datetime.now(timezone.utc).isoformat()
+            attach_started=time.monotonic()
             self.call(['start','--attach',self.cid],deadline,limit=8*1024*1024,allow_nonzero=True)
+            run_elapsed=time.monotonic()-attach_started
+            finished=datetime.now(timezone.utc).isoformat()
             attach_code=self.last_returncode
             if self.bridge.verify(plan,ledger,uuid) is not True:raise ValueError('Bridge custody lost during attach')
             observed=self.inspected(plan,image,deadline)
@@ -194,4 +197,4 @@ class ContainerRuntime:
         if failed:
             self.halted=True
             raise ValueError('Container lifecycle halted; private evidence and verified recovery required') from None
-        return dict(exit_code=exit_code,container_id=self.cid,container_clean=True,run_started_at=started)
+        return dict(exit_code=exit_code,container_id=self.cid,container_clean=True,run_started_at=started,run_finished_at=finished,run_elapsed_seconds=run_elapsed)

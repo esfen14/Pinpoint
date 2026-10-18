@@ -346,9 +346,13 @@ browser permission assertions and logout/401 passed, container/bridge removal
 completed and independent post-run baseline inspection passed. Overall result is
 INCONCLUSIVE because the parser rejected an E1 timestamp 44 ms beyond its computed
 attempt end; harness [#211](https://github.com/esfen14/Pinpoint/issues/211) tracks
-reporter/clock investigation. The supervisor ledger remains halted; no accepted
+the offline bounded attach-window fix and pinned-worker timing investigation
+([timing rule](../docs/qa/QA_Report_Timing.md)). Import and composed-driver
+regressions accept the synthetic 44 ms relationship and halt on stale/foreign or
+failed-cleanup evidence. Fresh supervised acceptance remains unverified.
+The supervisor ledger remains halted; no accepted
 result, automatic repeat or reset occurred. See the [pilot report](../docs/test-runs/2026-10-18-issue-206-ss04-pilot/REPORT.md).
-A separate harness fix, reviewed recovery, new recheck card and explicit start
+Reviewed recovery, a new recheck card and explicit start
 are needed before another attempt; broader/unattended coverage stays blocked. Controlled launch/build provenance is a trust boundary, not memory
 attestation. The standalone observer's negative readiness fields are unchanged.
 

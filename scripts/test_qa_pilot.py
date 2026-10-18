@@ -29,9 +29,9 @@ class DriverTests(unittest.TestCase):
             container=Mock()
             def execute(plan,*args):
                 self.assertEqual(ledger.snapshot(f.UUID)['attempts'][-1]['status'],'running')
-                return dict(container_clean=True,exit_code=0,run_started_at=v.s.t.x.now())
+                return dict(container_clean=True,exit_code=0,run_started_at=v.s.t.x.now(),run_finished_at=v.s.t.x.now(),run_elapsed_seconds=1)
             container.execute.side_effect=execute
-            def parsed(*args):
+            def parsed(*args,**kwargs):
                 self.assertEqual(args[1],'TC-SS-04')
                 (root/'evidence/E1.json').write_text('{}')
                 return dict(result='PASS',restored=True,evidence={'E1':dict(verdict='PASS',observed='Synthetic permission evidence',reference='E1.json')},reason='')
@@ -39,6 +39,44 @@ class DriverTests(unittest.TestCase):
                 result=v.s.supervise(q,j,grant,ledger,root/'state',root/'bridge',driver)
             self.assertEqual(result['result'],'PASS');self.assertEqual(driver.inspector.verify.call_count,3)
             bridge.stop.assert_called_once();self.assertFalse(ledger.snapshot(f.UUID)['halted'])
+
+    def test_real_parser_44ms_result_and_rejections_through_supervisor(self):
+        fixtures=v.module('result_fixtures','test_qa_results.py')
+        for fault in ('none','stale','future-item','foreign-item','cleanup','missing-finish','missing-elapsed'):
+            with self.subTest(fault=fault),tempfile.TemporaryDirectory() as tmp:
+                root=Path(tmp);q,j,ledger,grant,driver=self.fixture(root)
+                (root/'fixture').mkdir(mode=0o700)
+                report,path,start,finish=fixtures.ResultTests().timing_fixture(root/'fixture')
+                attempt=report['suites'][0]['specs'][0]['tests'][0]['results'][0]
+                if fault=='stale':start='2026-10-18T07:21:19.100Z'
+                elif fault in ('future-item','foreign-item'):
+                    obs=fixtures.json.loads(fixtures.base64.b64decode(attempt['attachments'][0]['body']))
+                    if fault=='future-item':obs['at']='2026-10-18T07:21:19.201Z'
+                    else:obs['case_id']='TC-HIS-01'
+                    attempt['attachments'][0]['body']=fixtures.body(obs)
+                elif fault=='cleanup':attempt['attachments'][1]['body']=fixtures.body(dict(session_closed=False))
+                path.write_text(fixtures.json.dumps(report))
+                runtime=dict(container_clean=True,exit_code=0,run_started_at=start,run_finished_at=finish,run_elapsed_seconds=2.2)
+                if fault=='missing-finish':runtime.pop('run_finished_at')
+                if fault=='missing-elapsed':runtime.pop('run_elapsed_seconds')
+                bridge=Mock();bridge.stop.return_value=True
+                runner=Mock();runner.idle.return_value=True
+                container=Mock()
+                def execute(*args):
+                    self.assertEqual(ledger.snapshot(f.UUID)['attempts'][-1]['status'],'running')
+                    output=root/'evidence/results.json';output.write_text(path.read_text());output.chmod(0o600)
+                    return runtime
+                container.execute.side_effect=execute
+                with patch.object(v.b,'Bridge',return_value=bridge),patch.object(v.p,'GroupRunner',return_value=runner),patch.object(v.c,'ContainerRuntime',return_value=container):
+                    if fault=='none':
+                        result=v.s.supervise(q,j,grant,ledger,root/'state',root/'bridge',driver)
+                        self.assertEqual(result['result'],'PASS')
+                    else:
+                        with self.assertRaises(ValueError):v.s.supervise(q,j,grant,ledger,root/'state',root/'bridge',driver)
+                state=ledger.snapshot(f.UUID)
+                self.assertEqual(state['halted'],fault!='none')
+                self.assertEqual(len(state['attempts']),1)
+                bridge.stop.assert_called_once()
 
     def test_inspector_failure_never_creates_transport_or_consumes(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -54,7 +92,7 @@ class DriverTests(unittest.TestCase):
                 root=Path(tmp);q,j,l,g,driver=self.fixture(root)
                 bridge=Mock();bridge.stop.return_value=failure!='bridge'
                 runner=Mock();runner.idle.return_value=failure!='runner'
-                container=Mock();container.execute.return_value=dict(container_clean=failure!='container',exit_code=0,run_started_at=v.s.t.x.now())
+                container=Mock();container.execute.return_value=dict(container_clean=failure!='container',exit_code=0,run_started_at=v.s.t.x.now(),run_finished_at=v.s.t.x.now(),run_elapsed_seconds=1)
                 outcome=dict(result='INCONCLUSIVE',restored=failure!='session',evidence={},reason='Synthetic incomplete evidence')
                 with patch.object(v.b,'Bridge',return_value=bridge),patch.object(v.p,'GroupRunner',return_value=runner),patch.object(v.c,'ContainerRuntime',return_value=container),patch.object(v.r,'parse_report',side_effect=ValueError('Synthetic malformed report') if failure=='report' else None,return_value=outcome):
                     with self.assertRaises(ValueError):v.s.supervise(q,j,g,l,root/'state',root/'bridge',driver)

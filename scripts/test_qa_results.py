@@ -35,7 +35,98 @@ class ResultTests(unittest.TestCase):
         path=root/'results.json';path.write_text(json.dumps(report));path.chmod(0o600)
         return report,path,(start-timedelta(seconds=1)).isoformat()
 
-    def parse(self,path,root,start):return r.parse_report(path,'TC-SS-04',root,start)
+    def parse(self,path,root,start,finish=None):
+        return r.parse_report(path,'TC-SS-04',root,start,
+            finish or datetime.now(timezone.utc).isoformat(),run_elapsed_seconds=2.2,max_run_seconds=300)
+
+    def timing_fixture(self,root):
+        """Construct from public sanitized timings, never read owner-held evidence."""
+        report,path,_=self.fixture(root)
+        report['stats'].update(startTime='2026-10-18T07:21:17.708Z',duration=1448.738)
+        attempt=report['suites'][0]['specs'][0]['tests'][0]['results'][0]
+        attempt.update(startTime='2026-10-18T07:21:18.069Z',duration=910,
+            workerIndex=0,parallelIndex=0,stdout=[],stderr=[],annotations=[])
+        observation=json.loads(base64.b64decode(attempt['attachments'][0]['body']))
+        observation['at']='2026-10-18T07:21:19.023Z'
+        attempt['attachments'][0]['body']=body(observation)
+        path.write_text(json.dumps(report))
+        # Synthetic independently observed launch/attach completion surround the
+        # published times. They are NOT new observations about the original pilot.
+        return report,path,'2026-10-18T07:21:17.000Z','2026-10-18T07:21:19.200Z'
+
+    def test_observed_44ms_mismatch_uses_independent_run_window(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);root.chmod(0o700)
+            report,path,start,finish=self.timing_fixture(root)
+            attempt=report['suites'][0]['specs'][0]['tests'][0]['results'][0]
+            observation=json.loads(base64.b64decode(attempt['attachments'][0]['body']))
+            computed=r.instant(attempt['startTime'])+timedelta(milliseconds=attempt['duration'])
+            self.assertEqual((r.instant(observation['at'])-computed).total_seconds(),0.044)
+            self.assertEqual(self.parse(path,root,start,finish)['result'],'PASS')
+
+    def test_independent_window_rejects_stale_future_foreign_and_forged_items(self):
+        for fault in ('before-launch','after-finish','before-attempt','foreign-case','foreign-item',
+                      'forged-text','future-finish','reversed-window','over-budget','bad-stats',
+                      'stats-too-long','stats-exceeds-attach','stats-before-launch','attempt-after-finish'):
+            with self.subTest(fault=fault),tempfile.TemporaryDirectory() as d:
+                root=Path(d);root.chmod(0o700)
+                report,path,start,finish=self.timing_fixture(root)
+                attempt=report['suites'][0]['specs'][0]['tests'][0]['results'][0]
+                att=attempt['attachments'][0];obs=json.loads(base64.b64decode(att['body']))
+                if fault=='before-launch':start='2026-10-18T07:21:19.100Z'
+                elif fault=='after-finish':obs['at']='2026-10-18T07:21:19.201Z'
+                elif fault=='before-attempt':obs['at']='2026-10-18T07:21:18.068Z'
+                elif fault=='foreign-case':obs['case_id']='TC-HIS-01'
+                elif fault=='foreign-item':obs['item']='E2'
+                elif fault=='forged-text':obs['observed']='forged unreviewed claim'
+                elif fault=='future-finish':finish=(datetime.now(timezone.utc)+timedelta(seconds=1)).isoformat()
+                elif fault=='reversed-window':finish=start
+                elif fault=='over-budget':start='2026-10-18T07:16:19.199Z'
+                elif fault=='bad-stats':report['stats']['duration']=True
+                elif fault=='stats-too-long':report['stats']['duration']=90001
+                elif fault=='stats-exceeds-attach':report['stats']['duration']=2201
+                elif fault=='stats-before-launch':report['stats']['startTime']='2026-10-18T07:21:16.999Z'
+                else:attempt['startTime']='2026-10-18T07:21:19.201Z'
+                att['body']=body(obs);path.write_text(json.dumps(report))
+                with self.assertRaises(ValueError):self.parse(path,root,start,finish)
+                self.assertFalse((root/'observed-TC-SS-04-E1.json').exists())
+
+    def test_independent_receipts_reject_future_and_invalid_monotonic_budgets(self):
+        for fault in ('future','elapsed-boolean','elapsed-nan','elapsed-zero','elapsed-over-budget',
+                      'budget-boolean','budget-infinite','budget-above-reviewed-cap'):
+            with self.subTest(fault=fault),tempfile.TemporaryDirectory() as d:
+                root=Path(d);root.chmod(0o700)
+                report,path,start,finish=self.timing_fixture(root)
+                elapsed=2.2;budget=300
+                if fault=='future':
+                    start=(datetime.now(timezone.utc)+timedelta(seconds=1)).isoformat()
+                    finish=(r.instant(start)+timedelta(seconds=2)).isoformat()
+                    report['stats']['startTime']=start
+                    attempt=report['suites'][0]['specs'][0]['tests'][0]['results'][0]
+                    attempt['startTime']=start
+                    obs=json.loads(base64.b64decode(attempt['attachments'][0]['body']))
+                    obs['at']=start;attempt['attachments'][0]['body']=body(obs)
+                    path.write_text(json.dumps(report))
+                elif fault=='elapsed-boolean':elapsed=True
+                elif fault=='elapsed-nan':elapsed=float('nan')
+                elif fault=='elapsed-zero':elapsed=0
+                elif fault=='elapsed-over-budget':elapsed=301
+                elif fault=='budget-boolean':budget=True
+                elif fault=='budget-infinite':budget=float('inf')
+                else:budget=301
+                with self.assertRaises(ValueError):
+                    r.parse_report(path,'TC-SS-04',root,start,finish,
+                        run_elapsed_seconds=elapsed,max_run_seconds=budget)
+                self.assertFalse((root/'observed-TC-SS-04-E1.json').exists())
+
+    def test_44ms_fixture_with_failed_logout_stays_inconclusive(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);root.chmod(0o700)
+            report,path,start,finish=self.timing_fixture(root)
+            report['suites'][0]['specs'][0]['tests'][0]['results'][0]['attachments'][1]['body']=body(dict(session_closed=False))
+            path.write_text(json.dumps(report))
+            result=self.parse(path,root,start,finish)
+            self.assertEqual(result['result'],'INCONCLUSIVE');self.assertFalse(result['restored'])
 
     def test_complete_single_attempt_pass_has_sanitized_item_and_cleanup(self):
         with tempfile.TemporaryDirectory() as d:

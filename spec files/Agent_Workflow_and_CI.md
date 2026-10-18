@@ -330,6 +330,21 @@ label that finding `needs-decision` and stop work on the case. Synthetic workflo
 demonstrations use scratch traceability data and do not establish product passes.
 See `.agent/workflows/fix-found.md` for commands and written boundary checks.
 
+### Current-case report timing
+
+The narrow permission importer requires independent owned container attach launch
+and completion UTC, monotonic elapsed time and the consumed remaining case budget.
+Playwright 1.64.0 duration sums selected timeout slots; it is not a wall-clock end.
+Evidence must fall between the current attempt start and actual attach completion,
+within a positive window capped at 300 seconds and the remaining budget. Report
+elapsed duration is bounded by 90 seconds and measured attach elapsed; attempt
+duration is bounded by 60 seconds. Future timestamps receive no grace. Exact
+source/case/initial-attempt/item checks and all cleanup requirements still apply.
+No report-only inference authenticates a malicious same-user writer. See the
+[timing investigation](../docs/qa/QA_Report_Timing.md) for pinned source semantics,
+uncertainty and trust boundary. The real no-browser timing worker is included in
+the frontend gate; it is synthetic harness evidence, never a case verdict.
+
 ## Verification commands
 
 | Stage | Command | Notes |

@@ -224,7 +224,8 @@ class PilotDriver:
             min(30,plan['step_timeout_seconds']))
         self.transport_complete=result.get('container_clean') is True
         self.outcome=r.parse_report(Path(plan['evidence_dir'])/'results.json',
-            plan['case'],Path(plan['evidence_dir']),result['run_started_at'])
+            plan['case'],Path(plan['evidence_dir']),result['run_started_at'],
+            result['run_finished_at'],run_elapsed_seconds=result['run_elapsed_seconds'],max_run_seconds=min(timeout,plan['remaining_seconds']))
         if result['exit_code']!=0 and self.outcome['result']=='PASS':
             self.outcome.update(result='INCONCLUSIVE',reason='Container exit disagrees with successful report')
         return self.outcome
