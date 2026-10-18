@@ -203,7 +203,7 @@ class DriverTests(unittest.TestCase):
             with self.subTest(first=first_result),tempfile.TemporaryDirectory() as tmp:
                 root=Path(tmp);q,j,l,g,driver=self.fixture(root);baseline=self.baseline()
                 baseline['state_dir']=str(root/'state');v.d.seal(baseline)
-                q=v.s.t.x.queue.prepare(['set:Reviewer:TC-ACC-09,TC-NCPA-08'],v.s.t.x.queue.load_catalog(),'a'*40)
+                q=v.s.t.x.queue.prepare(['set:Reviewer:TC-ACC-09,TC-NCPA-08'],v.s.t.x.queue.load_catalog(),'a'*40,purpose='recheck')
                 for case in q['sets'][0]['cases']:
                     evidence=root/case['id'];evidence.mkdir(mode=0o700)
                     card=v.s.t.x.queue.coverage.card_template(case['coverage'])

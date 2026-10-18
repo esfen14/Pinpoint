@@ -32,6 +32,8 @@ class QAQueueTests(unittest.TestCase):
 
     def test_investigation_selects_partial_verdicts_without_silently_retesting(self):
         catalog=queue.load_catalog()
+        # Synthetic partial fixture: real manual verdicts can change independently.
+        catalog['TC-ACK-05']['status']='partial'
         q=queue.prepare(['partial:Reviewer:ACK,REM'],catalog,'a'*40,purpose='investigate')
         self.assertEqual([c['id'] for c in q['sets'][0]['cases']],['TC-ACK-05','TC-REM-04'])
         self.assertEqual(q['sets'][0]['purpose'],'investigate')
@@ -46,16 +48,16 @@ class QAQueueTests(unittest.TestCase):
             queue.prepare(['partial:Reviewer:TC-ACK-06'],catalog,'a'*40,purpose='investigate')
 
     def test_coverage_snapshot_and_unmapped_card_cannot_be_bypassed(self):
-        q=queue.prepare(['one:A:TC-SS-04'],queue.load_catalog(),'a'*40)
+        q=queue.prepare(['one:A:TC-SS-04'],queue.load_catalog(),'a'*40,purpose='recheck')
         self.assertEqual(q['sets'][0]['cases'][0]['coverage']['status'],'implemented')
         altered=copy.deepcopy(q);altered['sets'][0]['cases'][0]['coverage']['status']='unmapped'
         queue.seal(altered)
         self.assertTrue(any('coverage changed' in e for e in queue.check(altered,queue.load_catalog())))
         with self.assertRaisesRegex(ValueError,'adapter'):
-            queue.prepare(['one:A:TC-DI-06'],queue.load_catalog(),'a'*40,cards={'TC-DI-06':{'mode':'scripted automation'}})
+            queue.prepare(['one:A:TC-DI-06'],queue.load_catalog(),'a'*40,purpose='recheck',cards={'TC-DI-06':{'mode':'scripted automation'}})
         card={'actions':[['scripts/playwright-lab']]}
         with self.assertRaises(ValueError):
-            queue.prepare(['one:A:TC-SS-04'],queue.load_catalog(),'a'*40,cards={'TC-SS-04':card})
+            queue.prepare(['one:A:TC-SS-04'],queue.load_catalog(),'a'*40,purpose='recheck',cards={'TC-SS-04':card})
 
     def test_recheck_is_explicit_and_still_excludes_conflicts(self):
         q=queue.prepare(['one:A:TC-TOP-01'],self.catalog(),'a'*40,purpose='recheck')
@@ -71,7 +73,7 @@ class QAQueueTests(unittest.TestCase):
                 self.assertEqual(len(b['ids']),1)
 
     def test_freshness_detects_selected_change_and_does_not_expand(self):
-        c=self.catalog();q=queue.prepare(['one:A:TC-DI-06'],c,'a'*40)
+        c=self.catalog();q=queue.prepare(['one:A:TC-DI-06'],c,'a'*40,purpose='recheck')
         changed=copy.deepcopy(c);changed['TC-DI-06']['steps']='changed'
         self.assertTrue(queue.check(q,changed))
         changed=copy.deepcopy(c);changed['TC-DI-01']['title']='unselected'
@@ -96,7 +98,7 @@ class QAQueueTests(unittest.TestCase):
     def test_cli_and_overwrite(self):
         with tempfile.TemporaryDirectory() as d:
             out=Path(d)/'q.json'
-            args=[sys.executable,'-I',str(queue.ROOT/'scripts/qa_queue.py'),'prepare','--set','one:A:TC-DI-06','--target-revision','a'*40,'--output',str(out)]
+            args=[sys.executable,'-I',str(queue.ROOT/'scripts/qa_queue.py'),'prepare','--set','one:A:TC-DI-06','--purpose','recheck','--target-revision','a'*40,'--output',str(out)]
             r=subprocess.run(args,capture_output=True,text=True)
             self.assertEqual(r.returncode,0,r.stderr)
             self.assertIn('TC-DI-06',out.with_suffix('.md').read_text())

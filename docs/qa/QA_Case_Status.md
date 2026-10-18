@@ -6,7 +6,7 @@ Historical catalog results are human manual results. Historical reports retain t
 E2E with no recorded result is pending/unrecorded, not proof it was never attempted.
 Accepted evidence and new execution totals must be reported separately.
 
-Source SHA-256: `d9374c41d7f4e5304c3475735d765ad66cb4352cc9745f76e96d78c4de0e398f`.
+Source SHA-256: `4064c125cd88d602b8e9bcec3d533a7ab32c393aeeb371bb1481c1636989fc33`.
 Cases: 231 TC plus 8 E2E.
 Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 
@@ -32,10 +32,10 @@ Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 | TC-ACC-05 | ACC / 2 | FAIL | FAIL - the suspended account successfully signed out but it didn't have any warning when user session is timed out | fail | No reviewed mapping |
 | TC-ACC-06 | ACC / 2 | FAIL | FAIL - the administrator cannot change or reset the other user password | fail | No reviewed mapping |
 | TC-ACC-07 | ACC / 2 | PASS | PASS | pass | No reviewed mapping |
-| TC-ACC-09 | ACC / 2 | Not run | Not run | untested | No reviewed mapping |
-| TC-ACC-10 | ACC / 2 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-17-issue-191-accounts/REPORT.md) |
-| TC-ACC-08 | ACC / 2 | Not run | Not run | untested | No reviewed mapping |
-| TC-ROL-04 | ROL / 2 | Not run | Not run | untested | No reviewed mapping |
+| TC-ACC-09 | ACC / 2 | PASS | PASS | pass | No reviewed mapping |
+| TC-ACC-10 | ACC / 2 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-17-issue-191-accounts/REPORT.md) |
+| TC-ACC-08 | ACC / 2 | PASS | PASS | pass | No reviewed mapping |
+| TC-ROL-04 | ROL / 2 | PASS | PASS | pass | No reviewed mapping |
 | TC-ROL-05 | ROL / 2 | PASS | PASS | pass | No reviewed mapping |
 | TC-ROL-06 | ROL / 2 | PASS | PASS | pass | No reviewed mapping |
 | TC-AUTH-10 | AUTH / 2 | PASS | PASS | pass | No reviewed mapping |
@@ -44,7 +44,7 @@ Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 | TC-SHL-04 | SHL / 2 | PASS | Not run | needs-decision | No reviewed mapping |
 | TC-SHL-10 | SHL / 2 | PASS | Not run | needs-decision | No reviewed mapping |
 | TC-DASH-08 | DASH / 3 | PASS | PASS | pass | No reviewed mapping |
-| TC-SS-04 | SS / 3 | Not run | Not run | untested | No reviewed mapping |
+| TC-SS-04 | SS / 3 | PASS | PASS | pass | No reviewed mapping |
 | TC-HIS-01 | HIS / 3 | PASS | PASS | pass | No reviewed mapping |
 | TC-PLG-07 | PLG / 3 | PASS | PASS | pass | No reviewed mapping |
 | TC-NCPA-08 | NCPA / 3 | Not run | Not run | untested | No reviewed mapping |
@@ -77,17 +77,17 @@ Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 | TC-PLG-05 | PLG / 5 | PASS | PASS | pass | No reviewed mapping |
 | TC-PLG-06 | PLG / 5 | PASS | PASS | pass | No reviewed mapping |
 | TC-DI-01 | DI / 5 | PASS | PASS | pass | No reviewed mapping |
-| TC-DI-02 | DI / 5 | Not run | Not run | untested | No reviewed mapping |
-| TC-DI-03 | DI / 5 | Not run | Not run | untested | No reviewed mapping |
+| TC-DI-02 | DI / 5 | PASS | PASS | pass | No reviewed mapping |
+| TC-DI-03 | DI / 5 | PASS | PASS | pass | No reviewed mapping |
 | TC-DI-04 | DI / 5 | PASS | PASS | pass | No reviewed mapping |
 | TC-DASH-01 | DASH / 6 | PASS | PASS (re-check: this case was reworded to match the real cards) | pass | No reviewed mapping |
 | TC-DASH-05 | DASH / 6 | PASS | PASS | pass | No reviewed mapping |
-| TC-DASH-07 | DASH / 6 | Not run | Not run | untested | No reviewed mapping |
+| TC-DASH-07 | DASH / 6 | PASS | PASS | pass | No reviewed mapping |
 | TC-NH-01 | NH / 6 | PASS | PASS | pass | No reviewed mapping |
 | TC-NH-02 | NH / 6 | PASS | PASS | pass | No reviewed mapping |
 | TC-NH-03 | NH / 6 | PASS | PASS | pass | No reviewed mapping |
 | TC-NH-04 | NH / 6 | PASS | PASS | pass | No reviewed mapping |
-| TC-NH-05 | NH / 6 | Not run | Not run | untested | No reviewed mapping |
+| TC-NH-05 | NH / 6 | PASS | PASS | pass | No reviewed mapping |
 | TC-SS-01 | SS / 6 | PASS | PASS | pass | No reviewed mapping |
 | TC-SS-02 | SS / 6 | PASS | PASS | pass | No reviewed mapping |
 | TC-SS-03 | SS / 6 | PASS | PASS | pass | No reviewed mapping |
@@ -101,44 +101,44 @@ Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 | TC-DX-08 | DX / 6 | Not run | Not run | untested | No reviewed mapping |
 | TC-DX-09 | DX / 6 | Not run | Not run | untested | No reviewed mapping |
 | TC-DX-10 | DX / 6 | Not run | Not run | untested | No reviewed mapping |
-| TC-NH-06 | NH / 6 | Not run | Not run | untested | No reviewed mapping |
-| TC-NH-07 | NH / 6 | Not run | Not run | untested | No reviewed mapping |
+| TC-NH-06 | NH / 6 | PASS | PASS | pass | No reviewed mapping |
+| TC-NH-07 | NH / 6 | PASS | PASS | pass | No reviewed mapping |
 | TC-TOP-01 | TOP / 6 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-117-live-browser/REPORT.md) |
 | TC-TOP-02 | TOP / 6 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-117-live-browser/REPORT.md) |
 | TC-TOP-03 | TOP / 6 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-117-live-browser/REPORT.md) |
 | TC-TOP-04 | TOP / 6 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-117-live-browser/REPORT.md) |
 | TC-TOP-05 | TOP / 6 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-117-live-browser/REPORT.md) |
 | TC-TOP-06 | TOP / 6 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-117-manual-topology/REPORT.md) |
-| TC-DI-05 | DI / 7 | Not run | Not run | untested | No reviewed mapping |
-| TC-DI-06 | DI / 7 | Not run | Not run | untested | No reviewed mapping |
-| TC-DI-07 | DI / 7 | Not run | Not run | untested | No reviewed mapping |
-| TC-DI-08 | DI / 7 | Not run | Not run | untested | No reviewed mapping |
-| TC-DI-09 | DI / 7 | Not run | Not run | untested | No reviewed mapping |
+| TC-DI-05 | DI / 7 | PASS | PASS | pass | No reviewed mapping |
+| TC-DI-06 | DI / 7 | PASS | PASS | pass | No reviewed mapping |
+| TC-DI-07 | DI / 7 | PASS | PASS | pass | No reviewed mapping |
+| TC-DI-08 | DI / 7 | PASS | PASS | pass | No reviewed mapping |
+| TC-DI-09 | DI / 7 | FAIL - Notes in the step-by-step | FAIL - Using network discovery again assigns the device with a port 80 named into a different service name to a new record in network discovery, and saying that the old record has an unknown IP address. The same device is said to have a different SSH key despite being the same device, this needs to be investigated, the device used is 10.77.0.8. | fail | No reviewed mapping |
 | TC-DI-11 | DI / 7 | Not run | Not run | untested | No reviewed mapping |
-| TC-DI-12 | DI / 7 | Not run | Not run | untested | No reviewed mapping |
-| TC-DI-13 | DI / 7 | Not run | Not run | untested | No reviewed mapping |
+| TC-DI-12 | DI / 7 | PASS | PASS | pass | No reviewed mapping |
+| TC-DI-13 | DI / 7 | PASS | PASS | pass | No reviewed mapping |
 | TC-DASH-02 | DASH / 7 | PASS | PASS | pass | No reviewed mapping |
-| TC-DI-14 | DI / 7 | Not run | Not run | untested | No reviewed mapping |
-| TC-DI-15 | DI / 7 | Not run | Not run | untested | No reviewed mapping |
-| TC-DI-16 | DI / 7 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-15-issue-164-identity-review/REPORT.md); supporting: [source report](../test-runs/2026-10-15-issue-164-final-refresh/REPORT.md) |
-| TC-DI-17 | DI / 7 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-15-issue-164-identity-review/REPORT.md); supporting: [source report](../test-runs/2026-10-15-issue-164-final-refresh/REPORT.md) |
-| TC-DI-18 | DI / 7 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-15-issue-164-identity-review/REPORT.md); supporting: [source report](../test-runs/2026-10-15-issue-164-final-refresh/REPORT.md) |
-| TC-DI-19 | DI / 7 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-15-issue-164-identity-review/REPORT.md); supporting: [source report](../test-runs/2026-10-15-issue-164-final-refresh/REPORT.md) |
+| TC-DI-14 | DI / 7 | PASS | PASS | pass | No reviewed mapping |
+| TC-DI-15 | DI / 7 | PASS | PASS | pass | No reviewed mapping |
+| TC-DI-16 | DI / 7 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-164-identity-review/REPORT.md); supporting: [source report](../test-runs/2026-10-15-issue-164-final-refresh/REPORT.md) |
+| TC-DI-17 | DI / 7 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-164-identity-review/REPORT.md); supporting: [source report](../test-runs/2026-10-15-issue-164-final-refresh/REPORT.md) |
+| TC-DI-18 | DI / 7 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-164-identity-review/REPORT.md); supporting: [source report](../test-runs/2026-10-15-issue-164-final-refresh/REPORT.md) |
+| TC-DI-19 | DI / 7 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-164-identity-review/REPORT.md); supporting: [source report](../test-runs/2026-10-15-issue-164-final-refresh/REPORT.md) |
 | TC-DSC-06 | DSC / 7 | Not run | Not run | untested | No reviewed mapping |
 | TC-DSC-07 | DSC / 7 | Not run | Not run | untested | No reviewed mapping |
 | TC-DASH-03 | DASH / 8 | PASS | PASS | pass | No reviewed mapping |
 | TC-ACK-01 | ACK / 8 | PASS | PASS | pass | No reviewed mapping |
 | TC-ACK-02 | ACK / 8 | PASS | PASS | pass | No reviewed mapping |
 | TC-ACK-03 | ACK / 8 | PASS | PASS | pass | No reviewed mapping |
-| TC-ACK-04 | ACK / 8 | Not run | Not run | untested | No reviewed mapping |
-| TC-ACK-05 | ACK / 8 | PARTIALLY PASS | PARTIALLY PASS - there is no prompt to ask you if you want to remove the acknowledge for the alert | partial | No reviewed mapping |
-| TC-ACK-06 | ACK / 8 | See note | There is no filter in acknowledgement/ active alerts | needs-decision | No reviewed mapping |
-| TC-ACK-07 | ACK / 8 | Not run | Not run | untested | No reviewed mapping |
-| TC-ACK-08 | ACK / 8 | Not run | Not run | untested | No reviewed mapping |
+| TC-ACK-04 | ACK / 8 | PASS | PASS | pass | No reviewed mapping |
+| TC-ACK-05 | ACK / 8 | FAIL - see details in step-by-step | FAIL - there is no prompt to ask you if you want to remove the acknowledge for the alert | fail | No reviewed mapping |
+| TC-ACK-06 | ACK / 8 | FAIL - See note | There is no filter in acknowledgement/ active alerts | needs-decision | No reviewed mapping |
+| TC-ACK-07 | ACK / 8 | PASS | PASS | pass | No reviewed mapping |
+| TC-ACK-08 | ACK / 8 | PASS | PASS | pass | No reviewed mapping |
 | TC-DASH-04 | DASH / 8 | PASS | PASS (re-check: wording changed) | pass | No reviewed mapping |
 | TC-HIS-02 | HIS / 8 | PASS | PASS | pass | No reviewed mapping |
 | TC-HIS-03 | HIS / 8 | PASS | PASS | pass | No reviewed mapping |
-| TC-HIS-04 | HIS / 8 | Not run | Not run | untested | No reviewed mapping |
+| TC-HIS-04 | HIS / 8 | PASS | PASS | pass | No reviewed mapping |
 | TC-HIS-05 | HIS / 8 | PASS | PASS | pass | No reviewed mapping |
 | TC-HIS-06 | HIS / 8 | PASS | PASS | pass | No reviewed mapping |
 | TC-HIS-07 | HIS / 8 | PASS | PASS | pass | No reviewed mapping |
@@ -164,9 +164,9 @@ Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 | TC-NCPA-09 | NCPA / 9 | Not run | Not run | untested | partial historical coverage: [source report](../test-runs/2026-10-17-issue-182-playwright/REPORT.md) |
 | TC-NCPA-10 | NCPA / 9 | Not run | Not run | untested | partial historical coverage: [source report](../test-runs/2026-10-17-issue-182-playwright/REPORT.md) |
 | TC-NCPA-11 | NCPA / 9 | Not run | Not run | untested | partial historical coverage: [source report](../test-runs/2026-10-17-issue-182-playwright/REPORT.md) |
-| TC-DI-10 | DI / 9 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-15-issue-129-finish-journeys/REPORT.md) |
-| TC-DASH-09 | DASH / 9 | Not run | Not run | untested | No reviewed mapping |
-| TC-SS-05 | SS / 9 | Not run | Not run | untested | No reviewed mapping |
+| TC-DI-10 | DI / 9 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-129-finish-journeys/REPORT.md) |
+| TC-DASH-09 | DASH / 9 | PASS | PASS | pass | No reviewed mapping |
+| TC-SS-05 | SS / 9 | PASS | PASS | pass | No reviewed mapping |
 | TC-REM-02 | REM / 9 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-17-issue-182-playwright/REPORT.md) |
 | TC-REM-01 | REM / 9 | PASS | PASS | pass | No reviewed mapping |
 | TC-REM-04 | REM / 9 | PARTIALLY PASS | PARTIALLY PASS - | partial | retest required: [source report](../test-runs/2026-10-17-issue-182-playwright/REPORT.md) |
@@ -188,7 +188,7 @@ Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 | TC-LOG-03 | LOG / 10 | PASS | PASS | pass | partial historical coverage: [source report](../test-runs/2026-10-15-issue-124-storage-logs/REPORT.md) |
 | TC-LOG-04 | LOG / 10 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-15-issue-124-storage-logs/REPORT.md) |
 | TC-SHL-05 | SHL / 10 | PASS | Not run | needs-decision | retest required: [source report](../test-runs/2026-10-15-issue-124-storage-logs/REPORT.md) |
-| TC-DASH-06 | DASH / 11 | Not run | Not run | untested | No reviewed mapping |
+| TC-DASH-06 | DASH / 11 | FAIL - While Nagios is down, there is no indication that Nagios is not running and not polling, this was confirmed when trying to modify a Nagios config but can't save. | FAIL | fail | No reviewed mapping |
 | TC-MNT-08 | MNT / 11 | Not run | Not run | untested | No reviewed mapping |
 | TC-SET-08 | SET / 11 | PASS | PASS | pass | No reviewed mapping |
 | TC-SET-09 | SET / 11 | PASS | PASS | pass | No reviewed mapping |

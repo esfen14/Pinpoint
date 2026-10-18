@@ -9,7 +9,7 @@
       "reviewed_by": "Codex mapping review (partial; not full-case acceptance)",
       "reviewed_at": "2026-10-18",
       "impact_review": "The report exercises delayed role loading, default role selection, save without reload, and persistence, which overlap this case. It does not establish every catalog step or current-build compatibility; retain as partial evidence only. The source report identifies its executor; this historical run is not represented as a manual catalog result or new AI execution. The October 15 cutoff remains provisional, so no historical credit is accepted. The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: server/app/api/user/management.py. Re-run this case on the target before using historical evidence to omit checks.",
-      "case_hash": "5236a306f69c77f15f4edaf54717fb0b6763b5acf7db493e3ae92fff442b9c38",
+      "case_hash": "9f0b14fd25f1cd69a976214e00ec3a4f3a56ee09d9d51be31adf7a1a0a5bed99",
       "report": "docs/test-runs/2026-10-17-issue-191-accounts/REPORT.md",
       "report_sha256": "5c43e86dea7e34a56beb697331e1465bd776f1dcf873712c6a289ce67b808532",
       "tested_revision": "2688e430",
@@ -32,7 +32,7 @@
       "reviewed_by": "Codex mapping review (partial; not full-case acceptance)",
       "reviewed_at": "2026-10-18",
       "impact_review": "The deployed nondefault NCPA port was protected by the real port lifecycle and generated monitoring used the stored port. The current inventory UI\u2019s unavailable action controls and target compatibility were not fully established. The report retains its stated executor; this does not change the human catalog result, count as a new AI execution, or establish current-build compatibility. The October 15 cutoff remains provisional; no historical credit is accepted. The tested commit is present and is an ancestor of target 299ab3ba7203. Case-specific source review found these relevant post-run product changes: client/src/components/device-inventory/DevicePortsSection.tsx, client/src/components/device-inventory/devicePortsLogic.ts, server/app/api/system/ncpa_deployment.py, server/app/ncpa_deployment/ncpa_deployment.py, server/app/network_discovery/create_host_cfg.py. Re-run this case on the target before omitting checks.",
-      "case_hash": "5da85ed8901985f618fa5dc75800804a48313716f049b53e24520c433e9d8bda",
+      "case_hash": "e4376213658d6f728cdf50eeb90c0078dda99209bdc00912b25eb2122e65db6b",
       "report": "docs/test-runs/2026-10-15-issue-129-finish-journeys/REPORT.md",
       "report_sha256": "74d4ffa605aeaac657a0ea52e0d36ba6d9b98f9030a1177740d9deacf6c85bf3",
       "tested_revision": "c9f8e263",
@@ -59,7 +59,7 @@
       "reviewed_by": "Codex mapping review (partial; not full-case acceptance)",
       "reviewed_at": "2026-10-18",
       "impact_review": "The browser showed a separate Needs Review count/list and confirmed unresolved identity review behavior. Empty-state wording and the full current search interaction were not established. The report retains its stated executor; this does not change the human catalog result, count as a new AI execution, or establish current-build compatibility. The October 15 cutoff remains provisional; no historical credit is accepted. The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/device-inventory/IdentityReviewDrawer.tsx, server/app/api/system/device_identity.py, server/app/network_discovery/device_identity.py. Re-run this case on the target before using historical evidence to omit checks.",
-      "case_hash": "a6c1ef3a446d94020f62e4d540d44bcf070bb5843ceeae9d6c76a856bcea08d2",
+      "case_hash": "77a456eed1b9639e93998d01d8cd6f3061936c0444c9d46492cc038599901a20",
       "report": "docs/test-runs/2026-10-15-issue-164-identity-review/REPORT.md",
       "report_sha256": "0730cce909440f11222554ec4b97f22acdee5666f31a87fbe366a7910792b468",
       "tested_revision": "d8aac3e4",
@@ -93,7 +93,7 @@
       "reviewed_by": "Codex mapping review (partial; not full-case acceptance)",
       "reviewed_at": "2026-10-18",
       "impact_review": "The browser loaded review comparison details and address history; cancellation left review IDs unchanged, with tests confirming no mutation request. Current drawer fields and target compatibility remain to review. The report retains its stated executor; this does not change the human catalog result, count as a new AI execution, or establish current-build compatibility. The October 15 cutoff remains provisional; no historical credit is accepted. The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/device-inventory/IdentityReviewDrawer.tsx, server/app/api/system/device_identity.py, server/app/network_discovery/device_identity.py. Re-run this case on the target before using historical evidence to omit checks.",
-      "case_hash": "2ee44b9d1293f0400000f505d26ec2440e3654b68b7f99f0e3ad09fa687e0829",
+      "case_hash": "c809e8a6ea93f301f8fe2dd332ddbfd7264c08e6190106db7585dea0c105409a",
       "report": "docs/test-runs/2026-10-15-issue-164-identity-review/REPORT.md",
       "report_sha256": "0730cce909440f11222554ec4b97f22acdee5666f31a87fbe366a7910792b468",
       "tested_revision": "d8aac3e4",
@@ -127,7 +127,7 @@
       "reviewed_by": "Codex mapping review (partial; not full-case acceptance)",
       "reviewed_at": "2026-10-18",
       "impact_review": "Both source/target choices began empty and a successful two-record merge was exercised; focused tests cover permission gates and invalid/self/stale choices. Full current UI equivalence and target compatibility remain open. The report retains its stated executor; this does not change the human catalog result, count as a new AI execution, or establish current-build compatibility. The October 15 cutoff remains provisional; no historical credit is accepted. The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/device-inventory/IdentityReviewDrawer.tsx, server/app/api/system/device_identity.py, server/app/network_discovery/device_identity.py. Re-run this case on the target before using historical evidence to omit checks.",
-      "case_hash": "4383a640848e6b88476579c8de6e6d3a30be4eb7d53e7f8164d747cc0447252e",
+      "case_hash": "51227c0eee9635b14964bc4c27a06445ecd427d439b5e7418f494b87f0c039c9",
       "report": "docs/test-runs/2026-10-15-issue-164-identity-review/REPORT.md",
       "report_sha256": "0730cce909440f11222554ec4b97f22acdee5666f31a87fbe366a7910792b468",
       "tested_revision": "d8aac3e4",
@@ -161,7 +161,7 @@
       "reviewed_by": "Codex mapping review (partial; not full-case acceptance)",
       "reviewed_at": "2026-10-18",
       "impact_review": "The confirmation showed source/target details and no undo, then a merge refreshed the review/inventory state. The exact current conflict/duplicate-submit wording and target compatibility remain open. The report retains its stated executor; this does not change the human catalog result, count as a new AI execution, or establish current-build compatibility. The October 15 cutoff remains provisional; no historical credit is accepted. The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/device-inventory/IdentityReviewDrawer.tsx, server/app/api/system/device_identity.py, server/app/network_discovery/device_identity.py. Re-run this case on the target before using historical evidence to omit checks.",
-      "case_hash": "192161bebf7324ebc976cc06a5c1cfe9d6e3f302c2c56cca4840a0da115f422f",
+      "case_hash": "4855504ec47ab65532d9220504745483f37413411cf45c29416a679865d84a4c",
       "report": "docs/test-runs/2026-10-15-issue-164-identity-review/REPORT.md",
       "report_sha256": "0730cce909440f11222554ec4b97f22acdee5666f31a87fbe366a7910792b468",
       "tested_revision": "d8aac3e4",
@@ -1283,5 +1283,19 @@
         "decision": "The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: server/app/network_discovery/host_config_templates.py. Re-run this case on the target before using historical evidence to omit checks."
       }
     }
-  ]
+  ],
+  "catalog_result_review": {
+    "reviewed_by": "Codex catalog result-only comparison",
+    "reviewed_at": "2026-10-19",
+    "compared_catalog_revision": "43f0df103752d485f4cab786ee29ce6a5e049add",
+    "decision": "All 239 definitions compared: titles, steps, expected items, prerequisites, requirements, safety classification and context are unchanged after masking only recorded result fields. Refresh bindings for the recorded verdicts; retain adapter implementation claims and historical compatibility/cutoff decisions. This review adds no execution or historical acceptance.",
+    "refreshed_cases": [
+      "TC-ACC-10",
+      "TC-DI-10",
+      "TC-DI-16",
+      "TC-DI-17",
+      "TC-DI-18",
+      "TC-DI-19"
+    ]
+  }
 }

@@ -18,7 +18,7 @@ class TransportTests(unittest.TestCase):
         for name in ('state','bridge','evidence'):(root/name).mkdir(mode=0o700)
         for name in ('restricted-email','restricted-new-password'):
             path=root/'state'/name;path.write_text('synthetic-private-value');path.chmod(0o600)
-        q=t.x.queue.prepare(['set:Reviewer:TC-SS-04'],t.x.queue.load_catalog(),'a'*40)
+        q=t.x.queue.prepare(['set:Reviewer:TC-SS-04'],t.x.queue.load_catalog(),'a'*40,purpose='recheck')
         case=q['sets'][0]['cases'][0];card=t.x.queue.coverage.card_template(case['coverage'])
         card.update(reviewed_by='Synthetic reviewer',timeout_seconds=60,step_timeout_seconds=10,
             human_required=False,prerequisites=['Synthetic Staff baseline'],

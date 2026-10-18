@@ -1,5 +1,19 @@
 # Historical black-box evidence review
 
+## 2026-10-19 catalog result binding review
+
+PR #237 records newer Modules 1–11 outcomes. Comparing the catalog against
+`43f0df103752d485f4cab786ee29ce6a5e049add` confirmed that all 239 case/scenario
+titles, priorities, procedures, expected items, prerequisites, requirements and
+safety classifications are unchanged after masking recorded result fields only.
+The changed result text invalidated six historical procedure hashes:
+TC-ACC-10, TC-DI-10 and TC-DI-16 through TC-DI-19. Their hashes were refreshed
+with an attributable result-only comparison in `historical-evidence-review.json`.
+Original reports, source compatibility reviews, target revision, classifications,
+covered-item maps and provisional cutoff decision remain unchanged. No historical
+coverage is newly accepted and no live execution was performed for this refresh.
+
+
 Cutoff candidate: October 15, 2026 (Asia/Manila); still provisional. This inventory
 is a dated discovery aid, not a result ledger or a claim that every post-cutoff
 report tested a current build. Original reports and human catalog verdicts remain unchanged.
