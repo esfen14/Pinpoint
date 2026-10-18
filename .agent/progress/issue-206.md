@@ -24,7 +24,7 @@ Status: in-progress
 ## Plan
 
 1. [x] Add shared catalog parser/tests in `scripts/qa_catalog.py`, `scripts/test_qa_catalog.py`.
-2. [ ] Migrate `scripts/qa_queue.py` and queue tests; add reviewed-evidence validation and historical inventory.
+2. [x] Migrate `scripts/qa_queue.py` and queue tests; add reviewed-evidence validation and historical inventory.
 3. [ ] Add offline execution-state/card/result validation and tests; do not launch labs or unmapped browser tests.
 4. [ ] Migrate traceability/rendering/tests/report templates/documentation links and specifications; verify docs.
 5. [ ] Review finish condition, verify required gates, checkpoint and open PR with explicit remaining live work.
@@ -33,14 +33,15 @@ Status: in-progress
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| 2 | Migrated module/person queue v2 and reviewer-bound evidence validation; inventoried 41 reports and attached six partial candidate mappings | `python3 -I scripts/test_qa_queue.py`; `python3 -I scripts/test_qa_evidence.py` | 8 queue and 3 evidence tests pass; no historical PASS inferred; docs migration remains round 4 |
 | 1 | Added shared catalog parser with shorthand phase expansion, 239 definitions, complete procedures/expectations and result-conflict handling | `python3 -I scripts/test_qa_catalog.py`; `python3 -I scripts/qa_catalog.py` | 4 tests pass; 231 TC/8 E2E; 26 conflicts plus one free-text verdict flagged; docs gate migration remains step 4 |
 | Plan | Copied approved local documentation/catalog transition into isolated issue checkout; recorded implementation plan | `gh issue view 206 --json body --jq .body` | Finish condition covers offline readiness; no live operations authorized |
 
 ## State for the next session
 
-- Last check run: `python3 -I scripts/test_qa_catalog.py`
-- Result: Four catalog tests pass; source definitions and mapping validate.
-- Next action: Write new module/person queue and evidence validation tests; replace the legacy queue reader.
+- Last check run: `python3 -I scripts/test_qa_evidence.py`
+- Result: Eight queue and three evidence checks pass; inventory has 41 candidates, six partial mappings.
+- Next action: Add fail-closed offline execution-state/card/budget validation and synthetic result tests.
 
 ## Decisions and notes
 

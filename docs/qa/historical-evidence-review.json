@@ -1,0 +1,85 @@
+{
+  "version": 1,
+  "target_revision": "299ab3ba7203c89a3ca5d8fabea42d9e5f239be2",
+  "cutoff_approved": false,
+  "entries": [
+    {
+      "case_id": "TC-NCPA-09",
+      "classification": "partial historical coverage",
+      "reviewed_by": "Codex evidence inventory (not full-case acceptance)",
+      "reviewed_at": "2026-10-18",
+      "impact_review": "Remote settings persistence observed; twenty/21-service boundary and untrusted-device refusal are not all established by this report. Current target contains later NCPA/remediation changes; no full historical credit.",
+      "case_hash": "7776c57b0cfdcc661e7aa974442599817f94147c75cb00d9ef6ce09b55991c6d",
+      "report": "docs/test-runs/2026-10-17-issue-182-playwright/REPORT.md",
+      "report_sha256": "a4f7b988c607841e4461593907b466e8e6514d5990f5745c0f3c9b696c19659d",
+      "tested_revision": "910d6f99",
+      "execution_date": "2026-10-17",
+      "covered_items": {}
+    },
+    {
+      "case_id": "TC-NCPA-10",
+      "classification": "partial historical coverage",
+      "reviewed_by": "Codex evidence inventory (not full-case acceptance)",
+      "reviewed_at": "2026-10-18",
+      "impact_review": "Real settings Retry was observed after a synthetic load error; opening settings while deployment is running was not established. Current target contains later NCPA/remediation changes; no full historical credit.",
+      "case_hash": "9ba2f194cc4bfe0c3834c193f8b9f39e1e217680f7bc22430bb3d9f1e5a2a334",
+      "report": "docs/test-runs/2026-10-17-issue-182-playwright/REPORT.md",
+      "report_sha256": "a4f7b988c607841e4461593907b466e8e6514d5990f5745c0f3c9b696c19659d",
+      "tested_revision": "910d6f99",
+      "execution_date": "2026-10-17",
+      "covered_items": {}
+    },
+    {
+      "case_id": "TC-NCPA-11",
+      "classification": "partial historical coverage",
+      "reviewed_by": "Codex evidence inventory (not full-case acceptance)",
+      "reviewed_at": "2026-10-18",
+      "impact_review": "Cleanup notice, credential clearing and retained list are described; exact remote-restart-enabled prerequisite and current-build dependencies require review. Current target contains later NCPA/remediation changes; no full historical credit.",
+      "case_hash": "d695edcb9800662ce133bd2d9d03ce82964564354078fa9dea4cb4fe6dcfce9f",
+      "report": "docs/test-runs/2026-10-17-issue-182-playwright/REPORT.md",
+      "report_sha256": "a4f7b988c607841e4461593907b466e8e6514d5990f5745c0f3c9b696c19659d",
+      "tested_revision": "910d6f99",
+      "execution_date": "2026-10-17",
+      "covered_items": {}
+    },
+    {
+      "case_id": "TC-REM-02",
+      "classification": "partial historical coverage",
+      "reviewed_by": "Codex evidence inventory (not full-case acceptance)",
+      "reviewed_at": "2026-10-18",
+      "impact_review": "Creation/edit/persistence of remote actions observed; Record only setup and cooldown boundary are not fully established. Current target contains later NCPA/remediation changes; no full historical credit.",
+      "case_hash": "e994d8d26b70dc49feaf8216139cc6cf56fca6e5a4a13e5bee9b5389b4114d8f",
+      "report": "docs/test-runs/2026-10-17-issue-182-playwright/REPORT.md",
+      "report_sha256": "a4f7b988c607841e4461593907b466e8e6514d5990f5745c0f3c9b696c19659d",
+      "tested_revision": "910d6f99",
+      "execution_date": "2026-10-17",
+      "covered_items": {}
+    },
+    {
+      "case_id": "TC-REM-04",
+      "classification": "partial historical coverage",
+      "reviewed_by": "Codex evidence inventory (not full-case acceptance)",
+      "reviewed_at": "2026-10-18",
+      "impact_review": "Read-only UI and real settings PUT/action creation 403 observed. Historical partial human entry and newer remediation changes need compatibility review. Current target contains later NCPA/remediation changes; no full historical credit.",
+      "case_hash": "45bf1f9cb26c251bf9b8ca21f01b2abfe02bb84183898d314ed099fe375bb59f",
+      "report": "docs/test-runs/2026-10-17-issue-182-playwright/REPORT.md",
+      "report_sha256": "a4f7b988c607841e4461593907b466e8e6514d5990f5745c0f3c9b696c19659d",
+      "tested_revision": "910d6f99",
+      "execution_date": "2026-10-17",
+      "covered_items": {}
+    },
+    {
+      "case_id": "TC-REM-10",
+      "classification": "partial historical coverage",
+      "reviewed_by": "Codex evidence inventory (not full-case acceptance)",
+      "reviewed_at": "2026-10-18",
+      "impact_review": "Local and remote unit fields were exercised; all action-type transitions and field clearing are not established. Current target contains later NCPA/remediation changes; no full historical credit.",
+      "case_hash": "b7cf6b099fc81ca740c68c83599e79d1be94c8176909d0927a04a9a83c49a675",
+      "report": "docs/test-runs/2026-10-17-issue-182-playwright/REPORT.md",
+      "report_sha256": "a4f7b988c607841e4461593907b466e8e6514d5990f5745c0f3c9b696c19659d",
+      "tested_revision": "910d6f99",
+      "execution_date": "2026-10-17",
+      "covered_items": {}
+    }
+  ]
+}
