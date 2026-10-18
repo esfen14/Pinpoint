@@ -105,7 +105,7 @@ class GroupRunner:
                 except OSError:raise ValueError('Private process log exists or is unsafe') from None
                 outputs.append(os.fdopen(fd,'wb'))
             self.process=subprocess.Popen(argv,stdin=subprocess.DEVNULL,stdout=subprocess.PIPE,stderr=subprocess.PIPE,
-                cwd=self.root,env=environment,start_new_session=True,close_fds=True)
+                cwd=self.root,env=environment,start_new_session=True,close_fds=True,umask=0o077)
             self.group=self.process.pid;self.group_finished=False
             for stream,output in zip((self.process.stdout,self.process.stderr),outputs):
                 os.set_blocking(stream.fileno(),False);selector.register(stream,selectors.EVENT_READ,output)

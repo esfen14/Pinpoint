@@ -19,6 +19,7 @@ claim that the product passes or that every case can run without human involveme
 - [x] Implement and synthetically test the supervisor lifecycle core: separate start identity, cooperative UUID lock, durable pre-dispatch action consumption, replay/budget persistence and halted interruption/cleanup handling (16 isolated contracts).
 - [x] Implement/test bounded local process-group control and strict permission-report parsing (8 local-process and 9 synthetic-report contracts), retaining private evidence and inconclusive outcomes.
 - [x] Coordinate supervisor and mutating VM-controller entries with one private per-user host claim; verify inherited descriptors and cross-ledger exclusion using local fixtures. Collect structured host-only observations without asserting deployment readiness.
+- [x] Implement/test concrete pinned-image container creation, identity/isolation verification, bounded attach and owned-resource removal/absence with durable intent and consumed-transport binding (13 synthetic contracts); fix worker config reload using 7 offline frontend helper checks.
 - [ ] Connect and prove the production supervisor driver: actual ownership/deployment/baseline receipts, inherited controller/driver wiring, bounded process-tree cancellation, sanitized result parsing and verified live cleanup/recovery.
 - [ ] Every selected case has an unambiguous expectation, executor, environment, prerequisites, evidence and restoration procedure.
 - [ ] Every selected case maps to a specific tool/spec/project, fixture, assertion and evidence output using the reviewed testing stack.
@@ -345,6 +346,7 @@ execution and missing mandatory evidence block the affected cases.
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| Same-day pilot components | Added concrete pinned/consumed Docker lifecycle and fixed real worker reload in a synthetic no-browser fixture; TC-SS-04 selected | 13 synthetic container contracts; full frontend gate with 7 helper checks and 1003 product tests | User explicitly chose offline preparation; no live preflight, Docker daemon or acceptance run |
 | Shared host control | Added fixed per-user supervisor/controller claim and structured read-only host observations; running application identity remains unproved | Six lock/controller fixtures, seven new observation contracts and cross-ledger supervisor regression; docs gate | No live tools; inherited production driver wiring, deployment/baseline/recovery proof remain pending |
 | Runtime process/results | Added allowlisted bounded process groups, private output and strict one-case result parser; bootstrap private umask | Eight local-process/nine synthetic-report tests plus docs gate | No live tools; production proof/driver/container lifecycle/recovery remain pending |
 | Supervisor lifecycle core | Added separate grant/receipt checks, shared private OS lock/ledger, durable consumption and halt/replay/budget/result enforcement; production driver stays absent | Fifteen synthetic-driver regressions plus docs gate | Verification recorded in issue progress; no live tools or operations |
@@ -374,3 +376,9 @@ execution and missing mandatory evidence block the affected cases.
 - This plan is local scaffolding for review, not a published design or authorization to operate the lab.
 
 - Historical evidence reuse is requested. The October 15 cutoff is a recommendation pending review; report attachment is required, and coverage plus version compatibility determine whether rerunning can be avoided.
+
+Verification instruction (user, 2026-10-18): skip backend test runs on subsequent
+passes when application backend code is unchanged. Run focused QA tooling checks,
+the docs gate and relevant frontend checks. Existing GitHub CI may still schedule
+a backend job automatically; do not claim that job passed or change CI policy
+without an actual result. No local backend suite is needed for this change.

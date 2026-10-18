@@ -100,6 +100,33 @@ def prepare(q:dict,journal:dict,state_dir:Path,bridge_dir:Path) -> dict:
     for i,a in enumerate(paths):
         for b in paths[i+1:]:
             if a.is_relative_to(b) or b.is_relative_to(a):raise ValueError('Source, state, evidence and bridge paths must be disjoint')
+    argv=container_command(evidence,state,bridge,case['id'])
+    return dict(version=1,readiness='BLOCKED: live supervisor, ownership/deployment proof and recovery required',
+        live_authorized=False,queue_hash=q['scope_hash'],journal_hash=journal['journal_hash'],
+        owner=journal['owner'],set=journal['set'],session=journal['session_id'],
+        batch=journal['active_batch'],case=case['id'],target_revision=q['target_revision'],
+        evidence_dir=str(evidence),state_dir=str(state),bridge_socket=str(bridge/'web.sock'),
+        approved_image_id=card.get('container_image_id'),
+        bridge_origin='http://127.0.0.1:18080',docker_argv=argv,
+        missing_live_guards=['Exclusive lab lock and runtime ownership proof',
+            'Actual deployed revision and baseline/recovery verification',
+            'Durable action-slot consumption, cancellation, cleanup and halted recovery',
+            'Reviewed explicit live set start; offline journal is not authorization'])
+
+
+def container_command(evidence:Path,state:Path,bridge:Path,case_id:str) -> list[str]:
+    """Build the exact transport argv; this function grants no authority to run it.
+
+    Unlike preparation, this permits already-created bridge/artifact entries so
+    a future lifecycle component can revalidate the fixed command before launch.
+    """
+    evidence=private_directory(evidence);state=private_directory(state);bridge=private_directory(bridge)
+    cases=x.queue.coverage.load()['cases']
+    if case_id not in cases or cases[case_id]['status']!='implemented':raise ValueError('Unsupported transport case')
+    paths=[ROOT,evidence,state,bridge]
+    for i,a in enumerate(paths):
+        for b in paths[i+1:]:
+            if a.is_relative_to(b) or b.is_relative_to(a):raise ValueError('Transport paths overlap')
     credentials=[private_credential(state/name) for name in ('restricted-email','restricted-new-password')]
     cache=clean_path(Path.home()/'.cache/ms-playwright')
     uid,gid=os.getuid(),os.getgid()
@@ -114,19 +141,10 @@ def prepare(q:dict,journal:dict,state_dir:Path,bridge_dir:Path) -> dict:
         '--tmpfs',f'/tmp:rw,nosuid,nodev,mode=1777,uid={uid},gid={gid}']
     for mount in mounts:argv+=['--mount',mount]
     for env in ('HOME=/tmp','PLAYWRIGHT_BROWSERS_PATH=/ms-playwright','LD_LIBRARY_PATH=/host-libs',
-                f"PINPOINT_QA_CASES={case['id']}",'PINPOINT_QA_RUN_DIR=/evidence'):
+                f'PINPOINT_QA_CASES={case_id}','PINPOINT_QA_RUN_DIR=/evidence'):
         argv+=['--env',env]
-    argv += [IMAGE,'bash','-c',BOOTSTRAP,'bash',*card['actions'][0][1:]]
-    return dict(version=1,readiness='BLOCKED: live supervisor, ownership/deployment proof and recovery required',
-        live_authorized=False,queue_hash=q['scope_hash'],journal_hash=journal['journal_hash'],
-        owner=journal['owner'],set=journal['set'],session=journal['session_id'],
-        batch=journal['active_batch'],case=case['id'],target_revision=q['target_revision'],
-        evidence_dir=str(evidence),bridge_socket=str(bridge/'web.sock'),
-        bridge_origin='http://127.0.0.1:18080',docker_argv=argv,
-        missing_live_guards=['Exclusive lab lock and runtime ownership proof',
-            'Actual deployed revision and baseline/recovery verification',
-            'Durable action-slot consumption, cancellation, cleanup and halted recovery',
-            'Reviewed explicit live set start; offline journal is not authorization'])
+    argv += [IMAGE,'bash','-c',BOOTSTRAP,'bash',*x.queue.coverage.action_for(cases[case_id])[1:]]
+    return argv
 
 
 def main() -> int:

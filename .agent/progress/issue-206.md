@@ -15,6 +15,7 @@ Status: in-progress
 - [x] Implement the supervisor lifecycle core with separate start binding, cooperative UUID lock, fsynced action consumption, persistent replay/budget checks and halted failures; prove with 16 synthetic-driver contracts.
 - [x] Implement and test bounded local process-group control (8 contracts) and strict private permission-report parsing (9 contracts); these components remain unwired to live execution.
 - [x] Share a fixed per-user host claim between supervisor and mutating VM controllers, and collect structured host-only ownership observations; verify with local fixtures without claiming running application identity.
+- [x] Implement concrete pinned-image Docker lifecycle with durable intent/consumed-transport binding and verified owned-resource cleanup (13 synthetic contracts); fix and offline-test Playwright worker reload without launching a browser (7 frontend helper checks).
 - [ ] Complete production supervisor-driver integration and live validation: actual controller/deployment/baseline proofs, inherited controller/driver wiring, bounded process-tree control, sanitized result parsing and verified recovery. This is part of overall readiness, not a claim that the offline milestone executes cases.
 
 | Issue requirement | Finish-condition item | Proof |
@@ -63,10 +64,10 @@ and require separately authorized live evidence where needed.
 
 ## State for the next session
 
-- Last relevant check: `scripts/verify.sh docs > /tmp/issue-206-control-docs.log 2>&1` (132 isolated contracts), focused lock/controller/preflight/supervisor/setup fixtures, Python/shell syntax and whitespace checks. Final observed result and exact-head CI proof are recorded in draft PR #207.
-- Result: supervisor and mutating vmlab entries share a canonical private host control claim; structured preflight returns only real host ownership metadata, not application identity. Six local control fixtures, seven new preflight contracts and a cross-ledger regression join the existing process/result components. No Docker, VirtualBox, SSH, browser, lab or account access; original human catalog/product source unchanged.
-- Finish conditions: both progress checklists mark tested process/result and shared host-control components complete and retain production integration/live-proof requirements unchecked. Original-checkout copies are synchronized after checkpoint.
-- Next action: implement running-application/frontend deployment identity, then wire inherited controller claims and a bounded production driver with private bridge/container-ID termination, result parsing and verified recovery. Do not equate Git HEAD with running application identity or Docker CLI exit with container cleanup; actual live cards/pilot still require reviewed scope/start.
+- Last relevant check: `scripts/verify.sh docs > /tmp/issue-206-today-docs.log 2>&1` (145 isolated contracts), `scripts/verify.sh frontend > /tmp/issue-206-today-frontend.log 2>&1`, focused container contracts, Python/shell syntax and whitespace checks. Final observed results and exact-head CI proof are recorded in draft PR #207. Final observed result and exact-head CI proof are recorded in draft PR #207.
+- Result: concrete Docker lifecycle now verifies pinned image/consumed transport, fsynced intent, actual identity/isolation, bounded attach and verified owned-resource removal using 13 synthetic contracts only. A reproduced Playwright worker-reload defect is fixed; all 7 selection/collection/no-browser-worker checks pass. No Docker daemon, VirtualBox, SSH, browser, lab or account access; original human catalog/product source unchanged. The user explicitly chose continued offline preparation for today’s TC-SS-04 pilot.
+- Finish conditions: both progress checklists mark process/result, shared host-control and concrete container/worker components complete and retain production integration/live-proof requirements unchecked. Original-checkout copies are synchronized after checkpoint.
+- Next action: implement running-application/frontend deployment identity and the owned private bridge, then connect the tested container/process/result components through a bounded production driver and verified recovery. Today’s pilot is TC-SS-04; no live preflight was started because the user chose offline preparation. Do not equate Git HEAD with running application identity or Docker CLI exit with container cleanup; actual live cards/pilot still require reviewed scope/start.
 
 ## Decisions and notes
 
@@ -229,3 +230,34 @@ Final local shared-control check: `scripts/verify.sh docs` passes with 132 isola
 contracts; Python compilation, shell syntax, focused hardlink/forged-marker checks
 and `git diff --check` pass. Checkpoint this milestone in draft PR #207 and inspect
 its exact-head CI rather than carrying forward the previous head's green status.
+
+## Same-day pilot preparation: container lifecycle (2026-10-18)
+
+User prioritizes starting automation today, confirmed exclusive local VirtualBox
+availability, then explicitly selected **Keep preparing offline** when offered
+read-only preflight. Do not contact the lab. Prioritize TC-SS-04; existing human
+PASS cases stay excluded. Keep the full readiness checklist truthful.
+
+1. [x] Test and implement the concrete Docker lifecycle component around the existing bounded process helper: private durable create intent, pinned image identity, exact prepared transport, container-ID verification, bounded attach, kill/remove/absence proof and no repeat after uncertain cleanup. Exercise only fake command responses.
+2. [x] Bind the helper to durable supervisor consumption, preserve private raw output, and keep real ownership/deployment/baseline/bridge proof outside this component. No CLI or default production driver may start live work.
+3. [x] Wire fingerprints/docs checks, update specifications and both progress checklists, prepare a fresh blocked one-case queue after source changes, verify and checkpoint. User has not authorized preflight or case execution.
+
+Same-day round 1: container module tests initially failed because the module was absent. Thirteen synthetic command contracts now cover pinned images, consumed-transport hashes, actual settings/mounts, initial/post-create checkpoint failures, timeout/uncertain create, foreign ownership, daemon-query failure, restart/retry rejection and non-verdict exit codes. Fixtures use unconnected local Unix sockets and fake Docker responses only.
+
+Same-day round 2: a real synthetic Playwright IPC worker reproduced a configuration reload failure after output directory creation. The selection helper now recognizes only the pinned worker entry/IPC plus expected indices and its private artifacts; forged environment markers and initial evidence reuse still reject. The actual acceptance specs/browser were never invoked. Full local frontend gate passes: 1003 product tests, 7 helper checks, QA typecheck, build and lint with 0 errors/33 existing warnings. No human result was changed.
+
+Verification instruction (user, 2026-10-18): skip backend test runs on subsequent
+passes when application backend code is unchanged. Run focused QA tooling checks,
+the docs gate and relevant frontend checks. Existing GitHub CI may still schedule
+a backend job automatically; do not claim that job passed or change CI policy
+without an actual result. No local backend suite is needed for this change.
+
+Same-day round 3: full docs gate passes 145 isolated checks; full frontend gate
+passes 1003 tests plus 7 helper checks, QA typecheck, build and lint (0 errors/33
+existing warnings). Python syntax and whitespace checks pass. No local backend
+suite ran under the user’s new verification instruction. The fresh blocked pilot
+is `docs/qa/queues/2026-10-18-today-ss04-v2.json`, set `today-ss04`; the initial
+unstarted draft is retained as superseded. Both finish-condition checklists and
+the separate today checklist are synchronized to the original checkout after
+checkpoint. Exact-head CI results are recorded in PR #207, with backend CI
+automatically scheduled by the existing workflow rather than locally requested.

@@ -124,7 +124,7 @@ class Ledger:
             if len(batches)>=5:raise ValueError('Persistent five-batch budget exhausted')
             batches.append(plan['batch'])
         state['attempts'].append({k:plan[k] for k in ('queue_hash','set','case','session','batch','owner')}
-            |dict(status='running',started_at=t.x.now()))
+            |dict(status='running',started_at=t.x.now(),transport_hash=t.x.queue.cat.digest(plan)))
         self.save(uuid,state)
 
     def finish(self,uuid:str,success:bool,result:dict|None=None) -> None:

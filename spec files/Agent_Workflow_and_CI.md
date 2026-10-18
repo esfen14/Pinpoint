@@ -241,6 +241,18 @@ reports. App/spec conflicts remain decisions, not automatic passes.
   `umask 077`. Eight local-process and nine synthetic-report tests prove component
   contracts only. Production identity, container lifecycle, inherited controller lock wiring and
   verified recovery integration remain pending; no live command is exposed.
+- **Concrete container lifecycle component:** `qa_container.py` requires a held
+  host/UUID claim, durable matching consumed transport digest, scope-bound approved
+  image ID, empty private evidence and existing private bridge socket. Independent
+  bounded process/recovery runners retain private output with child `umask 077`.
+  An fsynced unique intent precedes create; actual ID, image, owner, command, user,
+  isolation and mounts are checked before bounded attach. Cleanup kills/removes
+  only the identified owned container and proves absence through a successful
+  daemon query. Failed/uncertain create, ownership drift, persistence/cleanup
+  failures and existing intent halt without retry. Thirteen synthetic contracts
+  are not live isolation/restoration evidence. No CLI/default production driver
+  exists; bridge/runtime identity/baseline/session proof and explicit start remain
+  required. Never manually invoke this component to bypass missing integration.
 - **Partial-pass investigation:** Every catalog partial needs an evidence review,
   duplicate search, linked issue/disposition and next action in the
   [partial-pass register](../docs/qa/Partial_Pass_Investigations.md). The

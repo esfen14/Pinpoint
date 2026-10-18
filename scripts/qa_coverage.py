@@ -152,7 +152,7 @@ def card_template(record:dict) -> dict:
         coverage_hash=catalog.digest(record),selection=record['adapter'],mode=record['mode'],
         adapter=str(adapter),adapter_hash=catalog.digest(adapter.read_text()),actions=[action_for(record)],
         reviewed_by='',timeout_seconds=None,step_timeout_seconds=None,human_required=True,
-        prerequisites=[],recovery=record['recovery'],evidence_dir='',write_paths=[])
+        prerequisites=[],recovery=record['recovery'],evidence_dir='',write_paths=[],container_image_id=None)
 
 
 def main() -> int:

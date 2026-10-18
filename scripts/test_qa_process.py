@@ -20,10 +20,11 @@ class ProcessTests(unittest.TestCase):
     def test_private_nonoverwriting_raw_logs_and_exit_status(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d);root.chmod(0o700);runner=self.runner(root)
-            result=runner.run([PYTHON,'-c','import sys; print("synthetic secret");sys.stderr.write("private error");sys.exit(7)'],{},2,'one')
+            result=runner.run([PYTHON,'-c','import sys; from pathlib import Path; Path("child-artifact").write_text("fixture"); print("synthetic secret");sys.stderr.write("private error");sys.exit(7)'],{},2,'one')
             self.assertEqual(result['returncode'],7)
             self.assertIn('synthetic secret',(root/'one.stdout').read_text())
             self.assertEqual((root/'one.stderr').stat().st_mode & 0o777,0o600)
+            self.assertEqual((root/'child-artifact').stat().st_mode & 0o777,0o600)
             self.assertNotIn('synthetic secret',str(result))
             with self.assertRaises(ValueError):runner.run([PYTHON,'-c','pass'],{},2,'one')
 

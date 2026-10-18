@@ -308,6 +308,22 @@ preflight contracts cover structured read-only observations and identity drift;
 running application/frontend proof, baseline or restoration claim. No lab was
 contacted or acceptance result added by these fixture tests.
 
+`qa_container.py` adds the concrete bounded create/attach/inspect/kill/remove
+component with 13 synthetic-command contracts. It binds a pinned image and exact
+transport digest to a durable consumed supervisor slot, fsyncs intent before
+creation, verifies actual container identity/isolation and proves absence through
+a successful daemon query. Uncertain create/cleanup and persisted intent block
+retry; child commands use private umask. It has no CLI/default production driver.
+Actual bridge ownership/lifecycle, running application/frontend identity, Staff
+baseline, session recovery and reviewed live cards/start remain pending.
+
+Seven frontend selection/collection/synthetic-worker checks now include a fixed
+worker-reload defect that collection-only checks missed. Real Playwright IPC
+workers may see their private artifact directory after initial configuration;
+environment markers alone cannot allow evidence reuse. No page/browser, appliance
+or acceptance adapter executes in the worker fixture. The user prioritized a
+TC-SS-04 pilot today but explicitly kept preparation offline; no live run occurred.
+
 The [historical evidence inventory/review](../docs/qa/Historical_Evidence_Review.md)
 links 41 post-cutoff-directory-date reports and six partial current-case mappings.
 October 15 remains a provisional cutoff. No full-case inherited PASS is accepted.

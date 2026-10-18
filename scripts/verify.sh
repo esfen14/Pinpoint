@@ -42,6 +42,8 @@ docs() {
   echo "==> docs: bounded local process groups and strict synthetic report parsing"
   python3 -I "$root/scripts/test_qa_process.py"
   python3 -I "$root/scripts/test_qa_results.py"
+  echo "==> docs: concrete container lifecycle with synthetic command responses only"
+  python3 -I "$root/scripts/test_qa_container.py"
   echo "==> docs: VM control and endpoint ownership safety"
   python3 -I "$root/scripts/test_qa_control.py"
   python3 -I "$root/scripts/test_vmlab_preflight.py"

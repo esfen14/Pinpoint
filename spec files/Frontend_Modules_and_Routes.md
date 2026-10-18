@@ -426,5 +426,10 @@ cases (SS-04, HIS-01, RPT-07, LOG-05, PLG-07). The separate
 `playwright.qa.config.ts` accepts explicit current IDs, has no auth-setup dependency
 or retry, uses private per-run output and disables captures.
 `tsconfig.qa.json` and offline collection checks run in the frontend gate.
+Seven offline checks include a synthetic no-browser worker: initial selection
+requires an empty private evidence root, while the pinned Playwright IPC worker
+may reload with only its private owned artifact directory present. Worker-index
+environment markers alone cannot relax the guard. The synthetic worker imports
+no acceptance spec, logs into no application and is not a current-case result.
 The [coverage guide](../docs/qa/Automation_Readiness.md) records source completeness
 and remaining launcher/card/preflight work; these are not runtime acceptance results.

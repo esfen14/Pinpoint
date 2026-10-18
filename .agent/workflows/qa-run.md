@@ -59,6 +59,10 @@ Never delete its lock/store or call a direct controller to bypass a busy claim.
 `vmlab preflight --json` supplies host observations only: it cannot prove the
 running frontend/backend revision, baseline, restoration or permission to start.
 Production driver integration and live cards remain blocked.
+The concrete container lifecycle component also has no live CLI/default driver.
+Its consumed-slot/image/cleanup contracts and synthetic worker checks do not
+authorize calling it manually. Keep actual bridge/runtime/baseline proof and
+the explicit named start separate from offline implementation success.
 
 ## Mandatory partial-pass investigation
 

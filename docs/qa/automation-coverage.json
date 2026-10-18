@@ -374,7 +374,7 @@
       "source_hashes": {
         "client/e2e/qa-permissions.lab.spec.ts": "5a89a5f31b07498bbe23665b4e32c01bfe89c79c03fda5442b6e472a1f94d1f7",
         "client/playwright.qa.config.ts": "bd93c4be8518993af9dd734d48c498e065802db67d7934c6733313a7f47423e1",
-        "client/qa/selection.mjs": "7f212a315cf28f7ceb01c21532707d439fd1f08ff152e5d421178ede02f4ead7",
+        "client/qa/selection.mjs": "e8cd2bc53d940280fdfb03d332d386975376a77e5746d96964c3d5b32ebea626",
         "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
         "client/src/components/layout/Sidebar.tsx": "25986b10740143c932f2ffd936e3396b871e703ffd603810b45e9306df1838f2",
         "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
@@ -418,7 +418,7 @@
       "source_hashes": {
         "client/e2e/qa-permissions.lab.spec.ts": "5a89a5f31b07498bbe23665b4e32c01bfe89c79c03fda5442b6e472a1f94d1f7",
         "client/playwright.qa.config.ts": "bd93c4be8518993af9dd734d48c498e065802db67d7934c6733313a7f47423e1",
-        "client/qa/selection.mjs": "7f212a315cf28f7ceb01c21532707d439fd1f08ff152e5d421178ede02f4ead7",
+        "client/qa/selection.mjs": "e8cd2bc53d940280fdfb03d332d386975376a77e5746d96964c3d5b32ebea626",
         "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
         "client/src/components/layout/Sidebar.tsx": "25986b10740143c932f2ffd936e3396b871e703ffd603810b45e9306df1838f2",
         "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
@@ -462,7 +462,7 @@
       "source_hashes": {
         "client/e2e/qa-permissions.lab.spec.ts": "5a89a5f31b07498bbe23665b4e32c01bfe89c79c03fda5442b6e472a1f94d1f7",
         "client/playwright.qa.config.ts": "bd93c4be8518993af9dd734d48c498e065802db67d7934c6733313a7f47423e1",
-        "client/qa/selection.mjs": "7f212a315cf28f7ceb01c21532707d439fd1f08ff152e5d421178ede02f4ead7",
+        "client/qa/selection.mjs": "e8cd2bc53d940280fdfb03d332d386975376a77e5746d96964c3d5b32ebea626",
         "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
         "client/src/components/layout/Sidebar.tsx": "25986b10740143c932f2ffd936e3396b871e703ffd603810b45e9306df1838f2",
         "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
@@ -517,7 +517,7 @@
       "source_hashes": {
         "client/e2e/qa-permissions.lab.spec.ts": "5a89a5f31b07498bbe23665b4e32c01bfe89c79c03fda5442b6e472a1f94d1f7",
         "client/playwright.qa.config.ts": "bd93c4be8518993af9dd734d48c498e065802db67d7934c6733313a7f47423e1",
-        "client/qa/selection.mjs": "7f212a315cf28f7ceb01c21532707d439fd1f08ff152e5d421178ede02f4ead7",
+        "client/qa/selection.mjs": "e8cd2bc53d940280fdfb03d332d386975376a77e5746d96964c3d5b32ebea626",
         "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
         "client/src/components/layout/Sidebar.tsx": "25986b10740143c932f2ffd936e3396b871e703ffd603810b45e9306df1838f2",
         "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
@@ -561,7 +561,7 @@
       "source_hashes": {
         "client/e2e/qa-permissions.lab.spec.ts": "5a89a5f31b07498bbe23665b4e32c01bfe89c79c03fda5442b6e472a1f94d1f7",
         "client/playwright.qa.config.ts": "bd93c4be8518993af9dd734d48c498e065802db67d7934c6733313a7f47423e1",
-        "client/qa/selection.mjs": "7f212a315cf28f7ceb01c21532707d439fd1f08ff152e5d421178ede02f4ead7",
+        "client/qa/selection.mjs": "e8cd2bc53d940280fdfb03d332d386975376a77e5746d96964c3d5b32ebea626",
         "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
         "client/src/components/layout/Sidebar.tsx": "25986b10740143c932f2ffd936e3396b871e703ffd603810b45e9306df1838f2",
         "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",

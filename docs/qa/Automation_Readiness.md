@@ -276,3 +276,58 @@ Six local lock/controller fixtures, seven new structured-observation contracts a
 the supervisor's cross-ledger exclusion regression run without VirtualBox, SSH,
 HTTP, Docker, browsers or a real account. Existing setup fixtures copy the lock
 helper into their disposable fixture checkout; they do not set up a live account.
+
+## Pilot container lifecycle and worker loading
+
+`qa_container.py` provides the concrete Docker lifecycle component for a future
+trusted driver. It has no CLI/default driver and is not permission to execute
+preview commands. Before any daemon operation it requires the held canonical
+host/UUID claim and the matching durable running attempt, including a digest of
+the entire consumed transport. The execution card's `container_image_id` must pin
+an approved `sha256:<64 hex>` image ID; the supplied image must match the prepared
+plan. Mutable tags alone cannot execute. Case/cleanup budgets cannot exceed the
+consumed plan, and elapsed time since consumption reduces the remaining budget.
+
+Private control output must be separate from source, credentials, bridge and
+evidence. A private Unix socket must already exist; proving its fixed upstream
+and creating/disposing the bridge remain the future driver's responsibility.
+The case evidence root must still be empty. Two independent bounded process
+runners share the private control-output directory so recovery can run when the
+attach runner has halted. Child commands now use `umask 077`, including Docker's
+CID file; raw logs and intent remain private and never become report prose.
+
+The component fsyncs a unique create intent before Docker create, pins the image,
+sets an explicit Bash entrypoint and records the actual full container ID. It
+checks ID/name/ownership token, image/user/command, no-network/read-only/capability/
+privilege/restart settings and every bind mount before attach. After bounded
+attach it requires a stopped container and consistent CLI/container exit code.
+It returns process metadata, never a product PASS/FAIL. Expected-item parsing and
+actual application/session restoration remain separate requirements.
+
+Cleanup identifies only its own resource, kills it if running, removes it and
+requires a successful daemon query proving absence. Docker CLI exit or a failed
+inspect/list query is not absence proof. A failed create is looked up by the
+durably recorded unique name, but the attempt still halts even when no resource
+is visible because a delayed daemon operation could finish later. Ownership or
+isolation drift, failed checkpoints, uncertain cleanup and interruption halt;
+existing control output/intent prevents an implicit restart or retry. Cleanup
+cannot clear the supervisor's halted ledger or claim the baseline is restored.
+
+Thirteen synthetic command-response contracts exercise these paths. Local Unix
+sockets are disposable metadata fixtures with no upstream. No Docker daemon,
+container, browser, SSH endpoint, account or appliance is used by those tests.
+
+A synthetic Playwright worker exposed an adapter preparation defect: Playwright
+creates its artifact directory before its IPC worker reloads the configuration,
+so unconditional empty-root validation rejected the real worker. Selection now
+permits only the private owned `artifacts` directory for the pinned Playwright
+worker entry with an actual IPC channel and expected worker indices. Environment
+markers alone cannot relax the guard. Initial configuration and the container
+lifecycle still reject reused evidence. The frontend gate has seven offline
+selection/collection/worker checks; the worker fixture requests no page/browser,
+imports no acceptance spec and produces no current-case result.
+
+The same-day pilot scope is TC-SS-04 only, with no inherited human PASS reruns.
+The user chose continued offline preparation. Real running frontend/backend
+identity, bridge integration, initialized Staff baseline, complete live card and
+an explicit named start are still needed; no claim that the pilot ran is made.
