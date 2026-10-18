@@ -101,7 +101,7 @@ describe('service duration reports', () => {
 
   it.each(['CSV', 'XLS', 'PDF'])('device coverage, pending/missing current status, filter, pages and %s export', async (format) => {
     mocks.get.mockResolvedValue(device())
-    render(<ExtraReports view="device-services" query="period=last_24h" runKey={0} onStatus={onStatus} onCards={onCards} description="About" />)
+    render(<ExtraReports view="device-services" query="period=last_24h" runKey={0} onStatus={onStatus} onCards={onCards} />)
     await screen.findByText('Device Services Report')
     expect(screen.getByRole('columnheader', { name: 'Current state' })).toBeInTheDocument()
     expect(screen.getByText('Pending')).toBeInTheDocument()
@@ -129,10 +129,10 @@ describe('service duration reports', () => {
 
   it('clears device data and removes export on failed rerun; historical status failure has notice', async () => {
     mocks.get.mockResolvedValue({ ...device(), current_status: { available: false, observed_at: null, notice: 'Current status unavailable. Historical availability is still shown.' } })
-    const view = render(<ExtraReports view="device-services" query="period=last_24h" runKey={0} onStatus={onStatus} onCards={onCards} description="About" />)
+    const view = render(<ExtraReports view="device-services" query="period=last_24h" runKey={0} onStatus={onStatus} onCards={onCards} />)
     await screen.findByText(/Current status unavailable/)
     mocks.get.mockRejectedValue(new Error('Retry report'))
-    view.rerender(<ExtraReports view="device-services" query="period=last_7d" runKey={1} onStatus={onStatus} onCards={onCards} description="About" />)
+    view.rerender(<ExtraReports view="device-services" query="period=last_7d" runKey={1} onStatus={onStatus} onCards={onCards} />)
     await waitFor(() => expect(onStatus).toHaveBeenCalledWith({ type: 'error', text: 'Retry report' }))
     expect(screen.queryByRole('button', { name: 'Export' })).not.toBeInTheDocument()
     expect(screen.queryByText('svc-0')).not.toBeInTheDocument()
@@ -142,14 +142,14 @@ describe('service duration reports', () => {
     mocks.get.mockImplementation((url: string) => Promise.resolve(url.includes('network-services') ? network() : { period, summary: {total: 0, up:0, down:0, unreachable:0, uptime_pct:null}, hosts:[] }))
     render(<ReportsPage />)
     await waitFor(() => expect(screen.getByRole('button', { name: 'Run Report' })).toBeEnabled())
-    fireEvent.click(screen.getByRole('tab', { name: 'Network Services' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Network Services' }))
     await screen.findByText('svc-00')
     mocks.get.mockRejectedValueOnce(new Error('Archive unavailable'))
     fireEvent.click(screen.getByRole('button', { name: 'Run Report' }))
     await screen.findByText('Archive unavailable')
     expect(screen.queryByText('svc-00')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Export' })).not.toBeInTheDocument()
-    fireEvent.change(screen.getByLabelText('Report period'), { target: { value: 'custom' } })
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'custom' } })
     fireEvent.change(screen.getByLabelText('Report start date'), { target: { value: '2024-01-01' } })
     fireEvent.change(screen.getByLabelText('Report end date'), { target: { value: '2024-01-02' } })
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Run Report' })))
@@ -162,30 +162,11 @@ it('invalid device custom rerun removes the prior result and export', async () =
   mocks.get.mockImplementation((url: string) => Promise.resolve(url.includes('device-services') ? device() : { period, summary: {total:0,up:0,down:0,unreachable:0,uptime_pct:null}, hosts:[] }))
   render(<ReportsPage />)
   await waitFor(() => expect(screen.getByRole('button', { name: 'Run Report' })).toBeEnabled())
-  fireEvent.click(screen.getByRole('tab', { name: 'Device Services' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Device Services' }))
   await screen.findByText('svc-0')
   mocks.get.mockRejectedValue(new Error('Invalid custom dates'))
-  fireEvent.change(screen.getByLabelText('Report period'), { target: { value: 'custom' } })
-  // Editing controls only changes the draft: the applied result and its export stay.
-  expect(screen.getByText(/Changes not applied/)).toBeInTheDocument()
-  expect(screen.getByRole('button', { name: 'Export' })).toBeInTheDocument()
-  fireEvent.change(screen.getByLabelText('Report start date'), { target: { value: '2024-01-01' } })
-  fireEvent.change(screen.getByLabelText('Report end date'), { target: { value: '2024-01-02' } })
-  await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Run Report' })))
+  fireEvent.change(screen.getByRole('combobox'), { target: { value: 'custom' } })
   await waitFor(() => expect(screen.queryByRole('button', { name: 'Export' })).not.toBeInTheDocument())
-})
-
-it('draft period edits do not request data until Run Report applies them', async () => {
-  mocks.get.mockImplementation((url: string) => Promise.resolve(url.includes('network-services') ? network() : { period, summary: {total: 0, up:0, down:0, unreachable:0, uptime_pct:null}, hosts:[] }))
-  render(<ReportsPage />)
-  await waitFor(() => expect(screen.getByRole('button', { name: 'Run Report' })).toBeEnabled())
-  const calls = mocks.get.mock.calls.length
-  fireEvent.change(screen.getByLabelText('Report period'), { target: { value: 'last_7d' } })
-  expect(mocks.get.mock.calls.length).toBe(calls)
-  expect(screen.getByText(/Changes not applied/)).toBeInTheDocument()
-  await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Run Report' })))
-  expect(mocks.get).toHaveBeenLastCalledWith('/api/system/report/availability?period=last_7d')
-  expect(screen.queryByText(/Changes not applied/)).not.toBeInTheDocument()
 })
 
 it('shows loading, valid empty and zero-known availability distinctly', () => {

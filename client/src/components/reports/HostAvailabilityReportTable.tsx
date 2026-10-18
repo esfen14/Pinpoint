@@ -2,21 +2,15 @@ import { useMemo, useState } from 'react'
 import { ArrowUpDown, Filter, Search } from 'lucide-react'
 import { useSystemSettings } from '../../contexts/SystemSettingsContext'
 import { formatServerDateTime } from '../../utils/formatDateTime'
-import { exportRows, type ExportMeta } from '../../utils/exportData'
+import { exportRows } from '../../utils/exportData'
 import { ExportMenu } from '../shared/ExportMenu'
 import type { HostAvailabilityRow } from '../../types/report'
 import { Pagination } from '../shared/Pagination'
-import { InsufficientHistoryNotice } from './InsufficientHistoryNotice'
 
 type HostAvailabilityReportTableProps = {
   hosts: HostAvailabilityRow[]
   isLoading: boolean
   title?: string
-  // Opens the availability detail drawer for one exact host.
-  onDetails?: (hostname: string) => void
-  // The last run failed: these rows are from an earlier run, so export is withheld.
-  stale?: boolean
-  meta?: ExportMeta
 }
 
 const PAGE_SIZE = 10
@@ -41,9 +35,6 @@ export function HostAvailabilityReportTable({
   hosts,
   isLoading,
   title = 'Host Availability Report',
-  onDetails,
-  stale = false,
-  meta,
 }: HostAvailabilityReportTableProps) {
   const { settings } = useSystemSettings()
   const [query, setQuery] = useState('')
@@ -79,10 +70,7 @@ export function HostAvailabilityReportTable({
     Hostname: h.hostname,
     State: h.state,
     'Uptime %': h.uptimePct ?? '',
-    'Up (seconds)': h.upSeconds,
-    'Down (seconds)': h.downSeconds,
-    'Unreachable (seconds)': h.unreachableSeconds,
-    'Known time (seconds)': h.knownSeconds,
+    'Total Snapshots': h.totalSnapshots,
     'Last Check': h.lastCheck ?? '',
     'Last State Change': h.lastStateChange ?? '',
   }))
@@ -146,20 +134,12 @@ export function HostAvailabilityReportTable({
           </button>
 
           <ExportMenu
-            allowedFormats={stale || isLoading ? [] : settings.exportFormats}
-            onExport={(format) => exportRows(exportData, format, 'host-availability-report', meta)}
+            allowedFormats={settings.exportFormats}
+            onExport={(format) => exportRows(exportData, format, 'host-availability-report')}
           />
         </div>
       </div>
 
-      {!isLoading && !stale && hosts.length > 0 && hosts.every((h) => h.knownSeconds === 0) && (
-        <InsufficientHistoryNotice subject="these hosts" />
-      )}
-      {stale && (
-        <p role="alert" className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
-          The last run failed. These rows are from an earlier run and cannot be exported. Run the report again.
-        </p>
-      )}
       <div className="overflow-x-auto">
         <table className="w-full min-w-275 text-left text-sm">
           <thead className="border-b border-gray-200 text-gray-500 dark:border-white/10 dark:text-gray-500">
@@ -167,22 +147,18 @@ export function HostAvailabilityReportTable({
               <th className="px-4 py-3">Hostname</th>
               <th className="px-4 py-3">State</th>
               <th className="px-4 py-3">Uptime %</th>
-              <th className="px-4 py-3">Up (s)</th>
-              <th className="px-4 py-3">Down (s)</th>
-              <th className="px-4 py-3">Unreachable (s)</th>
-              <th className="px-4 py-3">Known time (s)</th>
+              <th className="px-4 py-3">Snapshots</th>
               <th className="px-4 py-3">Last Check</th>
               <th className="px-4 py-3">Last State Change</th>
-              {onDetails && <th className="px-4 py-3">Details</th>}
             </tr>
           </thead>
 
           <tbody>
             {isLoading ? (
-              <tr><td colSpan={onDetails ? 10 : 9} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">Loading…</td></tr>
+              <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">Loading…</td></tr>
             ) : paginated.length === 0 ? (
               <tr>
-                <td colSpan={onDetails ? 10 : 9} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                <td colSpan={6} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                   {query || statusFilter !== 'All' ? 'No hosts match your search or filter' : 'No data in this period'}
                 </td>
               </tr>
@@ -192,22 +168,13 @@ export function HostAvailabilityReportTable({
                   <td className="px-4 py-3 text-gray-900 dark:text-white">{host.hostname}</td>
                   <td className="px-4 py-3"><StatusBadge state={host.state} /></td>
                   <td className="px-4 py-3 text-gray-900 dark:text-white">{host.uptimePct ?? '—'}</td>
-                  <td className="px-4 py-3 text-gray-900 dark:text-white">{host.upSeconds}</td>
-                  <td className="px-4 py-3 text-gray-900 dark:text-white">{host.downSeconds}</td>
-                  <td className="px-4 py-3 text-gray-900 dark:text-white">{host.unreachableSeconds}</td>
-                  <td className="px-4 py-3 text-gray-900 dark:text-white">{host.knownSeconds}</td>
+                  <td className="px-4 py-3 text-gray-900 dark:text-white">{host.totalSnapshots}</td>
                   <td className="px-4 py-3 text-gray-900 dark:text-white">
                     {formatServerDateTime(host.lastCheck, settings.dateTimeFormat, settings.timeZone)}
                   </td>
                   <td className="px-4 py-3 text-gray-900 dark:text-white">
                     {formatServerDateTime(host.lastStateChange, settings.dateTimeFormat, settings.timeZone)}
                   </td>
-                  {onDetails && (
-                    <td className="px-4 py-3">
-                      <button type="button" onClick={() => onDetails(host.hostname)}
-                        aria-label={`Details for ${host.hostname}`} className="text-[#ffb100] underline">Details</button>
-                    </td>
-                  )}
                 </tr>
               ))
             )}
