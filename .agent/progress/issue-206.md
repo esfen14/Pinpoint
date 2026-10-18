@@ -86,9 +86,15 @@ and require separately authorized live evidence where needed.
 Scope: continue the approved offline readiness work; no lab connection, test launch
 against an application, account setup or product behavior change.
 
-1. [ ] Add a source-bound coverage registry/validator and derived all-case matrix in `scripts/qa_coverage.py`, regression tests and `docs/qa/automation-coverage.json` / `Automation_Coverage.md`. Unknown coverage stays explicitly unmapped; partial coverage cannot become whole-case automation.
+1. [x] Add a source-bound coverage registry/validator and derived all-case matrix in `scripts/qa_coverage.py`, regression tests and `docs/qa/automation-coverage.json` / `Automation_Coverage.md`. Unknown coverage stays explicitly unmapped; partial coverage cannot become whole-case automation.
 2. [ ] Add reviewed source adapters for Staff permission cases (SS-04, HIS-01, RPT-07, LOG-05, PLG-07), with isolated exact-selection Playwright configuration, no setup dependencies/retries/captures, and per-item evidence. Validate registration with offline `--list`, never a browser launch. Existing human passes stay excluded by normal queue eligibility.
 3. [ ] Bind queue snapshots/freshness to coverage metadata and reject mismatched adapter cards; include registry checks in the docs gate, document source implementation versus live readiness, and update the overall checklist. Complete live cards still require verified prerequisites/environment and a supported reviewed launcher.
 4. [ ] Verify docs and relevant frontend checks, inspect CI, checkpoint to draft PR #207 and synchronize the main-checkout progress copies.
 
 Next action: round 1 failing coverage registry contracts, then implement validation.
+
+Coverage round 1: five isolated coverage contracts pass; the first run failed
+because `qa_coverage.py` did not exist, then the implementation passed. All 239
+records currently remain unmapped until the next source-review round.
+`python3 -I scripts/qa_coverage.py render --write` generated the matrix; no runtime
+verdict was changed. Next action: source permission adapters and offline collection.
