@@ -80,3 +80,15 @@ and require separately authorized live evidence where needed.
 - Refreshed stack/status descriptions and synchronized the overall plan and this progress file into the original checkout for visibility. Implementation remains in the isolated checkout.
 - `scripts/verify.sh docs` and `git diff --check` pass. At pre-checkpoint head `9828931`, docs and frontend CI passed; backend was still running. New-head CI remains separate. No live tests or product changes.
 - Next work: selected-case coverage/cards and evidence/ambiguity review, then live boundaries/recovery and a separately started pilot.
+
+## Coverage/adapters implementation session (2026-10-18)
+
+Scope: continue the approved offline readiness work; no lab connection, test launch
+against an application, account setup or product behavior change.
+
+1. [ ] Add a source-bound coverage registry/validator and derived all-case matrix in `scripts/qa_coverage.py`, regression tests and `docs/qa/automation-coverage.json` / `Automation_Coverage.md`. Unknown coverage stays explicitly unmapped; partial coverage cannot become whole-case automation.
+2. [ ] Add reviewed source adapters for Staff permission cases (SS-04, HIS-01, RPT-07, LOG-05, PLG-07), with isolated exact-selection Playwright configuration, no setup dependencies/retries/captures, and per-item evidence. Validate registration with offline `--list`, never a browser launch. Existing human passes stay excluded by normal queue eligibility.
+3. [ ] Bind queue snapshots/freshness to coverage metadata and reject mismatched adapter cards; include registry checks in the docs gate, document source implementation versus live readiness, and update the overall checklist. Complete live cards still require verified prerequisites/environment and a supported reviewed launcher.
+4. [ ] Verify docs and relevant frontend checks, inspect CI, checkpoint to draft PR #207 and synchronize the main-checkout progress copies.
+
+Next action: round 1 failing coverage registry contracts, then implement validation.
