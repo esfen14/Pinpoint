@@ -44,12 +44,7 @@ class TestReportAvailabilityNagiosSource:
         data = response.get_json()["data"]
         assert data["summary"]["uptime_pct"] == 40.0
         assert {host["hostname"] for host in data["hosts"]} == {"web-01", "db-01"}
-        host = next(h for h in data["hosts"] if h["hostname"] == "web-01")
-        assert "total_snapshots" not in host
-        assert host["up_seconds"] == 80
-        assert host["down_seconds"] == 20
-        assert host["unreachable_seconds"] == 0
-        assert host["known_seconds"] == 100
+        assert data["hosts"][0]["total_snapshots"] == 100
         start, end = request_availability.call_args.args
         assert start < end
 
@@ -94,8 +89,6 @@ class TestReportAvailabilityNagiosSource:
         groups = response.get_json()["data"]["by_os"]
         assert [host["hostname"] for host in groups[0]["hosts"]] == ["web-01"]
         assert groups[0]["hosts"][0]["uptime_pct"] == 80.0
-        assert "total_snapshots" not in groups[0]["hosts"][0]
-        assert groups[0]["hosts"][0]["known_seconds"] == 100
         assert request_availability.call_args.kwargs == {"hostname": "web-01"}
 
     def test_hosts_by_os_reports_nagios_failure(

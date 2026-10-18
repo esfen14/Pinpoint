@@ -5,13 +5,10 @@ import type { LucideIcon } from 'lucide-react'
 import { useSystemSettings } from '../../contexts/SystemSettingsContext'
 import { apiGet, errorMessage } from '../../lib/api'
 import { formatServerDateTime } from '../../utils/formatDateTime'
-import { exportRows, type ExportMeta } from '../../utils/exportData'
-import { exportMeta } from '../../lib/reportFormat'
+import { exportRows } from '../../utils/exportData'
 import { ExportMenu } from '../shared/ExportMenu'
-import type { DeviceServicesReport, PeriodMeta } from '../../types/report'
+import type { DeviceServicesReport } from '../../types/report'
 import { ServiceReportContext } from './ServiceReportContext'
-import { ReportNotes } from './ReportNotes'
-import { InsufficientHistoryNotice } from './InsufficientHistoryNotice'
 import { Pagination } from '../shared/Pagination'
 
 
@@ -23,10 +20,6 @@ type Props = {
   runKey: number
   onStatus: (message: { type: 'success' | 'error'; text: string } | null) => void
   onCards: (cards: ExtraReportCard[]) => void
-  // Opens the availability detail drawer for the row's exact host (and service).
-  onOpenDetail?: (hostname: string, service: string | null) => void
-  // The about-this-report text for the current view, shown below the table.
-  description: string
 }
 
 type ColumnKind = 'text' | 'state' | 'datetime' | 'pct'
@@ -50,9 +43,6 @@ type Report = {
   rows: Row[]
   cards: ExtraReportCard[]
   serviceContext?: DeviceServicesReport
-  // Row keys that identify the exact object for the detail drawer.
-  detail?: { host: string; service?: string }
-  meta?: ExportMeta
 }
 
 type NagiosEvent = Record<string, unknown>
@@ -106,7 +96,6 @@ function buildReport(view: ExtraReportView, data: Record<string, unknown>): Repo
       title: 'Hosts by OS Report',
       noun: 'hosts',
       filename: 'hosts-by-os-report',
-      detail: { host: 'hostname' },
       searchLabel: 'Search hostname or OS',
       searchKeys: ['hostname', 'os'],
       filterKey: 'state',
@@ -151,7 +140,6 @@ function buildReport(view: ExtraReportView, data: Record<string, unknown>): Repo
       title: 'Device Services Report',
       noun: 'services',
       filename: 'device-services-report',
-      detail: { host: 'hostname', service: 'service' },
       searchLabel: 'Search host or service',
       searchKeys: ['hostname', 'service'],
       filterKey: 'state',
@@ -184,8 +172,6 @@ function buildReport(view: ExtraReportView, data: Record<string, unknown>): Repo
       service: text(a.service_description),
       previousState: text(a.last_state).toUpperCase(),
       state: text(a.state).toUpperCase(),
-      stateType: text(a.state_type).toUpperCase(),
-      duration: Number(a.duration_seconds) || 0,
       output: text(a.plugin_output),
     }))
     const problems = rows.filter((r) => !isGood(String(r.state))).length
@@ -205,8 +191,6 @@ function buildReport(view: ExtraReportView, data: Record<string, unknown>): Repo
         { key: 'service', label: 'Service', kind: 'text' },
         { key: 'previousState', label: 'Previous State', kind: 'state' },
         { key: 'state', label: 'New State', kind: 'state' },
-        { key: 'stateType', label: 'State Type', kind: 'text' },
-        { key: 'duration', label: 'Time in previous state (seconds)', kind: 'text' },
         { key: 'output', label: 'Output', kind: 'text' },
       ],
       rows,
@@ -224,9 +208,7 @@ function buildReport(view: ExtraReportView, data: Record<string, unknown>): Repo
     hostname: text(n.hostname),
     service: text(n.servicedesc ?? n.service_description),
     state: text(n.state).toUpperCase(),
-    notificationType: text(n.notificationtype),
     contact: text(n.contact),
-    method: text(n.notificationmethod),
     message: text(n.output),
   }))
   const recoveries = rows.filter((r) => isGood(String(r.state))).length
@@ -245,9 +227,7 @@ function buildReport(view: ExtraReportView, data: Record<string, unknown>): Repo
       { key: 'hostname', label: 'Hostname', kind: 'text' },
       { key: 'service', label: 'Service', kind: 'text' },
       { key: 'state', label: 'State', kind: 'state' },
-      { key: 'notificationType', label: 'Type', kind: 'text' },
       { key: 'contact', label: 'Contact', kind: 'text' },
-      { key: 'method', label: 'Method', kind: 'text' },
       { key: 'message', label: 'Message', kind: 'text' },
     ],
     rows,
@@ -279,7 +259,7 @@ function StateBadge({ state }: { state: string }) {
   )
 }
 
-export function ExtraReports({ view, query, runKey, onStatus, onCards, onOpenDetail, description }: Props) {
+export function ExtraReports({ view, query, runKey, onStatus, onCards }: Props) {
   const { settings } = useSystemSettings()
   const [report, setReport] = useState<Report | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -301,15 +281,6 @@ export function ExtraReports({ view, query, runKey, onStatus, onCards, onOpenDet
       .then((data) => {
         if (cancelled) return
         const built = buildReport(view, data)
-        const period = data.period as PeriodMeta | undefined
-        if (period) {
-          built.meta = exportMeta(period, {
-            Filters: query,
-            Units: built.columns.some((c) => c.label.includes('(seconds)')) ? 'Durations are in seconds' : null,
-            Denominator: view === 'hosts-by-os' ? 'Uptime % = Up time / known host-state time; no recorded data is excluded' : null,
-            Warning: view === 'alerts' || view === 'notifications' ? 'Events come from the Nagios archive for the filtered period' : null,
-          })
-        }
         setSortAsc(built.sortKey !== 'time')
         setReport(built)
         onCards(built.cards)
@@ -373,10 +344,11 @@ export function ExtraReports({ view, query, runKey, onStatus, onCards, onOpenDet
     return value === '' || value == null ? '—' : value
   }
 
-  const columnCount = (report?.columns.length ?? 1) + (report?.detail && onOpenDetail ? 1 : 0)
+  const columnCount = report?.columns.length ?? 1
 
   return (
     <>
+      {report?.serviceContext && <ServiceReportContext period={report.serviceContext.period} current={report.serviceContext.current_status} durations={report.serviceContext.summary} />}
       <div className="rounded-2xl bg-white shadow-sm dark:bg-[#171B20]">
         <div className="relative flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 p-4 dark:border-white/10">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{report?.title ?? 'Report'}</h2>
@@ -440,15 +412,11 @@ export function ExtraReports({ view, query, runKey, onStatus, onCards, onOpenDet
             <ExportMenu
               label
               allowedFormats={isLoading || !report ? [] : settings.exportFormats}
-              onExport={(format) => report && exportRows(exportData(), format, report.filename, report.meta)}
+              onExport={(format) => report && exportRows(exportData(), format, report.filename)}
             />
           </div>
         </div>
 
-        {!isLoading && report && (view === 'hosts-by-os' || view === 'device-services') && report.rows.length > 0 &&
-          report.rows.every((r) => (view === 'hosts-by-os' ? r.uptime == null : Number(r.recorded) === 0)) && (
-          <InsufficientHistoryNotice subject={view === 'hosts-by-os' ? 'these hosts' : 'these services'} />
-        )}
         <div className="overflow-x-auto">
           <table className="w-full min-w-275 text-left text-sm">
             <thead className="border-b border-gray-200 text-gray-500 dark:border-white/10 dark:text-gray-500">
@@ -456,7 +424,6 @@ export function ExtraReports({ view, query, runKey, onStatus, onCards, onOpenDet
                 {(report?.columns ?? []).map((col) => (
                   <th key={col.key} className="px-4 py-3">{col.label}</th>
                 ))}
-                {report?.detail && onOpenDetail && <th className="px-4 py-3">Details</th>}
               </tr>
             </thead>
 
@@ -477,15 +444,6 @@ export function ExtraReports({ view, query, runKey, onStatus, onCards, onOpenDet
                         {renderCell(col, row)}
                       </td>
                     ))}
-                    {report!.detail && onOpenDetail && (
-                      <td className="px-4 py-3">
-                        <button type="button" className="text-[#ffb100] underline"
-                          aria-label={`Details for ${String(row[report!.detail.host])}${report!.detail.service ? ` ${String(row[report!.detail.service])}` : ''}`}
-                          onClick={() => onOpenDetail(String(row[report!.detail!.host]), report!.detail!.service ? String(row[report!.detail!.service]) : null)}>
-                          Details
-                        </button>
-                      </td>
-                    )}
                   </tr>
                 ))
               )}
@@ -500,11 +458,6 @@ export function ExtraReports({ view, query, runKey, onStatus, onCards, onOpenDet
           <Pagination page={currentPage} pageCount={pageCount} onPageChange={setPage} />
         </div>
       </div>
-      <ReportNotes description={description}>
-        {report?.serviceContext && <ServiceReportContext period={report.serviceContext.period} current={report.serviceContext.current_status} durations={report.serviceContext.summary} />}
-        {view === 'hosts-by-os' && <p>Uptime % = Up time ÷ known host-state time (Up + Down + Unreachable); time with no recorded data is excluded. Operating systems come from Pinpoint's device records, not from Nagios.</p>}
-        {(view === 'alerts' || view === 'notifications') && <p>Events come from the Nagios archive for the applied period and filters. Use Filters to narrow by host, service, object type or state type.</p>}
-      </ReportNotes>
     </>
   )
 }

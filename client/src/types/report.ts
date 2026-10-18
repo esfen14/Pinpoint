@@ -2,13 +2,10 @@
 
 export type ReportPeriod = 'last_24h' | 'today' | 'last_7d' | 'last_30d' | 'last_90d' | 'custom'
 
-export type ReportTimeZone = { name: string; utc_offset_seconds: number }
-
 export type PeriodMeta = {
   period: string
   start: string
   end: string
-  time_zone?: ReportTimeZone
 }
 
 // --- GET /report/availability -----------------------------------------
@@ -17,10 +14,7 @@ export type HostAvailabilityRow = {
   hostname: string
   state: string
   uptimePct: number | null
-  upSeconds: number
-  downSeconds: number
-  unreachableSeconds: number
-  knownSeconds: number
+  totalSnapshots: number
   lastCheck: string | null
   lastStateChange: string | null
 }
@@ -41,10 +35,7 @@ type HostAvailabilityApiRecord = {
   hostname: string
   state: string
   uptime_pct: number | null
-  up_seconds: number
-  down_seconds: number
-  unreachable_seconds: number
-  known_seconds: number
+  total_snapshots: number
   last_check: string | null
   last_state_change: string | null
 }
@@ -75,10 +66,7 @@ export function fromHostAvailabilityResponse(data: HostAvailabilityApiResponse):
       hostname: h.hostname,
       state: h.state,
       uptimePct: h.uptime_pct,
-      upSeconds: h.up_seconds,
-      downSeconds: h.down_seconds,
-      unreachableSeconds: h.unreachable_seconds,
-      knownSeconds: h.known_seconds,
+      totalSnapshots: h.total_snapshots,
       lastCheck: h.last_check,
       lastStateChange: h.last_state_change,
     })),
@@ -222,113 +210,4 @@ export function fromNetworkServicesResponse(data: NetworkServicesApiResponse): N
       instances: s.instances,
     })),
   }
-}
-
-
-// --- GET /report/availability-detail ------------------------------------
-
-export type DetailState = {
-  state: string
-  seconds: number
-  scheduled_seconds: number
-  unscheduled_seconds: number
-  pct_of_total: number | null
-  pct_of_known: number | null
-}
-
-export type DetailInterval = {
-  start: number
-  end: number
-  duration_seconds: number
-  state: string
-  information: string
-  clipped_start: boolean
-  unknown_onset: boolean
-  continuing: boolean
-}
-
-export type AvailabilityDetail = {
-  period: PeriodMeta
-  source: string
-  generated_at: string
-  object: { hostname: string; service: string | null }
-  totals: {
-    window_seconds: number
-    known_seconds: number
-    no_recorded_data_seconds: number
-    no_data_seconds: number
-    nagios_not_running_seconds: number
-    unaccounted_seconds: number
-    states: DetailState[]
-  }
-  complete: boolean
-  intervals_available: boolean
-  intervals: DetailInterval[]
-  reconciliation: { matches: boolean; tolerance_seconds: number; differences: Record<string, number> } | null
-  notice: string | null
-}
-
-// --- Event filters, alert summary and histogram -------------------------
-
-export type EventScope = 'both' | 'host' | 'service'
-export type EventStateType = 'default' | 'hard' | 'soft' | 'both'
-export type HistogramBreakdown = 'month' | 'day_of_month' | 'weekday' | 'hour'
-
-export type EventFilterMeta = {
-  scope: string
-  state_type: string
-  include_recoveries: boolean
-  include_initial: boolean
-  hostname: string | null
-  service: string | null
-  states: string[]
-  policy: string
-}
-
-export type SummaryRow = {
-  rank: number
-  hostname: string
-  service: string | null
-  total: number
-  states: Record<string, number>
-  first: number
-  last: number
-}
-
-export type AlertSummary = {
-  period: PeriodMeta
-  source: string
-  generated_at: string
-  filters: EventFilterMeta
-  by: 'host' | 'service'
-  complete: boolean
-  notice: string | null
-  totals: {
-    problem_events: number
-    recovery_events: number
-    host_problem_events: number
-    service_problem_events: number
-    distinct_hosts: number
-    distinct_objects: number
-    states: Record<string, number>
-  } | null
-  ranking: SummaryRow[]
-  top: SummaryRow[]
-}
-
-export type HistogramBucket = { label: string; total: number; states: Record<string, number> }
-
-export type AlertHistogram = {
-  period: PeriodMeta
-  source: string
-  generated_at: string
-  filters: EventFilterMeta
-  complete: boolean
-  recurring: boolean
-  bucketing_note: string
-  notice: string | null
-  breakdown: HistogramBreakdown
-  buckets: HistogramBucket[]
-  series: Record<string, number[]>
-  total: number | null
 }
