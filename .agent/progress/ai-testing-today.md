@@ -1,6 +1,6 @@
 # Start black-box automation today
 
-Priority: obtain the first attributable supervised automated case result today.
+Initial priority achieved: one attributable supervised TC-SS-04 PASS after the preserved original INCONCLUSIVE pilot. Next priority: prepare support for a new reviewed case batch.
 User confirmed the local VirtualBox appliance is exclusively available.
 
 ## Finish condition
@@ -9,7 +9,7 @@ User confirmed the local VirtualBox appliance is exclusively available.
 - [x] Prepare and show fixed one-case scope: `docs/qa/queues/2026-10-18-today-ss04-v4.json`, set `today-ss04`, owner Paeng.
 - [x] Obtain explicit user authorization for appliance preflight and subsequent backup/deployment/migration/restart/Staff setup.
 - [x] Verify actual VM/controller/endpoints; deploy/restart exact target, match tracked source and all served build artifacts, initialize Staff and verify local runner image availability.
-- [x] Bind fresh actual host/guest/source/config/runtime/Staff/served proof to the independently reviewed controlled launch/build record; require adapter logout and fresh post-case proof. Actual post-case cleanup is still unverified.
+- [x] Bind fresh actual host/guest/source/config/runtime/Staff/served proof to the independently reviewed controlled launch/build record; require adapter logout and fresh post-case proof. Actual complete post-case cleanup and accepted result were verified by the separately authorized #211 recheck.
 - [x] Implement concrete container lifecycle with 16 synthetic contracts and fix Playwright worker reload with 7 offline helper checks. No acceptance case or browser executes in these fixtures.
 - [x] Implement the owned private bridge and container custody checks (11 Unix-only/16 container contracts), plus read-only Git/artifact/process observations (6 fixture contracts). Observer output is not verified runtime identity.
 - [x] Complete the narrow pilot launcher/identity/cleanup wiring and eleven isolated integration contracts; pass supported actual read-only inspection. The broader unattended framework and unmapped cases are not prerequisites for implementing this narrow lane.
@@ -17,7 +17,7 @@ User confirmed the local VirtualBox appliance is exclusively available.
 - [x] Publish the final v4 executable scope/card with observed baseline and exact command.
 - [x] Obtain explicit user start for v4 `today-ss04`; Paeng said start after confirming the one-case pilot.
 - [x] Execute TC-SS-04 once, record INCONCLUSIVE due to harness timing issue #211 and independently verify cleanup; preserve original human Result fields.
-- [ ] Fix timing import/review recovery and obtain a new recheck start before claiming the accepted end-to-end result path works.
+- [x] Fix #211 timing import, apply separately authorized audited recovery, and complete the separately started accepted TC-SS-04 recheck with full cleanup (PR #212/report).
 - [x] Save/index the appliance preparation report, queue log and checklist, including automatic startup scan and temporary scheduler pause.
 - [x] Save/index the first INCONCLUSIVE pilot result and pass its docs gate after explicit start; no accepted PASS claimed.
 
@@ -32,7 +32,7 @@ Target `299ab3ba7203c89a3ca5d8fabea42d9e5f239be2`, the user's original checkout
 revision, is now deployed after the approved build/migration/restart. This revision was exercised by the first INCONCLUSIVE browser pilot; no accepted
 whole-case PASS or fresh receipt is implied by this descriptive file. The readiness
 branch freezes its source adapter/helper/configuration hashes separately.
-The v4 attempt ran once and is INCONCLUSIVE; its consumed slot/ledger are halted. No replay is allowed.
+The original v4 attempt remains INCONCLUSIVE/consumed. Audited recovery preserved it and enabled a separately started v2 recheck, now complete/PASS; neither slot may be replayed.
 Existing human PASS cases are excluded. The later explicit setup approval covered backup, deployment, dependency/build/migration
 work, restart and disposable Staff initialization. It did not authorize acceptance,
 fault injection, snapshot restore or scan starts. The automatic startup scan and
@@ -40,10 +40,10 @@ scheduler pause are disclosed below.
 
 ## State for the next session
 
-- First explicitly started TC-SS-04 attempt is INCONCLUSIVE: browser assertions/logout passed, but strict evidence import rejected a 44 ms timing disagreement. Harness issue #211 filed; no product failure or accepted PASS claimed. One batch/one attempt, no repeats; supervisor/session remain halted.
-- Cleanup: owned container removed with daemon absence proof, bridge stopped/socket removed, logout/401 attachment passed, and separate supported read-only post-run baseline check passed. VM remains running with scheduler off; backup retained.
-- Next action: investigate/fix #211 in a separate preparation task after this saved reporting checkpoint. Preserve halted ledger and original evidence. Any new attempt requires reviewed recovery, a fresh recheck card/queue and explicit start; never replay v4, clear counters or manually promote raw PASS.
-- No local backend or unchanged frontend suite; no product/harness source change during execution. Documentation gate for this reporting checkpoint passes 176 isolated contracts; links/progress/whitespace pass. The known-gap inventory update intentionally makes the old v4 source snapshot stale for any future launch.
+- Pulled merged PR #212 at `91357da8`. #211 timing fix, audited recovery and accepted TC-SS-04 recheck are complete; report is `docs/test-runs/2026-10-18-issue-211-ss04-recheck/REPORT.md`. Actual ledger audit confirms active halt false, original halted attempt preserved, new attempt complete/PASS and one valid archived recovery disposition.
+- Next action: prepare broader bounded execution support before a new assignment. The launcher is still TC-SS-04-only, and recovery's next-queue hash still restricts consumption to the already completed recheck queue. Implement a reviewed forward handoff preserving history, select new eligible case adapters/fixtures and extend only that scope, then freeze new queue/cards, recheck prerequisites and obtain its explicit start.
+- Five source adapters exist; four are original human PASS, TC-SS-04 has a new attributable PASS, 234 definitions remain unmapped. Do not rerun passed cases or reset the store to create throughput. Product application remains target `299ab3b`, scheduler off; no VM or case action occurred during this pull/review.
+- Post-pull local docs verification passed 193 isolated contracts plus the pinned no-browser timing worker; no local backend or unchanged frontend suite needed. The observed PR #212 ready-policy CI failure is inherited unfinished parent progress, after successful docs/tooling checks; it is not a failing parser/unit gate or a reason to erase parent progress.
 
 ## Current offline implementation
 
@@ -158,7 +158,7 @@ Start timestamp: 2026-10-18T07:21:01.029461+00:00. Queue `today-ss04`, session `
 - [x] Search existing issues and file harness [#211](https://github.com/esfen14/Pinpoint/issues/211), without a qa-found product label. No product failure established.
 - [x] Record/index [pilot report](../../docs/test-runs/2026-10-18-issue-206-ss04-pilot/REPORT.md), queue execution log and known-gap inventory; preserve original human results and earlier reports.
 - [x] Complete report/checklist/index documentation gate: 176 isolated contracts, links/progress/whitespace pass; checkpoint this reporting outcome.
-- [ ] Investigate/fix #211 in a separate preparation task; preserve the halted ledger and original run. A new attempt needs reviewed recovery, a fresh recheck queue/card and explicit start; never clear/replay the consumed v4 slot.
+- [x] Complete separate #211 fix, preserve original attempt/archive/budgets, apply separately approved recovery and pass the explicitly started v2 recheck. Neither consumed queue can be replayed.
 
 Actual application `299ab3ba7203c89a3ca5d8fabea42d9e5f239be2`; harness
 `b50f9b11745fa919df3a8faad6d0e2762823e084`. Session
@@ -168,3 +168,20 @@ INCONCLUSIVE 1, Not run 0. E2E attempted 0; inherited credit 0.
 The raw browser PASS is supporting evidence, not an accepted whole-case verdict.
 The scheduler remains off and VM running; no scan/fault/setup/reset/restart occurred.
 No application/harness source was edited during execution or investigation.
+
+## Pulled #212 and reconciled accepted pilot (2026-10-18)
+
+- [x] Fast-forward `issue-206-qa-readiness` to merge `91357da849c34aa9b2256688e331b78255ae08ba`; #212 contains the #211 timing fix, audited recovery and separately authorized successful recheck.
+- [x] Review bounded attach-window timing semantics, regression/recovery contract and [accepted recheck report](../../docs/test-runs/2026-10-18-issue-211-ss04-recheck/REPORT.md). Application target remains `299ab3b`; original INCONCLUSIVE evidence is unchanged.
+- [x] Read the actual canonical ledger under its existing host/UUID claim: active halt false, one preserved original halted attempt, one complete TC-SS-04 PASS, one audited recovery disposition; original archive/history passes `ready()` verification. No live state was changed in this review.
+- [x] Reconcile finish checklists with the accepted supervised import/logout/container/bridge/process/baseline path. No additional browser case ran in this pull/review pass.
+- [x] Complete local post-pull docs checks: 193 isolated contracts pass; the pinned no-browser Playwright timing worker test also passes. Skip local backend/unchanged product frontend suites. PR #212's observed red docs job passed the docs/tooling checks, then rejected the inherited unfinished `issue-206.md` under ready-PR policy; preserve parent progress rather than deleting unfinished work or weakening CI.
+- [ ] Implement/test a reviewed next-assignment handoff: `Ledger.consume()` currently permits only the recovery disposition's exact v2 queue hash, including after that queue completes. Preserve old attempts, archives and budgets; do not clear/relocate the store to launch a new queue.
+- [ ] Select the next eligible untested cases/module and implement their reviewed adapters/fixtures/assertions/cleanup. Registry has five implemented source adapters, 234 unmapped; the other four permission adapters have original human PASS, while TC-SS-04 now has accepted attributable PASS. No redundant rerun is implied.
+- [ ] Expand the live executor beyond its explicit TC-SS-04-only/single-case checks for only the selected reviewed IDs and bounded batches. Existing ordinary maximum remains five cases/batch and five batches/session, not automatic permission to drain the catalog.
+- [ ] Prepare a fresh source-current module/person queue/card with target/baseline/evidence paths, verify its actual prerequisites and obtain its own explicit start. Scheduler remains off; monitoring/timing/discovery fixtures need separately reviewed baseline changes.
+
+The timing defect and accepted-pilot recheck are complete. Broader testing is
+blocked by narrow supported scope/next-queue handoff and missing case adapters,
+not by a remaining #211 parser failure. No further TC-SS-04 run, reset, recovery,
+VM change or new test start occurred during this pull/review.
