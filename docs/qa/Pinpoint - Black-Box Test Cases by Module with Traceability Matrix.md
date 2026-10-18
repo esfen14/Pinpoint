@@ -414,9 +414,9 @@ Cases not listed here need only a finished setup (TC-AUTH-07) and the lab descri
 | TC-ACC-05 | Editing a signed-in user signs them out | ACC-04 | ST | M | FAIL |
 | TC-ACC-06 | Administrator resets another user's password | ACC-05 | ST | H | FAIL |
 | TC-ACC-07 | The first (bootstrap) account is protected | ACC-06 | DT | H | PASS |
-| TC-ACC-08 | "Send this user email alerts" depends on permission | ACC-07 | DT | L | Not run |
-| TC-ACC-09 | The accounts page needs permission | ACC-08 | DT | H | Not run |
-| TC-ACC-10 | Add User uses the default role (issue #191) | ACC-09 | EG | M | Not run |
+| TC-ACC-08 | "Send this user email alerts" depends on permission | ACC-07 | DT | L | PASS |
+| TC-ACC-09 | The accounts page needs permission | ACC-08 | DT | H | PASS |
+| TC-ACC-10 | Add User uses the default role (issue #191) | ACC-09 | EG | M | PASS   |
 
 #### TC-ACC-01 – Add an account
 
@@ -532,7 +532,7 @@ Cases not listed here need only a finished setup (TC-AUTH-07) and the lab descri
 
 #### TC-ACC-08 – "Send this user email alerts" depends on permission
 
-**Requirement:** REQ-ACC-07 · **Technique:** DT · **Priority:** L · **Result:** Not run
+**Requirement:** REQ-ACC-07 · **Technique:** DT · **Priority:** L · **Result:** PASS
 
 **Before you start:** a role `qa-accounts` with `account.view` and `account.edit` but not `account.alerts`, and a user with that role.
 
@@ -548,7 +548,7 @@ Cases not listed here need only a finished setup (TC-AUTH-07) and the lab descri
 
 #### TC-ACC-09 – The accounts page needs permission
 
-**Requirement:** REQ-ACC-08 · **Technique:** DT · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-ACC-08 · **Technique:** DT · **Priority:** H · **Result:** PASS
 
 **Steps**
 
@@ -563,7 +563,7 @@ Cases not listed here need only a finished setup (TC-AUTH-07) and the lab descri
 
 #### TC-ACC-10 – Add User uses the default role (issue #191)
 
-**Requirement:** REQ-ACC-09 · **Technique:** EG · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-ACC-09 · **Technique:** EG · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -587,7 +587,7 @@ Cases not listed here need only a finished setup (TC-AUTH-07) and the lab descri
 | TC-ROL-01 | Create a role | ROL-01 | EP | H | PASS |
 | TC-ROL-02 | The Super Admin role is read-only | ROL-02 | EG | M | PASS |
 | TC-ROL-03 | The bootstrap administrator's role is locked | ROL-03 | DT | H | PASS |
-| TC-ROL-04 | A dashboard-only user is limited to the Dashboard | ROL-04 | DT | H | Not run |
+| TC-ROL-04 | A dashboard-only user is limited to the Dashboard | ROL-04 | DT | H | PASS |
 | TC-ROL-05 | A Staff user can open only Settings | ROL-04 | DT | H | PASS |
 | TC-ROL-06 | Settings tabs follow their own permissions | ROL-05 | DT | M | PASS |
 
@@ -639,7 +639,7 @@ Cases not listed here need only a finished setup (TC-AUTH-07) and the lab descri
 
 #### TC-ROL-04 – A dashboard-only user is limited to the Dashboard
 
-**Requirement:** REQ-ROL-04 · **Technique:** DT · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-ROL-04 · **Technique:** DT · **Priority:** H · **Result:** PASS
 
 **Before you start:** the role `qa-view` (TC-ROL-01) and a user with that role, for example `qa.view@mail-lab.com`.
 
@@ -700,10 +700,10 @@ Cases not listed here need only a finished setup (TC-AUTH-07) and the lab descri
 | TC-DASH-03 | The Active Alerts table matches the cards | DASH-03 | DT | H | PASS |
 | TC-DASH-04 | All-clear state | DASH-03 | EG | M | PASS |
 | TC-DASH-05 | Service Overview panel | DASH-04 | EP | M | PASS |
-| TC-DASH-06 | Refresh text and stale Nagios warning | DASH-05 | BVA | M | Not run |
-| TC-DASH-07 | "No data" instead of blank cards | DASH-06 | EG | M | Not run |
+| TC-DASH-06 | Refresh text and stale Nagios warning | DASH-05 | BVA | M | FAIL - While Nagios is down, there is no indication that Nagios is not running and not polling, this was confirmed when trying to modify a Nagios config but can't save. |
+| TC-DASH-07 | "No data" instead of blank cards | DASH-06 | EG | M | PASS |
 | TC-DASH-08 | The Dashboard needs permission | DASH-07 | DT | H | PASS |
-| TC-DASH-09 | "Running out soon" forecast list (issue #156) | DASH-08 | EP | M | Not run |
+| TC-DASH-09 | "Running out soon" forecast list (issue #156) | DASH-08 | EP | M | PASS |
 
 The page has: the header with the refresh text and the **Rescan Network** button, the **Appliance storage** card, four cards (**Total Hosts**, **Network Latency**, **Active Warnings**, **Critical Issues**), **Network Status Overview** (Online and Offline), **Network Performance**, **Average Resource Utilization** (only when an NCPA host reports), **Running out soon**, the **Active Alerts** table, **Recent Notifications**, and the **Service Overview** panel on the right.
 
@@ -789,7 +789,7 @@ The page has: the header with the refresh text and the **Rescan Network** button
 
 #### TC-DASH-06 – Refresh text and stale Nagios warning
 
-**Requirement:** REQ-DASH-05 · **Technique:** BVA · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-DASH-05 · **Technique:** BVA · **Priority:** M · **Result:** FAIL
 
 **Steps**
 
@@ -805,7 +805,7 @@ The page has: the header with the refresh text and the **Rescan Network** button
 
 #### TC-DASH-07 – "No data" instead of blank cards
 
-**Requirement:** REQ-DASH-06 · **Technique:** EG · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-DASH-06 · **Technique:** EG · **Priority:** M · **Result:** PASS
 
 **Before you start:** a lab with no ping check on any host and no NCPA host.
 
@@ -834,7 +834,7 @@ The page has: the header with the refresh text and the **Rescan Network** button
 
 #### TC-DASH-09 – "Running out soon" forecast list (issue #156)
 
-**Requirement:** REQ-DASH-08 · **Technique:** EP · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-DASH-08 · **Technique:** EP · **Priority:** M · **Result:** PASS
 
 **Before you start:** an NCPA host with at least 3 days of disk or memory readings, and one disk or memory value that is rising. The forecast job runs every 30 minutes.
 
@@ -864,9 +864,9 @@ The page has: the header with the refresh text and the **Rescan Network** button
 | TC-NH-02 | Host table search and filters (Device Inventory) | NH-02 | EP | H | PASS |
 | TC-NH-03 | Host paging limits (API) | NH-03 | BVA | M | PASS |
 | TC-NH-04 | Host detail drawer (Device Inventory) | NH-04 | EP | M | PASS |
-| TC-NH-05 | Averages need enough data | NH-05 | BVA | M | Not run |
-| TC-NH-06 | Interface Bandwidth | NH-06 | EP | M | Not run |
-| TC-NH-07 | Flap history and "Flapping only" (Device Inventory) | NH-07 | BVA | L | Not run |
+| TC-NH-05 | Averages need enough data | NH-05 | BVA | M | PASS |
+| TC-NH-06 | Interface Bandwidth | NH-06 | EP | M | PASS |
+| TC-NH-07 | Flap history and "Flapping only" (Device Inventory) | NH-07 | BVA | L | PASS |
 
 The Network Health page shows: **Online Devices**, **Offline Devices**, host availability, system activity, **Interface Bandwidth**, CPU load, added plugins, **Latency**, **Packets Loss**, **Bandwidth**, **Avg. Response Time**, active connections, and insights. The host table, its search and filters, and the host drawer are on the **Device Inventory** page. The spec places them under Network Health, so TC-NH-02 to TC-NH-04 and TC-NH-07 are done on Device Inventory.
 
@@ -932,7 +932,7 @@ The Network Health page shows: **Online Devices**, **Offline Devices**, host ava
 
 #### TC-NH-05 – Averages need enough data
 
-**Requirement:** REQ-NH-05 · **Technique:** BVA · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-NH-05 · **Technique:** BVA · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -946,7 +946,7 @@ The Network Health page shows: **Online Devices**, **Offline Devices**, host ava
 
 #### TC-NH-06 – Interface Bandwidth
 
-**Requirement:** REQ-NH-06 · **Technique:** EP · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-NH-06 · **Technique:** EP · **Priority:** M · **Result:** PASS
 
 **Before you start:** a device with SNMP whose interface is monitored (TC-DX-07).
 
@@ -965,7 +965,7 @@ The Network Health page shows: **Online Devices**, **Offline Devices**, host ava
 
 #### TC-NH-07 – Flap history and "Flapping only" (Device Inventory)
 
-**Requirement:** REQ-NH-07 · **Technique:** BVA · **Priority:** L · **Result:** Not run
+**Requirement:** REQ-NH-07 · **Technique:** BVA · **Priority:** L · **Result:** PASS
 
 **Steps**
 
@@ -988,8 +988,8 @@ The Network Health page shows: **Online Devices**, **Offline Devices**, host ava
 | TC-SS-01 | Service state counts | SS-01 | EP | H | PASS |
 | TC-SS-02 | Search, filter, sort, and paging | SS-01 | EP | M | PASS |
 | TC-SS-03 | No results | SS-01 | EG | L | PASS |
-| TC-SS-04 | System Status needs permission | SS-02 | DT | H | Not run |
-| TC-SS-05 | Forecast badge on a service row (issue #156) | SS-03 | EP | M | Not run |
+| TC-SS-04 | System Status needs permission | SS-02 | DT | H | PASS |
+| TC-SS-05 | Forecast badge on a service row (issue #156) | SS-03 | EP | M | PASS |
 
 #### TC-SS-01 – Service state counts
 
@@ -1034,7 +1034,7 @@ The Network Health page shows: **Online Devices**, **Offline Devices**, host ava
 
 #### TC-SS-04 – System Status needs permission
 
-**Requirement:** REQ-SS-02 · **Technique:** DT · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-SS-02 · **Technique:** DT · **Priority:** H · **Result:** PASS
 
 **Steps**
 
@@ -1047,7 +1047,7 @@ The Network Health page shows: **Online Devices**, **Offline Devices**, host ava
 
 #### TC-SS-05 – Forecast badge on a service row (issue #156)
 
-**Requirement:** REQ-SS-03 · **Technique:** EP · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-SS-03 · **Technique:** EP · **Priority:** M · **Result:** PASS
 
 **Before you start:** the same lab as TC-DASH-09.
 
@@ -1071,11 +1071,11 @@ The Network Health page shows: **Online Devices**, **Offline Devices**, host ava
 | TC-ACK-01 | Acknowledge needs a comment | ACK-02 | EP | H | PASS |
 | TC-ACK-02 | No acknowledge without permission | ACK-01 | DT | H | PASS |
 | TC-ACK-03 | Acknowledge all | ACK-03 | EP | H | PASS |
-| TC-ACK-04 | Acknowledge all counts only unacknowledged alerts | ACK-03 | DT | M | Not run |
-| TC-ACK-05 | Unacknowledge | ACK-04 | ST | H | PARTIALLY PASS |
-| TC-ACK-06 | Acknowledgement filters | ACK-05 | DT | M | See note |
-| TC-ACK-07 | Acknowledged alerts sort below others | ACK-06 | EG | L | Not run |
-| TC-ACK-08 | Acknowledgement clears on recovery | ACK-07 | ST | H | Not run |
+| TC-ACK-04 | Acknowledge all counts only unacknowledged alerts | ACK-03 | DT | M | PASS |
+| TC-ACK-05 | Unacknowledge | ACK-04 | ST | H | FAIL - see details in step-by-step |
+| TC-ACK-06 | Acknowledgement filters | ACK-05 | DT | M | FAIL - See note |
+| TC-ACK-07 | Acknowledged alerts sort below others | ACK-06 | EG | L | PASS |
+| TC-ACK-08 | Acknowledgement clears on recovery | ACK-07 | ST | H | PASS |
 
 Acknowledge buttons are on the **Active Alerts** table (Dashboard), the host rows and drawer (**Device Inventory**), and the service rows (**System Status**). A comment is required.
 
@@ -1126,7 +1126,7 @@ Acknowledge buttons are on the **Active Alerts** table (Dashboard), the host row
 
 #### TC-ACK-04 – Acknowledge all counts only unacknowledged alerts
 
-**Requirement:** REQ-ACK-03 · **Technique:** DT · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-ACK-03 · **Technique:** DT · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -1142,7 +1142,7 @@ Acknowledge buttons are on the **Active Alerts** table (Dashboard), the host row
 
 #### TC-ACK-05 – Unacknowledge
 
-**Requirement:** REQ-ACK-04 · **Technique:** ST · **Priority:** H · **Result:** PARTIALLY PASS - there is no prompt to ask you if you want to remove the acknowledge for the alert
+**Requirement:** REQ-ACK-04 · **Technique:** ST · **Priority:** H · **Result:** FAIL - there is no prompt to ask you if you want to remove the acknowledge for the alert
 
 **Steps**
 
@@ -1172,7 +1172,7 @@ Acknowledge buttons are on the **Active Alerts** table (Dashboard), the host row
 
 #### TC-ACK-07 – Acknowledged alerts sort below others
 
-**Requirement:** REQ-ACK-06 · **Technique:** EG · **Priority:** L · **Result:** Not run
+**Requirement:** REQ-ACK-06 · **Technique:** EG · **Priority:** L · **Result:** PASS
 
 **Steps**
 
@@ -1185,7 +1185,7 @@ Acknowledge buttons are on the **Active Alerts** table (Dashboard), the host row
 
 #### TC-ACK-08 – Acknowledgement clears on recovery
 
-**Requirement:** REQ-ACK-07 · **Technique:** ST · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-ACK-07 · **Technique:** ST · **Priority:** H · **Result:** PASS
 
 **Steps**
 
@@ -1209,7 +1209,7 @@ Acknowledge buttons are on the **Active Alerts** table (Dashboard), the host row
 | TC-HIS-01 | History needs permission | HIS-01 | DT | H | PASS |
 | TC-HIS-02 | Time presets | HIS-02 | EP | M | PASS |
 | TC-HIS-03 | Filters work together | HIS-02 | DT | M | PASS |
-| TC-HIS-04 | Date range rules (API) | HIS-03 | BVA | M | Not run |
+| TC-HIS-04 | Date range rules (API) | HIS-03 | BVA | M | PASS |
 | TC-HIS-05 | Sorting | HIS-04 | EP | L | PASS |
 | TC-HIS-06 | Rows per page | HIS-05 | BVA | L | PASS |
 | TC-HIS-07 | Row detail and the link between tabs | HIS-06 | EP | M | PASS |
@@ -1261,7 +1261,7 @@ The page has two tabs, **Alerts** and **Notifications**. Filters: **Time range**
 
 #### TC-HIS-04 – Date range rules (API)
 
-**Requirement:** REQ-HIS-03 · **Technique:** BVA · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-HIS-03 · **Technique:** BVA · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -1339,24 +1339,24 @@ The page has two tabs, **Alerts** and **Notifications**. Filters: **Time range**
 | TC | Case | Req | Tech | Pri | Result |
 | --- | --- | --- | --- | --- | --- |
 | TC-DI-01 | Who sees the Ports section | DI-01 | DT | H | PASS |
-| TC-DI-02 | Port groups and their order | DI-02 | EP | M | Not run |
-| TC-DI-03 | One reason per port | DI-03 | DT | M | Not run |
+| TC-DI-02 | Port groups and their order | DI-02 | EP | M | PASS |
+| TC-DI-03 | One reason per port | DI-03 | DT | M | PASS |
 | TC-DI-04 | View-only without edit permission | DI-04 | DT | H | PASS |
-| TC-DI-05 | Stop and resume monitoring | DI-05, DI-06 | ST | H | Not run |
-| TC-DI-06 | Leave suggested holds the port | DI-07 | ST | M | Not run |
-| TC-DI-07 | Service name rules in Set service | DI-08 | BVA | H | Not run |
-| TC-DI-08 | The "Checked by" line | DI-08 | EP | M | Not run |
-| TC-DI-09 | Pin and Remove pin | DI-09 | ST | M | Not run |
-| TC-DI-10 | The NCPA port is protected | DI-10 | EG | M | Not run |
+| TC-DI-05 | Stop and resume monitoring | DI-05, DI-06 | ST | H | PASS |
+| TC-DI-06 | Leave suggested holds the port | DI-07 | ST | M | PASS |
+| TC-DI-07 | Service name rules in Set service | DI-08 | BVA | H | PASS |
+| TC-DI-08 | The "Checked by" line | DI-08 | EP | M | PASS |
+| TC-DI-09 | Pin and Remove pin | DI-09 | ST | M | FAIL - Notes in the step-by-step  |
+| TC-DI-10 | The NCPA port is protected | DI-10 | EG | M | PASS |
 | TC-DI-11 | One monitoring label per device | DI-11 | DT | H | Not run |
-| TC-DI-12 | Monitoring filter | DI-11 | EP | M | Not run |
-| TC-DI-13 | Pause and resume | DI-12 | ST | H | Not run |
-| TC-DI-14 | Invalid pause and resume | DI-12 | DT | M | Not run |
-| TC-DI-15 | Out-of-config devices show "last known status" | DI-13 | EG | M | Not run |
-| TC-DI-16 | Needs Review section | DI-14 | DT | M | Not run |
-| TC-DI-17 | The review drawer writes nothing | DI-14 | EP | M | Not run |
-| TC-DI-18 | Merging needs edit permission and two distinct records | DI-14 | DT | H | Not run |
-| TC-DI-19 | Merge confirmation | DI-14 | ST | H | Not run |
+| TC-DI-12 | Monitoring filter | DI-11 | EP | M | PASS |
+| TC-DI-13 | Pause and resume | DI-12 | ST | H | PASS |
+| TC-DI-14 | Invalid pause and resume | DI-12 | DT | M | PASS |
+| TC-DI-15 | Out-of-config devices show "last known status" | DI-13 | EG | M | PASS |
+| TC-DI-16 | Needs Review section | DI-14 | DT | M | PASS |
+| TC-DI-17 | The review drawer writes nothing | DI-14 | EP | M | PASS |
+| TC-DI-18 | Merging needs edit permission and two distinct records | DI-14 | DT | H | PASS |
+| TC-DI-19 | Merge confirmation | DI-14 | ST | H | PASS |
 
 To open a host's drawer press **View host details** on its row. The drawer has the **Services** list, **Performance data**, **Timestamps**, **Acknowledgement**, and, for a discovered device, sections such as **Monitoring**, **Ports**, **SNMP**, **Interfaces**, **Email alert recipients**, and **Parent devices**. Pressing a service in the list shows the service view, and **Back to host** returns.
 
@@ -1381,7 +1381,7 @@ To open a host's drawer press **View host details** on its row. The drawer has t
 
 #### TC-DI-02 – Port groups and their order
 
-**Requirement:** REQ-DI-02 · **Technique:** EP · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-DI-02 · **Technique:** EP · **Priority:** M · **Result:** PASS
 
 **Before you start:** a device with ports in several states (Monitored, Suggested, Ignored, Archived).
 
@@ -1398,7 +1398,7 @@ To open a host's drawer press **View host details** on its row. The drawer has t
 
 #### TC-DI-03 – One reason per port
 
-**Requirement:** REQ-DI-03 · **Technique:** DT · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-DI-03 · **Technique:** DT · **Priority:** M · **Result:** PASS
 
 **Before you start:** a Suggested port that is both held (**Leave suggested**) and flagged **Not used as intended**.
 
@@ -1430,7 +1430,7 @@ To open a host's drawer press **View host details** on its row. The drawer has t
 
 #### TC-DI-05 – Stop and resume monitoring
 
-**Requirement:** REQ-DI-05, REQ-DI-06 · **Technique:** ST · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-DI-05, REQ-DI-06 · **Technique:** ST · **Priority:** H · **Result:** PASS
 
 **Steps**
 
@@ -1448,7 +1448,7 @@ To open a host's drawer press **View host details** on its row. The drawer has t
 
 #### TC-DI-06 – Leave suggested holds the port
 
-**Requirement:** REQ-DI-07 · **Technique:** ST · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-DI-07 · **Technique:** ST · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -1464,7 +1464,7 @@ To open a host's drawer press **View host details** on its row. The drawer has t
 
 #### TC-DI-07 – Service name rules in Set service
 
-**Requirement:** REQ-DI-08 · **Technique:** BVA · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-DI-08 · **Technique:** BVA · **Priority:** H · **Result:** PASS
 
 **Steps**
 
@@ -1480,7 +1480,7 @@ To open a host's drawer press **View host details** on its row. The drawer has t
 
 #### TC-DI-08 – The "Checked by" line
 
-**Requirement:** REQ-DI-08 · **Technique:** EP · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-DI-08 · **Technique:** EP · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -1497,7 +1497,7 @@ To open a host's drawer press **View host details** on its row. The drawer has t
 
 #### TC-DI-09 – Pin and Remove pin
 
-**Requirement:** REQ-DI-09 · **Technique:** ST · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-DI-09 · **Technique:** ST · **Priority:** M · **Result:** FAIL - Using network discovery again assigns the device with a port 80 named into a different service name to a new record in network discovery, and saying that the old record has an unknown IP address. The same device is said to have a different SSH key despite being the same device, this needs to be investigated, the device used is 10.77.0.8.
 
 **Steps**
 
@@ -1515,7 +1515,7 @@ To open a host's drawer press **View host details** on its row. The drawer has t
 
 #### TC-DI-10 – The NCPA port is protected
 
-**Requirement:** REQ-DI-10 · **Technique:** EG · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-DI-10 · **Technique:** EG · **Priority:** M · **Result:** PASS
 
 **Before you start:** a host with a successful NCPA deployment.
 
@@ -1548,7 +1548,7 @@ To open a host's drawer press **View host details** on its row. The drawer has t
 
 #### TC-DI-12 – Monitoring filter
 
-**Requirement:** REQ-DI-11 · **Technique:** EP · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-DI-11 · **Technique:** EP · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -1564,7 +1564,7 @@ To open a host's drawer press **View host details** on its row. The drawer has t
 
 #### TC-DI-13 – Pause and resume
 
-**Requirement:** REQ-DI-12 · **Technique:** ST · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-DI-12 · **Technique:** ST · **Priority:** H · **Result:** PASS
 
 **Steps**
 
@@ -1584,7 +1584,7 @@ To open a host's drawer press **View host details** on its row. The drawer has t
 
 #### TC-DI-14 – Invalid pause and resume
 
-**Requirement:** REQ-DI-12 · **Technique:** DT · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-DI-12 · **Technique:** DT · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -1599,7 +1599,7 @@ To open a host's drawer press **View host details** on its row. The drawer has t
 
 #### TC-DI-15 – Out-of-config devices show "last known status"
 
-**Requirement:** REQ-DI-13 · **Technique:** EG · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-DI-13 · **Technique:** EG · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -1617,7 +1617,7 @@ To open a host's drawer press **View host details** on its row. The drawer has t
 
 #### TC-DI-16 – Needs Review section
 
-**Requirement:** REQ-DI-14 · **Technique:** DT · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-DI-14 · **Technique:** DT · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -1631,7 +1631,7 @@ To open a host's drawer press **View host details** on its row. The drawer has t
 
 #### TC-DI-17 – The review drawer writes nothing
 
-**Requirement:** REQ-DI-14 · **Technique:** EP · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-DI-14 · **Technique:** EP · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -1647,7 +1647,7 @@ To open a host's drawer press **View host details** on its row. The drawer has t
 
 #### TC-DI-18 – Merging needs edit permission and two distinct records
 
-**Requirement:** REQ-DI-14 · **Technique:** DT · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-DI-14 · **Technique:** DT · **Priority:** H · **Result:** PASS
 
 **Steps**
 
@@ -1663,7 +1663,7 @@ To open a host's drawer press **View host details** on its row. The drawer has t
 
 #### TC-DI-19 – Merge confirmation
 
-**Requirement:** REQ-DI-14 · **Technique:** ST · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-DI-14 · **Technique:** ST · **Priority:** H · **Result:** PASS
 
 **Steps**
 
