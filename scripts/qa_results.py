@@ -9,7 +9,7 @@ implemented. Cleanup attachment is necessary, not sufficient for live recovery.
 from __future__ import annotations
 import base64
 import binascii
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 import importlib.util
 import json
 import math
@@ -91,19 +91,23 @@ def attachment_data(attachment:dict,root:Path) -> dict:
     return result
 
 
-def parse_report(path:Path,case_id:str,evidence_root:Path,run_started_at:str) -> dict:
+def parse_report(path:Path,case_id:str,evidence_root:Path,run_started_at:str,
+                 run_finished_at:str,*,run_elapsed_seconds:float,max_run_seconds:float) -> dict:
     """Validate a single current adapter/attempt and write only sanitized observations.
 
-    run_started_at must come from actual process launch, not the report. Parser
+    Both bounds must come from the owned container attach, not the report or
+    caller import time. max_run_seconds is the consumed remaining case budget.
+    Playwright duration sums monotonic slots, not a wall-clock interval. Parser
     output still requires the supervisor's independent runtime/cleanup proof.
     Caller must preserve the raw report privately and never import it as prose.
     """
-    try:return parse_checked(path,case_id,evidence_root,run_started_at)
+    try:return parse_checked(path,case_id,evidence_root,run_started_at,run_finished_at,run_elapsed_seconds=run_elapsed_seconds,max_run_seconds=max_run_seconds)
     except (ValueError,KeyError,TypeError,IndexError,OverflowError,OSError,RecursionError):
         raise ValueError('Malformed or unavailable current-case report') from None
 
 
-def parse_checked(path:Path,case_id:str,evidence_root:Path,run_started_at:str) -> dict:
+def parse_checked(path:Path,case_id:str,evidence_root:Path,run_started_at:str,
+                  run_finished_at:str,*,run_elapsed_seconds:float,max_run_seconds:float) -> dict:
     """Internal checked parse; supplied documents are observations, never instructions."""
     root=t.private_directory(evidence_root)
     if case_id not in OBSERVATIONS:raise ValueError('Unsupported current-case report')
@@ -149,9 +153,22 @@ def parse_checked(path:Path,case_id:str,evidence_root:Path,run_started_at:str) -
     duration=attempt['duration']
     if isinstance(duration,bool) or not isinstance(duration,(int,float)) or not math.isfinite(duration) or not 0<=duration<=60000:
         raise ValueError('Unbounded report duration')
-    began=instant(attempt['startTime']);ended=began+timedelta(milliseconds=duration)
-    if (began<instant(run_started_at) or ended>datetime.now(timezone.utc)+timedelta(seconds=5)
-        or instant(stats['startTime'])<instant(run_started_at) or instant(stats['startTime'])>began):
+    # Independent host wall-clock bounds surround the owned attach only. Never
+    # derive a wall end from Playwright's sum of selected monotonic timeout slots,
+    # or use parser/import time as the completion bound. The narrow pilot caps
+    # this envelope at its reviewed 300-second case budget; no timing grace.
+    launched=instant(run_started_at);finished=instant(run_finished_at)
+    began=instant(attempt['startTime']);report_began=instant(stats['startTime'])
+    report_duration=stats['duration']
+    if (type(max_run_seconds) not in (int,float) or not math.isfinite(max_run_seconds)
+        or not 0<max_run_seconds<=300
+        or type(run_elapsed_seconds) not in (int,float) or not math.isfinite(run_elapsed_seconds)
+        or not 0<run_elapsed_seconds<=max_run_seconds
+        or not 0<(finished-launched).total_seconds()<=max_run_seconds
+        or finished>datetime.now(timezone.utc)
+        or not launched<=report_began<=began<=finished
+        or type(report_duration) not in (int,float) or not math.isfinite(report_duration)
+        or not duration<=report_duration<=min(90000,run_elapsed_seconds*1000)):
         raise ValueError('Stale or inconsistent report time')
     attachments={};allowed={case_id+'-E1','cleanup'}
     for att in attempt.get('attachments',[]):
@@ -170,7 +187,7 @@ def parse_checked(path:Path,case_id:str,evidence_root:Path,run_started_at:str) -
     if observation is not None:
         if (set(observation)!={'case_id','item','verdict','observed','at'} or observation['case_id']!=case_id
             or observation['item']!='E1' or observation['verdict']!='PASS'
-            or observation['observed']!=OBSERVATIONS[case_id] or not began<=instant(observation['at'])<=ended):
+            or observation['observed']!=OBSERVATIONS[case_id] or not began<=instant(observation['at'])<=finished):
             raise ValueError('Unreviewed or stale expected-item observation')
         name=f'observed-{case_id}-E1.json'
         # Validate all report data before creating output; never overwrite earlier evidence.

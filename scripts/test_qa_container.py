@@ -113,6 +113,8 @@ class ContainerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as d:
             result,commands,runtime=self.run_case(Path(d))
             self.assertTrue(result['container_clean'])
+            self.assertLessEqual(c.r.instant(result['run_started_at']),c.r.instant(result['run_finished_at']))
+            self.assertGreater(result['run_elapsed_seconds'],0)
             self.assertEqual(result['exit_code'],0)
             create=commands.calls[0]
             self.assertEqual(create[0],'create')
@@ -125,6 +127,23 @@ class ContainerTests(unittest.TestCase):
             self.assertEqual(intent['status'],'complete')
             self.assertEqual(intent['container_id'],CID)
             self.assertNotIn('synthetic-private-error',runtime.intent.read_text())
+
+    def test_completion_clock_is_captured_after_attach_before_cleanup(self):
+        with tempfile.TemporaryDirectory() as d:
+            plan,ledger,commands,runtime=self.fixture(Path(d))
+            original=commands.run;clock=c.datetime;times={}
+            def observed(argv,*args,**kwargs):
+                if argv[1:3]==['start','--attach']:
+                    times['attach']=clock.now(c.timezone.utc)
+                elif argv[1:3]==['container','rm']:
+                    times['cleanup']=clock.now(c.timezone.utc)
+                return original(argv,*args,**kwargs)
+            with ledger.claim(UUID),patch.object(commands,'run',side_effect=observed):
+                ledger.consume(UUID,plan)
+                result=runtime.execute(plan,ledger,UUID,IMAGE,60,10)
+            self.assertLessEqual(c.r.instant(result['run_started_at']),times['attach'])
+            self.assertLessEqual(times['attach'],c.r.instant(result['run_finished_at']))
+            self.assertLessEqual(c.r.instant(result['run_finished_at']),times['cleanup'])
 
     def test_no_dispatch_without_real_lock_and_consumed_slot(self):
         with tempfile.TemporaryDirectory() as d:

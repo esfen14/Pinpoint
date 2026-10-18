@@ -203,8 +203,10 @@ still separate requirements.
 `qa_results.py` parses only the five reviewed permission adapters. It validates
 pinned Playwright version/configuration, one project/case/initial attempt, no
 retries/captures, fixed origin, consistent totals/status/timestamps and exact
-expected-item/cleanup attachment identities. The actual process-launch time must
-be supplied independently; a stale report cannot certify a new run. JSON duplicate
+expected-item/cleanup attachment identities. The actual owned attach launch/completion UTC and monotonic elapsed time must
+be supplied independently, within the consumed case budget. Playwright selected-slot
+duration does not define a wall end; no timing grace is added. A stale report cannot
+certify a new run. See [timing rule and investigation](QA_Report_Timing.md). JSON duplicate
 keys, unsafe/private-path violations and oversized or unreviewed evidence reject.
 The prepared container bootstrap sets `umask 077` so reporter/artifact files meet
 private-file requirements.
@@ -222,7 +224,7 @@ The current adapters emit PASS items only. A browser/tool failure without explic
 failed expected-item evidence is INCONCLUSIVE, never an invented product FAIL.
 Missing cleanup remains `restored: false` and must halt supervision. Importing
 structured product failures will need reviewed adapter changes and their own
-regressions. Nine synthetic-report tests validate parsing; they are not runtime
+regressions. Thirteen synthetic-report tests validate parsing; they are not runtime
 acceptance results.
 
 These components are now wired through the narrow pilot entry below. Their
@@ -409,7 +411,28 @@ container work. Canonical shared ledger consumption precedes the actual attempt.
 Container removal, bridge shutdown, browser logout evidence and fresh baseline
 checks are all required; any uncertainty halts without retry/reset/restore.
 
-The first real browser/container attempt remains pending. Passing isolated driver
-contracts or read-only inspection is not live cleanup validation or an acceptance
-PASS. Broader/unattended cases stay blocked. The one-case initial pilot permits no
-diagnostic repeat; a later attempt/recovery needs separately reviewed scope.
+The first v4 browser/container attempt remains INCONCLUSIVE after the original
+timing rejection. The separately authorized v2 recheck now passed the actual full
+supervised result/cleanup path; see the [new report](../test-runs/2026-10-18-issue-211-ss04-recheck/REPORT.md).
+Broader/unattended cases stay blocked. Neither scope allows a diagnostic repeat;
+a later attempt/recovery needs separately reviewed scope/start.
+
+The #211 offline timing fix has real pinned-worker and composed real-parser regressions.
+It preserves the first pilot INCONCLUSIVE result, exact original halted-state
+archive and original attempt/budgets. Separately authorized recovery and the fresh
+v2 explicit start established narrow live acceptance without reclassifying v4.
+
+## Explicit audited recovery exception
+
+Paeng separately approved implementation of `qa_pilot.py recover`. It is not an
+automatic retry, start or store reset. An expiring `supervised recovery` grant
+binds the original ledger/attempt/evidence, new queue and unchanged target/baseline.
+The caller holds canonical host/UUID locks, proves terminal metadata/logout without
+accepting the old result, rechecks actual daemon/process/socket absence and baseline,
+then archives exact original ledger bytes and appends a disposition. Attempts and
+budget history remain unchanged; only its named new queue can consume a fresh slot.
+Missing/changed archives and subsequent halts reject. The authorized actual
+recovery retained the original ledger archive and added one audited disposition;
+the separately started v2 attempt completed with accepted PASS/restored. A future
+browser run still needs its own scope and explicit start; v2 is consumed.
+See the [reviewed recovery scope](Issue_211_Recheck_Review.md).

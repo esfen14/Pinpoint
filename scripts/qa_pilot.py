@@ -224,7 +224,8 @@ class PilotDriver:
             min(30,plan['step_timeout_seconds']))
         self.transport_complete=result.get('container_clean') is True
         self.outcome=r.parse_report(Path(plan['evidence_dir'])/'results.json',
-            plan['case'],Path(plan['evidence_dir']),result['run_started_at'])
+            plan['case'],Path(plan['evidence_dir']),result['run_started_at'],
+            result['run_finished_at'],run_elapsed_seconds=result['run_elapsed_seconds'],max_run_seconds=min(timeout,plan['remaining_seconds']))
         if result['exit_code']!=0 and self.outcome['result']=='PASS':
             self.outcome.update(result='INCONCLUSIVE',reason='Container exit disagrees with successful report')
         return self.outcome
@@ -327,12 +328,14 @@ def main():
     sub=parser.add_subparsers(dest='command',required=True)
     inspect=sub.add_parser('inspect')
     run=sub.add_parser('run')
-    for command in (inspect,run):
+    recovery=sub.add_parser('recover')
+    for command in (inspect,run,recovery):
         command.add_argument('--baseline',type=Path,required=True)
         command.add_argument('--ssh-key',type=Path)
         command.add_argument('--control-dir',type=Path,required=True)
     for name in ('queue','grant','state-dir','bridge-dir'):run.add_argument('--'+name,type=Path,required=True)
     for name in ('run','owner','session'):run.add_argument('--'+name,required=True)
+    for name in ('queue','prior-queue','grant'):recovery.add_argument('--'+name,type=Path,required=True)
     args=parser.parse_args()
     try:
         baseline=private_json(args.baseline)
@@ -344,6 +347,11 @@ def main():
             with s.control.claim() as fd:proof=inspector.verify(plan,fd)
             save_private(directory/'inspection.json',dict(proof=proof,live_authorized=False,test_cases_executed=0),new=True)
             print('Read-only pilot inspection passed. No test or transport launched; this is not a test start.')
+        elif args.command=='recover':
+            recovery_module=module('recovery','qa_recovery.py')
+            result=recovery_module.recover_pilot(r.decode_json(args.queue.read_bytes()),
+                r.decode_json(args.prior_queue.read_bytes()),private_json(args.grant),baseline,args.control_dir,key)
+            print(json.dumps(result))
         else:
             queue=r.decode_json(args.queue.read_bytes())
             result=run_pilot(queue,args.run,args.owner,args.session,private_json(args.grant),baseline,

@@ -338,7 +338,7 @@ proc fixtures pass without SSH, real backend processes or an appliance. Observer
 runtime/served readiness stays false and verified running revision stays null:
 disk matches/start ordering alone cannot attest loaded code or actual served bytes.
 The narrow `qa_pilot.py` integration now composes these components for TC-SS-04
-only. Eleven isolated driver/proof/gate contracts and read-only actual appliance
+only. Twelve isolated driver/proof/gate contracts and read-only actual appliance
 inspection pass; 455 source files and 2383 installed runtime files are bound to
 the reviewed controlled deployment. Inspection launches no browser/container.
 The first explicitly started v4 TC-SS-04 attempt ran once on target `299ab3b`:
@@ -346,11 +346,26 @@ browser permission assertions and logout/401 passed, container/bridge removal
 completed and independent post-run baseline inspection passed. Overall result is
 INCONCLUSIVE because the parser rejected an E1 timestamp 44 ms beyond its computed
 attempt end; harness [#211](https://github.com/esfen14/Pinpoint/issues/211) tracks
-reporter/clock investigation. The supervisor ledger remains halted; no accepted
-result, automatic repeat or reset occurred. See the [pilot report](../docs/test-runs/2026-10-18-issue-206-ss04-pilot/REPORT.md).
-A separate harness fix, reviewed recovery, new recheck card and explicit start
-are needed before another attempt; broader/unattended coverage stays blocked. Controlled launch/build provenance is a trust boundary, not memory
-attestation. The standalone observer's negative readiness fields are unchanged.
+the offline bounded attach-window fix and pinned-worker timing investigation
+([timing rule](../docs/qa/QA_Report_Timing.md)). Import and composed-driver
+regressions accept the synthetic 44 ms relationship and halt on stale/foreign or
+failed-cleanup evidence. The original v4 result remains INCONCLUSIVE; its halted
+attempt, exact private ledger archive, evidence and original budgets are preserved.
+See the [original pilot report](../docs/test-runs/2026-10-18-issue-206-ss04-pilot/REPORT.md).
+
+After separately approved implementation/use, `qa_pilot.py recover` obtained fresh
+cleanup/baseline proof and appended an expiring grant-bound audited disposition,
+preserving original attempts/budgets and permitting only the named v2 queue. Paeng
+separately explicitly started that one-case recheck. The real TC-SS-04 attempt on
+the same target passed through strict fresh import, logout/401, owned container/
+bridge/process cleanup and fresh post-case baseline proof. Its E1 was 47 ms beyond
+the old invalid duration-derived end, accepted by actual independent attach bounds
+without grace. The supervised v2 attempt is complete/PASS/restored; the serialized
+source journal retains an active label with no active case/batch and one accepted
+result. See the [recheck report](../docs/test-runs/2026-10-18-issue-211-ss04-recheck/REPORT.md).
+Broader/unattended coverage stays blocked. Controlled launch/build provenance is a
+trust boundary, not memory attestation. The standalone observer's negative
+readiness fields are unchanged.
 
 The [historical evidence inventory/review](../docs/qa/Historical_Evidence_Review.md)
 links 41 post-cutoff-directory-date reports and six partial current-case mappings.

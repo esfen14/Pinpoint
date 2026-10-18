@@ -39,6 +39,7 @@ docs() {
   python3 -I "$root/scripts/test_qa_transport.py"
   echo "==> docs: durable supervisor lifecycle with synthetic driver only"
   python3 -I "$root/scripts/test_qa_supervisor.py"
+  python3 -I "$root/scripts/test_qa_recovery.py"
   echo "==> docs: bounded local process groups and strict synthetic report parsing"
   python3 -I "$root/scripts/test_qa_process.py"
   python3 -I "$root/scripts/test_qa_results.py"
@@ -77,7 +78,7 @@ frontend() {
   cd "$root/client"
   echo "==> frontend: offline current-case selection and Playwright collection (no browser)"
   ./node_modules/.bin/tsc -p tsconfig.qa.json
-  node --test qa/selection.node.mjs
+  node --test qa/selection.node.mjs qa/timing.node.mjs
   npm run test
   npm run build
   echo "==> frontend: lint (errors block; warnings are tracked in Implementation_Status.md)"
