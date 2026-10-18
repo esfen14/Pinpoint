@@ -192,6 +192,11 @@ class ResultTests(unittest.TestCase):
             'TC-DI-03': ('TC-DI-03: One reason per port', {
                 'E1':'Exactly one reason is shown and the held-back reason is absent.',
                 'E2':'The reason explains the expected/found names and says monitoring waits for acknowledgement.'}),
+            'TC-DI-08': ('TC-DI-08: The Checked by line', {
+                'E1':'The known TCP service http resolves to the check_http plugin.',
+                'E2':'An unknown TCP service resolves to the generic check_tcp label.',
+                'E3':'An unknown UDP service shows that no UDP check exists.',
+                'E4':'The service pin warning appears on TCP and UDP without saving either change.'}),
             'TC-DASH-07': ('TC-DASH-07: "No data" instead of blank cards', {
                 'E1':'Network Latency and both Network Performance metrics show No data.',
                 'E2':'Average Resource Utilization is absent without NCPA data.'}),

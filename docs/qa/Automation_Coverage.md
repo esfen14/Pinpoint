@@ -107,7 +107,7 @@ Assertion markers and source hashes support review; they do not prove assertion 
 | TC-DI-05 | DI | unmapped / unassigned | None | E1, E2, E3, E4 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-DI-06 | DI | unmapped / unassigned | None | E1, E2 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-DI-07 | DI | unmapped / unassigned | None | E1, E2, E3 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
-| TC-DI-08 | DI | unmapped / unassigned | None | E1, E2, E3, E4 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
+| TC-DI-08 | DI | implemented / scripted automation | [TC-DI-08: The Checked by line](../../client/e2e/qa-modules-2-9.lab.spec.ts) | None in source review | Source adapter covers all catalog items using existing TCP/UDP fixtures, blocks port mutations, and closes both dialogs without saving; live fixture/card/preflight and explicit start remain required. |
 | TC-DI-09 | DI | unmapped / unassigned | None | E1, E2, E3 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-DI-11 | DI | unmapped / unassigned | None | E1, E2, E3 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-DI-12 | DI | unmapped / unassigned | None | E1, E2, E3 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
@@ -247,4 +247,4 @@ Assertion markers and source hashes support review; they do not prove assertion 
 | E2E-07 | E2E | unmapped / unassigned | None | E1, E2, E3, E4, E5, E6, E7 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | E2E-08 | E2E | unmapped / unassigned | None | E1, E2, E3, E4, E5 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 
-Source register: 12 implemented, 1 partial, 226 unmapped (TC and E2E combined; not execution counts).
+Source register: 13 implemented, 1 partial, 225 unmapped (TC and E2E combined; not execution counts).

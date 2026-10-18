@@ -304,6 +304,62 @@ test('TC-DI-03: One reason per port', async ({ page }, info) => {
   await observe(info, 'TC-DI-03', 'E2', 'The reason explains the expected/found names and says monitoring waits for acknowledgement.');
 });
 
+test('TC-DI-08: The Checked by line', async ({ page }, info) => {
+  const tcpLabel = process.env.PINPOINT_QA_TCP_PORT;
+  const udpLabel = process.env.PINPOINT_QA_UDP_PORT;
+  if (!tcpLabel || !/^tcp\/\d+$/.test(tcpLabel) || !udpLabel || !/^udp\/\d+$/.test(udpLabel)) {
+    throw new Error('Set PINPOINT_QA_TCP_PORT and PINPOINT_QA_UDP_PORT to reviewed existing port labels.');
+  }
+  const ports = await openDevicePorts(page);
+  const current = await page.request.get('/api/user/me');
+  expect(current.status()).toBe(200);
+  const user = await current.json();
+  expect(user.data.permissions, 'Opening Set service requires edit permission').toContain('system.hosts.edit');
+
+  // This case must stay read-only even if the UI or adapter changes unexpectedly.
+  const blockedWrites: string[] = [];
+  await page.route('**/api/system/hosts/*/ports/*/*', async (route) => {
+    if (route.request().method() === 'PUT') {
+      blockedWrites.push(new URL(route.request().url()).pathname);
+      await route.abort('blockedbyclient');
+      return;
+    }
+    await route.continue();
+  });
+
+  const openDialog = async (label: string) => {
+    const portText = ports.getByText(label, { exact: true });
+    const row = ports.locator('li').filter({ has: portText });
+    await expect(row, `Reviewed fixture port ${label} is present exactly once`).toHaveCount(1);
+    await row.getByRole('button', { name: new RegExp(`^Set service.*${label.replace('/', '\\/')}`) }).click();
+    return page.getByRole('dialog', { name: new RegExp(`Set service for ${label.replace('/', '\\/')}`) });
+  };
+
+  const tcp = await openDialog(tcpLabel);
+  const input = tcp.getByRole('textbox', { name: 'Service name' });
+  await input.fill('http');
+  await expect(tcp.getByText('check_http', { exact: true })).toBeVisible();
+  await expect(tcp.getByText("Scans will no longer change this port's service on this device.", { exact: false })).toBeVisible();
+  // qa-evidence:TC-DI-08:E1
+  await observe(info, 'TC-DI-08', 'E1', 'Known TCP service http resolves to check_http.');
+  await input.fill('myapp');
+  await expect(tcp.getByText('check_tcp (generic TCP check)', { exact: true })).toBeVisible();
+  // qa-evidence:TC-DI-08:E2
+  await observe(info, 'TC-DI-08', 'E2', 'Unknown TCP service resolves to the generic check_tcp label.');
+  await tcp.getByRole('button', { name: 'Cancel', exact: true }).click();
+
+  const udp = await openDialog(udpLabel);
+  await udp.getByRole('textbox', { name: 'Service name' }).fill('myapp');
+  await expect(udp.getByText('Skipped: no check exists for this UDP service', { exact: true })).toBeVisible();
+  await expect(udp.getByText("Scans will no longer change this port's service on this device.", { exact: false })).toBeVisible();
+  // qa-evidence:TC-DI-08:E3
+  await observe(info, 'TC-DI-08', 'E3', 'Unknown UDP service shows that no UDP check exists.');
+  // qa-evidence:TC-DI-08:E4
+  await observe(info, 'TC-DI-08', 'E4', 'The service pin warning appears for TCP and UDP without saving either change.');
+  await udp.getByRole('button', { name: 'Cancel', exact: true }).click();
+  expect(blockedWrites, 'The adapter made no port mutation request').toEqual([]);
+});
+
 test('TC-DASH-07: "No data" instead of blank cards', async ({ page }, info) => {
   await signInSuperAdmin(page);
   await page.goto('/dashboard');

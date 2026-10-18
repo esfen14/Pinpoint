@@ -386,11 +386,11 @@ item-level coverage before full reuse. The requirement validator, derived
 instead of the removed journey plan, matrix and paper tables.
 
 Issue #214 adds source-reviewed, offline-collection-only adapters for
-TC-ACC-08, TC-ROL-04, TC-DI-02, TC-DI-03 and TC-DASH-07, plus partial TC-ACC-10
+TC-ACC-08, TC-ROL-04, TC-DI-02, TC-DI-03, TC-DI-08 and TC-DASH-07, plus partial TC-ACC-10
 coverage for E1/E2. Together with the seven permission adapters, the source coverage
-register now has 12 implemented mappings, one partial mapping and 226 unmapped
+register now has 13 implemented mappings, one partial mapping and 225 unmapped
 entries across 239 current cases/scenarios. The supervised live pilot accepts the
-five complete read-only module IDs in addition to its three permission IDs; this
+six complete read-only module IDs in addition to its three permission IDs; this
 does not add a general live launcher or runtime results. The October 18 supervised reports record
 complete PASS/restored outcomes for TC-ACC-09 and TC-SS-04; their original catalog
 Result fields remain unchanged under the QA workflow, and both IDs are excluded

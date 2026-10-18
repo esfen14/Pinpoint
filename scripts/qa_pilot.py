@@ -33,7 +33,7 @@ APP=Path('/opt/pinpoint/Network-Diagnosis-System')
 SUPPORTED_CASES=frozenset({
     'TC-SS-04','TC-ACC-09','TC-NCPA-08',
     # Read-only module adapters with a reviewed exact fixture profile.
-    'TC-ACC-08','TC-ROL-04','TC-DI-02','TC-DI-03','TC-DASH-07',
+    'TC-ACC-08','TC-ROL-04','TC-DI-02','TC-DI-03','TC-DI-08','TC-DASH-07',
 })
 MODULE_CASES=SUPPORTED_CASES-frozenset({'TC-SS-04','TC-ACC-09','TC-NCPA-08'})
 

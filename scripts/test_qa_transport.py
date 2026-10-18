@@ -84,6 +84,24 @@ class TransportTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 t.container_command(root/'evidence',root/'state',root/'bridge','TC-ACC-10')
 
+    def test_di08_transport_uses_private_port_labels_and_no_account_fixture(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);(root/'state').mkdir(mode=0o700);(root/'evidence').mkdir(mode=0o700);(root/'bridge').mkdir(mode=0o700)
+            cache=root/'home/.cache/ms-playwright';cache.mkdir(parents=True,mode=0o700)
+            names=t.MODULE_STATE_FILES['TC-DI-08']
+            self.assertEqual(names,('admin-email','admin-password','qa-device-host','qa-tcp-port','qa-udp-port'))
+            for name in names:
+                path=root/'state'/name;path.write_text('synthetic-private-value');path.chmod(0o600)
+            with patch.object(Path,'home',return_value=root/'home'):
+                argv=t.container_command(root/'evidence',root/'state',root/'bridge','TC-DI-08')
+            self.assertIn('load_private_value PINPOINT_QA_TCP_PORT /state/qa-tcp-port',t.MODULE_BOOTSTRAP)
+            self.assertIn('load_private_value PINPOINT_QA_UDP_PORT /state/qa-udp-port',t.MODULE_BOOTSTRAP)
+            mounts=[argv[i+1] for i,value in enumerate(argv) if value=='--mount']
+            state_mounts=[value for value in mounts if 'dst=/state/' in value]
+            self.assertEqual(len(state_mounts),len(names))
+            self.assertTrue(all('readonly' in value for value in state_mounts))
+            self.assertNotIn('synthetic-private-value',json.dumps(argv))
+
     def test_draft_cards_and_offline_to_live_promotion_are_rejected(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d);q,s=self.fixture(root)

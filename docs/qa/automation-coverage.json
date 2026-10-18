@@ -292,9 +292,9 @@
         "config": "client/playwright.modules.qa.config.ts"
       },
       "source_hashes": {
-        "client/e2e/qa-modules-2-9.lab.spec.ts": "e73a39edc751cbb7e4e7ada7f4b58dc3adbe710058aa3da1f70a81af917e2252",
-        "client/playwright.modules.qa.config.ts": "f5174ebcd20ccfbc481e06b6fe606f920d38d2bb11dda3f55143e4c480104347",
-        "client/qa/module-selection.mjs": "e04c4e85e1edb041fd687dece0e4b304c7ba0cddceed4e62864d506eb1232c64",
+        "client/e2e/qa-modules-2-9.lab.spec.ts": "04177ad4402893930a65134d9456a61ff8455dad46688d1db57d0ca38098eba2",
+        "client/playwright.modules.qa.config.ts": "bb6b2925339839e3adc065515ec9ac0bb540bb4710ba97ac0cca2f0d70de13ba",
+        "client/qa/module-selection.mjs": "7c44aa60e4328709f1657e0c8075ef962b7baa9e7c4dcf27a0dedecda546910d",
         "client/src/pages/ManageAccountsPage.tsx": "e3af9a686f681993cab29109f8623eb624f421f547d2c5db3f0f50164c0ae555",
         "client/src/components/manage-accounts/UserTable.tsx": "f9e302e459b71dd45807770b3db1feefcfd1951ec8a8b38811d4024f84e602db",
         "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
@@ -340,9 +340,9 @@
         "config": "client/playwright.modules.qa.config.ts"
       },
       "source_hashes": {
-        "client/e2e/qa-modules-2-9.lab.spec.ts": "e73a39edc751cbb7e4e7ada7f4b58dc3adbe710058aa3da1f70a81af917e2252",
-        "client/playwright.modules.qa.config.ts": "f5174ebcd20ccfbc481e06b6fe606f920d38d2bb11dda3f55143e4c480104347",
-        "client/qa/module-selection.mjs": "e04c4e85e1edb041fd687dece0e4b304c7ba0cddceed4e62864d506eb1232c64",
+        "client/e2e/qa-modules-2-9.lab.spec.ts": "04177ad4402893930a65134d9456a61ff8455dad46688d1db57d0ca38098eba2",
+        "client/playwright.modules.qa.config.ts": "bb6b2925339839e3adc065515ec9ac0bb540bb4710ba97ac0cca2f0d70de13ba",
+        "client/qa/module-selection.mjs": "7c44aa60e4328709f1657e0c8075ef962b7baa9e7c4dcf27a0dedecda546910d",
         "client/src/pages/ManageAccountsPage.tsx": "e3af9a686f681993cab29109f8623eb624f421f547d2c5db3f0f50164c0ae555",
         "client/src/components/manage-accounts/UserTable.tsx": "f9e302e459b71dd45807770b3db1feefcfd1951ec8a8b38811d4024f84e602db",
         "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
@@ -391,9 +391,9 @@
         "config": "client/playwright.modules.qa.config.ts"
       },
       "source_hashes": {
-        "client/e2e/qa-modules-2-9.lab.spec.ts": "e73a39edc751cbb7e4e7ada7f4b58dc3adbe710058aa3da1f70a81af917e2252",
-        "client/playwright.modules.qa.config.ts": "f5174ebcd20ccfbc481e06b6fe606f920d38d2bb11dda3f55143e4c480104347",
-        "client/qa/module-selection.mjs": "e04c4e85e1edb041fd687dece0e4b304c7ba0cddceed4e62864d506eb1232c64",
+        "client/e2e/qa-modules-2-9.lab.spec.ts": "04177ad4402893930a65134d9456a61ff8455dad46688d1db57d0ca38098eba2",
+        "client/playwright.modules.qa.config.ts": "bb6b2925339839e3adc065515ec9ac0bb540bb4710ba97ac0cca2f0d70de13ba",
+        "client/qa/module-selection.mjs": "7c44aa60e4328709f1657e0c8075ef962b7baa9e7c4dcf27a0dedecda546910d",
         "client/src/App.tsx": "05b6afc326a4946b382f222a68276744aa6b365fbe1a40cee04b237240a27579",
         "client/src/components/layout/Sidebar.tsx": "25986b10740143c932f2ffd936e3396b871e703ffd603810b45e9306df1838f2",
         "client/src/components/layout/PageAccessGuard.tsx": "2d0765defe8f5dbc8c33ec735d0d7ba7a57332574b8c77b723cea41bc1ea9c5f",
@@ -1094,9 +1094,9 @@
         "config": "client/playwright.modules.qa.config.ts"
       },
       "source_hashes": {
-        "client/e2e/qa-modules-2-9.lab.spec.ts": "e73a39edc751cbb7e4e7ada7f4b58dc3adbe710058aa3da1f70a81af917e2252",
-        "client/playwright.modules.qa.config.ts": "f5174ebcd20ccfbc481e06b6fe606f920d38d2bb11dda3f55143e4c480104347",
-        "client/qa/module-selection.mjs": "e04c4e85e1edb041fd687dece0e4b304c7ba0cddceed4e62864d506eb1232c64",
+        "client/e2e/qa-modules-2-9.lab.spec.ts": "04177ad4402893930a65134d9456a61ff8455dad46688d1db57d0ca38098eba2",
+        "client/playwright.modules.qa.config.ts": "bb6b2925339839e3adc065515ec9ac0bb540bb4710ba97ac0cca2f0d70de13ba",
+        "client/qa/module-selection.mjs": "7c44aa60e4328709f1657e0c8075ef962b7baa9e7c4dcf27a0dedecda546910d",
         "client/src/pages/DeviceInventoryPage.tsx": "9b8f63fe860eb151c253db31948468e76a3b7e3a805d76a6da37525e760e8a6a",
         "client/src/components/device-inventory/HostTable.tsx": "feb088ad5b68e6fbc7e72c35ea52fec5e84396c0021f7794e0f5efe30db59fdf",
         "client/src/components/device-inventory/StatusDetailDrawer.tsx": "d5314464a53b4197e0b9da51b60fb26338b483e58f5a1d6681a332c671379530",
@@ -1145,9 +1145,9 @@
         "config": "client/playwright.modules.qa.config.ts"
       },
       "source_hashes": {
-        "client/e2e/qa-modules-2-9.lab.spec.ts": "e73a39edc751cbb7e4e7ada7f4b58dc3adbe710058aa3da1f70a81af917e2252",
-        "client/playwright.modules.qa.config.ts": "f5174ebcd20ccfbc481e06b6fe606f920d38d2bb11dda3f55143e4c480104347",
-        "client/qa/module-selection.mjs": "e04c4e85e1edb041fd687dece0e4b304c7ba0cddceed4e62864d506eb1232c64",
+        "client/e2e/qa-modules-2-9.lab.spec.ts": "04177ad4402893930a65134d9456a61ff8455dad46688d1db57d0ca38098eba2",
+        "client/playwright.modules.qa.config.ts": "bb6b2925339839e3adc065515ec9ac0bb540bb4710ba97ac0cca2f0d70de13ba",
+        "client/qa/module-selection.mjs": "7c44aa60e4328709f1657e0c8075ef962b7baa9e7c4dcf27a0dedecda546910d",
         "client/src/pages/DeviceInventoryPage.tsx": "9b8f63fe860eb151c253db31948468e76a3b7e3a805d76a6da37525e760e8a6a",
         "client/src/components/device-inventory/HostTable.tsx": "feb088ad5b68e6fbc7e72c35ea52fec5e84396c0021f7794e0f5efe30db59fdf",
         "client/src/components/device-inventory/StatusDetailDrawer.tsx": "d5314464a53b4197e0b9da51b60fb26338b483e58f5a1d6681a332c671379530",
@@ -1229,9 +1229,9 @@
         "config": "client/playwright.modules.qa.config.ts"
       },
       "source_hashes": {
-        "client/e2e/qa-modules-2-9.lab.spec.ts": "e73a39edc751cbb7e4e7ada7f4b58dc3adbe710058aa3da1f70a81af917e2252",
-        "client/playwright.modules.qa.config.ts": "f5174ebcd20ccfbc481e06b6fe606f920d38d2bb11dda3f55143e4c480104347",
-        "client/qa/module-selection.mjs": "e04c4e85e1edb041fd687dece0e4b304c7ba0cddceed4e62864d506eb1232c64",
+        "client/e2e/qa-modules-2-9.lab.spec.ts": "04177ad4402893930a65134d9456a61ff8455dad46688d1db57d0ca38098eba2",
+        "client/playwright.modules.qa.config.ts": "bb6b2925339839e3adc065515ec9ac0bb540bb4710ba97ac0cca2f0d70de13ba",
+        "client/qa/module-selection.mjs": "7c44aa60e4328709f1657e0c8075ef962b7baa9e7c4dcf27a0dedecda546910d",
         "client/src/pages/DashboardPage.tsx": "b8038c7177a2e498c4feb115a0665406969f290d8f9236ac2e67e154b8da8a40",
         "client/src/components/shared/SummaryStatCard.tsx": "2da439e5d5684c62af52f3f84816d68085d6aa32663cdbaea6d256782fb11f66",
         "client/src/components/dashboard/NetworkPerformanceSection.tsx": "152dfed49ef2b1a45e354b2aa7314a95c9de9c83cc60823a9e1421d0e5349b3f",
@@ -1577,14 +1577,63 @@
     },
     "TC-DI-08": {
       "case_hash": "2d6e9ef19e5f506ef7ecddc4c1704679284a4bc29b103bb5c103dac474674279",
-      "status": "unmapped",
-      "mode": "unassigned",
-      "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
-      "items": {},
-      "adapter": null,
-      "source_hashes": {},
-      "prerequisites": [],
-      "recovery": []
+      "status": "implemented",
+      "mode": "scripted automation",
+      "reason": "Source adapter covers all catalog items using existing TCP/UDP fixtures, blocks port mutations, and closes both dialogs without saving; live fixture/card/preflight and explicit start remain required.",
+      "items": {
+        "E1": {
+          "marker": "qa-evidence:TC-DI-08:E1",
+          "method": "Type the known service http on a reviewed TCP port and assert the live Checked by value is exactly check_http."
+        },
+        "E2": {
+          "marker": "qa-evidence:TC-DI-08:E2",
+          "method": "Type unknown service myapp on the TCP port and assert the generic check_tcp label."
+        },
+        "E3": {
+          "marker": "qa-evidence:TC-DI-08:E3",
+          "method": "Type unknown service myapp on a reviewed UDP port and assert the no-UDP-check message."
+        },
+        "E4": {
+          "marker": "qa-evidence:TC-DI-08:E4",
+          "method": "Assert the service pin warning in both protocol dialogs, cancel both, and verify the route guard observed no PUT."
+        }
+      },
+      "adapter": {
+        "path": "client/e2e/qa-modules-2-9.lab.spec.ts",
+        "title": "TC-DI-08: The Checked by line",
+        "project": "qa-modules-2-9",
+        "config": "client/playwright.modules.qa.config.ts"
+      },
+      "source_hashes": {
+        "client/e2e/qa-modules-2-9.lab.spec.ts": "04177ad4402893930a65134d9456a61ff8455dad46688d1db57d0ca38098eba2",
+        "client/playwright.modules.qa.config.ts": "bb6b2925339839e3adc065515ec9ac0bb540bb4710ba97ac0cca2f0d70de13ba",
+        "client/qa/module-selection.mjs": "7c44aa60e4328709f1657e0c8075ef962b7baa9e7c4dcf27a0dedecda546910d",
+        "client/src/pages/DeviceInventoryPage.tsx": "9b8f63fe860eb151c253db31948468e76a3b7e3a805d76a6da37525e760e8a6a",
+        "client/src/components/device-inventory/DevicePortsSection.tsx": "7379de62eebd72f7a8a5410a6aa74bd9ff1a978035716522d248c7600659be30",
+        "client/src/components/device-inventory/SetServiceDialog.tsx": "f1843a4f044046e3fa5a30e24baad01d62cb590a827d051d8ec7e739df8beebb",
+        "client/src/components/device-inventory/devicePortsLogic.ts": "c817a5967fdb5982a4601bf7bfd582f89393547b1903395b368aea9a73ed306e",
+        "client/src/lib/devicePortsApi.ts": "8bb807775007ebaecf3f461f24ab2d1ab7464d589faaa1a448bdd8602be6c15e",
+        "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
+        "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
+        "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
+        "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
+        "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
+        "server/app/api/system/network_hosts.py": "dd238e3cca7d1b5434f07c0f3e61f2ca9da021dd186f1683d3d844a176a5f8bf",
+        "server/app/api/system/device_identity.py": "8e6e9c77b8d0adec67b0db5e317adf10fbcce474d2fc989dc859eeef65692e30",
+        "server/app/api/helper/database_access/permissions.py": "223c0628444524cdae232fb02c29ebbb18b5e4c2e0307990acbe597a40e2ecff"
+      },
+      "prerequisites": [
+        "PINPOINT_QA_DEVICE_HOST identifies a reviewed existing discovered device; no scan or device creation is performed.",
+        "PINPOINT_QA_TCP_PORT identifies a non-archived, editable TCP port on that device whose service options include http.",
+        "PINPOINT_QA_UDP_PORT identifies a non-archived, editable UDP port on that device; both port rows offer Set service.",
+        "An initialized Super Admin credential is available privately with system.hosts.edit; fixture labels are private same-owner files."
+      ],
+      "recovery": [
+        "Read-only dialog interaction. A Playwright route guard blocks every PUT to the port change endpoint; cancel both dialogs, verify no write was attempted, POST logout and verify GET /api/user/me returns 401. Preserve expected login/logout audit entries."
+      ],
+      "reviewed_by": "Codex source review; not runtime acceptance",
+      "reviewed_at": "2026-10-18",
+      "procedure_review": "Reviewed the full TC-DI-08 procedure and Device Inventory \u00a76/\u00a713. The adapter uses one pre-existing TCP and UDP port, checks the known http mapping, generic TCP and skipped UDP messages, confirms the pin warning on both protocols, blocks port PUTs and cancels both dialogs. It does not save a pin or alter a port."
     },
     "TC-DI-09": {
       "case_hash": "229b89f3d89e96e50c92828556d7aeecb5926ec34dc964e5fa13a6f2ff94f341",

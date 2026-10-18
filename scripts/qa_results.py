@@ -43,9 +43,13 @@ OBSERVATIONS={'TC-SS-04': {'E1': 'System Status absent from sidebar; direct addr
               'E3': 'Each visible port group is ordered TCP then UDP, by port number.'},
  'TC-DI-03': {'E1': 'Exactly one reason is shown and the held-back reason is absent.',
               'E2': 'The reason explains the expected/found names and says monitoring waits for acknowledgement.'},
+ 'TC-DI-08': {'E1': 'The known TCP service http resolves to the check_http plugin.',
+              'E2': 'An unknown TCP service resolves to the generic check_tcp label.',
+              'E3': 'An unknown UDP service shows that no UDP check exists.',
+              'E4': 'The service pin warning appears on TCP and UDP without saving either change.'},
  'TC-DASH-07': {'E1': 'Network Latency and both Network Performance metrics show No data.',
                 'E2': 'Average Resource Utilization is absent without NCPA data.'}}
-MODULE_CASES=frozenset({'TC-ACC-08','TC-ROL-04','TC-DI-02','TC-DI-03','TC-DASH-07'})
+MODULE_CASES=frozenset({'TC-ACC-08','TC-ROL-04','TC-DI-02','TC-DI-03','TC-DI-08','TC-DASH-07'})
 
 
 def unique_object(pairs):

@@ -69,6 +69,14 @@ test('offline collection selects exactly TC-ACC-10', () => {
   });
 });
 
+test('offline collection selects exactly TC-DI-08', () => {
+  fixture((dir) => {
+    const result = collect('TC-DI-08', dir);
+    assert.equal(result.status, 0, result.stderr + result.stdout);
+    assert.deepEqual(titles(JSON.parse(result.stdout).suites), [CASES['TC-DI-08']]);
+  });
+});
+
 test('offline collection selects only source-reviewed module adapters', () => {
   fixture((dir) => {
     const result = collect(Object.keys(CASES).join(','), dir);

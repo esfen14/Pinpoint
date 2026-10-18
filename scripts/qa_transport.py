@@ -23,6 +23,7 @@ MODULE_STATE_FILES={
     'TC-ROL-04':('qa-view-email','qa-view-password'),
     'TC-DI-02':('admin-email','admin-password','qa-device-host'),
     'TC-DI-03':('admin-email','admin-password','qa-device-host','qa-held-mismatch-port'),
+    'TC-DI-08':('admin-email','admin-password','qa-device-host','qa-tcp-port','qa-udp-port'),
     'TC-DASH-07':('admin-email','admin-password'),
 }
 # Fixed code only. Credentials never become Docker argv or preview JSON values.
@@ -51,6 +52,8 @@ load_private_value PINPOINT_QA_DASHBOARD_USER /state/qa-view-email
 load_private_value PINPOINT_QA_DASHBOARD_PASSWORD /state/qa-view-password
 load_private_value PINPOINT_QA_DEVICE_HOST /state/qa-device-host
 load_private_value PINPOINT_QA_HELD_MISMATCH_PORT /state/qa-held-mismatch-port
+load_private_value PINPOINT_QA_TCP_PORT /state/qa-tcp-port
+load_private_value PINPOINT_QA_UDP_PORT /state/qa-udp-port
 cd /work/client''')
 
 

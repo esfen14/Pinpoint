@@ -21,6 +21,7 @@ not substitutes.
 | TC-ROL-04 | `qa-view` role with only `system.dashboard`; a user assigned to it | Create through a reviewed role/account setup card. Verify the effective permission list before opening the case. |
 | TC-DI-02 | One device with Monitored, Suggested, Stopped, and Archived ports | Read-only selection. Verify the device and each group before starting; do not change port state to satisfy the case. |
 | TC-DI-03 | One Suggested port marked Held and Not used as intended, with expected/found names | Read-only selection. Verify exact port label and reason on the target before starting. |
+| TC-DI-08 | One preexisting non-archived editable TCP port with `http` in service options and one preexisting non-archived editable UDP port on the reviewed device | Read-only dialog checks. Adapter blocks any port PUT and cancels both dialogs; verify exact labels, Set service actions, and service options before start. |
 | TC-DASH-07 | No ping check on any host and no NCPA host | Read-only baseline. Do not remove checks or deployments on the shared appliance to manufacture this state. |
 | TC-NH-05 | Exactly one reporting ping host, then a second host with fresh reporting data | Requires a separately approved discovery/monitoring setup and wait for real data. Do not synthesize samples or claim a data horizon. |
 | TC-NH-06 | SNMP device, monitored interface, traffic across all required ranges, and a no-interface device | Read-only selection. Require real observations in each range and a second device with no monitored interface. |
@@ -50,7 +51,7 @@ not substitutes.
 
 ## Current fixture gate
 
-The first batch's five complete adapters depend on these unverified states:
+The first batch contains four complete adapters and partial TC-ACC-10; the complete adapters depend on these unverified states:
 
 - TC-ACC-08: `qa-accounts` role and user.
 - TC-ROL-04: `qa-view` role and user.

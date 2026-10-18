@@ -29,6 +29,7 @@ the current execution record for these two cases; do not rerun them as untested.
 | TC-ROL-04 | 3 | `ManageRolesPage.tsx`, `Sidebar.tsx`, `pageAccess.ts`; role/access tests | Requires a `qa-view` account. Iterates 13 pages and three APIs; needs separate restricted credentials and exact redirects/403s. |
 | TC-DI-02 | 3 | `DevicePortsSection.tsx`, `devicePortsLogic.ts`; `DevicePortsSection.test.tsx` | Requires one device with ports in multiple lifecycle groups. Read-only; environment must provide each required state. |
 | TC-DI-03 | 2 | `DevicePortsSection.tsx`, `devicePortsLogic.ts`; port component/logic tests | Requires a Suggested port that is both held and not-as-intended. Read-only; exact precedence/text needs a matching real record. |
+| TC-DI-08 | 4 | `SetServiceDialog.tsx`, `devicePortsLogic.ts`, `DevicePortsSection.tsx`; service and port component tests | Requires reviewed existing TCP and UDP ports on one device. A network route guard aborts any attempted port PUT; both dialogs are canceled without saving. |
 | TC-DASH-07 | 2 | `DashboardPage.tsx`, dashboard metric components; `DashboardPage.test.tsx` | Requires no ping checks and no NCPA host. Read-only only after this baseline is independently observed. |
 | TC-NH-05 | 2 | `NetworkHealthPage.tsx`, summary/trend components; `NetworkHealthPage.test.tsx` | Requires exactly one reporting ping host then a second host with new data. Adding a check and waiting changes lab config; no adapter may manufacture that evidence. |
 | TC-NH-06 | 3 | `BandwidthCard.tsx`, `BandwidthChart.tsx`; `BandwidthCard.test.tsx` | Requires an SNMP device with monitored interface, traffic readings across four ranges, plus no-interface state. Read-only if fixture is already prepared. |
@@ -59,10 +60,10 @@ the current execution record for these two cases; do not rerun them as untested.
 ## Adapter and execution boundary
 
 The existing current-case live path is the bounded supervised pilot. It supports
-only the five complete read-only adapters TC-ACC-08, TC-ROL-04, TC-DI-02, TC-DI-03
-and TC-DASH-07 after reviewed cards, current fixture/baseline proof and explicit
+only the six complete read-only adapters TC-ACC-08, TC-ROL-04, TC-DI-02, TC-DI-03,
+TC-DI-08 and TC-DASH-07 after reviewed cards, current fixture/baseline proof and explicit
 start. TC-ACC-10 has only partial E1/E2 source coverage; it is excluded from the
-live allowlist because E3 is unresolved and account rows persist. The other 26
+live allowlist because E3 is unresolved and account rows persist. The other 25
 cases remain unsupported. Existing component tests provide isolated UI evidence but
 do not replace the written black-box procedures or live adapter assertions. An
 adapter may be marked source-complete only where every expected item has an exact
@@ -102,6 +103,6 @@ confirmation prompt; that behavior is outside the Module 2–9 adapters.
 The current baseline does not establish the required `qa-accounts`/`qa-view`
 accounts, device/port fixture for TC-DI-02/03, or no-ping/no-NCPA fixture for
 TC-DASH-07. TC-ACC-10 is source-partial only; its E3 branch, persistent account
-disposition, and live recovery plan are unresolved. The five-case live allowlist
+disposition, and live recovery plan are unresolved. The six-case live allowlist
 does not satisfy the full 31-case queue or establish its role/device/dashboard
 fixtures; no full Module 2–9 batch is ready to open.
