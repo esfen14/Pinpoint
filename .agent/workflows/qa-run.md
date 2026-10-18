@@ -76,7 +76,7 @@ authorize calling it manually. Keep actual bridge/runtime/baseline proof and
 the explicit named start separate from offline implementation success.
 Owned bridge and deployment-observer components require trusted integration;
 use the permission path below only for its three literal IDs and the module path
-only for its five literal read-only IDs.
+only for its seven literal read-only IDs.
 Observer disk matches/candidate process metadata always leave runtime/served
 identity false and the verified running revision null. Never promote them into a
 live proof receipt or manually start a bridge to bypass the missing driver/card.

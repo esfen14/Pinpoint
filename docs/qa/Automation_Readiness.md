@@ -483,8 +483,12 @@ start. No actual handoff was applied during preparation. See
 
 ## Issue #214 seven-case execution readiness (2026-10-18)
 
+See the [automation/manual handoff](Module_2-9_Automation_Handoff.md) for the
+completed work, per-case automation prerequisites, and the cases deferred for
+manual testing.
+
 The current seven-case preparation snapshot is
-[`2026-10-18-modules-2-9-adapters-v11.json`](queues/2026-10-18-modules-2-9-adapters-v11.json)
+[`2026-10-18-modules-2-9-adapters-v12.json`](queues/2026-10-18-modules-2-9-adapters-v12.json)
 with two named sets: `modules-2-9-adapters-01` (five cases) and
 `modules-2-9-adapters-02` (two cases). Both pass queue freshness/scope checks.
 Their source-bound v6 cards contain reviewed action vectors, timeouts, cleanup,

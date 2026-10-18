@@ -63,7 +63,7 @@ fixture-input files for the two QA accounts and the device/port labels were
 absent at inspection time. No credential values were read, and no accounts,
 roles, ports, alerts, or other appliance records were created or changed.
 
-Queue v10, `2026-10-18-modules-2-9-adapters-v10.json`, splits the seven exact
+Queue v12, `2026-10-18-modules-2-9-adapters-v12.json`, splits the seven exact
 IDs into two runner-compatible named sets: set 01 has five cases in one batch;
 set 02 has two cases in one batch. Each card now binds its source adapter,
 per-case timeout, expected-item evidence path, private control/bridge paths,
