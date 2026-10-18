@@ -1,34 +1,71 @@
-# Issue #199: Reports aligned with Nagios Core reporting
+# Issue #199: Web-Interface Refinement Align Reports With Nagios Core Reporting and Revise the UI
 
-Branch: `issue191-reports_alignment` (user-directed; NOT committed or pushed, user finalizes)
+Branch: `issue191-reports_alignment`
 Status: in-progress
 
-## Scope update (2026-10-18)
-User then asked to do all remaining items. Done in the working tree (uncommitted): contract probe, Reports requirements spec, report_events.py + three routes, alert/notification filters, drawer, analysis views, export context, tests, lab report. Not done: maintenance live check, scale, real export download, PR/CI.
-
-## Scope agreed with user
-Phases 1-3 only: Reports spec, backend semantic tests, host/OS snapshot-count removal, shared applied-query controls. No live lab, no new endpoints, no commits/pushes/checkpoints.
-
 ## Finish condition
-Full list is in the issue (16 items). Delivered this session: snapshot-count removal (item 2), part of item 3. All others remain open.
+
+The issue's 16 conditions, short form. Ticked items match the boxes ticked on the issue.
+
+- [x] Cited native behavior mapped to each delivered feature; Pinpoint-specific choices identified
+- [x] #198 contract intact; host/OS snapshot-count fields removed
+- [x] All six existing views remain with shared period/scope/applied-query controls
+- [x] Availability details: durations, both percentages, coverage, scheduled split
+- [x] Exact-object timeline and interval table, reconciled with native totals
+- [x] Alerts and Notifications filters/columns, totals, permission-safe History link
+- [x] Alert Summary totals, distinct counts, deterministic ranking, drilldown
+- [x] Alert Histogram: four breakdowns, zero buckets, zone/DST, drilldown
+- [ ] UI states (insufficient history added), narrow layouts, focus, both themes verified in a browser
+- [ ] CSV/XLS/PDF context verified by real browser downloads
+- [ ] Native-shape API tests (removed objects, auth/timeout, multi-contact tests added; await review)
+- [x] Instrumented limits/bounded-request tests and 24h/90d timings recorded
+- [x] Reports spec, frontend/backend/data specs, routing and operator manual updated
+- [ ] `scripts/verify.sh all` passes with output attached to the PR
+- [ ] Lab report complete (maintenance and missing-history cases, export journeys)
+- [ ] PR links the issue, CI green, human review
+
+Requirement coverage (every requirement the issue states, and the check that proves it):
+
+| Issue requirement | Finish-condition item | Proof (test or command) |
+|---|---|---|
+| Native behavior mapped; Pinpoint choices shown | item 1 | spec files/Reports_Requirements.md; About blocks |
+| Snapshot counts removed from host/OS | item 2 | server/tests/unit/test_report_availability.py |
+| Draft/applied query, stale runs, scope | item 3 | client/src/test/ReportsAnalysis.test.tsx, ServiceReports.test.tsx |
+| Detail drawer and timeline | items 4, 5 | server/tests/unit/test_report_events.py; lab report |
+| Alerts/Notifications filters | item 6 | test_report_events.py, ReportsAnalysis.test.tsx |
+| Summary and Histogram | items 7, 8 | test_report_events.py; lab report |
+| Limits and timings | item 12 | test_report_events.py (TestPaging); lab report |
+| Docs | item 13 | verify.sh docs link checks |
 
 ## Plan
-1. [x] Test first: host/OS rows carry explicit duration fields, no total_snapshots (server/tests/unit/test_report_availability.py)
-2. [x] Backend: report.py replace total_snapshots; remove dead snapshot code after return in hosts-by-os
-3. [x] Frontend: types/report.ts, HostAvailabilityReportTable.tsx duration columns, no Snapshots label
-4. [x] Specs: Frontend/Backend_Modules_and_Routes.md, Implementation_Status.md; new Reports requirements spec; route in AGENTS.md
-5. [x] Applied-query controls (draft vs applied, Run Report) in ReportsPage.tsx
-6. [ ] scripts/verify.sh backend/frontend/docs
+
+1. [x] Contract probe on the lab Nagios; sanitized fixture (server/tests/fixtures/archivejson_core_4_5_11.json)
+2. [x] Reports requirements spec and routing (spec files/Reports_Requirements.md, AGENTS.md)
+3. [x] Backend readers and routes (server/app/nagios/report_events.py, server/app/api/system/report.py)
+4. [x] Frontend controls, drawer, analysis views, exports (client/src/pages/ReportsPage.tsx, client/src/components/reports/)
+5. [x] Tests (server/tests/unit/test_report_events.py, client/src/test/ReportsAnalysis.test.tsx, ExportMeta.test.ts)
+6. [x] Lab report (docs/test-runs/2026-10-18-issue-199-reports/REPORT.md)
+7. [ ] Live scheduled-maintenance comparison; real export downloads; update the lab report
+8. [ ] Delete this file before the PR is marked ready for review
 
 ## Round log
+
 | Round | Change made | Check run | Result |
 |---|---|---|---|
-| 1 | Host/OS rows: explicit duration seconds, dead snapshot code removed; UI columns/exports; draft/applied query | pytest report tests (137), vitest (1011), tsc src | green |
-| 1 | Specs updated (Frontend, Backend, Implementation_Status) | scripts/verify.sh docs | fails only at test_qa_transport (Unsafe transport path, unrelated, env) |
+| 1 | Host/OS durations, applied-query controls | pytest report tests, vitest | green |
+| 2 | Backend readers/routes, drawer, analysis views, docs, lab report | pytest 4342 passed; vitest 1031 passed | green except existing environment failures |
+| 3 | Layout simplification, insufficient-history state, failure/removed-object tests | vitest 1036 passed | green |
+| 4 | Reverted unrelated Manage Accounts and dashboard edits; refreshed TC-ROL-04 report.py hash after impact review | `scripts/qa_coverage.py check` | 239 records validated |
 
 ## State for the next session
-- Last check: verify.sh docs/frontend; frontend tsc fails only on e2e (@playwright/test not installed); docs fails at qa_transport (path resolve).
-- Next action: run scripts/verify.sh backend/frontend/docs with PATH including server/venv/bin; fill final numbers in the lab report and PR text; human review. Remaining open: scheduled-maintenance live case, scale, real export downloads.
+
+- Last check run (exact command): `scripts/verify.sh docs` with server/venv/bin first on PATH
+- Result (first failing lines, or "green"): passes through the coverage-binding step; fails locally at test_qa_transport ("Unsafe transport path", macOS path) which is expected to pass on Linux CI
+- Hypothesis: remaining QA-tooling failures are local-environment path issues, not caused by #199
+- Next action: confirm CI is green, run the live maintenance comparison and real export downloads, then delete this file and mark the PR ready.
 
 ## Decisions and notes
-Remaining phases (interval detail, summary, histogram, live-lab evidence) are out of this session.
+
+- The Manage Accounts export fix and the dashboard "..." removal were taken out of this change because reviewed QA adapters (TC-ACC-08/10, TC-DASH-07) pin those files. They need their own change with the QA register reviewed.
+- TC-ROL-04 pins server/app/api/system/report.py; its hash was refreshed after a source review that the 403 assertion on /report/availability still holds (decorators unchanged). Needs human confirmation.
+- Open question for a person: History labels archive state type 2 as HARD; this Core sends HARD=1. Left unchanged here.
