@@ -243,6 +243,23 @@ See [the investigation](../docs/plans/Issue_191_Account_Creation_Investigation.m
 
 ## Test approach status
 
+The QA workflow and queue guide now use the
+[module-based black-box catalog](../docs/qa/Pinpoint%20-%20Black-Box%20Test%20Cases%20by%20Module%20with%20Traceability%20Matrix.md)
+(231 TC cases plus eight E2E scenarios), with reviewed Markdown assignments,
+separate new-execution reports and preserved human manual results. This is a
+documentation transition: `scripts/qa_queue.py`, `check_traceability.py`,
+`render_qa_case_tables.py` and their legacy contract tests/CI wiring still expect
+the removed journey plan/matrix/paper tables. CLI/schema and docs-gate migration
+remain pending; the new workflow does not claim compatibility or a green gate.
+Summary/detail result conflicts in the new catalog also remain unresolved and
+must be shown during queue review rather than silently reconciled.
+The documentation supports per-person multi-module sets and five approved batches
+per session (up to five ordinary TC IDs each; high-impact/E2E/long cases isolated).
+Case cards and explicit stop-action rules constrain execution, but independent
+schema, command/spec allowlist, batch-budget and evidence enforcement remain
+planned. The Markdown fallback requires review/supervision, not unattended trust
+in a model's compliance.
+
 Backend tests are organized under `server/tests/unit/`, `integration/`, `e2e/`,
 `support/`, and `plans/`. Default pytest collection is isolated. The deterministic
 browser-to-Nagios approach is recorded in

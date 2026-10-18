@@ -167,20 +167,51 @@ cover these paths; the corrected helper has not been rerun on a live appliance.
 
 ### QA finding (qa-run) and agent loop safety constraints
 
-The `.agent/workflows/qa-run.md` workflow automates the execution of the QA test plan under strict parameters.
+The `.agent/workflows/qa-run.md` workflow governs agent-assisted execution of the
+[module-based black-box catalog](../docs/qa/Pinpoint%20-%20Black-Box%20Test%20Cases%20by%20Module%20with%20Traceability%20Matrix.md).
+It contains 231 TC cases and eight separate E2E scenarios. Historical catalog
+results are human manual executions; new agent/human runs use separate attributable
+reports. App/spec conflicts remain decisions, not automatic passes.
 
-- **Scope preparation:** Before execution, `scripts/qa_queue.py prepare` saves
-  multiple named ISO sets with owners and fixed pending case lists (`untested`,
-  `retest`), plus a shareable Markdown preview including modules, environments and
-  prerequisites. Duplicate assignments within a queue are rejected. Each set waits
-  for an explicit start; the queue is not automatically drained. Source changes
-  require a replacement preview and a new start. Teammates coordinate reservations
-  and exclusive lab ownership separately; local queue files are not distributed
-  locks. Testers on different machines may run in parallel with separate
-  appliances and targets, verifying prerequisites locally and recording each
-  tested deployment SHA. Shared appliances or targets require exclusive access
-  regardless of which machine connects. Each tester uses a separate tracking
-  issue, branch and attributable report. See [QA Run Queues](../docs/qa/QA_Run_Queues.md).
+- **Scope preparation:** Before execution, prepare a reviewed Markdown queue with
+  named sets, owners and explicit `TC-*`/`E2E-*` IDs, source revisions/content hashes,
+  full case and prerequisite snapshots, eligibility, environment/executor, setup,
+  evidence and restoration. Group by module, phase or explicit IDs; an ISO mapping
+  requires review rather than inference. The old `scripts/qa_queue.py`, traceability
+  validator and paper renderer still target the removed journey sources and are not
+  compatible with this suite. Until migrated, prepare/check queues directly using
+  [QA Run Queues](../docs/qa/QA_Run_Queues.md); do not recreate retired sources to
+  satisfy old tooling. Conflicting summary/detail results need a decision; preserve
+  both and all human observations. Exclude passed and failed cases by default unless
+  explicitly selected for recheck, or a failed case qualifies for merged-fix retest.
+  Each set waits for an explicit start; never automatically drain the queue. Changed
+  selected procedures/prerequisites/results require a replacement preview/start.
+  Duplicate assignments within a queue are rejected by review. Local queues are not
+  distributed locks: coordinate shared-lab ownership separately. Separate machines
+  may run concurrently only with separate appliances and targets. Verify prerequisites
+  locally and record actual deployed SHAs. Each owner uses a separate issue, branch
+  and attributable report. New results go into reports/index and the queue execution
+  log, not over historical human Result fields or into the requirement mapping.
+- **QA batch throughput:** One owner's set may span multiple modules, expanded
+  to fixed eligible IDs and ordered batches before review/start. The QA-specific
+  five-round limit counts batches: up to five ordinary TC IDs per batch, five
+  batches per session (at most 25 ordinary IDs). E2E, disruptive/fault,
+  fresh-appliance and long cases each occupy one batch. Repeat at most once for
+  diagnosis, retaining both attempts. No dynamic replacement of blocked IDs,
+  reordered scope or reset by model/context changes. Save every case and checkpoint
+  every batch. An explicit resume after the limit starts a new tracked session;
+  another set needs its own start. Implementation and fix-found round limits are
+  unchanged. Module ownership never grants shared-lab ownership or cross-module
+  prerequisite execution.
+- **Executor guardrails:** Every case needs a complete execution card: scope/owner,
+  source/target revisions, verified prerequisites, exact tool/spec/command allowlist,
+  writable outputs, bounded timeouts, evidence per expected item and written recovery.
+  A missing field blocks execution. Executors cannot modify product/tests/selectors,
+  expectations, scope or human results to pass. Uncertain steps stop the attempt;
+  denied permissions, lost ownership, unsafe targets, secret exposure and failed
+  cleanup stop the set. Prompt instructions alone do not enforce these boundaries:
+  until schema/budget/allowlist/evidence checks are implemented independently, use
+  reviewed supervised execution rather than claim unattended safety.
 - **Authority rules:** The behavioral specification wins; `Implementation_Status.md` records known gaps, not overrides. Conflicts without an explicit team decision require a `needs-decision` issue. Passing requires observed behavior.
 - **Reporting rules:** A test failure is repeated exactly once before filing. Maintainers must search open and closed issues first; file use the Task template containing case ID and evidence; sanitize evidence (never paste passwords, credentials, tokens, SNMP communities, or raw database dumps). Defects determined to be installer bugs are written as notes for the owner, not filed against the application.
 - **Safety boundaries:** Using `scripts/vmlab` and `scripts/lab` is permitted for QA sweeps; the libvirt e2e harness is strictly forbidden. Ordinary VM network scans MUST be tightly restricted to `10.77.0.0/28` using a guard. The separate opt-in issue #187 DHCP Docker acceptance may scan only `10.79.0.0/28` after its controller proves collision-free routing and exclusive ownership; this does not authorize other QA suites or a physical/VPN range. Overlapping discoveries are banned (#59). One appliance is tested at a time, checking disk/RAM capacity before provisioning.
@@ -198,8 +229,9 @@ eligible `qa-found` issues by severity then age and follows `work-issue.md` in a
 separate issue worktree. It records skipped candidates, never weakens a QA case,
 and opens at most three PRs in five rounds. Permission denial stops the loop.
 Humans merge PRs; agents never merge. Only an actual merged fix plus a closed
-finding returns its affected traceability rows to `retest`, with the original
-failure, PR and merge SHA retained. Two failed retests after separate merged fixes
+finding makes affected new-suite cases eligible for `retest` in a reviewed queue,
+with the original failure, PR and merge SHA retained. The legacy fix-found matrix
+handoff must be inspected as evidence; it does not update the new catalog results. Two failed retests after separate merged fixes
 label that finding `needs-decision` and stop work on the case. Synthetic workflow
 demonstrations use scratch traceability data and do not establish product passes.
 See `.agent/workflows/fix-found.md` for commands and written boundary checks.
