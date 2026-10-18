@@ -166,7 +166,26 @@ it('invalid device custom rerun removes the prior result and export', async () =
   await screen.findByText('svc-0')
   mocks.get.mockRejectedValue(new Error('Invalid custom dates'))
   fireEvent.change(screen.getByRole('combobox'), { target: { value: 'custom' } })
+  // Editing controls only changes the draft: the applied result and its export stay.
+  expect(screen.getByText(/Changes not applied/)).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Export' })).toBeInTheDocument()
+  fireEvent.change(screen.getByLabelText('Report start date'), { target: { value: '2024-01-01' } })
+  fireEvent.change(screen.getByLabelText('Report end date'), { target: { value: '2024-01-02' } })
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Run Report' })))
   await waitFor(() => expect(screen.queryByRole('button', { name: 'Export' })).not.toBeInTheDocument())
+})
+
+it('draft period edits do not request data until Run Report applies them', async () => {
+  mocks.get.mockImplementation((url: string) => Promise.resolve(url.includes('network-services') ? network() : { period, summary: {total: 0, up:0, down:0, unreachable:0, uptime_pct:null}, hosts:[] }))
+  render(<ReportsPage />)
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Run Report' })).toBeEnabled())
+  const calls = mocks.get.mock.calls.length
+  fireEvent.change(screen.getByRole('combobox'), { target: { value: 'last_7d' } })
+  expect(mocks.get.mock.calls.length).toBe(calls)
+  expect(screen.getByText(/Changes not applied/)).toBeInTheDocument()
+  await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Run Report' })))
+  expect(mocks.get).toHaveBeenLastCalledWith('/api/system/report/availability?period=last_7d')
+  expect(screen.queryByText(/Changes not applied/)).not.toBeInTheDocument()
 })
 
 it('shows loading, valid empty and zero-known availability distinctly', () => {

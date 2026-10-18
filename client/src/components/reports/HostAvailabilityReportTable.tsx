@@ -70,7 +70,10 @@ export function HostAvailabilityReportTable({
     Hostname: h.hostname,
     State: h.state,
     'Uptime %': h.uptimePct ?? '',
-    'Total Snapshots': h.totalSnapshots,
+    'Up (seconds)': h.upSeconds,
+    'Down (seconds)': h.downSeconds,
+    'Unreachable (seconds)': h.unreachableSeconds,
+    'Known time (seconds)': h.knownSeconds,
     'Last Check': h.lastCheck ?? '',
     'Last State Change': h.lastStateChange ?? '',
   }))
@@ -147,7 +150,10 @@ export function HostAvailabilityReportTable({
               <th className="px-4 py-3">Hostname</th>
               <th className="px-4 py-3">State</th>
               <th className="px-4 py-3">Uptime %</th>
-              <th className="px-4 py-3">Snapshots</th>
+              <th className="px-4 py-3">Up (s)</th>
+              <th className="px-4 py-3">Down (s)</th>
+              <th className="px-4 py-3">Unreachable (s)</th>
+              <th className="px-4 py-3">Known time (s)</th>
               <th className="px-4 py-3">Last Check</th>
               <th className="px-4 py-3">Last State Change</th>
             </tr>
@@ -155,10 +161,10 @@ export function HostAvailabilityReportTable({
 
           <tbody>
             {isLoading ? (
-              <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">Loading…</td></tr>
+              <tr><td colSpan={9} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">Loading…</td></tr>
             ) : paginated.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                <td colSpan={9} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                   {query || statusFilter !== 'All' ? 'No hosts match your search or filter' : 'No data in this period'}
                 </td>
               </tr>
@@ -168,7 +174,10 @@ export function HostAvailabilityReportTable({
                   <td className="px-4 py-3 text-gray-900 dark:text-white">{host.hostname}</td>
                   <td className="px-4 py-3"><StatusBadge state={host.state} /></td>
                   <td className="px-4 py-3 text-gray-900 dark:text-white">{host.uptimePct ?? '—'}</td>
-                  <td className="px-4 py-3 text-gray-900 dark:text-white">{host.totalSnapshots}</td>
+                  <td className="px-4 py-3 text-gray-900 dark:text-white">{host.upSeconds}</td>
+                  <td className="px-4 py-3 text-gray-900 dark:text-white">{host.downSeconds}</td>
+                  <td className="px-4 py-3 text-gray-900 dark:text-white">{host.unreachableSeconds}</td>
+                  <td className="px-4 py-3 text-gray-900 dark:text-white">{host.knownSeconds}</td>
                   <td className="px-4 py-3 text-gray-900 dark:text-white">
                     {formatServerDateTime(host.lastCheck, settings.dateTimeFormat, settings.timeZone)}
                   </td>

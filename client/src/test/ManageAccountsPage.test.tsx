@@ -5,8 +5,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { ManageAccountsPage } from '../pages/ManageAccountsPage'
 
 let strongPasswordPolicy = true
+let exportFormats: string[] = ['CSV', 'XLS', 'PDF']
 vi.mock('../contexts/SystemSettingsContext', () => ({
-  useSystemSettings: () => ({ settings: { strongPasswordPolicy } }),
+  useSystemSettings: () => ({ settings: { strongPasswordPolicy, exportFormats } }),
 }))
 
 let canEditAccounts = false
@@ -148,6 +149,17 @@ describe('ManageAccountsPage', () => {
     await renderLoaded()
     expect(screen.getByRole('button', { name: 'Export' })).toBeEnabled()
     expect(screen.getByRole('button', { name: '+ Add User' })).toBeInTheDocument()
+  })
+
+  it('offers only the export formats enabled in settings', async () => {
+    exportFormats = ['CSV', 'PDF']
+    const user = userEvent.setup()
+    await renderLoaded()
+    await user.click(screen.getByRole('button', { name: 'Export' }))
+    expect(screen.getByRole('button', { name: 'CSV' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'PDF' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'XLS' })).not.toBeInTheDocument()
+    exportFormats = ['CSV', 'XLS', 'PDF']
   })
 
   it('lists every account by default', async () => {

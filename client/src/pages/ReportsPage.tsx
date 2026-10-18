@@ -36,11 +36,15 @@ const PERIOD_OPTIONS: { value: ReportPeriod; label: string }[] = [
   { value: 'custom', label: 'Custom range' },
 ]
 
+type AppliedQuery = { period: ReportPeriod; customStart: string; customEnd: string }
+
 export function ReportsPage() {
   const [view, setView] = useState<ReportView>('availability')
   const [period, setPeriod] = useState<ReportPeriod>('last_24h')
   const [customStart, setCustomStart] = useState('')
   const [customEnd, setCustomEnd] = useState('')
+  // Controls edit the draft above; Run Report copies it here. Loading and exports use only this.
+  const [applied, setApplied] = useState<AppliedQuery>({ period: 'last_24h', customStart: '', customEnd: '' })
 
   const [availability, setAvailability] = useState<HostAvailabilityReport | null>(null)
   const [networkServices, setNetworkServices] = useState<NetworkServicesReport | null>(null)
@@ -49,21 +53,26 @@ export function ReportsPage() {
   const [extraCards, setExtraCards] = useState<ExtraReportCard[]>([])
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
 
-  function buildPeriodQuery() {
-    const params = new URLSearchParams({ period })
-    if (period === 'custom') {
-      if (customStart) params.set('start', customStart)
-      if (customEnd) params.set('end', customEnd)
+  function buildPeriodQuery(source: AppliedQuery) {
+    const params = new URLSearchParams({ period: source.period })
+    if (source.period === 'custom') {
+      if (source.customStart) params.set('start', source.customStart)
+      if (source.customEnd) params.set('end', source.customEnd)
     }
     return params.toString()
   }
 
-  async function loadReport(showStatus = false) {
+  const draft: AppliedQuery = { period, customStart, customEnd }
+  const hasUnappliedChanges =
+    draft.period !== applied.period ||
+    (draft.period === 'custom' &&
+      (draft.customStart !== applied.customStart || draft.customEnd !== applied.customEnd))
+
+  async function loadReport(showStatus = false, source: AppliedQuery = applied) {
     const sequence = ++requestSequence.current
     if (view === 'network-services') setNetworkServices(null)
-    if (period === 'custom' && (!customStart || !customEnd)) {
+    if (source.period === 'custom' && (!source.customStart || !source.customEnd)) {
       setIsLoading(false)
-      if (view !== 'availability' && view !== 'network-services') setRunKey((k) => k + 1)
       setStatusMessage({ type: 'error', text: 'Pick a start and end date for a custom range.' })
       return
     }
@@ -77,7 +86,7 @@ export function ReportsPage() {
     setIsLoading(true)
     setStatusMessage(null)
     try {
-      const qs = buildPeriodQuery()
+      const qs = buildPeriodQuery(source)
       if (view === 'availability') {
         const data = await apiGet<Parameters<typeof fromHostAvailabilityResponse>[0]>(
           `/api/system/report/availability?${qs}`
@@ -112,7 +121,7 @@ export function ReportsPage() {
     }
     loadReport()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view, period])
+  }, [view])
 
   return (
     <main className="ml-55 flex-1">
@@ -244,7 +253,11 @@ export function ReportsPage() {
 
           <button
             type="button"
-            onClick={() => loadReport(true)}
+            onClick={() => {
+              const complete = draft.period !== 'custom' || (draft.customStart && draft.customEnd)
+              if (complete) setApplied(draft)
+              loadReport(true, draft)
+            }}
             disabled={isLoading}
             className="flex items-center gap-2 rounded-lg bg-white border border-gray-300 px-4 py-2 font-medium text-gray-800 shadow-sm transition hover:bg-gray-50 hover:shadow dark:bg-[#171B20] dark:border-white/10 dark:text-white dark:hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
           >
@@ -252,6 +265,12 @@ export function ReportsPage() {
             {isLoading ? 'Running...' : 'Run Report'}
           </button>
         </div>
+
+        {hasUnappliedChanges && (
+          <div role="status" className="text-right text-sm text-amber-600 dark:text-amber-400">
+            Changes not applied. Run Report to use the new period; the results below and their exports still use the last applied period.
+          </div>
+        )}
 
         {/* Status message */}
         {statusMessage && (
@@ -278,7 +297,7 @@ export function ReportsPage() {
         ) : view === 'network-services' ? (
           <NetworkServicesReportTable observedAt={networkServices?.current_status.observed_at} services={networkServices?.services ?? []} isLoading={isLoading} />
         ) : (
-          <ExtraReports view={view} query={buildPeriodQuery()} runKey={runKey} onStatus={setStatusMessage} onCards={setExtraCards} />
+          <ExtraReports view={view} query={buildPeriodQuery(applied)} runKey={runKey} onStatus={setStatusMessage} onCards={setExtraCards} />
         )}
 
       </div>

@@ -31,7 +31,7 @@ requests use `src/lib/api.ts`; Plugin Manager wrappers live in
 | `/remediation` | `RemediationPage` | `remediation.view` | Connected to `/api/system/remediation/...`; sidebar entry "Remediation". Above both tabs a status panel shows the consumer's health (last check-in, events waiting, runs, limits hit, skipped and dropped in 24 hours, refreshed every 15 seconds), a red banner when the consumer has stopped checking in, and the automatic recovery switch (the kill switch): changing it asks for confirmation in both directions, needs `remediation.manage` (view-only users see it disabled) and its saved state shows after a reload. An Actions tab (banner "Actions run automatically when a service reaches a hard failure", an enable switch per action, an add/edit form built from the action types with server messages shown against the right field, delete with confirmation; with only `remediation.view` the list is read-only) and a Run log tab (filters for action, outcome, host and dates, pagination, skipped runs show their reason (including kill switch, maintenance, downtime and acknowledged), an Operator column saying "Operator notified", "Notification pending", "Notification failed" (with the error) or "Not required", a drawer with the redacted output and the notification details). The action form has a "Tell the operator when" group (the action fails, is stopped by its limits, keeps recovering the same service; all on by default, help text says Nagios chooses the recipients), and the status panel has a Repeat recovery section (count and window hours; read-only without `remediation.manage`). The bell, the Dashboard's Recent Notifications and the History notification list and detail label a Nagios custom notification ("Custom notification" in the bell title, "Custom" in the state column) and show its comment text before the plugin output (`types/notification.ts` `isCustom` and `comment`; the comment comes from the server, see Backend_Modules_and_Routes). An address like `/remediation?run=7` opens the Run log and that run's drawer (the badge on a service row links there). Changes need `remediation.manage`; 409 offers a reload and 422 shows the Nagios message |
 | `/reports` | `ReportsPage` | `system.report` | Six connected views: Host Availability, Network Services, Hosts by OS, Device Services, Alerts and Notifications; see Reports below |
 | `/system-logs` | `SystemLogsPage` | `system.logs` | Connected to five audit log categories and a bounded Nagios log tab |
-| `/accounts` | `ManageAccountsPage` | `account.view` | Connected to account/role APIs. The table shows each user's Email Alerts (On/Off); the add and edit forms show a "Send this user email alerts" checkbox only with `account.alerts`, and a failed Nagios apply is shown as a notice. The first account is marked by the account API as `is_super_admin`; its edit form keeps Status Active, disables the status selector, explains that the bootstrap administrator must retain account/role administration, and disables role options whose `preserves_bootstrap_admin_access` value is false |
+| `/accounts` | `ManageAccountsPage` | `account.view` | Connected to account/role APIs. Export is the shared `ExportMenu`, offering only the formats enabled in the system Export Formats setting (filename stem `accounts-report`, current status filter). The table shows each user's Email Alerts (On/Off); the add and edit forms show a "Send this user email alerts" checkbox only with `account.alerts`, and a failed Nagios apply is shown as a notice. The first account is marked by the account API as `is_super_admin`; its edit form keeps Status Active, disables the status selector, explains that the bootstrap administrator must retain account/role administration, and disables role options whose `preserves_bootstrap_admin_access` value is false |
 | `/manage-roles` | `ManageRolesPage` | `role.view` | Connected to role and permission APIs. The built-in `Super Admin` role shows every permission as read-only with an explanation, and its name cannot be edited. The bootstrap administrator's assigned role is marked as locked; its edit form disables the seven account/role administration permission controls and role deactivation, even when assigned to a different role |
 | `/settings` | `SettingsPage` | Any logged-in user; tabs are separately gated | Connected to system settings and user preferences. Tabs: General Settings, Security, System, Network Discovery, Plugins and Email; the System tab includes the notification-policy card |
 | `/` | Redirect | — | Redirects to `/login` |
@@ -341,7 +341,7 @@ scheduled or recurring emailed reports are outside the supported scope.
 
 | View | API route (GET) | Displayed data |
 |---|---|---|
-| Host Availability | `/api/system/report/availability` | Hostname, state, uptime %, Snapshots (legacy label for known-state seconds), last check and last state change; summary cards show total hosts, Up, Down / Unreachable and overall uptime |
+| Host Availability | `/api/system/report/availability` | Hostname, state, uptime %, Up / Down / Unreachable / Known time (seconds), last check and last state change; summary cards show total hosts, Up, Down / Unreachable and overall uptime |
 | Network Services | `/api/system/report/network-services` | One row per service name: instance count, Current OK / Warning / Critical / Unknown / Pending / Unavailable counts, recorded-time availability %, recorded and missing seconds; summary cards show service and instance totals, OK, Warning / Critical and overall uptime |
 | Hosts by OS | `/api/system/report/hosts-by-os` | Flattened host rows with OS, hostname, state, uptime %, last check and last state change; no summary cards |
 | Device Services | `/api/system/report/device-services` | One row per host/service pair: hostname, service, current state, recorded-time availability %, recorded/missing seconds with no-data/engine-down/unaccounted components, observation time, current last check and state change; no summary cards |
@@ -369,9 +369,11 @@ validates periods and dates. Service custom dates use the next midnight after
 the inclusive end date as an exclusive boundary. Service reports stop at the
 last completed second, and show exact offset-bearing bounds through display
 preferences. They explain server-local date interpretation and current-status
-observation time, including for a past period. Changing a view or period loads its report; after
-editing custom dates, **Run Report** loads the chosen range. It also reruns the
-current report. Host Availability and Network Services load in `ReportsPage`;
+observation time, including for a past period. Period and custom-date controls
+edit a draft query only (#199): **Run Report** applies it atomically, and until
+then the page shows "Changes not applied" while results and exports keep the last
+applied period. Changing the view loads that view with the applied query. An
+incomplete custom range is not applied. Host Availability and Network Services load in `ReportsPage`;
 the other four load in `ExtraReports` on view change or a changed run key.
 Tables have loading and empty states, and request errors appear above them.
 Service reruns clear old data before loading and hide export until a successful
@@ -398,16 +400,15 @@ time zone. No report period metadata or summary cards are included in exports.
 
 | View | Filename stem | Export columns |
 |---|---|---|
-| Host Availability | `host-availability-report` | Hostname, State, Uptime %, Total Snapshots, Last Check, Last State Change |
+| Host Availability | `host-availability-report` | Hostname, State, Uptime %, Up (seconds), Down (seconds), Unreachable (seconds), Known time (seconds), Last Check, Last State Change |
 | Network Services | `network-services-report` | Service, Current status observed at, Total Instances, Current OK/Warning/Critical/Unknown/Pending/Unavailable, Availability during recorded time %, Recorded time (seconds), No recorded data (seconds), Nagios no data (seconds), Engine not running (seconds), Unaccounted time (seconds) |
 | Hosts by OS | `hosts-by-os-report` | OS, Hostname, State, Uptime %, Last Check, Last State Change |
 | Device Services | `device-services-report` | Hostname, Service, Current state, Availability during recorded time %, Recorded time (seconds), No recorded data (seconds), Nagios no data (seconds), Engine not running (seconds), Unaccounted time (seconds), Current status observed at, Current last check, Current last state change |
 | Alerts | `alerts-report` | Time, Hostname, Service, Previous State, New State, Output |
 | Notifications | `notifications-report` | Time, Hostname, Service, State, Contact, Message |
 
-Host Availability retains `Snapshots` on screen and `Total Snapshots` in exports, but its
-API `total_snapshots` value is known-state duration in seconds from Nagios,
-not a polling snapshot count. Export logging posts to `/api/system/exportlog`;
+Host Availability shows and exports explicit Nagios duration seconds; no snapshot
+count or label remains (#199). Export logging posts to `/api/system/exportlog`;
 a logging failure does not prevent the download.
 
 Service-report browser comparison is opt-in: Playwright project `issue-198-live`,

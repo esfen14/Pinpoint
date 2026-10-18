@@ -188,7 +188,10 @@ def _availability_host(row):
         "hostname": hostname,
         "state": state,
         "uptime_pct": round(up / known * 100, 2) if known else None,
-        "total_snapshots": int(known),
+        "up_seconds": int(up),
+        "down_seconds": int(down),
+        "unreachable_seconds": int(unreachable),
+        "known_seconds": int(known),
         "last_check": row.get("last_check"),
         "last_state_change": row.get("last_state_change"),
         "_up": up,
@@ -213,8 +216,8 @@ def report_host_availability():
     Host availability within the selected period.
 
     For each host, reads Nagios archive durations and computes UP seconds /
-    known host-state seconds. Missing state/check metadata remains unknown/null;
-    the legacy total_snapshots field contains known-state seconds.
+    known host-state seconds. Missing state/check metadata remains unknown/null.
+    Durations are explicit seconds; no snapshot-count field exists.
 
     Response shape:
     {
@@ -228,7 +231,10 @@ def report_host_availability():
                 "hostname":          "...",
                 "state":             "Up|Down|Unreachable",
                 "uptime_pct":        99.5,
-                "total_snapshots":   n,
+                "up_seconds":          n,
+                "down_seconds":        n,
+                "unreachable_seconds": n,
+                "known_seconds":       n,
                 "last_check":        "ISO-8601 | null",
                 "last_state_change": "ISO-8601 | null"
             },
@@ -383,160 +389,6 @@ def report_hosts_by_os():
                 "uptime_pct": round(total_up / total_known * 100, 2) if total_known else None,
             },
             "by_os": groups,
-        })
-
-        # ── All snapshots for every host within the window ──────────────────
-        # We need ALL rows (not just the latest) to compute uptime %.
-        all_snapshots = db.session.execute(
-            sa.select(
-                HostStatus.Hostname,
-                HostStatus.Current_State,
-                HostStatus.Last_Check,
-                HostStatus.Last_State_Change,
-            )
-            .where(
-                HostStatus.Timestamp >= start_dt,
-                HostStatus.Timestamp <= end_dt,
-            )
-        ).all()
-
-        # ── OS type map: hostname -> os_type (from NetworkDiscovery) ─────────
-        nd_rows = db.session.execute(
-            sa.select(NetworkDiscovery.Nagios_Host_Name, NetworkDiscovery.Hostname, NetworkDiscovery.OS_Type)
-        ).all()
-
-        # Nagios (and so the snapshots) knows a device by its stable
-        # Nagios_Host_Name; Hostname is only the fallback for older rows.
-        os_map = {}
-        for r in nd_rows:
-            name = r.Nagios_Host_Name or r.Hostname
-            if name:
-                os_map[name] = r.OS_Type or "Unknown"
-
-        # ── Aggregate per-host stats from snapshots ──────────────────────────
-        # hostname -> { total, up, last_check, last_state_change }
-        host_stats: dict[str, dict] = {}
-
-        for snap in all_snapshots:
-            h = snap.Hostname
-            if h not in host_stats:
-                host_stats[h] = {
-                    "total": 0,
-                    "up": 0,
-                    "last_check": snap.Last_Check,
-                    "last_state_change": snap.Last_State_Change,
-                }
-            stats = host_stats[h]
-            stats["total"] += 1
-            if snap.Current_State.value == "Up":
-                stats["up"] += 1
-            # Keep the most-recent last_check / last_state_change
-            if snap.Last_Check and (
-                stats["last_check"] is None
-                or snap.Last_Check > stats["last_check"]
-            ):
-                stats["last_check"] = snap.Last_Check
-                stats["last_state_change"] = snap.Last_State_Change
-
-        # ── Build per-OS groups ───────────────────────────────────────────────
-        # Include every host that has data in the window.
-        os_groups: dict[str, list] = {}
-
-        for hostname, stats in sorted(host_stats.items()):
-            os_type = os_map.get(hostname, "Unknown")
-            total = stats["total"]
-            up = stats["up"]
-            uptime_pct = round((up / total) * 100, 2) if total > 0 else None
-
-            # Determine "current" state from the last snapshot
-            down = total - up
-            if up == total:
-                state = "Up"
-            elif up == 0:
-                state = "Down"
-            else:
-                state = "Down"   # majority-down; use last snapshot below
-
-            os_groups.setdefault(os_type, []).append({
-                "hostname":          hostname,
-                "uptime_pct":        uptime_pct,
-                "total_snapshots":   total,
-                "last_check":        stats["last_check"].isoformat() if stats["last_check"] else None,
-                "last_state_change": (
-                    stats["last_state_change"].isoformat()
-                    if stats["last_state_change"]
-                    else None
-                ),
-            })
-
-        # Re-compute last snapshot state per host for the state column
-        # (use a separate pass with the most-recent snapshot per host)
-        latest_state: dict[str, str] = {}
-        for snap in all_snapshots:
-            h = snap.Hostname
-            if h not in latest_state:
-                latest_state[h] = snap.Current_State.value
-            # all_snapshots is unordered; we already tracked last_check above
-            # so overwrite with the row whose Last_Check is most recent
-            if snap.Last_Check and host_stats[h]["last_check"] == snap.Last_Check:
-                latest_state[h] = snap.Current_State.value
-
-        # Inject state back into host entries
-        for hosts_list in os_groups.values():
-            for entry in hosts_list:
-                entry["state"] = latest_state.get(entry["hostname"], "Unknown")
-
-        # ── Build response structure ──────────────────────────────────────────
-        by_os = []
-        global_up = global_total = 0
-
-        for os_type, hosts_list in sorted(os_groups.items()):
-            grp_total_snaps = sum(h["total_snapshots"] for h in hosts_list)
-            grp_up_snaps    = sum(
-                round((h["uptime_pct"] / 100) * h["total_snapshots"])
-                if h["uptime_pct"] is not None else 0
-                for h in hosts_list
-            )
-            grp_uptime = (
-                round((grp_up_snaps / grp_total_snaps) * 100, 2)
-                if grp_total_snaps > 0 else None
-            )
-
-            state_counter = Counter(h["state"] for h in hosts_list)
-
-            global_up    += state_counter.get("Up", 0)
-            global_total += len(hosts_list)
-
-            by_os.append({
-                "os_type":    os_type,
-                "total":      len(hosts_list),
-                "up":         state_counter.get("Up", 0),
-                "down":       state_counter.get("Down", 0),
-                "unreachable": state_counter.get("Unreachable", 0),
-                "uptime_pct": grp_uptime,
-                "hosts":      hosts_list,
-            })
-
-        global_uptime = (
-            round((global_up / global_total) * 100, 2)
-            if global_total > 0 else None
-        )
-        global_state_counts = Counter(
-            entry["state"]
-            for grp in by_os
-            for entry in grp["hosts"]
-        )
-
-        return success({
-            "period": _period_meta(period, start_dt, end_dt),
-            "summary": {
-                "total_hosts": global_total,
-                "up":          global_state_counts.get("Up", 0),
-                "down":        global_state_counts.get("Down", 0),
-                "unreachable": global_state_counts.get("Unreachable", 0),
-                "uptime_pct":  global_uptime,
-            },
-            "by_os": by_os,
         })
 
     except RuntimeError as exc:

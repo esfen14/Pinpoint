@@ -543,7 +543,9 @@ never rounded percentages. `no_recorded_data_seconds = window_seconds - known`;
 its components are native no-data, engine downtime and the unaccounted remainder.
 A zero-history configured instance remains visible with null uptime and full
 missing coverage. No snapshot-count field, including `total_snapshots`, exists
-in either service-report contract. The host report's legacy field is unchanged.
+in either service-report contract or in the host availability and hosts-by-OS
+host rows (#199); the latter carry `up_seconds`, `down_seconds`,
+`unreachable_seconds` and `known_seconds` instead.
 
 `current_status` contains `available`, `observed_at` (UTC ISO timestamp or null),
 and `notice` (null or sanitized status-unavailable text). Instance `state`,

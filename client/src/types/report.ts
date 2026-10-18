@@ -14,7 +14,10 @@ export type HostAvailabilityRow = {
   hostname: string
   state: string
   uptimePct: number | null
-  totalSnapshots: number
+  upSeconds: number
+  downSeconds: number
+  unreachableSeconds: number
+  knownSeconds: number
   lastCheck: string | null
   lastStateChange: string | null
 }
@@ -35,7 +38,10 @@ type HostAvailabilityApiRecord = {
   hostname: string
   state: string
   uptime_pct: number | null
-  total_snapshots: number
+  up_seconds: number
+  down_seconds: number
+  unreachable_seconds: number
+  known_seconds: number
   last_check: string | null
   last_state_change: string | null
 }
@@ -66,7 +72,10 @@ export function fromHostAvailabilityResponse(data: HostAvailabilityApiResponse):
       hostname: h.hostname,
       state: h.state,
       uptimePct: h.uptime_pct,
-      totalSnapshots: h.total_snapshots,
+      upSeconds: h.up_seconds,
+      downSeconds: h.down_seconds,
+      unreachableSeconds: h.unreachable_seconds,
+      knownSeconds: h.known_seconds,
       lastCheck: h.last_check,
       lastStateChange: h.last_state_change,
     })),
