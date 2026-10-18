@@ -1,7 +1,7 @@
 # #211 recheck review — prepared, not started
 
-The [v1 recheck preview](queues/2026-10-18-issue-211-ss04-recheck-v1.md) and
-[immutable JSON](queues/2026-10-18-issue-211-ss04-recheck-v1.json) select only
+The [v2 recheck preview](queues/2026-10-18-issue-211-ss04-recheck-v2.md) and
+[immutable JSON](queues/2026-10-18-issue-211-ss04-recheck-v2.json) select only
 TC-SS-04, one initial attempt, one worker, zero retries, owned by Paeng under
 tracking issue #211. Target remains `299ab3ba7203c89a3ca5d8fabea42d9e5f239be2`.
 This is an explicit diagnostic recheck after the
@@ -39,14 +39,19 @@ Before an executable replacement card/start, separately review a recovery scope:
 4. Obtain fresh exclusive ownership, exact host/guest/boot/runtime/source/Staff/
    served-byte/image/browser observations. A reboot or baseline change blocks;
    preparing this card does not authorize redeployment/restart/reset/account work.
-5. Prepare a new immutable executable replacement card reflecting actual recovery
-   and baseline observations; validate its sources and obtain a separate explicit
-   start bound to that queue/set/owner/new session/UUID/target/expiry.
+5. Freeze and review the source-complete executable-intent replacement card and
+   baseline pins before applying recovery. Record actual recovery/baseline proof
+   separately, without changing that queue. After successful granted recovery,
+   obtain a separate explicit start bound to the same queue/set/owner/new session/
+   UUID/target/expiry. A source or scope change blocks and needs new review.
 
-The v1 card keeps `human_required: true` to enforce this missing review gate.
-Its baseline/image values are pins from the previous report, not fabricated fresh
-attestations. Proposed output paths are disjoint from v4; none was created during
-preparation. The listed launcher vector is not permission to execute it.
+The historical v1 card kept `human_required: true` as a preparation block and is
+now source-stale. The v2 card records complete automated E1 coverage and no human
+product-observation requirement; independent live gates still enforce actual
+recovery, baseline and start. Baseline/image values are prior pins, not fresh
+attestations. Only new empty private v2 evidence/control/bridge/recovery directories
+were created for review, disjoint from v4. No grant, connection, recovery disposition
+or case attempt was created. The listed vectors are not permission to execute them.
 
 ## Pending live result
 
@@ -84,7 +89,7 @@ Old slots remain consumed and old budgets remain counted.
 Implementation authorization has been received. Applying this mechanism on the
 actual appliance/store has **not** been authorized or executed. A separate explicit
 start is still required for a browser run. The v1 card remains historical preparation
-and becomes source-stale after recovery source changes; prepare a replacement.
+and is source-stale after recovery source changes; v2 is its source-current replacement.
 
 A recovery grant must bind the exact executable-intent replacement queue. Changing
 that queue after recovery will be rejected. Its source-reviewed adapter needs no

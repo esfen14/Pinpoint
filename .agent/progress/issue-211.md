@@ -1,7 +1,7 @@
 # Issue #211: Fresh Playwright observation timing
 
 Branch: `issue-211-qa-report-timing`
-Status: in-progress
+Status: blocked
 
 ## Finish condition
 
@@ -31,8 +31,9 @@ Requirement coverage:
 3. [x] Update owning spec files/Agent_Workflow_and_CI.md, spec files/Implementation_Status.md and docs/qa/Automation_Readiness.md; verify focused Python/Node helpers and docs gate, with backend omitted per issue.
 4. [x] Prepare source-reviewed immutable recheck card/queue under docs/qa/queues and docs/qa/Issue_211_Recheck_Review.md, blocked on recovery/start; check freshness and refusal to execute.
 5. [x] Implement approved audited recovery in scripts/qa_supervisor.py and scripts/qa_recovery.py with isolated tests, preserving original attempt/session data and an exact private ledger archive; gate it on an expiring queue/attempt/checksum-bound recovery grant and fresh cleanup/baseline proof. Wire an explicit recover CLI in scripts/qa_pilot.py, update specs/docs, verify focused helpers/docs.
-6. [ ] Prepare a replacement recheck card after recovery source changes; obtain authorization before applying live recovery and a separate explicit new start before a browser run. Record a new supervised result only if authorized.
-7. [ ] Re-read issue, verify requirement proofs, checkpoint and open PR against issue-206-qa-readiness; draft if live completion pending. Inspect CI.
+6. [x] Prepare/check/show the source-current v2 replacement card after recovery source changes; validate the source card and missing-start rejection; create only new empty private v2 output directories.
+7. [ ] Obtain authorization before applying actual recovery and a separate explicit new start before a browser run. Record a new supervised result only if authorized.
+8. [ ] Re-read issue, verify requirement proofs, checkpoint and open PR against issue-206-qa-readiness; draft if live completion pending. Inspect CI.
 
 ## Round log
 
@@ -44,12 +45,14 @@ Requirement coverage:
 
 | 3 | Implemented user-approved audited recovery core/collector/CLI with exact private original-state archive, preserved halted attempts/budgets, expiring scope/evidence-bound grant, fresh absence/baseline proof and new-queue-only consumption | python3 -I scripts/test_qa_recovery.py; scripts/verify.sh docs > /tmp/issue211-recovery-docs-serial.log 2>&1; Python compile; git diff --check | Green: 11 new recovery contracts, full 193 isolated docs contracts. An earlier docs run collided with my concurrently run helper on the canonical test lock; serial rerun passed without weakening locks/tests. No live commands or real ledger/evidence access. |
 
+| 4 | Prepared immutable v2 exact TC-SS-04 executable-intent scope with recovery/launcher vectors and disjoint empty private outputs; v1 remains historical/stale. Updated recovery review sequence to freeze queue before its grant-bound disposition | qa_queue.py prepare/check/show; validate_card; grant_check negative; scripts/verify.sh docs > /tmp/issue211-v2-docs.log 2>&1; check_doc_links.py; git diff --check | Green: source-current scope 1a63336e7ceca199685233a85c3038bc075e6ab45ff800a51d73ffbed9c05d00; 193 docs contracts; 218 linked documents. No actual recovery, existing evidence access or browser start. |
+
 ## State for the next session
 
-- Last check run (exact command): scripts/verify.sh docs > /tmp/issue211-recovery-docs-serial.log 2>&1
+- Last check run (exact command): scripts/verify.sh docs > /tmp/issue211-v2-docs.log 2>&1
 - Result (first failing lines, or "green"): green; 193 docs contracts pass, including 11 recovery, 13 parser, 17 container and 12 composed driver tests. Earlier frontend gate passed 1003 product and 8 helper tests; no frontend changed during recovery implementation.
 - Hypothesis: Confirmed slot-duration/wall-end category error. Exact attribution of original 44 ms remains unknown without original per-slot telemetry. Independent owned attach bounds remove that inference without a grace period.
-- Next action (one specific step, not "continue"): Prepare a source-current v2 replacement queue/card for exactly TC-SS-04, keeping runtime recovery/use and explicit browser start pending; update draft PR #212 with verified recovery implementation.
+- Next action (one specific step, not "continue"): Update draft PR #212 and ask for explicit authorization to apply actual audited recovery for v2, plus a separate explicit start of issue211-ss04-recheck-v2. No actual recovery or browser work until those answers arrive.
 
 ## Decisions and notes
 
@@ -63,9 +66,11 @@ Requirement coverage:
 - No browser adapter/config/assertion changes; coverage hashes remain valid, no registry refresh required.
 - Final issue re-read returned unchanged finish conditions and no comments.
 
-- Blocking question: Approve a separate audited halted-state recovery scope described in docs/qa/Issue_211_Recheck_Review.md before implementation/use; no supported recovery command currently exists. A later executable replacement card and explicit start are still required. The source-reviewed v1 card retains human_required=true and is not a live start.
+- Previous blocking question answered: Paeng approved recovery implementation; it is complete. Current blocker: applying actual recovery and starting the named v2 case still need separate explicit authorization. No such use/start is inferred from implementation approval.
 - Prepared queue: docs/qa/queues/2026-10-18-issue-211-ss04-recheck-v1.json; set issue211-ss04-recheck; owner Paeng; target 299ab3ba7203c89a3ca5d8fabea42d9e5f239be2; scope checked source-current.
 
 - User explicitly approved recovery implementation via the PR #212 recovery-scope question. Plan expanded on that authorization; approval is for implementation, not applying live recovery or starting a browser. PR: https://github.com/esfen14/Pinpoint/pull/212 (draft, base issue-206-qa-readiness).
 
 - Recovery core/CLI implemented and verified under the approved scope. Approval does not yet authorize applying it to the real store or a browser run. The historical v1 card remains unexecuted and now correctly stale after recovery source/spec changes.
+
+- Current queue: docs/qa/queues/2026-10-18-issue-211-ss04-recheck-v2.json; set/next session issue211-ss04-recheck-v2; owner Paeng; application target unchanged. Card human_required=false records no human E1 requirement, not runtime proof or consent. Original ledger is still untouched/halted.
