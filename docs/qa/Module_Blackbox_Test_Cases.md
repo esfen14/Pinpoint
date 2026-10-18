@@ -3470,26 +3470,26 @@ These cases try the unusual: odd text, repeated clicks, lost connections, two pe
 
 **Summary of cases**
 
-| TC | Case | Req | Tech | Pri |
-| --- | --- | --- | --- | --- |
-| TC-EDG-01 | Very long text in names | EDG-01 | BVA | M |
-| TC-EDG-02 | Accents, emoji, and symbols in names | EDG-02 | EG | M |
-| TC-EDG-03 | Blank and space-only values | EDG-03 | EG | H |
-| TC-EDG-04 | Double click on Save | EDG-04 | EG | H |
-| TC-EDG-05 | Back button and page refresh | EDG-05 | EG | M |
-| TC-EDG-06 | Connection lost during a save | EDG-06 | EG | H |
-| TC-EDG-07 | Session ends with a dialog open | EDG-07 | EG | H |
-| TC-EDG-08 | Two administrators edit the same role | EDG-08 | EG | M |
-| TC-EDG-09 | Repeating an action many times | EDG-09 | ST | M |
-| TC-EDG-10 | Time zone change | EDG-10 | EP | M |
-| TC-EDG-11 | A maintenance window across midnight | EDG-11 | BVA | L |
-| TC-EDG-12 | Special characters in search boxes | EDG-12 | EG | M |
-| TC-EDG-13 | Password length boundaries | EDG-13 | BVA | H |
-| TC-EDG-14 | The same email in a different letter case | EDG-14 | EG | M |
-| TC-EDG-15 | Port number and range boundaries | EDG-15 | BVA | M |
-| TC-EDG-16 | Reload during a running scan | EDG-16 | ST | M |
-| TC-EDG-17 | Large amounts of data | EDG-17 | BVA | L |
-| TC-EDG-18 | Starting a second scan while one runs | EDG-18 | ST | M |
+| TC | Case | Req | Tech | Pri | Results |
+| --- | --- | --- | --- | --- | --- |
+| TC-EDG-01 | Very long text in names | EDG-01 | BVA | M | PASS |
+| TC-EDG-02 | Accents, emoji, and symbols in names | EDG-02 | EG | M | PASS |
+| TC-EDG-03 | Blank and space-only values | EDG-03 | EG | H | PASS |
+| TC-EDG-04 | Double click on Save | EDG-04 | EG | H | PASS |
+| TC-EDG-05 | Back button and page refresh | EDG-05 | EG | M | PASS |
+| TC-EDG-06 | Connection lost during a save | EDG-06 | EG | H | PASS |
+| TC-EDG-07 | Session ends with a dialog open | EDG-07 | EG | H | PASS |
+| TC-EDG-08 | Two administrators edit the same role | EDG-08 | EG | M | PASS |
+| TC-EDG-09 | Repeating an action many times | EDG-09 | ST | M | PASS |
+| TC-EDG-10 | Time zone change | EDG-10 | EP | M | PASS |
+| TC-EDG-11 | A maintenance window across midnight | EDG-11 | BVA | L | PASS |
+| TC-EDG-12 | Special characters in search boxes | EDG-12 | EG | M | PASS |
+| TC-EDG-13 | Password length boundaries | EDG-13 | BVA | H | PASS |
+| TC-EDG-14 | The same email in a different letter case | EDG-14 | EG | M | PASS |
+| TC-EDG-15 | Port number and range boundaries | EDG-15 | BVA | M | PASS |
+| TC-EDG-16 | Reload during a running scan | EDG-16 | ST | M | PASS |
+| TC-EDG-17 | Large amounts of data | EDG-17 | BVA | L | PASS |
+| TC-EDG-18 | Starting a second scan while one runs | EDG-18 | ST | M | PASS |
 
 #### TC-EDG-01 – Very long text in names
 
@@ -3782,32 +3782,32 @@ These cases test what happens when things occur in an unusual order: a fix befor
 
 **Summary of cases**
 
-| TC | Case | Req | Tech | Pri |
-| --- | --- | --- | --- | --- |
-| TC-SEQ-01 | Acknowledge after the service has recovered | SEQ-01 | ST | M |
-| TC-SEQ-02 | Break, recover, and break again during the retries | SEQ-02 | ST | M |
-| TC-SEQ-03 | A maintenance window starts while an alert is active | SEQ-03 | ST | H |
-| TC-SEQ-04 | A window cancelled before it starts | SEQ-04 | ST | M |
-| TC-SEQ-05 | A window edited while it is running | SEQ-05 | ST | M |
-| TC-SEQ-06 | Pause during an alert, recover, then resume | SEQ-06 | ST | M |
-| TC-SEQ-07 | Pause a device during a scan | SEQ-07 | ST | M |
-| TC-SEQ-08 | Save discovery settings during a scan | SEQ-08 | ST | M |
-| TC-SEQ-09 | Enable a plugin before the first scan | SEQ-09 | ST | M |
-| TC-SEQ-10 | Disable and re-enable a plugin that is monitoring | SEQ-10 | ST | M |
-| TC-SEQ-11 | Stop monitoring a port, then rescan | SEQ-11 | ST | M |
-| TC-SEQ-12 | A role is deactivated while its user is signed in | SEQ-12 | ST | H |
-| TC-SEQ-13 | A permission is removed while the user is on the page | SEQ-13 | ST | H |
-| TC-SEQ-14 | A user is suspended while signed in | SEQ-14 | ST | H |
-| TC-SEQ-15 | A password is reset while the user is signed in | SEQ-15 | ST | H |
-| TC-SEQ-16 | The forced password change is interrupted | SEQ-16 | ST | M |
-| TC-SEQ-17 | First-run setup is interrupted | SEQ-17 | ST | H |
-| TC-SEQ-18 | Kill switch off, failure, then switch on | SEQ-18 | ST | H |
-| TC-SEQ-19 | Cooldown and hourly limit in sequence | SEQ-19 | ST | M |
-| TC-SEQ-20 | Maintenance Mode and downtime before a failure | SEQ-20 | ST | M |
-| TC-SEQ-21 | Disable `check_ncpa` after a deployment | SEQ-21 | ST | M |
-| TC-SEQ-22 | Clean up, then redeploy, then restart | SEQ-22 | ST | L |
-| TC-SEQ-23 | The same event order on every page | SEQ-23 | ST | M |
-| TC-SEQ-24 | Pinpoint restarts during a scan | SEQ-24 | ST | M |
+| TC | Case | Req | Tech | Pri | Results |
+| --- | --- | --- | --- | --- | --- |
+| TC-SEQ-01 | Acknowledge after the service has recovered | SEQ-01 | ST | M | PASS |
+| TC-SEQ-02 | Break, recover, and break again during the retries | SEQ-02 | ST | M | PASS |
+| TC-SEQ-03 | A maintenance window starts while an alert is active | SEQ-03 | ST | H | PASS |
+| TC-SEQ-04 | A window cancelled before it starts | SEQ-04 | ST | M | PASS |
+| TC-SEQ-05 | A window edited while it is running | SEQ-05 | ST | M | PASS | 
+| TC-SEQ-06 | Pause during an alert, recover, then resume | SEQ-06 | ST | M | PASS |
+| TC-SEQ-07 | Pause a device during a scan | SEQ-07 | ST | M | PASS |
+| TC-SEQ-08 | Save discovery settings during a scan | SEQ-08 | ST | M | PASS |
+| TC-SEQ-09 | Enable a plugin before the first scan | SEQ-09 | ST | M | PASS |
+| TC-SEQ-10 | Disable and re-enable a plugin that is monitoring | SEQ-10 | ST | M | PASS |
+| TC-SEQ-11 | Stop monitoring a port, then rescan | SEQ-11 | ST | M | PASS |
+| TC-SEQ-12 | A role is deactivated while its user is signed in | SEQ-12 | ST | H | PASS |
+| TC-SEQ-13 | A permission is removed while the user is on the page | SEQ-13 | ST | H | PASS |
+| TC-SEQ-14 | A user is suspended while signed in | SEQ-14 | ST | H | PASS |
+| TC-SEQ-15 | A password is reset while the user is signed in | SEQ-15 | ST | H | PASS |
+| TC-SEQ-16 | The forced password change is interrupted | SEQ-16 | ST | M | PASS |
+| TC-SEQ-17 | First-run setup is interrupted | SEQ-17 | ST | H | PASS |
+| TC-SEQ-18 | Kill switch off, failure, then switch on | SEQ-18 | ST | H | PASS |
+| TC-SEQ-19 | Cooldown and hourly limit in sequence | SEQ-19 | ST | M | PASS |
+| TC-SEQ-20 | Maintenance Mode and downtime before a failure | SEQ-20 | ST | M | PASS |
+| TC-SEQ-21 | Disable `check_ncpa` after a deployment | SEQ-21 | ST | M | PASS |
+| TC-SEQ-22 | Clean up, then redeploy, then restart | SEQ-22 | ST | L | PASS |
+| TC-SEQ-23 | The same event order on every page | SEQ-23 | ST | M | PASS |
+| TC-SEQ-24 | Pinpoint restarts during a scan | SEQ-24 | ST | M | PASS |
 
 #### TC-SEQ-01 – Acknowledge after the service has recovered
 
@@ -4214,26 +4214,26 @@ These eight scenarios run the whole system as a user would, from the browser and
 
 **Modules:** Authentication, Manage Accounts, Dashboard · **Priority:** H
 
-| Step | What to do | What you should see |
-| --- | --- | --- |
-| 1 | Open the appliance address and sign in with the generated bootstrap login. | The window "Finish setting up Pinpoint" covers the page and cannot be closed. |
-| 2 | Fill **Current password**, a **New email** on a non-reserved domain, and a compliant **New password** and **Confirm new password**. Press **Complete setup** and then **Continue**. | "Setup saved" shows and the Overview opens. |
-| 3 | Sign out (confirm "Sign out of PinPoint?") and sign in with the new login. Then try the old bootstrap login. | The new login works. The old one is refused. |
-| 4 | Read the Overview. | The four cards (**Total Hosts**, **Network Latency**, **Active Warnings**, **Critical Issues**) show, and sections without data say "No data" instead of staying empty. |
+| Step | What to do | What you should see | Results |
+| --- | --- | --- | --- |
+| 1 | Open the appliance address and sign in with the generated bootstrap login. | The window "Finish setting up Pinpoint" covers the page and cannot be closed. | PASS |
+| 2 | Fill **Current password**, a **New email** on a non-reserved domain, and a compliant **New password** and **Confirm new password**. Press **Complete setup** and then **Continue**. | "Setup saved" shows and the Overview opens. | PASS |
+| 3 | Sign out (confirm "Sign out of PinPoint?") and sign in with the new login. Then try the old bootstrap login. | The new login works. The old one is refused. | PASS |
+| 4 | Read the Overview. | The four cards (**Total Hosts**, **Network Latency**, **Active Warnings**, **Critical Issues**) show, and sections without data say "No data" instead of staying empty. | PASS |
 
 ### E2E-02 – Discover the network and start monitoring a service
 
 **Modules:** Settings, Device Inventory, Plugins, System Status, Dashboard · **Priority:** H
 
-| Step | What to do | What you should see |
-| --- | --- | --- |
-| 1 | In **Settings**, **Network Discovery** check that the lab subnet is listed. On **Overview** press **Rescan Network**. | The button shows "Scanning… N%" and the bell shows "Network scan in progress", then "Network scan complete". |
-| 2 | Open **Device Inventory**. | Both VMs are listed with their IP addresses. |
-| 3 | Press **View host details** on the web VM and open **Ports**. Find port 80. | Port 80 is Suggested, and the reason says its plugin is not enabled. |
-| 4 | Open **Plugins**, press `check_http`, press **Enable**, read the preview, and press **Confirm enable**. | The preview lists what will be monitored. The plugin becomes Enabled. |
-| 5 | Return to the web VM's **Ports**. | Port 80 is now Monitored. |
-| 6 | Open **System Status** and search the web VM. | An HTTP service for the web VM shows OK. |
-| 7 | Open **Overview**. | **Total Hosts** includes the VMs, and the **Service Overview** counts match **System Status**. |
+| Step | What to do | What you should see | Results |
+| --- | --- | --- | --- |
+| 1 | In **Settings**, **Network Discovery** check that the lab subnet is listed. On **Overview** press **Rescan Network**. | The button shows "Scanning… N%" and the bell shows "Network scan in progress", then "Network scan complete". | PASS |
+| 2 | Open **Device Inventory**. | Both VMs are listed with their IP addresses. | PASS |
+| 3 | Press **View host details** on the web VM and open **Ports**. Find port 80. | Port 80 is Suggested, and the reason says its plugin is not enabled. | PASS |
+| 4 | Open **Plugins**, press `check_http`, press **Enable**, read the preview, and press **Confirm enable**. | The preview lists what will be monitored. The plugin becomes Enabled. | PASS |
+| 5 | Return to the web VM's **Ports**. | Port 80 is now Monitored. | PASS |
+| 6 | Open **System Status** and search the web VM. | An HTTP service for the web VM shows OK. | PASS |
+| 7 | Open **Overview**. | **Total Hosts** includes the VMs, and the **Service Overview** counts match **System Status**. | PASS |
 
 ### E2E-03 – Deploy an NCPA agent and see its metrics
 
@@ -4241,12 +4241,12 @@ These eight scenarios run the whole system as a user would, from the browser and
 
 | Step | What to do | What you should see |
 | --- | --- | --- |
-| 1 | Open **NCPA Deployment** while `check_ncpa` is disabled. | A warning says the agent's checks run only while `check_ncpa` is enabled. |
-| 2 | Enable `check_ncpa` in **Plugins** and reopen the page. | The warning is gone. |
-| 3 | Press **Verify** on the second VM, compare the fingerprint, and press **Trust**. Tick the VM and press **Deploy selected**. Enter a wrong SSH password, then the right one, and press **Check logins**. | The wrong password is rejected and nothing starts. The right one gives "Login and sudo verified." |
-| 4 | Start the deployment and watch. | The run banner shows progress and ends with Success. |
-| 5 | Open **Deployment History** and the run. | The run shows its steps, user, and time. No password appears anywhere. |
-| 6 | Open **Overview** and **Network Health**. | **Average Resource Utilization** and CPU data appear for that host. |
+| 1 | Open **NCPA Deployment** while `check_ncpa` is disabled. | A warning says the agent's checks run only while `check_ncpa` is enabled. | PASS |
+| 2 | Enable `check_ncpa` in **Plugins** and reopen the page. | The warning is gone. | PASS |
+| 3 | Press **Verify** on the second VM, compare the fingerprint, and press **Trust**. Tick the VM and press **Deploy selected**. Enter a wrong SSH password, then the right one, and press **Check logins**. | The wrong password is rejected and nothing starts. The right one gives "Login and sudo verified." | PASS |
+| 4 | Start the deployment and watch. | The run banner shows progress and ends with Success. | PASS |
+| 5 | Open **Deployment History** and the run. | The run shows its steps, user, and time. No password appears anywhere. | PASS |
+| 6 | Open **Overview** and **Network Health**. | **Average Resource Utilization** and CPU data appear for that host. | PASS |
 
 ### E2E-04 – Fault, alert, notification, acknowledgement, recovery, history
 
@@ -4254,14 +4254,14 @@ These eight scenarios run the whole system as a user would, from the browser and
 
 | Step | What to do | What you should see |
 | --- | --- | --- |
-| 1 | In **Settings**, **Email** press **Test email**. | The email arrives in the mailbox. |
-| 2 | On the web VM stop the web server service. Wait for the next check. | The HTTP service goes from OK to Critical, first as a soft state and then as a hard state after the maximum attempts. |
-| 3 | Open **Overview**. | **Critical Issues** goes up by 1, and the **Active Alerts** table lists the HTTP service as Critical. |
-| 4 | Check the mailbox. | One notification email arrives for the hard Critical state. |
-| 5 | Press **Acknowledge** on the alert. Look at the confirm button with an empty comment, then type `Investigating` and confirm. | The button is disabled with an empty comment. After confirming the row shows acknowledged with your name. |
-| 6 | Open **History**, tab **Notifications**. | The notification is listed and links to its alert. |
-| 7 | Start the web server again and wait for the next check. | The service returns to OK and leaves **Active Alerts**. |
-| 8 | Open **History**, tab **Alerts**, **Last hour**. | It lists the Critical event, the acknowledgement with your name, and the automatic resolved record, newest first. |
+| 1 | In **Settings**, **Email** press **Test email**. | The email arrives in the mailbox. | PASS |
+| 2 | On the web VM stop the web server service. Wait for the next check. | The HTTP service goes from OK to Critical, first as a soft state and then as a hard state after the maximum attempts. | PASS |
+| 3 | Open **Overview**. | **Critical Issues** goes up by 1, and the **Active Alerts** table lists the HTTP service as Critical. | PASS |
+| 4 | Check the mailbox. | One notification email arrives for the hard Critical state. | PASS |
+| 5 | Press **Acknowledge** on the alert. Look at the confirm button with an empty comment, then type `Investigating` and confirm. | The button is disabled with an empty comment. After confirming the row shows acknowledged with your name. | PASS |
+| 6 | Open **History**, tab **Notifications**. | The notification is listed and links to its alert. | PASS |
+| 7 | Start the web server again and wait for the next check. | The service returns to OK and leaves **Active Alerts**. | PASS |
+| 8 | Open **History**, tab **Alerts**, **Last hour**. | It lists the Critical event, the acknowledgement with your name, and the automatic resolved record, newest first. | PASS |
 
 Timings to write down: failure time \_\_\_\_ · Critical (hard) shown \_\_\_\_ · email received \_\_\_\_ · recovery shown \_\_\_\_
 
@@ -4269,52 +4269,52 @@ Timings to write down: failure time \_\_\_\_ · Critical (hard) shown \_\_\_\_ �
 
 **Modules:** Maintenance, Dashboard, Settings (Email), History · **Priority:** H
 
-| Step | What to do | What you should see |
-| --- | --- | --- |
-| 1 | In **Maintenance** press **New window**. Choose the web VM, **Does not repeat**, **Starts** in 15 minutes, **Ends** in 1 hour, and a **Reason**. Press **Create window**. | "Maintenance window created." and the window is Scheduled. The Activity Log records it. |
-| 2 | Wait until the window is active, then stop the web server. | The web VM shows the scheduled downtime indicator. |
-| 3 | Wait past the check and retry time. Check the mailbox. | The service is Critical, but no email is sent for it. |
-| 4 | Press **Cancel**, then **Keep it**. Press **Cancel** again and **Yes, cancel it**. | **Keep it** changes nothing. The second attempt sets the status to Cancelled. |
-| 5 | Wait for the next check. | Alerts resume: an email arrives for the still-failing service. |
-| 6 | Start the web server again. | The service returns to OK. |
+| Step | What to do | What you should see | Results |
+| --- | --- | --- | --- |
+| 1 | In **Maintenance** press **New window**. Choose the web VM, **Does not repeat**, **Starts** in 15 minutes, **Ends** in 1 hour, and a **Reason**. Press **Create window**. | "Maintenance window created." and the window is Scheduled. The Activity Log records it. | PASS |
+| 2 | Wait until the window is active, then stop the web server. | The web VM shows the scheduled downtime indicator. | PASS |
+| 3 | Wait past the check and retry time. Check the mailbox. | The service is Critical, but no email is sent for it. | PASS |
+| 4 | Press **Cancel**, then **Keep it**. Press **Cancel** again and **Yes, cancel it**. | **Keep it** changes nothing. The second attempt sets the status to Cancelled. | PASS |
+| 5 | Wait for the next check. | Alerts resume: an email arrives for the still-failing service. | PASS |
+| 6 | Start the web server again. | The service returns to OK. | PASS |
 
 ### E2E-06 – Pause a device and see it leave the counts
 
 **Modules:** Device Inventory, Dashboard, Network Health, Reports · **Priority:** M
 
-| Step | What to do | What you should see |
-| --- | --- | --- |
-| 1 | Write down **Total Hosts** on the Overview. | Value noted. |
-| 2 | In **Device Inventory** open the second VM, find **Monitoring**, press **Pause monitoring**. Cancel once, then confirm. | Cancel changes nothing. Confirming shows the chip Paused and "last known status". |
-| 3 | Reload **Overview** and **Network Health**. | The host and its services leave **Total Hosts**, **Active Alerts**, and the online and offline cards. |
-| 4 | Press **Rescan Network**. | The device stays Paused. |
-| 5 | Press **Resume monitoring** and confirm. | The chip returns to Monitored and **Total Hosts** returns to the step 1 value after the next poll. |
+| Step | What to do | What you should see | Results |
+| --- | --- | --- | --- |
+| 1 | Write down **Total Hosts** on the Overview. | Value noted. | PASS |
+| 2 | In **Device Inventory** open the second VM, find **Monitoring**, press **Pause monitoring**. Cancel once, then confirm. | Cancel changes nothing. Confirming shows the chip Paused and "last known status". | PASS |
+| 3 | Reload **Overview** and **Network Health**. | The host and its services leave **Total Hosts**, **Active Alerts**, and the online and offline cards. | PASS |
+| 4 | Press **Rescan Network**. | The device stays Paused. | PASS |
+| 5 | Press **Resume monitoring** and confirm. | The chip returns to Monitored and **Total Hosts** returns to the step 1 value after the next poll. | PASS |
 
 ### E2E-07 – A restricted user works only inside their role
 
 **Modules:** Manage Roles, Manage Accounts, Authentication, Alert acknowledgement, System Logs · **Priority:** H
 
-| Step | What to do | What you should see |
-| --- | --- | --- |
-| 1 | In **Manage Roles** press **+ Add Role**. Name it `qa-ack` and tick only `system.dashboard` and `system.acknowledge_alerts`. | The role is Active with exactly those two permissions. |
-| 2 | In **Manage Accounts** press **+ Add User** with that role, status Active, and **Require password change at first sign-in** ticked. | The user is listed as Active. |
-| 3 | Sign in as that user with the temporary password. | The window "Change your password" blocks until a compliant new password is saved. |
-| 4 | Type each sidebar address in the address bar (see TC-ROL-04). | Only **Overview** (and **Settings**) open. The rest redirect to the Dashboard. |
-| 5 | With an active alert, press **Acknowledge**, type a comment, and confirm. | It works and shows this user's name. |
-| 6 | Open `/api/system/log` and `/api/user/accounts`. | Both return 403. |
-| 7 | As Super Admin open **System Logs**, **Activity Log**, then set the user to Inactive and try to sign in as them. | The log shows the role and user creation, and the acknowledgement. Sign-in is refused. |
+| Step | What to do | What you should see | Results |
+| --- | --- | --- | --- |
+| 1 | In **Manage Roles** press **+ Add Role**. Name it `qa-ack` and tick only `system.dashboard` and `system.acknowledge_alerts`. | The role is Active with exactly those two permissions. | PASS |
+| 2 | In **Manage Accounts** press **+ Add User** with that role, status Active, and **Require password change at first sign-in** ticked. | The user is listed as Active. | PASS |
+| 3 | Sign in as that user with the temporary password. | The window "Change your password" blocks until a compliant new password is saved. | PASS |
+| 4 | Type each sidebar address in the address bar (see TC-ROL-04). | Only **Overview** (and **Settings**) open. The rest redirect to the Dashboard. | PASS |
+| 5 | With an active alert, press **Acknowledge**, type a comment, and confirm. | It works and shows this user's name. | PASS |
+| 6 | Open `/api/system/log` and `/api/user/accounts`. | Both return 403. | PASS |
+| 7 | As Super Admin open **System Logs**, **Activity Log**, then set the user to Inactive and try to sign in as them. | The log shows the role and user creation, and the acknowledgement. Sign-in is refused. | PASS |
 
 ### E2E-08 – Report on the incident and check the export log
 
 **Modules:** Reports, System Status, System Logs · **Priority:** M
 
-| Step | What to do | What you should see |
-| --- | --- | --- |
-| 1 | After E2E-04 and E2E-05 open **Report**, tab **Host Availability**, **Last 24 hours**, **Run Report**. | The web VM's uptime is below 100% and every value is between 0 and 100. |
-| 2 | Run the **Network Services** tab. | The HTTP service's OK, Warning, and Critical totals match **System Status** for the current state. |
-| 3 | Press **Export** and choose CSV, then Excel, then PDF. | A `.csv` and an `.xls` download with the same rows as the table, and a print view opens for PDF. |
-| 4 | Open **System Logs**, **Export Log**. | Three entries show: user, report type, format, period, and time. |
-| 5 | Run the report for a **Custom range** before the install date. | An empty-state message shows with no error. |
+| Step | What to do | What you should see | Results |
+| --- | --- | --- | --- |
+| 1 | After E2E-04 and E2E-05 open **Report**, tab **Host Availability**, **Last 24 hours**, **Run Report**. | The web VM's uptime is below 100% and every value is between 0 and 100. | PASS |
+| 2 | Run the **Network Services** tab. | The HTTP service's OK, Warning, and Critical totals match **System Status** for the current state. | PASS |
+| 3 | Press **Export** and choose CSV, then Excel, then PDF. | A `.csv` and an `.xls` download with the same rows as the table, and a print view opens for PDF. | PASS |
+| 4 | Open **System Logs**, **Export Log**. | Three entries show: user, report type, format, period, and time. | PASS |
+| 5 | Run the report for a **Custom range** before the install date. | An empty-state message shows with no error. | PASS |
 
 ### Requirements exercised by each end-to-end scenario
 
