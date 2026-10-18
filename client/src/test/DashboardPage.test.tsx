@@ -34,6 +34,7 @@ vi.mock('../contexts/CurrentUserContext', () => ({
 
 const apiGet = vi.fn()
 const apiPost = vi.fn()
+const apiDelete = vi.fn()
 
 vi.mock('../lib/api', async () => {
   const actual = await vi.importActual<typeof import('../lib/api')>('../lib/api')
@@ -41,6 +42,7 @@ vi.mock('../lib/api', async () => {
     ...actual,
     apiGet: (path: string) => apiGet(path),
     apiPost: (path: string, data?: unknown) => apiPost(path, data),
+    apiDelete: (path: string, data?: unknown) => apiDelete(path, data),
   }
 })
 
@@ -293,6 +295,40 @@ describe('DashboardPage', () => {
         service_name: 'snmp-uptime-161',
         comment: 'Looking into it',
       })
+    })
+  })
+
+  describe('removing an acknowledgement', () => {
+    const ACKED = { ...ALERT, ack: { comment: 'On it', acknowledged_by: 'Admin User', acknowledged_at: '2026-09-26T09:00:00+00:00' } }
+
+    beforeEach(() => {
+      responses['/api/system/dashboard/alerts'] = { alerts: [ACKED] }
+      apiDelete.mockReset().mockResolvedValue({})
+    })
+
+    it('deletes once, with no comment, after confirmation', async () => {
+      const user = userEvent.setup()
+      const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
+      await renderLoaded()
+
+      await user.click(screen.getByRole('button', { name: 'Unacknowledge' }))
+
+      expect(confirm).toHaveBeenCalledWith('Remove acknowledgement for this alert?')
+      await waitFor(() => expect(apiDelete).toHaveBeenCalledTimes(1))
+      expect(apiDelete).toHaveBeenCalledWith('/api/system/dashboard/alerts/acknowledge', {
+        hostname: 'switch-1',
+        service_name: 'snmp-uptime-161',
+      })
+    })
+
+    it('makes no request when cancelled', async () => {
+      const user = userEvent.setup()
+      vi.spyOn(window, 'confirm').mockReturnValue(false)
+      await renderLoaded()
+
+      await user.click(screen.getByRole('button', { name: 'Unacknowledge' }))
+
+      expect(apiDelete).not.toHaveBeenCalled()
     })
   })
 

@@ -1,3 +1,6 @@
+// The prompt shown before an acknowledgement is removed (Display_Requirements §4.6); no comment is asked for.
+export const UNACK_CONFIRM = 'Remove acknowledgement for this alert?'
+
 // Fields the acknowledge and unacknowledge routes add to their response data: whether the
 // acknowledgement also reached Nagios (see spec "Nagios command channel").
 export type NagiosSyncResult = {

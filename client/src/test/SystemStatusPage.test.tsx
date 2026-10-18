@@ -14,6 +14,7 @@ vi.mock('../contexts/CurrentUserContext', () => ({
 }))
 
 const apiGet = vi.fn()
+const apiDelete = vi.fn()
 
 vi.mock('../lib/api', async () => {
   const actual = await vi.importActual<typeof import('../lib/api')>('../lib/api')
@@ -21,7 +22,7 @@ vi.mock('../lib/api', async () => {
     ...actual,
     apiGet: (path: string) => apiGet(path),
     apiPost: vi.fn(),
-    apiDelete: vi.fn(),
+    apiDelete: (path: string, data?: unknown) => apiDelete(path, data),
   }
 })
 
@@ -114,5 +115,46 @@ describe('SystemStatusPage flapping filter', () => {
 
     expect(apiGet.mock.calls.map(([path]) => String(path))).not.toContain('/api/system/remediation/actions')
     expect(screen.queryByRole('link', { name: /Recovers automatically/ })).not.toBeInTheDocument()
+  })
+})
+
+describe('SystemStatusPage removing an acknowledgement', () => {
+  const acked = {
+    ...service('web-1', 'http-80-TCP', false),
+    state: 'CRITICAL',
+    ack: { comment: 'On it', acknowledged_by: 'Admin User', acknowledged_at: '2026-09-26T09:00:00+00:00' },
+  }
+
+  beforeEach(() => {
+    apiGet.mockReset()
+    apiGet.mockImplementation((path: string) =>
+      path.startsWith('/api/system/network-health/services?') ? Promise.resolve(listResponse([acked])) : route(path))
+    apiDelete.mockReset().mockResolvedValue({})
+    permissions.granted = new Set()
+  })
+
+  it('deletes once, with no comment, after confirmation', async () => {
+    const user = userEvent.setup()
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    render(<MemoryRouter><SystemStatusPage /></MemoryRouter>)
+
+    await user.click(await screen.findByRole('button', { name: 'Unacknowledge' }))
+
+    expect(confirm).toHaveBeenCalledWith('Remove acknowledgement for this alert?')
+    await waitFor(() => expect(apiDelete).toHaveBeenCalledTimes(1))
+    expect(apiDelete).toHaveBeenCalledWith('/api/system/network-health/services/acknowledge', {
+      hostname: 'web-1',
+      service_name: 'http-80-TCP',
+    })
+  })
+
+  it('makes no request when cancelled', async () => {
+    const user = userEvent.setup()
+    vi.spyOn(window, 'confirm').mockReturnValue(false)
+    render(<MemoryRouter><SystemStatusPage /></MemoryRouter>)
+
+    await user.click(await screen.findByRole('button', { name: 'Unacknowledge' }))
+
+    expect(apiDelete).not.toHaveBeenCalled()
   })
 })

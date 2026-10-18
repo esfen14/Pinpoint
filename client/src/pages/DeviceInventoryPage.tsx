@@ -8,7 +8,7 @@ import { PageHeader } from '../components/shared/PageHeader'
 import { SummaryStatCard } from '../components/shared/SummaryStatCard'
 import { useSystemSettings } from '../contexts/SystemSettingsContext'
 import { NagiosSyncNotice } from '../components/shared/NagiosSyncNotice'
-import { nagiosSyncNotice, type NagiosSyncResult } from '../types/nagiosSync'
+import { nagiosSyncNotice, UNACK_CONFIRM, type NagiosSyncResult } from '../types/nagiosSync'
 import { apiDelete, apiGet, apiPost, errorMessage } from '../lib/api'
 import type { MonitoringFilter } from '../components/device-inventory/monitoringState'
 import { fromHostRecord, type Host, type HostListResponse, type HostState } from '../types/host'
@@ -130,6 +130,7 @@ export function DeviceInventoryPage() {
   }
 
   async function unacknowledgeHost(host: Host) {
+    if (!window.confirm(UNACK_CONFIRM)) return
     try {
       const result = await apiDelete<NagiosSyncResult>('/api/system/network-health/hosts/acknowledge', { hostname: host.hostname })
       setSyncNotice(nagiosSyncNotice(result))
