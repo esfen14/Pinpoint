@@ -4,6 +4,10 @@ import os
 import sqlite3
 import sys
 import tempfile
+
+# Columns later migrations add to the remediation tables: not existing data, so snapshots leave them out.
+LATER_COLUMNS = {'Run_When_Acknowledged', 'Notify_On', 'Notify_Kind', 'Notify_State',
+                 'Notify_Attempts', 'Notify_Error', 'Notify_At'}
 sys.path.insert(0, os.getcwd())
 with tempfile.TemporaryDirectory() as tmp:
     system_path, history_path = os.path.join(tmp, 'system.db'), os.path.join(tmp, 'history.db')
@@ -38,7 +42,7 @@ with tempfile.TemporaryDirectory() as tmp:
     def existing_columns(conn, table):
         """Column list for a snapshot, leaving out columns a later migration adds (not existing data)."""
         return ', '.join(f'"{row[1]}"' for row in conn.execute(f'PRAGMA table_info("{table}")')
-                         if row[1] != 'Run_When_Acknowledged')
+                         if row[1] not in LATER_COLUMNS)
 
     def snapshot():
         """Read existing feature/device rows for exact preservation comparisons."""

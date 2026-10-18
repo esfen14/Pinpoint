@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowUpDown, Filter, Search } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import type { ServiceRow, ServiceState } from '../../types/service'
 import { useDisplayTime } from '../../hooks/useDisplayTime'
 import { Pagination } from '../shared/Pagination'
 import { forecastBadgeFor, type ForecastData } from '../../types/forecast'
+import { lastRunKey, recoveryBadgeFor, recoveryKey, type LastRun } from '../../types/remediation'
 
 type ServiceStatusTableProps = {
   services: ServiceRow[]
@@ -31,6 +33,10 @@ type ServiceStatusTableProps = {
   // Disk and memory trend estimates. Optional: without them no badge is shown.
   forecasts?: ForecastData | null
   forecastNow?: Date
+  // Newest automatic-recovery run per service; undefined or null shows no badge.
+  recoveries?: LastRun[] | null
+  // Host and service pairs (see recoveryKey) that recover automatically. Optional: without it no mark is shown.
+  autoRecovery?: ReadonlySet<string>
 }
 
 function StatusPill({ status }: { status: ServiceState }) {
@@ -153,6 +159,26 @@ function ForecastBadge({ badge }: { badge: ReturnType<typeof forecastBadgeFor> }
   )
 }
 
+/** Note under a service name: what automatic recovery last did here; links to that run. */
+function RecoveryBadge({ run }: { run: LastRun | undefined }) {
+  if (!run) return null
+  const badge = recoveryBadgeFor(run)
+  const style = badge.tone === 'good'
+    ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400'
+    : badge.tone === 'bad'
+      ? 'bg-red-500/15 text-red-700 dark:text-red-400'
+      : 'bg-gray-500/10 text-gray-500 dark:text-gray-400'
+  return (
+    <Link
+      to={`/remediation?run=${run.runId}`}
+      title={badge.title}
+      className={`mt-1 block w-fit rounded-full px-2 py-0.5 text-xs underline-offset-2 hover:underline ${style}`}
+    >
+      {badge.text}
+    </Link>
+  )
+}
+
 export function ServiceStatusTable({
   services,
   title = 'Service Status Details For All Hosts',
@@ -175,8 +201,11 @@ export function ServiceStatusTable({
   onUnacknowledge,
   forecasts,
   forecastNow,
+  recoveries,
+  autoRecovery,
 }: ServiceStatusTableProps) {
   const { formatDateTime } = useDisplayTime()
+  const recoveryByService = new Map((recoveries ?? []).map((run) => [lastRunKey(run.hostname, run.service), run]))
   const states: ('All' | ServiceState)[] = ['All', 'OK', 'WARNING', 'CRITICAL', 'UNKNOWN']
 
   return (
@@ -294,6 +323,16 @@ export function ServiceStatusTable({
                   <td className="px-4 py-3 text-gray-900 dark:text-white">
                     {s.service}
                     <ForecastBadge badge={forecastBadgeFor(forecasts, s.hostname, s.service, forecastNow ?? new Date())} />
+                    <RecoveryBadge run={recoveryByService.get(lastRunKey(s.hostname, s.service))} />
+                    {autoRecovery?.has(recoveryKey(s.hostname, s.service)) && (
+                      <Link
+                        to="/remediation"
+                        title="PinPoint restarts this service on its own when the check fails. Open the Remediation page to see or change it."
+                        className="mt-1 block w-fit rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs text-emerald-700 dark:text-emerald-400"
+                      >
+                        Recovers automatically
+                      </Link>
+                    )}
                   </td>
                   <td className="px-4 py-3"><StatusWithDescription service={s} /></td>
                   <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{formatDateTime(s.lastCheck)}</td>

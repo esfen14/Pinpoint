@@ -9,6 +9,7 @@ import { Pagination } from '../shared/Pagination'
 type NetworkServicesReportTableProps = {
   services: ServiceRow[]
   isLoading: boolean
+  observedAt?: string | null
   title?: string
 }
 
@@ -18,6 +19,7 @@ export function NetworkServicesReportTable({
   services,
   isLoading,
   title = 'Network Services Report',
+  observedAt = null,
 }: NetworkServicesReportTableProps) {
   const { settings } = useSystemSettings()
   const [query, setQuery] = useState('')
@@ -41,12 +43,20 @@ export function NetworkServicesReportTable({
 
   const exportData = filtered.map((s) => ({
     Service: s.service,
+    'Current status observed at': observedAt ?? '',
     'Total Instances': s.totalInstances,
-    OK: s.ok,
-    Warning: s.warning,
-    Critical: s.critical,
-    Unknown: s.unknown,
-    'Uptime %': s.uptimePct ?? '',
+    'Current OK': s.ok,
+    'Current Warning': s.warning,
+    'Current Critical': s.critical,
+    'Current Unknown': s.unknown,
+    'Current Pending': s.pending,
+    'Current Unavailable': s.unavailable,
+    'Availability during recorded time %': s.uptimePct ?? '',
+    'Recorded time (seconds)': s.known_seconds,
+    'No recorded data (seconds)': s.no_recorded_data_seconds,
+    'Nagios no data (seconds)': s.no_data_seconds,
+    'Engine not running (seconds)': s.nagios_not_running_seconds,
+    'Unaccounted time (seconds)': s.unaccounted_seconds,
   }))
 
   return (
@@ -75,7 +85,8 @@ export function NetworkServicesReportTable({
           </button>
 
           <ExportMenu
-            allowedFormats={settings.exportFormats}
+            label
+            allowedFormats={isLoading || services.length === 0 ? [] : settings.exportFormats}
             onExport={(format) => exportRows(exportData, format, 'network-services-report')}
           />
         </div>
@@ -87,20 +98,23 @@ export function NetworkServicesReportTable({
             <tr>
               <th className="px-4 py-3">Service</th>
               <th className="px-4 py-3">Instances</th>
-              <th className="px-4 py-3">OK</th>
-              <th className="px-4 py-3">Warning</th>
-              <th className="px-4 py-3">Critical</th>
-              <th className="px-4 py-3">Unknown</th>
-              <th className="px-4 py-3">Uptime %</th>
+              <th className="px-4 py-3">Current OK</th>
+              <th className="px-4 py-3">Current Warning</th>
+              <th className="px-4 py-3">Current Critical</th>
+              <th className="px-4 py-3">Current Unknown</th>
+              <th className="px-4 py-3">Availability %</th>
+              <th className="px-4 py-3">Current Pending / Unavailable</th>
+              <th className="px-4 py-3">Recorded time (seconds)</th>
+              <th className="px-4 py-3">No recorded data (seconds)</th>
             </tr>
           </thead>
 
           <tbody>
             {isLoading ? (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">Loading…</td></tr>
+              <tr><td colSpan={10} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">Loading…</td></tr>
             ) : paginated.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                <td colSpan={10} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                   {query ? 'No services match your search' : 'No data in this period'}
                 </td>
               </tr>
@@ -114,6 +128,9 @@ export function NetworkServicesReportTable({
                   <td className="px-4 py-3 text-red-600 dark:text-red-400">{svc.critical}</td>
                   <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{svc.unknown}</td>
                   <td className="px-4 py-3 text-gray-900 dark:text-white">{svc.uptimePct ?? '—'}</td>
+                  <td className="px-4 py-3">{svc.pending} / {svc.unavailable}</td>
+                  <td className="px-4 py-3">{svc.known_seconds}</td>
+                  <td className="px-4 py-3">{svc.no_recorded_data_seconds}</td>
                 </tr>
               ))
             )}

@@ -748,7 +748,14 @@ Conventions: "Existing" paths were verified in the repository. "(new)" marks pro
 
 ### Issue #21 — Availability reports: SLA targets and recurring reports
 
-> **Status: awaiting clarification.** The scope is unclear, so this issue is provisional. It bundles three separate things: (a) an SLA target with a breach marker in the availability report, (b) scheduled or recurring reports delivered by email, and (c) correcting `Implementation_Status.md`, which understates the Reports UI. Nagios Core itself only shows availability percentages and has no SLA targets, so (a) goes beyond Core. Please say which of (a), (b) and (c) are wanted. (c) is the only part that is certain.
+> **Decision resolved (2026-10-17):** The owner rejected availability targets.
+> GitHub [#134](https://github.com/esfen14/Pinpoint/issues/134) reconciles the
+> six implemented report views with the documentation. The target and recurring
+> delivery proposals below are historical and are not implementation scope.
+> Service-report sources are tracked in [#198](https://github.com/esfen14/Pinpoint/issues/198);
+> the Nagios-aligned reporting/UI revision is [#199](https://github.com/esfen14/Pinpoint/issues/199).
+
+> **Historical proposal (superseded by the decision above).** The original scope was provisional. It bundles three separate things: (a) an SLA target with a breach marker in the availability report, (b) scheduled or recurring reports delivered by email, and (c) correcting `Implementation_Status.md`, which understates the Reports UI. Nagios Core itself only shows availability percentages and has no SLA targets, so (a) goes beyond Core. Please say which of (a), (b) and (c) are wanted. (c) is the only part that is certain.
 
 **Related Nagios Core Feature:** Availability Reports
 

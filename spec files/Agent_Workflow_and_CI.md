@@ -140,6 +140,16 @@ fast lab and VM demo continue to use static addresses.
 
 ### VM control preflight
 
+Mutating `scripts/vmlab` entries and the QA supervisor first acquire the fixed
+private per-user host claim in `/tmp/pinpoint-qa-control-<uid>/controller.lock`
+through `qa_control.py`. Nested controller calls must inherit the verified held
+descriptor; environment/PID markers alone are insufficient. A driver calling
+the controller under supervision must explicitly pass `Ledger.control_fd` and
+`PINPOINT_QA_CONTROL_FD`. Different ledger roots still share host exclusion, but
+persistent history requires one ledger. Do not delete/replace held lock files.
+Direct VBoxManage/demo calls, other users/namespaces and legacy launchers remain
+outside this cooperative guard; it is not an OS sandbox or live authorization.
+
 Before VM-lab mutation, `scripts/vmlab preflight` must prove one same-user
 VirtualBox controller, agreement between appliance UUID and the unique VM process under that controller,
 and active runtime NAT forwarding sockets for both exclusive loopback listeners
@@ -148,7 +158,12 @@ Powered-off state requires no remaining UUID process or endpoint listeners.
 Mutation commands enforce this check at entry and recheck before SSH/key
 bootstrap and start/power-off boundaries; inaccessible process identity, missing runtime forwarding evidence, duplicate
 controllers and ambiguous/transitional states fail closed. It is a Linux-host
-check; it cannot substitute for exclusive lab ownership. See
+check; it cannot substitute for exclusive lab ownership. `preflight --json`
+returns only timestamped host UUID/state/controller/endpoint observations, with
+`live_authorized: false`; running app/frontend revision, baseline and recovery
+remain separate missing proof. The collector rechecks session/process identity,
+including kernel start ticks, and bounds each VBoxManage read to 20
+seconds. The future driver must enforce a total deadline. See
 [VM Lab Plan §4.0](../docs/plans/VM_Lab_Plan.md) for recovery and the disposable
 endpoint-marker snapshot trial. Never treat a snapshot command's success alone
 as proof that the endpoint is protected. The #162 owner accepted the lost edits as unrecoverable and authorized retirement
@@ -167,20 +182,130 @@ cover these paths; the corrected helper has not been rerun on a live appliance.
 
 ### QA finding (qa-run) and agent loop safety constraints
 
-The `.agent/workflows/qa-run.md` workflow automates the execution of the QA test plan under strict parameters.
+The `.agent/workflows/qa-run.md` workflow governs agent-assisted execution of the
+[module-based black-box catalog](../docs/qa/Pinpoint%20-%20Black-Box%20Test%20Cases%20by%20Module%20with%20Traceability%20Matrix.md).
+It contains 231 TC cases and eight separate E2E scenarios. Historical catalog
+results are human manual executions; new agent/human runs use separate attributable
+reports. App/spec conflicts remain decisions, not automatic passes.
 
-- **Scope preparation:** Before execution, `scripts/qa_queue.py prepare` saves
-  multiple named ISO sets with owners and fixed pending case lists (`untested`,
-  `retest`), plus a shareable Markdown preview including modules, environments and
-  prerequisites. Duplicate assignments within a queue are rejected. Each set waits
-  for an explicit start; the queue is not automatically drained. Source changes
-  require a replacement preview and a new start. Teammates coordinate reservations
-  and exclusive lab ownership separately; local queue files are not distributed
-  locks. Testers on different machines may run in parallel with separate
-  appliances and targets, verifying prerequisites locally and recording each
-  tested deployment SHA. Shared appliances or targets require exclusive access
-  regardless of which machine connects. Each tester uses a separate tracking
-  issue, branch and attributable report. See [QA Run Queues](../docs/qa/QA_Run_Queues.md).
+- **Scope preparation:** `scripts/qa_queue.py prepare` reads the module catalog
+  and emits a version-2 JSON queue plus Markdown preview. Select `NAME:OWNER:MODULE,ID`
+  sets; expand eligible cases once, report exclusions and snapshot procedures,
+  expectations, prerequisite/global context, results, source hashes and exact target
+  revision. Each case may carry an execution card; an absent/incomplete card blocks
+  it. Group by module/person; optional ISO tags require a reviewed mapping. Reject
+  legacy queue formats, duplicates, unknown/ineligible explicit IDs and overwrite.
+  `show` displays scope and `check` rejects changed selected sources. Each set needs
+  an explicit start; never automatically drain the queue. Local files are not
+  distributed lab locks. Verify prerequisites per environment; separate machines
+  run concurrently only with separate appliances AND targets. Preserve original
+  human verdicts. New runs use attributable reports/index and separate journals.
+  [Historical evidence review](../docs/qa/Historical_Evidence_Review.md) inventories
+  candidates without conferring PASS. Reviewer decisions for the exact target,
+  report/case hashes, item coverage and environment/source compatibility determine
+  reuse. October 15 remains a provisional cutoff. See [queue guide](../docs/qa/QA_Run_Queues.md).
+- **Source adapter coverage:** `scripts/qa_coverage.py` validates all current IDs,
+  catalog/case/source hashes, review metadata and expected-item source assertions.
+  The [coverage guide](../docs/qa/Automation_Readiness.md) distinguishes source
+  implementation from live readiness and runtime outcomes. Queues snapshot coverage;
+  cards bind its digest, adapter identity and exact argv. Unmapped/partial cards
+  cannot open a case. The journal requires recorded action slots before PASS.
+  Five Staff permission adapters have isolated offline collection/type checks;
+  no live execution is implied. `scripts/qa_transport.py` and the runner's
+  `--qa-preview` validate one unconsumed opened offline case and produce a JSON-only
+  container contract: read-only source/root, isolated network, private separate
+  evidence, and only two Staff credential mounts. Metadata checks never read
+  credential values. Invalid/stale journals, private paths, used slots or draft
+  cards reject the preview. The legacy runner rejects the current-case config
+  before private-state/socket/Docker work. The narrow pilot below adds locking,
+  fresh identity checks and composed dispatch; executing printed argv
+  manually is not a supported workflow or authorization.
+- **Supervisor lifecycle core:** `scripts/qa_supervisor.py` has no default driver or
+  CLI of its own; the narrow pilot caller is described below. A separately bound explicit start/expiry, cooperative UUID
+  lock, fresh matching runtime-driver receipts and durable fsynced running entry
+  precede driver invocation. Restart/replay, missing supervised prior results and
+  exhausted persisted budgets block. Cancellation/cleanup/proof/result failures
+  persist a lab halt; validated restored FAIL remains FAIL. The existing item
+  validator checks returned evidence. Synthetic-driver tests prove lifecycle
+  sequencing only. The narrow pilot composes these controls; actual browser/container
+  execution and post-case recovery validation remain pending. Never treat offline receipts or callbacks as live proof.
+- **Runtime components:** `qa_process.py` runs only explicitly allowlisted trusted
+  executables with reviewed argv, a restricted environment, bounded private output,
+  time limits and POSIX-group TERM/KILL/direct-child reaping. Uncertain cleanup
+  halts. It is not a sandbox or Docker-daemon/escaped-child cleanup mechanism.
+  `qa_results.py` imports only one non-retried reviewed permission case, with fixed
+  configuration, fresh timestamps and private expected-item/cleanup attachments.
+  Only reviewed observation text is copied; incomplete/failed browser execution
+  without failed-item evidence is INCONCLUSIVE. The transport bootstrap uses
+  `umask 077`. Eight local-process and nine synthetic-report tests prove component
+  contracts only. The narrow pilot below supplies integration; actual browser/container
+  operation and post-case recovery still require the explicitly started pilot.
+- **Concrete container lifecycle component:** `qa_container.py` requires a held
+  host/UUID claim, durable matching consumed transport digest, scope-bound approved
+  image ID, empty private evidence and existing private bridge socket. Independent
+  bounded process/recovery runners retain private output with child `umask 077`.
+  An fsynced unique intent precedes create; actual ID, image, owner, command, user,
+  isolation and mounts are checked before bounded attach. Cleanup kills/removes
+  only the identified owned container and proves absence through a successful
+  daemon query. Failed/uncertain create, ownership drift, persistence/cleanup
+  failures and existing intent halt without retry. Sixteen synthetic contracts
+  are not live isolation/restoration evidence. No CLI/default production driver
+  exists; production bridge wiring/runtime identity/baseline/session proof and explicit start remain
+  required. Never manually invoke this component to bypass missing integration.
+- **Owned bridge:** `qa_bridge.py` binds the consumed transport/host claim, retains
+  its lock descriptor, checks same-user Unix peers and relays only to fixed
+  `127.0.0.1:18080`. Time/connection/byte/buffer bounds, durable intent, custody
+  checks and joined cleanup fail closed. The container component checks bridge
+  custody before create/attach and after attach. Eleven Unix-only fixture tests
+  are not live isolation proof. The driver still must stop the container, dispose
+  the bridge and verify actual baseline/session recovery under its outer claim.
+- **Deployment observations:** standalone `qa_deployment.py` reads expected source
+  from full Git objects plus reviewed build hashes, compares stable canonical
+  public artifacts and rechecks candidate process metadata without copying command
+  arguments or environment values. Six Git/file/proc fixtures are not a live run.
+  All positive runtime/served/version authorization fields stay false/null;
+  trusted launch/import identity and actual served frontend bytes are separate
+  missing proof. No SSH/restart/network/default live entry is added.
+- **Narrow pilot integration:** `qa_pilot.py inspect` performs read-only checks;
+  `run` supports only one TC-SS-04 initial attempt behind source-bound card,
+  private reviewed controlled-deployment baseline and separate explicit start.
+  It composes the shared ledger, bridge/container/process/results components.
+  Fresh VM/boot/process/source/config/runtime/Staff/served-byte checks surround
+  execution; local image and browser pins are checked without launching them.
+  Missing proof, drift or uncertain session/resource cleanup halts. It never
+  restores, resets users, enables schedules, scans or retries. Launch/build
+  provenance is a reviewed trust boundary; disk or timestamp observations alone
+  cannot create it. Broader/unattended cases remain blocked.
+- **Partial-pass investigation:** Every catalog partial needs an evidence review,
+  duplicate search, linked issue/disposition and next action in the
+  [partial-pass register](../docs/qa/Partial_Pass_Investigations.md). The
+  `investigate` queue purpose selects partials only and cannot open product cases.
+  Reported gaps may be filed with human attribution; unknown observations require
+  evidence clarification. Preserve original verdicts and apply normal live
+  reproduction/repeat rules before `qa-found`.
+- **QA batch throughput:** One owner's set may span multiple modules, expanded
+  to fixed eligible IDs and ordered batches before review/start. The QA-specific
+  five-round limit counts batches: up to five ordinary TC IDs per batch, five
+  batches per session (at most 25 ordinary IDs). E2E, disruptive/fault,
+  fresh-appliance and long cases each occupy one batch. Repeat at most once for
+  diagnosis, retaining both attempts. No dynamic replacement of blocked IDs,
+  reordered scope or reset by model/context changes. Save every case and checkpoint
+  every batch. An explicit resume after the limit starts a new tracked session;
+  another set needs its own start. Implementation and fix-found round limits are
+  unchanged. Module ownership never grants shared-lab ownership or cross-module
+  prerequisite execution.
+- **Executor guardrails:** Every case needs a complete execution card: scope/owner,
+  source/target revisions, verified prerequisites, exact tool/spec/command allowlist,
+  writable outputs, bounded timeouts, evidence per expected item and written recovery.
+  A missing field blocks execution. Executors cannot modify product/tests/selectors,
+  expectations, scope or human results to pass. Uncertain steps stop the attempt;
+  denied permissions, lost ownership, unsafe targets, secret exposure and failed
+  cleanup stop the set. `scripts/qa_execute.py` validates offline session journals,
+  complete adapter cards/hashes, exact ordered action slots, budgets and per-item
+  evidence references. It never dispatches commands or verifies live preflight.
+  Live recovery/resume, full case adapters and atomic scan guarding remain pending.
+  Checksums detect changes, not hostile actors with file/shell access. Use reviewed
+  supervision; do not claim an unattended runner or OS isolation from these tools.
 - **Authority rules:** The behavioral specification wins; `Implementation_Status.md` records known gaps, not overrides. Conflicts without an explicit team decision require a `needs-decision` issue. Passing requires observed behavior.
 - **Reporting rules:** A test failure is repeated exactly once before filing. Maintainers must search open and closed issues first; file use the Task template containing case ID and evidence; sanitize evidence (never paste passwords, credentials, tokens, SNMP communities, or raw database dumps). Defects determined to be installer bugs are written as notes for the owner, not filed against the application.
 - **Safety boundaries:** Using `scripts/vmlab` and `scripts/lab` is permitted for QA sweeps; the libvirt e2e harness is strictly forbidden. Ordinary VM network scans MUST be tightly restricted to `10.77.0.0/28` using a guard. The separate opt-in issue #187 DHCP Docker acceptance may scan only `10.79.0.0/28` after its controller proves collision-free routing and exclusive ownership; this does not authorize other QA suites or a physical/VPN range. Overlapping discoveries are banned (#59). One appliance is tested at a time, checking disk/RAM capacity before provisioning.
@@ -198,17 +323,52 @@ eligible `qa-found` issues by severity then age and follows `work-issue.md` in a
 separate issue worktree. It records skipped candidates, never weakens a QA case,
 and opens at most three PRs in five rounds. Permission denial stops the loop.
 Humans merge PRs; agents never merge. Only an actual merged fix plus a closed
-finding returns its affected traceability rows to `retest`, with the original
-failure, PR and merge SHA retained. Two failed retests after separate merged fixes
+finding makes affected new-suite cases eligible for `retest` in a reviewed queue,
+with the original failure, PR and merge SHA retained. The reviewed finding/fix metadata is recorded in the evidence ledger and a new
+queue; it never updates original human catalog verdicts. Two failed retests after separate merged fixes
 label that finding `needs-decision` and stop work on the case. Synthetic workflow
 demonstrations use scratch traceability data and do not establish product passes.
 See `.agent/workflows/fix-found.md` for commands and written boundary checks.
+
+### Current-case report timing
+
+The narrow permission importer requires independent owned container attach launch
+and completion UTC, monotonic elapsed time and the consumed remaining case budget.
+Playwright 1.64.0 duration sums selected timeout slots; it is not a wall-clock end.
+Evidence must fall between the current attempt start and actual attach completion,
+within a positive window capped at 300 seconds and the remaining budget. Report
+elapsed duration is bounded by 90 seconds and measured attach elapsed; attempt
+duration is bounded by 60 seconds. Future timestamps receive no grace. Exact
+source/case/initial-attempt/item checks and all cleanup requirements still apply.
+No report-only inference authenticates a malicious same-user writer. See the
+[timing investigation](../docs/qa/QA_Report_Timing.md) for pinned source semantics,
+uncertainty and trust boundary. The real no-browser timing worker is included in
+the frontend gate; it is synthetic harness evidence, never a case verdict.
+
+### Explicit audited permission-pilot recovery
+
+The narrow `qa_pilot.py recover` entry requires a separate expiring recovery grant,
+current immutable new queue, original consumed scope and unchanged controlled
+baseline. Under the canonical host/UUID claim it checks original terminal transport,
+halted session and browser logout evidence without accepting the old case result;
+then fresh read-only Docker ID/name absence, original same-user process/socket
+absence and supported baseline proof. Failed observations or ambiguous state stop.
+
+The ledger keeps an exact private checksum-named archive before appending a recovery
+disposition and updating its active halt gate. Original attempts remain halted and
+consumed, and session/batch budgets remain counted. Readiness validates the archive
+and its history against unchanged attempt prefixes; only the recovery's exact new
+queue may consume a slot, still under a separate live-start grant and fresh proofs.
+No running-attempt recovery, ledger reset/relocation, implicit retry or resource
+cleanup mutation is supported. A new halt needs new review. See the
+[recovery contract](../docs/qa/Issue_211_Recheck_Review.md); same-user receipts and
+cooperative locks remain a trust boundary, not cryptographic human authorization.
 
 ## Verification commands
 
 | Stage | Command | Notes |
 |---|---|---|
-| Docs | `scripts/verify.sh docs` | VM ownership safety and administrator setup regression tests pass; agent progress files are well formed; relative links resolve; environment variables match the README table; browser routes match `App.tsx`, `pageAccess.ts` and the spec; traceability matrix matches test cases; fix-found queue and stop-rule contracts are present. Standard library only |
+| Docs | `scripts/verify.sh docs` | VM ownership safety and administrator setup regression tests pass; agent progress files are well formed; relative links resolve; environment variables match the README table; browser routes match `App.tsx`, `pageAccess.ts` and the spec; module requirement mappings, derived status, queue/evidence/offline-executor regressions pass; fix-found queue and stop-rule contracts are present. Standard library only |
 | Backend | `scripts/verify.sh backend` | Route and client-API drift checks, then `pytest tests/unit` in `server/` with `FLASK_DEBUG=1`; ~4 min, 2,167 passed / 14 skipped on 2026-10-08 |
 | Frontend | `scripts/verify.sh frontend` | `npm run test`, `npm run build`, `npm run lint` (errors fail; warnings do not) |
 | Everything | `scripts/verify.sh all` | Same stages as CI |
@@ -284,6 +444,7 @@ This repository's side of the contract, all implemented as of 2026-10-08:
   placeholders, and the first sign-in must replace both through the setup window
   (`POST /api/user/complete-setup`). The VM lab's `setup-admin` completes it.
 - `PINPOINT_SCHEDULER=1` only for the Gunicorn service.
+- `flask restore-backup` (recovery runbook `docs/manuals/Backup_and_Restore.md`) checks `systemctl is-active --quiet pinpoint-gunicorn.service`, so the service unit name is part of the installer contract; the `pinpoint` account needs write access to its database files and `DATABASE_BACKUP_DIR`.
 - The `pinpoint` account may write `hosts.cfg` and `plugin-services.cfg`, runs
   `nagios -v`, and may `sudo systemctl reload nagios`. The issue #129 installer
   extension additionally grants only the root-owned `pinpoint-apply-resources`
@@ -296,3 +457,17 @@ This repository's side of the contract, all implemented as of 2026-10-08:
 A change that breaks any item above breaks every installed server on upgrade;
 raise it with the installer owners first. Installer code stays in its own
 repository (`Implementation_Status.md`).
+
+### Bounded permission batch handoff
+
+The supported supervised permission lane is limited to TC-SS-04, TC-ACC-09 and
+TC-NCPA-08 in one fixed serial batch. Each case needs its own source-bound card,
+private evidence and fresh verification; results persist before the next case.
+Any non-PASS stops remaining work. This does not enable generic unattended QA.
+After the accepted pilot/recovery queue, `qa_pilot.py handoff` requires a separate
+exact expiring review plus accepted prior items/terminal custody and independently
+fresh absence/baseline proof. It archives exact ledger bytes and appends the new
+queue hash, preserving original attempts, recovery archives and budgets. It grants
+no case start. Missing archives, unfinished prior cases, old accepted IDs in an
+untested scope or changed review reject. See
+[the concrete permission batch review](../docs/qa/Next_Permission_Batch_Review.md).

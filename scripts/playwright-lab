@@ -4,6 +4,22 @@
 set -euo pipefail
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
+# Current-case previews never read credentials, make a socket or start a container.
+if [ "${1:-}" = "--qa-preview" ]; then
+  [ "$#" -eq 5 ] || { echo "usage: scripts/playwright-lab --qa-preview QUEUE JOURNAL STATE_DIR BRIDGE_DIR" >&2; exit 2; }
+  exec python3 -I "$root/scripts/qa_transport.py" --queue "$2" --journal "$3" --state-dir "$4" --bridge-dir "$5"
+fi
+# Current-case transport must not fall through to legacy unrestricted argument
+# forwarding. A preview or environment variable is not a reviewed live start.
+if [ -n "${PINPOINT_QA_CASES:-}" ] || [ -n "${PINPOINT_QA_RUN_DIR:-}" ]; then
+  echo "current-case live dispatch is blocked; use --qa-preview for offline preparation" >&2; exit 2
+fi
+for arg in "$@"; do
+  case "$arg" in
+    *playwright.qa.config*|*qa-permissions*|*playwright.modules.qa.config*|*qa-modules-2-9*|--qa-*)
+      echo "current-case live dispatch is blocked; use --qa-preview for offline preparation" >&2; exit 2 ;;
+  esac
+done
 state_dir="${VMLAB_STATE_DIR:-$HOME/.local/share/pinpoint-vmlab}"
 for name in admin-email admin-password restricted-email restricted-password restricted-new-password; do
   [ -s "$state_dir/$name" ] || { echo "missing private lab state: $name" >&2; exit 1; }

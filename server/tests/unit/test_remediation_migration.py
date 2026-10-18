@@ -206,3 +206,38 @@ def test_safety_migration_downgrades_and_upgrades_again(safety_report):
     assert safety_report["version_after_reupgrade"] == [["f155a3c7d2b1"]]
     assert safety_report["tables_after_reupgrade"] == [
         "REMEDIATION_ACTION", "REMEDIATION_CONSUMER_STATE", "REMEDIATION_RUN"]
+
+
+@pytest.fixture(scope="module")
+def escalation_report():
+    result = subprocess.run(
+        [sys.executable, "tests/support/remediation_escalation_migration_runner.py"],
+        cwd=SERVER_DIR, capture_output=True, text=True, timeout=180,
+    )
+    assert result.returncode == 0, result.stderr[-3000:]
+    return json.loads(result.stdout.split("REPORT_BEGIN")[1].split("REPORT_END")[0])
+
+
+def test_escalation_migration_adds_columns_with_unchanged_defaults(escalation_report):
+    assert escalation_report["version"] == [["e153c4a8b2d7"]]
+    assert {"Remediation_Repeat_Count", "Remediation_Repeat_Window_Hours"} <= set(
+        escalation_report["settings_columns"])
+    assert "Notify_On" in escalation_report["action_columns"]
+    assert {"Notify_Kind", "Notify_State", "Notify_Attempts", "Notify_Error", "Notify_At"} <= set(
+        escalation_report["run_columns"])
+    assert escalation_report["settings_defaults"] == [[3, 24]]
+    assert json.loads(escalation_report["action_default"][0][0]) == ["failed", "capped", "repeated"]
+    # An existing run has no notification due.
+    assert escalation_report["run_defaults"] == [[None, None, 0, None, None]]
+    assert escalation_report["state_accepted"] == [["SENT"]]
+
+
+def test_escalation_migration_downgrades_and_upgrades_again(escalation_report):
+    assert escalation_report["version_after_downgrade"] == [["f155a3c7d2b1"]]
+    assert not {"Remediation_Repeat_Count", "Remediation_Repeat_Window_Hours"} & set(
+        escalation_report["settings_columns_after_downgrade"])
+    assert "Notify_On" not in escalation_report["action_columns_after_downgrade"]
+    assert not {"Notify_Kind", "Notify_State", "Notify_Attempts"} & set(
+        escalation_report["run_columns_after_downgrade"])
+    assert escalation_report["runs_after_downgrade"] == escalation_report["runs_after_reupgrade"] == 1
+    assert escalation_report["version_after_reupgrade"] == [["e153c4a8b2d7"]]

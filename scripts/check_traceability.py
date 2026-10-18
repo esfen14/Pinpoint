@@ -1,72 +1,56 @@
-"""Drift check: every traceability-matrix row must reference a real case, spec and heading."""
-import re, sys
+#!/usr/bin/env python3
+"""Validate the current module catalog, source references and reviewed evidence ledger."""
+from __future__ import annotations
+import importlib.util
 from pathlib import Path
+import re
 
-# Allowed verification statuses in the traceability matrix.
-STATUSES = {"pass", "fail-filed", "untested", "needs-decision", "won't-do", "retest"}
-# The actual column layout of docs/qa/Requirements_Traceability.md.
-COLUMNS = ["ID", "Source Spec/Journey", "ISO Characteristic", "Env",
-           "Verification", "Status", "Notes"]
+ROOT=Path(__file__).resolve().parent.parent
+spec=importlib.util.spec_from_file_location('catalog',Path(__file__).with_name('qa_catalog.py'))
+cat=importlib.util.module_from_spec(spec);spec.loader.exec_module(cat)
+SOURCES={'DR':'Display_Requirements.md','DIR':'Device_Inventory_Requirements.md',
+         'AHR':'Alerts_Notifications_History_Requirements.md','FMR':'Frontend_Modules_and_Routes.md'}
 
 
-def validate_row(cells, plan_content, spec_dir):
-    """Validate a single traceability row. Returns a list of error strings."""
-    errors = []
-    if len(cells) != len(COLUMNS) + 2:  # leading and trailing '|'
-        return [f"malformed row ({len(cells)-2} columns, expected {len(COLUMNS)}): {cells}"]
-
-    case_id, source, iso, env, ver, status, notes = [c.strip() for c in cells[1:-1]]
-
-    if not (f"#### {case_id}" in plan_content or f"| {case_id} |" in plan_content):
-        errors.append(f"unknown case {case_id!r}: not present in QA_Test_Plan.md")
-
-    if "#" in source:
-        spec_path, heading = source.split("#", 1)
-        if not (spec_dir / spec_path).exists():
-            errors.append(f"spec file not found: {spec_path!r}")
-        elif heading not in (spec_dir / spec_path).read_text():
-            errors.append(f"heading not found: {heading!r} in {spec_path!r}")
-
-    if status not in STATUSES:
-        errors.append(f"invalid status: {status!r}")
-    elif status == "pass" and not notes.strip():
-        errors.append(f"pass row for {case_id!r} needs evidence in the notes column")
-
+def validate_source(source:str,root:Path) -> list[str]:
+    """Check local owning specifications without treating historical journey IDs as cases."""
+    errors=[];spec_dir=(root/'spec files').resolve()
+    names=re.findall(r'`?([\w./-]+\.md)(?:#([^`,;|]+))?',source)
+    for name,heading in names:
+        path=(spec_dir/name).resolve()
+        if not path.is_relative_to(spec_dir) or not path.is_file():
+            errors.append(f'spec file not found/unsafe: {name}')
+        elif heading and heading not in path.read_text():errors.append(f'heading not found: {heading}')
+    for token,name in SOURCES.items():
+        if re.search(r'\b'+token+r'\b',source) and not (spec_dir/name).is_file():
+            errors.append(f'missing source {token}: {name}')
     return errors
 
 
-def validate(root, plan_content, trac_content):
-    """Validate the traceability matrix against the test plan and spec files."""
-    errors = []
-    seen_ids = set()
-    spec_dir = root / "spec files"
-
-    for i, row in enumerate(trac_content.splitlines()):
-        if i < 2 or not row.strip() or not row.startswith("|"):
-            continue
-        cells = [c.strip() for c in row.split("|")]
-        if cells[1] in ("ID", "---", "**Acceptance**"):
-            continue
-
-        case_id = cells[1].strip()
-        if case_id in seen_ids:
-            errors.append(f"duplicate case id: {case_id!r}")
-        seen_ids.add(case_id)
-        errors.extend(validate_row(cells, plan_content, spec_dir))
-
+def validate(root:Path,text:str) -> list[str]:
+    """Validate every definition/requirement and each declared source; return actionable errors."""
+    try:cat.parse_catalog(text)
+    except ValueError as exc:return [str(exc)]
+    errors=[]
+    for line in text.split('## Requirements traceability matrix',1)[1].splitlines():
+        cells=cat.columns(line) if line.startswith('|') else []
+        if cells and cells[0].startswith('REQ-'):
+            if len(cells)!=4:errors.append('malformed requirement row');continue
+            errors += [f'{cells[0]}: {e}' for e in validate_source(cells[2],root)]
     return errors
 
 
-def main():
-    root = Path(__file__).resolve().parent.parent
-    trac = root / "docs" / "qa" / "Requirements_Traceability.md"
-    plan = root / "docs" / "qa" / "QA_Test_Plan.md"
-
-    errors = validate(root, plan.read_text(), trac.read_text())
-    for e in errors:
-        print(f"Error: {e}")
-    return 1 if errors else 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())
+def main() -> int:
+    errors=validate(ROOT,cat.PLAN.read_text())
+    review=ROOT/'docs/qa/historical-evidence-review.json'
+    if review.exists():
+        import json
+        spec=importlib.util.spec_from_file_location('evidence',Path(__file__).with_name('qa_evidence.py'))
+        ev=importlib.util.module_from_spec(spec);spec.loader.exec_module(ev)
+        try:
+            value=json.loads(review.read_text());ev.load_review(review,cat.load_catalog(),value['target_revision'])
+        except (ValueError,KeyError,OSError) as exc:errors.append(f'Evidence review: {exc}')
+    for error in errors:print(error)
+    if not errors:print('Module catalog, requirement mappings and reviewed evidence validate')
+    return bool(errors)
+if __name__=='__main__':raise SystemExit(main())

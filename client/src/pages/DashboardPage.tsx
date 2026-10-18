@@ -18,7 +18,7 @@ import { trendBuckets } from '../utils/trendHours'
 import { fromPluginsResponse, type PluginGroup, type PluginsApiResponse } from '../types/networkHealth'
 import { apiDelete, apiGet, apiPost, ApiError, errorMessage } from '../lib/api'
 import { NagiosSyncNotice } from '../components/shared/NagiosSyncNotice'
-import { nagiosSyncNotice, type NagiosSyncResult } from '../types/nagiosSync'
+import { nagiosSyncNotice, UNACK_CONFIRM, type NagiosSyncResult } from '../types/nagiosSync'
 import {
   fromAlertRecord,
   fromDashboardStatusResponse,
@@ -159,6 +159,7 @@ export function DashboardPage() {
   }
 
   async function unacknowledgeAlert(alert: AlertRow) {
+    if (!window.confirm(UNACK_CONFIRM)) return
     try {
       const result = await apiDelete<NagiosSyncResult>('/api/system/dashboard/alerts/acknowledge', {
         hostname: alert.hostname,
@@ -208,16 +209,6 @@ export function DashboardPage() {
             </div>
           </div>
 
-          <StorageUsageCard usage={status?.storageUsage ?? null} isLoading={statusLoading} error={statusError} />
-
-          <NagiosSyncNotice message={syncNotice} onDismiss={() => setSyncNotice(null)} />
-
-          {loadError && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300">
-              {loadError}
-            </div>
-          )}
-
           <div className="grid gap-[var(--dash-grid-gap-sm)] sm:grid-cols-2 xl:grid-cols-4">
             <SummaryStatCard
               title="Total Hosts"
@@ -248,6 +239,16 @@ export function DashboardPage() {
               gradient="linear-gradient(135deg,#EF4444,#DC2626)"
             />
           </div>
+
+          <StorageUsageCard usage={status?.storageUsage ?? null} isLoading={statusLoading} error={statusError} />
+
+          <NagiosSyncNotice message={syncNotice} onDismiss={() => setSyncNotice(null)} />
+
+          {loadError && (
+            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300">
+              {loadError}
+            </div>
+          )}
 
           <div className="grid gap-[var(--dash-grid-gap)] lg:grid-cols-2">
             <NetworkStatusOverview

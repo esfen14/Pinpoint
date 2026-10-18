@@ -40,6 +40,7 @@ from flask_login import current_user, login_required
 from sqlalchemy.exc import IntegrityError
 
 from app import db
+from app.automation import get_backup_health
 from app.storage_usage import get_storage_usage
 from app.api.helper.database_access.permissions import require_permission
 from app.api.helper.responses import success, error
@@ -66,6 +67,7 @@ from app.history_models import (
 )
 from app.nagios import commands as nagios_commands
 from app.nagios.notifications import request_notifications_last, normalize_notification
+from app.remediation_escalation import attach_comments
 from app.system_models import AlertAcknowledgement, AckHistory, AckAction
 
 # ---------------------------------------------------------------------------
@@ -362,6 +364,7 @@ def _normalize_notification(item: dict) -> dict:
         "state":        item["state"],
         "contact":      item["contact"],
         "message":      item["output"][:200],
+        "is_custom":    item["notificationtype"] == "CUSTOM",
     }
 
 
@@ -385,6 +388,9 @@ def dashboard_status():
     (name, bytes, filesystem), backups/archives (bytes, complete, filesystem).
     Each filesystem has free_bytes/total_bytes, or null when unavailable. Missing
     files have null bytes; partial directory totals have complete=false.
+    Includes backup_health: newest_backup_at, backup_count, total_bytes,
+    automatic_backups and stale (automatic backups on and the newest backup
+    missing or older than twice the daily interval).
 
     Response shape:
     {
@@ -416,6 +422,14 @@ def dashboard_status():
                 "warn": float | null,
                 "crit": float | null,
             }
+        },
+        "storage_usage": { ... },
+        "backup_health": {
+            "newest_backup_at":  str (ISO-8601, UTC) | null,
+            "backup_count":      int,
+            "total_bytes":       int,
+            "automatic_backups": bool,
+            "stale":             bool,
         }
     }
     """
@@ -437,6 +451,7 @@ def dashboard_status():
             "nagios":            nagios_info,
             "server_resources":  resources,
             "storage_usage": get_storage_usage(),
+            "backup_health": get_backup_health(),
         })
 
     except Exception:
@@ -831,7 +846,7 @@ def dashboard_notifications():
 
         # Sort newest first and cap at 5.
         notifications.sort(key=_notification_sort_key, reverse=True)
-        notifications = notifications[:5]
+        notifications = attach_comments(notifications[:5], "service_name")
 
         return success({"notifications": notifications})
 

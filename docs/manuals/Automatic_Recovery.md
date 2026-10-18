@@ -43,6 +43,10 @@ A rule acts only when a covered check reaches a **hard** failure. Recoveries and
 
 **Maintenance Mode** (Settings, System) blocks every rule and records **Skipped (maintenance)**. Only the exit code of the restart is recorded; the command's own output is never kept, and the recorded text never contains secrets.
 
+## Recover automatically for one service
+
+You can also switch automatic recovery on for a single service without opening **Remediation**. In **Device Inventory**, open a device, click the service, and use **Recover automatically**. Turn the switch on, choose how many times an hour PinPoint may restart it (1 to 6), and click **Save**. PinPoint warns you that it will restart the service on its own, picks the right action and service name itself, and shows the last result with a link to the run log. The switch is greyed out, with the reason, when PinPoint cannot restart that service: for example the device is paused, retired or not trusted, remote restart is off for it, or the service is not on the device's restart list. It is the same rule that appears on **Remediation**, so a change in either place shows in the other, and the **System Status** page marks the service **Recovers automatically**. You need **remediation.view** to see the control and **remediation.manage** to change it.
+
 ## Stop everything: the automatic recovery switch
 
 The status panel at the top of **Remediation** has an **Automatic recovery** switch. Switch it off during an incident and no rule runs on the next check, with no restart needed. Every covered failure is still written to the run log as **Skipped (kill switch)**, so you can see what would have happened. Switching it off or on asks for confirmation. Changing it needs **remediation.manage**, and each change is written to the configuration log.
@@ -72,6 +76,24 @@ No failure is being handled until this is fixed. Check, in this order:
 4. The PinPoint application log for lines starting with "Remediation:".
 
 Until it recovers, handle failures by hand. PinPoint does not queue a restart for later. Old run records are removed after the retention period (default 90 days); event files nobody handled for 7 days are removed too.
+
+## Being told when recovery fails
+
+An operator who relies on automatic recovery should know when it stops working. When one of the following happens, PinPoint asks Nagios for a **custom notification** about the service. Nagios sends it to the contacts of that service, by email and in the in-app bell, Dashboard and History, using its own rules (contacts, time periods, escalations). PinPoint has no second mailing list.
+
+| Tick this on the rule | PinPoint notifies when |
+|---|---|
+| **The action fails** | The restart failed or timed out. |
+| **The action is stopped by its limits** | The cooldown or the hourly limit stopped the restart, so nothing was tried. |
+| **It keeps recovering the same service** | The same rule has recovered the same service several times in a row, so the real fault is still there. |
+
+All three are ticked by default; untick all of them for a rule that should stay quiet. A rule that is skipped on purpose (kill switch, Maintenance Mode, scheduled downtime, an acknowledged problem) never notifies.
+
+The "keeps recovering" limits are set in the status panel under **Repeat recovery**: the number of recoveries (default 3) and the window in hours (default 24). Only one such notification is sent per service and window. Changing them needs **remediation.manage**.
+
+Nagios still honours downtime and notification settings, so a service in scheduled downtime or with notifications turned off sends no email. The message holds only fixed text, the rule name, the outcome and the run number; it never contains the output of the check or the restart.
+
+The **Operator** column of the run log shows what happened to the notification: **Operator notified**, **Notification pending**, **Notification failed** (with the reason; PinPoint tries up to 3 times) or **Not required**. On the System Status page, a service that automatic recovery acted on shows a small badge (**Auto-recovered**, **Recovery failed**, **Recovery limited**) that opens the run.
 
 ## Release note
 

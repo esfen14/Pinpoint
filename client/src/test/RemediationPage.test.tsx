@@ -1,11 +1,12 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '../lib/api'
 import { RemediationPage } from '../pages/RemediationPage'
 import type { RemediationAction, RemediationHealth, RemediationRun } from '../types/remediation'
 
 const api = vi.hoisted(() => ({
   getActionTypes: vi.fn(),
+  getTargets: vi.fn(),
   listActions: vi.fn(),
   createAction: vi.fn(),
   updateAction: vi.fn(),
@@ -40,7 +41,7 @@ function action(overrides: Partial<RemediationAction> = {}): RemediationAction {
   return {
     id: 1, name: 'restart-web', actionType: 'record_only', scopeKind: 'service', hostPattern: 'web-*',
     servicePattern: 'HTTP', parameters: {}, enabled: true, maxRunsPerHour: 2, cooldownSeconds: 600,
-    runWhenAcknowledged: false, version: 3, updatedAt: '2026-10-14T10:00:00', updatedBy: 1, ...overrides,
+    runWhenAcknowledged: false, notifyOn: ['failed', 'capped', 'repeated'], version: 3, updatedAt: '2026-10-14T10:00:00', updatedBy: 1, ...overrides,
   }
 }
 
@@ -48,7 +49,8 @@ function run(overrides: Partial<RemediationRun> = {}): RemediationRun {
   return {
     id: 7, actionId: 1, actionName: 'restart-web', hostname: 'web-01', service: 'HTTP', state: 'CRITICAL',
     stateType: 'HARD', attempt: 3, receivedAt: '2026-10-14T10:00:00', startedAt: '2026-10-14T10:00:01',
-    finishedAt: '2026-10-14T10:00:02', outcome: 'succeeded', reason: null, ...overrides,
+    finishedAt: '2026-10-14T10:00:02', outcome: 'succeeded', reason: null, notifyKind: null, notifyState: null,
+    notifyAttempts: 0, notifyError: null, notifyAt: null, ...overrides,
   }
 }
 
@@ -67,11 +69,12 @@ beforeEach(() => {
   permissions = ['remediation.view', 'remediation.manage']
   Object.values(api).forEach((fn) => fn.mockReset())
   api.getActionTypes.mockResolvedValue(TYPES)
+  api.getTargets.mockResolvedValue([{ hostname: 'web-01', services: ['HTTP', 'SSH'] }, { hostname: 'db-01', services: ['MySQL'] }])
   api.listActions.mockResolvedValue([action()])
   api.listRuns.mockResolvedValue(runList([run()]))
   api.getRun.mockResolvedValue({ ...run(), output: 'recorded' })
   api.getHealth.mockResolvedValue(health())
-  api.getSettings.mockResolvedValue({ enabled: true, retentionDays: 90 })
+  api.getSettings.mockResolvedValue({ enabled: true, retentionDays: 90, repeatCount: 3, repeatWindowHours: 24 })
   vi.spyOn(window, 'confirm').mockReturnValue(true)
 })
 
@@ -135,8 +138,8 @@ describe('Remediation page: actions', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Add action' }))
     const dialog = screen.getByRole('dialog', { name: 'Add action' })
     fireEvent.change(within(dialog).getByLabelText('Name'), { target: { value: 'restart-web' } })
-    fireEvent.change(within(dialog).getByLabelText('Host pattern'), { target: { value: 'web-*' } })
-    fireEvent.change(within(dialog).getByLabelText('Service pattern'), { target: { value: 'HTTP' } })
+    fireEvent.change(within(dialog).getByLabelText('Device'), { target: { value: 'web-*' } })
+    fireEvent.change(within(dialog).getByLabelText('Service'), { target: { value: 'HTTP' } })
     fireEvent.change(within(dialog).getByLabelText('Cooldown (seconds)'), { target: { value: '900' } })
     fireEvent.change(within(dialog).getByLabelText('Max runs per hour'), { target: { value: '3' } })
     fireEvent.click(within(dialog).getByRole('checkbox', { name: 'Enabled' }))
@@ -145,7 +148,7 @@ describe('Remediation page: actions', () => {
     expect(api.createAction).toHaveBeenCalledWith({
       name: 'restart-web', actionType: 'record_only', scopeKind: 'service', hostPattern: 'web-*',
       servicePattern: 'HTTP', parameters: {}, enabled: true, maxRunsPerHour: 3, cooldownSeconds: 900,
-      runWhenAcknowledged: false,
+      runWhenAcknowledged: false, notifyOn: ['failed', 'capped', 'repeated'],
     })
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
     expect(await screen.findByText('restart-web')).toBeInTheDocument()
@@ -167,14 +170,14 @@ describe('Remediation page: actions', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Add action' }))
     const dialog = screen.getByRole('dialog', { name: 'Add action' })
     fireEvent.change(within(dialog).getByLabelText('Name'), { target: { value: 'restart-web' } })
-    fireEvent.change(within(dialog).getByLabelText('Host pattern'), { target: { value: 'web-*' } })
-    fireEvent.change(within(dialog).getByLabelText('Service pattern'), { target: { value: 'HTTP' } })
+    fireEvent.change(within(dialog).getByLabelText('Device'), { target: { value: 'web-*' } })
+    fireEvent.change(within(dialog).getByLabelText('Service'), { target: { value: 'HTTP' } })
     fireEvent.click(within(dialog).getByRole('button', { name: 'Save action' }))
     const nameField = within(dialog).getByLabelText('Name')
     expect(await within(dialog).findByText('An action with this name already exists.')).toBeInTheDocument()
     expect(nameField).toHaveAccessibleDescription('An action with this name already exists.')
-    expect(within(dialog).getByLabelText('Host pattern')).toHaveAccessibleDescription(/Host pattern must be/)
-    expect(within(dialog).getByLabelText('Service pattern')).not.toHaveAccessibleDescription(/\w/)
+    expect(within(dialog).getByLabelText('Device')).toHaveAccessibleDescription(/Host pattern must be/)
+    expect(within(dialog).getByLabelText('Service')).not.toHaveAccessibleDescription(/\w/)
     expect(screen.getByRole('dialog', { name: 'Add action' })).toBeInTheDocument()
   })
 
@@ -184,9 +187,9 @@ describe('Remediation page: actions', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Add action' }))
     const dialog = screen.getByRole('dialog', { name: 'Add action' })
     fireEvent.change(within(dialog).getByLabelText('Scope'), { target: { value: 'host' } })
-    expect(within(dialog).queryByLabelText('Service pattern')).not.toBeInTheDocument()
+    expect(within(dialog).queryByLabelText('Service')).not.toBeInTheDocument()
     fireEvent.change(within(dialog).getByLabelText('Name'), { target: { value: 'host-rule' } })
-    fireEvent.change(within(dialog).getByLabelText('Host pattern'), { target: { value: 'web-01' } })
+    fireEvent.change(within(dialog).getByLabelText('Device'), { target: { value: 'web-01' } })
     fireEvent.click(within(dialog).getByRole('button', { name: 'Save action' }))
     await waitFor(() => expect(api.createAction).toHaveBeenCalled())
     expect(api.createAction.mock.calls[0][0]).toMatchObject({ scopeKind: 'host', servicePattern: null })
@@ -465,8 +468,8 @@ describe('Remediation page: run when acknowledged', () => {
     expect(within(dialog).getByText(/skipped when an operator has already acknowledged/i)).toBeInTheDocument()
     fireEvent.click(box)
     fireEvent.change(within(dialog).getByLabelText('Name'), { target: { value: 'ack-ok' } })
-    fireEvent.change(within(dialog).getByLabelText('Host pattern'), { target: { value: 'web-01' } })
-    fireEvent.change(within(dialog).getByLabelText('Service pattern'), { target: { value: 'HTTP' } })
+    fireEvent.change(within(dialog).getByLabelText('Device'), { target: { value: 'web-01' } })
+    fireEvent.change(within(dialog).getByLabelText('Service'), { target: { value: 'HTTP' } })
     fireEvent.click(within(dialog).getByRole('button', { name: 'Save action' }))
     await waitFor(() => expect(api.createAction).toHaveBeenCalled())
     expect(api.createAction.mock.calls[0][0]).toMatchObject({ runWhenAcknowledged: true })
@@ -508,5 +511,246 @@ describe('Remediation page: skip reasons in the run log', () => {
     expect(screen.getByText('Maintenance Mode is on.')).toBeInTheDocument()
     const filter = screen.getByLabelText('Outcome')
     expect(within(filter).getByRole('option', { name: 'Skipped (kill switch)' })).toBeInTheDocument()
+  })
+})
+
+
+describe('Remediation page: operator notification in the run log', () => {
+  async function openRunLog() {
+    render(<RemediationPage />)
+    fireEvent.click(await screen.findByRole('tab', { name: 'Run log' }))
+  }
+
+  it('says "Not required" for a run that needed no notification', async () => {
+    await openRunLog()
+    const row = (await screen.findByText('web-01')).closest('tr') as HTMLElement
+    expect(within(row).getByText('Not required')).toBeInTheDocument()
+  })
+
+  it('says the operator was notified when the notification was sent', async () => {
+    api.listRuns.mockResolvedValue(runList([
+      run({ outcome: 'failed', notifyKind: 'failed', notifyState: 'sent', notifyAttempts: 1, notifyAt: '2026-10-14T10:00:03' }),
+    ]))
+    await openRunLog()
+    expect(await screen.findByText('Operator notified')).toBeInTheDocument()
+  })
+
+  it('shows a notification that is still waiting to be sent', async () => {
+    api.listRuns.mockResolvedValue(runList([
+      run({ outcome: 'failed', notifyKind: 'failed', notifyState: 'pending', notifyAttempts: 1, notifyError: 'The Nagios command pipe was not found.' }),
+    ]))
+    await openRunLog()
+    expect(await screen.findByText('Notification pending')).toBeInTheDocument()
+  })
+
+  it('shows a failed notification with its error', async () => {
+    api.listRuns.mockResolvedValue(runList([
+      run({ outcome: 'timed_out', notifyKind: 'failed', notifyState: 'failed', notifyAttempts: 3, notifyError: 'The Nagios command pipe was not found.' }),
+    ]))
+    await openRunLog()
+    const row = (await screen.findByText('web-01')).closest('tr') as HTMLElement
+    expect(within(row).getByText('Notification failed')).toBeInTheDocument()
+    expect(within(row).getByText('The Nagios command pipe was not found.')).toBeInTheDocument()
+  })
+
+  it('shows the notification details in the run drawer', async () => {
+    const detail = run({
+      outcome: 'skipped_hourly_cap', notifyKind: 'capped', notifyState: 'failed', notifyAttempts: 3,
+      notifyError: 'The Nagios command pipe could not be written.', notifyAt: null,
+    })
+    api.listRuns.mockResolvedValue(runList([detail]))
+    api.getRun.mockResolvedValue({ ...detail, output: null })
+    await openRunLog()
+    fireEvent.click(await screen.findByRole('button', { name: 'View run 7' }))
+    const drawer = await screen.findByRole('dialog', { name: 'Run 7' })
+    expect(await within(drawer).findByText('Notification failed')).toBeInTheDocument()
+    expect(within(drawer).getByText('Stopped by its limits')).toBeInTheDocument()
+    expect(within(drawer).getByText('The Nagios command pipe could not be written.')).toBeInTheDocument()
+    expect(within(drawer).getByText('3')).toBeInTheDocument()
+  })
+
+  it('shows "Not required" in the drawer when nothing was due', async () => {
+    await openRunLog()
+    fireEvent.click(await screen.findByRole('button', { name: 'View run 7' }))
+    const drawer = await screen.findByRole('dialog', { name: 'Run 7' })
+    expect(await within(drawer).findByText('Not required')).toBeInTheDocument()
+  })
+})
+
+
+describe('Remediation page: notify the operator (action form)', () => {
+  it('offers the three kinds with help text, all on by default, and sends them', async () => {
+    api.createAction.mockResolvedValue(action())
+    render(<RemediationPage />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Add action' }))
+    const dialog = screen.getByRole('dialog', { name: 'Add action' })
+    const group = within(dialog).getByRole('group', { name: 'Tell the operator when' })
+    for (const name of ['The action fails', 'The action is stopped by its limits', 'It keeps recovering the same service']) {
+      expect(within(group).getByRole('checkbox', { name })).toBeChecked()
+    }
+    expect(within(dialog).getByText(/Nagios sends the message to the contacts of that service/i)).toBeInTheDocument()
+    fireEvent.change(within(dialog).getByLabelText('Name'), { target: { value: 'notify-ok' } })
+    fireEvent.change(within(dialog).getByLabelText('Device'), { target: { value: 'web-01' } })
+    fireEvent.change(within(dialog).getByLabelText('Service'), { target: { value: 'HTTP' } })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save action' }))
+    await waitFor(() => expect(api.createAction).toHaveBeenCalled())
+    expect(api.createAction.mock.calls[0][0]).toMatchObject({ notifyOn: ['failed', 'capped', 'repeated'] })
+  })
+
+  it('sends only the kinds that stay ticked, in a fixed order', async () => {
+    api.createAction.mockResolvedValue(action())
+    render(<RemediationPage />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Add action' }))
+    const dialog = screen.getByRole('dialog', { name: 'Add action' })
+    fireEvent.click(within(dialog).getByRole('checkbox', { name: 'The action fails' }))
+    fireEvent.change(within(dialog).getByLabelText('Name'), { target: { value: 'quiet' } })
+    fireEvent.change(within(dialog).getByLabelText('Device'), { target: { value: 'web-01' } })
+    fireEvent.change(within(dialog).getByLabelText('Service'), { target: { value: 'HTTP' } })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save action' }))
+    await waitFor(() => expect(api.createAction).toHaveBeenCalled())
+    expect(api.createAction.mock.calls[0][0]).toMatchObject({ notifyOn: ['capped', 'repeated'] })
+  })
+
+  it('can turn every kind off', async () => {
+    api.listActions.mockResolvedValue([action({ notifyOn: ['failed'] })])
+    api.updateAction.mockResolvedValue(action({ notifyOn: [] }))
+    render(<RemediationPage />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit restart-web' }))
+    const dialog = screen.getByRole('dialog', { name: 'Edit action' })
+    fireEvent.click(within(dialog).getByRole('checkbox', { name: 'The action fails' }))
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save action' }))
+    await waitFor(() => expect(api.updateAction).toHaveBeenCalled())
+    expect(api.updateAction.mock.calls[0][1]).toMatchObject({ notifyOn: [] })
+  })
+
+  it('shows the saved choice when editing', async () => {
+    api.listActions.mockResolvedValue([action({ notifyOn: ['capped'] })])
+    render(<RemediationPage />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit restart-web' }))
+    const dialog = screen.getByRole('dialog', { name: 'Edit action' })
+    expect(within(dialog).getByRole('checkbox', { name: 'The action fails' })).not.toBeChecked()
+    expect(within(dialog).getByRole('checkbox', { name: 'The action is stopped by its limits' })).toBeChecked()
+    expect(within(dialog).getByRole('checkbox', { name: 'It keeps recovering the same service' })).not.toBeChecked()
+  })
+
+  it('keeps the choice when the enable switch is used', async () => {
+    api.listActions.mockResolvedValue([action({ notifyOn: ['failed'] })])
+    api.updateAction.mockResolvedValue(action({ enabled: false, notifyOn: ['failed'], version: 4 }))
+    render(<RemediationPage />)
+    fireEvent.click(await screen.findByRole('switch', { name: 'Enable restart-web' }))
+    await waitFor(() => expect(api.updateAction).toHaveBeenCalled())
+    expect(api.updateAction.mock.calls[0][1]).toMatchObject({ notifyOn: ['failed'] })
+  })
+
+  it('shows the server message against the field', async () => {
+    api.createAction.mockRejectedValue(new ApiError('Some fields are not valid.', 400, { fields: { notifyOn: 'Notify on must be a list of failed, capped or repeated.' } }))
+    render(<RemediationPage />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Add action' }))
+    const dialog = screen.getByRole('dialog', { name: 'Add action' })
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save action' }))
+    expect(await within(dialog).findByText(/Notify on must be a list/)).toBeInTheDocument()
+  })
+})
+
+describe('Remediation page: repeat recovery limits', () => {
+  it('shows the saved count and window', async () => {
+    api.getSettings.mockResolvedValue({ enabled: true, retentionDays: 90, repeatCount: 5, repeatWindowHours: 48 })
+    render(<RemediationPage />)
+    // The fields exist before the saved settings arrive, so wait for the values themselves.
+    await waitFor(() => expect(screen.getByLabelText('Repeat count')).toHaveValue(5))
+    expect(screen.getByLabelText('Repeat window (hours)')).toHaveValue(48)
+    expect(screen.getByText(/recovers the same service this many times/i)).toBeInTheDocument()
+  })
+
+  it('saves both values', async () => {
+    api.updateSettings.mockResolvedValue({ enabled: true, retentionDays: 90, repeatCount: 4, repeatWindowHours: 12 })
+    render(<RemediationPage />)
+    await waitFor(() => expect(screen.getByLabelText('Repeat count')).toHaveValue(3))
+    fireEvent.change(screen.getByLabelText('Repeat count'), { target: { value: '4' } })
+    fireEvent.change(screen.getByLabelText('Repeat window (hours)'), { target: { value: '12' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save repeat limits' }))
+    await waitFor(() => expect(api.updateSettings).toHaveBeenCalledWith({ repeatCount: 4, repeatWindowHours: 12 }))
+    expect(await screen.findByText('Repeat limits saved.')).toBeInTheDocument()
+  })
+
+  it('shows the server message when saving fails and keeps the typed values', async () => {
+    api.updateSettings.mockRejectedValue(new ApiError('Repeat count must be a whole number from 2 to 20.', 400))
+    render(<RemediationPage />)
+    // The field exists before the saved value is copied into it, and an edit made in that gap is overwritten.
+    await waitFor(() => expect(screen.getByLabelText('Repeat count')).toHaveValue(3))
+    fireEvent.change(screen.getByLabelText('Repeat count'), { target: { value: '99' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save repeat limits' }))
+    expect(await screen.findByText(/Repeat count must be a whole number from 2 to 20/)).toBeInTheDocument()
+    expect(screen.getByLabelText('Repeat count')).toHaveValue(99)
+  })
+
+  it('is read-only for a user who can only view', async () => {
+    permissions = ['remediation.view']
+    render(<RemediationPage />)
+    expect(await screen.findByLabelText('Repeat count')).toBeDisabled()
+    expect(screen.getByLabelText('Repeat window (hours)')).toBeDisabled()
+    expect(screen.queryByRole('button', { name: 'Save repeat limits' })).not.toBeInTheDocument()
+  })
+
+  it('shows nothing to edit while the settings could not be loaded', async () => {
+    api.getSettings.mockRejectedValue(new ApiError('Forbidden', 403))
+    render(<RemediationPage />)
+    expect(await screen.findByText(/do not have permission to view the kill switch/i)).toBeInTheDocument()
+    expect(screen.queryByLabelText('Repeat count')).not.toBeInTheDocument()
+  })
+})
+
+describe('Remediation page: opened from a service row badge', () => {
+  afterEach(() => window.history.pushState({}, '', '/'))
+
+  it('opens the run log and that run when the address names one', async () => {
+    window.history.pushState({}, '', '/remediation?run=7')
+    render(<RemediationPage />)
+    expect(await screen.findByRole('dialog', { name: 'Run 7' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: 'Run log' })).toHaveAttribute('aria-selected', 'true')
+    await waitFor(() => expect(api.getRun).toHaveBeenCalledWith(7))
+  })
+
+  it('ignores an address that does not name a whole number', async () => {
+    window.history.pushState({}, '', '/remediation?run=abc')
+    render(<RemediationPage />)
+    expect(await screen.findByRole('tab', { name: 'Actions' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('opens nothing without the parameter', async () => {
+    render(<RemediationPage />)
+    expect(await screen.findByRole('tab', { name: 'Actions' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+})
+
+// ==========================================================
+// DEVICE AND SERVICE SUGGESTIONS
+// ==========================================================
+
+describe('device and service suggestions', () => {
+  const options = (dialog: HTMLElement, id: string) =>
+    Array.from(dialog.querySelectorAll(`#${id} option`)).map((o) => (o as HTMLOptionElement).value)
+
+  it('suggests devices, and the services of the device typed or matched by a pattern', async () => {
+    render(<RemediationPage />)
+    fireEvent.click(await screen.findByRole('button', { name: /add action/i }))
+    const dialog = await screen.findByRole('dialog')
+    await waitFor(() => expect(options(dialog, 'remediation-device-options')).toEqual(['web-01', 'db-01']))
+    expect(options(dialog, 'remediation-service-options')).toEqual([])
+    fireEvent.change(within(dialog).getByLabelText('Device'), { target: { value: 'web-01' } })
+    expect(options(dialog, 'remediation-service-options')).toEqual(['HTTP', 'SSH'])
+    fireEvent.change(within(dialog).getByLabelText('Device'), { target: { value: '*-01' } })
+    expect(options(dialog, 'remediation-service-options')).toEqual(['HTTP', 'MySQL', 'SSH'])
+  })
+
+  it('still lets a pattern be typed when the suggestions cannot load', async () => {
+    api.getTargets.mockRejectedValue(new Error('down'))
+    render(<RemediationPage />)
+    fireEvent.click(await screen.findByRole('button', { name: /add action/i }))
+    const dialog = await screen.findByRole('dialog')
+    fireEvent.change(within(dialog).getByLabelText('Device'), { target: { value: 'web-*' } })
+    expect(within(dialog).getByLabelText('Device')).toHaveValue('web-*')
   })
 })

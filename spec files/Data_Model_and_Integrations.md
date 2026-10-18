@@ -33,7 +33,7 @@ acknowledgements belong in `system.db` even though they relate to Nagios alerts.
   `Open_TCP_Services`, `Open_UDP_Services`, `DeviceParent` (manual reachability links).
 - NCPA deployment: `SSHCredentials` (also `Remote_Restart_Enabled`, default false, and `Remote_Restart_Services`, a JSON list of unit names, both added by `c7a1f4d92e60` for #8 Part 8.3), `NCPADeploymentStatus` (one row per run,
   with `Reviewed_At`/`Reviewed_By`), `NCPADeploymentResult` (one row per device
-  per run), `NCPADeployment` (each device's latest agent state and nullable installed `Port`),
+  per run), `NCPADeployment` (each device's latest agent state and nullable installed `Port`; `Deployement_Method` is Automatic for SSH installs and Manual for an agent registered by the administrator, #130, which needs no migration because the enum already had `Manual`),
   `NCPADevicePartition`.
 - Remediation: `RemediationAction` (`REMEDIATION_ACTION`): the admin-defined rule with `Name` (unique), `Action_Type` (`record_only`, `restart_local_service` added by migration `b8e3d5f2a417`, or `restart_remote_service` added by `c7a1f4d92e60`), `Scope_Kind` (service or host), `Host_Pattern`, `Service_Pattern`, `Parameters` (JSON, validated per type), `Enabled`, `Max_Runs_Per_Hour`, `Cooldown_Seconds`, `Version` and `Updated_By`/`Updated_At`; and `RemediationRun` (`REMEDIATION_RUN`): one row per decision with `Event_Key` (sha256 of kind, host, service, state and last state change; unique together with `Action_Id`), `Action_Id` (nullable foreign key to `REMEDIATION_ACTION.Id`, `ON DELETE SET NULL`, migration `a182f6c9d301`; deleting an action keeps its runs and snapshots but detaches its cooldown/hourly history; upgrade clears existing orphan links without removing audit rows), `Action_Name` (a copy), host, service, state, `State_Type`, `Attempt`, `Received_At`, `Started_At`, `Finished_At`, `Outcome`, `Reason` and `Output` (at most 1 KB, redacted). Both live in `system.db` because PinPoint writes them; `history.db` stays Nagios snapshots only. Migration `e4a7c1d9b305` creates both tables and the `remediation.view` and `remediation.manage` permissions, granted to the Super Admin role. Migration `f155a3c7d2b1` (safety controls, #155) adds `SystemSettings.Remediation_Enabled` (the kill switch, default on) and `Remediation_Retention_Days` (default 90), `RemediationAction.Run_When_Acknowledged` (default off), the outcomes `skipped_kill_switch`, `skipped_maintenance`, `skipped_downtime` and `skipped_acknowledged`, and the one-row `RemediationConsumerState` table (`REMEDIATION_CONSUMER_STATE`, Id 1: `Last_Tick_At`, `Last_Error`, `Dropped_Count`, `Dropped_At`; written on every consumer tick, which is why it is not on the settings row). Existing rows keep today's behavior; the downgrade deletes runs with a new outcome and drops the added columns and table.
 - Settings: singleton `SystemSettings`, singleton `NotificationPolicy` (`NOTIFICATION_POLICY`, Id 1, migration `143c48cd6663`), one-per-user `UserPreferences`. `NotificationPolicy` stores weekday/HH:MM quiet windows as JSON, host/service option strings, a 0–1440-minute renotify interval, `Version`, and `Updated_By`; the migration seeds the historical 24x7/default-options/30-minute policy and removes the table on downgrade.
@@ -220,6 +220,8 @@ matching `AcknowledgementType.NORMACK`. This path is injection-sensitive
 `app/nagios/notifications.py` reads `archivejson.cgi` for durable alert and
 notification event ranges.
 
+Per-service recovery (#154): `/api/system/remediation/services/...` stores nothing new. The switch is one `RemediationAction` with `Scope_Kind` service whose `Host_Pattern` and `Service_Pattern` are the exact Nagios host and service names, so the Remediation page and the config renderer see the same row. The server maps a check name to a unit by its first word (`ssh-22-tcp` gives `ssh`, plus the fixed `SERVICE_UNIT_ALIASES` in `app/remediation.py`, for example `ssh` and `sshd`) and uses a unit only when it is on that device's own restart list (`SSH_CREDENTIALS.Remote_Restart_Services`) or, for host `localhost`, in `RESTARTABLE_UNITS`. No model, migration or permission was added.
+
 Event handler: when at least one enabled `RemediationAction` exists and the program
 `/usr/local/sbin/pinpoint-event-handler` is a file on this machine,
 `host_config_templates.py` writes the commands `pinpoint_event_handler_service` and
@@ -232,10 +234,90 @@ one file per event to `REMEDIATION_SPOOL_DIR`, and `app/remediation.py` decides 
 spool folder, the root-owned handler and narrower rights for the `nagios` group are installer work
 (see the installer instructions); the application never runs a command taken from an event.
 
+### Operator notification for automatic recovery (#153)
+
+Migration `e153c4a8b2d7` (after `f155a3c7d2b1`) adds `RemediationAction.Notify_On` (JSON list of
+`failed`, `capped` and `repeated`, default all three, may be empty), `RemediationRun.Notify_Kind`
+(`failed`, `capped` or `repeated`; null when no notification was due), `Notify_State`
+(`pending`, `sent`, `failed`; null when none was due), `Notify_Attempts` (default 0), `Notify_Error`
+(a fixed sentence, at most 200 characters) and `Notify_At`, and `SystemSettings.Remediation_Repeat_Count`
+(default 3, range 2 to 20) and `Remediation_Repeat_Window_Hours` (default 24, range 1 to 168).
+Existing rows keep today's behavior (nothing due, defaults as stated); the downgrade drops the
+added columns and keeps every run.
+
+`app/remediation_escalation.py` owns the rest. A run is marked for a notification when its outcome
+is `failed` or `timed_out` (kind `failed`), `skipped_cooldown` or `skipped_hourly_cap` (kind
+`capped`), or when it succeeds and the same action has now succeeded `Remediation_Repeat_Count`
+times for the same host and service inside the window with no `repeated` notification in the
+window (kind `repeated`), and only when the action's `Notify_On` lists that kind. The deliberate
+skips (kill switch, Maintenance Mode, downtime, acknowledged) never notify. The consumer marks the
+run in the same commit that records its outcome. Every consumer tick then calls `deliver_pending`:
+each attempt is counted and committed before it is sent, so a stop in the middle is never sent
+again (`fail_unfinished` runs at startup and fails such a run); a failed send keeps the run
+`pending` with a fixed error until `MAX_ATTEMPTS` (3) is reached, then `failed`. Nothing here raises,
+so a missing or unwritable command file is recorded on the run and the consumer carries on.
+
+The notification is a Nagios custom notification written through `app/nagios/commands.py`
+(`SEND_CUSTOM_SVC_NOTIFICATION` for a service, `SEND_CUSTOM_HOST_NOTIFICATION` for a host) with
+option `0`: the force option is never set, so Nagios still applies notification-enabled flags,
+scheduled downtime, timeperiods and escalations, and Nagios alone chooses the recipients. The
+comment is fixed text plus the action name (reduced to letters, digits and `. _ : / -`), the
+outcome code and the run id; plugin output and command output never reach it. Because the message
+is written to the Nagios archive, it appears in the notification feed without a PinPoint-owned
+notification table.
+
 `Config.NAGIOS_HOST` is the CGI network host. In contrast,
 `api/system/statistics.py` uses `NAGIOS_HOST = "localhost"` to identify the
 Nagios server within status data. Changing either requires understanding its
 different purpose.
+
+## Service report history and coverage (#198)
+
+Network Services and Device Services read `archivejson.cgi` availability through
+`app/nagios/service_availability.py`, not `ServiceStatus` snapshot counts.
+Snapshots and the general poller remain available for their existing consumers.
+The exact `(host_name, description)` identifies a native instance; service
+names are preserved verbatim. Only configured objects in the archive response
+are counted; historical removed objects are not guaranteed.
+
+Explicit options: `availabilityobjecttype=services`, `statetypes=hard`,
+`assumeinitialstate=false`, `assumestateretention=true`,
+`assumestatesduringnagiosdowntime=false`, `backtrackedarchives=4`.
+There is no report-timeperiod restriction. Four preceding archives are searched
+for initial state; actual coverage depends on Nagios's rotation, retained logs,
+recorded checks and engine events, not Pinpoint snapshot retention. Missing logs
+cannot be recovered by these reports. Unlike existing host-report defaults, these
+service reports explicitly avoid assuming an initial state or state during engine
+downtime; this intentional difference is explained in the UI and operator guide.
+
+Native `time_STATE` and `scheduled_time_STATE` are separate accumulators in Core
+4.5.11. Add the matching scheduled component to each normalized state exactly
+once, preserving maintenance in headline availability. UNKNOWN is observed and
+belongs in known time. Native no-data and engine-down time are excluded. Native
+all-zero responses can leave the requested range unexplained, so expose
+`unaccounted_seconds = window - known - native_no_data - native_engine_down`.
+Total missing coverage is native no-data + engine downtime + unaccounted seconds.
+An unaccounted duration asserts no state or cause. Reject negative/nonfinite
+values, wrong shapes, duplicate identities, and totals exceeding the window.
+
+Core can synthesize current state for no-history objects when a range includes
+its query time, even with `assumeinitialstate=false`. Service reports request
+completed seconds, ending strictly before query time; the normalizer checks this
+against the millisecond native `result.query_time`. A clock disagreement fails
+closed. This avoids that pseudo-state path; it does not reconstruct unobserved
+outages or turn missing history into healthy time. Raw seconds are aggregated
+before percentages: Network Services by exact service description; Device Services
+by hostname. A device aggregate measures its services, not host uptime. A null
+percentage means no known time; zero-known instances still contribute coverage
+and instance counts.
+
+Current state/timestamps/output are fetched in one read-only bulk
+`statusjson.cgi?query=servicelist&details=true&formatoptions=enumerate` request.
+The reader never calls the snapshot-writing status poller. It joins full identity,
+retains pending/missing metadata as absent, and records a separate observation time.
+Historical archive failure aborts; current-status failure is a visible partial
+result. No new dependency, database model, migration, permission, credential,
+monitoring-config change or scheduler job is introduced.
 
 ## Aggregation rules
 
@@ -327,7 +409,16 @@ reads the persisted interval when next started. No other job cadence changes.
 scans, and plugin security validation. Scheduled network discovery runs only if
 at least one scan has already been recorded; a fresh installation waits for an
 administrator to trigger the first scan manually. Maintenance mode permits backups but
-stops the other automated operations. Jobs are attributed to an active user for
+stops the other automated operations.
+
+Backups are folders `YYYYMMDD-HHMMSS` under `DATABASE_BACKUP_DIR`, one SQLite
+online-backup copy of each database, newest 7 kept. They are restored with
+`flask restore-backup` (`backup_restore.py`), which keeps the replaced files in
+`pre-restore-<timestamp>` in the same directory (not rotated). No model,
+migration or setting is added. Cold-standby recovery only: active/passive
+failover, Nagios configuration backup and the NCPA deployment key are not
+covered (`docs/manuals/Backup_and_Restore.md` lists what is not backed up,
+including `SECRET_KEY`). Jobs are attributed to an active user for
 audit purposes.
 
 ## Maintenance windows and Nagios downtime

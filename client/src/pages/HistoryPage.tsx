@@ -50,6 +50,9 @@ type NotificationEvent = {
   contact: string
   method: string
   message: string
+  // Set for a Nagios custom notification; `comment` is its text (null when no run here sent it).
+  is_custom?: boolean
+  comment?: string | null
 }
 
 type NotificationDetail = NotificationEvent & {
@@ -125,6 +128,14 @@ function StateBadge({ state }: { state: string }) {
   return (
     <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${stateBadgeClass(state)}`}>
       {state}
+    </span>
+  )
+}
+
+function CustomBadge() {
+  return (
+    <span className="inline-block rounded-full bg-sky-500/15 px-2.5 py-0.5 text-xs font-medium text-sky-700 dark:text-sky-400">
+      Custom
     </span>
   )
 }
@@ -683,10 +694,10 @@ export function HistoryPage() {
                       <td className="px-3 py-3 capitalize">{n.type === 'scan' ? 'Network scan' : n.type}</td>
                       <td className="px-3 py-3">{n.hostname}</td>
                       <td className="px-3 py-3">{n.service_name ?? '—'}</td>
-                      <td className="px-3 py-3"><StateBadge state={n.state} /></td>
+                      <td className="px-3 py-3">{n.is_custom ? <CustomBadge /> : <StateBadge state={n.state} />}</td>
                       <td className="px-3 py-3">{n.contact || '—'}</td>
                       <td className="max-w-xs truncate px-3 py-3 text-[var(--text-muted)]">
-                        {[n.method, n.message].filter(Boolean).join(' · ')}
+                        {[n.method, n.comment || n.message].filter(Boolean).join(' · ')}
                       </td>
                     </tr>
                     {open && (
@@ -697,6 +708,12 @@ export function HistoryPage() {
                           {notificationDetail && (
                             <div className="space-y-3 text-sm">
                               <p className="text-xs text-[var(--text-muted)]">{formatDateTime(notificationDetail.timestamp * 1000)}</p>
+                              {notificationDetail.is_custom && notificationDetail.comment && (
+                                <div>
+                                  <p className="mb-1 font-medium">Custom notification</p>
+                                  <p className="text-[var(--text)]">{notificationDetail.comment}</p>
+                                </div>
+                              )}
                               <div>
                                 <p className="mb-1 font-medium">Message</p>
                                 <pre className="whitespace-pre-wrap break-words font-mono text-xs text-[var(--text-muted)]">

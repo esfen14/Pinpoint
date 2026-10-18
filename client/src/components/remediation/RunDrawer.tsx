@@ -3,7 +3,7 @@ import { errorMessage } from '../../lib/api'
 import { getRun } from '../../lib/remediationApi'
 import { useSystemSettings } from '../../contexts/SystemSettingsContext'
 import { formatServerDateTime } from '../../utils/formatDateTime'
-import { OUTCOME_LABELS, type RemediationRunDetail } from '../../types/remediation'
+import { NOTIFY_KIND_LABELS, OUTCOME_LABELS, notifyLabel, type RemediationRunDetail } from '../../types/remediation'
 import { DrawerShell } from '../shared/DrawerShell'
 
 type Props = {
@@ -53,6 +53,11 @@ export function RunDrawer({ runId, onClose }: Props) {
         ['Received', when(run.receivedAt)],
         ['Started', when(run.startedAt)],
         ['Finished', when(run.finishedAt)],
+        ['Operator notification', notifyLabel(run)],
+        ...(run.notifyKind ? ([['Notified because', NOTIFY_KIND_LABELS[run.notifyKind]]] as [string, string][]) : []),
+        ...(run.notifyKind ? ([['Notification attempts', String(run.notifyAttempts)]] as [string, string][]) : []),
+        ...(run.notifyAt ? ([['Notification sent', when(run.notifyAt)]] as [string, string][]) : []),
+        ...(run.notifyError ? ([['Notification error', run.notifyError]] as [string, string][]) : []),
       ]
     : []
 

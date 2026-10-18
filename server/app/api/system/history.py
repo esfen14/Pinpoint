@@ -45,6 +45,7 @@ from app.api.system import system_bp
 from app.api.helper import success, error
 from app.api.helper.database_access.permissions import require_permission
 from app.api.helper.converter import get_range_day, get_range_custom
+from app.remediation_escalation import attach_comments
 from app.system_models import AckHistory, AckAction, User
 from app.nagios.notifications import (
     request_alerts_range,
@@ -657,6 +658,7 @@ def notifications_history():
                 "contact":      contact,
                 "method":       method,
                 "message":      message[:200],
+                "is_custom":    notif["notificationtype"] == "CUSTOM",
             })
 
         if not locator and source_f != SOURCE_NAGIOS and not (type_f or hostname_f or service_f or contact_f):
@@ -685,6 +687,7 @@ def notifications_history():
             return error("Failed to retrieve notification history from Nagios.", 502)
 
         result = paginate_list(items, page, per_page)
+        attach_comments(result["items"], "service_name")
         result["nagios_unavailable"] = nagios_unavailable
         return success(result)
 
@@ -792,7 +795,7 @@ def notifications_history_detail():
                     "prev_state": a['last_state'],
                 }
 
-        return success({
+        detail = {
             "source":       SOURCE_NAGIOS,
             "event_id":     event_id(notif, "notification"),
             "hostname":     hostname,
@@ -804,7 +807,10 @@ def notifications_history_detail():
             "method":       method,
             "message":      message,
             "linked_alert": linked_alert,
-        })
+            "is_custom":    notif["notificationtype"] == "CUSTOM",
+        }
+        attach_comments([detail], "service_name")
+        return success(detail)
 
     except Exception:
         current_app.logger.exception(

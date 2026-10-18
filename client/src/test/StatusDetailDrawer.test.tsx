@@ -2,10 +2,10 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { StatusDetailDrawer } from '../components/device-inventory/StatusDetailDrawer'
 
-const api = vi.hoisted(() => ({ apiGet: vi.fn() }))
+const api = vi.hoisted(() => ({ apiGet: vi.fn(), apiDelete: vi.fn() }))
 vi.mock('../lib/api', async () => {
   const actual = await vi.importActual<typeof import('../lib/api')>('../lib/api')
-  return { ...actual, apiGet: (path: string) => api.apiGet(path), apiPost: vi.fn(), apiDelete: vi.fn() }
+  return { ...actual, apiGet: (path: string) => api.apiGet(path), apiPost: vi.fn(), apiDelete: (path: string, data?: unknown) => api.apiDelete(path, data) }
 })
 
 const permissions = vi.hoisted(() => ({ granted: new Set<string>() }))
@@ -239,5 +239,38 @@ describe('identity review notice', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Review' }))
     expect(screen.getByRole('dialog', { name: 'Review device identity' })).toBeInTheDocument()
     expect(await screen.findByText('UNVERIFIED')).toBeInTheDocument()
+  })
+})
+
+describe('StatusDetailDrawer removing an acknowledgement', () => {
+  const ack = { comment: 'On it', acknowledged_by: 'Admin User', acknowledged_at: '2026-10-05T09:00:00+00:00' }
+
+  async function openAckedService() {
+    permissions.granted = new Set(['system.network_health', 'system.acknowledge_alerts'])
+    api.apiDelete.mockReset().mockResolvedValue({})
+    render(<StatusDetailDrawer hostname='web-01' onClose={() => {}} />)
+    await screen.findByRole('button', { name: /ssh-22-tcp/ })
+    api.apiGet.mockResolvedValue(detail({ service: 'ssh-22-tcp', services: undefined, state: 'Critical', ack }))
+    fireEvent.click(screen.getByRole('button', { name: /ssh-22-tcp/ }))
+    return screen.findByRole('button', { name: 'Unacknowledge' })
+  }
+
+  it('deletes once, with no comment, after confirmation', async () => {
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    fireEvent.click(await openAckedService())
+
+    expect(confirm).toHaveBeenCalledWith('Remove acknowledgement for this alert?')
+    await waitFor(() => expect(api.apiDelete).toHaveBeenCalledTimes(1))
+    expect(api.apiDelete).toHaveBeenCalledWith('/api/system/network-health/services/acknowledge', {
+      hostname: 'web-01',
+      service_name: 'ssh-22-tcp',
+    })
+  })
+
+  it('makes no request when cancelled', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(false)
+    fireEvent.click(await openAckedService())
+
+    expect(api.apiDelete).not.toHaveBeenCalled()
   })
 })

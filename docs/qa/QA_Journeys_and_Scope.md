@@ -2,10 +2,10 @@
 
 What the QA agent loop tests and what it must leave alone: nine user journeys,
 six invariants, and the out-of-scope list. The cases that exercise them are in
-[`QA_Test_Plan.md`](QA_Test_Plan.md). The loop mechanics (traceability, the
+[current module catalog](Pinpoint%20-%20Black-Box%20Test%20Cases%20by%20Module%20with%20Traceability%20Matrix.md). The loop mechanics (traceability, the
 `qa-run` workflow, lab safety) are issue #63 and are not defined here.
 The paper-format case and actual-result tables are in
-[`QA_Paper_Test_Case_Tables.md`](QA_Paper_Test_Case_Tables.md).
+[derived status view](QA_Case_Status.md).
 
 | | |
 |---|---|
@@ -25,6 +25,16 @@ The paper-format case and actual-result tables are in
 - **[INFER]** an inference. The agent does not assert it as a requirement.
 
 ---
+
+## Current execution source
+
+The journey IDs and historical plan citations below retain their original scope/decision
+context. Current execution uses the 231 TC cases and eight E2E scenarios in the module
+catalog; do not translate old IDs to new passes automatically. Per-case ISO metadata
+is not supplied by that catalog. Queues are assigned by module/person and explicit IDs.
+Current completion requires report-backed coverage for the reviewed current scope,
+including required human evidence, with failures/blocked work visible. Historical
+J/BB/PT completion statements below are background, not an additional live queue.
 
 ## 0. Authority order
 

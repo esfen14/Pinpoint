@@ -17,6 +17,7 @@ import pytest
 from unittest.mock import patch
 
 from app.history_models import HostStateType, ServiceStateType
+from app.system_models import SystemSettings
 
 from tests.support.seed_helpers import (
     _ts,
@@ -122,6 +123,30 @@ class TestDashboardStatus:
         assert nagios["running"] is False
         assert nagios["pid"] is None
         assert nagios["version"] is None
+
+    def test_reports_backup_health_for_an_empty_backup_folder(self, app, logged_in_client, db_session, tmp_path):
+        with patch.dict(app.config, {"DATABASE_BACKUP_DIR": tmp_path / "none"}):
+            resp = logged_in_client.get("/api/system/dashboard/status")
+        health = resp.get_json()["data"]["backup_health"]
+        assert health["newest_backup_at"] is None
+        assert health["backup_count"] == 0
+        assert health["total_bytes"] == 0
+        assert health["automatic_backups"] is False
+        assert health["stale"] is False
+
+    def test_backup_health_reports_newest_backup_and_stale_flag(self, app, logged_in_client, db_session, tmp_path):
+        db_session.session.add(SystemSettings(Id=1, Automatic_Backups=True))
+        db_session.session.commit()
+        old = tmp_path / "20200101-000000"
+        old.mkdir()
+        (old / "system.db").write_bytes(b"x" * 10)
+        with patch.dict(app.config, {"DATABASE_BACKUP_DIR": tmp_path}):
+            resp = logged_in_client.get("/api/system/dashboard/status")
+        health = resp.get_json()["data"]["backup_health"]
+        assert health["newest_backup_at"].startswith("2020-01-01T00:00:00")
+        assert health["backup_count"] == 1
+        assert health["total_bytes"] == 10
+        assert health["stale"] is True
 
     def test_with_program_status(self, logged_in_client, db_session):
         _make_program_status(db_session)

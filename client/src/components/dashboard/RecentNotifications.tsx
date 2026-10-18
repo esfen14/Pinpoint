@@ -12,6 +12,9 @@ export type DashboardNotification = {
   state: string
   contact: string
   message: string
+  // Set for a Nagios custom notification; `comment` is its text (null when no run here sent it).
+  is_custom?: boolean
+  comment?: string | null
 }
 
 type RecentNotificationsProps = {
@@ -60,9 +63,11 @@ export function RecentNotifications({ notifications, isLoading }: RecentNotifica
                   <td className="py-3 pr-4 text-[var(--text)]">
                     {n.hostname}{n.service_name ? ` / ${n.service_name}` : ''}
                   </td>
-                  <td className="py-3 pr-4 text-[var(--text)]">{n.state || '—'}</td>
+                  <td className="py-3 pr-4 text-[var(--text)]">{n.is_custom ? 'Custom' : n.state || '—'}</td>
                   <td className="py-3 pr-4 text-[var(--text-muted)]">{n.contact || '—'}</td>
-                  <td className="py-3 text-[var(--text-muted)] max-w-xs truncate">{n.message}</td>
+                  <td className="py-3 text-[var(--text-muted)] max-w-xs truncate" title={n.is_custom ? n.message : undefined}>
+                    {n.comment || n.message}
+                  </td>
                 </tr>
               ))
             )}

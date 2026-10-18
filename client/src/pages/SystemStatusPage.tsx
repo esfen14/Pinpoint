@@ -1,12 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { AlertTriangle, CheckCircle2, HelpCircle, XCircle } from 'lucide-react'
 import { PageHeader } from '../components/shared/PageHeader'
 import { SummaryStatCard } from '../components/shared/SummaryStatCard'
 import { useForecasts } from '../hooks/useForecasts'
+import { useLastRecoveries } from '../hooks/useLastRecoveries'
 import { ServiceStatusTable } from '../components/system-status/ServiceStatusTable'
+import { useCurrentUser } from '../contexts/CurrentUserContext'
 import { apiDelete, apiGet, apiPost, errorMessage } from '../lib/api'
+import { listActions } from '../lib/remediationApi'
+import { recoveryKey } from '../types/remediation'
 import { NagiosSyncNotice } from '../components/shared/NagiosSyncNotice'
-import { nagiosSyncNotice, type NagiosSyncResult } from '../types/nagiosSync'
+import { nagiosSyncNotice, UNACK_CONFIRM, type NagiosSyncResult } from '../types/nagiosSync'
 import { fromServiceRecord, type ServiceListResponse, type ServiceRow, type ServiceState } from '../types/service'
 
 const PER_PAGE = 10
@@ -24,6 +28,10 @@ function buildQuery(params: Record<string, string | number>) {
 
 export function SystemStatusPage() {
   const { data: forecasts } = useForecasts()
+  const recoveries = useLastRecoveries()
+  const { hasPermission } = useCurrentUser()
+  const canSeeRecovery = hasPermission('remediation.view')
+  const [recoveryActions, setRecoveryActions] = useState<Awaited<ReturnType<typeof listActions>>>([])
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [stateFilter, setStateFilter] = useState<'All' | ServiceState>('All')
@@ -51,6 +59,34 @@ export function SystemStatusPage() {
   useEffect(() => {
     setPage(1)
   }, [stateFilter, flappingOnly, sortAsc])
+
+  // Which services recover automatically, for the read-only mark on each row. Best effort: a
+  // failure only means no marks are shown.
+  useEffect(() => {
+    if (!canSeeRecovery) return
+    let cancelled = false
+    listActions()
+      .then((items) => {
+        if (!cancelled) setRecoveryActions(items)
+      })
+      .catch(() => {
+        if (!cancelled) setRecoveryActions([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [canSeeRecovery])
+
+  const autoRecovery = useMemo(() => {
+    const keys = new Set<string>()
+    for (const action of recoveryActions) {
+      const restarts = action.actionType === 'restart_local_service' || action.actionType === 'restart_remote_service'
+      if (action.enabled && restarts && action.scopeKind === 'service' && action.servicePattern) {
+        keys.add(recoveryKey(action.hostPattern, action.servicePattern))
+      }
+    }
+    return keys
+  }, [recoveryActions])
 
   async function loadServices() {
     setIsLoading(true)
@@ -111,6 +147,7 @@ export function SystemStatusPage() {
   }
 
   async function unacknowledgeService(service: ServiceRow) {
+    if (!window.confirm(UNACK_CONFIRM)) return
     try {
       const result = await apiDelete<NagiosSyncResult>('/api/system/network-health/services/acknowledge', {
         hostname: service.hostname,
@@ -194,6 +231,8 @@ export function SystemStatusPage() {
           onAcknowledge={(service) => setAckTarget(service)}
           onUnacknowledge={unacknowledgeService}
           forecasts={forecasts}
+          recoveries={recoveries}
+          autoRecovery={autoRecovery}
         />
 
       </div>

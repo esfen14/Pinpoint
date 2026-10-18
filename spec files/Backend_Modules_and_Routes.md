@@ -37,6 +37,22 @@ current-state inventory rather than treated as intended permission design.
 
 ## Operator CLI commands
 
+`app/api/commands/restore.py` provides `flask restore-backup <folder> --yes
+[--force]` (cold-standby recovery; runbook `docs/manuals/Backup_and_Restore.md`).
+The folder is a bare name in `YYYYMMDD-HHMMSS` form inside `DATABASE_BACKUP_DIR`,
+never a path. The logic is in `app/backup_restore.py`: it refuses a bad name, a
+symlink or a folder outside the backup directory, a missing database file, any
+file failing `PRAGMA integrity_check`, a missing `--yes`, and an active
+`pinpoint-gunicorn.service` (checked with a fixed `systemctl is-active --quiet`
+argument list; `--force` skips only this). It copies the current databases to
+`pre-restore-<timestamp>` (ignored by backup listing and rotation), stages each
+backup beside its target with the SQLite backup API, removes stale `-wal`/`-shm`/
+`-journal` files and renames each into place atomically; if the second rename
+fails the first is put back. It then prints the follow-up steps
+(`flask db upgrade --multidb`, `flask sync-permissions`, regenerate the Nagios
+config through the existing writer, start the service). Nothing is restored over
+a database that was not checked first.
+
 `app/api/commands/seed.py` provides `flask recover-bootstrap-admin` for an
 operator with local server access when the original bootstrap administrator has
 lost its password. It privately prompts for a confirmed temporary password and
@@ -181,14 +197,18 @@ Allowlisted actions that run when a covered service or host reaches a HARD failu
 | Method and path | Permission | Purpose |
 |---|---|---|
 | `GET /api/system/remediation/action-types` | `remediation.view` | The action types an admin can pick, each with `key`, `label`, `description` and its parameter schema |
+| `GET /api/system/remediation/targets` | `remediation.view` | Suggestions for the action form: `items` of `hostname` (the Nagios host name of every device that is not merged, plus any host with a service snapshot) and `services` (the service names snapshotted on it in the last 7 days, sorted). Suggestions only; the patterns an action saves are still validated by create and update |
 | `GET /api/system/remediation/actions` | `remediation.view` | All actions, ordered by name |
-| `POST /api/system/remediation/actions` | `remediation.manage` | Create an action; 400 with `data.fields` (field name to message) on invalid input, 422 with Nagios feedback when the regenerated config is rejected (nothing is saved), 201 on success |
+| `POST /api/system/remediation/actions` | `remediation.manage` | Create an action (`notifyOn`: which of `failed`, `capped` and `repeated` notify the operator through Nagios, default all three, may be empty, stored in a fixed order without duplicates, #153); 400 with `data.fields` (field name to message) on invalid input, 422 with Nagios feedback when the regenerated config is rejected (nothing is saved), 201 on success |
 | `PUT /api/system/remediation/actions/<id>` | `remediation.manage` | Replace an action; needs the current integer `version`; 400 with `data.fields`, 404, 409 on a stale version, 422 as for create |
 | `DELETE /api/system/remediation/actions/<id>` | `remediation.manage` | Delete an action; its runs stay in the log; 404, 422 as for create |
 | `GET /api/system/remediation/runs` | `remediation.view` | The run log, newest first: `page`, `per_page` (1 to 100, default 25), filters `action` (action id), `host` (exact name), `outcome`, `from` and `to` (`YYYY-MM-DD`, inclusive); 400 on a bad value; returns `items`, `page`, `per_page`, `pages`, `total` |
-| `GET /api/system/remediation/runs/<id>` | `remediation.view` | One run including its redacted `output`; 404 when missing |
-| `GET /api/system/remediation/settings` | `remediation.view` | `{enabled, retentionDays}`: the kill switch (default on) and how many days runs are kept (default 90) |
-| `PUT /api/system/remediation/settings` | `remediation.manage` | Send `enabled` (true or false), `retentionDays` (a whole number from 7 to 3650) or both; unknown fields and bad values are a 400 with `data.fields` and nothing is saved; each changed value is written to the configuration log as type `remediation_setting` when audit logging is on. These two settings are not part of `/api/system` and do not change its `version` |
+| `GET /api/system/remediation/runs/<id>` | `remediation.view` | One run including its redacted `output`; 404 when missing. Every run item also carries `notifyKind` (`failed`, `capped`, `repeated` or null), `notifyState` (`pending`, `sent`, `failed` or null when no notification was due), `notifyAttempts`, `notifyError` (a fixed sentence) and `notifyAt` (#153) |
+| `GET /api/system/remediation/last-runs` | `remediation.view` | The newest run for each host and service in the last 7 days (at most 500, newest first), for the badge on a service row: `items` of `runId`, `hostname`, `service` (null for a host), `outcome`, `notifyState`, `receivedAt`; never the output (#153) |
+| `GET /api/system/remediation/settings` | `remediation.view` | `{enabled, retentionDays, repeatCount, repeatWindowHours}`: the kill switch (default on), how many days runs are kept (default 90), and the repeat-recovery limits (default 3 successful recoveries of one service in 24 hours send one "repeated" notification, #153) |
+| `PUT /api/system/remediation/settings` | `remediation.manage` | Send any of `enabled` (true or false), `retentionDays` (a whole number from 7 to 3650), `repeatCount` (2 to 20) and `repeatWindowHours` (1 to 168); unknown fields and bad values are a 400 with `data.fields` and nothing is saved; each changed value is written to the configuration log as type `remediation_setting` when audit logging is on. These settings are not part of `/api/system` and do not change its `version` |
+| `GET /api/system/remediation/services/<hostname>/<service_name>` | `remediation.view` | One service's "Recover automatically" setting (#154): `enabled`, `maxRestartsPerHour`, `version` (null until it exists), `actionId`, `actionType` and `unit` (the server's choice), `canEnable` with a plain `reason` when false (device not found, not Active, paused, not trusted, remote restart off, no matching unit on the device's own list, the event handler program not installed, or on the PinPoint host a unit outside `RESTARTABLE_UNITS`), `otherActions` (other enabled actions that also cover the service) and `lastRun`. The pair must exist in the newest Nagios status snapshot, else 404 |
+| `PUT /api/system/remediation/services/<hostname>/<service_name>` | `remediation.manage` | Body `{enabled, maxRestartsPerHour (1 to 6), version}`; `version` is left out until the setting exists. Any other field, including a unit, command or path, is a 400 with `data.fields`; 409 on a stale or missing version; 422 with `data.reason` when it cannot be switched on, or with the Nagios message when the regenerated config is rejected (nothing is saved). Creates, updates or disables exactly one `RemediationAction` scoped to this host and service (`Host_Pattern` and `Service_Pattern` equal to the names, the same row the Remediation page lists); the server picks the type and unit (see `remediation.choose_service_recovery`) and keeps a still-valid unit an administrator chose on the Remediation page. Disabling keeps the row with `Enabled` false, and the handler leaves that service's config on the next regeneration. Changes are audited like the action routes |
 | `GET /api/system/remediation/health` | `remediation.view` | Whether the consumer is working: `lastTickAt`, `lastError` (a fixed sentence, never a path), `stalled` (no heartbeat for three poll intervals, 45 seconds, or never), `backlog` and `oldestSpoolAgeSeconds` (event files waiting), `runsLast24h` (actions started), `capsHitLast24h`, `skippedLast24h`, `droppedTotal` and `droppedAt` (events discarded because the spool held too many). One state row, one folder listing and three counts; no history scan |
 
 An action body has `name` (3 to 60 letters, numbers, spaces, `.`, `_`, `-`; unique), `actionType` (a key from `action-types`), `scopeKind` (`service` or `host`), `hostPattern` (letters, numbers, `.`, `_`, `-`, `*`), `servicePattern` (required for a service action, null for a host action; also allows spaces, `:` and `/`), `parameters` (validated by the action type; `record_only` takes none and rejects any key; `restart_local_service` takes exactly `unit`, one of the fixed list in `RESTARTABLE_UNITS`, currently `nagios`, and anything else is a 400 on `parameters.unit`), `enabled` (boolean, default false), `maxRunsPerHour` (1 to 60, default 2) and `cooldownSeconds` (60 to 86400, default 600) and `runWhenAcknowledged` (boolean, default false: when false the action is skipped for a problem an operator has already acknowledged). Patterns match an exact name or use `*` for any run of characters; there is no regex. Unknown fields are errors. Every change regenerates, validates and applies the Nagios config through the shared writer before committing, and is written to the configuration log when audit logging is on. Run list items hold `id`, `actionId`, `actionName`, `hostname`, `service`, `state`, `stateType`, `attempt`, `receivedAt`, `startedAt`, `finishedAt`, `outcome` and `reason`; outcomes are `running`, `succeeded`, `failed`, `timed_out`, `skipped_cooldown`, `skipped_hourly_cap`, `interrupted`, `skipped_kill_switch`, `skipped_maintenance`, `skipped_downtime` and `skipped_acknowledged`. Nothing in a response carries credentials or internal paths.
@@ -197,13 +217,13 @@ An action body has `name` (3 to 60 letters, numbers, spaces, `.`, `_`, `-`; uniq
 
 | Method and path | Permission | Purpose |
 |---|---|---|
-| `GET /api/system/dashboard/status` | `system.dashboard` | Nagios process, monitoring-server resources and appliance storage_usage (per-database, backups, archives, free/total bytes per filesystem) |
+| `GET /api/system/dashboard/status` | `system.dashboard` | Nagios process, monitoring-server resources, appliance storage_usage (per-database, backups, archives, free/total bytes per filesystem) and `backup_health` (`newest_backup_at`, `backup_count`, `total_bytes`, `automatic_backups`, `stale`; `stale` is true only when automatic backups are on and the newest backup is missing or older than twice the daily interval; an empty or missing folder gives null/0) |
 | `GET /api/system/dashboard/summary` | `system.dashboard` | Host/service counts, active-alert counts, ping and NCPA summaries |
 | `GET /api/system/dashboard/alerts` | `system.dashboard` | Active alerts from the latest snapshot, with acknowledgement filters |
 | `POST /api/system/dashboard/alerts/acknowledge` | `system.acknowledge_alerts` | Acknowledge one host or service alert; also sent to Nagios (`nagios_synced`, `nagios_message` in the response). A comment with a line break or NUL returns 400 |
 | `POST /api/system/dashboard/alerts/acknowledge-all` | `system.acknowledge_alerts` | Acknowledge a supplied batch of alerts; `nagios_synced` is false if any command failed |
 | `DELETE /api/system/dashboard/alerts/acknowledge` | `system.acknowledge_alerts` | Remove one application acknowledgement and the Nagios one (`nagios_synced`) |
-| `GET /api/system/dashboard/notifications` | `system.dashboard` | Return the five latest Nagios notifications |
+| `GET /api/system/dashboard/notifications` | `system.dashboard` | Return the five latest Nagios notifications. A Nagios custom notification (archive `notification_type` 1024, `notificationtype: CUSTOM`) carries `is_custom: true` and a `comment`: the archive holds no comment text, so the server rebuilds it from the `RemediationRun` that sent it (same host and service, `Notify_State` sent, send time within 120 seconds of the notification; the nearest run wins). `comment` is null when no run here sent it; ordinary notifications carry `is_custom: false` and no `comment` (#153). |
 
 Detailed fields and behavior are normative in `Display_Requirements.md`.
 
@@ -260,8 +280,8 @@ each route's docstring.
 |---|---|---|
 | `GET /api/system/history/alerts` | `system.history` | Paginated Nagios state-change events |
 | `GET /api/system/history/alerts/detail` | `system.history` | Full detail for one alert event |
-| `GET /api/system/history/notifications` | `system.history` | Paginated notification events from Nagios and Pinpoint; every item has `source` (`nagios` or `pinpoint`), filterable with `source=`. Pinpoint items are finished network scans (`type: scan`, state SUCCESS/FAILED/CANCELLED) read from `NETWORK_DISCOVERY_STATUS`; host/service/contact/type filters exclude them |
-| `GET /api/system/history/notifications/detail` | `system.history` | Full detail for one notification event; Pinpoint events use `source=pinpoint&id=<DiscoveryStatusID>` |
+| `GET /api/system/history/notifications` | `system.history` | Paginated notification events from Nagios and Pinpoint; every item has `source` (`nagios` or `pinpoint`), filterable with `source=`. Pinpoint items are finished network scans (`type: scan`, state SUCCESS/FAILED/CANCELLED) read from `NETWORK_DISCOVERY_STATUS`; host/service/contact/type filters exclude them A custom notification carries `is_custom` and a `comment` rebuilt from the run that sent it, as for the Dashboard route above (#153). |
+| `GET /api/system/history/notifications/detail` | `system.history` | Full detail for one notification event; Pinpoint events use `source=pinpoint&id=<DiscoveryStatusID>`. A Nagios custom notification (archive `notification_type` 1024, `notificationtype: CUSTOM`) carries `is_custom: true` and a `comment`: the archive holds no comment text, so the server rebuilds it from the `RemediationRun` that sent it (same host and service, `Notify_State` sent, send time within 120 seconds of the notification; the nearest run wins). `comment` is null when no run here sent it; ordinary notifications carry `is_custom: false` and no `comment` (#153). |
 
 Alert list and detail annotate prior state and time in that state from preceding
 archive transitions for the same target; recovery detail computes the full
@@ -295,7 +315,7 @@ in the seed permission list. This is tracked in `Implementation_Status.md`.
 
 | Method and path | Permission | Purpose |
 |---|---|---|
-| `GET /api/system/notifications` | `system.notifications` | Recent notifications from Nagios (`source: nagios`) and Pinpoint itself (`source: pinpoint`, network scan results) annotated with per-user read state. Nagios field names are normalized (`normalize_notification`) and repeats of the same host/service in the same state are collapsed into one entry with `repeat_count` and `first_timestamp` (`collapse_repeats`); the history routes are not collapsed |
+| `GET /api/system/notifications` | `system.notifications` | Recent notifications from Nagios (`source: nagios`) and Pinpoint itself (`source: pinpoint`, network scan results) annotated with per-user read state. Nagios field names are normalized (`normalize_notification`) and repeats of the same host/service in the same state are collapsed into one entry with `repeat_count` and `first_timestamp` (`collapse_repeats`); the history routes are not collapsed A custom notification carries `is_custom` and a `comment` rebuilt from the run that sent it, as for the Dashboard route above (#153). |
 | `GET /api/system/notifications/unread-count` | `system.notifications` | Count collapsed entries after the user's cursor (matches the panel list) |
 | `POST /api/system/notifications/mark-read` | `system.notifications` | Advance the user's notification cursor |
 
@@ -405,6 +425,8 @@ encrypted with `secrets_store` as `<name>_enc` and never returned.
 | `POST /api/system/deployment/ncpa/<device_id>/confirm-trust` | `system.deploy.ncpa` | Body `{"fingerprint"}`: save the key only if the live key on the device's SSH port still equals the one the user approved, pinning that port in `SSH_Port`; 409 with `data.fingerprint` when it changed, 502 when unreachable |
 | `POST /api/system/deployment/ncpa/check-credentials` | `system.deploy.ncpa` | Test each device's login and sudo on its pinned SSH port without deploying; per-device result `ok`, `auth_failed`, `no_sudo`, `unreachable`, `host_key_changed`, `not_trusted`, `not_found` or `rate_limited` (one check per device per 3 s) |
 | `POST /api/system/deployment/ncpa/<device_id>/refresh-disks` | `system.deploy.ncpa` | Re-read the agent's logical disks, store them, regenerate the Nagios config |
+| `GET /api/system/deployment/ncpa/register-candidates` | `system.deploy.ncpa` | Active scanned devices without a deployed agent, NCPA-eligible or not (#130), for the registration picker |
+| `POST /api/system/deployment/ncpa/<device_id>/register` | `system.deploy.ncpa` | Register an agent the administrator installed (#130): body `token` (32 hex characters) and optional `port`; the agent must answer and report a disk before anything is saved; stores method Manual, status Deployed, disks and the NCPA port, then reconciles Nagios. 400 invalid input, 404 unknown/retired device, 409 already deployed, 502 agent unreachable or no disks |
 | `GET /api/system/deployment/ncpa/<device_id>/remote-restart`, `PUT /api/system/deployment/ncpa/<device_id>/remote-restart` | `system.deploy.ncpa` | Read or set a device's remote restart switch and service list. PUT body `{"enabled": bool, "services": [unit, ...]}`; units are plain names (letters, digits, `_ . @ -`, at most 63 characters, at most 20 per device); 400 for anything else, 409 for an untrusted device or turning it on with an empty list. `redeploy_needed` is true when the list changed, because the device's own copy is written only by a (re)deployment |
 | `POST /api/system/deployment/ncpa/<device_id>/cleanup` | `system.deploy.ncpa` | Body `{"username", "password", "remove_account"?}`: a failed or deployed device with a confirmed SSH fingerprint and no running deployment; recheck SSH key before SSH and remove Pinpoint bootstrap key/rule/helper, optionally account. Response lists each step with `ok`/optional `skipped`, and `agent_status`; cleanup clears `Key_Installed` to block remote actions until redeployment; complete cleanup returns Pending NCPA, incomplete cleanup stays Deployment Failed with a safe error. An activity entry records the outcome; request credentials are cleared. Errors never contain credentials. |
 | `POST /api/system/deployment/ncpa/start` | `system.deploy.ncpa` | Validate credentials and devices, create the run with a Rejected or Pending result per device, and start the worker; 400 with `data.rejected` when no device can be deployed |
@@ -447,8 +469,8 @@ policy and fixed path; responses can still contain hostnames and addresses.
 |---|---|---|
 | `GET /api/system/report/availability` | `system.report` | Host availability for a period from Nagios `archivejson.cgi` durations; optional `hostname` scope is forwarded |
 | `GET /api/system/report/hosts-by-os` | `system.report` | The same Nagios-backed host availability grouped by OS |
-| `GET /api/system/report/network-services` | `system.report` | Network-wide service health report |
-| `GET /api/system/report/device-services` | `system.report` | Per-device service health report |
+| `GET /api/system/report/network-services` | `system.report` | Service availability from bulk Nagios archive durations, grouped by exact description; separate current bulk status |
+| `GET /api/system/report/device-services` | `system.report` | The same archive service instances grouped by hostname; device aggregate is service availability, not host uptime |
 | `GET /api/system/report/alerts` | `system.report` | Alert events/count from Nagios archives |
 | `GET /api/system/report/notifications` | `system.report` | Notification events/count from Nagios archives |
 
@@ -492,6 +514,60 @@ update/custom-plugin modules.
 | `POST /api/plugin/<plugin_id>/update` | `plugin.update` | Update from an archive |
 | `POST /api/plugin/<plugin_id>/update/rollback` | `plugin.update_rollback` | Restore the backed-up version |
 
+#### Service availability response contract
+
+The two service reports share `nagios/service_availability.py`, called on each
+execution. No `ServiceStatus` query, poller invocation, cache, scheduler or database
+fallback is used. One bulk archive request and at most one bulk detailed status
+request are made (none for empty history). Each call has a maximum 10-second
+connect/read timeout, the second limited by a shared 20-second timeout budget;
+there are no retries or redirects. This timeout budget is not a hard CPU or
+whole-response wall-clock deadline for a continuously streaming upstream.
+
+Existing URLs, grouping arrays and `uptime_pct` names remain. Network Services
+returns `services[]` with `service`, `total_instances`, current state counts and
+`instances[]`. Device Services returns `hosts[]` with `hostname`, `services[]`
+and service-duration aggregates; `total_hosts` and `total_services` remain.
+Both include `summary` with raw duration sums and counts. Distinct configured
+archive instances/hosts determine totals; no synthetic database-only rows exist.
+
+Instance, group and summary duration fields are numeric **seconds**:
+`ok_seconds`, `warning_seconds`, `critical_seconds`, `unknown_seconds`,
+`scheduled_ok_seconds`, `scheduled_warning_seconds`, `scheduled_critical_seconds`,
+`scheduled_unknown_seconds`, `known_seconds`, `no_data_seconds`,
+`nagios_not_running_seconds`, `unaccounted_seconds`, `no_recorded_data_seconds`
+and `window_seconds`. State totals already include their scheduled component;
+`known_seconds` sums the four states. `uptime_pct` is `100 * ok / known`, rounded
+to two decimals at output, null when known is zero. Aggregates sum raw seconds,
+never rounded percentages. `no_recorded_data_seconds = window_seconds - known`;
+its components are native no-data, engine downtime and the unaccounted remainder.
+A zero-history configured instance remains visible with null uptime and full
+missing coverage. No snapshot-count field, including `total_snapshots`, exists
+in either service-report contract. The host report's legacy field is unchanged.
+
+`current_status` contains `available`, `observed_at` (UTC ISO timestamp or null),
+and `notice` (null or sanitized status-unavailable text). Instance `state`,
+`last_check`, `last_state_change`, `plugin_output` come only from the separate
+bulk current service list, joined by exact `(hostname, service)` identity.
+Counts `ok`, `warning`, `critical`, `unknown`, `pending`, `unavailable` describe
+current status, even for past periods. Pending has null timestamps/output;
+missing has null metadata. A status failure preserves availability with null
+metadata and explicit notice. Archive timeout/auth/JSON/envelope/shape/identity/
+duration failures return a sanitized retryable 502; empty success returns an
+empty report. Every native duration must be finite, nonnegative and numeric;
+duplicate identities and duration sums exceeding the instance window are rejected.
+
+All six period values remain. Service custom dates use server-local midnight
+through the next midnight after the inclusive end date (exclusive boundary).
+Rolling/today/future-ended custom windows end at the last completed Unix second,
+strictly before the native query time, preventing Core's no-history current
+pseudo-state path. Empty/future-start/invalid bounds return 400 before I/O.
+Service `period` adds exact `start_ts`, `end_ts`, `end_exclusive=true`, `time_zone`;
+`start`/`end` contain UTC offsets. The same resolved window is used throughout;
+current status is explicitly an observation now, not a historical status query.
+The unchanged host/event routes retain their existing period behavior.
+
+
 ### Data polling settings contract
 
 `GET /api/system` includes `dataPollingInterval` in seconds. `PUT /api/system`
@@ -519,6 +595,7 @@ running. Check/retry settings, discovery and browser preferences remain independ
 | `api/helper/settings_flags.py` | Reads security/logging/session settings without importing route modules |
 | `api/helper/database_access/` | User, role, and permission lookup helpers |
 | `api/commands/seed.py` | Seeds permissions, roles, settings, and development users |
+| `nagios/service_availability.py` | Validates native service archive durations, sums weighted service availability and joins one read-only bulk current service list |
 | `nagios/status.py` | Polls status/object CGI data and writes snapshot models |
 | `api/plugin/plugin_descriptions.py` | One-line descriptions for the 58 bundled plugins; the scan fills a plugin's empty `Description` from it, and never overwrites an edited one |
 | `nagios/notifications.py` | Queries archive CGI alerts and notification events |
@@ -531,7 +608,8 @@ running. Check/retry settings, discovery and browser preferences remain independ
 | `remediation_actions.py` | The code-defined action types (`record_only`, and `restart_local_service` which runs `sudo -n /usr/bin/systemctl restart <unit>` as an argument list with no shell for a unit in `RESTARTABLE_UNITS`; it is refused for an unlisted unit or in Maintenance Mode, and records only the exit code, never command output): parameter schema and validation, `restart_remote_service` (#8 Part 8.3: restarts one unit on the device the event came from over SSH; see `remote_restart.py`; refused in Maintenance Mode, for a device that is not Active, is paused, is not trusted or has the switch off, and for a unit not on that device's list), and `run_action`, which enforces a timeout and turns a crash into a fixed message so no secret reaches the log. `RESTARTABLE_UNITS` and the installer sudoers drop-in must change together |
 | `remote_restart.py` | Remote service restart (#8 Part 8.3). Device side: the root-owned helper `/usr/local/sbin/pinpoint-service-restart`, its one sudoers line (`/etc/sudoers.d/pinpoint-service-restart`, checked with `visudo` before it replaces the live file) and the root-owned list `/etc/pinpoint/restartable-services`, installed by the NCPA bootstrap with the administrator's one-time password. PinPoint side: `restart_remote_unit` checks the stored host-key fingerprint, logs in with the deployment key and runs only `sudo -n <helper> <unit>`; the unit must match a plain-name pattern, and only fixed text is returned. Design: `docs/plans/Issue_8_3_Remote_Restart_Design_Note.md` |
 | `scripts/pinpoint_event_handler.py` | The Nagios event handler (standard library only): validates its arguments and writes one JSON file per event to the spool; never opens a shell or the network; installed by the installer at `/usr/local/sbin/pinpoint-event-handler` (`root:root`, 755) |
-| `automation.py` | Settings-driven discovery, plugin/security checks, and database backups |
+| `automation.py` | Settings-driven discovery, plugin/security checks, and database backups; `backup_health` for the dashboard; a failed scheduled backup writes one activity-log entry per day ("Scheduled database backup failed; see the application log", no exception text) |
+| `backup_restore.py` | Validation, integrity check, safety copy and atomic replacement used by `flask restore-backup`; also owns `BACKUP_FOLDER_FORMAT` |
 
 ## Shared statistics contract
 

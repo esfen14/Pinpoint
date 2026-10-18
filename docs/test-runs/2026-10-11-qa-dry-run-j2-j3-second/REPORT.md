@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-11 session; appliance timestamps 2026-10-10 UTC |
 | Commit tested | `ebb5aea3010331e5264937443047d7c3f48231d7`, confirmed on appliance as its repository owner |
-| Plan | [QA_Test_Plan.md](../../qa/QA_Test_Plan.md), Phase 0 of owner's execution plan |
+| Plan | [QA_Test_Plan.md](https://github.com/esfen14/Pinpoint/blob/299ab3ba7203c89a3ca5d8fabea42d9e5f239be2/docs/qa/QA_Test_Plan.md), Phase 0 of owner's execution plan |
 | Tester | OpenCode; earlier observations explicitly attributed to owner-provided handoff |
 | Environment | Existing Ubuntu installer-built VirtualBox appliance `pinpoint-appliance-45`, Nagios lab; five targets on `10.77.0.0/28`; inherited database, not reset this session |
 | Raw evidence | Owner scratchpad `issue-62-lab-handoff.md`; live API/SSH observations in the OpenCode session. No raw export committed |

@@ -156,6 +156,7 @@ See [the investigation](../docs/plans/Issue_191_Account_Creation_Investigation.m
   Saves reschedule one existing job and restore its trigger/next run on failure;
   disabled scheduling stays disabled and startup uses the saved interval. General
   displays the actual saved check/poll and personal browser refresh schedules.
+- Database restore and backup health (#125): `flask restore-backup`, `backup_health` on the dashboard status route and a failed-backup activity-log entry; unit tests pass. Recovery runbook `docs/manuals/Backup_and_Restore.md`. No frontend display of `backup_health`. **Not yet verified on a fresh lab appliance** (`scripts/vmlab fresh`; no report in `docs/test-runs/`). Cold standby only; Nagios config and NCPA key are not backed up.
 - Scheduled Nagios polling, retention purges, backups, network scans, plugin
   update scans, and security validation.
 - Event handler framework (#120): admin-defined remediation actions (`record_only`, plus `restart_local_service` from #121 and `restart_remote_service` from #8 Part 8.3), the
@@ -167,6 +168,14 @@ See [the investigation](../docs/plans/Issue_191_Account_Creation_Investigation.m
   type), scheduled downtime and acknowledged problems (`Run_When_Acknowledged` opts an action out),
   purge of old runs and spool files with a 1000 file spool cap, a consumer heartbeat and
   `/api/system/remediation/health` with a `stalled` flag, and the status panel on the Remediation page.
+- Failure escalation for automatic recovery (#153): a failed or timed-out run, a run stopped by the
+  cooldown or hourly cap, and a service recovered repeatedly each send one Nagios custom
+  notification (never forced, fixed-text comment) when the action's `Notify_On` asks for it; state,
+  bounded retry and restart safety are on the run; `/api/system/remediation/last-runs`; the Operator
+  column, drawer details, `Notify_On` checkboxes, Repeat recovery limits and a last-recovery badge on
+  service rows. Verified with the command layer mocked and a lab run; the browser pass and an automatic-run mail check are open
+  (see Incomplete or mismatched work).
+- Per-service "Recover automatically" (#154): `GET`/`PUT /api/system/remediation/services/<host>/<service>` and a switch with a restarts-per-hour limit in the Device Inventory service view, backed by one service-scoped `RemediationAction` shared with the Remediation page, plus a read-only mark on System Status rows.
 
 ## Implemented frontend areas
 
@@ -182,7 +191,7 @@ See [the investigation](../docs/plans/Issue_191_Account_Creation_Investigation.m
 - Settings -> Plugins tab (`settings.plugins`): the SNMP OID table and the NCPA metric table, each editable once its plugin (`check_snmp`, `check_ncpa`) is installed; saving rebuilds the Nagios config. A metric's `fallback_path` (used when no partitions were recorded) is supported by the planner but not editable from the tab.
 - Settings -> Email tab (`settings.email`): Gmail preset plus Other SMTP relay over STARTTLS, applied through the existing installer helper. Custom host/port validation, password preservation and generic relay test-email errors are covered by isolated tests; Gmail tests remain unchanged. The tab polls a bounded, sanitized Nagios notification-failure indicator every 30 seconds. No migration or new permission is needed. The [#115 Docker acceptance run](../docs/test-runs/2026-10-15-issue-115-starttls-docker/REPORT.md) verifies the unchanged root helper through real sudo, protected file metadata, five authenticated STARTTLS sink deliveries (API, Nagios host/service and browser), actual worker failure detection within 0.33 seconds, service-user log access and browser notice polling without losing edits. The [external receipt run](../docs/test-runs/2026-10-15-issue-115-inbox-confirmed/REPORT.md) records owner-reported successful test email, owner-confirmed receipt of the uniquely labeled real Nagios notification, a final guarded browser repeat and removal of the owned fixture. No installer ISO/upgrade result is claimed. Implicit TLS/installer changes are deferred by the user; plaintext SMTP and Microsoft 365/OAuth remain excluded. The helper exists only on installed appliances, so saving elsewhere returns "The mail helper is not installed on this server."
 - System Logs with five backend categories.
-- Reports UI for host availability and network services.
+- Reports UI with six connected views: Host Availability, Network Services, Hosts by OS, Device Services, Alerts and Notifications. Each supports shared report periods and filtered exports; see [Reports](Frontend_Modules_and_Routes.md#reports) for endpoints, displayed fields and formats.
 - Plugin Manager inventory/running tabs, details, scan, custom plugin, and
   administrative actions.
 - Remediation page (`remediation.view`): actions with an enable switch, an add/edit form, and a run log with filters and a detail drawer (#120).
@@ -196,12 +205,13 @@ See [the investigation](../docs/plans/Issue_191_Account_Creation_Investigation.m
 
 | Area | Current state | Required direction |
 |---|---|---|
+| Set service uppercase validation (TC-DI-07) | `SetServiceDialog` lowercases trimmed input before applying the lowercase-only regex and before saving, while the black-box case expects uppercase `SSH` to be invalid. The regex unit test rejects uppercase in isolation, but this does not verify dialog normalization. No live result is claimed. | Resolve the intended uppercase behavior and align the dialog or approved case/spec before accepting E2; the current adapter asserts the catalog expectation and keeps the live case result evidence-dependent |
 | History frontend audit | `/history` is routed and permission-guarded; its source audit against `Alerts_Notifications_History_Requirements.md` is in `docs/test-runs/2026-10-14-issue-133-history-audit/AUDIT.md`. It supports sorting for API-supported columns and cross-tab target navigation. Episode-specific acknowledgement now bounds list/filter/detail annotations by Nagios problem/recovery transitions and ACK_HISTORY actions (#141). The list API now supports validated offset-aware custom date/time bounds and all-column sorting with timestamp-desc ties (#142); the page still needs to wire its picker and remaining columns to those options. Exact event linking now uses deterministic archive event locators in list/detail responses and cross-tab row expansion outside the default range (#143; indistinguishable duplicate archive records still require upstream identity). Prior-state and recovery duration derive from the archive timeline, including transitions before the selected list range (#144); when no earlier archive record exists, onset cannot be inferred. No live appliance walk has been recorded | Wire the history UI to #142, complete #144 and verify manually on a lab appliance |
 | Auto-resolved acknowledgements | A completed Nagios status poll clears active acknowledgements for fresh UP/OK checks and appends actorless AUTO_RESOLVED history in one transaction; missing/stale/failed checks retain them. Isolated tests pass; live lab recovery not yet verified | Verify acknowledge → recover → history on a lab appliance |
 | Per-host alert recipients | `HostAlertRecipient` selects users per stable device; permission `system.hosts.alerts` gates the host editor and read/write routes. Generated host and service groups filter Active opted-in users, fall back to the default, and roll back failed saves; rescan/merge/retire ownership covered by isolated tests | #79: [Docker repeat](../docs/test-runs/2026-10-14-issue-79-docker-repeat/REPORT.md) verifies real Nagios groups, selected/default host and service MIME routing, fallback, rescan and rollback (14 passes across the initial and follow-up reports). [VM/browser run](../docs/test-runs/2026-10-15-issue-79-vm-browser/REPORT.md) also verifies save/config validation, normal host/service captured mail routing, rescan and ineligible fallback. [Rebuilt VM run](../docs/test-runs/2026-10-15-issue-79-rebuilt-inbox/REPORT.md) on integrated commit `4ed80435` passes browser E2E (4 checks), selected/default groups, real DOWN/HARD CRITICAL dispatch, actual Gmail SMTP acceptance (12 problem/recovery messages), bounded rescan and ineligible fallback; original baseline restored with unchanged database/static hashes. [Owner inbox confirmation](../docs/test-runs/2026-10-15-issue-79-inbox-confirmed/REPORT.md) completes acceptance: selected mailbox received eight host/service problem/recovery messages for both hosts, while the default-only mailbox received four for the default host and none for the selected host, including Spam. [#162](https://github.com/esfen14/Pinpoint/issues/162) is resolved by merged PR #165 and the rebuilt lab passes ownership preflight. Recipient/interface migration histories now join at e79b7d3c2641; interface counter services retain recipient groups with global NCPA enabled. The initial immediate post-reload capture timed out; a later transition after worker registration passed, and the timing cause remains undiagnosed |
 | Discovery stop permission | Stop route checks `network.discovery`; seed data defines `system.discover` | Standardize the route on the seeded permission or deliberately introduce/seed the alternate permission |
 | Password recovery | Email settings and installer transport now support notification email, including the STARTTLS custom relay evidence above. The login page’s “Forgot Password?” button has no handler and the server has no recovery route (the only reset is an administrator resetting a password). First-login placeholder email replacement remains tracked separately under #61 | Design password recovery on top of the existing SMTP settings and transport |
-| Reports frontend breadth | Backend has six report endpoints; UI currently exposes availability and network-services views | Add other views only when product requirements call for them |
+| Reports frontend breadth | All six API-backed views are implemented: Host Availability, Network Services, Hosts by OS, Device Services, Alerts and Notifications. Each route, period and export mapping is documented in [Reports](Frontend_Modules_and_Routes.md#reports) | Documentation reconciled in #134. Product decision: measured uptime only; availability targets and breach indicators are excluded |
 | Network Health plugin section | Backend endpoint exists; current page does not call `/network-health/plugins` | Connect it when implementing the corresponding `Display_Requirements.md` section |
 | Device discovery inventory | Historical docs described `/system/hosts` and port endpoints, but those routes do not exist; current Device Inventory uses latest Nagios host status | Treat the current host-status API as implemented behavior unless a separate discovery inventory contract is approved |
 | Plugin lifecycle and discovery | Generation and promotion follow Plugin Manager; the reconciler attaches and detaches services on enable, disable, scan, port edit, merge/retire and NCPA events; the Plugin Manager page shows an enable preview, a Monitoring column, each plugin's monitored services with live status and stop/resume per device. The manual apply routes, `plugin-services.cfg` writing and the `plugin.configure` permission are removed | Not yet run against a live Nagios or checked in a browser: `server/tests/plans/PLUGIN_DRIVEN_MONITORING_LAB_TEST_PLAN.md` is the checklist. Held ports are shown and released from the device drawer's Ports section |
@@ -211,6 +221,7 @@ See [the investigation](../docs/plans/Issue_191_Account_Creation_Investigation.m
 | Custom checks | Plugins that probe a device but need arguments (`check_by_ssh`, `check_ups`, ...) take per-device custom checks from the plugin drawer (`plugin.custom_check`); seven more port-driven plugins (`check_pgsql`, `check_ldap`, `check_ldaps`, `check_rpc`, `check_ircd`, `check_time`, `check_ntp_peer`) are in the registry and enable like `check_ssh`. Not run against a live Nagios or opened in a browser | Lab run (`docs/plans/Custom_Checks_Plan.md` phase C4). Server-local plugins (`check_apt`, `check_uptime`, `check_file_age`, ... ) take **server checks** on the Nagios server's own host; the five stock local plugins stay with Nagios Core. Passwords for `check_radius`, `check_mysql_query`, `check_nt` and `check_disk_smb` are stored encrypted (generated through protected resource slots and secure NCPA/native adapters under #129; password-bearing SMB generation is explicitly refused because its child lacks secure credential input); `check_dbi` and `check_oracle` are not available; see the plan's section 2.4. The ping family (`check_ping`, `check_icmp`, `check_fping`, `check_dig`) takes custom checks like the rest |
 | Device Inventory beyond ports | The Ports section of the device drawer exists (state, reason, monitor, ignore, stop, leave suggested, resume, acknowledge, set service, remove pin). The host table shows a monitoring label (Monitored, Missing, Address unknown, Paused, Retired, Merged) with a filter that opens on Monitored, and the drawer pauses and resumes a device (`Include_Device_In_Scanning` now has a writer). A paused, retired or merged device is left out of the dashboard and Network Health counts and alerts. Identity review and merging now have an independent Needs Review table and linked device notice, comparison evidence, address history on demand, discovered-record lookup and confirmation (#164). Isolated interaction/backend regressions and [Docker real-Nagios/browser acceptance](../docs/test-runs/2026-10-15-issue-164-final-refresh/REPORT.md) pass, including the linked notice, both themes, keyboard focus, source outside Monitored and a saved merge with a configuration warning. Still API-only: `SERVICE_CHANGED` review resolution, retire and static/DHCP marking; standalone device confidence badges are not implemented | Follow-ups in `docs/plans/Device_Ports_UI_Plan.md` §10 and `docs/plans/DHCP_Device_Identity_Plan.md` §11 |
 | NCPA port per device | Installed `NCPADeployment.Port` is recorded and used by checks, probes, relocation and port protection, with a global fallback. The reversible migration backfills existing deployed rows. Isolated tests pass; actual main Nagios monitoring, authenticated probes and certificate relocation on port 5703 pass in [the finish-journeys report](../docs/test-runs/2026-10-15-issue-129-finish-journeys/REPORT.md). | No re-port UI; change deployed agents through the documented deployment workflow. |
+| Manual NCPA registration (#130) | `POST .../ncpa/<id>/register` and the **Register agent** dialog with Windows install help are implemented with isolated backend and frontend tests. | Not done: probing a lab Windows host for valid disk/process node names (the issue's open scope decision), Windows-specific metric defaults the lab report in `docs/test-runs/`, and checking the help wording on the lab host |
 | NCPA deployment cleanup | The permission-protected failed-only cleanup endpoint and dialog remove bootstrap artifacts, optionally the account, recheck the SSH fingerprint and report each step. Isolated backend/frontend tests pass. | Verify deliberately failed install and cleanup on a lab target. |
 | SERVICE_CHANGED auto-clear | A `SERVICE_CHANGED` review item stays open after the mismatch disappears (seen when a port rule was removed); only an operator resolves it | Resolve the item automatically when the port again matches its frozen plugin |
 | Per-device plugin variables and SNMP v3 (#127) | `GET/PUT/DELETE /api/system/hosts/<id>/plugin-variables/<plugin>` and a Test route; SNMP version 1/2c/3 and v3 credentials in a drawer SNMP section; v3 passphrases encrypted, written to resource slots and given to `check_snmp` on stdin. Backend and frontend tests pass (mocked Nagios and `check_snmp`). | **Not run against a live Nagios or a real `snmpd` v3 device**, and the Nagios-validated apply, the `--extra-opts` support of the installed `check_snmp`, and a lab report in `docs/test-runs/` are still to do. `check_snmp` hands the passphrases to its `snmpget` helper in argv, so they are briefly visible in the process list during a check (Engineering Standards secret rule not met for this plugin). SNMP interface discovery (`snmpwalk -v2c`) does not support v3 devices. The other plugins' variables can be set through the API; besides SNMP only the web and mail options have a form (#131). Next: a lab run with an `snmpd` v3 authPriv device, and a decision on replacing `check_snmp` for v3 with a client that reads credentials from a protected file |
@@ -223,13 +234,169 @@ See [the investigation](../docs/plans/Issue_191_Account_Creation_Investigation.m
 | VM lab | `scripts/vmlab` builds a VirtualBox appliance from the stock Ubuntu ISO, snapshots Ubuntu + Nagios below the app, installs a pushed branch with the installer's own steps, and runs the installer healthcheck and a smoke test against the `demo/` targets. First run passed (healthcheck 59/0; five targets monitored; see `docs/test-runs/2026-10-08-vm-lab-first-run/`) and found #43. NCPA run (`docs/test-runs/2026-10-08-ncpa-run/`): deployment to two targets passes, but NCPA services are CRITICAL on installer-built appliances because `check_ncpa.py` needs a `python` command (#45). The installer fix (`e471a1b8`, branch `fix/check-ncpa-python3-shebang`, not merged) was inspected and one NCPA check returned OK on a partial rerun (`docs/test-runs/2026-10-08-ncpa-repeat-run/`, Partial); a later clean run (`docs/test-runs/2026-10-08-ncpa-fresh-run/`) passed the fresh install, all six NCPA services OK and the negative tests, and the installer fix is merged (`2859361d`). The run found a duplicate `Address Unknown` device record for one host (#59); the discovery start race and address-unknown matching are fixed and the fresh VM-lab repeat recorded one ACTIVE record after NCPA deployment (`docs/test-runs/2026-10-10-issue-59/`), though #86 tracks remaining duplicate persistence seen on the inherited lab baseline. Not run: alerts, `demo_lab.py break`/`fix`, `sync --client` | Fix #45 (mainly the installer), rerun the NCPA monitoring cases, then run alerts and `break`/`fix` |
 | Local service restart action (#121) | Part 8.1 implemented and unit tested (fixed unit list, no shell, Maintenance Mode, cooldown and cap). Not done: Part 8.2 (sudoers drop-in with `visudo -c`, the installer code is not in this repository), Part 8.3 (remote restart; needs a design note on the on-device helper first), the lab report, and live acceptance remains tracked separately. The Remediation form now renders local and remote `unit` parameters (#182). The consumer now records Maintenance Mode as `skipped_maintenance` before the action runs (#155); the action still refuses on its own as a second guard | Add the sudoers drop-in in the installer repository, run the lab case, complete #182 live acceptance and review |
 | Local service restart action (#121) | Part 8.1 implemented and unit tested (fixed unit list, no shell, Maintenance Mode, cooldown and cap). Not done: Part 8.2 (sudoers drop-in with `visudo -c`, the installer code is not in this repository), Part 8.3 (remote restart; needs a design note on the on-device helper first), the lab report, and the Remediation form does not yet render action parameters, so `unit` cannot be set from the page (API only). A Maintenance Mode refusal is recorded as outcome `failed` because a new outcome would need a frontend and migration change | Add the sudoers drop-in in the installer repository, run the lab case, render parameter fields in `ActionFormDialog.tsx`, then Part 8.3 |
+| Failure escalation (#153) | Implemented and unit tested with the Nagios command layer mocked: custom notification commands, escalation module (mapping, `Notify_On`, bounded retry, restart safety, repeat window), consumer wiring, API fields, `/last-runs`, run log, form, Repeat recovery limits and the service row badge. The bell, Dashboard and History label a custom notification and show its comment (the archive holds none, so the server rebuilds it from the run that sent it); verified with the archive entry captured on a lab appliance on 2026-10-17, which also showed the service form `SEND_CUSTOM_SVC_NOTIFICATION` is accepted and logged by a live Nagios. **Lab run done** (`docs/test-runs/2026-10-18-issue-153-failure-escalation/`): a failed run, a cap skip, repeat recovery, scheduled-downtime suppression and an unwritable pipe were observed on a dummy host and service. A second lab session confirmed the automatic-run notification reached the mail command and showed the bell and Run log in a browser. **Not done:** the inbox receipt of that mail is unconfirmed, and the History Notifications tab label, run drawer and service-row badge have not been seen in a browser | Do the browser pass and confirm one automatic-run mail, then append to the report. Cap and cooldown skips notify on every blocked event by decision, so a flapping service can send several |
 | Event handler framework (#120) | Implemented and unit tested (migration, registry, handler, consumer, config rendering, API, page). Run on a lab appliance on 2026-10-15 (`docs/test-runs/2026-10-15-issue-120-event-handler/REPORT.md`): a covered host's hard DOWN fired the handler through real Nagios and gave a run, repeats were skipped by the cooldown and the hourly cap, `nagios -v` passed, and the run found and fixed one defect (a recovery ran the action). A second run (`docs/test-runs/2026-10-15-issue-120-service-and-spool/REPORT.md`) added a service-scope action, forged, malformed, oversized, symlinked and replayed spool files, all handled safely. Not yet seen live: a SOFT state (needs an active check that really fails) and the page in a browser (checklist in section 8 of `docs/plans/Event_Handler_Design.md`). Two tests (a spool symlink and the file mode of the handler) are skipped on Windows and rely on Linux CI. Needs installer work in the other repository: the spool folder (`nagios:pinpoint`, 2770), the handler at `/usr/local/sbin/pinpoint-event-handler` (`root:root`, 755), and narrower rights for the `nagios` group. `restart_local_service` (#121 Part 8.1) restarts a listed host service (`nagios`) through `sudo -n systemctl restart`; it needs the installer sudoers drop-in, which is not yet written (#121 Part 8.2) | Deploy to a lab appliance after the installer pieces are applied, force a hard failure and recovery on one service, check exactly one run and the cooldown and cap skips, repeat with the installer-built spool folder and handler, a live SOFT state and a browser walk-through; add `restart_local_service` in #121 |
 | Resource forecasts (#156) | Display only: `app/forecast.py` (straight-line fit over 72 hours of hourly averages for NCPA disk and memory percent), the `resource_forecast` job every 30 minutes, `RESOURCE_FORECAST` (migration `b7e2a9c4d518`), `GET /api/system/forecast` (`system.dashboard` or `system.services`), the Dashboard "Running out soon" list and a badge on the service table; unit tests cover the fit, the job (replacement, paused devices, exact-tuple cap, constant mixed-row query count, rotating batches and failed-commit retry), the route, the migration and the UI states. Not done: notifying on a forecast with a horizon and on/off setting and their Settings page controls (decided out of scope on 2026-10-17; needs #132 and #153), native `check_disk` metrics, and the lab comparison of a forecast with a real disk fill (`docs/test-runs/`) | Open a follow-up issue for forecast notifications; run the lab fill test on an appliance |
 | Local service restart action (#121) | Part 8.1 implemented and unit tested (fixed unit list, no shell, Maintenance Mode, cooldown and cap). Not done: Part 8.2 (sudoers drop-in with `visudo -c`, the installer code is not in this repository), Part 8.3 (remote restart; needs a design note on the on-device helper first), the lab report, and live acceptance remains tracked separately. The Remediation form now renders local and remote `unit` parameters (#182). A Maintenance Mode refusal is recorded as outcome `failed` because a new outcome would need a frontend and migration change | Add the sudoers drop-in in the installer repository, run the lab case, complete #182 live acceptance and review |
 | Event handler framework (#120) | Implemented and unit tested (migration, registry, handler, consumer, config rendering, API, page). Run on a lab appliance on 2026-10-15 (`docs/test-runs/2026-10-15-issue-120-event-handler/REPORT.md`): a covered host's hard DOWN fired the handler through real Nagios and gave a run, repeats were skipped by the cooldown and the hourly cap, `nagios -v` passed, and the run found and fixed one defect (a recovery ran the action). A second run (`docs/test-runs/2026-10-15-issue-120-service-and-spool/REPORT.md`) added a service-scope action, forged, malformed, oversized, symlinked and replayed spool files, all handled safely. Not yet seen live: a SOFT state (needs an active check that really fails) and the page in a browser (checklist in section 8 of `docs/plans/Event_Handler_Design.md`). Two tests (a spool symlink and the file mode of the handler) are skipped on Windows and rely on Linux CI. Needs installer work in the other repository: the spool folder (`nagios:pinpoint`, 2770), the handler at `/usr/local/sbin/pinpoint-event-handler` (`root:root`, 755), and narrower rights for the `nagios` group. `restart_local_service` (#121 Part 8.1) restarts a listed host service (`nagios`) through `sudo -n systemctl restart`; it needs the installer sudoers drop-in, which is now merged in the installer repository (#121 Part 8.2). `restart_remote_service` (#8 Part 8.3) restarts a unit from a per-device list on a trusted, Active, unpaused device through a second root-owned helper installed by the NCPA bootstrap; it is unit tested with SSH mocked, security reviewed in #182 with fingerprint-race and exit-status-timeout regressions; fresh-VM real SSH/systemd restart, changed-key/on-device-list/refusal/deadline cases, helper privileges and audit-ID reuse passed on 2026-10-17 ([report](../docs/test-runs/2026-10-17-issue-182-remote-restart/REPORT.md)); the subsequent [Playwright walkthrough](../docs/test-runs/2026-10-17-issue-182-playwright/REPORT.md) passed settings/persistence/errors, real cleanup/redeployment, action unit fields and real read-only permissions; human review remains pending. Existing devices need cleanup/redeploy to receive the helper, and a changed list reaches a device only through cleanup/redeployment (only root can write it there). The NCPA Deployment settings dialog and remediation `unit` controls are included; trusted deployed devices support cleanup with an explicit redeployment warning. The run action link is a nullable foreign key, preserving audit snapshots while preventing replacement actions from inheriting deleted-action limits | Deploy to a lab appliance after the installer pieces are applied, force a hard failure and recovery on one service, check exactly one run and the cooldown and cap skips, repeat with the installer-built spool folder and handler, a live SOFT state and a browser walk-through; add `restart_local_service` in #121 |
+| Per-service Recover automatically (#154) | Implemented and unit tested: the route (400 for any unit, command or path, limit 1 to 6, 409, 422, 403), the server's choice of action and unit by check name against each device's own restart list, the drawer control and the System Status mark. Service names map to units by their first word and a small fixed alias table, so a check that matches no listed unit shows a disabled switch with the reason. Not run on a lab appliance or in a browser. Remote services depend on the same installer and device pieces as `restart_remote_service` | Walk it through on a lab appliance: switch it on for one service, force a failure, see one run and the cooldown and cap skips, then switch it off and check the handler leaves the config |
 | Installer | Developed in another repository | Keep installer work out of this repository unless scope changes |
 
 ## Test approach status
+
+The [module black-box catalog](../docs/qa/Pinpoint%20-%20Black-Box%20Test%20Cases%20by%20Module%20with%20Traceability%20Matrix.md)
+contains 231 TC cases plus eight E2E scenarios. The shared `scripts/qa_catalog.py`
+parser validates definitions, run phases, requirement mappings and full procedures.
+It preserves original human verdicts and flags 26 conflicting summary/detail
+verdicts plus one free-text observation. No human result was reconciled by inference.
+
+`scripts/qa_queue.py` now prepares/checks version-2 module/person queues and Markdown
+previews with exact IDs, exclusions, case snapshots and fixed batches. Ordinary
+batches have up to five TC IDs; disruptive/fresh/long/E2E cases are isolated and a
+session may open at most five batches. `scripts/qa_execute.py` is an offline-only
+session/card/result validator: owner/start attestations, immutable scope/adapter
+hashes, ordered action slots, evidence completeness and cleanup halt. It performs
+no live command dispatch or preflight and cannot constrain an agent with arbitrary
+shell/file access. Empty/missing cards remain blocked. Live scan guarding,
+recovery/resume orchestration and complete current-case browser adapters remain
+unimplemented; no unattended-readiness claim is made.
+The [source coverage register](../docs/qa/Automation_Coverage.md) accounts for all
+239 definitions: seven source-complete permission adapters, 232 unmapped.
+The two new untested adapters are TC-ACC-09 (page denial plus API 403 as
+independent E1/E2 items) and TC-NCPA-08 (page denial). Their source-complete
+status does not authorize execution. `qa_pilot.py run` now implements a fixed
+serial batch for only TC-SS-04, TC-ACC-09 and TC-NCPA-08, with independent private
+resources, per-case durable results and stop on non-PASS. `qa_pilot.py handoff`
+separately checks complete supervisor-backed PASS/cleanup/evidence/baseline before
+archiving the exact old ledger and appending the new queue; no prior attempts,
+recoveries or budgets are cleared. Concrete cards, current proof, handoff review
+and a new explicit start are required. The new two cases have not run. See the
+[next batch review](../docs/qa/Next_Permission_Batch_Review.md).
+`qa_coverage.py` validates hashes/review/item coverage and binds cards to exact
+selection. `playwright.qa.config.ts` has one worker, zero retries, no setup
+dependencies/captures and private unique outputs; offline collection is checked.
+The isolated launcher now has a JSON-only `--qa-preview` for the selection/output
+contract, validated against one unconsumed opened journal case. Its proposed mounts
+keep source/root read-only and expose separate private evidence and only two Staff
+credential files, with no credential value reads during preparation. Nine synthetic
+transport tests cover stale scope, slot/budget/state, private paths, forbidden
+config fallthrough and offline/live distinction. The legacy runner still rejects
+the new config; only the narrow pilot entry below adds gated live integration.
+Other live cases remain blocked. No new case result
+is claimed. See [adapter preparation](../docs/qa/Automation_Readiness.md). Review-only `investigate`
+queues now retain human partials for mandatory evidence/issue triage and reject
+product case opening. The [partial-pass register](../docs/qa/Partial_Pass_Investigations.md)
+links reported confirmation defect #208 and unexplained-result clarification #209;
+neither is a fresh runtime reproduction.
+
+`scripts/qa_supervisor.py` now implements the driver-independent lifecycle core:
+separate start grant, cooperative lab UUID lock, private atomic/fsynced ledger,
+durable pre-dispatch consumption, persistent batch budgets/replay rejection and
+halted interruption/cleanup states. Sixteen synthetic-driver regressions include
+proof drift, prior-offline-result rejection, failures and no secret exception
+persistence. The core has no default driver; the narrow pilot entry is described
+below. Actual deployment/controller
+proof and full production process/parser/recovery integration remain pending;
+elapsed checks cannot interrupt a hanging
+Python callback. This does not authorize or demonstrate live case execution.
+
+The runtime components `qa_process.py` and `qa_results.py` now exist with eight
+local Python-process and nine synthetic-report regressions. The process helper
+bounds time/output, preserves private non-overwriting logs, cancels its owned
+POSIX group and halts on uncertain cleanup. The parser validates one reviewed
+permission attempt/configuration and copies only fixed item observations; it
+requires full PASS and cleanup evidence, otherwise preserves INCONCLUSIVE.
+Their narrow pilot wiring is described below; broader running frontend/backend
+revision proof, inherited controller/driver wiring, bridge/container-ID lifecycle (daemon work
+can outlive its CLI), recovered baseline and live validation remain pending.
+
+`qa_control.py` now coordinates mutating `vmlab` entries and supervisor claims
+through one fixed private per-user host flock, including across different ledger
+roots. Six local lock/controller fixtures verify exclusion, inherited-descriptor
+checks and pre-configuration gating. Direct controllers, other users/namespaces
+and legacy browser launchers remain outside the cooperative mechanism. Seven new
+preflight contracts cover structured read-only observations and identity drift;
+`vmlab preflight --json` explicitly carries no live authorization, target revision,
+running application/frontend proof, baseline or restoration claim. No lab was
+contacted or acceptance result added by these fixture tests.
+
+`qa_container.py` adds the concrete bounded create/attach/inspect/kill/remove
+component with 16 synthetic-command contracts. It binds a pinned image and exact
+transport digest to a durable consumed supervisor slot, fsyncs intent before
+creation, verifies actual container identity/isolation and proves absence through
+a successful daemon query. Uncertain create/cleanup and persisted intent block
+retry; child commands use private umask. It has no CLI/default production driver.
+Production bridge wiring, running application/frontend identity, Staff
+baseline, session recovery and reviewed live cards/start remain pending.
+
+Seven frontend selection/collection/synthetic-worker checks now include a fixed
+worker-reload defect that collection-only checks missed. Real Playwright IPC
+workers may see their private artifact directory after initial configuration;
+environment markers alone cannot allow evidence reuse. No page/browser, appliance
+or acceptance adapter executes in the worker fixture. The user prioritized a
+TC-SS-04 pilot today, later authorizing appliance setup and read-only inspection;
+no acceptance case ran. The narrow pilot entry is described below.
+
+`qa_bridge.py` now implements the owned private relay: consumed transport and
+retained host-lock binding, same-user peers, fixed loopback origin, bounded time/
+connections/bytes/buffers, durable intent and joined cleanup with socket custody.
+Eleven Unix-only fixture tests pass; the container component also verifies bridge
+custody and has an integration fixture with no upstream connection or Docker.
+
+Standalone `qa_deployment.py` adds expected Git-object source/build manifests and
+stable public artifact/candidate-process observations. Six disposable Git/file/
+proc fixtures pass without SSH, real backend processes or an appliance. Observer
+runtime/served readiness stays false and verified running revision stays null:
+disk matches/start ordering alone cannot attest loaded code or actual served bytes.
+The narrow `qa_pilot.py` integration now composes these components for TC-SS-04
+only. Twelve isolated driver/proof/gate contracts and read-only actual appliance
+inspection pass; 455 source files and 2383 installed runtime files are bound to
+the reviewed controlled deployment. Inspection launches no browser/container.
+The first explicitly started v4 TC-SS-04 attempt ran once on target `299ab3b`:
+browser permission assertions and logout/401 passed, container/bridge removal
+completed and independent post-run baseline inspection passed. Overall result is
+INCONCLUSIVE because the parser rejected an E1 timestamp 44 ms beyond its computed
+attempt end; harness [#211](https://github.com/esfen14/Pinpoint/issues/211) tracks
+the offline bounded attach-window fix and pinned-worker timing investigation
+([timing rule](../docs/qa/QA_Report_Timing.md)). Import and composed-driver
+regressions accept the synthetic 44 ms relationship and halt on stale/foreign or
+failed-cleanup evidence. The original v4 result remains INCONCLUSIVE; its halted
+attempt, exact private ledger archive, evidence and original budgets are preserved.
+See the [original pilot report](../docs/test-runs/2026-10-18-issue-206-ss04-pilot/REPORT.md).
+
+After separately approved implementation/use, `qa_pilot.py recover` obtained fresh
+cleanup/baseline proof and appended an expiring grant-bound audited disposition,
+preserving original attempts/budgets and permitting only the named v2 queue. Paeng
+separately explicitly started that one-case recheck. The real TC-SS-04 attempt on
+the same target passed through strict fresh import, logout/401, owned container/
+bridge/process cleanup and fresh post-case baseline proof. Its E1 was 47 ms beyond
+the old invalid duration-derived end, accepted by actual independent attach bounds
+without grace. The supervised v2 attempt is complete/PASS/restored; the serialized
+source journal retains an active label with no active case/batch and one accepted
+result. See the [recheck report](../docs/test-runs/2026-10-18-issue-211-ss04-recheck/REPORT.md).
+Broader/unattended coverage stays blocked. Controlled launch/build provenance is a
+trust boundary, not memory attestation. The standalone observer's negative
+readiness fields are unchanged.
+
+The [historical evidence inventory/review](../docs/qa/Historical_Evidence_Review.md)
+links 41 post-cutoff-directory-date reports and six partial current-case mappings.
+October 15 remains a provisional cutoff. No full-case inherited PASS is accepted.
+`scripts/qa_evidence.py` validates reviewer-bound target/report/case hashes and
+item-level coverage before full reuse. The requirement validator, derived
+[case status view](../docs/qa/QA_Case_Status.md), and docs gate now use the new sources
+instead of the removed journey plan, matrix and paper tables.
+
+Issue #214 adds source-reviewed, offline-collection-only adapters for
+TC-ACC-08, TC-ROL-04, TC-DI-02, TC-DI-03, TC-DI-07, TC-DI-08, TC-HIS-04 and TC-DASH-07, plus partial TC-ACC-10
+coverage for E1/E2. Together with the seven permission adapters, the source coverage
+register now has 15 implemented mappings, one partial mapping and 223 unmapped
+entries across 239 current cases/scenarios. The supervised live pilot accepts seven
+complete read-only module IDs in addition to its three permission IDs; TC-DI-07 is
+excluded pending resolution of its uppercase expectation discrepancy and failure-result handling. This
+does not add a general live launcher or runtime results. The October 18 supervised reports record
+complete PASS/restored outcomes for TC-ACC-09 and TC-SS-04; their original catalog
+Result fields remain unchanged under the QA workflow, and both IDs are excluded
+from the replacement untested queue.
 
 Backend tests are organized under `server/tests/unit/`, `integration/`, `e2e/`,
 `support/`, and `plans/`. Default pytest collection is isolated. The deterministic
@@ -269,3 +436,22 @@ check OK, omitted an unsupported path with persisted skipped reasons, and
 measured small-lab Nagios load. Installation, independent-host scale and browser
 walkthrough remain unverified; see [the service report](../docs/test-runs/2026-10-14-issue-128-ncpa-services/REPORT.md)
 and [the capability report](../docs/test-runs/2026-10-14-issue-128-ncpa-probe/REPORT.md).
+
+## Service-report availability (#198)
+
+The issue branch replaces Network Services and Device Services snapshot counting
+with a shared strict Nagios duration reader, including scheduled components and
+separate native/unaccounted missing coverage. Current status is fetched in one
+separate bulk read; no status is inferred from availability. Both service-report
+contracts, tables and exports remove snapshot counts and expose seconds. Owning
+backend/data/frontend specifications and the [operator guide](../docs/manuals/Service_Reports.md)
+define exact semantics, completed-second windows, retention and Core assumptions.
+No snapshot storage or general polling behavior is removed. The full local gate passes (4040 backend/922 frontend; 14 existing skips), with
+51 focused service regressions and two Chromium tests for both views and all
+exports. The [final comparison](../docs/test-runs/2026-10-17-issue-198-service-availability/REPORT.md)
+records installed Core 4.5.11 real brief-outage/missing-history agreement with
+native avail.cgi, small-inventory timings, and a corrected harness socket-isolation
+failure/recovery. Large real inventories, installer upgrade and production HTTP
+authentication remain untested; CI and human review are tracked on PR #201.
+The initial [contract probe](../docs/test-runs/2026-10-17-issue-198-contract-probe/REPORT.md)
+is historical partial evidence, not final acceptance.

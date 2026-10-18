@@ -7,6 +7,7 @@ import { useCurrentUser } from '../../contexts/CurrentUserContext'
 import { DeviceParentSection } from './DeviceParentSection'
 import { DeviceMonitoringSection } from './DeviceMonitoringSection'
 import { DeviceRecipientsSection } from './DeviceRecipientsSection'
+import { ServiceRecoverySection } from './ServiceRecoverySection'
 import { DeviceInterfacesSection } from './DeviceInterfacesSection'
 import { DeviceSnmpSection } from './DeviceSnmpSection'
 import { DevicePortsSection } from './DevicePortsSection'
@@ -16,7 +17,7 @@ import { useDisplayTime } from '../../hooks/useDisplayTime'
 import { DrawerShell } from '../shared/DrawerShell'
 import { CheckNowButton } from '../shared/CheckNowButton'
 import { NagiosSyncNotice } from '../shared/NagiosSyncNotice'
-import { nagiosSyncNotice, type NagiosSyncResult } from '../../types/nagiosSync'
+import { nagiosSyncNotice, UNACK_CONFIRM, type NagiosSyncResult } from '../../types/nagiosSync'
 
 
 type PerfMetric = {
@@ -131,6 +132,7 @@ export function StatusDetailDrawer({ hostname, onClose, onMonitoringChanged, onI
 
   async function changeAcknowledgement(acknowledge: boolean) {
     if (!service) return
+    if (!acknowledge && !window.confirm(UNACK_CONFIRM)) return
     setIsSaving(true)
     setAckError(null)
     setSyncNotice(null)
@@ -263,6 +265,8 @@ export function StatusDetailDrawer({ hostname, onClose, onMonitoringChanged, onI
                   {ackError && <p className="mt-2 text-[13px] text-red-600 dark:text-red-400">{ackError}</p>}
                 </section>
               )}
+
+              {service && <ServiceRecoverySection key={`recovery-${hostname}-${service}`} hostname={hostname} service={service} />}
 
               <section>
                 <h3 className="mb-2 text-[17px] font-semibold">Timestamps</h3>

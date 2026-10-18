@@ -199,3 +199,41 @@ class TestSyncFields:
             admin_user.UserID, [cmd.CommandResult(False, cmd.UNAVAILABLE, "Nagios is down.")], "x")
         assert fields["nagios_synced"] is False
         assert "Notifications may continue" in fields["nagios_message"]
+
+
+class TestCustomNotifications:
+    """SEND_CUSTOM_*_NOTIFICATION lines (#153). The pipe write is replaced, so no FIFO is needed."""
+
+    @pytest.fixture
+    def sent(self, app, monkeypatch):
+        lines = []
+        monkeypatch.setattr(cmd, "_write_line", lambda line: lines.append(line) or cmd._ok())
+        return lines
+
+    def test_service_notification_is_not_forced(self, app, sent):
+        assert cmd.send_custom_service_notification("web-01", "cpu/percent", "Automatic recovery failed", TARGETS).ok
+        assert body(sent[0]) == "SEND_CUSTOM_SVC_NOTIFICATION;web-01;cpu/percent;0;PinPoint;Automatic recovery failed"
+
+    def test_host_notification_is_not_forced(self, app, sent):
+        assert cmd.send_custom_host_notification("web-01", "Automatic recovery failed", TARGETS).ok
+        assert body(sent[0]) == "SEND_CUSTOM_HOST_NOTIFICATION;web-01;0;PinPoint;Automatic recovery failed"
+
+    def test_semicolon_in_comment_cannot_add_a_field(self, app, sent):
+        assert cmd.send_custom_service_notification("web-01", "cpu/percent", "a;b", TARGETS).ok
+        assert body(sent[0]).endswith(";PinPoint;a,b")
+
+    @pytest.mark.parametrize("comment", ["", "  ", "line\nbreak", "nul\0byte", None])
+    def test_bad_comment_is_refused(self, app, sent, comment):
+        result = cmd.send_custom_service_notification("web-01", "cpu/percent", comment, TARGETS)
+        assert not result.ok and result.error == cmd.INVALID
+        assert sent == []
+
+    def test_unknown_service_is_refused(self, app, sent):
+        result = cmd.send_custom_service_notification("web-01", "nope", "x", TARGETS)
+        assert not result.ok and result.error == cmd.UNKNOWN_TARGET
+        assert sent == []
+
+    def test_unknown_host_is_refused(self, app, sent):
+        result = cmd.send_custom_host_notification("db-01", "x", TARGETS)
+        assert not result.ok and result.error == cmd.UNKNOWN_TARGET
+        assert sent == []

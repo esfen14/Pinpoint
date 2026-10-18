@@ -1,0 +1,42 @@
+{
+  "format_version": 0,
+  "result": {
+    "query_time": 1792247782000,
+    "cgi": "archivejson.cgi",
+    "user": "fixture-user",
+    "query": "availability",
+    "query_status": "released",
+    "program_start": 1792245234000,
+    "last_data_update": 1792247782000,
+    "type_code": 0,
+    "type_text": "Success",
+    "message": ""
+  },
+  "data": {
+    "selectors": {
+      "availabilityobjecttype": 2,
+      "starttime": 1792245782000,
+      "endtime": 1792246782000,
+      "hostname": "host-a",
+      "servicedescription": "service-1",
+      "assumeinitialstate": false,
+      "assumestateretention": true,
+      "assumestateduringnagiosdowntime": false,
+      "statetypes": 1
+    },
+    "service": {
+      "host_name": "host-a",
+      "description": "service-1",
+      "time_ok": 670,
+      "time_warning": 0,
+      "time_critical": 80,
+      "time_unknown": 50,
+      "scheduled_time_ok": 50,
+      "scheduled_time_warning": 0,
+      "scheduled_time_critical": 50,
+      "scheduled_time_unknown": 0,
+      "time_indeterminate_nodata": 0,
+      "time_indeterminate_notrunning": 100
+    }
+  }
+}
