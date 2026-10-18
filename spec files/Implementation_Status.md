@@ -243,22 +243,30 @@ See [the investigation](../docs/plans/Issue_191_Account_Creation_Investigation.m
 
 ## Test approach status
 
-The QA workflow and queue guide now use the
-[module-based black-box catalog](../docs/qa/Pinpoint%20-%20Black-Box%20Test%20Cases%20by%20Module%20with%20Traceability%20Matrix.md)
-(231 TC cases plus eight E2E scenarios), with reviewed Markdown assignments,
-separate new-execution reports and preserved human manual results. This is a
-documentation transition: `scripts/qa_queue.py`, `check_traceability.py`,
-`render_qa_case_tables.py` and their legacy contract tests/CI wiring still expect
-the removed journey plan/matrix/paper tables. CLI/schema and docs-gate migration
-remain pending; the new workflow does not claim compatibility or a green gate.
-Summary/detail result conflicts in the new catalog also remain unresolved and
-must be shown during queue review rather than silently reconciled.
-The documentation supports per-person multi-module sets and five approved batches
-per session (up to five ordinary TC IDs each; high-impact/E2E/long cases isolated).
-Case cards and explicit stop-action rules constrain execution, but independent
-schema, command/spec allowlist, batch-budget and evidence enforcement remain
-planned. The Markdown fallback requires review/supervision, not unattended trust
-in a model's compliance.
+The [module black-box catalog](../docs/qa/Pinpoint%20-%20Black-Box%20Test%20Cases%20by%20Module%20with%20Traceability%20Matrix.md)
+contains 231 TC cases plus eight E2E scenarios. The shared `scripts/qa_catalog.py`
+parser validates definitions, run phases, requirement mappings and full procedures.
+It preserves original human verdicts and flags 26 conflicting summary/detail
+verdicts plus one free-text observation. No human result was reconciled by inference.
+
+`scripts/qa_queue.py` now prepares/checks version-2 module/person queues and Markdown
+previews with exact IDs, exclusions, case snapshots and fixed batches. Ordinary
+batches have up to five TC IDs; disruptive/fresh/long/E2E cases are isolated and a
+session may open at most five batches. `scripts/qa_execute.py` is an offline-only
+session/card/result validator: owner/start attestations, immutable scope/adapter
+hashes, ordered action slots, evidence completeness and cleanup halt. It performs
+no live command dispatch or preflight and cannot constrain an agent with arbitrary
+shell/file access. Empty/missing cards remain blocked. Live scan guarding,
+recovery/resume orchestration and complete current-case browser adapters remain
+unimplemented; no unattended-readiness claim is made.
+
+The [historical evidence inventory/review](../docs/qa/Historical_Evidence_Review.md)
+links 41 post-cutoff-directory-date reports and six partial current-case mappings.
+October 15 remains a provisional cutoff. No full-case inherited PASS is accepted.
+`scripts/qa_evidence.py` validates reviewer-bound target/report/case hashes and
+item-level coverage before full reuse. The requirement validator, derived
+[case status view](../docs/qa/QA_Case_Status.md), and docs gate now use the new sources
+instead of the removed journey plan, matrix and paper tables.
 
 Backend tests are organized under `server/tests/unit/`, `integration/`, `e2e/`,
 `support/`, and `plans/`. Default pytest collection is isolated. The deterministic

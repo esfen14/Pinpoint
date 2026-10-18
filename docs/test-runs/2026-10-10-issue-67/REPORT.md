@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-10 |
 | Commit tested | `f9f03bcf` (app source synced into an already-running VM; not a fresh install) |
-| Plan | [Issue #67](https://github.com/esfen14/Pinpoint/issues/67) sequence and J2-08 from [QA Test Plan](../../qa/QA_Test_Plan.md) |
+| Plan | [Issue #67](https://github.com/esfen14/Pinpoint/issues/67) sequence and J2-08 from [QA Test Plan](https://github.com/esfen14/Pinpoint/blob/299ab3ba7203c89a3ca5d8fabea42d9e5f239be2/docs/qa/QA_Test_Plan.md) |
 | Tester | OpenCode agent, API and VM shell; browser UI not driven |
 | Environment | VirtualBox `pinpoint-appliance-45`, Ubuntu 22.04.5, Nagios Core 4.5.11, five `demo/` targets on `10.77.0.0/28`; pre-existing SQLite data from prior runs, including address history and NCPA deployment |
 | Raw evidence | Console API and SQLite queries during the run were not persisted; observations below are limited to the conversation transcript. No raw secrets are committed. |

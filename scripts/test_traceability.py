@@ -1,51 +1,39 @@
-"""Isolated traceability contract tests; no application or lab required."""
+"""Current catalog/source and derived-view migration contracts, isolated from the lab."""
 import importlib.util
 from pathlib import Path
 import tempfile
 import unittest
 
-spec = importlib.util.spec_from_file_location("checker", Path(__file__).with_name("check_traceability.py"))
-checker = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(checker)
-
+def module(name):
+    spec=importlib.util.spec_from_file_location(name,Path(__file__).with_name(name+'.py'))
+    m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);return m
+checker=module('check_traceability');renderer=module('render_qa_case_tables')
 
 class TraceabilityTests(unittest.TestCase):
-    def check(self, rows, plan="#### J1-01 Login\n#### BB-01\n| BB-01 | Acceptance |"):
-        with tempfile.TemporaryDirectory() as temp:
-            root = Path(temp)
-            (root / "spec files").mkdir()
-            (root / "spec files" / "spec.md").write_text("# Spec\n## Login\n")
-            trac = "# Traceability\n\n| ID | Source Spec/Journey | ISO Characteristic | Env | Verification | Status | Notes |\n" + rows
-            return checker.validate(root, plan, trac)
+    def test_real_catalog_and_derived_conflicts(self):
+        text=checker.cat.PLAN.read_text()
+        self.assertEqual(checker.validate(checker.ROOT,text),[])
+        out=renderer.render(text)
+        self.assertIn('231 TC plus 8 E2E',out)
+        self.assertIn('needs-decision',out)
+        self.assertIn('human manual',out)
+        self.assertNotEqual(out,renderer.render(text.replace('FAIL - the administrator','FAIL - changed observation')))
 
-    def row(self, case="J1-01", source="spec.md#Login", iso="SE", env="VM",
-            ver="agent", status="untested", notes=""):
-        return (f"| {case} | {source} | {iso} | {env} | {ver} | {status} | {notes} |")
+    def test_unknown_case_mapping_rejected(self):
+        text=checker.cat.PLAN.read_text().replace('| TC-AUTH-01 |\n','| TC-AUTH-99 |\n',1)
+        self.assertTrue(checker.validate(checker.ROOT,text))
 
-    def test_valid(self):
-        self.assertEqual(self.check(self.row() + "\n" + self.row("BB-01")), [])
+    def test_missing_spec_heading_and_traversal(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);(root/'spec files').mkdir();(root/'spec files/spec.md').write_text('# Spec\n## Login\n')
+            self.assertEqual(checker.validate_source('spec.md#Login',root),[])
+            for source in ['spec.md#Missing','missing.md','../spec.md#Login']:
+                self.assertTrue(checker.validate_source(source,root),source)
 
-    def test_bad_case_and_heading(self):
-        errors = self.check(self.row("J1-010", "spec.md#Missing"))
-        self.assertTrue(any("unknown case" in e for e in errors))
-        self.assertTrue(any("heading" in e for e in errors))
+    def test_duplicate_case_and_malformed_matrix_rejected(self):
+        text=checker.cat.PLAN.read_text()
+        for bad in [text.replace('#### TC-AUTH-02','#### TC-AUTH-01',1),
+                    text.replace('| REQ-AUTH-01 | Valid credentials','| REQ-AUTH-99 | Valid credentials',1)]:
+            self.assertTrue(checker.validate(checker.ROOT,bad))
 
-    def test_missing_and_duplicate(self):
-        errors = self.check(self.row() + "\n" + self.row())
-        self.assertTrue(any("duplicate" in e for e in errors))
-
-    def test_pass_needs_evidence(self):
-        self.assertTrue(any("evidence" in e for e in self.check(self.row(status="pass", notes=""))))
-
-    def test_bad_status(self):
-        self.assertTrue(any("invalid status" in e for e in self.check(self.row(status="green"))))
-
-    def test_malformed_row_not_ignored(self):
-        self.assertTrue(any("malformed" in e for e in self.check("| J1-01 | x |")))
-
-    def test_outside_spec_rejected(self):
-        self.assertTrue(any("spec file not found" in e for e in self.check(self.row(source="../spec.md#Login"))))
-
-
-if __name__ == "__main__":
-    unittest.main()
+if __name__=='__main__':unittest.main()

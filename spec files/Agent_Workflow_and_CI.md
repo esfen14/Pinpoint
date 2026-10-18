@@ -173,25 +173,22 @@ It contains 231 TC cases and eight separate E2E scenarios. Historical catalog
 results are human manual executions; new agent/human runs use separate attributable
 reports. App/spec conflicts remain decisions, not automatic passes.
 
-- **Scope preparation:** Before execution, prepare a reviewed Markdown queue with
-  named sets, owners and explicit `TC-*`/`E2E-*` IDs, source revisions/content hashes,
-  full case and prerequisite snapshots, eligibility, environment/executor, setup,
-  evidence and restoration. Group by module, phase or explicit IDs; an ISO mapping
-  requires review rather than inference. The old `scripts/qa_queue.py`, traceability
-  validator and paper renderer still target the removed journey sources and are not
-  compatible with this suite. Until migrated, prepare/check queues directly using
-  [QA Run Queues](../docs/qa/QA_Run_Queues.md); do not recreate retired sources to
-  satisfy old tooling. Conflicting summary/detail results need a decision; preserve
-  both and all human observations. Exclude passed and failed cases by default unless
-  explicitly selected for recheck, or a failed case qualifies for merged-fix retest.
-  Each set waits for an explicit start; never automatically drain the queue. Changed
-  selected procedures/prerequisites/results require a replacement preview/start.
-  Duplicate assignments within a queue are rejected by review. Local queues are not
-  distributed locks: coordinate shared-lab ownership separately. Separate machines
-  may run concurrently only with separate appliances and targets. Verify prerequisites
-  locally and record actual deployed SHAs. Each owner uses a separate issue, branch
-  and attributable report. New results go into reports/index and the queue execution
-  log, not over historical human Result fields or into the requirement mapping.
+- **Scope preparation:** `scripts/qa_queue.py prepare` reads the module catalog
+  and emits a version-2 JSON queue plus Markdown preview. Select `NAME:OWNER:MODULE,ID`
+  sets; expand eligible cases once, report exclusions and snapshot procedures,
+  expectations, prerequisite/global context, results, source hashes and exact target
+  revision. Each case may carry an execution card; an absent/incomplete card blocks
+  it. Group by module/person; optional ISO tags require a reviewed mapping. Reject
+  legacy queue formats, duplicates, unknown/ineligible explicit IDs and overwrite.
+  `show` displays scope and `check` rejects changed selected sources. Each set needs
+  an explicit start; never automatically drain the queue. Local files are not
+  distributed lab locks. Verify prerequisites per environment; separate machines
+  run concurrently only with separate appliances AND targets. Preserve original
+  human verdicts. New runs use attributable reports/index and separate journals.
+  [Historical evidence review](../docs/qa/Historical_Evidence_Review.md) inventories
+  candidates without conferring PASS. Reviewer decisions for the exact target,
+  report/case hashes, item coverage and environment/source compatibility determine
+  reuse. October 15 remains a provisional cutoff. See [queue guide](../docs/qa/QA_Run_Queues.md).
 - **QA batch throughput:** One owner's set may span multiple modules, expanded
   to fixed eligible IDs and ordered batches before review/start. The QA-specific
   five-round limit counts batches: up to five ordinary TC IDs per batch, five
@@ -209,9 +206,12 @@ reports. App/spec conflicts remain decisions, not automatic passes.
   A missing field blocks execution. Executors cannot modify product/tests/selectors,
   expectations, scope or human results to pass. Uncertain steps stop the attempt;
   denied permissions, lost ownership, unsafe targets, secret exposure and failed
-  cleanup stop the set. Prompt instructions alone do not enforce these boundaries:
-  until schema/budget/allowlist/evidence checks are implemented independently, use
-  reviewed supervised execution rather than claim unattended safety.
+  cleanup stop the set. `scripts/qa_execute.py` validates offline session journals,
+  complete adapter cards/hashes, exact ordered action slots, budgets and per-item
+  evidence references. It never dispatches commands or verifies live preflight.
+  Live recovery/resume, full case adapters and atomic scan guarding remain pending.
+  Checksums detect changes, not hostile actors with file/shell access. Use reviewed
+  supervision; do not claim an unattended runner or OS isolation from these tools.
 - **Authority rules:** The behavioral specification wins; `Implementation_Status.md` records known gaps, not overrides. Conflicts without an explicit team decision require a `needs-decision` issue. Passing requires observed behavior.
 - **Reporting rules:** A test failure is repeated exactly once before filing. Maintainers must search open and closed issues first; file use the Task template containing case ID and evidence; sanitize evidence (never paste passwords, credentials, tokens, SNMP communities, or raw database dumps). Defects determined to be installer bugs are written as notes for the owner, not filed against the application.
 - **Safety boundaries:** Using `scripts/vmlab` and `scripts/lab` is permitted for QA sweeps; the libvirt e2e harness is strictly forbidden. Ordinary VM network scans MUST be tightly restricted to `10.77.0.0/28` using a guard. The separate opt-in issue #187 DHCP Docker acceptance may scan only `10.79.0.0/28` after its controller proves collision-free routing and exclusive ownership; this does not authorize other QA suites or a physical/VPN range. Overlapping discoveries are banned (#59). One appliance is tested at a time, checking disk/RAM capacity before provisioning.
@@ -230,8 +230,8 @@ separate issue worktree. It records skipped candidates, never weakens a QA case,
 and opens at most three PRs in five rounds. Permission denial stops the loop.
 Humans merge PRs; agents never merge. Only an actual merged fix plus a closed
 finding makes affected new-suite cases eligible for `retest` in a reviewed queue,
-with the original failure, PR and merge SHA retained. The legacy fix-found matrix
-handoff must be inspected as evidence; it does not update the new catalog results. Two failed retests after separate merged fixes
+with the original failure, PR and merge SHA retained. The reviewed finding/fix metadata is recorded in the evidence ledger and a new
+queue; it never updates original human catalog verdicts. Two failed retests after separate merged fixes
 label that finding `needs-decision` and stop work on the case. Synthetic workflow
 demonstrations use scratch traceability data and do not establish product passes.
 See `.agent/workflows/fix-found.md` for commands and written boundary checks.
@@ -240,7 +240,7 @@ See `.agent/workflows/fix-found.md` for commands and written boundary checks.
 
 | Stage | Command | Notes |
 |---|---|---|
-| Docs | `scripts/verify.sh docs` | VM ownership safety and administrator setup regression tests pass; agent progress files are well formed; relative links resolve; environment variables match the README table; browser routes match `App.tsx`, `pageAccess.ts` and the spec; traceability matrix matches test cases; fix-found queue and stop-rule contracts are present. Standard library only |
+| Docs | `scripts/verify.sh docs` | VM ownership safety and administrator setup regression tests pass; agent progress files are well formed; relative links resolve; environment variables match the README table; browser routes match `App.tsx`, `pageAccess.ts` and the spec; module requirement mappings, derived status, queue/evidence/offline-executor regressions pass; fix-found queue and stop-rule contracts are present. Standard library only |
 | Backend | `scripts/verify.sh backend` | Route and client-API drift checks, then `pytest tests/unit` in `server/` with `FLASK_DEBUG=1`; ~4 min, 2,167 passed / 14 skipped on 2026-10-08 |
 | Frontend | `scripts/verify.sh frontend` | `npm run test`, `npm run build`, `npm run lint` (errors fail; warnings do not) |
 | Everything | `scripts/verify.sh all` | Same stages as CI |

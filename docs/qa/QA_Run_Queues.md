@@ -13,12 +13,12 @@ HIS, DI, TOP, PLG, NCPA, MNT, REM, RPT, LOG, SET, DSC, DX, SHL, NFR, EDG and SEQ
 Keep the E2E total separate from the TC total. `REQ-*` IDs are requirements;
 legacy J/X/PT/BB IDs are references, not new-suite queue IDs.
 
-The previous ISO queue CLI (`scripts/qa_queue.py`) and table renderer still read
-the retired journey plan and result matrix. They do not support the new catalog,
-IDs or result format. Do not run their prepare/check/render commands for this
-suite or reuse an old JSON queue as a new assignment. Until migration, the agent
-prepares and checks a reviewed Markdown queue directly; there is no JSON companion
-or automatic freshness/duplicate enforcement. Perform the checks below explicitly.
+The module queue CLI now supports version-2 JSON assignments plus a readable
+Markdown preview. `prepare` selects/snapshots cases, `show` displays the complete
+review scope and `check` rejects changed sources. Legacy ISO JSON is rejected.
+Preparation never starts tests or reserves a lab. Every JSON/Markdown pair is a new
+immutable review artifact; execution logs/reports stay separate so checksums remain
+valid. Do not edit the JSON to resolve a failed check; prepare a replacement.
 
 All results already in the catalog are human manual results. Preserve them.
 New human, AI-assisted and scripted runs get separate attributable reports.
@@ -54,7 +54,7 @@ is specific to qa-run; it does not increase implementation/fix-found round limit
 
 Example preparation prompt:
 
-> Prepare `team-modules-01.md` following `.agent/workflows/qa-run.md`.
+> Prepare `team-modules-01.json` following `.agent/workflows/qa-run.md`.
 > Assign pending Device Inventory and Topology cases to `paeng-devices`, owned by
 > Paeng, and pending NCPA Deployment and Remediation cases to `teammate-operations`,
 > owned by my teammate. Expand eligible IDs, show linked accepted historical coverage
@@ -98,10 +98,12 @@ with a report/progress checkpoint and counts reconciliation. Missing observation
 remain partial/blocked/inconclusive. A module cannot be declared PASS merely because
 its attempted cases passed while others were blocked, excluded or untested.
 
-These document rules need independent enforcement in the future queue/runner:
-validated schema, immutable scope, exact test/command selection, budgets, network/lab
-checks and evidence completeness. Until implemented, the Markdown fallback needs
-human review/supervision; it is not a model-proof unattended runner.
+The queue and offline journal validate schema/scope, adapter hashes, exact action
+order, budgets and evidence references. Live dispatch, enforced scan guards, actual
+network/lab checks and automatic recovery remain future runner work. The current offline journal validator checks these fields and budgets, but it
+neither dispatches actions nor verifies live preflight assertions. Human review and
+supervision remain required; these tools are not an OS sandbox or a model-proof
+unattended runner.
 
 ## What a queue contains
 
@@ -109,7 +111,7 @@ human review/supervision; it is not a model-proof unattended runner.
 |---|---|
 | Case | A catalog ID such as `TC-DI-05` or `E2E-04`, with its full procedure |
 | Set | One owner's named assignment with a fixed ordered list of IDs |
-| Queue | A new Markdown file under `docs/qa/queues/` containing one or more sets |
+| Queue | A version-2 JSON file and derived Markdown preview under `docs/qa/queues/` |
 | Owner | The responsible tester; assignment does not grant lab access |
 | Source result | Both the summary-table result and detailed Result text, preserved verbatim |
 | Eligibility | Why the case may be selected: `untested`, `retest`, or explicitly requested `recheck`; unresolved entries are `needs-decision` |
@@ -136,7 +138,7 @@ requested IDs and the reason. A new diagnostic execution requires explicit scope
 Example prompt (IDs are examples, not a claim that they are currently eligible):
 
 > Follow `.agent/workflows/qa-run.md`. Prepare a black-box queue at
-> `docs/qa/queues/team-black-box-01.md`. Assign pending Device Inventory cases
+> `docs/qa/queues/team-black-box-01.json`. Assign pending Device Inventory cases
 > to `paeng-inventory`, owned by Paeng, and pending NCPA Deployment cases to
 > `teammate-ncpa`, owned by my teammate. Use the new module catalog and its
 > prerequisites/run order. Preserve human results, show conflicts and blockers,
@@ -145,13 +147,13 @@ Example prompt (IDs are examples, not a claim that they are currently eligible):
 For a fixed subset:
 
 > Prepare only TC-DI-05 and TC-DI-06 for `paeng-ports`, owned by Paeng.
-> Report any ineligible ID instead of replacing it. Save a new reviewed Markdown
-> queue, show every procedure and prerequisite, and wait for my explicit start.
+> Report any ineligible ID instead of replacing it. Save a new reviewed JSON queue and Markdown
+> preview, show every procedure and prerequisite, and wait for my explicit start.
 
 For E2E work, explicitly name scenarios and the fresh/restored appliance baseline.
 An earlier module pass does not certify an E2E scenario or the other tester's setup.
 
-The agent must read the complete case blocks, phase order, global setup and both
+The parser snapshots the complete case blocks; the agent must read them along with phase order, global setup and both
 prerequisite tables. Include prerequisite states and necessary setup actions for
 review. Do not silently add their case IDs, rerun passed cases or expand into another
 set. Missing prerequisites are blockers unless their setup is included in scope.
@@ -160,7 +162,7 @@ the specified SEQ cases, and the E2E scenarios afterwards on a fresh/restored la
 
 ## 2. Save and review the queue
 
-Use a new filename for each changed assignment. Never overwrite a reviewed scope.
+Use a new `.json` filename for each changed assignment; the tool saves a sibling `.md` preview. Never overwrite a reviewed scope.
 Every queue must contain:
 
 - Preparation date, catalog path, repository revision and SHA-256 of the actual
@@ -177,9 +179,10 @@ Every queue must contain:
 - Lab identity, intended application/installer version, baseline, authorized setup
   and fault actions, restoration, human participation and evidence/measurement plan.
   Refer to private credential storage without embedding credentials.
-- An initially empty execution log. Do not prefill PASS from old human results.
+- A separate, initially empty execution log/journal. Do not prefill PASS from old human results.
 
-A compact outline for an agent to fill (placeholders are not an executable queue):
+A compact preview/review checklist (the CLI generates immutable JSON/Markdown;
+placeholders below are not an executable queue):
 
 ```markdown
 # Black-box QA queue: <name>
@@ -228,15 +231,15 @@ Timeouts / stop / recovery: <bounded values and exact actions>
 Before presenting it, check that every ID exists, every selection has a reason,
 set names and assigned IDs are unique, source copies are complete, the order
 respects dependencies and no result has been reclassified. Check all sets together.
-There is no automatic distributed reservation: compare other queues/progress and
+The CLI rejects duplicate IDs/names and produces fixed batches. There is no automatic distributed reservation: compare other queues/progress and
 agree who owns each appliance and target before use.
 
 ## 3. Share the reviewed file and prepare each environment
 
 Share the queue through your existing team channel or an agreed Git branch.
 Nothing is sent automatically. A local file path is not available to a teammate
-until they receive the file or fetch the branch. Both testers use the same reviewed
-queue and catalog revision/content, with separate QA branches, tracking issues,
+until they receive the file or fetch the branch. Both testers use the same reviewed JSON scope and Markdown preview,
+and catalog revision/content, with separate QA branches, tracking issues,
 progress and reports. Preserve each tester's log/results when combining changes.
 
 Different machines can run concurrently only with separate appliances and targets.
@@ -256,12 +259,12 @@ to provision, reset, scan, inject a fault or send email before the set starts.
 Review prompt:
 
 > Follow `.agent/workflows/qa-run.md`. Show only `paeng-inventory` from
-> `docs/qa/queues/team-black-box-01.md`, compare the saved scope/results and
+> `docs/qa/queues/team-black-box-01.json`, compare the saved scope/results and
 > prerequisites against current sources and reports, and wait for my explicit start.
 
 Start prompt:
 
-> Start only `paeng-inventory` from `docs/qa/queues/team-black-box-01.md`,
+> Start only `paeng-inventory` from `docs/qa/queues/team-black-box-01.json`,
 > following `.agent/workflows/qa-run.md`, using tracking issue #123.
 > Verify exclusive lab ownership, versions, prerequisites and restoration before execution.
 
@@ -269,8 +272,7 @@ Replace #123 with the actual tracking issue. Starting one set does not start the
 teammate's work or the next set. If selected procedures, prerequisites, expectations,
 eligibility or notes changed, show a replacement queue and wait for a new start.
 An unrelated document edit requires a recorded comparison proving the selected
-scope and its global dependencies are unchanged. No legacy CLI check can replace
-this comparison. On resume, completed cases use report evidence; review remaining
+scope and its global dependencies are unchanged. The queue `check` validates source freshness, not live lab readiness or ownership. On resume, completed cases use report evidence; review remaining
 scope, consult progress and never repeat mutations without checking lab state.
 
 ### Copyable execution instruction
@@ -280,7 +282,7 @@ issue. Replace the path/set/owner/issue with actual values; this example does no
 start anything:
 
 > Follow `.agent/workflows/qa-run.md`. Start only set `paeng-devices` from the
-> reviewed `docs/qa/queues/team-modules-01.md`, owned by Paeng, using tracking issue
+> reviewed `docs/qa/queues/team-modules-01.json`, owned by Paeng, using tracking issue
 > #123. Execute only its fixed batches and listed case cards. Use only their exact
 > tool/spec/command/target allowlists and permitted output paths. Record each expected
 > item's evidence and verify restoration before proceeding. Do not implement or
@@ -313,8 +315,45 @@ partial, blocked, inconclusive and not-run totals; distinguish attempts from uni
 cases. Setup, an assignment, and an unmet human observation are not completed tests.
 A wholly passed module does not imply its E2E scenarios passed.
 
-Run `git diff --check` and `scripts/verify.sh docs` before sign-off. The current docs
-gate still references deleted legacy artifacts, so it may fail pending tool/router
-migration. Record the exact blocker, preserve unrelated changes, and leave work
-draft; do not restore retired files or weaken checks to obtain a green result.
-This documentation alignment does not claim the old CLI or CI migration is complete.
+Run `git diff --check` and `scripts/verify.sh docs` before sign-off. The docs gate uses the new catalog and derived view. Record any failed check,
+preserve unrelated changes and leave work draft; never restore retired artifacts
+or weaken checks to obtain a green result.
+
+## Tool commands (preparation only)
+
+Replace `FULL_DEPLOYED_SHA` with the actual 40-character application revision to be
+tested. A local checkout revision is not proof of deployment. These commands do
+not connect to a lab or start tests:
+
+```bash
+python3 -I scripts/qa_queue.py prepare --set paeng-devices:Paeng:DI,TOP --set teammate-operations:Teammate:NCPA,REM --target-revision FULL_DEPLOYED_SHA --output docs/qa/queues/team-modules-01.json
+python3 -I scripts/qa_queue.py show --queue docs/qa/queues/team-modules-01.json --run paeng-devices
+python3 -I scripts/qa_queue.py check --queue docs/qa/queues/team-modules-01.json --run paeng-devices
+```
+
+`--set` is `NAME:OWNER:MODULE,CASE,...`. Explicit IDs must be eligible; a module
+selector lists exclusions and selects only eligible cases. Optional `--purpose
+recheck` or `retest` records intended review scope; it is not permission to execute.
+`--evidence <review.json>` accepts only validated reviewer decisions for the exact
+target. The [historical evidence review](Historical_Evidence_Review.md) explains
+partial candidates and why no current inherited PASS is automatic.
+
+Optional `--cards <cards.json>` supplies a dictionary keyed by current case ID.
+An absent card is displayed as empty/BLOCKED. The offline validator requires:
+`reviewed_by`, `mode`, immutable adapter path/hash, exact ordered `actions` argument
+vectors, positive case/step timeout seconds, observed `prerequisites`, `recovery`,
+`human_required: false`, private `evidence_dir` and allowed `write_paths`.
+Prepare/review a new queue when cards change; never patch started scope in place.
+
+`scripts/qa_execute.py --help` describes the **offline-only** journal interface:
+start, open batch/case, validate action and record result/halt/show. It validates
+an explicit-start flag and recent preflight attestations but never performs live
+preflight or runs a command. No command here starts a real browser or scan.
+There is no automatic resume/recovery dispatcher yet. Each expected-item record
+requires a verdict, observed value and existing evidence reference; PASS needs every
+item passed within timeout and `restored: true`. Hidden/reordered action repeats and
+sixth batches are rejected. A failed cleanup halts the journal.
+
+The content hash detects changed scope, not a malicious actor able to rewrite and
+rehash files. Live ownership, process/network controls, private evidence and human
+review still matter. Keep actual runtime authorization separate from offline logs.

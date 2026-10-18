@@ -30,7 +30,14 @@ table while you test, not afterward.
 ## Rules
 
 - Name the exact commit tested. A result without a commit is not reproducible.
-- One row per plan case: `Pass`, `Fail`, `Blocked` or `Skipped`, and why.
+- One row per current case: `Pass`, `Fail`, `Partially Pass`, `Blocked`, `Inconclusive`
+  or `Not run` (historical reports may use `Skipped`), and why. Record each expected
+  item's observed value/evidence and restoration. Count unique TC and E2E separately;
+  record diagnostic repeats as attempts, not additional cases.
+- New runs record actual executor/mode, catalog hash, queue/set/session/batch,
+  deployed application/installer versions, baseline and timestamps. Historical
+  [evidence reuse](../qa/Historical_Evidence_Review.md) stays separately labelled,
+  never masquerading as a new human or AI execution.
 - Every `Fail` and `Blocked` links a GitHub issue. Defects live in issues, not in
   the report.
 - Sanitize before committing: no passwords, tokens, keys, community strings,

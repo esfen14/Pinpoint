@@ -2,7 +2,7 @@
 
 This queue delegates each fix to [work-issue.md](work-issue.md), without replacing
 any of its steps, verification requirements or stop conditions. Read `AGENTS.md`,
-the QA journeys, traceability matrix and the owning specifications first.
+the current module catalog, historical evidence review and owning specifications first.
 
 ## Start or resume
 
@@ -45,7 +45,7 @@ Skip a candidate that:
 - has `needs-decision`;
 - has an open fix PR, or an `issue-NUMBER-*` branch with work: record the existing
   worktree/PR as the resume target rather than creating a duplicate;
-- has no valid case ID in the master QA plan or no explicit finish condition
+- has no valid case ID in the current module catalog or no explicit finish condition
   covering that failing case;
 - touches a sensitive module, needs a migration, new dependency, live Nagios or a
   secret without the required authorization; record the question for the owner;
@@ -91,12 +91,13 @@ gh pr view PR_NUMBER --json state,mergedAt,mergeCommit,body,url
 gh pr diff PR_NUMBER
 ```
 
-Only after the fix is merged and the finding closed, change its affected matrix
-rows to `retest`, retaining the original failure and recording the issue, PR, merge
-SHA and evidence. Confirm that the lab contains the merge before the next qa-run.
+Only after the fix is merged and the finding closed, record affected current case
+eligibility as `retest required` in a reviewer-bound evidence record, retaining the
+original failure and recording the issue, PR, merge SHA and evidence. Prepare a
+new reviewed version-2 queue with purpose `retest`; do not overwrite human verdicts. Confirm that the lab contains the merge before the next qa-run.
 A failed retest links the original finding (reopen it if appropriate), increments
 its failed-fix count, and never creates a disconnected duplicate issue. A synthetic
-handoff must use a clearly separate scratch matrix; it cannot certify a product case.
+handoff must use clearly separate scratch evidence; it cannot certify a product case.
 
 ## Written boundary checks
 
@@ -111,9 +112,9 @@ to exercise a limit. Record the input, selected action and expected result.
 | Progress already records three opened PRs | Stop before a fourth `gh pr create` |
 | Case has two merged fixes, each followed by a failed retest | Label `needs-decision`, record both failures, stop on case |
 | Issue creation, PR creation or lab command denied | Record denial and stop; no retry through another tool |
-| Closed issue with an unmerged PR | Keep row `fail-filed`; no retest handoff |
+| Closed issue with an unmerged PR | Keep the original failure; no retest handoff |
 | Closed issue with merged documentation-only/synthetic PR | No product retest; scratch demonstration only |
-| Closed finding with merged actual fix and recorded case coverage | Set that row `retest`; preserve failure evidence |
+| Closed finding with merged actual fix and recorded case coverage | Record retest eligibility; preserve failure evidence |
 
 ## Session report
 

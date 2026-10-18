@@ -16,13 +16,18 @@ steps, expected results, Run order and prerequisites, and requirement matrix.
 IDs (`J*`, `X*`, `PT-*`, `BB-*`) are historical references, not interchangeable IDs.
 Do not invent a one-to-one migration or aggregate old results into new passes.
 
-The old `QA_Test_Plan.md`, `Requirements_Traceability.md`, and
-`QA_Paper_Test_Case_Tables.md` are not inputs to this workflow. Their old queue,
-validation and rendering scripts have not been migrated. In particular, do not
-use `scripts/qa_queue.py` or `python3 -I scripts/render_qa_case_tables.py --write`
-for the new suite, and do not restore the old files merely to satisfy those tools.
-Use the reviewed Markdown queue described below until tooling supports the new
-catalog. A queue is an assignment record, not an automated test implementation.
+The retired `QA_Test_Plan.md`, `Requirements_Traceability.md` and
+`QA_Paper_Test_Case_Tables.md` are no longer inputs. `scripts/qa_queue.py`
+prepares version-2 JSON scope plus a Markdown preview from the new catalog;
+`scripts/check_traceability.py` validates definitions/mappings/evidence and
+`scripts/render_qa_case_tables.py --write` derives `docs/qa/QA_Case_Status.md`.
+Never recreate the old files or use an old version-1 ISO queue.
+
+The [historical evidence review](../../docs/qa/Historical_Evidence_Review.md) links
+candidate reports without promoting partial observations to whole-case passes.
+The reviewer-bound JSON ledger is optional input to queue preparation. Its target
+revision must match; accepted credit needs complete item-level coverage and a
+confirmed cutoff/compatibility decision. Current checked-in mappings are partial.
 
 This workflow finds and retests defects; it never fixes product code or weakens
 expected results. Behavioral specifications and explicit team decisions remain
@@ -74,10 +79,13 @@ compatibility and explicit accepted/partial/retest classifications. The proposed
 October 15 cutoff is not yet a settled decision. If a reuse decision is missing,
 queue it for review rather than making an execution-time eligibility choice.
 
-These are documented limits, not proof of enforced isolation. Until migrated tools
-validate manifests, command/spec allowlists, budgets, ownership and evidence, use
-reviewed supervised execution only. Do not describe prompts alone as sufficient
-protection for unattended testing.
+The offline `scripts/qa_execute.py` checks immutable scope, owner/start attestations,
+card completeness, adapter content hashes, exact ordered action vectors, batch budget,
+per-item evidence references and cleanup status. It does not execute those actions,
+verify live lab assertions or sandbox arbitrary shell access. Missing adapters block
+execution. Resume/recovery automation and the atomic scan guard remain pending;
+use reviewed supervised execution only. Prompts and checksums are not a security
+boundary against an agent with unrestricted file/shell access.
 
 ## Preserve human results and resolve conflicting entries
 
@@ -100,7 +108,8 @@ the module suite does not assign an ISO characteristic to every case.
 ## Prepare a queue before execution
 
 Every new run starts with preparation. Follow [QA Run Queues](../../docs/qa/QA_Run_Queues.md)
-and create a new Markdown file in `docs/qa/queues/` with named sets, owners,
+and use `scripts/qa_queue.py prepare` to create a new JSON queue and Markdown
+preview in `docs/qa/queues/` with named sets, owners,
 explicit case IDs, source revision and case snapshots. Group by module, run phase,
 or explicit IDs; do not require an ISO group or infer one from the module name.
 
@@ -192,7 +201,8 @@ module ownership does not authorize executing that module's cases as setup.
 
 ## Start or resume
 
-On explicit start, re-read the saved set and compare its case snapshots, source
+On explicit start, run `python3 -I scripts/qa_queue.py check --queue <file> --run <set>`
+and `show` the same set. Re-read the saved set and compare its case snapshots, source
 hashes and latest reports with current sources before connecting to the lab. If
 procedures, expectations, prerequisites, eligibility or notes changed, prepare and
 show a replacement queue and wait for a new start. Never silently substitute IDs.
@@ -281,9 +291,10 @@ precedence over completing the batch. Report all remaining IDs as pending/blocke
    Keep TC and E2E totals separate, distinguishing selected, attempted, definitive
    verdicts, partial, blocked, inconclusive and not run. Do not count setup or a
    queued case as a completed test. Run `git diff --check` and `scripts/verify.sh docs`.
-   Existing checks still depend on the removed legacy sources; record exact failures
-   and distinguish inherited failures from new ones. Do not fabricate old files,
-   skip failing checks, or claim a green gate. A failed docs check blocks a ready
+   The docs gate now validates the new catalog, derived status, queues, evidence and
+   offline session rules. Regenerate `docs/qa/QA_Case_Status.md` when its source or
+   review ledger changes. Do not fabricate old files, skip checks or claim a green
+   gate without observed success. A failed docs check blocks a ready
    checkpoint/sign-off; preserve unfinished work as draft with the failure recorded.
 9. Update `.agent/progress/issue-<n>.md` with the report path, validation result and next
    action, then checkpoint authorized work with `scripts/agent_checkpoint.sh <n> '<case and observed result>'`.
@@ -314,7 +325,7 @@ A closed issue, unmerged fix or documentation-only/synthetic PR is insufficient.
 Record eligibility in the queue with original failure/report, finding, fix PR,
 merge SHA and affected `TC-*`/`E2E-*` IDs. Confirm the deployment contains the fix
 before execution. Handoff from the legacy fix-found matrix is evidence to inspect,
-not a new-suite result or permission to regenerate legacy artifacts.
+not a new-suite result. Record the reviewed fix in the evidence ledger/queue; never regenerate legacy artifacts.
 
 Preserve original failures; a failed retest links the same finding. After two failed
 merged fixes for the same case, mark `needs-decision` and stop work on it. A real

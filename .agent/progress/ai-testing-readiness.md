@@ -1,10 +1,12 @@
 # AI automated testing readiness plan
 
 Date: 2026-10-18 (Asia/Manila)
-State: Planned — awaiting the user's go signal
-Tracking issue: Not created; no issue number is assumed.
-Scope of this request: Write this plan only. No implementation, case execution,
-lab connection, provisioning, reset, fault injection, issue filing or publication.
+State: Implementation in progress — authorized offline tooling milestone (#206)
+Tracking issue: [#206](https://github.com/esfen14/Pinpoint/issues/206); issue-scoped progress is [issue-206.md](issue-206.md).
+Current authorization: implement readiness tooling. [Issue #206](https://github.com/esfen14/Pinpoint/issues/206)
+tracks the offline milestone in an isolated checkout. No live case execution, lab
+connection, provisioning/reset or fault injection is authorized by that milestone.
+The original planning-only instruction was superseded by the user's go signal.
 
 ## Finish condition
 
@@ -21,7 +23,27 @@ claim that the product passes or that every case can run without human involveme
 - [ ] After a separate explicit start, the pilot demonstrates execution, reporting, failure handling and verified restoration.
 - [ ] Unattended testing is enabled only for cases with deterministic execution and recovery; remaining cases stay explicitly human-assisted or blocked.
 
-## Current baseline
+## Implemented offline milestone
+
+- Shared parser validates all 231 TC/eight E2E procedures, phases and requirements;
+  conflicting human results remain flagged.
+- Queue v2 supports module/person assignments, fixed batches, exact IDs, exclusions,
+  source snapshots/freshness, optional cards and reviewer-bound historical reuse.
+- Forty-one post-cutoff-directory-date reports are inventoried; six current-case
+  mappings are partial. No inherited full-case PASS or cutoff decision is invented.
+- Offline session validation rejects missing owner/start/preflight attestations,
+  incomplete/changed adapters, wrong action slots, exhausted budgets, incomplete
+  PASS evidence and failed cleanup. It dispatches no live commands and is not an
+  OS sandbox. Live adapter completion, preflight, enforced scan guard, recovery/resume
+  and pilot runs remain separate pending work.
+- Current/historical links and docs checks have migrated. `scripts/verify.sh docs`
+  is green. Read the issue progress for latest edge-case tests and publication state.
+
+The original checklist below is intentionally retained. Only mark its broader
+items complete when the whole requirement (including live evidence where needed)
+is proved; offline tooling alone does not satisfy full unattended readiness.
+
+## Current baseline (planning snapshot, retained for context)
 
 - Case source: [Black-Box Test Cases by Module with Traceability Matrix](../../docs/qa/Pinpoint%20-%20Black-Box%20Test%20Cases%20by%20Module%20with%20Traceability%20Matrix.md).
 - Catalog: 231 TC cases across 23 modules, plus eight distinct E2E scenarios.
@@ -299,12 +321,12 @@ execution and missing mandatory evidence block the affected cases.
 
 - Last check run (exact command): `scripts/verify.sh docs`, after workflow contract tests and edited-document local-link/batch/guardrail assertions; final whitespace check: `git diff --check`.
 - Result: Plan checks passed. Docs verification stopped on 11 existing links to deleted legacy QA documents, beginning with `AGENTS.md -> docs/qa/QA_Test_Plan.md`; migration is listed in phase 4. The issue-progress validator reports zero issue files because this descriptive planning filename is intentionally outside its `issue-*.md` scope; the plan was checked separately. Readiness work has not started.
-- Next action: Wait for the user's go signal; then establish the tracking issue/checkout, confirm the provisional October 15 cutoff/transition revision and begin phase 1 source and execution-contract review.
+- Next action: Follow issue-206 progress for offline implementation review/publication; then prepare separately reviewed adapter/lab/pilot scope. Cutoff and human-result conflicts remain pending decisions.
 
 ## Decisions and notes
 
-- This descriptive progress filename is intentional: no GitHub issue has been assigned. Do not invent an issue number. After authorization, transfer execution tracking to the real issue-scoped template.
-- The current queue guide's Markdown fallback remains valid until the migrated tool is implemented and its documented schema agrees with that guide.
+- This descriptive file is the overall readiness checklist. Authorized offline implementation now uses the real issue-scoped progress file for #206.
+- Version-2 JSON queues with generated Markdown previews have replaced the manual Markdown fallback. Incomplete execution cards remain blocked.
 - Do not resolve human-result conflicts, add ISO classifications or change product expectations by assumption.
 - Human evidence requirements are case-specific. Do not block an independent pilot solely because an unrelated case needs a person, but never claim those omitted cases passed.
 - This plan is local scaffolding for review, not a published design or authorization to operate the lab.
