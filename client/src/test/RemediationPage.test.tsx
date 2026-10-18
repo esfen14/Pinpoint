@@ -656,7 +656,8 @@ describe('Remediation page: repeat recovery limits', () => {
   it('shows the saved count and window', async () => {
     api.getSettings.mockResolvedValue({ enabled: true, retentionDays: 90, repeatCount: 5, repeatWindowHours: 48 })
     render(<RemediationPage />)
-    expect(await screen.findByLabelText('Repeat count')).toHaveValue(5)
+    // The fields exist before the saved settings arrive, so wait for the values themselves.
+    await waitFor(() => expect(screen.getByLabelText('Repeat count')).toHaveValue(5))
     expect(screen.getByLabelText('Repeat window (hours)')).toHaveValue(48)
     expect(screen.getByText(/recovers the same service this many times/i)).toBeInTheDocument()
   })
