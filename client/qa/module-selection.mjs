@@ -5,6 +5,8 @@ import { isAbsolute, resolve, join } from 'node:path';
 export const CASES = Object.freeze({
   'TC-ACC-08': 'TC-ACC-08: "Send this user email alerts" depends on permission',
   'TC-ROL-04': 'TC-ROL-04: A dashboard-only user is limited to the Dashboard',
+  'TC-DI-02': 'TC-DI-02: Port groups and their order',
+  'TC-DI-03': 'TC-DI-03: One reason per port',
 });
 
 export function moduleSelection(env) {

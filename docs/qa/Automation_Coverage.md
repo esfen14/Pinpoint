@@ -72,8 +72,8 @@ Assertion markers and source hashes support review; they do not prove assertion 
 | TC-PLG-05 | PLG | unmapped / unassigned | None | E1, E2 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-PLG-06 | PLG | unmapped / unassigned | None | E1, E2 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-DI-01 | DI | unmapped / unassigned | None | E1, E2, E3 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
-| TC-DI-02 | DI | unmapped / unassigned | None | E1, E2, E3 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
-| TC-DI-03 | DI | unmapped / unassigned | None | E1, E2 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
+| TC-DI-02 | DI | implemented / scripted automation | [TC-DI-02: Port groups and their order](../../client/e2e/qa-modules-2-9.lab.spec.ts) | None in source review | Source adapter covers every catalog expected item with read-only browser assertions; current live launcher, reviewed current prerequisites/cards and a separate explicit start are still required. |
+| TC-DI-03 | DI | implemented / scripted automation | [TC-DI-03: One reason per port](../../client/e2e/qa-modules-2-9.lab.spec.ts) | None in source review | Source adapter covers every catalog expected item with read-only browser assertions; current live launcher, reviewed current prerequisites/cards and a separate explicit start are still required. |
 | TC-DI-04 | DI | unmapped / unassigned | None | E1, E2 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-DASH-01 | DASH | unmapped / unassigned | None | E1, E2, E3, E4 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-DASH-05 | DASH | unmapped / unassigned | None | E1, E2 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
@@ -247,4 +247,4 @@ Assertion markers and source hashes support review; they do not prove assertion 
 | E2E-07 | E2E | unmapped / unassigned | None | E1, E2, E3, E4, E5, E6, E7 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | E2E-08 | E2E | unmapped / unassigned | None | E1, E2, E3, E4, E5 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 
-Source register: 9 implemented, 0 partial, 230 unmapped (TC and E2E combined; not execution counts).
+Source register: 11 implemented, 0 partial, 228 unmapped (TC and E2E combined; not execution counts).

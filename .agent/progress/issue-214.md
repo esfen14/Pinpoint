@@ -42,13 +42,14 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | 2 | Added case-by-case review matrix with source/test references and explicit prerequisite, mutation, and cleanup concerns | `python3 -I scripts/qa_coverage.py check` | Green; existing coverage unchanged. Matrix explicitly notes that the bounded pilot is not a general launcher and no live action is authorized. |
 | 3 | Added exact-ID source adapters for TC-ACC-08 and TC-ROL-04, a private-directory selector, isolated Playwright collection config and offline collection checks; updated source coverage and blocked legacy-launch routing | `cd client && node --test qa/module-selection.node.mjs`; `cd client && npx tsc --noEmit -p tsconfig.qa.json`; `python3 -I scripts/qa_coverage.py check` | 5 offline selection/collection checks pass; QA config type-check passes; all 239 coverage records validate. These are adapter checks, not product-case results. No live browser or lab was contacted. |
 | 4 | Recorded report-backed PASS exclusions for TC-ACC-09/TC-SS-04 and same-lab read-only host preflight in the adapter review; documented that target revision/baseline and live authorization remain unverified | `scripts/vmlab preflight --json`; `scripts/verify.sh docs` | Host preflight confirms the configured VM UUID is running and host/loopback ownership checks pass; `live_authorized=false`; served app revision/current baseline not established. Docs gate green. No product case executed. |
+| 5 | Added read-only source adapters for TC-DI-02 and TC-DI-03; refreshed reviewed coverage hashes; updated readiness and implementation status to distinguish 11 source mappings from live support and retain ACC-09/SS-04 report outcomes | `cd client && node --test qa/module-selection.node.mjs`; `cd client && npx tsc --noEmit -p tsconfig.qa.json`; `python3 -I scripts/qa_coverage.py check`; `git diff --check` | 5 offline selection/collection checks pass; TypeScript QA config passes; 239 coverage records validate (11 implemented, 228 unmapped); whitespace check passes. No product case or browser ran. |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh docs`
-- Result (first failing lines, or "green"): green; all isolated documentation and workflow contract checks pass.
-- Hypothesis: The same lab is running, but this host-only check did not establish the served application revision/current controlled baseline; no supported live launcher accepts the two new adapters.
-- Next action (one specific step, not "continue"): Implement and review the next exact read-only adapter (TC-DI-02), then extend its source mapping and collection test without adding a live dispatch path.
+- Last check run (exact command): `python3 -I scripts/qa_coverage.py check`
+- Result (first failing lines, or "green"): green; 239 coverage records validate, with 11 implemented and 228 unmapped.
+- Hypothesis: The same lab host is running, but the served application revision/current controlled baseline are not verified; no supported live launcher accepts the module adapter config.
+- Next action (one specific step, not "continue"): Run `scripts/verify.sh docs` after the latest readiness/status changes, then checkpoint this round.
 
 ## Decisions and notes
 

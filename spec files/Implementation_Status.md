@@ -385,6 +385,15 @@ item-level coverage before full reuse. The requirement validator, derived
 [case status view](../docs/qa/QA_Case_Status.md), and docs gate now use the new sources
 instead of the removed journey plan, matrix and paper tables.
 
+Issue #214 adds source-reviewed, offline-collection-only adapters for
+TC-ACC-08, TC-ROL-04, TC-DI-02 and TC-DI-03. Together with the seven permission
+adapters, the source coverage register now has 11 implemented mappings and 228
+unmapped entries across 239 current cases/scenarios. These mappings do not add a
+general live launcher or runtime results. The October 18 supervised reports record
+complete PASS/restored outcomes for TC-ACC-09 and TC-SS-04; their original catalog
+Result fields remain unchanged under the QA workflow, and both IDs are excluded
+from the replacement untested queue.
+
 Backend tests are organized under `server/tests/unit/`, `integration/`, `e2e/`,
 `support/`, and `plans/`. Default pytest collection is isolated. The deterministic
 browser-to-Nagios approach is recorded in

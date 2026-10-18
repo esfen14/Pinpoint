@@ -6,13 +6,15 @@ source implementation, expected items still missing and unassigned executors.
 It does not change the human catalog or certify any runtime PASS.
 
 Seven permission adapters are source-complete: TC-SS-04, TC-HIS-01, TC-RPT-07,
-TC-LOG-05, TC-PLG-07, TC-ACC-09 and TC-NCPA-08. The next proposed untested batch
+TC-LOG-05, TC-PLG-07, TC-ACC-09 and TC-NCPA-08. Four additional source-only
+module adapters are under issue #214 for TC-ACC-08, TC-ROL-04, TC-DI-02 and
+TC-DI-03. The next proposed untested batch
 is TC-ACC-09 followed by TC-NCPA-08; each uses the existing initialized Staff
 account with zero permissions. TC-ACC-09 has separate E1 page-denial and E2 API-403
 evidence; missing either cannot yield PASS. TC-SS-04 already has an attributable
 accepted supervised PASS. The other four original adapters have human PASS and
-remain excluded from default pending queues. The remaining 232 cases/scenarios
-are unmapped. Source coverage does not authorize the next batch or imply runtime
+remain excluded from default pending queues. Across all 239 cases/scenarios, 11
+have source-complete adapters and 228 remain unmapped. Source coverage does not authorize the next batch or imply runtime
 acceptance; its cards, current prerequisite observations, reviewed ledger handoff and explicit
 start remain separate requirements. The launcher now implements a fixed serial
 batch for only TC-SS-04, TC-ACC-09 and TC-NCPA-08; see the
@@ -32,6 +34,11 @@ batch for only TC-SS-04, TC-ACC-09 and TC-NCPA-08; see the
   `qa-permissions`, with explicit current IDs, one worker, no retries or setup
   dependencies, fixed loopback origin and disabled trace/video/screenshot capture.
   A failed test stops further tests; bounded action/navigation/case/global limits apply.
+- The issue #214 module config selects only explicit IDs from
+  `qa-modules-2-9.lab.spec.ts`; the supported legacy launcher rejects this config,
+  so it is currently an offline source/collection suite only. Its four mapped
+  cases require exact approved credential and pre-existing fixture inputs; they
+  do not create accounts, roles, devices, or port state.
 - Each adapter signs in through the UI using an already initialized disposable
   Staff account, checks its role, zero permissions and completed password/setup
   state, then checks the exact hidden sidebar link and redirect. API cases open
@@ -124,12 +131,14 @@ checks do not establish discovery, NCPA, report content, performance or E2E cove
 ## Verification
 
 `scripts/verify.sh docs` checks the registry/derived view and isolated Python
-contracts. `scripts/verify.sh frontend` type-checks the new config/adapter and runs
-`node --test qa/selection.node.mjs` before existing frontend checks. Nine additional Python transport tests use synthetic private files and exercise
-the preview/legacy rejection paths without external commands. Those Node
-tests use Playwright `--list` with no browser or credentials: they prove exact
-one-case/five-case collection, no setup dependencies/retries and rejected invalid
-selection/private paths. They are harness checks, not live acceptance evidence.
+contracts. `scripts/verify.sh frontend` type-checks both configs/adapters and runs
+`node --test qa/selection.node.mjs` and
+`node --test qa/module-selection.node.mjs` before existing frontend checks. Nine
+additional Python transport tests use synthetic private files and exercise the
+preview/legacy rejection paths without external commands. The Node tests use
+Playwright `--list` with no browser or credentials: they verify exact explicit-ID
+collection, no setup dependencies/retries and rejected invalid selections/private
+paths. They are harness checks, not live acceptance evidence.
 
 ## Supervisor lifecycle core
 

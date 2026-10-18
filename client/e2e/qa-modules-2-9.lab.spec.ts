@@ -23,6 +23,28 @@ async function signIn(page: Page, email: string, password: string, role: string,
     'Prerequisite account forbidden permissions').toBe(true);
 }
 
+async function signInSuperAdmin(page: Page) {
+  const email = process.env.PINPOINT_ADMIN_USER;
+  const password = process.env.PINPOINT_ADMIN_PASSWORD;
+  if (!email || !password) throw new Error('Use the existing Super Admin credentials from the private store.');
+  await signIn(page, email, password, 'Super Admin', ['system.network_health', 'system.hosts'], []);
+}
+
+async function openDevicePorts(page: Page) {
+  const hostname = process.env.PINPOINT_QA_DEVICE_HOST;
+  if (!hostname) throw new Error('Set PINPOINT_QA_DEVICE_HOST to the pre-reviewed fixture host.');
+  await signInSuperAdmin(page);
+  await page.goto('/device-inventory');
+  await page.getByPlaceholder('Search hostname').fill(hostname);
+  const hostButton = page.getByRole('button', { name: hostname, exact: true });
+  await expect(hostButton).toBeVisible();
+  await hostButton.click();
+  await expect(page.getByRole('heading', { name: hostname, exact: true, level: 2 })).toBeVisible();
+  const portsHeading = page.getByRole('heading', { name: 'Ports', exact: true, level: 3 });
+  await expect(portsHeading).toBeVisible();
+  return portsHeading.locator('..');
+}
+
 test.afterEach(async ({ page }, info) => {
   const response = await page.request.post('/api/user/logout');
   expect([200, 401].includes(response.status()), 'Session cleanup response').toBe(true);
@@ -97,4 +119,78 @@ test('TC-ROL-04: A dashboard-only user is limited to the Dashboard', async ({ pa
   }
   // qa-evidence:TC-ROL-04:E3
   await observe(info, 'TC-ROL-04', 'E3', 'All three protected API addresses return 403.');
+});
+
+test('TC-DI-02: Port groups and their order', async ({ page }, info) => {
+  const ports = await openDevicePorts(page);
+  const archived = ports.getByRole('button', { name: /^Archived \(\d+\)$/ });
+  await expect(archived, 'The prepared fixture includes archived ports').toBeVisible();
+  await archived.click();
+
+  const groupHeadings = ports.locator('h4, button[aria-expanded="true"]');
+  const labels = (await groupHeadings.allTextContents()).map((text) => text.trim());
+  const groups = labels.map((label) => {
+    const match = /^(Needs attention|Monitored|Suggested|Stopped|Archived) \((\d+)\)$/.exec(label);
+    expect(match, `Valid group title and count: ${label}`).not.toBeNull();
+    return { title: match![1], count: Number(match![2]) };
+  });
+  const expectedOrder = ['Needs attention', 'Monitored', 'Suggested', 'Stopped', 'Archived'];
+  const actualOrder = groups.map(({ title }) => title);
+  expect(actualOrder, 'Visible nonempty groups follow the required order').toEqual(
+    expectedOrder.filter((title) => actualOrder.includes(title)),
+  );
+  expect(['Monitored', 'Suggested', 'Stopped', 'Archived'].every((title) => actualOrder.includes(title)),
+    'The prepared device has each required lifecycle group').toBe(true);
+  // qa-evidence:TC-DI-02:E1
+  await observe(info, 'TC-DI-02', 'E1', 'Port group headers appear in the required order.');
+
+  for (const { title, count } of groups) {
+    const heading = ports.locator('h4, button[aria-expanded="true"]').filter({ hasText: new RegExp(`^${title} \\(\\d+\\)$`) });
+    const group = heading.locator('..');
+    const rows = group.locator('ul > li');
+    await expect(rows, `${title} count matches its rows`).toHaveCount(count);
+    expect(count, `${title} is shown only when nonempty`).toBeGreaterThan(0);
+  }
+  // qa-evidence:TC-DI-02:E2
+  await observe(info, 'TC-DI-02', 'E2', 'Every shown group has a matching positive count; empty groups are absent.');
+
+  for (const { title } of groups) {
+    const heading = ports.locator('h4, button[aria-expanded="true"]').filter({ hasText: new RegExp(`^${title} \\(\\d+\\)$`) });
+    const rows = heading.locator('..').locator('ul > li');
+    const portLabels = await rows.evaluateAll((nodes) => nodes.map((node) => (
+      node.querySelector(':scope > div > span')?.textContent?.trim() ?? ''
+    )));
+    const parsed = portLabels.map((label) => {
+      const match = /^(tcp|udp)\/(\d+)$/i.exec(label.trim());
+      expect(match, `Port label has protocol and number: ${label}`).not.toBeNull();
+      return { label: label.trim(), protocolRank: match![1].toLowerCase() === 'tcp' ? 0 : 1, number: Number(match![2]) };
+    });
+    const sorted = [...parsed].sort((a, b) => a.protocolRank - b.protocolRank || a.number - b.number);
+    expect(parsed.map((item) => item.label), `${title} ports are TCP then UDP, ordered by number`)
+      .toEqual(sorted.map((item) => item.label));
+  }
+  // qa-evidence:TC-DI-02:E3
+  await observe(info, 'TC-DI-02', 'E3', 'Each visible port group is ordered TCP then UDP, by port number.');
+});
+
+test('TC-DI-03: One reason per port', async ({ page }, info) => {
+  const ports = await openDevicePorts(page);
+  const label = process.env.PINPOINT_QA_HELD_MISMATCH_PORT;
+  if (!label || !/^(tcp|udp)\/\d+$/i.test(label)) {
+    throw new Error('Set PINPOINT_QA_HELD_MISMATCH_PORT to the pre-reviewed held mismatch port label.');
+  }
+  const portLabel = ports.getByText(label, { exact: true });
+  const row = ports.locator('li').filter({ has: portLabel });
+  await expect(row).toHaveCount(1);
+  await expect(row.getByText('Held', { exact: true })).toBeVisible();
+  await expect(row.getByText('Not used as intended', { exact: true })).toBeVisible();
+  const reason = row.locator('p').filter({ hasText: /^Not used as intended:/ });
+  await expect(reason, 'Only the first matching reason is shown').toHaveCount(1);
+  await expect(row.getByText(/Held back/)).toHaveCount(0);
+  // qa-evidence:TC-DI-03:E1
+  await observe(info, 'TC-DI-03', 'E1', 'Exactly one reason is shown and the held-back reason is absent.');
+  await expect(reason).toHaveText(/^Not used as intended: expected .+, found .+\. Not monitored until acknowledged\.$/);
+
+  // qa-evidence:TC-DI-03:E2
+  await observe(info, 'TC-DI-03', 'E2', 'The reason explains the expected/found names and says monitoring waits for acknowledgement.');
 });
