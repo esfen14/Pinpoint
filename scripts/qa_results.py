@@ -47,9 +47,12 @@ OBSERVATIONS={'TC-SS-04': {'E1': 'System Status absent from sidebar; direct addr
               'E2': 'An unknown TCP service resolves to the generic check_tcp label.',
               'E3': 'An unknown UDP service shows that no UDP check exists.',
               'E4': 'The service pin warning appears on TCP and UDP without saving either change.'},
+ 'TC-HIS-04': {'E1': 'A complete valid date range returns a list response.',
+               'E2': 'Missing, reversed and malformed date ranges return 400 without data.',
+               'E3': 'A known event older than 25 hours is excluded when dates and preset are omitted.'},
  'TC-DASH-07': {'E1': 'Network Latency and both Network Performance metrics show No data.',
                 'E2': 'Average Resource Utilization is absent without NCPA data.'}}
-MODULE_CASES=frozenset({'TC-ACC-08','TC-ROL-04','TC-DI-02','TC-DI-03','TC-DI-08','TC-DASH-07'})
+MODULE_CASES=frozenset({'TC-ACC-08','TC-ROL-04','TC-DI-02','TC-DI-03','TC-DI-08','TC-HIS-04','TC-DASH-07'})
 
 
 def unique_object(pairs):

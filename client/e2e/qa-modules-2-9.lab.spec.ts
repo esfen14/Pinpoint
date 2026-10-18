@@ -360,6 +360,117 @@ test('TC-DI-08: The Checked by line', async ({ page }, info) => {
   expect(blockedWrites, 'The adapter made no port mutation request').toEqual([]);
 });
 
+test('TC-DI-07: Service name rules in Set service', async ({ page }, info) => {
+  const editableLabel = process.env.PINPOINT_QA_DI07_PORT;
+  const sshLabel = process.env.PINPOINT_QA_DI07_SSH_PORT;
+  if (!editableLabel || !/^(tcp|udp)\/\d+$/.test(editableLabel)
+    || !sshLabel || !/^(tcp|udp)\/\d+$/.test(sshLabel) || editableLabel === sshLabel) {
+    throw new Error('Set PINPOINT_QA_DI07_PORT and PINPOINT_QA_DI07_SSH_PORT to two reviewed port labels.');
+  }
+  const ports = await openDevicePorts(page);
+  const current = await page.request.get('/api/user/me');
+  expect(current.status()).toBe(200);
+  expect((await current.json()).data.permissions, 'Opening Set service requires edit permission')
+    .toContain('system.hosts.edit');
+  const blockedWrites: string[] = [];
+  await page.route('**/api/system/hosts/*/ports/*/*', async (route) => {
+    if (route.request().method() === 'PUT') {
+      blockedWrites.push(new URL(route.request().url()).pathname);
+      await route.abort('blockedbyclient');
+      return;
+    }
+    await route.continue();
+  });
+
+  const openDialog = async (label: string) => {
+    const portText = ports.getByText(label, { exact: true });
+    const row = ports.locator('li').filter({ has: portText });
+    await expect(row, `Reviewed fixture port ${label} is present exactly once`).toHaveCount(1);
+    await row.getByRole('button', { name: new RegExp(`^Set service.*${label.replace('/', '\\/')}`) }).click();
+    return page.getByRole('dialog', { name: new RegExp(`Set service for ${label.replace('/', '\\/')}`) });
+  };
+  const name = await openDialog(editableLabel);
+  const input = name.getByRole('textbox', { name: 'Service name' });
+  const save = name.getByRole('button', { name: 'Save', exact: true });
+  await expect(input, 'The editable fixture port must not already use ssh').not.toHaveValue('ssh');
+  await input.fill('ssh');
+  await expect(save, 'Valid ssh enables Save when it changes the current service').toBeEnabled();
+  await input.fill('my_svc-1');
+  await expect(save, 'Valid service name with underscore and hyphen enables Save').toBeEnabled();
+  await input.fill('a'.repeat(32));
+  await expect(save, 'A 32-character service name is valid').toBeEnabled();
+  // qa-evidence:TC-DI-07:E1
+  await observe(info, 'TC-DI-07', 'E1', 'ssh, my_svc-1 and a 32-character name are valid and enable Save when changed.');
+
+  for (const invalid of ['SSH', '-ssh', 'a'.repeat(33), '']) {
+    await input.fill(invalid);
+    await expect(save, `Invalid service name ${invalid || '(empty)'} keeps Save disabled`).toBeDisabled();
+  }
+  // qa-evidence:TC-DI-07:E2
+  await observe(info, 'TC-DI-07', 'E2', 'Uppercase, leading hyphen, 33 characters and empty service names keep Save disabled.');
+  await name.getByRole('button', { name: 'Cancel', exact: true }).click();
+
+  const ssh = await openDialog(sshLabel);
+  const sshInput = ssh.getByRole('textbox', { name: 'Service name' });
+  await expect(sshInput).toHaveValue('ssh');
+  await expect(ssh.getByRole('button', { name: 'Save', exact: true }), 'Unchanged ssh keeps Save disabled').toBeDisabled();
+  // qa-evidence:TC-DI-07:E3
+  await observe(info, 'TC-DI-07', 'E3', 'Save is disabled when ssh is unchanged on a port already named ssh.');
+  await ssh.getByRole('button', { name: 'Cancel', exact: true }).click();
+  expect(blockedWrites, 'The adapter made no port mutation request').toEqual([]);
+});
+
+test('TC-HIS-04: Date range rules (API)', async ({ page }, info) => {
+  const email = process.env.PINPOINT_ADMIN_USER;
+  const password = process.env.PINPOINT_ADMIN_PASSWORD;
+  if (!email || !password) throw new Error('Use the existing Super Admin credentials from the private store.');
+  await signIn(page, email, password, 'Super Admin', ['system.history'], []);
+
+  const valid = await page.request.get('/api/system/history/alerts?start_date=2026-10-01&end_date=2026-10-02');
+  expect(valid.status(), 'A complete date range is accepted').toBe(200);
+  const validBody = await valid.json();
+  expect(validBody.success).toBe(true);
+  expect(Array.isArray(validBody.data?.items), 'Valid range returns a list, including when it is empty').toBe(true);
+  // qa-evidence:TC-HIS-04:E1
+  await observe(info, 'TC-HIS-04', 'E1', 'A complete valid date range returns a list response.');
+
+  const invalidUrls = [
+    '/api/system/history/alerts?start_date=2026-10-01',
+    '/api/system/history/alerts?start_date=2026-10-02&end_date=2026-10-01',
+    '/api/system/history/alerts?start_date=abc&end_date=def',
+  ];
+  for (const url of invalidUrls) {
+    const response = await page.request.get(url);
+    expect(response.status(), `Invalid range ${url} is refused`).toBe(400);
+    const body = await response.json();
+    expect(body.success).toBe(false);
+    expect(body).not.toHaveProperty('data');
+  }
+  // qa-evidence:TC-HIS-04:E2
+  await observe(info, 'TC-HIS-04', 'E2', 'Missing, reversed and malformed date ranges return 400 without data.');
+
+  const now = Math.floor(Date.now() / 1000);
+  const startDate = new Date((now - 30 * 86400) * 1000).toISOString().slice(0, 10);
+  const endDate = new Date(now * 1000).toISOString().slice(0, 10);
+  const oldEventsResponse = await page.request.get(
+    `/api/system/history/alerts?start_date=${startDate}&end_date=${endDate}&sort_by=timestamp&order=asc&per_page=100`,
+  );
+  expect(oldEventsResponse.status(), 'Existing history is available to confirm default filtering').toBe(200);
+  const oldEvents = (await oldEventsResponse.json()).data.items as Array<{ event_id: string; timestamp: number }>;
+  const oldEvent = oldEvents.find((event) => event.timestamp < now - 25 * 3600);
+  expect(oldEvent, 'Fixture includes an event older than 25 hours within the last 30 days').toBeTruthy();
+
+  const defaultRange = await page.request.get('/api/system/history/alerts?per_page=100');
+  expect(defaultRange.status(), 'The no-date request uses the default range').toBe(200);
+  const defaultEvents = (await defaultRange.json()).data.items as Array<{ event_id: string; timestamp: number }>;
+  expect(defaultEvents.some((event) => event.event_id === oldEvent!.event_id),
+    'An event known to be older than 25 hours is outside the default range').toBe(false);
+  expect(defaultEvents.every((event) => event.timestamp >= now - 25 * 3600),
+    'All returned default-range events fall within 24 hours with clock tolerance').toBe(true);
+  // qa-evidence:TC-HIS-04:E3
+  await observe(info, 'TC-HIS-04', 'E3', 'A known event older than 25 hours is excluded when dates and preset are omitted.');
+});
+
 test('TC-DASH-07: "No data" instead of blank cards', async ({ page }, info) => {
   await signInSuperAdmin(page);
   await page.goto('/dashboard');

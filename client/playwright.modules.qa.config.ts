@@ -3,7 +3,7 @@ import { moduleSelection } from './qa/module-selection.mjs';
 
 // Exact source selection for the supervised module pilot. Direct legacy
 // playwright-lab dispatch remains blocked; only qa_pilot.py run may execute the
-// six complete read-only mappings with reviewed cards and a separate start.
+// seven complete read-only mappings with reviewed cards and a separate start.
 const scope = moduleSelection(process.env);
 export default defineConfig({
   testDir: './e2e',

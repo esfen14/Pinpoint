@@ -9,7 +9,10 @@ export const CASES = Object.freeze({
   'TC-DI-02': 'TC-DI-02: Port groups and their order',
   'TC-DI-03': 'TC-DI-03: One reason per port',
   'TC-DI-08': 'TC-DI-08: The Checked by line',
+  'TC-DI-07': 'TC-DI-07: Service name rules in Set service',
+  'TC-HIS-04': 'TC-HIS-04: Date range rules (API)',
   'TC-DASH-07': 'TC-DASH-07: "No data" instead of blank cards',
+  'TC-HIS-04': 'TC-HIS-04: Date range rules (API)',
 });
 
 export function moduleSelection(env) {

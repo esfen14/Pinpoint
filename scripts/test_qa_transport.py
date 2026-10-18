@@ -102,6 +102,23 @@ class TransportTests(unittest.TestCase):
             self.assertTrue(all('readonly' in value for value in state_mounts))
             self.assertNotIn('synthetic-private-value',json.dumps(argv))
 
+    def test_history_case_transport_mounts_only_admin_credentials(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);(root/'state').mkdir(mode=0o700);(root/'evidence').mkdir(mode=0o700);(root/'bridge').mkdir(mode=0o700)
+            cache=root/'home/.cache/ms-playwright';cache.mkdir(parents=True,mode=0o700)
+            names=t.MODULE_STATE_FILES['TC-HIS-04']
+            self.assertEqual(names,('admin-email','admin-password'))
+            for name in names:
+                path=root/'state'/name;path.write_text('synthetic-private-value');path.chmod(0o600)
+            with patch.object(Path,'home',return_value=root/'home'):
+                argv=t.container_command(root/'evidence',root/'state',root/'bridge','TC-HIS-04')
+            mounts=[argv[i+1] for i,value in enumerate(argv) if value=='--mount']
+            state_mounts=[value for value in mounts if 'dst=/state/' in value]
+            self.assertEqual(len(state_mounts),2)
+            self.assertTrue(all('readonly' in value for value in state_mounts))
+            self.assertIn('PINPOINT_QA_CASES=TC-HIS-04',argv)
+            self.assertNotIn('synthetic-private-value',json.dumps(argv))
+
     def test_draft_cards_and_offline_to_live_promotion_are_rejected(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d);q,s=self.fixture(root)

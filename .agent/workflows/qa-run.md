@@ -44,9 +44,11 @@ reject execution cards not bound to an implemented mapping and its exact command
 A card template is deliberately BLOCKED; never substitute guessed prerequisites,
 reviewer, timeouts or output paths. Seven permission adapters have source coverage.
 The bounded supervised live launcher supports TC-SS-04, TC-ACC-09, TC-NCPA-08,
-and the six complete read-only Module 2–9 adapters TC-ACC-08, TC-ROL-04,
-TC-DI-02, TC-DI-03, TC-DI-08 and TC-DASH-07. TC-ACC-10 is partial and unsupported; all
-other Module 2–9 cases still need complete reviewed adapters/cards. The direct
+and the seven complete read-only Module 2–9 adapters TC-ACC-08, TC-ROL-04,
+TC-DI-02, TC-DI-03, TC-DI-08, TC-HIS-04 and TC-DASH-07. TC-ACC-10 is partial and unsupported;
+TC-DI-07 has a source adapter but stays outside the live allowlist until its
+uppercase expectation discrepancy and failure-result handling are resolved. Other
+Module 2–9 cases still need complete reviewed adapters/cards. The direct
 legacy launcher rejects both current-case configs; only `qa_pilot.py run` may
 dispatch the fixed supported IDs after reviewed cards, current baseline and
 explicit named set start.
@@ -66,7 +68,7 @@ The supervisor and mutating `vmlab` entries now share a cooperative host claim.
 Never delete its lock/store or call a direct controller to bypass a busy claim.
 `vmlab preflight --json` supplies host observations only: it cannot prove the
 running frontend/backend revision, baseline, restoration or permission to start.
-The bounded supervised driver supports three permission cases and six complete
+The bounded supervised driver supports three permission cases and seven complete
 read-only Module 2–9 cases; other production integration remains blocked.
 The concrete container lifecycle component also has no live CLI/default driver.
 Its consumed-slot/image/cleanup contracts and synthetic worker checks do not
@@ -89,7 +91,7 @@ inspection fields are not live authorization or evidence that a case passed.
 The standalone deployment observer continues to return false/null readiness.
 
 Only `qa_pilot.py run` may launch one fixed batch of supported IDs: the three
-permission cases above and the six complete read-only module cases listed in
+permission cases above and the seven complete read-only module cases listed in
 the source coverage register. It requires a reviewed queue/cards and explicit
 user start. It uses one case/driver/container at a time, saves each result before
 opening the next, and stops on every non-PASS. No automatic retry or resume.

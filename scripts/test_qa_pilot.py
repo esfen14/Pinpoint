@@ -11,6 +11,14 @@ f=v.module('fixtures','test_qa_supervisor.py')
 
 
 class DriverTests(unittest.TestCase):
+    def test_source_complete_di07_is_not_live_dispatchable_until_failure_handling_is_reviewed(self):
+        record=v.s.t.x.queue.coverage.load()['cases']['TC-DI-07']
+        self.assertEqual(record['status'],'implemented')
+        self.assertIn('uppercase input is lowercased',record['reason'])
+        self.assertNotIn('TC-DI-07',v.SUPPORTED_CASES)
+        self.assertNotIn('TC-DI-07',v.r.OBSERVATIONS)
+        self.assertIn('TC-HIS-04',v.SUPPORTED_CASES)
+
     def fixture(self,root):
         q,j,ledger,grant,_=f.SupervisorTests().fixture(root)
         runtime=root/'runtime';runtime.mkdir(mode=0o700)

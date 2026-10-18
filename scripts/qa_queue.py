@@ -31,7 +31,7 @@ def references() -> dict:
         ROOT/'docs/qa/QA_Run_Queues.md',ROOT/'docs/qa/QA_Journeys_and_Scope.md',ROOT/'docs/qa/Next_Permission_Batch_Review.md',
         ROOT/'docs/qa/Automation_Readiness.md',ROOT/'docs/qa/Automation_Coverage.md',
         ROOT/'docs/qa/Module_2-9_Adapter_Review.md',ROOT/'docs/qa/Module_2-9_Fixture_Plan.md',
-        ROOT/'docs/qa/queues/modules-2-9-card-drafts-v3.json',
+        ROOT/'docs/qa/queues/modules-2-9-card-drafts-v5.json',
         ROOT/'scripts/qa_catalog.py',ROOT/'scripts/qa_queue.py',ROOT/'scripts/qa_evidence.py',
         ROOT/'scripts/qa_execute.py',ROOT/'scripts/qa_transport.py',ROOT/'scripts/qa_supervisor.py',ROOT/'scripts/qa_process.py',ROOT/'scripts/qa_results.py',ROOT/'scripts/qa_coverage.py',coverage.REGISTRY,
         ROOT/'scripts/qa_control.py',ROOT/'scripts/vmlab',ROOT/'scripts/vmlab_preflight.py',

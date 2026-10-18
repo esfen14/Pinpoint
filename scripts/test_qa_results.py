@@ -197,6 +197,10 @@ class ResultTests(unittest.TestCase):
                 'E2':'An unknown TCP service resolves to the generic check_tcp label.',
                 'E3':'An unknown UDP service shows that no UDP check exists.',
                 'E4':'The service pin warning appears on TCP and UDP without saving either change.'}),
+            'TC-HIS-04': ('TC-HIS-04: Date range rules (API)', {
+                'E1':'A complete valid date range returns a list response.',
+                'E2':'Missing, reversed and malformed date ranges return 400 without data.',
+                'E3':'A known event older than 25 hours is excluded when dates and preset are omitted.'}),
             'TC-DASH-07': ('TC-DASH-07: "No data" instead of blank cards', {
                 'E1':'Network Latency and both Network Performance metrics show No data.',
                 'E2':'Average Resource Utilization is absent without NCPA data.'}),

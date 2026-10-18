@@ -30,14 +30,13 @@ the current execution record for these two cases; do not rerun them as untested.
 | TC-DI-02 | 3 | `DevicePortsSection.tsx`, `devicePortsLogic.ts`; `DevicePortsSection.test.tsx` | Requires one device with ports in multiple lifecycle groups. Read-only; environment must provide each required state. |
 | TC-DI-03 | 2 | `DevicePortsSection.tsx`, `devicePortsLogic.ts`; port component/logic tests | Requires a Suggested port that is both held and not-as-intended. Read-only; exact precedence/text needs a matching real record. |
 | TC-DI-08 | 4 | `SetServiceDialog.tsx`, `devicePortsLogic.ts`, `DevicePortsSection.tsx`; service and port component tests | Requires reviewed existing TCP and UDP ports on one device. A network route guard aborts any attempted port PUT; both dialogs are canceled without saving. |
+| TC-DI-07 | 3 | `SetServiceDialog.tsx`, `devicePortsLogic.ts`, `DevicePortsSection.tsx`; device port logic/component tests | Requires one editable port not already named `ssh` and a second editable port named `ssh`. Adapter blocks every port PUT and cancels both dialogs. The procedure says uppercase `SSH` is invalid; the component lowercases before validation, so E2 is a deliberate compatibility check that may expose an implementation/spec discrepancy, not an assumed PASS. |
 | TC-DASH-07 | 2 | `DashboardPage.tsx`, dashboard metric components; `DashboardPage.test.tsx` | Requires no ping checks and no NCPA host. Read-only only after this baseline is independently observed. |
 | TC-NH-05 | 2 | `NetworkHealthPage.tsx`, summary/trend components; `NetworkHealthPage.test.tsx` | Requires exactly one reporting ping host then a second host with new data. Adding a check and waiting changes lab config; no adapter may manufacture that evidence. |
 | TC-NH-06 | 3 | `BandwidthCard.tsx`, `BandwidthChart.tsx`; `BandwidthCard.test.tsx` | Requires an SNMP device with monitored interface, traffic readings across four ranges, plus no-interface state. Read-only if fixture is already prepared. |
 | TC-NH-07 | 3 | `FlapHistorySection.tsx`, `HostTable.tsx`, `DeviceInventoryPage.tsx`; inventory tests | Requires host flap history and flap-detection state. Read-only; four date windows and filtering need suitable real history. |
 | TC-DI-05 | 4 | `DevicePortsSection.tsx`, `devicePortsLogic.ts`; `DevicePortsSection.test.tsx`, `devicePortsApi.test.ts` | Stops and resumes a monitored service. Reversible but changes Nagios config/state; verify service absence/return and restoration before continuing. Singleton batch. |
 | TC-DI-06 | 2 | `DevicePortsSection.tsx`, device port API; `DevicePortsSection.test.tsx` | Holds a Suggested port, rescans, then disables/enables a plugin. Mutates discovery and monitoring configuration; needs a scoped target and verified restore. |
-| TC-DI-07 | 3 | `SetServiceDialog.tsx`, `checkOptionsForm.ts`; device ports tests | Requires monitored port and opens service-name form. Can test input validation without saving; exact 32/33-character boundary and unchanged name. |
-| TC-DI-08 | 4 | `SetServiceDialog.tsx`, plugin/service mapping; device ports tests | Requires TCP and UDP ports. Can test derived “Checked by” values without saving; no generic UDP check is expected. |
 | TC-DI-09 | 3 | `DevicePortsSection.tsx`, `devicePortsLogic.ts`; device port tests | Pins and removes a service pin, then rescans. Changes service naming/config and needs preserved prior name plus rescan/recovery proof. Singleton batch. |
 | TC-DI-11 | 3 | `DeviceMonitoringSection.tsx`, `monitoringState.ts`; `DeviceMonitoringState.test.tsx` | Requires normal, paused, address-unknown, missing, retired, merged, localhost, and precedence-combination rows. Read-only with prepared inventory. |
 | TC-DI-12 | 3 | `DeviceInventoryPage.tsx`, `HostTable.tsx`, monitoring API; inventory tests | Checks default/filter values and an invalid GET. Read-only; host records must cover each monitoring label. |
@@ -51,7 +50,7 @@ the current execution record for these two cases; do not rerun them as untested.
 | TC-ACK-04 | 2 | `DashboardPage.tsx`, `RecentOutageTable.tsx`, acknowledgement modal; dashboard tests | Requires three active unacknowledged alerts, then writes acknowledgements. Must preserve an existing comment and prove all intended items; unacknowledge/recovery actions need a separately approved recovery plan. |
 | TC-ACK-07 | 1 | `RecentOutageTable.tsx`, `DashboardPage.tsx`; dashboard tests | Requires same-severity acknowledged and unacknowledged alerts. Read-only once state exists. |
 | TC-ACK-08 | 3 | Dashboard acknowledgement flow and History; dashboard/history tests | Acknowledges, repairs, then breaks a target again. Fault/recovery/re-fault is disruptive and must be isolated with explicit recovery; singleton batch. |
-| TC-HIS-04 | 3 | `HistoryPage.tsx`, history API client; `HistoryPage.test.tsx` | Opens four GET URLs and checks valid/invalid date ranges and default 24-hour range. Non-mutating API checks; endpoint behavior must be source-bound to current routes. |
+| TC-HIS-04 | 3 | `history.py`, History API client/page; `HistoryPage.test.tsx` | Read-only GETs verify valid/invalid ranges. E3 compares a real event older than 25 hours in the rolling 30-day range against a no-date response; if no such event exists, E3 is blocked rather than inferred from an empty response. |
 | TC-DI-10 | 2 | `DevicePortsSection.tsx`, NCPA deployment/port API; inventory tests | Requires successful NCPA deployment. Read-only but a prior #129 report is partial and relevant source paths changed; preserve as partial and do not infer a pass. |
 | TC-DASH-09 | 5 | `ForecastList.tsx`, `useForecasts.ts`, forecast types; forecast/dashboard tests | Requires three days of rising NCPA history, new host with insufficient history, and a flat host. Read-only display; data horizon cannot be fabricated or accelerated in a live run. |
 | TC-SS-05 | 2 | `SystemStatusPage.tsx`, `ServiceStatusTable.tsx`, forecast types; service-status tests | Requires the same forecast fixtures as TC-DASH-09. Read-only display; verify a real rising metric and a low-history service. |
@@ -60,11 +59,13 @@ the current execution record for these two cases; do not rerun them as untested.
 ## Adapter and execution boundary
 
 The existing current-case live path is the bounded supervised pilot. It supports
-only the six complete read-only adapters TC-ACC-08, TC-ROL-04, TC-DI-02, TC-DI-03,
-TC-DI-08 and TC-DASH-07 after reviewed cards, current fixture/baseline proof and explicit
+only the seven complete read-only adapters TC-ACC-08, TC-ROL-04, TC-DI-02, TC-DI-03,
+TC-DI-08, TC-HIS-04 and TC-DASH-07 after reviewed cards, current fixture/baseline proof and explicit
 start. TC-ACC-10 has only partial E1/E2 source coverage; it is excluded from the
-live allowlist because E3 is unresolved and account rows persist. The other 25
-cases remain unsupported. Existing component tests provide isolated UI evidence but
+live allowlist because E3 is unresolved and account rows persist. TC-DI-07 has a
+complete offline adapter but is excluded due to the uppercase expectation mismatch
+and current failure-result handling. The other 22 cases remain unmapped. Existing
+component tests provide isolated UI evidence but
 do not replace the written black-box procedures or live adapter assertions. An
 adapter may be marked source-complete only where every expected item has an exact
 assertion method, its prerequisites are explicit, and its mutations/cleanup are
@@ -103,6 +104,9 @@ confirmation prompt; that behavior is outside the Module 2–9 adapters.
 The current baseline does not establish the required `qa-accounts`/`qa-view`
 accounts, device/port fixture for TC-DI-02/03, or no-ping/no-NCPA fixture for
 TC-DASH-07. TC-ACC-10 is source-partial only; its E3 branch, persistent account
-disposition, and live recovery plan are unresolved. The six-case live allowlist
-does not satisfy the full 31-case queue or establish its role/device/dashboard
-fixtures; no full Module 2–9 batch is ready to open.
+disposition, and live recovery plan are unresolved. The current run-specific queue
+`docs/qa/queues/2026-10-18-modules-2-9-adapters-v1.json` selects only the seven
+complete read-only adapters and excludes the other 24 candidates from this run.
+It still does not establish the required role/device/dashboard/history fixtures or
+complete the live case cards; no case is ready to open. The broader 31-case v10
+queue is retained as historical candidate inventory, not the active run scope.

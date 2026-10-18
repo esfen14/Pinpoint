@@ -24,6 +24,7 @@ MODULE_STATE_FILES={
     'TC-DI-02':('admin-email','admin-password','qa-device-host'),
     'TC-DI-03':('admin-email','admin-password','qa-device-host','qa-held-mismatch-port'),
     'TC-DI-08':('admin-email','admin-password','qa-device-host','qa-tcp-port','qa-udp-port'),
+    'TC-HIS-04':('admin-email','admin-password'),
     'TC-DASH-07':('admin-email','admin-password'),
 }
 # Fixed code only. Credentials never become Docker argv or preview JSON values.

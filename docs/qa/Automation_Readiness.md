@@ -6,16 +6,18 @@ source implementation, expected items still missing and unassigned executors.
 It does not change the human catalog or certify any runtime PASS.
 
 Seven permission adapters are source-complete: TC-SS-04, TC-HIS-01, TC-RPT-07,
-TC-LOG-05, TC-PLG-07, TC-ACC-09 and TC-NCPA-08. Five additional source-only
+TC-LOG-05, TC-PLG-07, TC-ACC-09 and TC-NCPA-08. Eight additional source-only
 module adapters are under issue #214 for TC-ACC-08, TC-ROL-04, TC-DI-02,
-TC-DI-03, TC-DI-08 and TC-DASH-07. TC-ACC-10 has partial source coverage for E1/E2.
+TC-DI-03, TC-DI-07, TC-DI-08, TC-HIS-04 and TC-DASH-07. TC-DI-07 has source coverage but stays outside
+the live allowlist while the uppercase expectation mismatch and failure-report
+handling are unresolved. TC-ACC-10 has partial source coverage for E1/E2.
 The next proposed untested batch
 is TC-ACC-09 followed by TC-NCPA-08; each uses the existing initialized Staff
 account with zero permissions. TC-ACC-09 has separate E1 page-denial and E2 API-403
 evidence; missing either cannot yield PASS. TC-SS-04 already has an attributable
 accepted supervised PASS. The other four original adapters have human PASS and
-remain excluded from default pending queues. Across all 239 cases/scenarios, 13
-have source-complete adapters, one is partial and 225 remain unmapped. Source coverage does not authorize the next batch or imply runtime
+remain excluded from default pending queues. Across all 239 cases/scenarios, 15
+have source-complete adapters, one is partial and 223 remain unmapped. Source coverage does not authorize the next batch or imply runtime
 acceptance; its cards, current prerequisite observations, reviewed ledger handoff and explicit
 start remain separate requirements. The launcher now implements a fixed serial
 batch for only TC-SS-04, TC-ACC-09 and TC-NCPA-08; see the
@@ -37,14 +39,15 @@ batch for only TC-SS-04, TC-ACC-09 and TC-NCPA-08; see the
   A failed test stops further tests; bounded action/navigation/case/global limits apply.
 - The issue #214 module config selects only explicit IDs from
   `qa-modules-2-9.lab.spec.ts`; direct legacy launcher dispatch rejects this
-config. The supervised `qa_pilot.py run` path now accepts only six complete
+config. The supervised `qa_pilot.py run` path now accepts only seven complete
   read-only mappings from this config, after reviewed cards, fresh baseline proof
   and a separate explicit start. It has one partial TC-ACC-10 mapping (E1/E2 only). TC-ACC-10 creates
   inactive users with alerts disabled, but the rows persist and E3 would require
-  an unapproved no-active-role state; its card must remain blocked. The six complete
+  an unapproved no-active-role state; its card must remain blocked. The seven complete
   mappings require exact approved credentials and pre-existing fixture inputs; they
-  do not create accounts, roles, devices, or port state. The other 25 target cases
-  and TC-ACC-10 remain outside the supervised live allowlist.
+  do not create accounts, roles, devices, or port state. Of 31 target cases, 24
+  remain outside the live allowlist: TC-ACC-10 is partial, TC-DI-07 is blocked on
+  its source/result mismatch, and 22 remain unmapped.
 - Each adapter signs in through the UI using an already initialized disposable
   Staff account, checks its role, zero permissions and completed password/setup
   state, then checks the exact hidden sidebar link and redirect. API cases open
