@@ -148,11 +148,12 @@ def card_template(record:dict) -> dict:
     """Expose reviewed identity, leaving unobserved live readiness explicitly blocked."""
     if record['status']!='implemented':raise ValueError('No source-complete adapter for this case')
     adapter=ROOT/record['adapter']['path']
-    return dict(readiness='BLOCKED: launcher integration and reviewed live prerequisites required',
+    return dict(readiness='BLOCKED: current fixture, reviewer, bounded outputs and live preflight are unverified',
         coverage_hash=catalog.digest(record),selection=record['adapter'],mode=record['mode'],
         adapter=str(adapter),adapter_hash=catalog.digest(adapter.read_text()),actions=[action_for(record)],
         reviewed_by='',timeout_seconds=None,step_timeout_seconds=None,human_required=True,
-        prerequisites=[],recovery=record['recovery'],evidence_dir='',write_paths=[],container_image_id=None)
+        prerequisites=list(record['prerequisites']),recovery=record['recovery'],
+        evidence_dir='',write_paths=[],container_image_id=None)
 
 
 def main() -> int:

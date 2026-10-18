@@ -272,36 +272,152 @@
     },
     "TC-ACC-10": {
       "case_hash": "4f8ddecf3112a2b79a7168e883dde8599d8a81643a5e650826ad318e1449a7b4",
-      "status": "unmapped",
-      "mode": "unassigned",
-      "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
-      "items": {},
-      "adapter": null,
-      "source_hashes": {},
-      "prerequisites": [],
-      "recovery": []
+      "status": "partial",
+      "mode": "scripted automation",
+      "reason": "E1 and E2 have a source adapter. E3 requires the live role-options list to have no active roles; this issue will not deactivate system roles to manufacture that state. Created account rows and audit entries persist after deactivation, so the current bounded baseline cannot certify restoration; the live card remains blocked pending a separately reviewed disposable-appliance recovery plan.",
+      "items": {
+        "E1": {
+          "marker": "qa-evidence:TC-ACC-10:E1",
+          "method": "Read the actual active role options and assert the first active role is selected in the Add User form; with a valid form, assert Save is enabled."
+        },
+        "E2": {
+          "marker": "qa-evidence:TC-ACC-10:E2",
+          "method": "Create two uniquely named accounts in one open page session; assert each row appears without reload and both remain visible after reload."
+        }
+      },
+      "adapter": {
+        "path": "client/e2e/qa-modules-2-9.lab.spec.ts",
+        "title": "TC-ACC-10: Add User uses the default role",
+        "project": "qa-modules-2-9",
+        "config": "client/playwright.modules.qa.config.ts"
+      },
+      "source_hashes": {
+        "client/e2e/qa-modules-2-9.lab.spec.ts": "49f82ae6f6996d784082d575da9013a7a4827100fc797d5e47c73848977b43bc",
+        "client/playwright.modules.qa.config.ts": "49dbe58e8e6547495ced6abe204a5ccd3854e917db47dea2f7c4acd846d6085c",
+        "client/qa/module-selection.mjs": "5b648a29d597eb7ecdf3e7ea38f2a44560c5f7a2c1259e8041a503c3c4f4d99e",
+        "client/src/pages/ManageAccountsPage.tsx": "e3af9a686f681993cab29109f8623eb624f421f547d2c5db3f0f50164c0ae555",
+        "client/src/components/manage-accounts/UserTable.tsx": "f9e302e459b71dd45807770b3db1feefcfd1951ec8a8b38811d4024f84e602db",
+        "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
+        "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
+        "client/src/lib/api.ts": "41740092051ab506b57b7c9f6b38cd3f38f12bc508a6c034af3133a089d9c5e5",
+        "client/src/types/user.ts": "b67b1d2d488248ff5a24f715622f7b603c752416b663233a4d5c37e51ed27d7e",
+        "server/app/api/user/management.py": "2ad5a1f3a41c9784fb5688b1455279946f2da9ea63c1deaf13a6723d1adb0c4d",
+        "client/src/test/ManageAccountsPage.test.tsx": "102beed4c91771b865c64db3db22999976ed68260d37a2db9d07f979dabd5e38"
+      },
+      "prerequisites": [
+        "An independently reviewed disposable appliance running the exact target build; this adapter is not accepted by the current live launcher.",
+        "Super Admin credentials with account.view, account.edit and account.alerts; at least one active role and no more than 98 existing accounts.",
+        "A fresh lowercase run token (8\u201324 letters, digits or hyphens), two unused addresses under example.invalid, and a private password satisfying the deployed policy.",
+        "The adapter creates inactive accounts with email alerts off to avoid granting a login or changing Nagios contacts; rows and audit entries still persist."
+      ],
+      "recovery": [
+        "After any attempt, locate only the two exact run-token addresses and verify they are inactive through Manage Accounts; preserve audit records.",
+        "Deactivation does not delete account rows or restore the database to its original state. Do not accept PASS/restored or continue on this appliance unless a separately reviewed recovery plan proves the expected persistent fixture disposition."
+      ],
+      "reviewed_by": "Codex source review; not runtime acceptance",
+      "reviewed_at": "2026-10-18",
+      "procedure_review": "Reviewed the full ACC-10 steps and E1\u2013E3 against ManageAccountsPage, account role-options/list APIs, and the local timing/empty-role component contracts. E1/E2 are source-mapped; E3 is explicitly blocked because safely establishing no active roles would require changing shared roles. Test-created users cannot be deleted, so cleanup only verifies inactive rows and is not full baseline restoration."
     },
     "TC-ACC-08": {
       "case_hash": "bc5bbce195fb22385953cea857c9d5c0d82f7a32cb37ca6fb70765c9d80ac818",
-      "status": "unmapped",
-      "mode": "unassigned",
-      "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
-      "items": {},
-      "adapter": null,
-      "source_hashes": {},
-      "prerequisites": [],
-      "recovery": []
+      "status": "implemented",
+      "mode": "scripted automation",
+      "reason": "Source adapter is complete for every catalog expected item; live launcher support, reviewed current lab prerequisites/cards and a separate explicit start are still required.",
+      "items": {
+        "E1": {
+          "marker": "qa-evidence:TC-ACC-08:E1",
+          "method": "As Super Admin, the Email Alerts column and Send this user email alerts checkbox are visible; an account row shows On or Off."
+        },
+        "E2": {
+          "marker": "qa-evidence:TC-ACC-08:E2",
+          "method": "As the qa-accounts user with account.view/account.edit but without account.alerts, the Add User dialog has no email-alert checkbox."
+        }
+      },
+      "adapter": {
+        "path": "client/e2e/qa-modules-2-9.lab.spec.ts",
+        "title": "TC-ACC-08: \"Send this user email alerts\" depends on permission",
+        "project": "qa-modules-2-9",
+        "config": "client/playwright.modules.qa.config.ts"
+      },
+      "source_hashes": {
+        "client/e2e/qa-modules-2-9.lab.spec.ts": "49f82ae6f6996d784082d575da9013a7a4827100fc797d5e47c73848977b43bc",
+        "client/playwright.modules.qa.config.ts": "49dbe58e8e6547495ced6abe204a5ccd3854e917db47dea2f7c4acd846d6085c",
+        "client/qa/module-selection.mjs": "5b648a29d597eb7ecdf3e7ea38f2a44560c5f7a2c1259e8041a503c3c4f4d99e",
+        "client/src/pages/ManageAccountsPage.tsx": "e3af9a686f681993cab29109f8623eb624f421f547d2c5db3f0f50164c0ae555",
+        "client/src/components/manage-accounts/UserTable.tsx": "f9e302e459b71dd45807770b3db1feefcfd1951ec8a8b38811d4024f84e602db",
+        "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
+        "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
+        "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
+        "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
+        "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
+        "server/app/api/user/management.py": "2ad5a1f3a41c9784fb5688b1455279946f2da9ea63c1deaf13a6723d1adb0c4d",
+        "server/app/api/helper/database_access/permissions.py": "223c0628444524cdae232fb02c29ebbb18b5e4c2e0307990acbe597a40e2ecff"
+      },
+      "prerequisites": [
+        "An initialized Super Admin account with account.view and account.alerts.",
+        "A pre-created qa-accounts role with account.view and account.edit but not account.alerts, plus an initialized user assigned to that role.",
+        "Credentials for both users remain in the approved private store; no account or role is created or edited by this adapter."
+      ],
+      "recovery": [
+        "No account or role writes. After each session, POST logout, verify GET /api/user/me returns 401, and dispose the browser context. Preserve login/logout audit entries."
+      ],
+      "reviewed_by": "Codex source review; not runtime acceptance",
+      "reviewed_at": "2026-10-18",
+      "procedure_review": "The catalog procedure and REQ-ACC-07 were reviewed against ManageAccountsPage permission gating, UserTable email-alert column rendering, real UI login, and the pre-created role/user state. E1 checks the table header/value and Super Admin add form. E2 checks the actual restricted user Add User form. No account/role mutation or mock response is used."
     },
     "TC-ROL-04": {
       "case_hash": "18647647b5a4840371c5559f2af1eccbf6bf89964af049079239878ca0dab6cd",
-      "status": "unmapped",
-      "mode": "unassigned",
-      "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
-      "items": {},
-      "adapter": null,
-      "source_hashes": {},
-      "prerequisites": [],
-      "recovery": []
+      "status": "implemented",
+      "mode": "scripted automation",
+      "reason": "Source adapter is complete for every catalog expected item; live launcher support, reviewed current lab prerequisites/cards and a separate explicit start are still required.",
+      "items": {
+        "E1": {
+          "marker": "qa-evidence:TC-ROL-04:E1",
+          "method": "The qa-view sidebar contains Overview and Settings only."
+        },
+        "E2": {
+          "marker": "qa-evidence:TC-ROL-04:E2",
+          "method": "Each of the 13 catalog page addresses redirects to /dashboard."
+        },
+        "E3": {
+          "marker": "qa-evidence:TC-ROL-04:E3",
+          "method": "Opening /api/system/log, /api/system/report/availability, and /api/user/accounts returns HTTP 403 for qa-view."
+        }
+      },
+      "adapter": {
+        "path": "client/e2e/qa-modules-2-9.lab.spec.ts",
+        "title": "TC-ROL-04: A dashboard-only user is limited to the Dashboard",
+        "project": "qa-modules-2-9",
+        "config": "client/playwright.modules.qa.config.ts"
+      },
+      "source_hashes": {
+        "client/e2e/qa-modules-2-9.lab.spec.ts": "49f82ae6f6996d784082d575da9013a7a4827100fc797d5e47c73848977b43bc",
+        "client/playwright.modules.qa.config.ts": "49dbe58e8e6547495ced6abe204a5ccd3854e917db47dea2f7c4acd846d6085c",
+        "client/qa/module-selection.mjs": "5b648a29d597eb7ecdf3e7ea38f2a44560c5f7a2c1259e8041a503c3c4f4d99e",
+        "client/src/App.tsx": "05b6afc326a4946b382f222a68276744aa6b365fbe1a40cee04b237240a27579",
+        "client/src/components/layout/Sidebar.tsx": "25986b10740143c932f2ffd936e3396b871e703ffd603810b45e9306df1838f2",
+        "client/src/components/layout/PageAccessGuard.tsx": "2d0765defe8f5dbc8c33ec735d0d7ba7a57332574b8c77b723cea41bc1ea9c5f",
+        "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
+        "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
+        "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
+        "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
+        "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
+        "server/app/api/helper/database_access/permissions.py": "223c0628444524cdae232fb02c29ebbb18b5e4c2e0307990acbe597a40e2ecff",
+        "server/app/api/system/log.py": "0217cd8e0b016a80bb77b01684d8e47a1af0a1ea445a73ddf20b35874be1e706",
+        "server/app/api/system/report.py": "c8995b4ada8817603604bc411646de70d6cf707de749fe322fc0efd9a5d0f13d",
+        "server/app/api/user/management.py": "2ad5a1f3a41c9784fb5688b1455279946f2da9ea63c1deaf13a6723d1adb0c4d",
+        "server/app/api/user/login.py": "131d66fec10e1ee90bf98a7838e3ed827edc8d99e461b0ec3f36ab4c069c5e8b"
+      },
+      "prerequisites": [
+        "An initialized qa-view user with system.dashboard and no permissions for the catalog protected pages/APIs.",
+        "The qa-view credentials remain in the approved private store; no role or account is created or edited by this adapter."
+      ],
+      "recovery": [
+        "No account or role writes. POST logout, verify GET /api/user/me returns 401, and dispose the browser context. Preserve login/logout audit entries."
+      ],
+      "reviewed_by": "Codex source review; not runtime acceptance",
+      "reviewed_at": "2026-10-18",
+      "procedure_review": "The full catalog route/API list and REQ-ROL-04 were reviewed against the frontend page-permission map, sidebar filtering and PageAccessGuard, plus Flask permission decorators for the three listed APIs. The adapter signs in through the real UI, reads actual hrefs, navigates each page address, and browser-navigates each API address. No mocked request or alternate API assertion replaces a step."
     },
     "TC-ROL-05": {
       "case_hash": "29fea15877e68c2e86e7c0829176cf8c1264000f7292b2ade3ffc4ab1b1aa9d1",
@@ -954,25 +1070,109 @@
     },
     "TC-DI-02": {
       "case_hash": "ff89ca1fa16e26dfb6d3e16182dd759ed7a608789b5dc612916e7865a2422ac6",
-      "status": "unmapped",
-      "mode": "unassigned",
-      "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
-      "items": {},
-      "adapter": null,
-      "source_hashes": {},
-      "prerequisites": [],
-      "recovery": []
+      "status": "implemented",
+      "mode": "scripted automation",
+      "reason": "Source adapter covers every catalog expected item with read-only browser assertions; current live launcher, reviewed current prerequisites/cards and a separate explicit start are still required.",
+      "items": {
+        "E1": {
+          "marker": "qa-evidence:TC-DI-02:E1",
+          "method": "The actual Ports group headings are checked against the required order, with only absent empty groups omitted."
+        },
+        "E2": {
+          "marker": "qa-evidence:TC-DI-02:E2",
+          "method": "For every visible group, the count is positive and equals the rendered port rows; the archived group is opened before inspection."
+        },
+        "E3": {
+          "marker": "qa-evidence:TC-DI-02:E3",
+          "method": "Each visible group is checked for TCP before UDP and ascending numeric port order."
+        }
+      },
+      "adapter": {
+        "path": "client/e2e/qa-modules-2-9.lab.spec.ts",
+        "title": "TC-DI-02: Port groups and their order",
+        "project": "qa-modules-2-9",
+        "config": "client/playwright.modules.qa.config.ts"
+      },
+      "source_hashes": {
+        "client/e2e/qa-modules-2-9.lab.spec.ts": "49f82ae6f6996d784082d575da9013a7a4827100fc797d5e47c73848977b43bc",
+        "client/playwright.modules.qa.config.ts": "49dbe58e8e6547495ced6abe204a5ccd3854e917db47dea2f7c4acd846d6085c",
+        "client/qa/module-selection.mjs": "5b648a29d597eb7ecdf3e7ea38f2a44560c5f7a2c1259e8041a503c3c4f4d99e",
+        "client/src/pages/DeviceInventoryPage.tsx": "9b8f63fe860eb151c253db31948468e76a3b7e3a805d76a6da37525e760e8a6a",
+        "client/src/components/device-inventory/HostTable.tsx": "feb088ad5b68e6fbc7e72c35ea52fec5e84396c0021f7794e0f5efe30db59fdf",
+        "client/src/components/device-inventory/StatusDetailDrawer.tsx": "d5314464a53b4197e0b9da51b60fb26338b483e58f5a1d6681a332c671379530",
+        "client/src/components/device-inventory/DevicePortsSection.tsx": "7379de62eebd72f7a8a5410a6aa74bd9ff1a978035716522d248c7600659be30",
+        "client/src/components/device-inventory/devicePortsLogic.ts": "c817a5967fdb5982a4601bf7bfd582f89393547b1903395b368aea9a73ed306e",
+        "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
+        "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
+        "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
+        "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
+        "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
+        "server/app/api/system/network_hosts.py": "dd238e3cca7d1b5434f07c0f3e61f2ca9da021dd186f1683d3d844a176a5f8bf",
+        "server/app/api/system/device_identity.py": "8e6e9c77b8d0adec67b0db5e317adf10fbcce474d2fc989dc859eeef65692e30",
+        "server/app/api/helper/database_access/permissions.py": "223c0628444524cdae232fb02c29ebbb18b5e4c2e0307990acbe597a40e2ecff"
+      },
+      "prerequisites": [
+        "PINPOINT_QA_DEVICE_HOST identifies a previously reviewed discovered device; no scan or device creation is performed.",
+        "The device has existing Monitored, Suggested, Ignored/Stopped, and Archived ports. The private fixture fact is rechecked before execution.",
+        "An initialized Super Admin account is available from the approved private credential store with system.network_health and system.hosts."
+      ],
+      "recovery": [
+        "No inventory, port, plugin, or service writes. POST logout, verify GET /api/user/me returns 401, and dispose the browser context; preserve expected login/logout audit entries."
+      ],
+      "reviewed_by": "Codex source review; not runtime acceptance",
+      "reviewed_at": "2026-10-18",
+      "procedure_review": "The complete TC-DI-02 procedure and REQ-DI-02 were reviewed against Device Inventory routing, the host detail drawer, DevicePortsSection group rendering, and groupPorts ordering. The adapter reads the actual Ports headings and rows, expands only the Archived disclosure, verifies positive header counts against rendered rows, and sorts by protocol/number. It does not mutate inventory or substitute unit tests for the browser checks."
     },
     "TC-DI-03": {
       "case_hash": "072ad33fa2218d0e813c217d063d1cd795123a67f7a31481bdba09db11da6209",
-      "status": "unmapped",
-      "mode": "unassigned",
-      "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
-      "items": {},
-      "adapter": null,
-      "source_hashes": {},
-      "prerequisites": [],
-      "recovery": []
+      "status": "implemented",
+      "mode": "scripted automation",
+      "reason": "Source adapter covers every catalog expected item with read-only browser assertions; current live launcher, reviewed current prerequisites/cards and a separate explicit start are still required.",
+      "items": {
+        "E1": {
+          "marker": "qa-evidence:TC-DI-03:E1",
+          "method": "The selected row shows exactly one reason paragraph and does not show the Held back reason."
+        },
+        "E2": {
+          "marker": "qa-evidence:TC-DI-03:E2",
+          "method": "The reason text exactly explains the expected and found service names and states that monitoring waits for acknowledgement."
+        }
+      },
+      "adapter": {
+        "path": "client/e2e/qa-modules-2-9.lab.spec.ts",
+        "title": "TC-DI-03: One reason per port",
+        "project": "qa-modules-2-9",
+        "config": "client/playwright.modules.qa.config.ts"
+      },
+      "source_hashes": {
+        "client/e2e/qa-modules-2-9.lab.spec.ts": "49f82ae6f6996d784082d575da9013a7a4827100fc797d5e47c73848977b43bc",
+        "client/playwright.modules.qa.config.ts": "49dbe58e8e6547495ced6abe204a5ccd3854e917db47dea2f7c4acd846d6085c",
+        "client/qa/module-selection.mjs": "5b648a29d597eb7ecdf3e7ea38f2a44560c5f7a2c1259e8041a503c3c4f4d99e",
+        "client/src/pages/DeviceInventoryPage.tsx": "9b8f63fe860eb151c253db31948468e76a3b7e3a805d76a6da37525e760e8a6a",
+        "client/src/components/device-inventory/HostTable.tsx": "feb088ad5b68e6fbc7e72c35ea52fec5e84396c0021f7794e0f5efe30db59fdf",
+        "client/src/components/device-inventory/StatusDetailDrawer.tsx": "d5314464a53b4197e0b9da51b60fb26338b483e58f5a1d6681a332c671379530",
+        "client/src/components/device-inventory/DevicePortsSection.tsx": "7379de62eebd72f7a8a5410a6aa74bd9ff1a978035716522d248c7600659be30",
+        "client/src/components/device-inventory/devicePortsLogic.ts": "c817a5967fdb5982a4601bf7bfd582f89393547b1903395b368aea9a73ed306e",
+        "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
+        "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
+        "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
+        "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
+        "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
+        "server/app/api/system/network_hosts.py": "dd238e3cca7d1b5434f07c0f3e61f2ca9da021dd186f1683d3d844a176a5f8bf",
+        "server/app/api/system/device_identity.py": "8e6e9c77b8d0adec67b0db5e317adf10fbcce474d2fc989dc859eeef65692e30",
+        "server/app/api/helper/database_access/permissions.py": "223c0628444524cdae232fb02c29ebbb18b5e4c2e0307990acbe597a40e2ecff"
+      },
+      "prerequisites": [
+        "PINPOINT_QA_DEVICE_HOST identifies a previously reviewed discovered device; no scan or device creation is performed.",
+        "PINPOINT_QA_HELD_MISMATCH_PORT identifies a preexisting Suggested port that is both held and flagged Not used as intended, with mismatch unacknowledged.",
+        "An initialized Super Admin account is available from the approved private credential store with system.network_health and system.hosts."
+      ],
+      "recovery": [
+        "No inventory, port, plugin, or service writes. POST logout, verify GET /api/user/me returns 401, and dispose the browser context; preserve expected login/logout audit entries."
+      ],
+      "reviewed_by": "Codex source review; not runtime acceptance",
+      "reviewed_at": "2026-10-18",
+      "procedure_review": "The complete TC-DI-03 procedure and REQ-DI-03 were reviewed against DevicePortsSection reason rendering and devicePortsLogic precedence. The adapter opens the selected existing port, verifies both Held and Not used as intended indicators, then checks the single reason paragraph and exact required wording. It makes no writes; the fixture must already satisfy both conditions."
     },
     "TC-DI-04": {
       "case_hash": "0fa29dd34f87f9096ecc992ece3ba18a12a744eab417b3f707244762c27c1618",
@@ -1009,14 +1209,52 @@
     },
     "TC-DASH-07": {
       "case_hash": "2616c5d0ef1b19ab7b0a3bff759ab656c7c852288019eff2b97a40a05a849c8e",
-      "status": "unmapped",
-      "mode": "unassigned",
-      "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
-      "items": {},
-      "adapter": null,
-      "source_hashes": {},
-      "prerequisites": [],
-      "recovery": []
+      "status": "implemented",
+      "mode": "scripted automation",
+      "reason": "Source adapter covers each catalog expected item using read-only Dashboard assertions; current live launcher, reviewed current data prerequisites/cards and a separate explicit start are still required.",
+      "items": {
+        "E1": {
+          "marker": "qa-evidence:TC-DASH-07:E1",
+          "method": "Network Latency and both Network Performance metric cards display No data, rather than blank values."
+        },
+        "E2": {
+          "marker": "qa-evidence:TC-DASH-07:E2",
+          "method": "Average Resource Utilization is absent when the lab has no NCPA host/data."
+        }
+      },
+      "adapter": {
+        "path": "client/e2e/qa-modules-2-9.lab.spec.ts",
+        "title": "TC-DASH-07: \"No data\" instead of blank cards",
+        "project": "qa-modules-2-9",
+        "config": "client/playwright.modules.qa.config.ts"
+      },
+      "source_hashes": {
+        "client/e2e/qa-modules-2-9.lab.spec.ts": "49f82ae6f6996d784082d575da9013a7a4827100fc797d5e47c73848977b43bc",
+        "client/playwright.modules.qa.config.ts": "49dbe58e8e6547495ced6abe204a5ccd3854e917db47dea2f7c4acd846d6085c",
+        "client/qa/module-selection.mjs": "5b648a29d597eb7ecdf3e7ea38f2a44560c5f7a2c1259e8041a503c3c4f4d99e",
+        "client/src/pages/DashboardPage.tsx": "b8038c7177a2e498c4feb115a0665406969f290d8f9236ac2e67e154b8da8a40",
+        "client/src/components/shared/SummaryStatCard.tsx": "2da439e5d5684c62af52f3f84816d68085d6aa32663cdbaea6d256782fb11f66",
+        "client/src/components/dashboard/NetworkPerformanceSection.tsx": "152dfed49ef2b1a45e354b2aa7314a95c9de9c83cc60823a9e1421d0e5349b3f",
+        "client/src/components/dashboard/MetricCard.tsx": "a414ba058ac82dd32427f9cd02dc974c407a95c21703ac3ae230942afd9955d3",
+        "client/src/components/dashboard/ResourceUtilizationSection.tsx": "a7ce05dd37a06c8ab76d7c931cbd23c669f14bd853705ba07eb88810b8c0ba69",
+        "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
+        "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
+        "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
+        "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
+        "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
+        "server/app/api/system/dashboard.py": "d984eecb2f6ad5a86680ef211b842117b659ec158b0cc58390b9b8a332374d32",
+        "server/app/api/helper/database_access/permissions.py": "223c0628444524cdae232fb02c29ebbb18b5e4c2e0307990acbe597a40e2ecff"
+      },
+      "prerequisites": [
+        "No host has a ping check and no NCPA host/data exists; these lab facts must be independently reviewed before start. The adapter does not alter them.",
+        "An initialized Super Admin account is available in the approved private credential store."
+      ],
+      "recovery": [
+        "Read-only Dashboard visit. POST logout, verify GET /api/user/me returns 401, and dispose the browser context; preserve expected login/logout audit entries."
+      ],
+      "reviewed_by": "Codex source review; not runtime acceptance",
+      "reviewed_at": "2026-10-18",
+      "procedure_review": "The complete TC-DASH-07 procedure and REQ-DASH-06 were reviewed against DashboardPage summary/conditional resource rendering, NetworkPerformanceSection metric states, and the shared SummaryStatCard/MetricCard. The adapter uses the real UI and asserts both No data displays plus absence of Average Resource Utilization. No fixture or API response is mocked and no lab data is changed."
     },
     "TC-NH-01": {
       "case_hash": "87cfe95d322a287f555a08511227b81abb0be7431cc210139ace50b3a2a029f6",
@@ -1328,25 +1566,119 @@
     },
     "TC-DI-07": {
       "case_hash": "314a1f1fd1fcf59b9cf24aa9e57e5dd06e4cc29316d28c8585bd92872b587117",
-      "status": "unmapped",
-      "mode": "unassigned",
-      "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
-      "items": {},
-      "adapter": null,
-      "source_hashes": {},
-      "prerequisites": [],
-      "recovery": []
+      "status": "implemented",
+      "mode": "scripted automation",
+      "reason": "Offline source adapter asserts each catalog boundary and blocks all port PUTs; live dispatch remains blocked because uppercase input is lowercased in the component while the case requires rejection and the current importer cannot preserve failing-item observations.",
+      "items": {
+        "E1": {
+          "marker": "qa-evidence:TC-DI-07:E1",
+          "method": "On a reviewed editable port not named ssh, assert Save is enabled for ssh, my_svc-1 and a 32-character lowercase name."
+        },
+        "E2": {
+          "marker": "qa-evidence:TC-DI-07:E2",
+          "method": "On the same port, assert Save is disabled for uppercase SSH, -ssh, a 33-character value and empty input."
+        },
+        "E3": {
+          "marker": "qa-evidence:TC-DI-07:E3",
+          "method": "On a separate existing port whose service is ssh, assert the unchanged value keeps Save disabled."
+        }
+      },
+      "adapter": {
+        "path": "client/e2e/qa-modules-2-9.lab.spec.ts",
+        "title": "TC-DI-07: Service name rules in Set service",
+        "project": "qa-modules-2-9",
+        "config": "client/playwright.modules.qa.config.ts"
+      },
+      "source_hashes": {
+        "client/e2e/qa-modules-2-9.lab.spec.ts": "49f82ae6f6996d784082d575da9013a7a4827100fc797d5e47c73848977b43bc",
+        "client/playwright.modules.qa.config.ts": "49dbe58e8e6547495ced6abe204a5ccd3854e917db47dea2f7c4acd846d6085c",
+        "client/qa/module-selection.mjs": "5b648a29d597eb7ecdf3e7ea38f2a44560c5f7a2c1259e8041a503c3c4f4d99e",
+        "client/src/pages/DeviceInventoryPage.tsx": "9b8f63fe860eb151c253db31948468e76a3b7e3a805d76a6da37525e760e8a6a",
+        "client/src/components/device-inventory/DevicePortsSection.tsx": "7379de62eebd72f7a8a5410a6aa74bd9ff1a978035716522d248c7600659be30",
+        "client/src/components/device-inventory/SetServiceDialog.tsx": "f1843a4f044046e3fa5a30e24baad01d62cb590a827d051d8ec7e739df8beebb",
+        "client/src/components/device-inventory/devicePortsLogic.ts": "c817a5967fdb5982a4601bf7bfd582f89393547b1903395b368aea9a73ed306e",
+        "client/src/lib/devicePortsApi.ts": "8bb807775007ebaecf3f461f24ab2d1ab7464d589faaa1a448bdd8602be6c15e",
+        "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
+        "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
+        "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
+        "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
+        "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
+        "server/app/api/system/network_hosts.py": "dd238e3cca7d1b5434f07c0f3e61f2ca9da021dd186f1683d3d844a176a5f8bf",
+        "server/app/api/system/device_identity.py": "8e6e9c77b8d0adec67b0db5e317adf10fbcce474d2fc989dc859eeef65692e30",
+        "server/app/api/helper/database_access/permissions.py": "223c0628444524cdae232fb02c29ebbb18b5e4c2e0307990acbe597a40e2ecff"
+      },
+      "prerequisites": [
+        "PINPOINT_QA_DEVICE_HOST identifies a reviewed existing discovered device; no scan or device creation is performed.",
+        "PINPOINT_QA_DI07_PORT identifies a non-archived editable port on that device whose current service name is not ssh.",
+        "PINPOINT_QA_DI07_SSH_PORT identifies a second non-archived editable port on that device whose current service name is exactly ssh.",
+        "An initialized Super Admin credential is available privately with system.hosts.edit; both fixture labels are private same-owner files."
+      ],
+      "recovery": [
+        "Read-only validation. A Playwright route guard blocks every PUT to the port change endpoint; cancel both dialogs, verify no write was attempted, POST logout and verify GET /api/user/me returns 401. Preserve expected login/logout audit entries."
+      ],
+      "reviewed_by": "Codex source review; not runtime acceptance",
+      "reviewed_at": "2026-10-18",
+      "procedure_review": "Reviewed the complete TC-DI-07 procedure and Device Inventory \u00a76/\u00a713. Two pre-existing editable ports are used; the adapter checks valid values, all specified invalid boundaries and the unchanged ssh case without saving. Source inspection found that SetServiceDialog lowercases input before validation, so uppercase SSH may enable Save contrary to the catalog expectation. Keep outside live dispatch until failure reporting and the intended behavior are reviewed."
     },
     "TC-DI-08": {
       "case_hash": "2d6e9ef19e5f506ef7ecddc4c1704679284a4bc29b103bb5c103dac474674279",
-      "status": "unmapped",
-      "mode": "unassigned",
-      "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
-      "items": {},
-      "adapter": null,
-      "source_hashes": {},
-      "prerequisites": [],
-      "recovery": []
+      "status": "implemented",
+      "mode": "scripted automation",
+      "reason": "Source adapter covers all catalog items using existing TCP/UDP fixtures, blocks port mutations, and closes both dialogs without saving; live fixture/card/preflight and explicit start remain required.",
+      "items": {
+        "E1": {
+          "marker": "qa-evidence:TC-DI-08:E1",
+          "method": "Type the known service http on a reviewed TCP port and assert the live Checked by value is exactly check_http."
+        },
+        "E2": {
+          "marker": "qa-evidence:TC-DI-08:E2",
+          "method": "Type unknown service myapp on the TCP port and assert the generic check_tcp label."
+        },
+        "E3": {
+          "marker": "qa-evidence:TC-DI-08:E3",
+          "method": "Type unknown service myapp on a reviewed UDP port and assert the no-UDP-check message."
+        },
+        "E4": {
+          "marker": "qa-evidence:TC-DI-08:E4",
+          "method": "Assert the service pin warning in both protocol dialogs, cancel both, and verify the route guard observed no PUT."
+        }
+      },
+      "adapter": {
+        "path": "client/e2e/qa-modules-2-9.lab.spec.ts",
+        "title": "TC-DI-08: The Checked by line",
+        "project": "qa-modules-2-9",
+        "config": "client/playwright.modules.qa.config.ts"
+      },
+      "source_hashes": {
+        "client/e2e/qa-modules-2-9.lab.spec.ts": "49f82ae6f6996d784082d575da9013a7a4827100fc797d5e47c73848977b43bc",
+        "client/playwright.modules.qa.config.ts": "49dbe58e8e6547495ced6abe204a5ccd3854e917db47dea2f7c4acd846d6085c",
+        "client/qa/module-selection.mjs": "5b648a29d597eb7ecdf3e7ea38f2a44560c5f7a2c1259e8041a503c3c4f4d99e",
+        "client/src/pages/DeviceInventoryPage.tsx": "9b8f63fe860eb151c253db31948468e76a3b7e3a805d76a6da37525e760e8a6a",
+        "client/src/components/device-inventory/DevicePortsSection.tsx": "7379de62eebd72f7a8a5410a6aa74bd9ff1a978035716522d248c7600659be30",
+        "client/src/components/device-inventory/SetServiceDialog.tsx": "f1843a4f044046e3fa5a30e24baad01d62cb590a827d051d8ec7e739df8beebb",
+        "client/src/components/device-inventory/devicePortsLogic.ts": "c817a5967fdb5982a4601bf7bfd582f89393547b1903395b368aea9a73ed306e",
+        "client/src/lib/devicePortsApi.ts": "8bb807775007ebaecf3f461f24ab2d1ab7464d589faaa1a448bdd8602be6c15e",
+        "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
+        "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
+        "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
+        "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
+        "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
+        "server/app/api/system/network_hosts.py": "dd238e3cca7d1b5434f07c0f3e61f2ca9da021dd186f1683d3d844a176a5f8bf",
+        "server/app/api/system/device_identity.py": "8e6e9c77b8d0adec67b0db5e317adf10fbcce474d2fc989dc859eeef65692e30",
+        "server/app/api/helper/database_access/permissions.py": "223c0628444524cdae232fb02c29ebbb18b5e4c2e0307990acbe597a40e2ecff"
+      },
+      "prerequisites": [
+        "PINPOINT_QA_DEVICE_HOST identifies a reviewed existing discovered device; no scan or device creation is performed.",
+        "PINPOINT_QA_TCP_PORT identifies a non-archived, editable TCP port on that device whose service options include http.",
+        "PINPOINT_QA_UDP_PORT identifies a non-archived, editable UDP port on that device; both port rows offer Set service.",
+        "An initialized Super Admin credential is available privately with system.hosts.edit; fixture labels are private same-owner files."
+      ],
+      "recovery": [
+        "Read-only dialog interaction. A Playwright route guard blocks every PUT to the port change endpoint; cancel both dialogs, verify no write was attempted, POST logout and verify GET /api/user/me returns 401. Preserve expected login/logout audit entries."
+      ],
+      "reviewed_by": "Codex source review; not runtime acceptance",
+      "reviewed_at": "2026-10-18",
+      "procedure_review": "Reviewed the full TC-DI-08 procedure and Device Inventory \u00a76/\u00a713. The adapter uses one pre-existing TCP and UDP port, checks the known http mapping, generic TCP and skipped UDP messages, confirms the pin warning on both protocols, blocks port PUTs and cancels both dialogs. It does not save a pin or alter a port."
     },
     "TC-DI-09": {
       "case_hash": "229b89f3d89e96e50c92828556d7aeecb5926ec34dc964e5fa13a6f2ff94f341",
@@ -1625,14 +1957,56 @@
     },
     "TC-HIS-04": {
       "case_hash": "ea55071c6c432050cfd81796072161128a153fb8c13fa7ea2b79d2251c326863",
-      "status": "unmapped",
-      "mode": "unassigned",
-      "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
-      "items": {},
-      "adapter": null,
-      "source_hashes": {},
-      "prerequisites": [],
-      "recovery": []
+      "status": "implemented",
+      "mode": "scripted automation",
+      "reason": "Source adapter covers all expected items using read-only history API requests; E3 requires real history older than 25 hours and remains unprovable when no qualifying event exists. Reviewed cards, current baseline and explicit start are still required.",
+      "items": {
+        "E1": {
+          "marker": "qa-evidence:TC-HIS-04:E1",
+          "method": "GET a complete valid date range and assert HTTP 200, success=true and a list response (which may be empty)."
+        },
+        "E2": {
+          "marker": "qa-evidence:TC-HIS-04:E2",
+          "method": "GET missing, reversed and malformed bounds and assert each returns HTTP 400, success=false and no data key."
+        },
+        "E3": {
+          "marker": "qa-evidence:TC-HIS-04:E3",
+          "method": "Find a real event older than 25 hours within 30-day history; assert the no-date/no-preset response excludes it and returns no event older than the 24-hour range with clock tolerance."
+        }
+      },
+      "adapter": {
+        "path": "client/e2e/qa-modules-2-9.lab.spec.ts",
+        "title": "TC-HIS-04: Date range rules (API)",
+        "project": "qa-modules-2-9",
+        "config": "client/playwright.modules.qa.config.ts"
+      },
+      "source_hashes": {
+        "client/e2e/qa-modules-2-9.lab.spec.ts": "49f82ae6f6996d784082d575da9013a7a4827100fc797d5e47c73848977b43bc",
+        "client/playwright.modules.qa.config.ts": "49dbe58e8e6547495ced6abe204a5ccd3854e917db47dea2f7c4acd846d6085c",
+        "client/qa/module-selection.mjs": "5b648a29d597eb7ecdf3e7ea38f2a44560c5f7a2c1259e8041a503c3c4f4d99e",
+        "client/src/pages/HistoryPage.tsx": "6e5e4673f35349cf11b78f87e5391fd9e9a66b57d5c02d9ba5b5a6eb09339b57",
+        "client/src/test/HistoryPage.test.tsx": "ac1086099b603a87ae1b26d12aa26984fc9542216727d685fa2cc4c862aa69ba",
+        "client/src/lib/api.ts": "41740092051ab506b57b7c9f6b38cd3f38f12bc508a6c034af3133a089d9c5e5",
+        "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
+        "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
+        "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
+        "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
+        "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
+        "server/app/api/system/history.py": "bac073e7b026e6309106231e526f9c083c091d07ac8ea7bb184cbb62965a2cf4",
+        "server/app/api/helper/responses.py": "1fa6d94e99c13c91bdb60002f804d06c1d3195269afeb5e64b47dc4de832b56f",
+        "server/app/api/helper/database_access/permissions.py": "223c0628444524cdae232fb02c29ebbb18b5e4c2e0307990acbe597a40e2ecff"
+      },
+      "prerequisites": [
+        "An initialized Super Admin account is available privately with system.history.",
+        "Existing alert history has at least one real event older than 25 hours but within the rolling 30-day range; no history is seeded or edited.",
+        "The API is served from the reviewed target and the device/server clocks differ by no more than the stated 5-minute tolerance."
+      ],
+      "recovery": [
+        "Read-only GET requests only. No history, acknowledgement, or alert data is changed. POST logout, verify GET /api/user/me returns 401, dispose the browser context, and preserve expected login/logout audit entries."
+      ],
+      "reviewed_by": "Codex source review; not runtime acceptance",
+      "reviewed_at": "2026-10-18",
+      "procedure_review": "Reviewed the complete TC-HIS-04 case and Alerts/Notifications History \u00a73.3, plus Backend_Modules_and_Routes history contracts. The adapter checks a valid complete day range, missing/reversed/malformed bounds, then compares a known real event older than 25 hours with the no-date/no-preset API response. If the fixture event is absent, E3 is not inferred from an empty response and the attempt remains incomplete."
     },
     "TC-HIS-05": {
       "case_hash": "256f2cd8e58fc306fa7dc87c049658c26e4ca622762bdc95a0b2f8183eb3db61",

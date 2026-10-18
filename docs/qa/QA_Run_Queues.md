@@ -99,9 +99,11 @@ remain partial/blocked/inconclusive. A module cannot be declared PASS merely bec
 its attempted cases passed while others were blocked, excluded or untested.
 
 The queue and offline journal validate schema/scope, adapter hashes, exact action
-order, budgets and evidence references. The bounded permission launcher supports only TC-SS-04, TC-ACC-09 and TC-NCPA-08
-in one fixed serial batch with complete cards and separate start. Other live
-dispatch, enforced scan guards and automatic recovery remain future runner work. The current offline journal validator checks these fields and budgets, but it
+order, budgets and evidence references. `qa_pilot.py run` supports the three
+permission IDs TC-SS-04, TC-ACC-09 and TC-NCPA-08 plus seven complete read-only
+Module 2–9 IDs (TC-ACC-08, TC-ROL-04, TC-DI-02, TC-DI-03, TC-DI-08, TC-HIS-04 and TC-DASH-07) in one
+fixed serial batch with complete cards and separate start. Other live dispatch,
+enforced scan guards and automatic recovery remain future runner work. The current offline journal validator checks these fields and budgets, but it
 neither dispatches actions nor verifies live preflight assertions. Human review and
 supervision remain required; these tools are not an OS sandbox or a model-proof
 unattended runner.

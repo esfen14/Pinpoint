@@ -28,9 +28,9 @@ Assertion markers and source hashes support review; they do not prove assertion 
 | TC-ACC-06 | ACC | unmapped / unassigned | None | E1, E2, E3 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-ACC-07 | ACC | unmapped / unassigned | None | E1, E2 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-ACC-09 | ACC | implemented / scripted automation | [TC-ACC-09: The accounts page needs permission](../../client/e2e/qa-permissions.lab.spec.ts) | None in source review | Source adapter complete; bounded live launcher support, new reviewed queue/card, current prerequisites and separate explicit start remain required. |
-| TC-ACC-10 | ACC | unmapped / unassigned | None | E1, E2, E3 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
-| TC-ACC-08 | ACC | unmapped / unassigned | None | E1, E2 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
-| TC-ROL-04 | ROL | unmapped / unassigned | None | E1, E2, E3 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
+| TC-ACC-10 | ACC | partial / scripted automation | [TC-ACC-10: Add User uses the default role](../../client/e2e/qa-modules-2-9.lab.spec.ts) | E3 | E1 and E2 have a source adapter. E3 requires the live role-options list to have no active roles; this issue will not deactivate system roles to manufacture that state. Created account rows and audit entries persist after deactivation, so the current bounded baseline cannot certify restoration; the live card remains blocked pending a separately reviewed disposable-appliance recovery plan. |
+| TC-ACC-08 | ACC | implemented / scripted automation | [TC-ACC-08: "Send this user email alerts" depends on permission](../../client/e2e/qa-modules-2-9.lab.spec.ts) | None in source review | Source adapter is complete for every catalog expected item; live launcher support, reviewed current lab prerequisites/cards and a separate explicit start are still required. |
+| TC-ROL-04 | ROL | implemented / scripted automation | [TC-ROL-04: A dashboard-only user is limited to the Dashboard](../../client/e2e/qa-modules-2-9.lab.spec.ts) | None in source review | Source adapter is complete for every catalog expected item; live launcher support, reviewed current lab prerequisites/cards and a separate explicit start are still required. |
 | TC-ROL-05 | ROL | unmapped / unassigned | None | E1, E2, E3 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-ROL-06 | ROL | unmapped / unassigned | None | E1, E2 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-AUTH-10 | AUTH | unmapped / unassigned | None | E1, E2, E3 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
@@ -72,12 +72,12 @@ Assertion markers and source hashes support review; they do not prove assertion 
 | TC-PLG-05 | PLG | unmapped / unassigned | None | E1, E2 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-PLG-06 | PLG | unmapped / unassigned | None | E1, E2 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-DI-01 | DI | unmapped / unassigned | None | E1, E2, E3 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
-| TC-DI-02 | DI | unmapped / unassigned | None | E1, E2, E3 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
-| TC-DI-03 | DI | unmapped / unassigned | None | E1, E2 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
+| TC-DI-02 | DI | implemented / scripted automation | [TC-DI-02: Port groups and their order](../../client/e2e/qa-modules-2-9.lab.spec.ts) | None in source review | Source adapter covers every catalog expected item with read-only browser assertions; current live launcher, reviewed current prerequisites/cards and a separate explicit start are still required. |
+| TC-DI-03 | DI | implemented / scripted automation | [TC-DI-03: One reason per port](../../client/e2e/qa-modules-2-9.lab.spec.ts) | None in source review | Source adapter covers every catalog expected item with read-only browser assertions; current live launcher, reviewed current prerequisites/cards and a separate explicit start are still required. |
 | TC-DI-04 | DI | unmapped / unassigned | None | E1, E2 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-DASH-01 | DASH | unmapped / unassigned | None | E1, E2, E3, E4 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-DASH-05 | DASH | unmapped / unassigned | None | E1, E2 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
-| TC-DASH-07 | DASH | unmapped / unassigned | None | E1, E2 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
+| TC-DASH-07 | DASH | implemented / scripted automation | [TC-DASH-07: "No data" instead of blank cards](../../client/e2e/qa-modules-2-9.lab.spec.ts) | None in source review | Source adapter covers each catalog expected item using read-only Dashboard assertions; current live launcher, reviewed current data prerequisites/cards and a separate explicit start are still required. |
 | TC-NH-01 | NH | unmapped / unassigned | None | E1, E2 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-NH-02 | NH | unmapped / unassigned | None | E1, E2 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-NH-03 | NH | unmapped / unassigned | None | E1, E2, E3 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
@@ -106,8 +106,8 @@ Assertion markers and source hashes support review; they do not prove assertion 
 | TC-TOP-06 | TOP | unmapped / unassigned | None | E1 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-DI-05 | DI | unmapped / unassigned | None | E1, E2, E3, E4 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-DI-06 | DI | unmapped / unassigned | None | E1, E2 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
-| TC-DI-07 | DI | unmapped / unassigned | None | E1, E2, E3 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
-| TC-DI-08 | DI | unmapped / unassigned | None | E1, E2, E3, E4 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
+| TC-DI-07 | DI | implemented / scripted automation | [TC-DI-07: Service name rules in Set service](../../client/e2e/qa-modules-2-9.lab.spec.ts) | None in source review | Offline source adapter asserts each catalog boundary and blocks all port PUTs; live dispatch remains blocked because uppercase input is lowercased in the component while the case requires rejection and the current importer cannot preserve failing-item observations. |
+| TC-DI-08 | DI | implemented / scripted automation | [TC-DI-08: The Checked by line](../../client/e2e/qa-modules-2-9.lab.spec.ts) | None in source review | Source adapter covers all catalog items using existing TCP/UDP fixtures, blocks port mutations, and closes both dialogs without saving; live fixture/card/preflight and explicit start remain required. |
 | TC-DI-09 | DI | unmapped / unassigned | None | E1, E2, E3 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-DI-11 | DI | unmapped / unassigned | None | E1, E2, E3 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-DI-12 | DI | unmapped / unassigned | None | E1, E2, E3 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
@@ -133,7 +133,7 @@ Assertion markers and source hashes support review; they do not prove assertion 
 | TC-DASH-04 | DASH | unmapped / unassigned | None | E1, E2 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-HIS-02 | HIS | unmapped / unassigned | None | E1, E2 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-HIS-03 | HIS | unmapped / unassigned | None | E1, E2 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
-| TC-HIS-04 | HIS | unmapped / unassigned | None | E1, E2, E3 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
+| TC-HIS-04 | HIS | implemented / scripted automation | [TC-HIS-04: Date range rules (API)](../../client/e2e/qa-modules-2-9.lab.spec.ts) | None in source review | Source adapter covers all expected items using read-only history API requests; E3 requires real history older than 25 hours and remains unprovable when no qualifying event exists. Reviewed cards, current baseline and explicit start are still required. |
 | TC-HIS-05 | HIS | unmapped / unassigned | None | E1 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-HIS-06 | HIS | unmapped / unassigned | None | E1 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-HIS-07 | HIS | unmapped / unassigned | None | E1, E2, E3 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
@@ -247,4 +247,4 @@ Assertion markers and source hashes support review; they do not prove assertion 
 | E2E-07 | E2E | unmapped / unassigned | None | E1, E2, E3, E4, E5, E6, E7 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | E2E-08 | E2E | unmapped / unassigned | None | E1, E2, E3, E4, E5 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 
-Source register: 7 implemented, 0 partial, 232 unmapped (TC and E2E combined; not execution counts).
+Source register: 15 implemented, 1 partial, 223 unmapped (TC and E2E combined; not execution counts).

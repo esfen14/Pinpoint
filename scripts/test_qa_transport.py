@@ -65,6 +65,60 @@ class TransportTests(unittest.TestCase):
             with patch.object(Path,'open',guarded):
                 t.prepare(q,s,root/'state',root/'bridge')
 
+    def test_module_transport_mounts_only_the_selected_cases_private_fixture_inputs(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);(root/'state').mkdir(mode=0o700);(root/'evidence').mkdir(mode=0o700);(root/'bridge').mkdir(mode=0o700)
+            cache=root/'home/.cache/ms-playwright';cache.mkdir(parents=True,mode=0o700)
+            names=t.MODULE_STATE_FILES['TC-ACC-08']
+            for name in names:
+                path=root/'state'/name;path.write_text('synthetic-private-value');path.chmod(0o600)
+            with patch.object(Path,'home',return_value=root/'home'):
+                argv=t.container_command(root/'evidence',root/'state',root/'bridge','TC-ACC-08')
+            mounts=[argv[i+1] for i,value in enumerate(argv) if value=='--mount']
+            state_mounts=[value for value in mounts if 'dst=/state/' in value]
+            self.assertEqual(len(state_mounts),len(names))
+            self.assertTrue(all('readonly' in value for value in state_mounts))
+            self.assertTrue(all(any(f'/{name},dst=/state/{name},readonly' in value for value in state_mounts) for name in names))
+            self.assertIn('PINPOINT_QA_CASES=TC-ACC-08',argv)
+            self.assertNotIn('synthetic-private-value',json.dumps(argv))
+            with self.assertRaises(ValueError):
+                t.container_command(root/'evidence',root/'state',root/'bridge','TC-ACC-10')
+
+    def test_di08_transport_uses_private_port_labels_and_no_account_fixture(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);(root/'state').mkdir(mode=0o700);(root/'evidence').mkdir(mode=0o700);(root/'bridge').mkdir(mode=0o700)
+            cache=root/'home/.cache/ms-playwright';cache.mkdir(parents=True,mode=0o700)
+            names=t.MODULE_STATE_FILES['TC-DI-08']
+            self.assertEqual(names,('admin-email','admin-password','qa-device-host','qa-tcp-port','qa-udp-port'))
+            for name in names:
+                path=root/'state'/name;path.write_text('synthetic-private-value');path.chmod(0o600)
+            with patch.object(Path,'home',return_value=root/'home'):
+                argv=t.container_command(root/'evidence',root/'state',root/'bridge','TC-DI-08')
+            self.assertIn('load_private_value PINPOINT_QA_TCP_PORT /state/qa-tcp-port',t.MODULE_BOOTSTRAP)
+            self.assertIn('load_private_value PINPOINT_QA_UDP_PORT /state/qa-udp-port',t.MODULE_BOOTSTRAP)
+            mounts=[argv[i+1] for i,value in enumerate(argv) if value=='--mount']
+            state_mounts=[value for value in mounts if 'dst=/state/' in value]
+            self.assertEqual(len(state_mounts),len(names))
+            self.assertTrue(all('readonly' in value for value in state_mounts))
+            self.assertNotIn('synthetic-private-value',json.dumps(argv))
+
+    def test_history_case_transport_mounts_only_admin_credentials(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);(root/'state').mkdir(mode=0o700);(root/'evidence').mkdir(mode=0o700);(root/'bridge').mkdir(mode=0o700)
+            cache=root/'home/.cache/ms-playwright';cache.mkdir(parents=True,mode=0o700)
+            names=t.MODULE_STATE_FILES['TC-HIS-04']
+            self.assertEqual(names,('admin-email','admin-password'))
+            for name in names:
+                path=root/'state'/name;path.write_text('synthetic-private-value');path.chmod(0o600)
+            with patch.object(Path,'home',return_value=root/'home'):
+                argv=t.container_command(root/'evidence',root/'state',root/'bridge','TC-HIS-04')
+            mounts=[argv[i+1] for i,value in enumerate(argv) if value=='--mount']
+            state_mounts=[value for value in mounts if 'dst=/state/' in value]
+            self.assertEqual(len(state_mounts),2)
+            self.assertTrue(all('readonly' in value for value in state_mounts))
+            self.assertIn('PINPOINT_QA_CASES=TC-HIS-04',argv)
+            self.assertNotIn('synthetic-private-value',json.dumps(argv))
+
     def test_draft_cards_and_offline_to_live_promotion_are_rejected(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d);q,s=self.fixture(root)
@@ -124,7 +178,8 @@ class TransportTests(unittest.TestCase):
     def test_legacy_runner_denies_current_config_before_any_external_command(self):
         script=Path(__file__).with_name('playwright-lab')
         for args in [['--config=playwright.qa.config.ts'],['--project=qa-permissions'],['-c','playwright.qa.config.ts'],
-                     ['--config','./playwright.qa.config.ts']]:
+                     ['--config','./playwright.qa.config.ts'],
+                     ['--config=playwright.modules.qa.config.ts'],['--project=qa-modules-2-9']]:
             result=subprocess.run(['bash',str(script),*args],capture_output=True,text=True,
                 env={'PATH':'/usr/bin:/bin','HOME':'/nonexistent'},timeout=5)
             self.assertNotEqual(result.returncode,0)
