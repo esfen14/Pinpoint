@@ -58,3 +58,15 @@ Historical credit: 0 accepted, 0 partial; historical issue context was not count
 - [x] No passwords, tokens, keys, SNMP communities or private key paths
 - [x] No addresses outside the documented lab range
 - [x] Evidence is referenced by name and location, not pasted
+
+## Implementation regression checks (2026-10-19)
+
+The working-branch fix was checked after the live-lab observations above. These
+local tests are separate from the VM cases and do not change the live rejection
+case from Inconclusive:
+
+- Backend: `server/.venv/bin/python -m pytest server/tests/unit/test_resource_helper_client.py server/tests/unit/test_plugin_reconcile.py::TestNcpaAndInventory server/tests/unit/test_ncpa_deployment_runs.py -q` — 65 passed. This includes a simulated successful agent install followed by a protected monitoring-attachment failure and checks the API's fixed safe error.
+- Frontend: `npm test -- --run src/test/NcpaDeploymentPage.test.tsx src/test/NcpaDeploymentNotification.test.tsx` — 16 passed. The deployment history drawer and notification distinguish agent installation from monitoring attachment.
+- Full frontend stage: 1,016 tests passed, production TypeScript/Vite build passed, and ESLint reported 0 errors (33 existing warnings).
+- Full backend stage: `scripts/verify.sh backend` — 4,333 passed, 14 skipped, 2 existing Requests deprecation warnings; route catalog and client API route checks passed.
+- Combined `scripts/verify.sh all`: docs stage reached unrelated QA supervisor tests, which failed because their host-controller claim was unavailable/unsafe and then caused ledger assertion failures. Backend and frontend were run independently.

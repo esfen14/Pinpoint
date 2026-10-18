@@ -793,6 +793,18 @@ into the row so history survives renames and moves. The run is Success when no
 device failed, Failed when none succeeded, otherwise Partial Failure; a stop or
 a Nagios config that could not be applied by `add_ncpa_port` keeps that status.
 
+Agent installation and Nagios monitoring attachment are separate stages. If the
+agent installs but the protected resource-macro helper rejects the generated
+configuration or Nagios validation/apply fails, keep the device outcome
+`Success` to represent the installed agent and set its result `Error` to a fixed,
+sanitized explanation that names the monitoring-attachment stage. Mark the run
+`Failed` and set a run message that clearly says installation succeeded while
+monitoring attachment failed. Never include helper stdout/stderr, resource-file
+contents, credentials or other request data in the API error. A successful
+installation alone does not mean metrics are monitored: `check_ncpa` must be
+enabled and the host/service configuration must be applied. Network Health
+metrics appear after Nagios executes those checks.
+
 Trust confirmation saves a host key only when the live key equals the
 fingerprint the user approved. A device can be deployed to when its agent is
 Pending NCPA or Deployment Failed (retry); Deployed and Incompatible devices

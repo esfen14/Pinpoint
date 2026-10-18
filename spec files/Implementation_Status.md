@@ -437,6 +437,17 @@ measured small-lab Nagios load. Installation, independent-host scale and browser
 walkthrough remain unverified; see [the service report](../docs/test-runs/2026-10-14-issue-128-ncpa-services/REPORT.md)
 and [the capability report](../docs/test-runs/2026-10-14-issue-128-ncpa-probe/REPORT.md).
 
+## NCPA installation and monitoring attachment (#234)
+
+The deployment API and UI now distinguish a successful agent installation from a
+failed Nagios configuration attachment; per-device outcomes stay tied to the
+agent install, and safe fixed errors identify the attachment stage. Focused
+backend/frontend regressions pass. The live QA run confirms the installed
+restricted helper, a successful NCPA deployment and CPU/memory/disk metrics in
+Network Health, but the reported helper rejection did not recur; exact diagnosis
+of that earlier failure remains open pending a sanitized capture from the
+originating environment. See [the issue #234 report](../docs/test-runs/2026-10-19-issue-234-ncpa-helper/REPORT.md).
+
 ## Host-report current state (#228)
 
 Host Availability and Hosts by OS now show each host's current state, last check and
