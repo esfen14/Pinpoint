@@ -1,9 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { X } from 'lucide-react'
 import { UserTable } from '../components/manage-accounts/UserTable'
-import { ExportMenu } from '../components/shared/ExportMenu'
-import { exportRows } from '../utils/exportData'
-import type { ExportFormat } from '../types/settings'
 import { PageHeader } from '../components/shared/PageHeader'
 import { PasswordRequestsPanel } from '../components/manage-accounts/PasswordRequestsPanel'
 import { useCurrentUser } from '../contexts/CurrentUserContext'
@@ -121,15 +118,26 @@ export function ManageAccountsPage() {
     return allUsers.filter((u) => u.status === statusFilter)
   }, [allUsers, statusFilter])
 
-  const handleExport = (format: ExportFormat) => {
-    const rows = filteredUsers.map((u) => ({
-      'Full Name': u.fullName,
-      Email: u.email,
-      Role: u.role,
-      Status: u.status,
-      'Joined Date': u.createdAt,
-    }))
-    exportRows(rows, format, 'accounts-report')
+  const handleExport = () => {
+    const headers = ['Full Name', 'Email', 'Role', 'Status', 'Joined Date']
+
+    const rows = filteredUsers.map((u) => [u.fullName, u.email, u.role, u.status, u.createdAt])
+
+    const csvContent = [headers, ...rows]
+      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `users-${statusFilter}-${new Date().toISOString().split('T')[0]}.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+
+    apiPost('/api/system/exportlog', { report_type: 'accounts', format: 'CSV' }).catch(() => {})
   }
 
   return (
@@ -183,13 +191,13 @@ export function ManageAccountsPage() {
 
           {/* ACTION BUTTONS */}
           <div className="flex gap-2">
-            <ExportMenu
-              allowedFormats={settings.exportFormats}
-              onExport={handleExport}
+            <button
+              onClick={handleExport}
               disabled={filteredUsers.length === 0}
-              label
-              buttonClassName="px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-800 shadow-sm hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:border-transparent dark:hover:bg-white/20 transition cursor-pointer"
-            />
+              className="px-4 py-2 rounded-lg bg-white border border-gray-200 text-gray-800 shadow-sm hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:border-transparent dark:hover:bg-white/20 transition disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+            >
+              Export
+            </button>
 
             <button
               onClick={() => setShowAddModal(true)}
