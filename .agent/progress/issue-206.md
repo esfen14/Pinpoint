@@ -149,3 +149,16 @@ credential exposure are a proposed transport contract, not proved live isolation
 Live lock/deployment/recovery supervisor remains unimplemented. Shell syntax and
 whitespace checks pass; relevant docs gate and final-head CI proof are maintained
 in draft PR #207. Scope remains offline implementation only.
+
+## Supervisor lifecycle session (2026-10-18)
+
+Continue authorized implementation without contacting the lab. Existing controller
+preflight and SSH/deployment helpers do not expose one proved runtime driver;
+implement and test lifecycle invariants before wiring any production dispatch.
+
+1. [ ] Add `scripts/qa_supervisor.py` lifecycle core and isolated fake-driver tests: separate explicit grant, queue/journal binding, canonical private shared ledger/OS lab lock, fresh matching driver receipts and durable action consumption before driver invocation.
+2. [ ] Persist interrupted/running/failed-cleanup states, prevent replay/session counter resets, enforce timing/cancellation/cleanup and use existing expected-item result validation. No production driver or live CLI in this milestone.
+3. [ ] Add docs gate/fingerprints, document trusted-driver and cooperative-lock limits, update checklist/progress and verify/checkpoint #207. Synchronize original-checkout progress; CI proof remains in PR description.
+
+Next action: failing lifecycle contracts using synthetic transport fixtures and
+a fake driver; no real process, bridge, Docker, SSH or appliance call.
