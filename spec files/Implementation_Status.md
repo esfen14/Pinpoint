@@ -341,10 +341,15 @@ The narrow `qa_pilot.py` integration now composes these components for TC-SS-04
 only. Eleven isolated driver/proof/gate contracts and read-only actual appliance
 inspection pass; 455 source files and 2383 installed runtime files are bound to
 the reviewed controlled deployment. Inspection launches no browser/container.
-A complete source-bound card and separate explicit start gate its one initial
-attempt. Actual browser/container execution and post-case session/baseline cleanup
-remain unverified until that supervised pilot; broader/unattended coverage stays
-blocked. Controlled launch/build provenance is a trust boundary, not memory
+The first explicitly started v4 TC-SS-04 attempt ran once on target `299ab3b`:
+browser permission assertions and logout/401 passed, container/bridge removal
+completed and independent post-run baseline inspection passed. Overall result is
+INCONCLUSIVE because the parser rejected an E1 timestamp 44 ms beyond its computed
+attempt end; harness [#211](https://github.com/esfen14/Pinpoint/issues/211) tracks
+reporter/clock investigation. The supervisor ledger remains halted; no accepted
+result, automatic repeat or reset occurred. See the [pilot report](../docs/test-runs/2026-10-18-issue-206-ss04-pilot/REPORT.md).
+A separate harness fix, reviewed recovery, new recheck card and explicit start
+are needed before another attempt; broader/unattended coverage stays blocked. Controlled launch/build provenance is a trust boundary, not memory
 attestation. The standalone observer's negative readiness fields are unchanged.
 
 The [historical evidence inventory/review](../docs/qa/Historical_Evidence_Review.md)

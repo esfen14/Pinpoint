@@ -15,10 +15,11 @@ User confirmed the local VirtualBox appliance is exclusively available.
 - [x] Complete the narrow pilot launcher/identity/cleanup wiring and eleven isolated integration contracts; pass supported actual read-only inspection. The broader unattended framework and unmapped cases are not prerequisites for implementing this narrow lane.
 - [x] Produce a complete execution card with the observed environment/version, exact bounded Playwright selection, private evidence and session/container/bridge cleanup.
 - [x] Publish the final v4 executable scope/card with observed baseline and exact command.
-- [ ] Obtain explicit user start for v4 `today-ss04`; preparation/inspection approval does not launch acceptance.
-- [ ] Execute TC-SS-04, save an attributable PASS/FAIL/INCONCLUSIVE/BLOCKED report and prove cleanup; preserve the original human Result field.
+- [x] Obtain explicit user start for v4 `today-ss04`; Paeng said start after confirming the one-case pilot.
+- [x] Execute TC-SS-04 once, record INCONCLUSIVE due to harness timing issue #211 and independently verify cleanup; preserve original human Result fields.
+- [ ] Fix timing import/review recovery and obtain a new recheck start before claiming the accepted end-to-end result path works.
 - [x] Save/index the appliance preparation report, queue log and checklist, including automatic startup scan and temporary scheduler pause.
-- [ ] Save/index the actual acceptance result and pass its docs gate after an explicit test start.
+- [x] Save/index the first INCONCLUSIVE pilot result and pass its docs gate after explicit start; no accepted PASS claimed.
 
 ## Prepared case
 
@@ -28,10 +29,10 @@ User confirmed the local VirtualBox appliance is exclusively available.
 4. Log out through the supported API and prove the session no longer authenticates.
 
 Target `299ab3ba7203c89a3ca5d8fabea42d9e5f239be2`, the user's original checkout
-revision, is now deployed after the approved build/migration/restart. This is not
-a tested acceptance revision or a fresh supervisor proof receipt. The readiness
+revision, is now deployed after the approved build/migration/restart. This revision was exercised by the first INCONCLUSIVE browser pilot; no accepted
+whole-case PASS or fresh receipt is implied by this descriptive file. The readiness
 branch freezes its source adapter/helper/configuration hashes separately.
-The v4 card is complete for one initial supervised attempt; explicit acceptance start is pending.
+The v4 attempt ran once and is INCONCLUSIVE; its consumed slot/ledger are halted. No replay is allowed.
 Existing human PASS cases are excluded. The later explicit setup approval covered backup, deployment, dependency/build/migration
 work, restart and disposable Staff initialization. It did not authorize acceptance,
 fault injection, snapshot restore or scan starts. The automatic startup scan and
@@ -39,9 +40,10 @@ scheduler pause are disclosed below.
 
 ## State for the next session
 
-- Narrow pilot driver/card and actual supported read-only inspection are complete; docs gate passes 176 isolated contracts. No local backend or unchanged frontend suite rerun. No acceptance case/batch/browser/container/bridge started.
-- Next action: obtain explicit user start for `docs/qa/queues/2026-10-18-today-ss04-v4.json`, set `today-ss04`, Paeng, one initial TC-SS-04 attempt. Only then write the matching affirmative expiring private grant and execute its exact launcher command. Preserve false template until actual approval.
-- After that attempt, verify actual session/container/bridge/baseline cleanup and publish a separate acceptance report; stop on uncertainty or INCONCLUSIVE, with no automatic repeat, reset, restore, scheduler enable or alternate browser/tool. The VM remains running with scheduler off and private backup retained; reboot invalidates baseline.
+- First explicitly started TC-SS-04 attempt is INCONCLUSIVE: browser assertions/logout passed, but strict evidence import rejected a 44 ms timing disagreement. Harness issue #211 filed; no product failure or accepted PASS claimed. One batch/one attempt, no repeats; supervisor/session remain halted.
+- Cleanup: owned container removed with daemon absence proof, bridge stopped/socket removed, logout/401 attachment passed, and separate supported read-only post-run baseline check passed. VM remains running with scheduler off; backup retained.
+- Next action: investigate/fix #211 in a separate preparation task after this saved reporting checkpoint. Preserve halted ledger and original evidence. Any new attempt requires reviewed recovery, a fresh recheck card/queue and explicit start; never replay v4, clear counters or manually promote raw PASS.
+- No local backend or unchanged frontend suite; no product/harness source change during execution. Documentation gate for this reporting checkpoint passes 176 isolated contracts; links/progress/whitespace pass. The known-gap inventory update intentionally makes the old v4 source snapshot stale for any future launch.
 
 ## Current offline implementation
 
@@ -99,7 +101,7 @@ question is pending. See the [preparation report](../../docs/test-runs/2026-10-1
 - [x] Disclose the automatic scan after boot (06:39:54–06:40:05 UTC) before pause; disable the serving scheduler with a temporary runtime environment override. Keep persisted configuration unchanged and record that reboot invalidates this baseline.
 - [x] Record preparation evidence, index and queue log; keep TC-SS-04 Not run (0 attempts, 0 batches), preserve human verdicts.
 - [x] Integrate the narrow trusted driver and fresh runtime/baseline observations; complete/review the pilot card (see the later driver checkpoint).
-- [ ] Obtain explicit acceptance start and verify actual browser/container/session cleanup in the pilot.
+- [x] Obtain explicit start and independently verify browser/container/session cleanup in the first INCONCLUSIVE pilot; the result-import gap remains open.
 
 Private evidence: `/home/paeng/pinpoint-test-results/2026-10-18-issue-206-preparation`.
 Guest backup: `/var/backups/pinpoint/qa-20261018-299ab3b`. The original administrator
@@ -126,8 +128,8 @@ frontend build and dependency/migration checks passed during approved deployment
 - [x] Pass eleven synthetic composed-driver/proof/gate contracts and actual supported read-only inspection; demonstrate false-start CLI denial with all reserved acceptance outputs still empty.
 - [x] Prepare complete [v4 card](../../docs/qa/queues/2026-10-18-today-ss04-v4.md) and immutable JSON; v3 is superseded, never started. E1 is sidebar absence plus redirect to Settings; one initial attempt, 300-second case envelope, 30-second cleanup, exact adapter selection, no scans/faults/restarts/resets/account changes or diagnostic repeat.
 - [x] Save/index the [driver preflight report](../../docs/test-runs/2026-10-18-issue-206-pilot-driver-preflight/REPORT.md), queue log and private evidence; pass `scripts/verify.sh docs` (176 isolated contracts), source/link/progress/whitespace checks. No local backend or unchanged frontend suite.
-- [ ] Obtain the user's explicit start for v4 `today-ss04`, Paeng; only then create the matching affirmative expiring private start record. Current template is false/expired. No acceptance case, batch, browser, container or bridge started.
-- [ ] Perform first supervised TC-SS-04 attempt, verify actual session/container/bridge/baseline cleanup and publish a separate attributable acceptance report. INCONCLUSIVE is not product FAIL; uncertain restoration halts.
+- [x] Obtain the user's explicit start for v4 `today-ss04`, Paeng; create the matching private expiring grant and run the one initial attempt (see outcome below).
+- [x] Perform first TC-SS-04 attempt and publish its separate INCONCLUSIVE report; independently verify session/container/bridge/baseline cleanup, preserve halted ledger and file #211.
 
 Actual read-only inspection uses SSH, public HTTP and Docker **image inspection**,
 without starting Docker containers or browsers. Positive fresh observation fields
@@ -138,3 +140,31 @@ Private baseline/inspection evidence is under the earlier preparation evidence
 root's `pilot-runtime-proof/`; reserved case evidence/control/bridge paths remain
 empty. Do not remove the shared lock/ledger, recreate an interrupted output path,
 re-enable schedules, change assertions or bypass the launcher with manual argv.
+
+## Authorized first pilot start (2026-10-18)
+
+- [x] Paeng explicitly said **start** after confirming this is the single-case supervised pilot; v4 scope/owner remain unchanged.
+- [x] Recheck v4 source scope and empty reserved private outputs; create the matching 15-minute private grant only after that user instruction.
+- [x] Execute/inspect the first attempt; record INCONCLUSIVE and independent cleanup verification without a retry/product change (see outcome below).
+
+Start timestamp: 2026-10-18T07:21:01.029461+00:00. Queue `today-ss04`, session `today-ss04-20261018`, batch `today-ss04-001`, exact case TC-SS-04. Report: `docs/test-runs/2026-10-18-issue-206-ss04-pilot/REPORT.md`. No other case or setup operation is authorized by this start.
+
+## First supervised pilot outcome (2026-10-18)
+
+- [x] Obtain Paeng's explicit start for fixed v4 `today-ss04`, TC-SS-04 only; recheck immutable scope and create the matching private expiring grant.
+- [x] Run the one initial browser/container attempt; one batch opened, zero supervisor-accepted batch completions, no repeat. Browser permission/redirect/sidebar assertions and logout/401 passed.
+- [x] Preserve INCONCLUSIVE overall outcome: strict import rejected E1 wall timestamp 44 ms beyond `startTime + duration`; reproduce the fixed parser diagnostic from unchanged private evidence, without another browser attempt or altered timestamps/assertions.
+- [x] Verify owned container exited 0/was removed with a successful empty daemon query, bridge completed/removed its socket, and the supported independent post-run inspection matched the original baseline. Do not override the halted supervisor with these independent observations.
+- [x] Search existing issues and file harness [#211](https://github.com/esfen14/Pinpoint/issues/211), without a qa-found product label. No product failure established.
+- [x] Record/index [pilot report](../../docs/test-runs/2026-10-18-issue-206-ss04-pilot/REPORT.md), queue execution log and known-gap inventory; preserve original human results and earlier reports.
+- [x] Complete report/checklist/index documentation gate: 176 isolated contracts, links/progress/whitespace pass; checkpoint this reporting outcome.
+- [ ] Investigate/fix #211 in a separate preparation task; preserve the halted ledger and original run. A new attempt needs reviewed recovery, a fresh recheck queue/card and explicit start; never clear/replay the consumed v4 slot.
+
+Actual application `299ab3ba7203c89a3ca5d8fabea42d9e5f239be2`; harness
+`b50f9b11745fa919df3a8faad6d0e2762823e084`. Session
+`today-ss04-20261018`, batch `today-ss04-001`, TC-SS-04 attempt 1.
+Unique TC: attempted 1, accepted PASS 0, FAIL 0, partial 0, BLOCKED 0,
+INCONCLUSIVE 1, Not run 0. E2E attempted 0; inherited credit 0.
+The raw browser PASS is supporting evidence, not an accepted whole-case verdict.
+The scheduler remains off and VM running; no scan/fault/setup/reset/restart occurred.
+No application/harness source was edited during execution or investigation.
