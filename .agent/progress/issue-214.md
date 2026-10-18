@@ -38,17 +38,18 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
-| 1 | Issue review and full required-source inspection underway | `gh issue view 214 --json number,title,body,url,state,comments` | Issue finish conditions cover requested scope; no source changes yet |
+| 1 | Read the 31 catalog procedures, phase/prerequisite tables, frontend route map, page requirements, architecture/engineering rules, current status and adapter/coverage constraints; found historical partial-report triage needed for several listed cases | `python3 scripts/qa_catalog.py`; `python3 -I scripts/qa_coverage.py check` | Catalog valid (231 TC/8 E2E, 27 existing verdict conflicts); all 239 coverage records source-current; no product tests executed |
 
 ## State for the next session
 
-- Last check run (exact command): `gh issue view 214 --json number,title,body,url,state,comments`
-- Result (first failing lines, or "green"): green; issue #214 is open with the copied finish condition.
-- Hypothesis: Scope is a test-harness preparation task across 31 cases; only source-mapped assertion coverage can be completed without live lab facts.
-- Next action (one specific step, not "continue"): Inspect and classify all 31 case procedures and prerequisites against their owning specifications and existing Playwright sources.
+- Last check run (exact command): `python3 -I scripts/qa_coverage.py check`
+- Result (first failing lines, or "green"): green; all 239 coverage records validate against current catalog/source hashes.
+- Hypothesis: The mapping registry is healthy; the assignment still needs per-case evidence plans and separation of fully scriptable observations from prerequisites or mutations that must remain blocked.
+- Next action (one specific step, not "continue"): Build a case-by-case adapter feasibility matrix that records expected items, source components, existing test coverage, prerequisites, mutations and cleanup blockers for all 31 IDs.
 
 ## Decisions and notes
 
 - TC-ACC-09 has a completed supervised PASS in `docs/test-runs/2026-10-18-next-permissions/REPORT.md`; TC-SS-04 has a completed supervised PASS in `docs/test-runs/2026-10-18-issue-211-ss04-recheck/REPORT.md`. They must not be replayed as untested cases.
 - The earlier prepared queue includes both cases because it lacked reviewer-bound run eligibility input; do not mutate it. Prepare a replacement after adapter/source changes are finalized.
+- TC-ACC-10 and TC-DI-10 have earlier partial reports and TC-DI-16–19 have #164 partial reports; the case catalog still says Not run. Queue eligibility and any retest/diagnostic decision must preserve both facts rather than treating the partial report as a pass or silently overwriting it.
 - No lab operation, live browser run, deployment check or execution start is authorized by this issue.
