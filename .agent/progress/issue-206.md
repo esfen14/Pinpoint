@@ -59,10 +59,10 @@ and require separately authorized live evidence where needed.
 
 ## State for the next session
 
-- Partial-pass follow-up: docs gate passes with 68 isolated checks and the original catalog is byte-for-byte unchanged. #208/#209 record initial triage; live verification/evidence clarification remain pending in those issues. Pushed to draft PR #207; final-head CI proof is maintained in its description.
-- Last full product check run: `scripts/verify.sh all` (green, `/tmp/issue-206-verify-all.log`), followed by final docs gate (66 checks) and syntax/whitespace validation for QA-only hardening.
-- Result: 4310 backend tests passed (14 skips), 1003 frontend passed, build/lint pass with 33 existing warnings and zero errors; final docs checks pass. Draft PR: https://github.com/esfen14/Pinpoint/pull/207. Final-head CI remains to inspect after this checkpoint.
-- Next action: Inspect final-head CI on PR #207, then continue current-case adapter/coverage preparation from the overall readiness checklist. Live preflight, atomic scan guarding and pilot runs remain separately gated; no launch authorization is inferred.
+- Last relevant checks: `scripts/verify.sh docs` (77 isolated checks) and `scripts/verify.sh frontend` (1003 Vitest tests, five offline Node/Playwright collection checks, QA type check, build/lint; zero errors and 33 existing warnings). Both green.
+- Full check: `scripts/verify.sh all > /tmp/issue-206-coverage-all.log 2>&1` running at the coverage checkpoint. Final result and current-head CI proof are maintained in draft PR #207, not inferred from an earlier revision.
+- Result: five source-complete permission adapters, 234 explicitly unmapped definitions. Source registry, exact selection, draft-card blocking and queue/journal bindings pass isolated checks. No live browser/lab test executed. Initial partial triage remains #208/#209; original human catalog unchanged.
+- Next action: inspect final PR CI/full-gate proof, then implement reviewed current-case selection/private artifact integration in the isolated launcher with ownership, target-version and recovery enforcement. Actual live cards/preflight, atomic scan guarding and pilot execution still require their separate reviewed scope/start.
 
 ## Decisions and notes
 
@@ -89,7 +89,7 @@ against an application, account setup or product behavior change.
 1. [x] Add a source-bound coverage registry/validator and derived all-case matrix in `scripts/qa_coverage.py`, regression tests and `docs/qa/automation-coverage.json` / `Automation_Coverage.md`. Unknown coverage stays explicitly unmapped; partial coverage cannot become whole-case automation.
 2. [x] Add reviewed source adapters for Staff permission cases (SS-04, HIS-01, RPT-07, LOG-05, PLG-07), with isolated exact-selection Playwright configuration, no setup dependencies/retries/captures, and per-item evidence. Validate registration with offline `--list`, never a browser launch. Existing human passes stay excluded by normal queue eligibility.
 3. [x] Bind queue snapshots/freshness to coverage metadata and reject mismatched adapter cards; include registry checks in the docs gate, document source implementation versus live readiness, and update the overall checklist. Complete live cards still require verified prerequisites/environment and a supported reviewed launcher.
-4. [ ] Verify docs and relevant frontend checks, inspect CI, checkpoint to draft PR #207 and synchronize the main-checkout progress copies.
+4. [x] Verify docs and relevant frontend checks, inspect CI status and checkpoint to draft PR #207; synchronize the main-checkout progress copies. Full-gate/current-head CI proof is recorded in the PR before completion.
 
 Next action: round 1 failing coverage registry contracts, then implement validation.
 
@@ -117,3 +117,9 @@ selection/output environment or mount its private artifacts; all actual live
 cards and deployment/ownership/recovery proof remain pending.
 
 Next action: run final local verification, checkpoint and inspect current-head CI.
+
+Coverage checkpoint: relevant docs/frontend checks pass; full local gate and
+current-head CI are running. New source tests, coverage register and guide are
+committed in #207. Progress copies are synchronized into the original checkout;
+implementation source remains isolated. Final green proof must be checked in
+the PR rather than inferred from this checkpoint.
