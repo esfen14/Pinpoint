@@ -101,7 +101,7 @@ describe('service duration reports', () => {
 
   it.each(['CSV', 'XLS', 'PDF'])('device coverage, pending/missing current status, filter, pages and %s export', async (format) => {
     mocks.get.mockResolvedValue(device())
-    render(<ExtraReports view="device-services" query="period=last_24h" runKey={0} onStatus={onStatus} onCards={onCards} />)
+    render(<ExtraReports view="device-services" query="period=last_24h" runKey={0} onStatus={onStatus} onCards={onCards} description="About" />)
     await screen.findByText('Device Services Report')
     expect(screen.getByRole('columnheader', { name: 'Current state' })).toBeInTheDocument()
     expect(screen.getByText('Pending')).toBeInTheDocument()
@@ -129,10 +129,10 @@ describe('service duration reports', () => {
 
   it('clears device data and removes export on failed rerun; historical status failure has notice', async () => {
     mocks.get.mockResolvedValue({ ...device(), current_status: { available: false, observed_at: null, notice: 'Current status unavailable. Historical availability is still shown.' } })
-    const view = render(<ExtraReports view="device-services" query="period=last_24h" runKey={0} onStatus={onStatus} onCards={onCards} />)
+    const view = render(<ExtraReports view="device-services" query="period=last_24h" runKey={0} onStatus={onStatus} onCards={onCards} description="About" />)
     await screen.findByText(/Current status unavailable/)
     mocks.get.mockRejectedValue(new Error('Retry report'))
-    view.rerender(<ExtraReports view="device-services" query="period=last_7d" runKey={1} onStatus={onStatus} onCards={onCards} />)
+    view.rerender(<ExtraReports view="device-services" query="period=last_7d" runKey={1} onStatus={onStatus} onCards={onCards} description="About" />)
     await waitFor(() => expect(onStatus).toHaveBeenCalledWith({ type: 'error', text: 'Retry report' }))
     expect(screen.queryByRole('button', { name: 'Export' })).not.toBeInTheDocument()
     expect(screen.queryByText('svc-0')).not.toBeInTheDocument()
