@@ -27,7 +27,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 ## Plan
 
-1. [ ] Review all selected case procedures and prerequisite tables, applicable frontend/backend/data/page specifications, existing adapter sources, coverage registry, and status gaps; record exact runnable/human/blocker classifications in a review artifact (`docs/qa/Automation_Readiness.md` or a focused linked document).
+1. [x] Review all selected case procedures and prerequisite tables, applicable frontend/backend/data/page specifications, existing adapter sources, coverage registry, and status gaps; record per-case source/test/prerequisite/mutation/recovery classifications in `docs/qa/Module_2-9_Adapter_Review.md`.
 2. [ ] Design and implement source adapters plus isolated selection/collection checks for the reviewed runnable cases (`client/e2e/`, `client/qa/`, `client/playwright.qa.config.ts`, focused Node tests); keep tests fail-closed on missing prerequisites and do not connect to a live lab.
 3. [ ] Update reviewed case coverage records and derived coverage view (`docs/qa/automation-coverage.json`, `docs/qa/Automation_Coverage.md`) with exact expected-item markers, source hashes, prerequisites and cleanup.
 4. [ ] Update QA implementation status and any owning specifications only where adapter/workflow support changes (`spec files/Implementation_Status.md`, relevant QA docs).
@@ -39,17 +39,19 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 1 | Read the 31 catalog procedures, phase/prerequisite tables, frontend route map, page requirements, architecture/engineering rules, current status and adapter/coverage constraints; found historical partial-report triage needed for several listed cases | `python3 scripts/qa_catalog.py`; `python3 -I scripts/qa_coverage.py check` | Catalog valid (231 TC/8 E2E, 27 existing verdict conflicts); all 239 coverage records source-current; no product tests executed |
+| 2 | Added case-by-case review matrix with source/test references and explicit prerequisite, mutation, and cleanup concerns | `python3 -I scripts/qa_coverage.py check` | Green; existing coverage unchanged. Matrix explicitly notes that the bounded pilot is not a general launcher and no live action is authorized. |
 
 ## State for the next session
 
 - Last check run (exact command): `python3 -I scripts/qa_coverage.py check`
 - Result (first failing lines, or "green"): green; all 239 coverage records validate against current catalog/source hashes.
-- Hypothesis: The mapping registry is healthy; the assignment still needs per-case evidence plans and separation of fully scriptable observations from prerequisites or mutations that must remain blocked.
-- Next action (one specific step, not "continue"): Build a case-by-case adapter feasibility matrix that records expected items, source components, existing test coverage, prerequisites, mutations and cleanup blockers for all 31 IDs.
+- Hypothesis: The source map confirms the initial permission adapter pipeline does not cover these cases; current code has isolated page tests we can use to source-review exact assertions while keeping live cards blocked.
+- Next action (one specific step, not "continue"): Implement one explicit-ID current-case collection config and browser adapter tests for the first safe read-only cases, without adding a live dispatch path.
 
 ## Decisions and notes
 
 - TC-ACC-09 has a completed supervised PASS in `docs/test-runs/2026-10-18-next-permissions/REPORT.md`; TC-SS-04 has a completed supervised PASS in `docs/test-runs/2026-10-18-issue-211-ss04-recheck/REPORT.md`. They must not be replayed as untested cases.
 - The earlier prepared queue includes both cases because it lacked reviewer-bound run eligibility input; do not mutate it. Prepare a replacement after adapter/source changes are finalized.
 - TC-ACC-10 and TC-DI-10 have earlier partial reports and TC-DI-16–19 have #164 partial reports; the case catalog still says Not run. Queue eligibility and any retest/diagnostic decision must preserve both facts rather than treating the partial report as a pass or silently overwriting it.
+- The per-case source/prerequisite/mutation assessment is in `docs/qa/Module_2-9_Adapter_Review.md`; it does not authorize lab access or itself create execution cards.
 - No lab operation, live browser run, deployment check or execution start is authorized by this issue.
