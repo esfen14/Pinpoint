@@ -109,8 +109,8 @@ describe('NCPA deployment in the notification panel', () => {
     renderHeader()
     openPanel()
 
-    expect(await screen.findByText('NCPA deployed: ready for review')).toBeInTheDocument()
-    expect(screen.getByText('2 of 2 devices deployed.')).toBeInTheDocument()
+    expect(await screen.findByText('NCPA agent install: ready for review')).toBeInTheDocument()
+    expect(screen.getByText('Agent installed on 2 of 2 devices.')).toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: 'Review →' }))
     expect(screen.getByTestId('location')).toHaveTextContent('/ncpa-deployment?tab=history&run=8')
@@ -129,7 +129,23 @@ describe('NCPA deployment in the notification panel', () => {
     openPanel()
 
     expect(await screen.findByText('NCPA deployed with problems')).toBeInTheDocument()
-    expect(screen.getByText('3 deployed, 1 failed, 1 down.')).toBeInTheDocument()
+    expect(screen.getByText('3 agents installed, 1 failed, 1 down.')).toBeInTheDocument()
+  })
+
+  it('names a monitoring attachment failure separately from successful agent installation', async () => {
+    apiGet.mockResolvedValue(run({
+      status: 'Failed',
+      progress: 100,
+      message: 'NCPA agent installation succeeded, but monitoring attachment failed.',
+      error: 'Protected resource helper rejected update. Check the installed helper and exact no-argument sudo rule.',
+      counts: counts({ success: 1 }),
+      devices: [result(1, 'Success')],
+    }))
+    renderHeader()
+    openPanel()
+
+    expect(await screen.findByText('NCPA agent installed; monitoring attachment failed')).toBeInTheDocument()
+    expect(screen.getByText(/Protected resource helper rejected update/)).toBeInTheDocument()
   })
 
   it('does not poll or show the bell without the deploy permission', () => {

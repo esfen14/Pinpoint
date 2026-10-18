@@ -213,10 +213,10 @@ export function runProgressCounts(run: DeploymentRun) {
   return { done, total: tried.length }
 }
 
-/** "3 deployed, 1 failed, 1 down" — used in notifications. */
+/** "3 agents installed, 1 failed, 1 down" — used in notifications. */
 export function describeCounts(counts: RunCounts): string {
   return [
-    counts.success && `${counts.success} deployed`,
+    counts.success && `${counts.success} agent${counts.success === 1 ? '' : 's'} installed`,
     counts.failed && `${counts.failed} failed`,
     counts.down && `${counts.down} down`,
     counts.incompatible && `${counts.incompatible} incompatible`,

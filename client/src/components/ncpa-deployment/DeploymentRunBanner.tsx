@@ -64,7 +64,7 @@ export function DeploymentRunBanner({ run, isCancelling, cancelError, onCancel }
               className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1 text-xs dark:border-white/10 dark:bg-[#171B20]"
             >
               <span className="font-medium text-gray-900 dark:text-white">{d.hostname}</span>
-              <OutcomeBadge outcome={d.outcome} />
+              <OutcomeBadge outcome={d.outcome} successLabel="Agent installed" />
             </li>
           ))}
         </ul>

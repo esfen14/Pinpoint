@@ -26,6 +26,14 @@ _FILE_MODE = 0o660
 _HELPER_RESOURCE_PATH = "/usr/local/nagios/etc/resource.cfg"
 _HELPER_COMMAND = ["/usr/bin/sudo", "-n", "/usr/local/sbin/pinpoint-apply-resources"]
 _MAX_HELPER_BYTES = 1024 * 1024
+HELPER_REJECTED_MESSAGE = (
+    "Protected resource helper rejected update. Check its installer setup and exact no-argument sudo rule, "
+    "resource.cfg owner/group/mode (nagios:nagios 0660), and managed-block integrity; configuration was not applied."
+)
+HELPER_UNAVAILABLE_MESSAGE = (
+    "Protected resource helper is unavailable or timed out. Verify installer setup and its exact no-argument "
+    "sudo rule; configuration was not applied."
+)
 
 
 class ResourceMacroLimitError(ValueError):
@@ -150,9 +158,11 @@ def replace_using_resource_helper(path, contents, metadata):
     try:
         result = subprocess.run(_HELPER_COMMAND, input=request, capture_output=True, timeout=10)
     except (OSError, subprocess.TimeoutExpired):
-        raise OSError("Protected resource helper is unavailable or timed out; configuration was not applied.") from None
+        raise OSError(HELPER_UNAVAILABLE_MESSAGE) from None
     if result.returncode != 0:
-        raise OSError("Protected resource helper rejected the update; configuration was not applied.")
+        # The privileged helper intentionally emits no request-dependent details.
+        # Keep its rejection actionable without forwarding captured stdout/stderr.
+        raise OSError(HELPER_REJECTED_MESSAGE)
     updated = path.stat()
     if path.read_bytes() != contents or (updated.st_uid, updated.st_gid, stat.S_IMODE(updated.st_mode)) != (
         metadata.st_uid, metadata.st_gid, stat.S_IMODE(metadata.st_mode),

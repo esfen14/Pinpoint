@@ -28,7 +28,10 @@ from app.plugin_models import (
     PluginStatus,
     PluginType,
 )
-from app.system_models import Open_TCP_Services, PortState
+from app.system_models import (
+    DeploymentOutcome, DeploymentStatus, NCPADeploymentResult, NCPADeploymentStatus,
+    Open_TCP_Services, PortState,
+)
 from tests.support.identity_helpers import MAC_1, MAC_2, NET, make_status, run_scan, scan
 
 APPLIED = ("applied", "New host.cfg applied.")
@@ -457,6 +460,51 @@ class TestNcpaAndInventory:
         device = new_device(status, tcp={22: "ssh"})
         reconcile = self.run_add_ncpa_port(app, admin_user, device, applied=False)
         reconcile.assert_not_called()
+
+    def test_attachment_failure_keeps_install_success_and_explains_device_stage(
+        self, app, db_session, admin_user, logged_in_client, status,
+    ):
+        import threading
+        from app.logging.deployment_history import add_deployment_result, create_ncpa_deployment_status
+        from app.network_discovery import create_host_cfg
+
+        device = new_device(status, tcp={22: "ssh"})
+        run = create_ncpa_deployment_status(admin_user.UserID)
+        add_deployment_result(run.NCPADeployStatusID, device, DeploymentOutcome.SUCCESS)
+        db_session.session.commit()
+        rejected = (
+            "Protected resource helper rejected the update; configuration was not applied. "
+            "Check the helper and exact no-argument sudo rule, and confirm resource.cfg is "
+            "nagios:nagios mode 0660."
+        )
+
+        with patch.object(create_host_cfg, "_validate_config", return_value=(True, "ok")), \
+             patch.object(create_host_cfg, "_create_host_cfg_file"), \
+             patch.object(create_host_cfg, "_apply_new_host_cfg", return_value=(False, rejected)), \
+             patch.object(create_host_cfg, "_sync_running_plugins") as reconcile:
+            create_host_cfg.add_ncpa_port(app, [device.NetDiscoveryID], run.NCPADeployStatusID, threading.Event())
+
+        result = db.session.scalar(sa.select(NCPADeploymentResult).where(
+            NCPADeploymentResult.NCPADeploymentStatusID == run.NCPADeployStatusID,
+            NCPADeploymentResult.NetworkDiscoveryID == device.NetDiscoveryID,
+        ))
+        saved_run = db.session.get(NCPADeploymentStatus, run.NCPADeployStatusID, populate_existing=True)
+        assert result.Outcome is DeploymentOutcome.SUCCESS
+        assert "monitoring attachment failed" in result.Error.lower()
+        assert "exact no-argument sudo rule" in result.Error
+        assert saved_run.Status is DeploymentStatus.FAILED
+        assert "monitoring attachment failed" in saved_run.Message.lower()
+        assert "agent installation succeeded" in saved_run.Message.lower()
+        reconcile.assert_not_called()
+
+        data = logged_in_client.get(
+            f"/api/system/deployment/ncpa/runs/{run.NCPADeployStatusID}"
+        ).get_json()["data"]
+        assert data["status"] == "Failed"
+        assert "monitoring attachment failed" in data["message"].lower()
+        assert data["devices"][0]["outcome"] == "Success"
+        assert "monitoring attachment failed" in data["devices"][0]["error"].lower()
+        assert "nagios:nagios 0660" in data["devices"][0]["error"]
 
     def test_the_ncpa_service_exists_only_while_check_ncpa_is_enabled(self, app, db_session, admin_user, status, writer, ncpa_inventory):
         from app.system_models import AgentStatus, NCPADeployment

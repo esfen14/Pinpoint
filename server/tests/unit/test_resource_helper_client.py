@@ -77,6 +77,9 @@ def test_helper_failure_does_not_echo_output_or_claim_success(helper_resource, m
     with pytest.raises(OSError) as error:
         resources.write_resource_block(path, {'ncpa_token:1': '$USER2$'}, {'ncpa_token:1': 'synthetic-helper-token'})
     assert 'synthetic-helper-token' not in str(error.value)
+    if failure == 'reject':
+        assert 'exact no-argument sudo rule' in str(error.value)
+        assert 'nagios:nagios 0660' in str(error.value)
     assert path.read_bytes() == original
 
 

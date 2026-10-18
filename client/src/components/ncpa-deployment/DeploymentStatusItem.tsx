@@ -58,8 +58,8 @@ export function DeploymentStatusItem({ run, isCancelling, cancelError, onCancel,
   const outcome = {
     Success: {
       icon: <CheckCircle2 className="h-4 w-4 text-green-500" />,
-      title: run.reviewedAt ? 'NCPA deployed · reviewed' : 'NCPA deployed: ready for review',
-      body: `${run.counts.success} of ${tried} device${tried === 1 ? '' : 's'} deployed.`,
+      title: run.reviewedAt ? 'NCPA agent install · reviewed' : 'NCPA agent install: ready for review',
+      body: `Agent installed on ${run.counts.success} of ${tried} device${tried === 1 ? '' : 's'}.`,
     },
     'Partial Failure': {
       icon: <AlertTriangle className="h-4 w-4 text-amber-500" />,
@@ -68,7 +68,9 @@ export function DeploymentStatusItem({ run, isCancelling, cancelError, onCancel,
     },
     Failed: {
       icon: <XCircle className="h-4 w-4 text-red-500" />,
-      title: 'NCPA deployment failed',
+      title: run.message.toLowerCase().includes('monitoring attachment failed')
+        ? 'NCPA agent installed; monitoring attachment failed'
+        : 'NCPA deployment failed',
       body: run.error ?? (summary ? `${summary}.` : run.message),
     },
     Interrupted: {

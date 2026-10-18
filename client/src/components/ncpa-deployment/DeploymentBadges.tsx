@@ -34,8 +34,8 @@ const OUTCOME_TONES: Record<DeviceOutcome, Tone> = {
   Skipped: 'gray',
 }
 
-export function OutcomeBadge({ outcome }: { outcome: DeviceOutcome }) {
-  return <Badge tone={OUTCOME_TONES[outcome]} label={outcome} pulse={outcome === 'Running'} />
+export function OutcomeBadge({ outcome, successLabel = 'Success' }: { outcome: DeviceOutcome; successLabel?: string }) {
+  return <Badge tone={OUTCOME_TONES[outcome]} label={outcome === 'Success' ? successLabel : outcome} pulse={outcome === 'Running'} />
 }
 
 const AGENT_LABELS: Record<AgentStatus, [Tone, string]> = {
@@ -76,7 +76,7 @@ export function RunResultBadge({ run }: { run: Pick<DeploymentRun, 'status' | 'n
 /** Compact per-outcome counts, e.g. "✔ 3  ✖ 1  ⏻ 1"; only non-zero outcomes are shown. */
 export function OutcomeCounts({ counts }: { counts: RunCounts }) {
   const parts = [
-    { n: counts.success, label: 'deployed', icon: CheckCircle2, className: 'text-emerald-600 dark:text-emerald-400' },
+    { n: counts.success, label: 'agent installed', icon: CheckCircle2, className: 'text-emerald-600 dark:text-emerald-400' },
     { n: counts.failed, label: 'failed', icon: XCircle, className: 'text-red-600 dark:text-red-400' },
     { n: counts.down, label: 'down', icon: Power, className: 'text-gray-500 dark:text-gray-400' },
     { n: counts.incompatible, label: 'incompatible', icon: Ban, className: 'text-gray-500 dark:text-gray-400' },

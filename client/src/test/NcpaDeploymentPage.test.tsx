@@ -161,6 +161,30 @@ describe('NcpaDeploymentPage', () => {
     expect(api.reviewRun).toHaveBeenCalledWith(11)
   })
 
+  it('distinguishes installed agents from a failed monitoring attachment', async () => {
+    api.getRun.mockResolvedValue(run({
+      status: 'Failed',
+      message: 'NCPA agent installation succeeded, but monitoring attachment failed.',
+      error: 'Protected resource helper rejected the update. Check the helper and exact no-argument sudo rule.',
+      counts: counts({ success: 1 }),
+      needsReview: false,
+      devices: [{
+        deviceId: 1,
+        hostname: 'web-01',
+        ipAddress: '10.0.20.1',
+        outcome: 'Success',
+        error: 'Agent installed, but monitoring attachment failed: check the helper and sudo rule.',
+      }],
+    }))
+    renderPage('/ncpa-deployment?tab=history&run=11')
+
+    const drawer = await screen.findByRole('dialog', { name: 'Deployment NP-0011' })
+    expect(await within(drawer).findAllByText(/monitoring attachment failed/i)).toHaveLength(2)
+    expect(within(drawer).getByText(/check the helper and exact no-argument sudo rule/i)).toBeInTheDocument()
+    expect(within(drawer).getByText('Agent installed')).toBeInTheDocument()
+    expect(within(drawer).queryByText(/Its checks appear in/)).not.toBeInTheDocument()
+  })
+
   it('retries the failed and down devices of a run', async () => {
     renderPage('/ncpa-deployment?tab=history&run=11')
 

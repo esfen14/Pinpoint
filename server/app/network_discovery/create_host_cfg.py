@@ -51,6 +51,9 @@ from app.system_models import \
     Open_UDP_Services, \
     SSHCredentials, \
     NCPADeployment, \
+    NCPADeploymentStatus, \
+    NCPADeploymentResult, \
+    DeploymentOutcome, \
     NCPADevicePartition, \
     AgentStatus, \
     DeviceState, \
@@ -2231,37 +2234,73 @@ def add_ncpa_port(app, successful_device, ncpa_deployment_status_id, stop_event)
                         # plugin-driven service, and only while that plugin is enabled.
                         _sync_running_plugins(app, None)
                     else:
-                        update_ncpa_deployment_status(
-                            ncpa_deployment_status_id,
-                            DeploymentStatus.FAILED,
-                            ADD_NCPA_PORT_PROGRESS_WEIGHT[4],
-                            "Config not applied.",
-                            datetime.now(timezone.utc),
-                            apply_message
+                        fail_ncpa_monitoring_attachment(
+                            ncpa_deployment_status_id, successful_device, apply_message
                         )
                     print(apply_message)
                 else:
-                    update_ncpa_deployment_status(
-                        ncpa_deployment_status_id,
-                        DeploymentStatus.FAILED,
-                        ADD_NCPA_PORT_PROGRESS_WEIGHT[4],
-                        "Config failed to validate.",
-                        datetime.now(timezone.utc),
-                        result
+                    fail_ncpa_monitoring_attachment(
+                        ncpa_deployment_status_id, successful_device, result
                     )
                     print(result)
 
-        except Exception as e:
+        except Exception:
             db.session.rollback()
-            app.logger.exception("Failed to add NCPA port")
-            update_ncpa_deployment_status(
+            app.logger.exception("Failed to attach NCPA monitoring configuration")
+            fail_ncpa_monitoring_attachment(
                 ncpa_deployment_status_id,
-                DeploymentStatus.FAILED,
-                100,
-                "Failed to add NCPA port.",
-                datetime.now(timezone.utc),
-                str(e)
+                successful_device,
+                "unexpected configuration failure",
             )
+
+
+def safe_ncpa_attachment_error(diagnostic):
+    """Map internal apply diagnostics to fixed, secret-free operator guidance."""
+    value = str(diagnostic or "")
+    if "Protected resource helper rejected" in value:
+        return resource_macros.HELPER_REJECTED_MESSAGE
+    if "Protected resource helper is unavailable or timed out" in value:
+        return resource_macros.HELPER_UNAVAILABLE_MESSAGE
+    if "Config failed to validate" in value:
+        return (
+            "Nagios rejected the generated monitoring configuration. Check the Nagios configuration log; "
+            "agent installation succeeded, but checks were not attached."
+        )
+    return (
+        "Nagios monitoring configuration could not be applied. Check server configuration logs; "
+        "agent installation succeeded, but checks were not attached."
+    )
+
+
+def fail_ncpa_monitoring_attachment(run_id, device_ids, diagnostic):
+    """Fail a deployment's monitoring stage while retaining successful agent outcomes.
+
+    ``diagnostic`` is never returned directly: the run and successful device
+    results receive a fixed, sanitized explanation of the failed stage.
+    """
+    detail = safe_ncpa_attachment_error(diagnostic)
+    try:
+        rows = db.session.scalars(
+            sa.select(NCPADeploymentResult).where(
+                NCPADeploymentResult.NCPADeploymentStatusID == run_id,
+                NCPADeploymentResult.NetworkDiscoveryID.in_(device_ids),
+                NCPADeploymentResult.Outcome == DeploymentOutcome.SUCCESS,
+            )
+        ).all()
+        for row in rows:
+            row.Error = f"Monitoring attachment failed: {detail}"
+
+        run = db.session.get(NCPADeploymentStatus, run_id)
+        if run is not None:
+            run.Status = DeploymentStatus.FAILED
+            run.Progress = 100
+            run.Message = "NCPA agent installation succeeded, but monitoring attachment failed."
+            run.Completed_At = datetime.now(timezone.utc)
+            run.Error = detail
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("Could not record NCPA monitoring attachment failure")
 
 def resource_config_transaction():
     """Snapshot the configured resource file for a config-lock-protected writer."""

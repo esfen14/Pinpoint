@@ -164,13 +164,18 @@ export function DeploymentRunDrawer({ runId, devices, isRunning, onClose, onChan
                           </p>
                           <p className="text-[13px] text-gray-500 dark:text-gray-400">
                             {d.outcome === 'Success' ? (
-                              <>
-                                NCPA installed and responding. Its checks appear in{' '}
-                                <Link to="/network-health" className="font-medium text-[#b37b00] hover:underline dark:text-[#ffb100]">
-                                  Network Health
-                                </Link>
-                                .
-                              </>
+                              d.error ? (
+                                <>NCPA agent installation succeeded. {d.error}</>
+                              ) : (
+                                <>
+                                  NCPA agent installed. Monitoring attachment completed for this run; checks run only while{' '}
+                                  <code>check_ncpa</code> is enabled. View{' '}
+                                  <Link to="/network-health" className="font-medium text-[#b37b00] hover:underline dark:text-[#ffb100]">
+                                    Network Health
+                                  </Link>
+                                  .
+                                </>
+                              )
                             ) : (
                               d.error ?? ''
                             )}
@@ -185,7 +190,7 @@ export function DeploymentRunDrawer({ runId, devices, isRunning, onClose, onChan
                             <KeyRound className="h-3.5 w-3.5" /> Enter new login
                           </button>
                         )}
-                        <OutcomeBadge outcome={d.outcome} />
+                        <OutcomeBadge outcome={d.outcome} successLabel="Agent installed" />
                       </li>
                     ))}
                   </ul>
