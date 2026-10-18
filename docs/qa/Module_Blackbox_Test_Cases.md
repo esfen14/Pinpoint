@@ -4,7 +4,7 @@
 
 ## Scope and approach
 
-This suite tests Pinpoint module by module, the way a user (or an API client) sees it, with no knowledge of the code. Every test case tells you what to prepare, the exact steps to follow, and what you should see. Every case traces to a requirement taken from the repository's `spec files/` (see the traceability matrix at the end). It covers 22 modules plus 8 end-to-end scenarios, and it was checked against the repository's `main` branch at commit `4b1ad9f` (merged 2026-10-17).
+This suite tests Pinpoint module by module, the way a user (or an API client) sees it, with no knowledge of the code. Every test case tells you what to prepare, the exact steps to follow, and what you should see. Every case traces to a requirement taken from the repository's `spec files/` (see the traceability matrix at the end). It covers 23 modules plus 8 end-to-end scenarios, and it was checked against the repository's `main` branch at commit `4b1ad9f` (merged 2026-10-17).
 
 **Black-box techniques used**
 
@@ -95,7 +95,8 @@ Some cases need something an earlier case creates, for example a user, a role, a
 | 11 | Cases that stop or break services (last, then restore everything) | TC-DASH-06, TC-MNT-08, TC-SET-08, 09 |
 | 12 | Quality and performance | TC-NFR-03, 04, 05, 06, 07, 08, 09, 10, 11 |
 | 13 | Edge cases | TC-EDG-01 to 18 |
-| 14 | End-to-end scenarios on a fresh appliance | E2E-01 to 08 |
+| 14 | Order of events (one at a time, restore the lab after each) | TC-SEQ-01, 02, 03, 04, 05, 06, 07, 08, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 22, 23, 24 |
+| 15 | Cases that need a fresh appliance (restore the clean snapshot before each one) | TC-SEQ-09, TC-SEQ-17, then E2E-01 to 08 |
 
 ### What each case needs first
 
@@ -158,6 +159,25 @@ Cases not listed here need only a finished setup (TC-AUTH-07) and the lab descri
 | TC-NFR-08, 09 | TC-DSC-01 | Need 10 and 15 monitored hosts |
 | TC-NFR-10 | TC-DASH-03 | Needs a target to break |
 | TC-EDG-01 to 18 | TC-ACC-01, TC-DSC-01, TC-DI-13 | They reuse the accounts, scans, and devices from earlier phases |
+
+**Order-of-events cases (TC-SEQ) need first**
+
+| Case | Do these first | Why |
+| --- | --- | --- |
+| TC-SEQ-01, 02, 06, 23 | TC-DASH-03, TC-PLG-03 | You need a monitored service to stop and start |
+| TC-SEQ-03, 04, 05 | TC-MNT-02, TC-SET-07 | You need the window form and working email |
+| TC-SEQ-06, 07 | TC-DI-13 | Pause and resume work |
+| TC-SEQ-08, 24 | TC-DSC-02 | A scan can be started |
+| TC-SEQ-09 | a fresh appliance | `check_http` disabled and no scan yet |
+| TC-SEQ-10, 11 | TC-PLG-03, TC-DI-05 | A plugin is monitoring a port |
+| TC-SEQ-12 | TC-ROL-04 | The role `qa-view` and its user exist |
+| TC-SEQ-13 | TC-ROL-01 | Make a role with two permissions and a user |
+| TC-SEQ-14, 15 | TC-ACC-01 | The Staff user exists |
+| TC-SEQ-16 | TC-ACC-03 | A user with the forced change exists |
+| TC-SEQ-17 | a fresh appliance | The bootstrap login is not used yet |
+| TC-SEQ-18, 19, 20 | TC-REM-02, TC-PLG-03 | An action and a service to break |
+| TC-SEQ-21 | TC-NCPA-04 | A deployed NCPA device |
+| TC-SEQ-22 | TC-NCPA-09, TC-REM-10, TC-NCPA-04 | A deployed device with remote restart set |
 
 ## Test cases: access and security
 
@@ -3756,6 +3776,436 @@ These cases try the unusual: odd text, repeated clicks, lost connections, two pe
 
 - The button is disabled while scanning. The second browser and the API call are refused (400, "Network discovery is already running."), and only one scan runs.
 
+### Module 23 – Order of events
+
+These cases test what happens when things occur in an unusual order: a fix before a confirmation, a change while another job runs, or a permission taken away while the user is working. Each case says which event comes first. Run them in phase 14, one at a time, and restore the lab after each one (services running, devices monitored, no window or pause left over).
+
+**Summary of cases**
+
+| TC | Case | Req | Tech | Pri |
+| --- | --- | --- | --- | --- |
+| TC-SEQ-01 | Acknowledge after the service has recovered | SEQ-01 | ST | M |
+| TC-SEQ-02 | Break, recover, and break again during the retries | SEQ-02 | ST | M |
+| TC-SEQ-03 | A maintenance window starts while an alert is active | SEQ-03 | ST | H |
+| TC-SEQ-04 | A window cancelled before it starts | SEQ-04 | ST | M |
+| TC-SEQ-05 | A window edited while it is running | SEQ-05 | ST | M |
+| TC-SEQ-06 | Pause during an alert, recover, then resume | SEQ-06 | ST | M |
+| TC-SEQ-07 | Pause a device during a scan | SEQ-07 | ST | M |
+| TC-SEQ-08 | Save discovery settings during a scan | SEQ-08 | ST | M |
+| TC-SEQ-09 | Enable a plugin before the first scan | SEQ-09 | ST | M |
+| TC-SEQ-10 | Disable and re-enable a plugin that is monitoring | SEQ-10 | ST | M |
+| TC-SEQ-11 | Stop monitoring a port, then rescan | SEQ-11 | ST | M |
+| TC-SEQ-12 | A role is deactivated while its user is signed in | SEQ-12 | ST | H |
+| TC-SEQ-13 | A permission is removed while the user is on the page | SEQ-13 | ST | H |
+| TC-SEQ-14 | A user is suspended while signed in | SEQ-14 | ST | H |
+| TC-SEQ-15 | A password is reset while the user is signed in | SEQ-15 | ST | H |
+| TC-SEQ-16 | The forced password change is interrupted | SEQ-16 | ST | M |
+| TC-SEQ-17 | First-run setup is interrupted | SEQ-17 | ST | H |
+| TC-SEQ-18 | Kill switch off, failure, then switch on | SEQ-18 | ST | H |
+| TC-SEQ-19 | Cooldown and hourly limit in sequence | SEQ-19 | ST | M |
+| TC-SEQ-20 | Maintenance Mode and downtime before a failure | SEQ-20 | ST | M |
+| TC-SEQ-21 | Disable `check_ncpa` after a deployment | SEQ-21 | ST | M |
+| TC-SEQ-22 | Clean up, then redeploy, then restart | SEQ-22 | ST | L |
+| TC-SEQ-23 | The same event order on every page | SEQ-23 | ST | M |
+| TC-SEQ-24 | Pinpoint restarts during a scan | SEQ-24 | ST | M |
+
+#### TC-SEQ-01 – Acknowledge after the service has recovered
+
+**Requirement:** REQ-SEQ-01 · **Technique:** ST · **Priority:** M
+
+**Before you start:** a monitored service on the web VM that you can stop and start.
+
+**Steps**
+
+1. Stop the service and wait until it is Critical (hard) in **Active Alerts**.
+2. Press **Acknowledge** and leave the comment box open, with a comment typed.
+3. Start the service again and wait until it shows OK in **System Status**.
+4. Press the confirm button in the open dialog.
+5. Reload **Overview** and open **History**, tab **Alerts**.
+
+**Expected result**
+
+- No acknowledgement is left on a service that is OK. Either the request is refused with a message, or it is cleared at the next poll.
+- The service is not in **Active Alerts**, and History shows the recovery as the last event.
+
+#### TC-SEQ-02 – Break, recover, and break again during the retries
+
+**Requirement:** REQ-SEQ-02 · **Technique:** ST · **Priority:** M
+
+**Steps**
+
+1. Stop a monitored service. As soon as it shows Critical as a soft state (before the retries are used up), start it again.
+2. Stop it again and wait until it is Critical (hard).
+3. Open **History**, tab **Alerts** and tab **Notifications**, and read the mailbox.
+
+**Expected result**
+
+- History lists the state changes in the order they happened, newest first, with soft and hard states marked.
+- A notification is sent only for the hard Critical state, once. No notification is sent for the first soft state.
+- **Active Alerts** and the Dashboard cards match the final state.
+
+#### TC-SEQ-03 – A maintenance window starts while an alert is active
+
+**Requirement:** REQ-SEQ-03 · **Technique:** ST · **Priority:** H
+
+**Before you start:** working email (TC-SET-07).
+
+**Steps**
+
+1. Stop a monitored service and wait for the notification email (hard Critical).
+2. In **Maintenance** create a window for that device that starts in 15 minutes and ends in 1 hour.
+3. Wait until the window is active and check the mailbox and the device.
+4. Wait until the window ends on its own and check the mailbox again.
+
+**Expected result**
+
+- While the window is active the device shows the scheduled downtime indicator and no new notification email is sent.
+- When the window ends and the service is still Critical, notifications resume.
+- The window shows Completed.
+
+#### TC-SEQ-04 – A window cancelled before it starts
+
+**Requirement:** REQ-SEQ-04 · **Technique:** ST · **Priority:** M
+
+**Steps**
+
+1. Create a window that starts in 30 minutes.
+2. Cancel it (**Cancel**, **Yes, cancel it**).
+3. Wait past the start time. Stop a service on that device.
+
+**Expected result**
+
+- The window shows Cancelled and never becomes Running.
+- At the old start time the device does not show downtime, and the failure sends a notification.
+
+#### TC-SEQ-05 – A window edited while it is running
+
+**Requirement:** REQ-SEQ-05 · **Technique:** ST · **Priority:** M
+
+**Steps**
+
+1. Create a window that is active now and ends in 1 hour. Check that the device shows downtime.
+2. Press **Edit** and set **Ends** to 5 minutes from now. Press **Save changes**.
+3. Wait until that time passes.
+
+**Expected result**
+
+- The device stays in downtime until the new end time and then leaves it. It does not stay in downtime for the old end time.
+- The window list shows the new end.
+
+#### TC-SEQ-06 – Pause during an alert, recover, then resume
+
+**Requirement:** REQ-SEQ-06 · **Technique:** ST · **Priority:** M
+
+**Steps**
+
+1. Stop a monitored service so it is Critical (hard).
+2. In the host drawer press **Pause monitoring** and confirm.
+3. Start the service again. Wait several minutes.
+4. Press **Resume monitoring** and confirm. Wait one check interval.
+
+**Expected result**
+
+- While paused the host and its services are not counted and are not in **Active Alerts**.
+- After resuming the device shows its current state (OK) and no stale alert appears.
+
+#### TC-SEQ-07 – Pause a device during a scan
+
+**Requirement:** REQ-SEQ-07 · **Technique:** ST · **Priority:** M
+
+**Steps**
+
+1. Press **Rescan Network**.
+2. While it runs, pause one device in **Device Inventory**.
+3. Wait until the scan finishes and read the **Monitoring** column.
+
+**Expected result**
+
+- The pause is accepted and the scan finishes with no error.
+- The device is still Paused after the scan.
+
+#### TC-SEQ-08 – Save discovery settings during a scan
+
+**Requirement:** REQ-SEQ-08 · **Technique:** ST · **Priority:** M
+
+**Steps**
+
+1. Press **Rescan Network**.
+2. Open **Settings**, **Network Discovery**, change a port, and try to save.
+3. Wait until the scan ends and save again.
+
+**Expected result**
+
+- While the scan runs the page says "A network discovery scan is running. Changes can be saved once it finishes." and the save is blocked.
+- After the scan ends the save works.
+
+#### TC-SEQ-09 – Enable a plugin before the first scan
+
+**Requirement:** REQ-SEQ-09 · **Technique:** ST · **Priority:** M
+
+**Before you start:** a fresh appliance where `check_http` is disabled and no scan has run.
+
+**Steps**
+
+1. In **Plugins** enable `check_http` first.
+2. Then press **Rescan Network** and wait for it to finish.
+3. Open the web VM's **Ports** and **System Status**.
+
+**Expected result**
+
+- Port 80 is Monitored without pressing **Monitor**, and the HTTP service shows in **System Status**.
+- The final state is the same as when you scan first and enable the plugin second (E2E-02).
+
+#### TC-SEQ-10 – Disable and re-enable a plugin that is monitoring
+
+**Requirement:** REQ-SEQ-10 · **Technique:** ST · **Priority:** M
+
+**Steps**
+
+1. With `check_http` monitoring the web VM, open the plugin and press **Disable**.
+2. Open **System Status** and the web VM's **Ports**.
+3. Press **Enable** again and **Confirm enable**. Look again.
+
+**Expected result**
+
+- After disabling, the HTTP services leave **System Status**. The port keeps its Monitored state and its reason says "{check\_plugin} is not enabled in Plugin Manager, so nothing is checking this port."
+- After enabling, the services return and the reason is gone.
+
+#### TC-SEQ-11 – Stop monitoring a port, then rescan
+
+**Requirement:** REQ-SEQ-11 · **Technique:** ST · **Priority:** M
+
+**Steps**
+
+1. On a Monitored port press **Stop monitoring** and confirm. The port moves to **Stopped**.
+2. Press **Rescan Network** and wait for it to finish.
+3. Look at the port again.
+
+**Expected result**
+
+- The scan does not turn the port back into Monitored. It stays in **Stopped** with "Monitoring stopped by an administrator."
+- If it returns to Monitored on its own, report it as a finding.
+
+#### TC-SEQ-12 – A role is deactivated while its user is signed in
+
+**Requirement:** REQ-SEQ-12 · **Technique:** ST · **Priority:** H
+
+**Before you start:** the role `qa-view` and its user (TC-ROL-04).
+
+**Steps**
+
+1. In a private window sign in as that user and keep **Overview** open.
+2. As Super Admin open **Manage Roles** and set `qa-view` to Inactive.
+3. In the private window click a refresh control or reload the page.
+4. As Super Admin set the role back to Active. Reload again in the private window.
+
+**Expected result**
+
+- After the role is Inactive its permissions stop working at once: the next request is refused (403) and the page shows an error or no data.
+- After the role is Active again the user has the Dashboard back.
+
+#### TC-SEQ-13 – A permission is removed while the user is on the page
+
+**Requirement:** REQ-SEQ-13 · **Technique:** ST · **Priority:** H
+
+**Before you start:** a role with `system.dashboard` and `system.history` and a user with it.
+
+**Steps**
+
+1. In a private window sign in as that user and open **History**.
+2. As Super Admin edit the role, untick `system.history`, and save.
+3. In the private window press **Apply** on History, then reload the page.
+
+**Expected result**
+
+- The next History request returns 403 and no history data is shown.
+- After the reload **History** is gone from the sidebar and `/history` redirects to the Dashboard. The Dashboard still works.
+
+#### TC-SEQ-14 – A user is suspended while signed in
+
+**Requirement:** REQ-SEQ-14 · **Technique:** ST · **Priority:** H
+
+**Steps**
+
+1. Sign in as the Staff user in a private window.
+2. As Super Admin set that user to Suspended and save.
+3. In the private window click any link.
+4. Try to sign in again. Then set the user to Active and sign in.
+
+**Expected result**
+
+- The next request signs the user out and shows `/login`.
+- Sign-in is refused while Suspended and works again when Active.
+
+#### TC-SEQ-15 – A password is reset while the user is signed in
+
+**Requirement:** REQ-SEQ-15 · **Technique:** ST · **Priority:** H
+
+**Steps**
+
+1. Sign in as the Staff user in a private window.
+2. As Super Admin open that user's **Edit Account**, set a new password, and save.
+3. In the private window click any link.
+4. Try the old password, then the new one.
+
+**Expected result**
+
+- The open session ends on the next request.
+- The old password fails. The new one works and forces a password change.
+
+#### TC-SEQ-16 – The forced password change is interrupted
+
+**Requirement:** REQ-SEQ-16 · **Technique:** ST · **Priority:** M
+
+**Steps**
+
+1. Sign in as a user who must change the password. When "Change your password" shows, close the browser tab without changing it.
+2. Open the app again and sign in with the same temporary password.
+3. Change the password and sign out. Sign in with the temporary password once more.
+
+**Expected result**
+
+- The change-password window shows again at every sign-in until the password is changed.
+- After the change, the temporary password no longer works.
+
+#### TC-SEQ-17 – First-run setup is interrupted
+
+**Requirement:** REQ-SEQ-17 · **Technique:** ST · **Priority:** H
+
+**Before you start:** a fresh install with the generated bootstrap login not yet set up.
+
+**Steps**
+
+1. Sign in with the bootstrap login. When "Finish setting up Pinpoint" shows, close the browser tab.
+2. Open the app again and sign in with the same bootstrap login.
+3. Open `/api/user/accounts`.
+4. Finish the setup.
+
+**Expected result**
+
+- The setup window shows again, and nothing else can be used.
+- `/api/user/accounts` returns 403 until setup is finished.
+- After setup the bootstrap email and password stop working.
+
+#### TC-SEQ-18 – Kill switch off, failure, then switch on
+
+**Requirement:** REQ-SEQ-18 · **Technique:** ST · **Priority:** H
+
+**Before you start:** one enabled "Record only" action covering a service you can break.
+
+**Steps**
+
+1. In **Remediation** switch **Automatic recovery** off and confirm.
+2. Break the service until it is a hard failure. Wait 2 minutes.
+3. Switch **Automatic recovery** on and confirm. Wait 5 minutes without changing the service.
+4. Open the **Run log**.
+
+**Expected result**
+
+- The failure that arrived while the switch was off is logged once as skipped by the kill switch.
+- Switching on does not run the action for that old failure. Pinpoint does not queue it.
+- A new failure after switching on does run.
+
+#### TC-SEQ-19 – Cooldown and hourly limit in sequence
+
+**Requirement:** REQ-SEQ-19 · **Technique:** ST · **Priority:** M
+
+**Before you start:** a "Record only" action with **Cooldown (seconds)** 60 and **Max runs per hour** 2.
+
+**Steps**
+
+1. Break the service (hard failure). Fix it.
+2. Break it again within 60 seconds of the first failure. Fix it.
+3. Wait over 60 seconds, then break it again. Fix it.
+4. Wait over 60 seconds again, then break it a fourth time.
+5. Read the **Run log** from oldest to newest.
+
+**Expected result**
+
+- Failure 1 is recorded as a run. Failure 2 is skipped because of the cooldown.
+- Failure 3 is a run (the second of the hour).
+- Failure 4 is skipped because of the hourly limit, even though the cooldown has passed.
+
+#### TC-SEQ-20 – Maintenance Mode and downtime before a failure
+
+**Requirement:** REQ-SEQ-20 · **Technique:** ST · **Priority:** M
+
+**Steps**
+
+1. Turn **Maintenance Mode** on (Settings, System). Break a covered service to a hard failure. Fix it.
+2. Turn **Maintenance Mode** off. Break it again to a hard failure.
+3. Create a maintenance window that is active now for that device. Break the service again.
+4. Read the **Run log**.
+
+**Expected result**
+
+- Step 1 is logged as skipped because of Maintenance Mode. Step 2 runs the action.
+- Step 3 is logged as skipped because of the scheduled downtime.
+
+#### TC-SEQ-21 – Disable `check_ncpa` after a deployment
+
+**Requirement:** REQ-SEQ-21 · **Technique:** ST · **Priority:** M
+
+**Before you start:** a deployed NCPA device (TC-NCPA-04).
+
+**Steps**
+
+1. In **Plugins** disable `check_ncpa`. Open **NCPA Deployment** and **Overview**.
+2. Enable `check_ncpa` again and wait two check intervals.
+
+**Expected result**
+
+- With the plugin disabled, NCPA services stop being monitored, **NCPA Deployment** shows its warning, and the resource data stops updating.
+- After enabling, the NCPA services and data return without redeploying.
+
+#### TC-SEQ-22 – Clean up, then redeploy, then restart
+
+**Requirement:** REQ-SEQ-22 · **Technique:** ST · **Priority:** L
+
+**Before you start:** a deployed device with a saved **Remote restart** list and a remote-restart action (TC-NCPA-09, TC-REM-10).
+
+**Steps**
+
+1. Press **Clean up** on the device and run the cleanup.
+2. Open **Remote restart** and read the list. Break the covered service to a hard failure and read the **Run log**.
+3. Deploy NCPA again (TC-NCPA-02 to 04). Turn **Allow remote service restart** on and save.
+4. Break the service again and read the **Run log**.
+
+**Expected result**
+
+- After Clean up the saved service list is still there, but the restart in step 2 does not succeed (it is logged as refused or failed).
+- After redeploying and enabling, the restart in step 4 runs.
+
+#### TC-SEQ-23 – The same event order on every page
+
+**Requirement:** REQ-SEQ-23 · **Technique:** ST · **Priority:** M
+
+**Steps**
+
+1. Break a service, wait for the hard failure and the email, acknowledge it, then fix it and wait for OK. Write down the time of each step.
+2. Read the event order and times in: the **Active Alerts** table (**Since**), **History** tab **Alerts**, **History** tab **Notifications**, and **System Logs**, **Nagios log**.
+
+**Expected result**
+
+- Every page shows the same order: the failure, then the notification, then the acknowledgement, then the recovery.
+- The times agree within one polling interval, and none shows a recovery before its failure.
+
+#### TC-SEQ-24 – Pinpoint restarts during a scan
+
+**Requirement:** REQ-SEQ-24 · **Technique:** ST · **Priority:** M
+
+**Steps**
+
+1. Press **Rescan Network**.
+2. While it runs, restart the Pinpoint service on the appliance.
+3. Sign in again and open **Overview**. Open `/api/system/discover/status`.
+4. Press **Rescan Network** once more.
+
+**Expected result**
+
+- The scan does not stay "Running" forever. It ends with a final status (Failed or Interrupted) within a few minutes.
+- A new scan can then be started and finishes with Success.
+
 ## End-to-end scenarios
 
 These eight scenarios run the whole system as a user would, from the browser and the lab's real machines, across several modules in one flow. They check only what the screen, the email, and the API show. Run them in order on a lab with: a fresh appliance, one web server VM (HTTP on port 80, SSH on port 22), a second Linux VM with SSH, an SMTP test mailbox, a Staff user, and a dashboard-only user. Default intervals apply (Check 5 minutes, Retry 1 minute, Maximum attempts 3). Record each step as PASS, FAIL, or PARTIALLY PASS in a test-run report.
@@ -3881,7 +4331,7 @@ Timings to write down: failure time \_\_\_\_ · Critical (hard) shown \_\_\_\_ �
 
 ## Requirements traceability matrix
 
-All 169 requirements trace to at least one of the 207 test cases, and every test case traces to at least one requirement. **Source** abbreviations: **DR** `Display_Requirements.md`, **DIR** `Device_Inventory_Requirements.md`, **AHR** `Alerts_Notifications_History_Requirements.md`, **FMR** `Frontend_Modules_and_Routes.md`, **QA** `docs/qa/QA_Test_Plan.md` (journey case), **MAN** a file in `docs/manuals/`. "#" in a DIR source means its acceptance criterion number, and "(#123)" means the repository issue that added it. "App differs" means the real app does not follow the spec on that point, so the case tests the app and the difference is reported as a finding.
+All 193 requirements trace to at least one of the 231 test cases, and every test case traces to at least one requirement. **Source** abbreviations: **DR** `Display_Requirements.md`, **DIR** `Device_Inventory_Requirements.md`, **AHR** `Alerts_Notifications_History_Requirements.md`, **FMR** `Frontend_Modules_and_Routes.md`, **QA** `docs/qa/QA_Test_Plan.md` (journey case), **MAN** a file in `docs/manuals/`. "#" in a DIR source means its acceptance criterion number, and "(#123)" means the repository issue that added it. "App differs" means the real app does not follow the spec on that point, so the case tests the app and the difference is reported as a finding.
 
 ### Coverage summary
 
@@ -3909,7 +4359,8 @@ All 169 requirements trace to at least one of the 207 test cases, and every test
 | 20 Settings extras and shell | 9 | 10 | 100% |
 | 21 Security and quality | 9 | 11 | 100% |
 | 22 Edge cases and robustness | 18 | 18 | 100% |
-| **Total** | **169** | **207** | **100%** |
+| 23 Order of events | 24 | 24 | 100% |
+| **Total** | **193** | **231** | **100%** |
 
 ### Authentication, accounts, roles
 
@@ -4114,3 +4565,32 @@ All 169 requirements trace to at least one of the 207 test cases, and every test
 | REQ-EDG-16 | A page reload during a scan keeps showing the scan and starts no second one | QA J2-02 | TC-EDG-16 |
 | REQ-EDG-17 | Pages stay usable with 100 hosts, 500 services, and 5,000 events | Test practice | TC-EDG-17 |
 | REQ-EDG-18 | Only one scan runs at a time and a second start is refused | `Backend_Modules_and_Routes.md` | TC-EDG-18 |
+
+### Order of events
+
+| Req | Requirement | Source | Test cases |
+| --- | --- | --- | --- |
+| REQ-SEQ-01 | An acknowledgement is never left on a service that has already recovered | DR §4.9 | TC-SEQ-01 |
+| REQ-SEQ-02 | State changes during the retries are listed in order, and only a hard failure sends a notification | AHR §3, MAN Notification\_Policy | TC-SEQ-02 |
+| REQ-SEQ-03 | A window that starts while an alert is active silences it, and notifications resume when the window ends | DR §6, MAN | TC-SEQ-03 |
+| REQ-SEQ-04 | A window cancelled before it starts never silences anything | DR §6, MAN | TC-SEQ-04 |
+| REQ-SEQ-05 | Editing a running window moves its end and removes the old downtime | MAN Maintenance windows | TC-SEQ-05 |
+| REQ-SEQ-06 | A device paused during an alert shows its current state when resumed, with no stale alert | DIR §12 | TC-SEQ-06 |
+| REQ-SEQ-07 | A pause made during a scan is kept after the scan | DIR §12.3 | TC-SEQ-07 |
+| REQ-SEQ-08 | Discovery settings cannot be saved while a scan runs and can be saved after | FMR | TC-SEQ-08 |
+| REQ-SEQ-09 | Enabling a plugin before the first scan gives the same result as enabling it after | DIR §4 | TC-SEQ-09 |
+| REQ-SEQ-10 | Disabling a plugin stops its services and explains the port, and enabling it brings them back | DIR §4 | TC-SEQ-10 |
+| REQ-SEQ-11 | A scan does not turn a stopped port back into Monitored | DIR §5 | TC-SEQ-11 |
+| REQ-SEQ-12 | Deactivating a role removes its permissions from signed-in users at once | `Implementation_Status.md`, FMR | TC-SEQ-12 |
+| REQ-SEQ-13 | A permission removed from a role stops working on the user's next request | FMR | TC-SEQ-13 |
+| REQ-SEQ-14 | A suspended user is signed out and cannot sign in | QA J9-05 | TC-SEQ-14 |
+| REQ-SEQ-15 | A password reset ends the user's open session | QA J9-07 | TC-SEQ-15 |
+| REQ-SEQ-16 | A forced password change shows at every sign-in until it is done | FMR | TC-SEQ-16 |
+| REQ-SEQ-17 | An interrupted first-run setup shows again and blocks everything else | QA J1-07 | TC-SEQ-17 |
+| REQ-SEQ-18 | A failure that arrives while the kill switch is off is logged as skipped and is not run later | MAN Automatic\_Recovery | TC-SEQ-18 |
+| REQ-SEQ-19 | Cooldown and the hourly limit skip runs in the right order | MAN Automatic\_Recovery | TC-SEQ-19 |
+| REQ-SEQ-20 | Maintenance Mode and scheduled downtime skip actions with their own reasons | MAN Automatic\_Recovery | TC-SEQ-20 |
+| REQ-SEQ-21 | Disabling `check_ncpa` stops NCPA monitoring and enabling it restores it without redeploying | FMR | TC-SEQ-21 |
+| REQ-SEQ-22 | After Clean up remote restarts stop until the device is redeployed | MAN Remote\_Service\_Restart | TC-SEQ-22 |
+| REQ-SEQ-23 | Every page shows the same event order | AHR §5.4 | TC-SEQ-23 |
+| REQ-SEQ-24 | A scan interrupted by a restart ends with a final status and a new scan can start | QA J2-02 | TC-SEQ-24 |
