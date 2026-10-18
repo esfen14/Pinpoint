@@ -168,9 +168,9 @@ trusted result-parser/driver's responsibility.
 This does not yet enforce production subprocess timeouts: a trusted driver must
 bound each call and terminate its entire process group/container before reporting
 cancellation/cleanup success. A blocking Python callback cannot be forcibly stopped
-by these elapsed-time checks. Likewise, OS locks coordinate only participants using
-the same ledger; the existing VM controllers and other users do not yet honor it.
-Connecting those controls, actual deployed-version/endpoint proof, baseline and
+by these elapsed-time checks. Mutating `vmlab` commands now share the canonical
+host control lock described below; direct controllers and other users do not.
+Connecting actual deployed-version/endpoint proof, baseline and
 restoration checks, private raw output parsing and crash recovery requires the
 production integration work still unchecked in the readiness plan. No default
 ledger directory is created and no supported CLI can call a live driver yet.
@@ -226,6 +226,53 @@ regressions. Nine synthetic-report tests validate parsing; they are not runtime
 acceptance results.
 
 These components are not yet wired to a production supervisor driver. Running
-application/frontend revision proof, controller lock adoption, private bridge and
+application/frontend revision proof, private bridge and
 container lifecycle, real cleanup/recovery and explicitly reviewed live cards
 remain pending. No live entry is enabled by their presence.
+
+## Shared host controller claim and structured observations
+
+`qa_control.py` serializes the supervisor and mutating `scripts/vmlab` commands
+through `/tmp/pinpoint-qa-control-<uid>/controller.lock`. The directory/file must
+be private, owned by the current user, canonical and free of symlinks; the file
+must have one hard link. The store is fixed across checkouts and independent of
+HOME, TMPDIR, VM state directory and ledger settings. It conservatively serializes
+all cooperating labs for that user. Never delete or replace a held lock/store.
+Private ledger directories must still be shared for persistent replay/budget
+history; the host claim prevents concurrent execution across differing ledgers,
+but cannot reconstruct their separate histories.
+
+Mutating controller entries acquire the lock before reading configuration and
+before preflight/SSH/API/VM work. Nested calls carry an inherited descriptor to
+the same held kernel lock. A PID/environment marker alone, closed descriptor,
+unheld open descriptor or descriptor to another file cannot bypass the claim.
+Nested calls close their duplicate without releasing their ancestor's flock.
+A future driver must explicitly forward `Ledger.control_fd` through `pass_fds`
+and `PINPOINT_QA_CONTROL_FD` when calling this controller while supervision owns
+the claim. This is not yet wired to any production driver.
+
+The lock is cooperative within the same host `/tmp` and user namespace. Direct
+VBoxManage, `demo/demo_lab.py`, legacy browser launchers, another user/namespace,
+or privileged/manual file replacement can bypass it. It is not a sandbox, access
+permission or sufficient unattended-readiness proof. Read-only status/preflight
+commands do not take this claim; structured observations alone do not claim
+exclusive use for a future run.
+
+`scripts/vmlab preflight --json` returns a structured read-only host observation:
+canonical appliance UUID, state, controller/VM PIDs, loopback origin/SSH port and
+UTC observation time. Preflight rechecks VM UUID/state/session and process
+inventory; running process observations include kernel start ticks
+to reject PID reuse and bind later observations. Missing/changed metadata or ambiguous endpoint ownership
+rejects. Each VBoxManage read has a 20-second timeout; a future driver must also
+enforce its total deadline and hold the host claim across proof/run/cleanup.
+
+The observation distinguishes powered-off state from proved running endpoints,
+sets `live_authorized: false`, and provides no target revision, running frontend/
+backend identity, clean deployment, baseline or restoration claim. It cannot pass
+the supervisor's live proof check. Deployment `Git HEAD` and a successful sync
+still do not prove what Gunicorn or the web server serves.
+
+Six local lock/controller fixtures, seven new structured-observation contracts and
+the supervisor's cross-ledger exclusion regression run without VirtualBox, SSH,
+HTTP, Docker, browsers or a real account. Existing setup fixtures copy the lock
+helper into their disposable fixture checkout; they do not set up a live account.

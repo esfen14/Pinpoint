@@ -54,6 +54,11 @@ lock/ledger and grant checks do not establish real ownership, deployment or huma
 consent. Never fabricate proof receipts, clear a halted ledger or manually invoke
 transport argv to bypass missing production integration. A running/interrupted
 entry requires separately reviewed recovery; restored product FAIL remains FAIL.
+The supervisor and mutating `vmlab` entries now share a cooperative host claim.
+Never delete its lock/store or call a direct controller to bypass a busy claim.
+`vmlab preflight --json` supplies host observations only: it cannot prove the
+running frontend/backend revision, baseline, restoration or permission to start.
+Production driver integration and live cards remain blocked.
 
 ## Mandatory partial-pass investigation
 

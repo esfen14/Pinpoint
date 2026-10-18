@@ -20,6 +20,8 @@ import time
 spec=importlib.util.spec_from_file_location('transport',Path(__file__).with_name('qa_transport.py'))
 t=importlib.util.module_from_spec(spec);spec.loader.exec_module(t)
 UUID=re.compile(r'[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}')
+control_spec=importlib.util.spec_from_file_location('control',Path(__file__).with_name('qa_control.py'))
+control=importlib.util.module_from_spec(control_spec);control_spec.loader.exec_module(control)
 
 
 def private_file(path:Path,flags:int) -> int:
@@ -37,9 +39,10 @@ def private_file(path:Path,flags:int) -> int:
 class Ledger:
     """Shared private lifecycle store with OS locks and durable atomic checkpoints.
 
-    Every checkout must use the same canonical store for a lab UUID. Locks are
-    cooperative: existing VM controllers/users do not yet honor them. This core
-    provides no authority over a malicious process with arbitrary file access.
+    A fixed per-user host lock also coordinates mutating vmlab entry points even
+    when ledger directories differ. Persistent budgets/replay still require the
+    same ledger. Direct controllers and malicious same-user code can bypass this
+    cooperative mechanism; it is not an OS permission boundary.
     """
     def __init__(self,root:Path):
         """Use an existing private shared directory; never invent/clear lab claims."""
@@ -55,6 +58,15 @@ class Ledger:
     @contextmanager
     def claim(self,uuid:str):
         """Hold a nonblocking exclusive OS lock throughout proof/run/cleanup."""
+        with control.claim() as control_fd:
+            self.control_fd=control_fd
+            try:
+                with self.lab_claim(uuid):yield
+            finally:self.control_fd=None
+
+    @contextmanager
+    def lab_claim(self,uuid:str):
+        """Hold the ledger-specific UUID lock inside the canonical host claim."""
         if uuid in self.held:raise ValueError('Lab already held by this supervisor')
         fd=private_file(self.path(uuid,'lock'),os.O_RDWR|os.O_CREAT)
         try:

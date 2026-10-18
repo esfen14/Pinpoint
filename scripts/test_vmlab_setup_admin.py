@@ -16,6 +16,10 @@ class SetupAdminTests(unittest.TestCase):
         for name in ['scripts', 'lab', 'bin', 'state']:
             (self.root / name).mkdir()
         shutil.copyfile(Path(__file__).with_name('vmlab'), self.root / 'scripts/vmlab')
+        control = Path(__file__).with_name('qa_control.py').read_text()
+        control = control.replace("return Path('/tmp') / f'pinpoint-qa-control-{os.getuid()}'",
+                                  'return Path(' + repr(str(self.root / 'control')) + ')')
+        (self.root / 'scripts/qa_control.py').write_text(control)
         (self.root / 'scripts/vmlab_preflight.py').write_text('''import os
 from pathlib import Path
 path = Path(os.environ['FAKE_PREFLIGHT_COUNT'])

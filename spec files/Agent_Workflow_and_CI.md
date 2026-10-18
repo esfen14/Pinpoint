@@ -140,6 +140,16 @@ fast lab and VM demo continue to use static addresses.
 
 ### VM control preflight
 
+Mutating `scripts/vmlab` entries and the QA supervisor first acquire the fixed
+private per-user host claim in `/tmp/pinpoint-qa-control-<uid>/controller.lock`
+through `qa_control.py`. Nested controller calls must inherit the verified held
+descriptor; environment/PID markers alone are insufficient. A driver calling
+the controller under supervision must explicitly pass `Ledger.control_fd` and
+`PINPOINT_QA_CONTROL_FD`. Different ledger roots still share host exclusion, but
+persistent history requires one ledger. Do not delete/replace held lock files.
+Direct VBoxManage/demo calls, other users/namespaces and legacy launchers remain
+outside this cooperative guard; it is not an OS sandbox or live authorization.
+
 Before VM-lab mutation, `scripts/vmlab preflight` must prove one same-user
 VirtualBox controller, agreement between appliance UUID and the unique VM process under that controller,
 and active runtime NAT forwarding sockets for both exclusive loopback listeners
@@ -148,7 +158,12 @@ Powered-off state requires no remaining UUID process or endpoint listeners.
 Mutation commands enforce this check at entry and recheck before SSH/key
 bootstrap and start/power-off boundaries; inaccessible process identity, missing runtime forwarding evidence, duplicate
 controllers and ambiguous/transitional states fail closed. It is a Linux-host
-check; it cannot substitute for exclusive lab ownership. See
+check; it cannot substitute for exclusive lab ownership. `preflight --json`
+returns only timestamped host UUID/state/controller/endpoint observations, with
+`live_authorized: false`; running app/frontend revision, baseline and recovery
+remain separate missing proof. The collector rechecks session/process identity,
+including kernel start ticks, and bounds each VBoxManage read to 20
+seconds. The future driver must enforce a total deadline. See
 [VM Lab Plan §4.0](../docs/plans/VM_Lab_Plan.md) for recovery and the disposable
 endpoint-marker snapshot trial. Never treat a snapshot command's success alone
 as proof that the endpoint is protected. The #162 owner accepted the lost edits as unrecoverable and authorized retirement
@@ -213,7 +228,7 @@ reports. App/spec conflicts remain decisions, not automatic passes.
   persist a lab halt; validated restored FAIL remains FAIL. The existing item
   validator checks returned evidence. Synthetic-driver tests prove lifecycle
   sequencing only. Production proof acquisition, bounded process-tree termination,
-  shared controller lock integration, parsing/sanitization and verified recovery
+  complete controller/driver integration, parsing/sanitization and verified recovery
   remain pending. Never treat offline receipts or callbacks as live proof.
 - **Runtime components:** `qa_process.py` runs only explicitly allowlisted trusted
   executables with reviewed argv, a restricted environment, bounded private output,
@@ -224,7 +239,7 @@ reports. App/spec conflicts remain decisions, not automatic passes.
   Only reviewed observation text is copied; incomplete/failed browser execution
   without failed-item evidence is INCONCLUSIVE. The transport bootstrap uses
   `umask 077`. Eight local-process and nine synthetic-report tests prove component
-  contracts only. Production identity, container lifecycle, controller locks and
+  contracts only. Production identity, container lifecycle, inherited controller lock wiring and
   verified recovery integration remain pending; no live command is exposed.
 - **Partial-pass investigation:** Every catalog partial needs an evidence review,
   duplicate search, linked issue/disposition and next action in the

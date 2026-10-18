@@ -12,9 +12,10 @@ Status: in-progress
 - [x] Migrate legacy validators/rendering/docs links without weakening coverage or rewriting historical outcomes.
 - [x] Update reports/workflows/specs and pass isolated checks/docs gate.
 - [x] Open reviewable PR with pending human decisions, adapter coverage and separately gated live work.
-- [x] Implement the supervisor lifecycle core with separate start binding, cooperative UUID lock, fsynced action consumption, persistent replay/budget checks and halted failures; prove with 15 synthetic-driver contracts.
+- [x] Implement the supervisor lifecycle core with separate start binding, cooperative UUID lock, fsynced action consumption, persistent replay/budget checks and halted failures; prove with 16 synthetic-driver contracts.
 - [x] Implement and test bounded local process-group control (8 contracts) and strict private permission-report parsing (9 contracts); these components remain unwired to live execution.
-- [ ] Complete production supervisor-driver integration and live validation: actual controller/deployment/baseline proofs, shared locks, bounded process-tree control, sanitized result parsing and verified recovery. This is part of overall readiness, not a claim that the offline milestone executes cases.
+- [x] Share a fixed per-user host claim between supervisor and mutating VM controllers, and collect structured host-only ownership observations; verify with local fixtures without claiming running application identity.
+- [ ] Complete production supervisor-driver integration and live validation: actual controller/deployment/baseline proofs, inherited controller/driver wiring, bounded process-tree control, sanitized result parsing and verified recovery. This is part of overall readiness, not a claim that the offline milestone executes cases.
 
 | Issue requirement | Finish-condition item | Proof |
 |---|---|---|
@@ -62,10 +63,10 @@ and require separately authorized live evidence where needed.
 
 ## State for the next session
 
-- Last relevant check: `scripts/verify.sh docs > /tmp/issue-206-runtime-docs.log 2>&1` (118 isolated contracts), focused process/result tests, Python/shell syntax and whitespace checks. Final observed result and exact-head CI proof are recorded in draft PR #207.
-- Result: runtime process-group helper and strict permission-report parser are implemented. Eight local Python-process tests and nine synthetic-report tests run without Docker, SSH, browser or lab access. Source transport bootstrap now sets private `umask 077`; original human catalog/product source unchanged.
-- Finish conditions: both progress checklists mark tested process/result components complete and retain production integration/live-proof requirements unchecked. Original-checkout copies are synchronized after checkpoint.
-- Next action: implement running-application/frontend deployment identity and controller-lock integration, then wire a bounded production driver with private bridge/container-ID termination, result parsing and verified recovery. Do not equate Git HEAD with running application identity or Docker CLI exit with container cleanup; actual live cards/pilot still require reviewed scope/start.
+- Last relevant check: `scripts/verify.sh docs > /tmp/issue-206-control-docs.log 2>&1` (132 isolated contracts), focused lock/controller/preflight/supervisor/setup fixtures, Python/shell syntax and whitespace checks. Final observed result and exact-head CI proof are recorded in draft PR #207.
+- Result: supervisor and mutating vmlab entries share a canonical private host control claim; structured preflight returns only real host ownership metadata, not application identity. Six local control fixtures, seven new preflight contracts and a cross-ledger regression join the existing process/result components. No Docker, VirtualBox, SSH, browser, lab or account access; original human catalog/product source unchanged.
+- Finish conditions: both progress checklists mark tested process/result and shared host-control components complete and retain production integration/live-proof requirements unchecked. Original-checkout copies are synchronized after checkpoint.
+- Next action: implement running-application/frontend deployment identity, then wire inherited controller claims and a bounded production driver with private bridge/container-ID termination, result parsing and verified recovery. Do not equate Git HEAD with running application identity or Docker CLI exit with container cleanup; actual live cards/pilot still require reviewed scope/start.
 
 ## Decisions and notes
 
@@ -213,3 +214,18 @@ Runtime integration hardening: a new failing supervisor regression demonstrated
 that parser `restored: false` could otherwise be ignored when the runtime driver
 reported successful cleanup. The core now halts on that conflict; supervisor
 contracts increase from 14 to 15, for 118 total docs-stage isolated checks.
+
+## Shared controller and host-observation session (2026-10-18)
+
+1. [x] Test and implement a canonical per-user host control lock shared by the supervisor and mutating `vmlab` entry points. Preserve the lock across controller subprocesses; reject forged/stale descriptors and competing owners. Only local fixture commands are permitted in verification.
+2. [x] Refactor read-only VirtualBox preflight into structured observations with fresh timestamps and stable controller/process identity. This proves host ownership only; running backend/frontend, baseline and recovery remain unproved and must not become true flags.
+3. [x] Update fingerprints, specifications and both finish-condition checklists; run the docs gate, checkpoint and synchronize original-checkout progress. No live execution or production driver is enabled.
+
+Shared-control rounds 1–2: test-first modules/observation calls failed before implementation. Six local control-lock fixtures, seven new host-observation contracts and the cross-ledger supervisor regression now pass. Existing ownership-change/setup fixtures were adapted to include the real lock helper with synthetic preflight/API/SSH endpoints. No real controller, VM, browser, account or credential value was accessed. Structured observations do not satisfy live proof. Next action: finish docs verification, checkpoint and inspect exact-head CI.
+
+Shared-control round 3: kernel start ticks are included in running observations and parsed with an isolated malformed-stat regression. Both finish-condition checklists now check the shared-host-control/structured-observation component while production driver/runtime identity/live restoration remain unchecked. Relevant docs gate passed before the final start-tick regression; final gate and exact-head CI are recorded in PR #207.
+
+Final local shared-control check: `scripts/verify.sh docs` passes with 132 isolated
+contracts; Python compilation, shell syntax, focused hardlink/forged-marker checks
+and `git diff --check` pass. Checkpoint this milestone in draft PR #207 and inspect
+its exact-head CI rather than carrying forward the previous head's green status.

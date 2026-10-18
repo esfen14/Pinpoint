@@ -43,6 +43,7 @@ docs() {
   python3 -I "$root/scripts/test_qa_process.py"
   python3 -I "$root/scripts/test_qa_results.py"
   echo "==> docs: VM control and endpoint ownership safety"
+  python3 -I "$root/scripts/test_qa_control.py"
   python3 -I "$root/scripts/test_vmlab_preflight.py"
   echo "==> docs: VM administrator setup compatibility and saved login validation"
   python3 -I "$root/scripts/test_vmlab_setup_admin.py"

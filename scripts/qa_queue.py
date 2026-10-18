@@ -31,6 +31,7 @@ def references() -> dict:
         ROOT/'docs/qa/QA_Run_Queues.md',ROOT/'docs/qa/QA_Journeys_and_Scope.md',
         ROOT/'scripts/qa_catalog.py',ROOT/'scripts/qa_queue.py',ROOT/'scripts/qa_evidence.py',
         ROOT/'scripts/qa_execute.py',ROOT/'scripts/qa_transport.py',ROOT/'scripts/qa_supervisor.py',ROOT/'scripts/qa_process.py',ROOT/'scripts/qa_results.py',ROOT/'scripts/qa_coverage.py',coverage.REGISTRY,
+        ROOT/'scripts/qa_control.py',ROOT/'scripts/vmlab',ROOT/'scripts/vmlab_preflight.py',
         ROOT/'client/playwright.qa.config.ts',ROOT/'client/qa/selection.mjs',ROOT/'lab/unix_web_proxy.mjs',ROOT/'scripts/playwright-lab',ROOT/'client/playwright.config.ts',
         ROOT/'client/package.json',ROOT/'client/package-lock.json']+list((ROOT/'client/e2e').glob('*.ts'))
     return {p.relative_to(ROOT).as_posix():cat.digest(p.read_text()) for p in sorted(paths)}

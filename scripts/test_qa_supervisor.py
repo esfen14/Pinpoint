@@ -85,6 +85,17 @@ class SupervisorTests(unittest.TestCase):
                 with self.assertRaises(ValueError):self.call(root,q,j,other,g,driver)
             self.assertFalse(driver.events)
 
+    def test_host_claim_excludes_even_a_different_ledger(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);q,j,l,g,driver=self.fixture(root)
+            other_dir=root/'other-ledger';other_dir.mkdir(mode=0o700)
+            other=s.Ledger(other_dir)
+            with l.claim(UUID):
+                with self.assertRaises(ValueError):
+                    with other.claim(UUID):self.fail('Different ledger bypassed host exclusion')
+                with self.assertRaises(ValueError):
+                    with s.control.claim():self.fail('Controller bypassed supervisor claim')
+
     def test_bad_runtime_proof_never_dispatches(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d);q,j,l,g,driver=self.fixture(root);driver.bad_proof=True
