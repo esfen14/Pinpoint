@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Date | 2026-10-19 (tester's local date; the lab ran the cases on 2026-10-18 UTC, about 16:25 to 16:45) |
-| Commit tested | The lab runs `43f0df1`. The checkout used for this report is `0c7d7567`. Pull request #217 ("reports alignment") was merged into `main` after the tested build and rewrites the Reports backend and page (`report.py`, `ReportsPage.tsx` and the report tables), so **these results describe `43f0df1`, not the current `main`**. The lab did not run #217's code. |
+| Commit tested | The lab runs `43f0df1`. The checkout used for this report is `0c7d7567`. Pull request #217 ("reports alignment") was merged into `main` after this run and reverted shortly afterwards (#227); the Reports code on `main` is again the code the lab runs, so these results describe the code on `main`. See the [retest](../2026-10-19-module-15-reports-retest/REPORT.md) of the two failing cases on a build with the fixes. |
 | Plan | `docs/qa/Pinpoint - Black-Box Test Cases by Module with Traceability Matrix.md`, Module 15 TC-RPT-01 and TC-RPT-06 |
 | Tester / executor mode | Mixed. AI-assisted (Claude) drove the browser UI with a Playwright script on installed Chrome and cross-checked with the API. The lab owner approved the plan and the filing of the defects. |
 | Catalog revision and SHA-256 | The Module 15 section is byte-identical at `65a5862c` and at `0c7d7567` (`git diff` of the catalog between them is empty). Whole-file SHA-256 of the catalog as checked out on Windows at `65a5862c`: `ec2b1c3f3b98f73da9b0f5d6656d1565b1405af97a58b2fcc8fe7481fbe5af71`; the worktree for this report hashes differently (`d9374c41d7f4e5304c3475735d765ad66cb4352cc9745f76e96d78c4de0e398f`) because of line-ending conversion, not content. |
@@ -47,12 +47,12 @@ Timing: no elapsed time was involved. The custom range uses date inputs; the 24-
 - Only TC-RPT-01 and TC-RPT-06 were run, as agreed; the already-passed cases were not rechecked and no Staff user was created.
 - For TC-RPT-06 the step does not name a tab; all six tabs were run, and a start-after-end range and a one-day range were added as extra checks. Start after end shows "end_date must be on or after start_date" (HTTP 400) and leaves the previous table on screen.
 - The Device Inventory count was read from the Monitoring column (9 Monitored) and cross-checked against the host lookup API (9 monitored); the inventory also lists 5 older Nagios entries that are not monitored devices (`localhost`, `pp153-dummy`, `pp153b-dummy`, and two entries for dummy devices removed earlier in this session).
-- A merge of PR #217 changed the Reports code on `main` while this module was being tested. It was not deployed to the lab and was not tested here.
+- PR #217 was merged into `main` and then reverted (#227) while this module was being tested. It was never deployed to the lab and was not tested here.
 
 ## Follow-up
 
 - Defects found: #228 (TC-RPT-01) and #229 (TC-RPT-06), both filed with the label `qa-found` against `43f0df1`.
-- Cases to repeat in the next run: TC-RPT-01 and TC-RPT-06, on a lab running a build that includes the Reports changes from #217 (or a fix for #228 and #229), because #217 may change these results. This report is not a verdict on the code in `main`.
+- Cases to repeat in the next run: TC-RPT-01 and TC-RPT-06, on a build with fixes for #228 and #229. Done: see the [retest](../2026-10-19-module-15-reports-retest/REPORT.md).
 
 ## Sanitization checklist
 
