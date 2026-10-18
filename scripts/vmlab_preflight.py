@@ -1,6 +1,8 @@
 """Read-only Linux host proof that VBoxManage and lab listeners share one VM."""
 import argparse
+from datetime import datetime, timezone
 import ipaddress
+import json
 import os
 import re
 from pathlib import Path
@@ -59,10 +61,24 @@ def inventory():
                 if '--startvm' not in args or args.index('--startvm') + 1 >= len(args):
                     raise ValueError('cannot identify a running VirtualBox process')
                 processes[int(path.name)] = {'uuid': args[args.index('--startvm') + 1],
-                                             'parent': int(status['PPid']), 'path': path}
+                                             'parent': int(status['PPid']), 'path': path,
+                                             'start_ticks': process_start(path),
+                                             'controller_start_ticks': process_start(Path('/proc') / status['PPid'].strip())}
         except FileNotFoundError:
             continue  # A process exited during the read; later checks still require positive proof.
     return managers, processes
+
+
+def process_start(path):
+    """Include kernel start ticks so a reused PID cannot preserve a running claim."""
+    try:
+        fields = (path / 'stat').read_text().rsplit(') ', 1)[1].split()
+        value = int(fields[19])
+        if value < 1:
+            raise ValueError()
+        return value
+    except (IndexError, ValueError):
+        raise ValueError('Unavailable process start identity') from None
 
 
 def tcp_listeners(ports):
@@ -79,6 +95,56 @@ def tcp_listeners(ports):
             raw = b''.join(raw[i:i + 4][::-1] for i in range(0, len(raw), 4))
             result.setdefault(port, []).append((str(ipaddress.ip_address(raw)), f'socket:[{fields[9]}]'))
     return result
+
+
+def endpoint_check(ssh_target, ports):
+    if (ssh_target.rsplit('@', 1)[-1] != '127.0.0.1' or len(ports) != 2
+            or len(set(ports)) != 2 or any(type(p) is not int or p < 1 or p > 65535 for p in ports)):
+        raise ValueError('preflight requires distinct valid ports and an explicit 127.0.0.1 SSH target')
+
+
+def vm_info(vm):
+    result = subprocess.run(['VBoxManage', 'showvminfo', vm, '--machinereadable'],
+                            capture_output=True, text=True, timeout=20, check=True)
+    return dict((key, value.strip('"')) for key, value in
+                (line.split('=', 1) for line in result.stdout.splitlines() if '=' in line))
+
+
+def observe(vm, ssh_target, ports):
+    """Collect real host ownership metadata, never deployment/baseline proof.
+
+    Commands are read-only and individually bounded. Callers must still bound
+    total collection time and hold the cooperative control lock during live use.
+    No SSH, HTTP, credential access or application readiness claim is performed.
+    """
+    endpoint_check(ssh_target, ports)
+    managers, _ = inventory()
+    if len(managers) > 1:
+        raise ValueError('Duplicate controller contexts')
+    info = vm_info(vm)
+    if not re.fullmatch(r'[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}', info.get('UUID', '').lower()):
+        raise ValueError('Canonical appliance UUID missing')
+    managers, processes = inventory()
+    forwards = {}
+    if info.get('VMState') == 'running':
+        runtime = subprocess.run(['VBoxManage', 'debugvm', vm, 'info', 'nat0'],
+                                 capture_output=True, text=True, timeout=20, check=True)
+        forwards = nat_forwards(runtime.stdout)
+    final_info = vm_info(vm)
+    final_managers, final_processes = inventory()
+    if (any(info.get(k) != final_info.get(k) for k in ('UUID', 'VMState', 'SessionPID'))
+            or final_managers != managers or final_processes != processes):
+        raise ValueError('VM/controller identity changed during observation')
+    validate(info, managers, processes, tcp_listeners(ports), ports, forwards)
+    matching = [pid for pid, process in processes.items() if process['uuid'].lower() == info['UUID'].lower()]
+    identity = processes[matching[0]] if matching else {}
+    return dict(version=1, lab_uuid=info['UUID'].lower(), state=info['VMState'],
+                controller_pid=managers[0], vm_pid=matching[0] if matching else None,
+                vm_start_ticks=identity.get('start_ticks'),
+                controller_start_ticks=identity.get('controller_start_ticks'),
+                origin=f'http://127.0.0.1:{ports[1]}', ssh_port=ports[0],
+                observed_at=datetime.now(timezone.utc).isoformat(), host_ownership_verified=True,
+                running_endpoints_verified=info['VMState'] == 'running', live_authorized=False)
 
 
 
@@ -101,6 +167,7 @@ def main():
     """Inspect controller metadata and prove ownership without SSH or VM mutation."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--new', action='store_true', help='require an unused VM name and no running VM processes')
+    parser.add_argument('--json', action='store_true', help='structured host observation only; no application identity or live authorization')
     parser.add_argument('vm')
     parser.add_argument('ssh_target')
     parser.add_argument('ssh_port', type=int)
@@ -108,8 +175,16 @@ def main():
     args = parser.parse_args()
     try:
         ports = [args.ssh_port, args.web_port]
-        if args.ssh_target.rsplit('@', 1)[-1] != '127.0.0.1' or len(set(ports)) != 2 or any(p < 1 or p > 65535 for p in ports):
-            raise ValueError('preflight requires distinct valid ports and an explicit 127.0.0.1 SSH target')
+        endpoint_check(args.ssh_target, ports)
+        if args.json and args.new:
+            raise ValueError('Structured observations require an existing appliance')
+        if not args.new:
+            receipt = observe(args.vm, args.ssh_target, ports)
+            if args.json:
+                print(json.dumps(receipt, sort_keys=True))
+            else:
+                print(f"Preflight passed: VM {receipt['lab_uuid']} ({receipt['state']}), exclusive control and endpoint ownership.")
+            return 0
         managers, initial_processes = inventory()
         if len(managers) > 1:
             raise ValueError('duplicate VBoxSVC control contexts; do not start/stop or restore any VM')
@@ -123,21 +198,6 @@ def main():
                 raise ValueError('creation requires unambiguous control, no running VMs and unused ports')
             print('Preflight passed: new VM name, unused endpoints and exclusive control.')
             return 0
-        proc = subprocess.run(['VBoxManage', 'showvminfo', args.vm, '--machinereadable'],
-                              capture_output=True, text=True, timeout=20, check=True)
-        info = dict((key, value.strip('"')) for key, value in
-                    (line.split('=', 1) for line in proc.stdout.splitlines() if '=' in line))
-        managers, processes = inventory()
-        forwards = {}
-        if info.get('VMState') == 'running':
-            runtime = subprocess.run(['VBoxManage', 'debugvm', args.vm, 'info', 'nat0'],
-                                     capture_output=True, text=True, timeout=20, check=True)
-            forwards = nat_forwards(runtime.stdout)
-            final_managers, final_processes = inventory()
-            if final_managers != managers or final_processes != processes:
-                raise ValueError('VM/controller identity changed during observation')
-        validate(info, managers, processes, tcp_listeners(ports), ports, forwards)
-        print(f"Preflight passed: VM {info['UUID']} ({info['VMState']}), exclusive control and endpoint ownership.")
     except (OSError, ValueError, KeyError, subprocess.SubprocessError):
         # Do not echo command lines, environment, credentials or raw subprocess output.
         print('vmlab: preflight FAILED: ownership is ambiguous or metadata is inaccessible; '

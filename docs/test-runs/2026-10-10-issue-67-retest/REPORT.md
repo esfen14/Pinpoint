@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-10 |
 | Commit tested | `72b51602` (`issue-67-network-identity`, fresh installer checkout) |
-| Plan | [Issue #67](https://github.com/esfen14/Pinpoint/issues/67) sequence and [QA Test Plan J2-08](../../qa/QA_Test_Plan.md) |
+| Plan | [Issue #67](https://github.com/esfen14/Pinpoint/issues/67) sequence and [QA Test Plan J2-08](https://github.com/esfen14/Pinpoint/blob/299ab3ba7203c89a3ca5d8fabea42d9e5f239be2/docs/qa/QA_Test_Plan.md) |
 | Tester | OpenCode agent, API and VM shell; browser UI not driven |
 | Environment | Owner-authorized reset of VirtualBox `pinpoint-appliance-45` to `os-nagios-ready`, followed by `scripts/vmlab fresh issue-67-network-identity`; Ubuntu 22.04.5, Nagios Core 4.5.11, five running `demo/` targets on `10.77.0.0/28`; freshly initialized SQLite database (zero device rows before the first scan). |
 | Raw evidence | Console API/SQLite observations during the run; transcripts were not committed. VM state and journal are on the lab host. |

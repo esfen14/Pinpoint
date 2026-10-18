@@ -50,8 +50,9 @@ class FixFoundContract(unittest.TestCase):
             "gh pr diff PR_NUMBER",
             "Only after the fix is merged and the finding closed",
             "documentation PR alone is not proof of a product fix",
-            "change its affected matrix",
-            "rows to `retest`",
+            "record affected current case",
+            "eligibility as `retest required`",
+            "do not overwrite human verdicts",
         ):
             with self.subTest(rule=rule):
                 self.assertIn(rule, WORKFLOW)
@@ -66,8 +67,8 @@ class FixFoundContract(unittest.TestCase):
 
     def test_qa_run_syncs_every_result_artifact_before_checkpointing(self):
         for requirement in (
-            "Requirements_Traceability.md",
-            "QA_Paper_Test_Case_Tables.md",
+            "docs/qa/QA_Case_Status.md",
+            "queue's execution log",
             "render_qa_case_tables.py --write",
             "scripts/verify.sh docs",
             "before checkpointing",

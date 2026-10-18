@@ -120,3 +120,21 @@ npx playwright test -g "J1-04"
 - **Self-Healing:** Not used. We want brittle tests to fail and reveal regressions.
 - **Reporting:** Extract failures from the JSON report to build sanitized markdown entries for `docs/test-runs/<date>-<slug>/REPORT.md`.
 - **Safety:** Do NOT commit `.auth/*` or raw dumps containing passwords.
+
+## Current case selection and offline readiness tooling
+
+Existing J/issue-oriented spec names above are historical adapter names, not proof
+of full current TC/E2E coverage. Use a reviewed exact spec/project/test selection
+from the [queue guide](QA_Run_Queues.md), with one worker and `--retries=0` for
+acceptance. Never launch the entire default project list to satisfy a module queue.
+New live runs still require the selected queue/set start and authorized lab preflight.
+The offline `scripts/qa_execute.py` validates cards/journals only; it cannot launch
+a browser, provision a guest, recover a lab, or prove the scan guard is enforced.
+
+The separate [current-case adapter configuration](Automation_Readiness.md) has
+source-reviewed permission adapters and exact offline collection tests. It is
+integrated into `scripts/playwright-lab` only as an offline `--qa-preview` of its
+private environment/mount contract. The legacy runner rejects live use of the new
+config. Direct host execution with live credentials remains prohibited; actual
+ownership/deployed-version proof, exclusive lock and recovery supervision are
+required before a reviewed live dispatcher can use that contract.

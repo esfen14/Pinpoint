@@ -243,6 +243,148 @@ See [the investigation](../docs/plans/Issue_191_Account_Creation_Investigation.m
 
 ## Test approach status
 
+The [module black-box catalog](../docs/qa/Pinpoint%20-%20Black-Box%20Test%20Cases%20by%20Module%20with%20Traceability%20Matrix.md)
+contains 231 TC cases plus eight E2E scenarios. The shared `scripts/qa_catalog.py`
+parser validates definitions, run phases, requirement mappings and full procedures.
+It preserves original human verdicts and flags 26 conflicting summary/detail
+verdicts plus one free-text observation. No human result was reconciled by inference.
+
+`scripts/qa_queue.py` now prepares/checks version-2 module/person queues and Markdown
+previews with exact IDs, exclusions, case snapshots and fixed batches. Ordinary
+batches have up to five TC IDs; disruptive/fresh/long/E2E cases are isolated and a
+session may open at most five batches. `scripts/qa_execute.py` is an offline-only
+session/card/result validator: owner/start attestations, immutable scope/adapter
+hashes, ordered action slots, evidence completeness and cleanup halt. It performs
+no live command dispatch or preflight and cannot constrain an agent with arbitrary
+shell/file access. Empty/missing cards remain blocked. Live scan guarding,
+recovery/resume orchestration and complete current-case browser adapters remain
+unimplemented; no unattended-readiness claim is made.
+The [source coverage register](../docs/qa/Automation_Coverage.md) accounts for all
+239 definitions: seven source-complete permission adapters, 232 unmapped.
+The two new untested adapters are TC-ACC-09 (page denial plus API 403 as
+independent E1/E2 items) and TC-NCPA-08 (page denial). Their source-complete
+status does not authorize execution. `qa_pilot.py run` now implements a fixed
+serial batch for only TC-SS-04, TC-ACC-09 and TC-NCPA-08, with independent private
+resources, per-case durable results and stop on non-PASS. `qa_pilot.py handoff`
+separately checks complete supervisor-backed PASS/cleanup/evidence/baseline before
+archiving the exact old ledger and appending the new queue; no prior attempts,
+recoveries or budgets are cleared. Concrete cards, current proof, handoff review
+and a new explicit start are required. The new two cases have not run. See the
+[next batch review](../docs/qa/Next_Permission_Batch_Review.md).
+`qa_coverage.py` validates hashes/review/item coverage and binds cards to exact
+selection. `playwright.qa.config.ts` has one worker, zero retries, no setup
+dependencies/captures and private unique outputs; offline collection is checked.
+The isolated launcher now has a JSON-only `--qa-preview` for the selection/output
+contract, validated against one unconsumed opened journal case. Its proposed mounts
+keep source/root read-only and expose separate private evidence and only two Staff
+credential files, with no credential value reads during preparation. Nine synthetic
+transport tests cover stale scope, slot/budget/state, private paths, forbidden
+config fallthrough and offline/live distinction. The legacy runner still rejects
+the new config; only the narrow pilot entry below adds gated live integration.
+Other live cases remain blocked. No new case result
+is claimed. See [adapter preparation](../docs/qa/Automation_Readiness.md). Review-only `investigate`
+queues now retain human partials for mandatory evidence/issue triage and reject
+product case opening. The [partial-pass register](../docs/qa/Partial_Pass_Investigations.md)
+links reported confirmation defect #208 and unexplained-result clarification #209;
+neither is a fresh runtime reproduction.
+
+`scripts/qa_supervisor.py` now implements the driver-independent lifecycle core:
+separate start grant, cooperative lab UUID lock, private atomic/fsynced ledger,
+durable pre-dispatch consumption, persistent batch budgets/replay rejection and
+halted interruption/cleanup states. Sixteen synthetic-driver regressions include
+proof drift, prior-offline-result rejection, failures and no secret exception
+persistence. The core has no default driver; the narrow pilot entry is described
+below. Actual deployment/controller
+proof and full production process/parser/recovery integration remain pending;
+elapsed checks cannot interrupt a hanging
+Python callback. This does not authorize or demonstrate live case execution.
+
+The runtime components `qa_process.py` and `qa_results.py` now exist with eight
+local Python-process and nine synthetic-report regressions. The process helper
+bounds time/output, preserves private non-overwriting logs, cancels its owned
+POSIX group and halts on uncertain cleanup. The parser validates one reviewed
+permission attempt/configuration and copies only fixed item observations; it
+requires full PASS and cleanup evidence, otherwise preserves INCONCLUSIVE.
+Their narrow pilot wiring is described below; broader running frontend/backend
+revision proof, inherited controller/driver wiring, bridge/container-ID lifecycle (daemon work
+can outlive its CLI), recovered baseline and live validation remain pending.
+
+`qa_control.py` now coordinates mutating `vmlab` entries and supervisor claims
+through one fixed private per-user host flock, including across different ledger
+roots. Six local lock/controller fixtures verify exclusion, inherited-descriptor
+checks and pre-configuration gating. Direct controllers, other users/namespaces
+and legacy browser launchers remain outside the cooperative mechanism. Seven new
+preflight contracts cover structured read-only observations and identity drift;
+`vmlab preflight --json` explicitly carries no live authorization, target revision,
+running application/frontend proof, baseline or restoration claim. No lab was
+contacted or acceptance result added by these fixture tests.
+
+`qa_container.py` adds the concrete bounded create/attach/inspect/kill/remove
+component with 16 synthetic-command contracts. It binds a pinned image and exact
+transport digest to a durable consumed supervisor slot, fsyncs intent before
+creation, verifies actual container identity/isolation and proves absence through
+a successful daemon query. Uncertain create/cleanup and persisted intent block
+retry; child commands use private umask. It has no CLI/default production driver.
+Production bridge wiring, running application/frontend identity, Staff
+baseline, session recovery and reviewed live cards/start remain pending.
+
+Seven frontend selection/collection/synthetic-worker checks now include a fixed
+worker-reload defect that collection-only checks missed. Real Playwright IPC
+workers may see their private artifact directory after initial configuration;
+environment markers alone cannot allow evidence reuse. No page/browser, appliance
+or acceptance adapter executes in the worker fixture. The user prioritized a
+TC-SS-04 pilot today, later authorizing appliance setup and read-only inspection;
+no acceptance case ran. The narrow pilot entry is described below.
+
+`qa_bridge.py` now implements the owned private relay: consumed transport and
+retained host-lock binding, same-user peers, fixed loopback origin, bounded time/
+connections/bytes/buffers, durable intent and joined cleanup with socket custody.
+Eleven Unix-only fixture tests pass; the container component also verifies bridge
+custody and has an integration fixture with no upstream connection or Docker.
+
+Standalone `qa_deployment.py` adds expected Git-object source/build manifests and
+stable public artifact/candidate-process observations. Six disposable Git/file/
+proc fixtures pass without SSH, real backend processes or an appliance. Observer
+runtime/served readiness stays false and verified running revision stays null:
+disk matches/start ordering alone cannot attest loaded code or actual served bytes.
+The narrow `qa_pilot.py` integration now composes these components for TC-SS-04
+only. Twelve isolated driver/proof/gate contracts and read-only actual appliance
+inspection pass; 455 source files and 2383 installed runtime files are bound to
+the reviewed controlled deployment. Inspection launches no browser/container.
+The first explicitly started v4 TC-SS-04 attempt ran once on target `299ab3b`:
+browser permission assertions and logout/401 passed, container/bridge removal
+completed and independent post-run baseline inspection passed. Overall result is
+INCONCLUSIVE because the parser rejected an E1 timestamp 44 ms beyond its computed
+attempt end; harness [#211](https://github.com/esfen14/Pinpoint/issues/211) tracks
+the offline bounded attach-window fix and pinned-worker timing investigation
+([timing rule](../docs/qa/QA_Report_Timing.md)). Import and composed-driver
+regressions accept the synthetic 44 ms relationship and halt on stale/foreign or
+failed-cleanup evidence. The original v4 result remains INCONCLUSIVE; its halted
+attempt, exact private ledger archive, evidence and original budgets are preserved.
+See the [original pilot report](../docs/test-runs/2026-10-18-issue-206-ss04-pilot/REPORT.md).
+
+After separately approved implementation/use, `qa_pilot.py recover` obtained fresh
+cleanup/baseline proof and appended an expiring grant-bound audited disposition,
+preserving original attempts/budgets and permitting only the named v2 queue. Paeng
+separately explicitly started that one-case recheck. The real TC-SS-04 attempt on
+the same target passed through strict fresh import, logout/401, owned container/
+bridge/process cleanup and fresh post-case baseline proof. Its E1 was 47 ms beyond
+the old invalid duration-derived end, accepted by actual independent attach bounds
+without grace. The supervised v2 attempt is complete/PASS/restored; the serialized
+source journal retains an active label with no active case/batch and one accepted
+result. See the [recheck report](../docs/test-runs/2026-10-18-issue-211-ss04-recheck/REPORT.md).
+Broader/unattended coverage stays blocked. Controlled launch/build provenance is a
+trust boundary, not memory attestation. The standalone observer's negative
+readiness fields are unchanged.
+
+The [historical evidence inventory/review](../docs/qa/Historical_Evidence_Review.md)
+links 41 post-cutoff-directory-date reports and six partial current-case mappings.
+October 15 remains a provisional cutoff. No full-case inherited PASS is accepted.
+`scripts/qa_evidence.py` validates reviewer-bound target/report/case hashes and
+item-level coverage before full reuse. The requirement validator, derived
+[case status view](../docs/qa/QA_Case_Status.md), and docs gate now use the new sources
+instead of the removed journey plan, matrix and paper tables.
+
 Backend tests are organized under `server/tests/unit/`, `integration/`, `e2e/`,
 `support/`, and `plans/`. Default pytest collection is isolated. The deterministic
 browser-to-Nagios approach is recorded in

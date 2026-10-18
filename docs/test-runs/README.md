@@ -30,7 +30,14 @@ table while you test, not afterward.
 ## Rules
 
 - Name the exact commit tested. A result without a commit is not reproducible.
-- One row per plan case: `Pass`, `Fail`, `Blocked` or `Skipped`, and why.
+- One row per current case: `Pass`, `Fail`, `Partially Pass`, `Blocked`, `Inconclusive`
+  or `Not run` (historical reports may use `Skipped`), and why. Record each expected
+  item's observed value/evidence and restoration. Count unique TC and E2E separately;
+  record diagnostic repeats as attempts, not additional cases.
+- New runs record actual executor/mode, catalog hash, queue/set/session/batch,
+  deployed application/installer versions, baseline and timestamps. Historical
+  [evidence reuse](../qa/Historical_Evidence_Review.md) stays separately labelled,
+  never masquerading as a new human or AI execution.
 - Every `Fail` and `Blocked` links a GitHub issue. Defects live in issues, not in
   the report.
 - Sanitize before committing: no passwords, tokens, keys, community strings,
@@ -48,6 +55,12 @@ table while you test, not afterward.
 
 | Run | Kind | Commit | Result | Report |
 |---|---|---|---|---|
+| [2026-10-18 next-permissions](2026-10-18-next-permissions/REPORT.md) | Approved audited queue handoff and supervised real browser permission batch | app `299ab3ba`; harness `7947da1a` | PASS: TC-ACC-09 E1/E2 and TC-NCPA-08 E1, 2/2 cases; cleanup/history independently verified | [REPORT.md](2026-10-18-next-permissions/REPORT.md) |
+| [2026-10-18 issue-206-next-permissions-preflight](2026-10-18-issue-206-next-permissions-preflight/REPORT.md) | Two-case readiness, actual read-only controlled baseline and local accepted-ledger audit | app `299ab3b`; harness `f6130403` plus source-bound preparation | Preparation PASS; 2 TC selected, 0 attempted; handoff/start pending | [REPORT.md](2026-10-18-issue-206-next-permissions-preflight/REPORT.md) |
+| [2026-10-18 issue-211 SS-04 recheck](2026-10-18-issue-211-ss04-recheck/REPORT.md) | Explicit audited recovery and one supervised TC-SS-04 recheck after timing fix | app `299ab3ba`, harness `724a4b55` | PASS: current-run import, logout, owned cleanup and fresh baseline accepted; original v4 INCONCLUSIVE preserved | [REPORT.md](2026-10-18-issue-211-ss04-recheck/REPORT.md) |
+| [2026-10-18 issue-206 SS-04 pilot](2026-10-18-issue-206-ss04-pilot/REPORT.md) | First supervised scripted TC-SS-04 attempt; exact one-case browser/owned transport | `299ab3ba` | INCONCLUSIVE: browser/assertions/logout passed, parser timing rejection #211; cleanup independently verified; ledger halted | [REPORT.md](2026-10-18-issue-206-ss04-pilot/REPORT.md) |
+| [2026-10-18 issue-206 pilot driver preflight](2026-10-18-issue-206-pilot-driver-preflight/REPORT.md) | Narrow driver, read-only actual baseline/served bytes and explicit-start denial | `299ab3ba` | Preflight complete; TC-SS-04 Not run; no browser/container launched | [REPORT.md](2026-10-18-issue-206-pilot-driver-preflight/REPORT.md) |
+| [2026-10-18 issue-206 pilot preparation](2026-10-18-issue-206-pilot-preflight/REPORT.md) | Exclusive appliance preflight, backup, deployment/migrations and Staff setup | `299ab3ba` | Preparation complete; TC-SS-04 Not run; automatic startup scan disclosed; scheduler off | [REPORT.md](2026-10-18-issue-206-pilot-preflight/REPORT.md) |
 | [2026-10-18 issue-153-failure-escalation](2026-10-18-issue-153-failure-escalation/REPORT.md) | Existing lab appliance, dummy host and service: failed action, cap skip, repeat recovery, downtime, unwritable pipe, feed | `ad23308b` | Partial: 8 pass, 2 skipped (browser screens; host form and flapping); mail to the inbox for an automatic run not confirmed | [REPORT.md](2026-10-18-issue-153-failure-escalation/REPORT.md) |
 | [2026-10-17 issue-198 service availability](2026-10-17-issue-198-service-availability/REPORT.md) | Native service durations, real recorded outage/missing-history comparisons and Chromium exports | `3554f123` | Corrected implementation passes local/scoped live checks; earlier harness socket failure and recovery retained; CI/review on PR #201 | [REPORT.md](2026-10-17-issue-198-service-availability/REPORT.md) |
 | [2026-10-17 issue-198 contract probe](2026-10-17-issue-198-contract-probe/REPORT.md) | Read-only installed Core service availability CGI shapes, assumptions and timings | `8cf01ab7`; product `44d80180` | Blocked: scheduled totals and missing coverage contradict proposed normalization; fixed-window/current-state discrepancy unresolved | [REPORT.md](2026-10-17-issue-198-contract-probe/REPORT.md) |

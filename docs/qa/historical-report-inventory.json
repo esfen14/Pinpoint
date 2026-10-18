@@ -1,0 +1,501 @@
+{
+  "version": 1,
+  "cutoff": "2026-10-15",
+  "cutoff_approved": false,
+  "reports": [
+    {
+      "report": "docs/test-runs/2026-10-15-issue-110-polling/REPORT.md",
+      "directory_date": "2026-10-15",
+      "reported_revisions": [
+        "30a7c7b03446eb282bf200a922e6efbc5380aee1"
+      ],
+      "report_sha256": "bb7c43f260e535c33a84b3fb5e7bef19a62b1d652077c47bc350a81bd1a0bfb7",
+      "title": "Test run: issue-110-polling",
+      "classification": "reviewed; no additional current-case mapping",
+      "review_note": "Same polling cadence/change/restart scope as the already attached issue-110-polling-retest; the retest is the later source for those current SET checks."
+    },
+    {
+      "report": "docs/test-runs/2026-10-15-issue-110-polling-retest/REPORT.md",
+      "directory_date": "2026-10-15",
+      "reported_revisions": [
+        "6cbc59d0"
+      ],
+      "report_sha256": "546ad8f361d3772415f45d3eac36206321600f841014f9a376cd32a55e85504c",
+      "title": "Test run: issue-110-polling-retest",
+      "classification": "partially mapped to current cases; no full-case credit"
+    },
+    {
+      "report": "docs/test-runs/2026-10-15-issue-115-inbox-confirmed/REPORT.md",
+      "directory_date": "2026-10-15",
+      "reported_revisions": [
+        "432e492ffbe749458084f88a933d01a8789cffa2",
+        "6e14836e"
+      ],
+      "report_sha256": "96d0d77f1316c0980ffc3e7d08b65fe80a77f8178ad60fed93fa233b5144ce77",
+      "title": "Test run: issue-115-inbox-confirmed",
+      "classification": "partially mapped to current cases; no full-case credit"
+    },
+    {
+      "report": "docs/test-runs/2026-10-15-issue-115-starttls-docker/REPORT.md",
+      "directory_date": "2026-10-15",
+      "reported_revisions": [
+        "6e14836e8e0f441d7785a741dfaac8ef34f41732",
+        "de7909e4",
+        "6c23656ad87cdbb58a293f3c87bd56587246cd74"
+      ],
+      "report_sha256": "7f4f1c5c083ac6f550f7061b79646bcdc57d002a97548e151cd5f912ebe123b4",
+      "title": "Test run: issue-115-starttls-docker",
+      "classification": "reviewed; no additional current-case mapping",
+      "review_note": "Overlaps the already attached issue-115-inbox-confirmed SET-07 evidence. The attached report records the guarded final browser repeat plus owner-confirmed delivery; no distinct current-case coverage is added here."
+    },
+    {
+      "report": "docs/test-runs/2026-10-15-issue-115-starttls-preflight/REPORT.md",
+      "directory_date": "2026-10-15",
+      "reported_revisions": [
+        "899e7cd2c4ef5b53fcf55c3b478d3e267feb51ac"
+      ],
+      "report_sha256": "b19c39c3a8629790ceab61f2ff09f9d8b65ad6c0dec8f15693a5b472f661ea02",
+      "title": "Test run: issue-115-starttls-preflight",
+      "classification": "reviewed; no additional current-case mapping",
+      "review_note": "Preflight/setup only; live product acceptance was blocked and its successor runs are attached for the matching current email case."
+    },
+    {
+      "report": "docs/test-runs/2026-10-15-issue-116-escalations/REPORT.md",
+      "directory_date": "2026-10-15",
+      "reported_revisions": [
+        "c1bf732f",
+        "b4d2c1648592c2e8294eb0d44fccb868d1fa9adb"
+      ],
+      "report_sha256": "8c71216428a0d5dfb39c3a795ffb90338323cb16022b73bc5ed2f69d2707f886",
+      "title": "Test run: issue-116-escalations",
+      "classification": "partially mapped to current cases; no full-case credit"
+    },
+    {
+      "report": "docs/test-runs/2026-10-15-issue-117-live-browser/REPORT.md",
+      "directory_date": "2026-10-15",
+      "reported_revisions": [
+        "b0a105e6443a32e9bf5a0344e107949b21aede59",
+        "b117d9a2c041",
+        "519a00a8"
+      ],
+      "report_sha256": "273e1b1a4a3ec0374e3ca8afe8eaefd82865b99a0d2bd9036371d685f0912d0c",
+      "title": "Test run: issue-117-live-browser",
+      "classification": "partially mapped to current cases; no full-case credit"
+    },
+    {
+      "report": "docs/test-runs/2026-10-15-issue-117-main-sync/REPORT.md",
+      "directory_date": "2026-10-15",
+      "reported_revisions": [
+        "4981a70e7c25ab3baec694a8d9ea3ad1a3d53bbe",
+        "c117e6a9d042",
+        "b117d9a2c041",
+        "99f584ed8151"
+      ],
+      "report_sha256": "79dfdb880225915deaa3361559bb6870bc499f75d697c12ee0eecfa0971c9d39",
+      "title": "Test run: issue-117-main-sync",
+      "classification": "reviewed; no additional current-case mapping",
+      "review_note": "Topology overlap is already represented by the more direct issue-117-live-browser and issue-117-manual-topology reports; this integration report adds no distinct current-case steps."
+    },
+    {
+      "report": "docs/test-runs/2026-10-15-issue-117-manual-topology/REPORT.md",
+      "directory_date": "2026-10-15",
+      "reported_revisions": [
+        "051abed5ff113827a8a2a00309b0e4b6f5aa9e0d",
+        "b117d9a2c041",
+        "051abed5"
+      ],
+      "report_sha256": "b2d1f53fc90e7e609c7227808942dcff4bec2619488ce6676ab4f41251d616f2",
+      "title": "Test run: issue-117-manual-topology",
+      "classification": "partially mapped to current cases; no full-case credit"
+    },
+    {
+      "report": "docs/test-runs/2026-10-15-issue-120-event-handler/REPORT.md",
+      "directory_date": "2026-10-15",
+      "reported_revisions": [
+        "708dd520",
+        "420e55d9",
+        "e4a7c1d9b305",
+        "c5e2a8f4d716"
+      ],
+      "report_sha256": "a3180feafa4804eb45f22472b867399a39a1eb74f4da1111877092f5bde3f8b2",
+      "title": "Test run: issue-120-event-handler",
+      "classification": "reviewed; no additional current-case mapping",
+      "review_note": "Event-handler implementation/security and fixture checks do not directly execute a distinct current black-box case; remediation behavior is represented by issue-155 and issue-182."
+    },
+    {
+      "report": "docs/test-runs/2026-10-15-issue-120-service-and-spool/REPORT.md",
+      "directory_date": "2026-10-15",
+      "reported_revisions": [
+        "420e55d9",
+        "e4a7c1d9b305"
+      ],
+      "report_sha256": "4713c1a070474c747caca2c98229bb917e159fdbad6149681c8abfa46e227d00",
+      "title": "Test run: issue-120-service-and-spool",
+      "classification": "reviewed; no additional current-case mapping",
+      "review_note": "Service/spool operational checks do not directly execute a distinct current black-box case; applicable remediation UI/run-log evidence is linked from issue-155."
+    },
+    {
+      "report": "docs/test-runs/2026-10-15-issue-122-maintenance-windows/REPORT.md",
+      "directory_date": "2026-10-15",
+      "reported_revisions": [
+        "0883693c"
+      ],
+      "report_sha256": "d2a6eee50430bd7b604768525135003bea434514c6a85790834a92613af53f96",
+      "title": "Test run: issue-122-maintenance-windows",
+      "classification": "partially mapped to current cases; no full-case credit"
+    },
+    {
+      "report": "docs/test-runs/2026-10-15-issue-124-storage-logs/REPORT.md",
+      "directory_date": "2026-10-15",
+      "reported_revisions": [
+        "f80d6c1f",
+        "5f0a7ef8",
+        "ffb4cc3c"
+      ],
+      "report_sha256": "eaae0611c1ccae4991ebf0a04feb16d4446256ade38031dc3de1ecb2ca31dff8",
+      "title": "Test run: issue-124-storage-logs",
+      "classification": "partially mapped to current cases; no full-case credit"
+    },
+    {
+      "report": "docs/test-runs/2026-10-15-issue-129-finish-journeys/REPORT.md",
+      "directory_date": "2026-10-15",
+      "reported_revisions": [
+        "c9f8e263",
+        "a119afa4",
+        "15c27d1",
+        "b166953"
+      ],
+      "report_sha256": "74d4ffa605aeaac657a0ea52e0d36ba6d9b98f9030a1177740d9deacf6c85bf3",
+      "title": "Test run: issue-129 remaining live journeys",
+      "classification": "partially mapped to current cases; no full-case credit"
+    },
+    {
+      "report": "docs/test-runs/2026-10-15-issue-129-main-daemon/REPORT.md",
+      "directory_date": "2026-10-15",
+      "reported_revisions": [
+        "c9f8e263",
+        "15c27d1",
+        "b166953"
+      ],
+      "report_sha256": "74a2cff0a8ea5a145bb79949804d390e592ccc5bdbf548a8dea489f70e03bc0e",
+      "title": "Test run: issue-129 main Nagios daemon",
+      "classification": "reviewed; no additional current-case mapping",
+      "review_note": "Nagios daemon operational/recovery coverage is not a distinct current black-box journey; the current catalog\u2019s related UI behavior is linked from issue-129-finish-journeys."
+    },
+    {
+      "report": "docs/test-runs/2026-10-15-issue-129-main-sync/REPORT.md",
+      "directory_date": "2026-10-15",
+      "reported_revisions": [
+        "e5c7e6f0",
+        "9ce590eb"
+      ],
+      "report_sha256": "38a697779532f9949ab7458f0e5259fb0bb5c5bdbc34bc86af4fab9120574409",
+      "title": "Test run: issue-129 main synchronization",
+      "classification": "reviewed; no additional current-case mapping",
+      "review_note": "Synchronization and integration checks do not add a distinct current case beyond the more direct issue-129-finish-journeys run."
+    },
+    {
+      "report": "docs/test-runs/2026-10-15-issue-129-polling-ci-repair/REPORT.md",
+      "directory_date": "2026-10-15",
+      "reported_revisions": [
+        "5bb6f7a0",
+        "a129f6d23901"
+      ],
+      "report_sha256": "39211a45c0a8d128e1475dd940ed5220a155c577cbc0ce4e5f7b8726128bf5a2",
+      "title": "Test run: issue-129 polling migration CI repair",
+      "classification": "reviewed; no additional current-case mapping",
+      "review_note": "CI/migration repair evidence, not an execution of a current black-box procedure."
+    },
+    {
+      "report": "docs/test-runs/2026-10-15-issue-129-review-readiness/REPORT.md",
+      "directory_date": "2026-10-15",
+      "reported_revisions": [
+        "7c0bb631"
+      ],
+      "report_sha256": "d2a62d971be1078144888e074970f7d9f7114f4b83f1e9842c4248b08eeb90c0",
+      "title": "Test run: issue-129 review readiness",
+      "classification": "reviewed; no additional current-case mapping",
+      "review_note": "Review-readiness and verification evidence, not a current black-box case execution."
+    },
+    {
+      "report": "docs/test-runs/2026-10-15-issue-162-recovery/REPORT.md",
+      "directory_date": "2026-10-15",
+      "reported_revisions": [
+        "5fefa6a2",
+        "b22221eb",
+        "1ca2c75",
+        "c9f8e26",
+        "3d6471d"
+      ],
+      "report_sha256": "cc28d6a7f6fb822c2722434e7d1158c826e78124eae66c3300f3739c7df5bcaa",
+      "title": "Issue #162: control diagnosis and lost-edit resolution",
+      "classification": "reviewed; no additional current-case mapping",
+      "review_note": "Lab-control recovery incident evidence; not application behavior exercised by a current black-box case."
+    },
+    {
+      "report": "docs/test-runs/2026-10-15-issue-162-snapshot-rebuild/REPORT.md",
+      "directory_date": "2026-10-15",
+      "reported_revisions": [
+        "f15ff1ab",
+        "ec9e2517",
+        "10fcb05f",
+        "82ba9ce9aefda8fbbad93ba500a9cacf23c56409",
+        "697869e"
+      ],
+      "report_sha256": "13972c38adc26c1bba866ef4c1679290d39bcc22a8dba74368d3c16e13d795e3",
+      "title": "Issue #162: clean lab rebuild and endpoint snapshot restoration",
+      "classification": "reviewed; no additional current-case mapping",
+      "review_note": "Lab snapshot/rebuild and ownership evidence; not a current product case execution."
+    },
+    {
+      "report": "docs/test-runs/2026-10-15-issue-164-final-refresh/REPORT.md",
+      "directory_date": "2026-10-15",
+      "reported_revisions": [
+        "8c8ff608"
+      ],
+      "report_sha256": "01689f783bbc12f4c05d7584f3ba429705ad60ff822e9c286565d337ab2b4782",
+      "title": "Test run: issue-164-final-refresh",
+      "classification": "partially mapped supporting report; no full-case credit",
+      "review_note": "This later scoped retest repeats the identity-review journeys and is useful supporting evidence for TC-DI-16\u201319. Those cases retain the detailed initial report as primary source; target identity source paths changed after this final-refresh run, so fresh target execution is still required."
+    },
+    {
+      "report": "docs/test-runs/2026-10-15-issue-164-identity-review/REPORT.md",
+      "directory_date": "2026-10-15",
+      "reported_revisions": [
+        "d8aac3e4",
+        "80a10fb1",
+        "7fce5bd4"
+      ],
+      "report_sha256": "0730cce909440f11222554ec4b97f22acdee5666f31a87fbe366a7910792b468",
+      "title": "Test run: issue-164-identity-review",
+      "classification": "partially mapped to current cases; no full-case credit"
+    },
+    {
+      "report": "docs/test-runs/2026-10-15-issue-79-inbox-confirmed/REPORT.md",
+      "directory_date": "2026-10-15",
+      "reported_revisions": [
+        "4ed80435f088ddda26302a44a6008037bdfec933",
+        "03f32a74ce2fed98c29735658ce04faa065f49cd"
+      ],
+      "report_sha256": "1240a599aebd8f07f31b9d8d88b80b58041c81762c94b36370374a2b9dbbf332",
+      "title": "Test run: issue-79-inbox-confirmed",
+      "classification": "reviewed; no additional current-case mapping",
+      "review_note": "Recipient-routing mailbox comparison is outside the current email-settings test case; the matching current SET-07 email test is linked to issue-115-inbox-confirmed."
+    },
+    {
+      "report": "docs/test-runs/2026-10-15-issue-79-rebuilt-inbox/REPORT.md",
+      "directory_date": "2026-10-15",
+      "reported_revisions": [
+        "4ed80435f088ddda26302a44a6008037bdfec933"
+      ],
+      "report_sha256": "adfcfe6f1cd52c4a23158c7fd880d3abc05e1894150d351c88789ba74f5894c8",
+      "title": "Test run: issue-79-rebuilt-inbox",
+      "classification": "reviewed; no additional current-case mapping",
+      "review_note": "Recipient editor/routing acceptance is not the current email-settings test; the matching SET-07 behavior is linked to issue-115-inbox-confirmed."
+    },
+    {
+      "report": "docs/test-runs/2026-10-15-issue-79-vm-browser/REPORT.md",
+      "directory_date": "2026-10-15",
+      "reported_revisions": [
+        "3d6471dc",
+        "697869e",
+        "1ca2c75",
+        "c9f8e26"
+      ],
+      "report_sha256": "a76eafe6b087cdf181fb678c88937c4749fd514ac10623af9b583d76b0bafe7d",
+      "title": "Issue #79: VM recipients and browser acceptance",
+      "classification": "reviewed; no additional current-case mapping",
+      "review_note": "Recipient routing and VM restoration are outside the current email-settings case; its lab failure also makes it unsuitable as positive reusable evidence."
+    },
+    {
+      "report": "docs/test-runs/2026-10-16-issue-121-local-restart/REPORT.md",
+      "directory_date": "2026-10-16",
+      "reported_revisions": [
+        "8869235",
+        "edb5036",
+        "b8e3d5f2a417",
+        "a4c8e1b7d933"
+      ],
+      "report_sha256": "c55aa9c01443e0e14c63d43ba627866b8eeeb8ca3e9baba4fd492169810ea099",
+      "title": "Test run: issue-121-local-restart",
+      "classification": "partially mapped to current cases; no full-case credit"
+    },
+    {
+      "report": "docs/test-runs/2026-10-16-issue-121-remote-restart-partial/REPORT.md",
+      "directory_date": "2026-10-16",
+      "reported_revisions": [
+        "f7905202",
+        "8869235",
+        "b8e3d5f2a417",
+        "d117f3b8a053",
+        "c7a1f4d92e60"
+      ],
+      "report_sha256": "8bc5df8d376ed6e25d4a5e0b26cbea78613b8df2792caa89676f79edeebc87b5",
+      "title": "Test run: issue-121-remote-restart-partial",
+      "classification": "reviewed; no additional current-case mapping",
+      "review_note": "Settings/API validation overlaps remote-restart prerequisites, but it is a separate issue acceptance with blocked device behaviors and an obsolete/re-parented migration; current NCPA/remediation UI overlap is linked to issue-182."
+    },
+    {
+      "report": "docs/test-runs/2026-10-17-issue-118/REPORT.md",
+      "directory_date": "2026-10-17",
+      "reported_revisions": [
+        "986ac2b6",
+        "1792169036"
+      ],
+      "report_sha256": "c265193812a6fef5b7e045b227fd60a6a954d82d80fa265bcce9f1c5d7c06cfe",
+      "title": "Test run: issue-118 notification dependencies",
+      "classification": "reviewed; no additional current-case mapping",
+      "review_note": "Notification dependency/setup checks do not directly cover a distinct current black-box procedure."
+    },
+    {
+      "report": "docs/test-runs/2026-10-17-issue-134-reports-documentation/REPORT.md",
+      "directory_date": "2026-10-17",
+      "reported_revisions": [
+        "65101a5f876a8a5d9894dd59ecdeb47a23a8dad6",
+        "4b1ad9f5",
+        "82ba9ce9aefda8fbbad93ba500a9cacf23c56409"
+      ],
+      "report_sha256": "4f5740ee27141ba150f3c262cf9bdd1756e2ca4de07541ff80722ca851bbdcb8",
+      "title": "Test run: issue-134-reports-documentation",
+      "classification": "partially mapped to current cases; no full-case credit"
+    },
+    {
+      "report": "docs/test-runs/2026-10-17-issue-155-remediation-safety/REPORT.md",
+      "directory_date": "2026-10-17",
+      "reported_revisions": [
+        "b4bbefec",
+        "6bd763c",
+        "f155a3c7d2b1"
+      ],
+      "report_sha256": "2c543cff5a91a6dfcb75f4a977e89ca109c66e8659ab061b84a25494bb7f594f",
+      "title": "Test run: 2026-10-17-issue-155-remediation-safety",
+      "classification": "partially mapped to current cases; no full-case credit"
+    },
+    {
+      "report": "docs/test-runs/2026-10-17-issue-173-parent-notifications/REPORT.md",
+      "directory_date": "2026-10-17",
+      "reported_revisions": [
+        "f45126c0a052251ea857d8a14eafaad8999558c2",
+        "c65c3ba4"
+      ],
+      "report_sha256": "283d4e91089486f288cf59a88cee149799ed4a206c20c69afc61b82f8fd6c27e",
+      "title": "Test run: issue-173-parent-notifications",
+      "classification": "reviewed; no additional current-case mapping",
+      "review_note": "Native Nagios parent-notification semantics are not the current topology editing journeys; those are linked to issue-117 browser reports."
+    },
+    {
+      "report": "docs/test-runs/2026-10-17-issue-182-playwright/REPORT.md",
+      "directory_date": "2026-10-17",
+      "reported_revisions": [
+        "910d6f99",
+        "8a6b11de"
+      ],
+      "report_sha256": "a4f7b988c607841e4461593907b466e8e6514d5990f5745c0f3c9b696c19659d",
+      "title": "Issue #182 Playwright browser walkthrough",
+      "classification": "partially mapped to current cases; no full-case credit"
+    },
+    {
+      "report": "docs/test-runs/2026-10-17-issue-182-remote-restart/REPORT.md",
+      "directory_date": "2026-10-17",
+      "reported_revisions": [
+        "910d6f99",
+        "a182f6c9d301",
+        "697869e",
+        "b166953d2e7e5b4bae12bf723712224cc97fae94"
+      ],
+      "report_sha256": "488bdca00f4f50cf00daad29adc70bc4365a776a30002d00e07cb3b731808362",
+      "title": "Test run: issue-182-remote-restart",
+      "classification": "partially mapped to current cases; no full-case credit"
+    },
+    {
+      "report": "docs/test-runs/2026-10-17-issue-187-dhcp-acceptance/REPORT.md",
+      "directory_date": "2026-10-17",
+      "reported_revisions": [
+        "46e1047a"
+      ],
+      "report_sha256": "d2932ff447d351839ef8782c6ada0209815d1676a1c677032f458b7ee323e5ad",
+      "title": "Test run: issue #187 isolated DHCP acceptance",
+      "classification": "reviewed; no additional current-case mapping",
+      "review_note": "DHCP discovery is a separate feature journey, not represented by a current black-box case procedure."
+    },
+    {
+      "report": "docs/test-runs/2026-10-17-issue-187-docker-feasibility/REPORT.md",
+      "directory_date": "2026-10-17",
+      "reported_revisions": [
+        "f53cc067"
+      ],
+      "report_sha256": "cefc1bd29b21639448cdeb7f8e156f48b79c0451b16cfc9cd61542c90b03e9ff",
+      "title": "Test run: issue #187 Docker DHCP feasibility",
+      "classification": "reviewed; no additional current-case mapping",
+      "review_note": "DHCP Docker feasibility/setup work is not a current black-box case execution."
+    },
+    {
+      "report": "docs/test-runs/2026-10-17-issue-191-accounts/REPORT.md",
+      "directory_date": "2026-10-17",
+      "reported_revisions": [
+        "2688e430"
+      ],
+      "report_sha256": "5c43e86dea7e34a56beb697331e1465bd776f1dcf873712c6a289ce67b808532",
+      "title": "Test run: issue-191-accounts",
+      "classification": "partially mapped to current cases; no full-case credit"
+    },
+    {
+      "report": "docs/test-runs/2026-10-17-issue-198-contract-probe/REPORT.md",
+      "directory_date": "2026-10-17",
+      "reported_revisions": [
+        "8cf01ab75ae407291d75b884de2455c6c49b0ee2",
+        "44d80180"
+      ],
+      "report_sha256": "ffd99eec9688d1795e0337c8308f5969b1d950aa40f26074a6bd744336c753cb",
+      "title": "Issue #198: installed service-availability contract probe",
+      "classification": "reviewed; no additional current-case mapping",
+      "review_note": "Service-availability contract probes cover a distinct feature absent from the current case procedures."
+    },
+    {
+      "report": "docs/test-runs/2026-10-17-issue-198-service-availability/REPORT.md",
+      "directory_date": "2026-10-17",
+      "reported_revisions": [
+        "3554f12357259f9c7a5947d84a8394f56068e487"
+      ],
+      "report_sha256": "3d21083fa29b0bf3c8030fe05f08ff023909344d8c9b220b17d2c2881f69d7d6",
+      "title": "Issue #198: service availability implementation and native comparison",
+      "classification": "reviewed; no additional current-case mapping",
+      "review_note": "Service-availability feature acceptance is distinct from the current host availability and network service catalog procedures."
+    },
+    {
+      "report": "docs/test-runs/2026-10-17-pr-185-issue-156/REPORT.md",
+      "directory_date": "2026-10-17",
+      "reported_revisions": [
+        "8c39c1ba2b732cfe2f86d76a09d2736924921f26"
+      ],
+      "report_sha256": "31b545d399791aa97fcaf74f35673f92c06e5f5d602788fbd2377c740a673a9d",
+      "title": "Test run: PR #185 / issue #156 resource forecasts",
+      "classification": "reviewed; no additional current-case mapping",
+      "review_note": "Forecast-engine issue acceptance/performance checks do not execute a distinct current black-box case."
+    },
+    {
+      "report": "docs/test-runs/2026-10-17-pr-185-issue-156-retest/REPORT.md",
+      "directory_date": "2026-10-17",
+      "reported_revisions": [
+        "298aa620c6f80442565dabb12f5173e1337cecf5"
+      ],
+      "report_sha256": "1812f840986a830baea03875db5372ad088b40a25d8cb09baedf24b6e5a27a49",
+      "title": "Test run: PR #185 / issue #156 forecast defect retest",
+      "classification": "reviewed; no additional current-case mapping",
+      "review_note": "Forecast defect retest is a separate issue acceptance; forecast UI/engine behavior is not a distinct current black-box case."
+    },
+    {
+      "report": "docs/test-runs/2026-10-18-issue-153-failure-escalation/REPORT.md",
+      "directory_date": "2026-10-18",
+      "reported_revisions": [
+        "ad23308b",
+        "145623ef",
+        "f155a3c7d2b1",
+        "e153c4a8b2d7"
+      ],
+      "report_sha256": "6b544e3a2d7b4c6b849fdf106c6cdd99ecc4890e6388a2a6744dbf9e2dd64c4f",
+      "title": "Test run: issue-153-failure-escalation",
+      "classification": "partially mapped to current cases; no full-case credit"
+    }
+  ]
+}
