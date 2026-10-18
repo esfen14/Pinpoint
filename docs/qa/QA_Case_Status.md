@@ -33,7 +33,7 @@ Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 | TC-ACC-06 | ACC / 2 | FAIL | FAIL - the administrator cannot change or reset the other user password | fail | No reviewed mapping |
 | TC-ACC-07 | ACC / 2 | PASS | PASS | pass | No reviewed mapping |
 | TC-ACC-09 | ACC / 2 | Not run | Not run | untested | No reviewed mapping |
-| TC-ACC-10 | ACC / 2 | Not run | Not run | untested | No reviewed mapping |
+| TC-ACC-10 | ACC / 2 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-17-issue-191-accounts/REPORT.md) |
 | TC-ACC-08 | ACC / 2 | Not run | Not run | untested | No reviewed mapping |
 | TC-ROL-04 | ROL / 2 | Not run | Not run | untested | No reviewed mapping |
 | TC-ROL-05 | ROL / 2 | PASS | PASS | pass | No reviewed mapping |
@@ -53,16 +53,16 @@ Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 | TC-SHL-06 | SHL / 3 | PASS | Not run | needs-decision | No reviewed mapping |
 | TC-NFR-01 | NFR / 3 | PASS | Not run | needs-decision | No reviewed mapping |
 | TC-NFR-02 | NFR / 3 | PASS | Not run | needs-decision | No reviewed mapping |
-| TC-SET-07 | SET / 4 | PASS | PASS | pass | No reviewed mapping |
+| TC-SET-07 | SET / 4 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-115-inbox-confirmed/REPORT.md) |
 | TC-SET-01 | SET / 4 | PASS | PASS | pass | No reviewed mapping |
-| TC-SET-02 | SET / 4 | PASS | PASS | pass | No reviewed mapping |
+| TC-SET-02 | SET / 4 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-110-polling-retest/REPORT.md) |
 | TC-SET-03 | SET / 4 | PASS | PASS | pass | No reviewed mapping |
 | TC-SET-04 | SET / 4 | PASS | PASS | pass | No reviewed mapping |
 | TC-SET-05 | SET / 4 | Not run | Not run | untested | No reviewed mapping |
 | TC-SET-06 | SET / 4 | PASS | PASS | pass | No reviewed mapping |
-| TC-SHL-01 | SHL / 4 | PASS | Not run | needs-decision | No reviewed mapping |
-| TC-SHL-02 | SHL / 4 | PASS | Not run | needs-decision | No reviewed mapping |
-| TC-SHL-03 | SHL / 4 | PASS | Not run | needs-decision | No reviewed mapping |
+| TC-SHL-01 | SHL / 4 | PASS | Not run | needs-decision | retest required: [source report](../test-runs/2026-10-15-issue-116-escalations/REPORT.md) |
+| TC-SHL-02 | SHL / 4 | PASS | Not run | needs-decision | retest required: [source report](../test-runs/2026-10-15-issue-116-escalations/REPORT.md) |
+| TC-SHL-03 | SHL / 4 | PASS | Not run | needs-decision | retest required: [source report](../test-runs/2026-10-15-issue-116-escalations/REPORT.md) |
 | TC-DSC-01 | DSC / 5 | PASS | Not run | needs-decision | No reviewed mapping |
 | TC-DSC-02 | DSC / 5 | Not run | Not run | untested | No reviewed mapping |
 | TC-DSC-03 | DSC / 5 | PASS | Not run | needs-decision | No reviewed mapping |
@@ -103,12 +103,12 @@ Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 | TC-DX-10 | DX / 6 | Not run | Not run | untested | No reviewed mapping |
 | TC-NH-06 | NH / 6 | Not run | Not run | untested | No reviewed mapping |
 | TC-NH-07 | NH / 6 | Not run | Not run | untested | No reviewed mapping |
-| TC-TOP-01 | TOP / 6 | PASS | PASS | pass | No reviewed mapping |
-| TC-TOP-02 | TOP / 6 | PASS | PASS | pass | No reviewed mapping |
-| TC-TOP-03 | TOP / 6 | PASS | PASS | pass | No reviewed mapping |
-| TC-TOP-04 | TOP / 6 | PASS | PASS | pass | No reviewed mapping |
-| TC-TOP-05 | TOP / 6 | PASS | PASS | pass | No reviewed mapping |
-| TC-TOP-06 | TOP / 6 | PASS | PASS | pass | No reviewed mapping |
+| TC-TOP-01 | TOP / 6 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-117-live-browser/REPORT.md) |
+| TC-TOP-02 | TOP / 6 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-117-live-browser/REPORT.md) |
+| TC-TOP-03 | TOP / 6 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-117-live-browser/REPORT.md) |
+| TC-TOP-04 | TOP / 6 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-117-live-browser/REPORT.md) |
+| TC-TOP-05 | TOP / 6 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-117-live-browser/REPORT.md) |
+| TC-TOP-06 | TOP / 6 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-117-manual-topology/REPORT.md) |
 | TC-DI-05 | DI / 7 | Not run | Not run | untested | No reviewed mapping |
 | TC-DI-06 | DI / 7 | Not run | Not run | untested | No reviewed mapping |
 | TC-DI-07 | DI / 7 | Not run | Not run | untested | No reviewed mapping |
@@ -120,10 +120,10 @@ Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 | TC-DASH-02 | DASH / 7 | PASS | PASS | pass | No reviewed mapping |
 | TC-DI-14 | DI / 7 | Not run | Not run | untested | No reviewed mapping |
 | TC-DI-15 | DI / 7 | Not run | Not run | untested | No reviewed mapping |
-| TC-DI-16 | DI / 7 | Not run | Not run | untested | No reviewed mapping |
-| TC-DI-17 | DI / 7 | Not run | Not run | untested | No reviewed mapping |
-| TC-DI-18 | DI / 7 | Not run | Not run | untested | No reviewed mapping |
-| TC-DI-19 | DI / 7 | Not run | Not run | untested | No reviewed mapping |
+| TC-DI-16 | DI / 7 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-15-issue-164-identity-review/REPORT.md); supporting: [source report](../test-runs/2026-10-15-issue-164-final-refresh/REPORT.md) |
+| TC-DI-17 | DI / 7 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-15-issue-164-identity-review/REPORT.md); supporting: [source report](../test-runs/2026-10-15-issue-164-final-refresh/REPORT.md) |
+| TC-DI-18 | DI / 7 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-15-issue-164-identity-review/REPORT.md); supporting: [source report](../test-runs/2026-10-15-issue-164-final-refresh/REPORT.md) |
+| TC-DI-19 | DI / 7 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-15-issue-164-identity-review/REPORT.md); supporting: [source report](../test-runs/2026-10-15-issue-164-final-refresh/REPORT.md) |
 | TC-DSC-06 | DSC / 7 | Not run | Not run | untested | No reviewed mapping |
 | TC-DSC-07 | DSC / 7 | Not run | Not run | untested | No reviewed mapping |
 | TC-DASH-03 | DASH / 8 | PASS | PASS | pass | No reviewed mapping |
@@ -143,51 +143,51 @@ Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 | TC-HIS-06 | HIS / 8 | PASS | PASS | pass | No reviewed mapping |
 | TC-HIS-07 | HIS / 8 | PASS | PASS | pass | No reviewed mapping |
 | TC-HIS-08 | HIS / 8 | PASS | PASS | pass | No reviewed mapping |
-| TC-SHL-07 | SHL / 8 | PASS | Not run | needs-decision | No reviewed mapping |
+| TC-SHL-07 | SHL / 8 | PASS | Not run | needs-decision | partial historical coverage: [source report](../test-runs/2026-10-18-issue-153-failure-escalation/REPORT.md) |
 | TC-SHL-08 | SHL / 8 | PASS | Not run | needs-decision | No reviewed mapping |
 | TC-MNT-01 | MNT / 8 | PASS | PASS | pass | No reviewed mapping |
-| TC-MNT-02 | MNT / 8 | Not run | Not run | untested | No reviewed mapping |
+| TC-MNT-02 | MNT / 8 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-15-issue-122-maintenance-windows/REPORT.md) |
 | TC-MNT-03 | MNT / 8 | Not run | Not run | untested | No reviewed mapping |
 | TC-MNT-04 | MNT / 8 | Not run | Not run | untested | No reviewed mapping |
 | TC-MNT-05 | MNT / 8 | Not run | Not run | untested | No reviewed mapping |
 | TC-MNT-06 | MNT / 8 | Not run | Not run | untested | No reviewed mapping |
-| TC-MNT-07 | MNT / 8 | Not run | Not run | untested | No reviewed mapping |
+| TC-MNT-07 | MNT / 8 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-15-issue-122-maintenance-windows/REPORT.md) |
 | TC-MNT-09 | MNT / 8 | Not run | Not run | untested | No reviewed mapping |
-| TC-MNT-10 | MNT / 8 | Not run | Not run | untested | No reviewed mapping |
+| TC-MNT-10 | MNT / 8 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-15-issue-122-maintenance-windows/REPORT.md) |
 | TC-NCPA-01 | NCPA / 9 | Not run | Not run | untested | No reviewed mapping |
 | TC-NCPA-02 | NCPA / 9 | Not run | Not run | untested | No reviewed mapping |
 | TC-NCPA-03 | NCPA / 9 | Not run | Not run | untested | No reviewed mapping |
 | TC-NCPA-04 | NCPA / 9 | Not run | Not run | untested | No reviewed mapping |
 | TC-NCPA-05 | NCPA / 9 | Not run | Not run | untested | No reviewed mapping |
-| TC-NCPA-06 | NCPA / 9 | Not run | Not run | untested | No reviewed mapping |
-| TC-NCPA-07 | NCPA / 9 | Not run | Not run | untested | No reviewed mapping |
+| TC-NCPA-06 | NCPA / 9 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-15-issue-129-finish-journeys/REPORT.md) |
+| TC-NCPA-07 | NCPA / 9 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-17-issue-182-playwright/REPORT.md) |
 | TC-NCPA-09 | NCPA / 9 | Not run | Not run | untested | partial historical coverage: [source report](../test-runs/2026-10-17-issue-182-playwright/REPORT.md) |
 | TC-NCPA-10 | NCPA / 9 | Not run | Not run | untested | partial historical coverage: [source report](../test-runs/2026-10-17-issue-182-playwright/REPORT.md) |
 | TC-NCPA-11 | NCPA / 9 | Not run | Not run | untested | partial historical coverage: [source report](../test-runs/2026-10-17-issue-182-playwright/REPORT.md) |
-| TC-DI-10 | DI / 9 | Not run | Not run | untested | No reviewed mapping |
+| TC-DI-10 | DI / 9 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-15-issue-129-finish-journeys/REPORT.md) |
 | TC-DASH-09 | DASH / 9 | Not run | Not run | untested | No reviewed mapping |
 | TC-SS-05 | SS / 9 | Not run | Not run | untested | No reviewed mapping |
-| TC-REM-02 | REM / 9 | Not run | Not run | untested | partial historical coverage: [source report](../test-runs/2026-10-17-issue-182-playwright/REPORT.md) |
+| TC-REM-02 | REM / 9 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-17-issue-182-playwright/REPORT.md) |
 | TC-REM-01 | REM / 9 | PASS | PASS | pass | No reviewed mapping |
-| TC-REM-04 | REM / 9 | PARTIALLY PASS | PARTIALLY PASS - | partial | partial historical coverage: [source report](../test-runs/2026-10-17-issue-182-playwright/REPORT.md) |
+| TC-REM-04 | REM / 9 | PARTIALLY PASS | PARTIALLY PASS - | partial | retest required: [source report](../test-runs/2026-10-17-issue-182-playwright/REPORT.md) |
 | TC-REM-03 | REM / 9 | Not run | Not run | untested | No reviewed mapping |
 | TC-REM-05 | REM / 9 | Not run | Not run | untested | No reviewed mapping |
-| TC-REM-07 | REM / 9 | Not run | Not run | untested | No reviewed mapping |
-| TC-REM-09 | REM / 9 | Not run | Not run | untested | No reviewed mapping |
-| TC-REM-06 | REM / 9 | Not run | Not run | untested | No reviewed mapping |
-| TC-REM-08 | REM / 9 | Not run | Not run | untested | No reviewed mapping |
-| TC-REM-10 | REM / 9 | Not run | Not run | untested | partial historical coverage: [source report](../test-runs/2026-10-17-issue-182-playwright/REPORT.md) |
-| TC-RPT-01 | RPT / 10 | Not run | Not run | untested | No reviewed mapping |
-| TC-RPT-02 | RPT / 10 | PASS | PASS | pass | No reviewed mapping |
-| TC-RPT-03 | RPT / 10 | PASS | PASS | pass | No reviewed mapping |
+| TC-REM-07 | REM / 9 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-17-issue-155-remediation-safety/REPORT.md) |
+| TC-REM-09 | REM / 9 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-17-issue-155-remediation-safety/REPORT.md) |
+| TC-REM-06 | REM / 9 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-17-issue-155-remediation-safety/REPORT.md) |
+| TC-REM-08 | REM / 9 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-17-issue-155-remediation-safety/REPORT.md) |
+| TC-REM-10 | REM / 9 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-17-issue-182-playwright/REPORT.md) |
+| TC-RPT-01 | RPT / 10 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-17-issue-134-reports-documentation/REPORT.md) |
+| TC-RPT-02 | RPT / 10 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-17-issue-134-reports-documentation/REPORT.md) |
+| TC-RPT-03 | RPT / 10 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-17-issue-134-reports-documentation/REPORT.md) |
 | TC-RPT-04 | RPT / 10 | PASS | PASS | pass | No reviewed mapping |
 | TC-RPT-05 | RPT / 10 | PASS | PASS | pass | No reviewed mapping |
 | TC-RPT-06 | RPT / 10 | Not run | Not run | untested | No reviewed mapping |
-| TC-LOG-01 | LOG / 10 | PASS | PASS | pass | No reviewed mapping |
+| TC-LOG-01 | LOG / 10 | PASS | PASS | pass | partial historical coverage: [source report](../test-runs/2026-10-15-issue-124-storage-logs/REPORT.md) |
 | TC-LOG-02 | LOG / 10 | PASS | PASS | pass | No reviewed mapping |
-| TC-LOG-03 | LOG / 10 | PASS | PASS | pass | No reviewed mapping |
-| TC-LOG-04 | LOG / 10 | Not run | Not run | untested | No reviewed mapping |
-| TC-SHL-05 | SHL / 10 | PASS | Not run | needs-decision | No reviewed mapping |
+| TC-LOG-03 | LOG / 10 | PASS | PASS | pass | partial historical coverage: [source report](../test-runs/2026-10-15-issue-124-storage-logs/REPORT.md) |
+| TC-LOG-04 | LOG / 10 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-15-issue-124-storage-logs/REPORT.md) |
+| TC-SHL-05 | SHL / 10 | PASS | Not run | needs-decision | retest required: [source report](../test-runs/2026-10-15-issue-124-storage-logs/REPORT.md) |
 | TC-DASH-06 | DASH / 11 | Not run | Not run | untested | No reviewed mapping |
 | TC-MNT-08 | MNT / 11 | Not run | Not run | untested | No reviewed mapping |
 | TC-SET-08 | SET / 11 | PASS | PASS | pass | No reviewed mapping |
@@ -222,7 +222,7 @@ Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 | TC-SEQ-01 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
 | TC-SEQ-02 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
 | TC-SEQ-03 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-SEQ-04 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
+| TC-SEQ-04 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | retest required: [source report](../test-runs/2026-10-15-issue-122-maintenance-windows/REPORT.md) |
 | TC-SEQ-05 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
 | TC-SEQ-06 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
 | TC-SEQ-07 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
@@ -234,11 +234,11 @@ Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 | TC-SEQ-14 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
 | TC-SEQ-15 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
 | TC-SEQ-16 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-SEQ-18 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-SEQ-19 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-SEQ-20 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
+| TC-SEQ-18 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | retest required: [source report](../test-runs/2026-10-17-issue-155-remediation-safety/REPORT.md) |
+| TC-SEQ-19 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | retest required: [source report](../test-runs/2026-10-16-issue-121-local-restart/REPORT.md) |
+| TC-SEQ-20 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | retest required: [source report](../test-runs/2026-10-17-issue-155-remediation-safety/REPORT.md) |
 | TC-SEQ-21 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-SEQ-22 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
+| TC-SEQ-22 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | retest required: [source report](../test-runs/2026-10-17-issue-182-remote-restart/REPORT.md) |
 | TC-SEQ-23 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
 | TC-SEQ-24 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
 | TC-SEQ-09 | SEQ / 15 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |

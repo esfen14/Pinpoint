@@ -35,6 +35,9 @@ def render(text:str,review:dict|None=None) -> str:
         if e:
             name=Path(e['report']).parent.name
             note=f"{e['classification']}: [source report](../test-runs/{name}/REPORT.md)"
+            for supporting in e.get('supporting_reports',[]):
+                support_name=Path(supporting['report']).parent.name
+                note+=f"; supporting: [source report](../test-runs/{support_name}/REPORT.md)"
         out.append('| '+' | '.join(map(cell,[k,f"{c['module']} / {c['phase']}",c['summary_result'],c['detailed_result'],c['status'],note]))+' |')
     return '\n'.join(out)+'\n'
 

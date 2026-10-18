@@ -48,6 +48,22 @@ def validate_review(value:dict,catalog:dict,target_revision:str,root:Path=ROOT) 
         if not re.fullmatch(r'[0-9a-f]{7,40}',tested) or tested not in text:
             raise ValueError('Tested revision must be present in the report; do not infer from its filename')
         day=date.fromisoformat(entry.get('execution_date',''))
+        supporting=entry.get('supporting_reports',[])
+        if not isinstance(supporting,list):raise ValueError('Supporting reports must be a list')
+        seen_reports={entry['report']}
+        for item in supporting:
+            if not isinstance(item,dict) or not item.get('relationship','').strip():
+                raise ValueError('Each supporting report needs a reason it applies')
+            if item.get('report') in seen_reports:raise ValueError('Duplicate primary/supporting report')
+            seen_reports.add(item.get('report'))
+            supporting_source=report_path(item.get('report'),root)
+            supporting_raw=supporting_source.read_bytes();supporting_text=supporting_raw.decode()
+            if item.get('report_sha256')!=hashlib.sha256(supporting_raw).hexdigest():
+                raise ValueError('Supporting report changed')
+            supporting_revision=item.get('tested_revision','')
+            if not re.fullmatch(r'[0-9a-f]{7,40}',supporting_revision) or supporting_revision not in supporting_text:
+                raise ValueError('Supporting report revision must be present in the report')
+            date.fromisoformat(item.get('execution_date',''))
         if entry['classification']=='accepted historical coverage':
             if not value['cutoff_approved']:raise ValueError('Cutoff decision is still provisional')
             if entry.get('catalog_hash')!=catalog[k]['source_hash']:

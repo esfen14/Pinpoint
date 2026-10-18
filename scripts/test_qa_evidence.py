@@ -50,4 +50,19 @@ class EvidenceTests(unittest.TestCase):
             p=root/'review.json';p.write_text(json.dumps(v))
             self.assertEqual(ev.load_review(p,c,'a'*40,root)['TC-X-01']['classification'],'partial historical coverage')
 
+    def test_supporting_report_is_attributed_and_hash_checked(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);c,v=self.fixture(root)
+            p=root/'docs/test-runs/2026-10-18-support/REPORT.md';p.parent.mkdir(parents=True)
+            p.write_text('Revision `fedcba9876`\nRepeated the browser journey.\n')
+            v['entries'][0]['supporting_reports']=[dict(
+                report=p.relative_to(root).as_posix(),report_sha256=hashlib.sha256(p.read_bytes()).hexdigest(),
+                tested_revision='fedcba9876',execution_date='2026-10-18',
+                relationship='Later retest of the same browser journey; supplementary, not full-case credit.')]
+            review=root/'review.json';review.write_text(json.dumps(v))
+            self.assertEqual(len(ev.load_review(review,c,'a'*40,root)['TC-X-01']['supporting_reports']),1)
+            bad=copy.deepcopy(v);bad['entries'][0]['supporting_reports'][0]['report_sha256']='bad'
+            review.write_text(json.dumps(bad))
+            with self.assertRaises(ValueError):ev.load_review(review,c,'a'*40,root)
+
 if __name__=='__main__':unittest.main()
