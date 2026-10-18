@@ -445,6 +445,16 @@ shows the success banner in that case. The wording still differs between the six
 [Reports](Frontend_Modules_and_Routes.md#reports)); the lab re-run of TC-RPT-06 on a deployed
 build is pending.
 
+## Host-report current state (#228)
+
+Host Availability and Hosts by OS now show each host's current state, last check and
+last state change from one bulk Nagios `hostlist` read joined to the archive durations
+(`app/nagios/host_current_status.py`); before, these were always `Unknown` and empty
+because the archive row does not carry them. Host Availability lists only hosts of
+currently monitored devices. Not covered: a host monitored earlier in the period but
+not now is not listed, Hosts by OS keeps its own row set, and the lab re-run of
+TC-RPT-01 on a deployed build is pending.
+
 ## Service-report availability (#198)
 
 The issue branch replaces Network Services and Device Services snapshot counting
