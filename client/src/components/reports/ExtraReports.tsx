@@ -87,7 +87,7 @@ function buildReport(view: ExtraReportView, data: Record<string, unknown>): Repo
   if (view === 'hosts-by-os') {
     const byOs = data.by_os as {
       os_type: string
-      hosts: { hostname: string; state: string; uptime_pct: number | null; last_check: string | null; last_state_change: string | null }[]
+      hosts: { hostname: string; state: string | null; uptime_pct: number | null; last_check: string | null; last_state_change: string | null }[]
     }[]
     const rows: Row[] = []
     for (const group of byOs) {
@@ -95,7 +95,7 @@ function buildReport(view: ExtraReportView, data: Record<string, unknown>): Repo
         rows.push({
           os: group.os_type,
           hostname: host.hostname,
-          state: host.state,
+          state: host.state ?? 'Unavailable',
           uptime: host.uptime_pct,
           lastCheck: host.last_check,
           lastStateChange: host.last_state_change,

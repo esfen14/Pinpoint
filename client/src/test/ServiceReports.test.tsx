@@ -139,7 +139,7 @@ describe('service duration reports', () => {
   })
 
   it('network failed rerun clears prior rows and disables export; custom range reruns correct dates', async () => {
-    mocks.get.mockImplementation((url: string) => Promise.resolve(url.includes('network-services') ? network() : { period, summary: {total: 0, up:0, down:0, unreachable:0, uptime_pct:null}, hosts:[] }))
+    mocks.get.mockImplementation((url: string) => Promise.resolve(url.includes('network-services') ? network() : { period, current_status: current, summary: {total: 0, up:0, down:0, unreachable:0, uptime_pct:null}, hosts:[] }))
     render(<ReportsPage />)
     await waitFor(() => expect(screen.getByRole('button', { name: 'Run Report' })).toBeEnabled())
     fireEvent.click(screen.getByRole('tab', { name: 'Network Services' }))
@@ -159,7 +159,7 @@ describe('service duration reports', () => {
 
 
 it('invalid device custom rerun removes the prior result and export', async () => {
-  mocks.get.mockImplementation((url: string) => Promise.resolve(url.includes('device-services') ? device() : { period, summary: {total:0,up:0,down:0,unreachable:0,uptime_pct:null}, hosts:[] }))
+  mocks.get.mockImplementation((url: string) => Promise.resolve(url.includes('device-services') ? device() : { period, current_status: current, summary: {total:0,up:0,down:0,unreachable:0,uptime_pct:null}, hosts:[] }))
   render(<ReportsPage />)
   await waitFor(() => expect(screen.getByRole('button', { name: 'Run Report' })).toBeEnabled())
   fireEvent.click(screen.getByRole('tab', { name: 'Device Services' }))
@@ -176,7 +176,7 @@ it('invalid device custom rerun removes the prior result and export', async () =
 })
 
 it('draft period edits do not request data until Run Report applies them', async () => {
-  mocks.get.mockImplementation((url: string) => Promise.resolve(url.includes('network-services') ? network() : { period, summary: {total: 0, up:0, down:0, unreachable:0, uptime_pct:null}, hosts:[] }))
+  mocks.get.mockImplementation((url: string) => Promise.resolve(url.includes('network-services') ? network() : { period, current_status: current, summary: {total: 0, up:0, down:0, unreachable:0, uptime_pct:null}, hosts:[] }))
   render(<ReportsPage />)
   await waitFor(() => expect(screen.getByRole('button', { name: 'Run Report' })).toBeEnabled())
   const calls = mocks.get.mock.calls.length

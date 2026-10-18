@@ -4,7 +4,7 @@ import { useSystemSettings } from '../../contexts/SystemSettingsContext'
 import { formatServerDateTime } from '../../utils/formatDateTime'
 import { exportRows, type ExportMeta } from '../../utils/exportData'
 import { ExportMenu } from '../shared/ExportMenu'
-import type { HostAvailabilityRow } from '../../types/report'
+import type { CurrentServiceStatus, HostAvailabilityRow } from '../../types/report'
 import { Pagination } from '../shared/Pagination'
 import { InsufficientHistoryNotice } from './InsufficientHistoryNotice'
 
@@ -17,11 +17,15 @@ type HostAvailabilityReportTableProps = {
   // The last run failed: these rows are from an earlier run, so export is withheld.
   stale?: boolean
   meta?: ExportMeta
+  // Whether the current state, last check and last state change could be read from Nagios.
+  currentStatus?: CurrentServiceStatus
 }
 
 const PAGE_SIZE = 10
+const NO_STATE = 'No current state'
 
-function StatusBadge({ state }: { state: string }) {
+function StatusBadge({ state }: { state: string | null }) {
+  if (state === null) return <span className="text-gray-500 dark:text-gray-400">—</span>
   const isUp = state === 'Up'
   return (
     <span
@@ -44,6 +48,7 @@ export function HostAvailabilityReportTable({
   onDetails,
   stale = false,
   meta,
+  currentStatus,
 }: HostAvailabilityReportTableProps) {
   const { settings } = useSystemSettings()
   const [query, setQuery] = useState('')
@@ -52,13 +57,13 @@ export function HostAvailabilityReportTable({
   const [statusFilter, setStatusFilter] = useState<string>('All')
   const [page, setPage] = useState(1)
 
-  const states = useMemo(() => ['All', ...Array.from(new Set(hosts.map((h) => h.state)))], [hosts])
+  const states = useMemo(() => ['All', ...Array.from(new Set(hosts.map((h) => h.state ?? NO_STATE)))], [hosts])
 
   const filtered = useMemo(() => {
     let result = hosts
 
     if (statusFilter !== 'All') {
-      result = result.filter((h) => h.state === statusFilter)
+      result = result.filter((h) => (h.state ?? NO_STATE) === statusFilter)
     }
 
     if (query.trim()) {
@@ -77,7 +82,7 @@ export function HostAvailabilityReportTable({
 
   const exportData = filtered.map((h) => ({
     Hostname: h.hostname,
-    State: h.state,
+    State: h.state ?? '',
     'Uptime %': h.uptimePct ?? '',
     'Up (seconds)': h.upSeconds,
     'Down (seconds)': h.downSeconds,
@@ -154,6 +159,11 @@ export function HostAvailabilityReportTable({
 
       {!isLoading && !stale && hosts.length > 0 && hosts.every((h) => h.knownSeconds === 0) && (
         <InsufficientHistoryNotice subject="these hosts" />
+      )}
+      {!isLoading && currentStatus && !currentStatus.available && currentStatus.notice && (
+        <p role="status" className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+          {currentStatus.notice}
+        </p>
       )}
       {stale && (
         <p role="alert" className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">

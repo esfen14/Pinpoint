@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AvailabilityDetailDrawer } from '../components/reports/AvailabilityDetailDrawer'
 import { AlertHistogramReport, AlertSummaryReport } from '../components/reports/AlertAnalysisReports'
 import { HostAvailabilityReportTable } from '../components/reports/HostAvailabilityReportTable'
+import { fromHostAvailabilityResponse } from '../types/report'
 import { ReportsPage } from '../pages/ReportsPage'
 import { exportMeta, formatDuration } from '../lib/reportFormat'
 import type { AlertHistogram, AlertSummary, AvailabilityDetail } from '../types/report'
@@ -227,8 +228,50 @@ describe('host availability table', () => {
   })
 })
 
+describe('host availability current state (#228)', () => {
+  const row = (overrides = {}) => ({ hostname: 'web-01', state: 'Up' as string | null, uptimePct: 80, upSeconds: 80, downSeconds: 20,
+    unreachableSeconds: 0, knownSeconds: 100, lastCheck: '2026-10-18T15:59:00+00:00', lastStateChange: '2026-10-17T09:00:00+00:00', ...overrides })
+  const available = { available: true, observed_at: '2026-10-18T16:00:00+00:00', notice: null }
+  const unavailable = { available: false, observed_at: null, notice: 'Current status unavailable. Historical availability is still shown; retry the report to refresh status.' }
+
+  it('shows each host state and its last check and last state change', () => {
+    render(<HostAvailabilityReportTable hosts={[row(), row({ hostname: 'db-01', state: 'Down' })]} isLoading={false} currentStatus={available} />)
+    expect(screen.getByText('Up')).toBeInTheDocument()
+    expect(screen.getByText('Down')).toBeInTheDocument()
+    expect(screen.queryByText('Unknown')).not.toBeInTheDocument()
+    const web = screen.getByRole('row', { name: /web-01/ })
+    expect(within(web).queryAllByText('—')).toHaveLength(0)
+  })
+
+  it('shows a dash, not a red badge, for a host with no current state', () => {
+    render(<HostAvailabilityReportTable hosts={[row({ state: null, lastCheck: null, lastStateChange: null })]} isLoading={false} currentStatus={unavailable} />)
+    const web = screen.getByRole('row', { name: /web-01/ })
+    expect(within(web).queryByText('Unknown')).not.toBeInTheDocument()
+    expect(within(web).queryByText('Down')).not.toBeInTheDocument()
+    expect(within(web).getAllByText('—').length).toBeGreaterThanOrEqual(3)
+  })
+
+  it('says why when current status could not be read, and not otherwise', () => {
+    const { rerender } = render(<HostAvailabilityReportTable hosts={[row({ state: null })]} isLoading={false} currentStatus={unavailable} />)
+    expect(screen.getByText(/Current status unavailable/)).toBeInTheDocument()
+    rerender(<HostAvailabilityReportTable hosts={[row()]} isLoading={false} currentStatus={available} />)
+    expect(screen.queryByText(/Current status unavailable/)).not.toBeInTheDocument()
+  })
+
+  it('maps the response, keeping a null state and the current-status context', () => {
+    const report = fromHostAvailabilityResponse({
+      period: { period: 'last_24h', start: '2026-10-17T16:00:00+00:00', end: '2026-10-18T16:00:00+00:00' },
+      summary: { total: 1, up: 0, down: 0, unreachable: 0, uptime_pct: 80 },
+      current_status: unavailable,
+      hosts: [{ hostname: 'web-01', state: null, uptime_pct: 80, up_seconds: 80, down_seconds: 20, unreachable_seconds: 0, known_seconds: 100, last_check: null, last_state_change: null }],
+    })
+    expect(report.hosts[0].state).toBeNull()
+    expect(report.currentStatus).toEqual(unavailable)
+  })
+})
+
 describe('reports page scope and applied query', () => {
-  const availabilityBody = { period, summary: { total: 0, up: 0, down: 0, unreachable: 0, uptime_pct: null }, hosts: [] }
+  const availabilityBody = { period, summary: { total: 0, up: 0, down: 0, unreachable: 0, uptime_pct: null }, current_status: { available: true, observed_at: null, notice: null }, hosts: [] }
 
   it('lists the views with summary cards first, then the others', () => {
     mocks.get.mockResolvedValue(availabilityBody)

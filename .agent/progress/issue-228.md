@@ -32,7 +32,7 @@ Write the whole plan first. Precedent: `server/app/nagios/service_availability.p
 1. [x] Tests first (red): `server/tests/unit/test_report_availability.py` and a new `server/tests/unit/test_host_current_status.py`: status join, ISO timestamps, summary counts, unavailable status notice with null state, pending host, monitored-only filter, hosts-by-os state.
 2. [x] New `server/app/nagios/host_current_status.py`: normalize one bulk `hostlist` read (details, enumerate) to `{host: {state, last_check, last_state_change}}`, reusing `request_cgi` and `AvailabilityError` from `service_availability.py`.
 3. [x] `server/app/api/system/report.py`: join current status into `/report/availability` and `/report/hosts-by-os` rows, add `current_status` {available, observed_at, notice}, and keep only hosts of monitored devices in `/report/availability` (via `monitoring_state`, `devices_by_host_name`).
-4. [ ] Frontend: `client/src/components/reports/HostAvailabilityReportTable.tsx`, `client/src/types` and `ReportsPage.tsx`: show the notice when current status is unavailable, show state `—` for null; extend vitest tests.
+4. [x] Frontend: `client/src/components/reports/HostAvailabilityReportTable.tsx`, `client/src/types` and `ReportsPage.tsx`: show the notice when current status is unavailable, show state `—` for null; extend vitest tests.
 5. [ ] Specs: `spec files/Backend_Modules_and_Routes.md`, `Frontend_Modules_and_Routes.md`, `Reports_Requirements.md` §3, `Implementation_Status.md`, `docs/manuals/Reports.md`.
 6. [ ] `scripts/verify.sh backend`, `frontend`, `docs`, then `all`.
 
@@ -46,13 +46,14 @@ One row per loop round, newest last.
 | 1 | Tests first: `test_host_current_status.py` (new) and new classes in `test_report_availability.py`; existing tests now seed monitored devices | pytest | red: module `host_current_status` missing |
 | 2 | New `app/nagios/host_current_status.py` (bulk `hostlist` read, join context) | `pytest tests/unit/test_host_current_status.py` | 12 passed |
 | 3 | `report.py`: join status into availability and hosts-by-os, `current_status` context, monitored-only rows | report test files | 22 new tests pass; the same 9 `time.tzset` failures (Windows) as on clean main, none new |
+| 4 | Frontend: `current_status` in types and mapper, null state shows a dash, notice and export warning, Hosts by OS null state shows Unavailable; tests (3 new fail without the source change, then pass); `ServiceReports.test.tsx` fixtures gained `current_status` | `npx vitest run` ReportsAnalysis and ServiceReports, `npx tsc -b` | 35 passed, tsc clean |
 
 ## State for the next session
 
-- Last check run (exact command): `cd server && python -m pytest tests/unit/test_report_availability.py tests/unit/test_host_current_status.py tests/unit/test_report_events.py tests/unit/test_report_notifications_alerts.py tests/unit/test_report_service_availability.py -q`
-- Result (first failing lines, or "green"): 147 passed, 9 failed; the 9 are `AttributeError: module 'time' has no attribute 'tzset'` in `test_report_service_availability.py` and fail the same on clean main (Windows only). No new failures.
-- Hypothesis: backend done. Frontend still reads `state` and `last_check` from the row, so it should already show them; needs the `current_status` notice and null-state text.
-- Next action: plan step 4. Read `client/src/components/reports/HostAvailabilityReportTable.tsx`, the Reports types and `ReportsPage.tsx`; write the failing vitest first.
+- Last check run (exact command): `cd client && npx vitest run src/test/ReportsAnalysis.test.tsx src/test/ServiceReports.test.tsx && npx tsc -b`
+- Result (first failing lines, or "green"): green (35 passed; tsc clean)
+- Hypothesis: code is done. Remaining work is the specs and the full verify gates.
+- Next action: plan step 5. Update `spec files/Backend_Modules_and_Routes.md` (availability row, `current_status`, monitored-only rows), `Frontend_Modules_and_Routes.md` (Host Availability row), `Reports_Requirements.md` section 3 (host rows), `Implementation_Status.md`, `docs/manuals/Reports.md`; then `scripts/verify.sh docs`.
 
 ## Decisions and notes
 

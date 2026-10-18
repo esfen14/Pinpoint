@@ -231,6 +231,7 @@ export function ReportsPage() {
         Filters: appliedQuery,
         Units: 'Durations are in seconds',
         Denominator: 'Uptime % = Up time / known host-state time (Up + Down + Unreachable); no recorded data is excluded',
+        Warning: availability.currentStatus.available ? null : availability.currentStatus.notice,
       })
     : undefined
   const serviceMeta = networkServices
@@ -531,6 +532,7 @@ export function ReportsPage() {
         {view === 'availability' ? (
           <>
             <HostAvailabilityReportTable
+              currentStatus={availability?.currentStatus}
               hosts={availability?.hosts ?? []}
               isLoading={isLoading}
               stale={stale}
