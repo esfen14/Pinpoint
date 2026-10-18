@@ -1,12 +1,14 @@
 # AI automated testing readiness plan
 
 Date: 2026-10-18 (Asia/Manila)
-State: Implementation in progress — authorized offline tooling milestone (#206)
+State: Implementation in progress — appliance prepared; acceptance launcher/card pending (#206)
 Tracking issue: [#206](https://github.com/esfen14/Pinpoint/issues/206); issue-scoped progress is [issue-206.md](issue-206.md).
-Current authorization: implement readiness tooling. [Issue #206](https://github.com/esfen14/Pinpoint/issues/206)
-tracks the offline milestone in an isolated checkout. No live case execution, lab
-connection, provisioning/reset or fault injection is authorized by that milestone.
-The original planning-only instruction was superseded by the user's go signal.
+Current authorization: implement readiness tooling in the isolated issue checkout.
+The later user instruction authorized access to the exclusive local VirtualBox
+appliance, followed by explicit backup/deployment/migration/restart/Staff setup
+approval. Those setup operations are complete and documented below. Actual case
+execution, fault injection, snapshot restore and new scans remain unauthorized.
+An existing automatic startup scan is disclosed in the preparation report.
 
 ## Finish condition
 
@@ -21,6 +23,7 @@ claim that the product passes or that every case can run without human involveme
 - [x] Coordinate supervisor and mutating VM-controller entries with one private per-user host claim; verify inherited descriptors and cross-ledger exclusion using local fixtures. Collect structured host-only observations without asserting deployment readiness.
 - [x] Implement/test concrete pinned-image container creation, identity/isolation verification, bounded attach and owned-resource removal/absence with durable intent and consumed-transport binding (16 synthetic contracts); fix worker config reload using 7 offline frontend helper checks.
 - [x] Implement and fixture-test the owned private bridge (11 Unix-only contracts), container custody integration (16 contracts) and standalone Git/artifact/process observer (6 contracts); observed disk/process facts remain separate from actual running/served identity.
+- [x] Complete authorized appliance setup: consistent verified backups, exact-target build/deployment/migrations, Staff initialization and served-artifact checks; disclose startup scan and preserve temporary scheduler pause.
 - [ ] Connect and prove the production supervisor driver: actual ownership/deployment/baseline receipts, inherited controller/driver wiring, bounded process-tree cancellation, sanitized result parsing and verified live cleanup/recovery.
 - [ ] Every selected case has an unambiguous expectation, executor, environment, prerequisites, evidence and restoration procedure.
 - [ ] Every selected case maps to a specific tool/spec/project, fixture, assertion and evidence output using the reviewed testing stack.
@@ -363,11 +366,9 @@ execution and missing mandatory evidence block the affected cases.
 
 ## State for the next session
 
-- Checklist audited after the partial-pass follow-up: completed offline work is checked below its owning phase; incomplete aggregates are split rather than marked wholly done.
-- Last relevant check: `scripts/verify.sh docs` (165 isolated checks) after bridge/observer preparation, plus focused bridge/deployment/container checks and Python/shell syntax/whitespace. No local backend or unchanged frontend suite rerun this pass. The previous full frontend gate passed 1003 product tests and 7 offline helper checks; its proof is separate. Earlier combined-run failure #210 remains recorded independently from passing stage reruns.
-- Result: 4310 backend tests passed (14 skips), 1003 frontend tests passed, build and lint passed with zero errors. Offline milestone is in draft PR #207; inspect its final-head CI. No live cases have been executed.
-- Next action: connect the tested bridge/container/process/results through the trusted pilot driver, obtain actual backend launch/import and served-frontend proof plus baseline/session recovery, and finish the TC-SS-04 execution card. Observer disk/process matches do not establish a running version. The user chose offline preparation; no preflight or live start is pending. Skip local backend tests while backend application code is unchanged.
-
+- The appliance now runs target `299ab3b` after controlled deployment/restart; initialized Staff has zero permissions. Raw evidence and a verified backup are private. The scheduler is temporarily off; reboot invalidates the baseline.
+- Latest completed offline checks remain 165 isolated contracts. The actual target frontend build, dependency check and both database migrations/integrity checks passed during approved setup. Report-only docs verification is recorded in the latest checkpoint below; no local backend suite or unchanged frontend suite is repeated.
+- Next action: integrate trusted pilot driver, fresh runtime/baseline proof and session recovery, then complete/review the TC-SS-04 execution card and obtain explicit test start. No acceptance case has run; no VM-setup approval question is pending.
 
 ## Decisions and notes
 
@@ -384,3 +385,37 @@ passes when application backend code is unchanged. Run focused QA tooling checks
 the docs gate and relevant frontend checks. Existing GitHub CI may still schedule
 a backend job automatically; do not claim that job passed or change CI policy
 without an actual result. No local backend suite is needed for this change.
+
+## Appliance preparation checkpoint (2026-10-18)
+
+The user's VM-access instruction superseded offline-only preparation. They then
+explicitly approved backup, deployment of `299ab3b`, dependencies/build/migrations,
+application restart and disposable Staff initialization, preserving existing data.
+That work is complete; acceptance execution remains separately gated. No approval
+question is pending. See the [preparation report](../../docs/test-runs/2026-10-18-issue-206-pilot-preflight/REPORT.md).
+
+- [x] Check exclusive actual UUID/controller/process/loopback endpoint ownership under the host claim; start the existing appliance without restoring a snapshot.
+- [x] Take and verify consistent application/venv/configuration/database backups before deployment; retain a SHA-256-verified private host copy.
+- [x] Build/deploy exact target `299ab3ba7203c89a3ca5d8fabea42d9e5f239be2`; install/check runtime dependencies, migrate both databases to `e153c4a8b2d7`, confirm integrity and active service.
+- [x] Verify 123 backend app / 279 frontend source Git blobs and all 16 HTTP-served artifacts; record controlled post-deployment restart/process metadata without inventing a supervisor proof receipt.
+- [x] Create/initialize disposable Staff through supported APIs with zero permissions; close and verify both setup sessions.
+- [x] Disclose the automatic scan after boot (06:39:54–06:40:05 UTC) before pause; disable the serving scheduler with a temporary runtime environment override. Keep persisted configuration unchanged and record that reboot invalidates this baseline.
+- [x] Record preparation evidence, index and queue log; keep TC-SS-04 Not run (0 attempts, 0 batches), preserve human verdicts.
+- [ ] Integrate the trusted driver and fresh runtime/baseline/session-recovery proof; complete/review the pilot card, then obtain explicit acceptance start.
+
+Private evidence: `/home/paeng/pinpoint-test-results/2026-10-18-issue-206-preparation`.
+Guest backup: `/var/backups/pinpoint/qa-20261018-299ab3b`. The original administrator
+and five discovery devices were retained; one Staff user was added. An existing
+automatic scan occurred before the consistent backup; three scan records were
+retained afterwards. This is not a fresh/restored appliance or a scan-free boot.
+No agent/API scan command, fault injection, snapshot restore, acceptance browser
+or acceptance Docker container was launched. VM remains running with scheduler off.
+Staff credentials are private in the configured controller state. The matching
+administrator identity came from another saved private credential set after the
+configured set returned 401; no administrator reset occurred.
+
+Latest verification: `scripts/verify.sh docs` passed (165 isolated contracts),
+v3 `today-ss04` source check passed and `git diff --check` passed. Prior head
+`04f317e9` passed all CI jobs in run 39103841594; new checkpoint CI is separate.
+No local backend suite or unchanged frontend suite is required; the actual target's
+frontend build and dependency/migration checks passed during approved deployment.

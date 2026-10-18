@@ -17,6 +17,7 @@ Status: in-progress
 - [x] Share a fixed per-user host claim between supervisor and mutating VM controllers, and collect structured host-only ownership observations; verify with local fixtures without claiming running application identity.
 - [x] Implement concrete pinned-image Docker lifecycle with durable intent/consumed-transport binding and verified owned-resource cleanup (16 synthetic contracts); fix and offline-test Playwright worker reload without launching a browser (7 frontend helper checks).
 - [x] Implement the owned bounded bridge with durable custody/cleanup (11 Unix-only contracts), connect container custody checks (16 container contracts), and add standalone Git/artifact/process observations (6 fixtures) that never claim verified runtime identity.
+- [x] Prepare the authorized exclusive appliance: verified backup, exact deployment/build/migrations, initialized Staff, served artifacts and closed setup sessions; disclose the startup scan and temporary scheduler pause.
 - [ ] Complete production supervisor-driver integration and live validation: actual controller/deployment/baseline proofs, inherited controller/driver wiring, bounded process-tree control, sanitized result parsing and verified recovery. This is part of overall readiness, not a claim that the offline milestone executes cases.
 
 | Issue requirement | Finish-condition item | Proof |
@@ -65,10 +66,9 @@ and require separately authorized live evidence where needed.
 
 ## State for the next session
 
-- Last relevant check: `scripts/verify.sh docs > /tmp/issue-206-bridge-docs.log 2>&1` (165 isolated contracts), focused bridge/deployment/container checks, Python/shell syntax and whitespace. Frontend application/adapter code is unchanged in this pass; prior frontend proof remains attributed separately. Final observed results and exact-head CI proof are recorded in draft PR #207.
-- Result: owned bridge and standalone read-only deployment observation components are implemented and exercised using local Unix sockets and disposable Git/file/proc fixtures only. Container checks bridge custody and has 16 synthetic contracts. Observer matches never become running-version proof; no live entry, SSH, appliance origin, Docker daemon, browser or account was used. Backend and frontend application code is unchanged.
-- Finish conditions: both progress checklists mark process/result, shared host-control, concrete container/worker, owned bridge and read-only observation components complete and retain production integration/live-proof requirements unchecked. Original-checkout copies are synchronized after checkpoint.
-- Next action: connect the tested bridge/container/process/results through a trusted pilot driver with actual backend launch/import and served-frontend proof, baseline/session recovery and complete TC-SS-04 card. Read-only observer facts are insufficient for runtime readiness. The user chose offline preparation; no lab-access approval is pending. Skip local backend tests while application backend code is unchanged.
+- Current milestone: authorized appliance preparation complete; acceptance Not run. Exact target deployed, Staff ready, scheduler temporarily off; preparation report and checklist updated below.
+- Next action: integrate the trusted pilot driver with fresh actual deployment/baseline proof, bounded bridge/container lifecycle, strict results and verified session cleanup; then complete/review the card and show it for a separate explicit acceptance start. VM setup approval is complete and does not need to be requested again.
+- Preserve the temporary scheduler pause, private backups and raw evidence. A reboot loses the runtime override and requires baseline recheck. Do not restore/re-enable schedules as routine cleanup. No local backend tests while backend application code is unchanged.
 
 ## Decisions and notes
 
@@ -293,3 +293,47 @@ v1/v2 are preserved as superseded, never started. Both finish-condition checklis
 and today progress are synchronized to the original checkout after checkpoint.
 PR #207 records exact-head CI; backend is automatically scheduled by existing CI,
 not a requested local test or a reason to delay this helper-only pass.
+
+## Authorized appliance preparation (2026-10-18)
+
+User now explicitly authorizes continuing preparations by accessing the VMs.
+This initially superseded the earlier offline-only preference for read-only
+preflight of `today-ss04` (v3 queue). The subsequent explicit backup/deployment/Staff
+approval and its completed operations are recorded below; no acceptance start was granted. Check host ownership first, hold the cooperative host
+claim across guest reads, retain private raw observations and commit only sanitized
+facts. Inspect actual deployed source/build/process and Staff prerequisites;
+record uncertainty instead of claiming running identity from Git HEAD.
+
+## Appliance preparation checkpoint (2026-10-18)
+
+The user's VM-access instruction superseded offline-only preparation. They then
+explicitly approved backup, deployment of `299ab3b`, dependencies/build/migrations,
+application restart and disposable Staff initialization, preserving existing data.
+That work is complete; acceptance execution remains separately gated. No approval
+question is pending. See the [preparation report](../../docs/test-runs/2026-10-18-issue-206-pilot-preflight/REPORT.md).
+
+- [x] Check exclusive actual UUID/controller/process/loopback endpoint ownership under the host claim; start the existing appliance without restoring a snapshot.
+- [x] Take and verify consistent application/venv/configuration/database backups before deployment; retain a SHA-256-verified private host copy.
+- [x] Build/deploy exact target `299ab3ba7203c89a3ca5d8fabea42d9e5f239be2`; install/check runtime dependencies, migrate both databases to `e153c4a8b2d7`, confirm integrity and active service.
+- [x] Verify 123 backend app / 279 frontend source Git blobs and all 16 HTTP-served artifacts; record controlled post-deployment restart/process metadata without inventing a supervisor proof receipt.
+- [x] Create/initialize disposable Staff through supported APIs with zero permissions; close and verify both setup sessions.
+- [x] Disclose the automatic scan after boot (06:39:54–06:40:05 UTC) before pause; disable the serving scheduler with a temporary runtime environment override. Keep persisted configuration unchanged and record that reboot invalidates this baseline.
+- [x] Record preparation evidence, index and queue log; keep TC-SS-04 Not run (0 attempts, 0 batches), preserve human verdicts.
+- [ ] Integrate the trusted driver and fresh runtime/baseline/session-recovery proof; complete/review the pilot card, then obtain explicit acceptance start.
+
+Private evidence: `/home/paeng/pinpoint-test-results/2026-10-18-issue-206-preparation`.
+Guest backup: `/var/backups/pinpoint/qa-20261018-299ab3b`. The original administrator
+and five discovery devices were retained; one Staff user was added. An existing
+automatic scan occurred before the consistent backup; three scan records were
+retained afterwards. This is not a fresh/restored appliance or a scan-free boot.
+No agent/API scan command, fault injection, snapshot restore, acceptance browser
+or acceptance Docker container was launched. VM remains running with scheduler off.
+Staff credentials are private in the configured controller state. The matching
+administrator identity came from another saved private credential set after the
+configured set returned 401; no administrator reset occurred.
+
+Latest verification: `scripts/verify.sh docs` passed (165 isolated contracts),
+v3 `today-ss04` source check passed and `git diff --check` passed. Prior head
+`04f317e9` passed all CI jobs in run 39103841594; new checkpoint CI is separate.
+No local backend suite or unchanged frontend suite is required; the actual target's
+frontend build and dependency/migration checks passed during approved deployment.
