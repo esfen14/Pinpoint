@@ -442,14 +442,15 @@ and [the capability report](../docs/test-runs/2026-10-14-issue-128-ncpa-probe/RE
 The deployment API and UI now distinguish a successful agent installation from a
 failed Nagios configuration attachment; per-device outcomes stay tied to the
 agent install, and safe fixed errors identify the attachment stage. Focused
-backend/frontend regressions pass. A supported QA run confirms helper compatibility, successful NCPA deployment and
+backend/frontend regressions pass, and the full `scripts/verify.sh all` gate passes (4,333 backend tests, 1,016 frontend tests, docs, build and lint; 14 backend skips and 33 existing lint warnings). A supported QA run confirms helper compatibility, successful NCPA deployment and
 CPU/memory/disk metrics in Network Health. Read-only diagnostics on the originating
 appliance then confirmed the reported helper rejection at 18:21 UTC (app
 `65a5862c`) and that the current helper plus its exact sudoers drop-in were
 created at 18:33 UTC. Their current metadata and helper-source hash match the
 restricted installer helper from PR #7 (`b166953d`). The old app logs only a
 generic helper rejection, and the appliance has no base-installer stamp, so the
-exact low-level rejection and full installer release remain unavailable. See
+exact low-level rejection and full installer release remain unavailable. The
+helper change remains in the open draft [Installer PR #7](https://github.com/lorraine-pangilinan/PinPoint-Installer/pull/7), which reports no checks; fresh-installer delivery remains pending. See
 [the live QA report](../docs/test-runs/2026-10-19-issue-234-ncpa-helper/REPORT.md)
 and [the originating-appliance diagnostics](../docs/test-runs/2026-10-19-issue-234-origin-lab/REPORT.md).
 
