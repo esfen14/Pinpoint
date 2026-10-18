@@ -1,7 +1,7 @@
 # Issue #211: Fresh Playwright observation timing
 
 Branch: `issue-211-qa-report-timing`
-Status: blocked
+Status: in-progress
 
 ## Finish condition
 
@@ -30,8 +30,9 @@ Requirement coverage:
 2. [x] Implement bounded provenance rule in scripts/qa_results.py and, only if necessary, adapter/config/driver sources; add meaningful import/driver regressions in scripts/test_qa_results.py and scripts/test_qa_pilot.py; review source hashes when affected.
 3. [x] Update owning spec files/Agent_Workflow_and_CI.md, spec files/Implementation_Status.md and docs/qa/Automation_Readiness.md; verify focused Python/Node helpers and docs gate, with backend omitted per issue.
 4. [x] Prepare source-reviewed immutable recheck card/queue under docs/qa/queues and docs/qa/Issue_211_Recheck_Review.md, blocked on recovery/start; check freshness and refusal to execute.
-5. [ ] Obtain separately scoped recovery review and explicit new start before live work; record a new supervised result only if authorized.
-6. [ ] Re-read issue, verify requirement proofs, checkpoint and open PR against issue-206-qa-readiness; draft if live completion pending. Inspect CI.
+5. [ ] Implement approved audited recovery in scripts/qa_supervisor.py and scripts/qa_recovery.py with isolated tests, preserving original attempt/session data and an exact private ledger archive; gate it on an expiring queue/attempt/checksum-bound recovery grant and fresh cleanup/baseline proof. Wire an explicit recover CLI in scripts/qa_pilot.py, update specs/docs, verify focused helpers/docs.
+6. [ ] Prepare a replacement recheck card after recovery source changes; obtain authorization before applying live recovery and a separate explicit new start before a browser run. Record a new supervised result only if authorized.
+7. [ ] Re-read issue, verify requirement proofs, checkpoint and open PR against issue-206-qa-readiness; draft if live completion pending. Inspect CI.
 
 ## Round log
 
@@ -39,7 +40,6 @@ Requirement coverage:
 |---|---|---|---|
 | Plan | Isolated /tmp/pinpoint-issue-211 based on origin/issue-206-qa-readiness at b350f7dc | gh issue view 211; source inspection | Finish conditions covered; no live access |
 | 1 | Reproduced original rejection before implementation; replaced derived wall end with independent attach bounds/monotonic budget; added real no-browser pinned-worker and real-parser composed regressions; documented timing/trust/uncertainty | scripts/verify.sh docs; scripts/verify.sh frontend; python3 -m py_compile scripts/qa_results.py scripts/qa_pilot.py scripts/qa_container.py; git diff --check | Green: 182 isolated docs contracts, 1003 frontend tests, 8 offline Node checks, build/types/lint (0 errors, 33 existing warnings). Backend skipped per issue; no live access. |
-
 | 2 | Prepared fresh #211 one-case recheck v1 and concrete recovery review; card deliberately non-executable, original pilot/v4/product sources unchanged | qa_queue.py prepare/check/show; validate_card negative check; git diff --quiet for original pilot/v4/application; scripts/verify.sh docs | Green: fresh scope, missing review fails closed, 182 isolated docs contracts. No live resource or private ledger/evidence accessed. |
 
 ## State for the next session
@@ -47,7 +47,7 @@ Requirement coverage:
 - Last check run (exact command): scripts/verify.sh docs > /tmp/issue211-docs-final.log 2>&1
 - Result (first failing lines, or "green"): green; docs and frontend gates pass. Focused parser 13, container 17, composed driver 12 tests pass.
 - Hypothesis: Confirmed slot-duration/wall-end category error. Exact attribution of original 44 ms remains unknown without original per-slot telemetry. Independent owned attach bounds remove that inference without a grace period.
-- Next action (one specific step, not "continue"): Open the draft PR against issue-206-qa-readiness, inspect CI, and request review of docs/qa/Issue_211_Recheck_Review.md. No live work before separately reviewed recovery and explicit start.
+- Next action (one specific step, not "continue"): Add failing isolated recovery tests before implementing the user-approved recovery mechanism; do not apply it to the real ledger or launch a browser.
 
 ## Decisions and notes
 
@@ -63,3 +63,5 @@ Requirement coverage:
 
 - Blocking question: Approve a separate audited halted-state recovery scope described in docs/qa/Issue_211_Recheck_Review.md before implementation/use; no supported recovery command currently exists. A later executable replacement card and explicit start are still required. The source-reviewed v1 card retains human_required=true and is not a live start.
 - Prepared queue: docs/qa/queues/2026-10-18-issue-211-ss04-recheck-v1.json; set issue211-ss04-recheck; owner Paeng; target 299ab3ba7203c89a3ca5d8fabea42d9e5f239be2; scope checked source-current.
+
+- User explicitly approved recovery implementation via the PR #212 recovery-scope question. Plan expanded on that authorization; approval is for implementation, not applying live recovery or starting a browser. PR: https://github.com/esfen14/Pinpoint/pull/212 (draft, base issue-206-qa-readiness).
