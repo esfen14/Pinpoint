@@ -11,6 +11,7 @@ import { ExportMenu } from '../shared/ExportMenu'
 import type { DeviceServicesReport, PeriodMeta } from '../../types/report'
 import { ServiceReportContext } from './ServiceReportContext'
 import { ReportNotes } from './ReportNotes'
+import { InsufficientHistoryNotice } from './InsufficientHistoryNotice'
 import { Pagination } from '../shared/Pagination'
 
 
@@ -444,6 +445,10 @@ export function ExtraReports({ view, query, runKey, onStatus, onCards, onOpenDet
           </div>
         </div>
 
+        {!isLoading && report && (view === 'hosts-by-os' || view === 'device-services') && report.rows.length > 0 &&
+          report.rows.every((r) => (view === 'hosts-by-os' ? r.uptime == null : Number(r.recorded) === 0)) && (
+          <InsufficientHistoryNotice subject={view === 'hosts-by-os' ? 'these hosts' : 'these services'} />
+        )}
         <div className="overflow-x-auto">
           <table className="w-full min-w-275 text-left text-sm">
             <thead className="border-b border-gray-200 text-gray-500 dark:border-white/10 dark:text-gray-500">

@@ -5,6 +5,7 @@ import { exportRows, type ExportMeta } from '../../utils/exportData'
 import { ExportMenu } from '../shared/ExportMenu'
 import type { ServiceRow } from '../../types/report'
 import { Pagination } from '../shared/Pagination'
+import { InsufficientHistoryNotice } from './InsufficientHistoryNotice'
 
 type NetworkServicesReportTableProps = {
   services: ServiceRow[]
@@ -100,6 +101,9 @@ export function NetworkServicesReportTable({
         </div>
       </div>
 
+      {!isLoading && !stale && services.length > 0 && services.every((svc) => svc.known_seconds === 0) && (
+        <InsufficientHistoryNotice subject="these services" />
+      )}
       {stale && (
         <p role="alert" className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
           The last run failed. These rows are from an earlier run and cannot be exported. Run the report again.

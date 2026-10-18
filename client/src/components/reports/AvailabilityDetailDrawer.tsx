@@ -65,6 +65,11 @@ export function AvailabilityDetailDrawer({ hostname, service, query, onClose }: 
         <>
           <section aria-label="State durations">
             <h3 className="mb-3 text-[17px] font-semibold">State durations</h3>
+            {detail.totals.known_seconds === 0 && (
+              <p role="status" className="mb-3 text-[13px] text-[var(--text-muted)]">
+                Nagios has no recorded state for this object in this period, so there is nothing to measure yet.
+              </p>
+            )}
             <div
               role="img"
               aria-label={`State durations over ${formatDuration(window)}: ${detail.totals.states

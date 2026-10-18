@@ -408,3 +408,73 @@ class TestCapturedNativeShape:
         assert [(i["state"], i["duration_seconds"]) for i in detail["intervals"]] == [
             ("no_data", 182742), ("critical", 76398)]
         assert detail["intervals"][0]["unknown_onset"] is True
+
+
+class TestSourceFailuresAndRemovedObjects:
+    """Auth, timeout and removed-object behavior of the new readers and routes."""
+
+    def _get(self, client, url):
+        return client.get(url)
+
+    @pytest.mark.parametrize("failure", ["timeout", "unauthorized", "redirect", "not_json"])
+    def test_upstream_failures_are_sanitized_502s(self, logged_in_client, db_session, seeded_permissions, failure):
+        import requests
+
+        class Response:
+            status_code = 200
+            def raise_for_status(self): pass
+            def json(self): return {}
+
+        def fake_get(url, **kwargs):
+            if failure == "timeout":
+                raise requests.Timeout("secret-host.example connect timed out")
+            resp = Response()
+            if failure == "unauthorized":
+                resp.status_code = 401
+                def raise_for_status():
+                    raise requests.HTTPError("401 for http://nagios.internal/cgi-bin/archivejson.cgi?password=hunter2")
+                resp.raise_for_status = raise_for_status
+            elif failure == "redirect":
+                resp.status_code = 302
+            else:
+                def not_json():
+                    raise ValueError("<html>login</html>")
+                resp.json = not_json
+            return resp
+
+        with patch("app.nagios.service_availability.requests.get", fake_get):
+            for url in (SUMMARY, HISTOGRAM, f"{DETAIL}?hostname=web&service=http"):
+                response = logged_in_client.get(url)
+                assert response.status_code == 502, (failure, url)
+                message = response.get_json()["message"]
+                assert "hunter2" not in message and "nagios.internal" not in message and "secret-host" not in message
+
+    def test_events_for_an_object_missing_from_inventory_are_still_summarized(self, logged_in_client, db_session, seeded_permissions):
+        # History of a removed device remains in the archive; reports do not consult the inventory.
+        with patch(CGI, fake_cgi(alerts=[svc_event(START, 32, host="removed-host")])):
+            data = logged_in_client.get(f"{SUMMARY}?by=host").get_json()["data"]
+        assert [r["hostname"] for r in data["ranking"]] == ["removed-host"]
+
+    def test_host_report_lists_only_hosts_nagios_returns_not_removed_inventory(self, logged_in_client, db_session, seeded_permissions):
+        from tests.support.seed_helpers import _make_host
+        _make_host(db_session, "removed-host")
+        db_session.session.commit()
+        rows = [{"hostname": "kept", "time_up": 10, "time_down": 0, "time_unreachable": 0}]
+        with patch("app.api.system.report.request_host_availability_range", return_value=rows):
+            data = logged_in_client.get("/api/system/report/hosts-by-os").get_json()["data"]
+        names = [h["hostname"] for group in data["by_os"] for h in group["hosts"]]
+        assert names == ["kept"]
+
+    def test_multiple_contacts_for_one_event_remain_separate_deliveries(self, logged_in_client, db_session, seeded_permissions):
+        ts = 1_700_000_000_000
+        notifications = [
+            {"timestamp": ts, "object_type": 2, "host_name": "web", "description": "http", "state": 32,
+             "contact_name": "ops", "notification_type": 1, "plugin_output": "down"},
+            {"timestamp": ts, "object_type": 2, "host_name": "web", "description": "http", "state": 32,
+             "contact_name": "oncall", "notification_type": 1, "plugin_output": "down"},
+        ]
+        with patch("app.api.system.report.request_notifications_range", return_value=notifications) as call, \
+                patch("app.api.system.report.request_notification_count_range", return_value={}):
+            data = logged_in_client.get("/api/system/report/notifications?contact=ops").get_json()["data"]
+        assert [n["contact"] for n in data["notifications"]] == ["ops", "oncall"]
+        assert call.call_args.kwargs["extra"]["contactname"] == "ops"

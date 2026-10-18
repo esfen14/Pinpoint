@@ -183,6 +183,31 @@ describe('alert histogram', () => {
   })
 })
 
+describe('insufficient history', () => {
+  const none = [{ hostname: 'web-01', state: 'Unknown', uptimePct: null, upSeconds: 0, downSeconds: 0, unreachableSeconds: 0, knownSeconds: 0, lastCheck: null, lastStateChange: null }]
+
+  it('host availability says there is nothing to measure when no host has known time', () => {
+    render(<HostAvailabilityReportTable hosts={none} isLoading={false} />)
+    expect(screen.getByRole('status')).toHaveTextContent('no recorded history for these hosts')
+  })
+
+  it('is not shown when any host has recorded time, while loading or for an empty list', () => {
+    const { rerender } = render(<HostAvailabilityReportTable hosts={[{ ...none[0], knownSeconds: 5 }]} isLoading={false} />)
+    expect(screen.queryByText(/no recorded history/)).not.toBeInTheDocument()
+    rerender(<HostAvailabilityReportTable hosts={none} isLoading />)
+    expect(screen.queryByText(/no recorded history/)).not.toBeInTheDocument()
+    rerender(<HostAvailabilityReportTable hosts={[]} isLoading={false} />)
+    expect(screen.queryByText(/no recorded history/)).not.toBeInTheDocument()
+  })
+
+  it('the detail drawer says so when the object has no known time', async () => {
+    mocks.get.mockResolvedValue(detail({ totals: { ...detail().totals, known_seconds: 0, no_recorded_data_seconds: 1000,
+      states: detail().totals.states.map((st) => ({ ...st, seconds: 0, pct_of_total: 0, pct_of_known: null })) } }))
+    renderDrawer()
+    expect(await screen.findByText(/no recorded state for this object/)).toBeInTheDocument()
+  })
+})
+
 describe('host availability table', () => {
   const hosts = [{ hostname: 'web-01', state: 'Up', uptimePct: 80, upSeconds: 80, downSeconds: 20, unreachableSeconds: 0, knownSeconds: 100, lastCheck: null, lastStateChange: null }]
 
