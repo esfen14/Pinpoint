@@ -7,6 +7,7 @@ import { formatServerDateTime } from '../../utils/formatDateTime'
 import { Pagination } from '../shared/Pagination'
 import {
   OUTCOME_LABELS,
+  notifyLabel,
   type RemediationAction,
   type RemediationOutcome,
   type RemediationRun,
@@ -18,6 +19,8 @@ const PER_PAGE = 10
 type Props = {
   // For the Action filter.
   actions: RemediationAction[]
+  // A run to open straight away (from a link on a service row).
+  initialRunId?: number | null
 }
 
 const filterClass =
@@ -32,7 +35,7 @@ function outcomeStyle(outcome: RemediationOutcome): string {
 }
 
 // The run log: every decision the consumer made, including skipped runs and why.
-export function RunLog({ actions }: Props) {
+export function RunLog({ actions, initialRunId = null }: Props) {
   const { settings } = useSystemSettings()
   const [outcome, setOutcome] = useState<RemediationOutcome | ''>('')
   const [actionId, setActionId] = useState('')
@@ -46,7 +49,7 @@ export function RunLog({ actions }: Props) {
   const [pages, setPages] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [selectedRun, setSelectedRun] = useState<number | null>(null)
+  const [selectedRun, setSelectedRun] = useState<number | null>(initialRunId)
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -153,6 +156,7 @@ export function RunLog({ actions }: Props) {
                 <th className="px-4 py-3 font-medium">State</th>
                 <th className="px-4 py-3 font-medium">Outcome</th>
                 <th className="px-4 py-3 font-medium">Reason</th>
+                <th className="px-4 py-3 font-medium">Operator</th>
                 <th className="px-4 py-3 font-medium"><span className="sr-only">Details</span></th>
               </tr>
             </thead>
@@ -172,6 +176,12 @@ export function RunLog({ actions }: Props) {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-[var(--text-muted)]">{run.reason ?? '—'}</td>
+                  <td className="px-4 py-3">
+                    <span className={run.notifyState === 'failed' ? 'text-red-700 dark:text-red-300' : 'text-[var(--text)]'}>
+                      {notifyLabel(run)}
+                    </span>
+                    {run.notifyError && <div className="text-xs text-[var(--text-muted)]">{run.notifyError}</div>}
+                  </td>
                   <td className="px-4 py-3">
                     <button
                       type="button"

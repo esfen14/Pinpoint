@@ -3,6 +3,7 @@ import { AlertTriangle, CheckCircle2, HelpCircle, XCircle } from 'lucide-react'
 import { PageHeader } from '../components/shared/PageHeader'
 import { SummaryStatCard } from '../components/shared/SummaryStatCard'
 import { useForecasts } from '../hooks/useForecasts'
+import { useLastRecoveries } from '../hooks/useLastRecoveries'
 import { ServiceStatusTable } from '../components/system-status/ServiceStatusTable'
 import { useCurrentUser } from '../contexts/CurrentUserContext'
 import { apiDelete, apiGet, apiPost, errorMessage } from '../lib/api'
@@ -27,6 +28,7 @@ function buildQuery(params: Record<string, string | number>) {
 
 export function SystemStatusPage() {
   const { data: forecasts } = useForecasts()
+  const recoveries = useLastRecoveries()
   const { hasPermission } = useCurrentUser()
   const canSeeRecovery = hasPermission('remediation.view')
   const [recoveryActions, setRecoveryActions] = useState<Awaited<ReturnType<typeof listActions>>>([])
@@ -228,6 +230,7 @@ export function SystemStatusPage() {
           onAcknowledge={(service) => setAckTarget(service)}
           onUnacknowledge={unacknowledgeService}
           forecasts={forecasts}
+          recoveries={recoveries}
           autoRecovery={autoRecovery}
         />
 

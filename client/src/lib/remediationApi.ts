@@ -9,6 +9,7 @@ import type {
   RemediationRunFilters,
   RemediationRunList,
   RemediationSettings,
+  RemediationTarget,
   ServiceRecovery,
   ServiceRecoveryInput,
 } from '../types/remediation'
@@ -17,6 +18,10 @@ const BASE = '/api/system/remediation'
 
 export function getActionTypes() {
   return apiGet<{ items: ActionTypeInfo[] }>(`${BASE}/action-types`).then((data) => data.items)
+}
+
+export function getTargets() {
+  return apiGet<{ items: RemediationTarget[] }>(`${BASE}/targets`).then((data) => data.items)
 }
 
 export function listActions() {

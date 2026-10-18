@@ -77,6 +77,24 @@ No failure is being handled until this is fixed. Check, in this order:
 
 Until it recovers, handle failures by hand. PinPoint does not queue a restart for later. Old run records are removed after the retention period (default 90 days); event files nobody handled for 7 days are removed too.
 
+## Being told when recovery fails
+
+An operator who relies on automatic recovery should know when it stops working. When one of the following happens, PinPoint asks Nagios for a **custom notification** about the service. Nagios sends it to the contacts of that service, by email and in the in-app bell, Dashboard and History, using its own rules (contacts, time periods, escalations). PinPoint has no second mailing list.
+
+| Tick this on the rule | PinPoint notifies when |
+|---|---|
+| **The action fails** | The restart failed or timed out. |
+| **The action is stopped by its limits** | The cooldown or the hourly limit stopped the restart, so nothing was tried. |
+| **It keeps recovering the same service** | The same rule has recovered the same service several times in a row, so the real fault is still there. |
+
+All three are ticked by default; untick all of them for a rule that should stay quiet. A rule that is skipped on purpose (kill switch, Maintenance Mode, scheduled downtime, an acknowledged problem) never notifies.
+
+The "keeps recovering" limits are set in the status panel under **Repeat recovery**: the number of recoveries (default 3) and the window in hours (default 24). Only one such notification is sent per service and window. Changing them needs **remediation.manage**.
+
+Nagios still honours downtime and notification settings, so a service in scheduled downtime or with notifications turned off sends no email. The message holds only fixed text, the rule name, the outcome and the run number; it never contains the output of the check or the restart.
+
+The **Operator** column of the run log shows what happened to the notification: **Operator notified**, **Notification pending**, **Notification failed** (with the reason; PinPoint tries up to 3 times) or **Not required**. On the System Status page, a service that automatic recovery acted on shows a small badge (**Auto-recovered**, **Recovery failed**, **Recovery limited**) that opens the run.
+
 ## Release note
 
 PinPoint can now restart `nagios` automatically when a covered check reaches a hard failure. This needs the installer's `pinpoint-restart` sudoers rule (one line, `systemctl restart nagios`, no wildcard). After upgrading, run the database migrations and `flask sync-permissions`.

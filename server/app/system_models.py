@@ -937,6 +937,11 @@ class SystemSettings(db.Model):
     # (remediation.manage), not the Settings page, so they are not part of to_dict().
     Remediation_Enabled: so.Mapped[bool] = so.mapped_column(sa.Boolean(), default=True, server_default=sa.true())
     Remediation_Retention_Days: so.Mapped[int] = so.mapped_column(sa.Integer(), default=90, server_default="90")
+    # Repeat-recovery escalation (#153): the same action succeeding this many times for the same
+    # host and service inside the window sends one "underlying fault persists" notification.
+    Remediation_Repeat_Count: so.Mapped[int] = so.mapped_column(sa.Integer(), default=3, server_default="3")
+    Remediation_Repeat_Window_Hours: so.Mapped[int] = so.mapped_column(
+        sa.Integer(), default=24, server_default="24")
 
     # Concurrency + audit trail
     Version: so.Mapped[int] = so.mapped_column(sa.Integer(), default=1)
@@ -1338,6 +1343,13 @@ class RemediationOutcome(Enum):
     SKIPPED_ACKNOWLEDGED = "skipped_acknowledged"
 
 
+class RemediationNotifyState(Enum):
+    """Where the operator notification for one run stands (#153). No value means none was due."""
+    PENDING = "pending"
+    SENT = "sent"
+    FAILED = "failed"
+
+
 class RemediationAction(db.Model):
     """
     An admin-defined rule: when a covered service or host reaches a HARD failure, run one
@@ -1359,6 +1371,12 @@ class RemediationAction(db.Model):
     # False: skip a problem an operator has already acknowledged.
     Run_When_Acknowledged: so.Mapped[bool] = so.mapped_column(
         sa.Boolean(), default=False, server_default=sa.false())
+    # Which problems send an operator notification through Nagios (#153): any of "failed" (the
+    # action failed or timed out), "capped" (the cooldown or hourly cap stopped it) and
+    # "repeated" (it keeps succeeding for the same object). Default all three.
+    Notify_On: so.Mapped[list] = so.mapped_column(
+        sa.JSON(), default=lambda: ["failed", "capped", "repeated"],
+        server_default='["failed", "capped", "repeated"]')
     Version: so.Mapped[int] = so.mapped_column(sa.Integer(), default=1)
     Updated_By: so.Mapped[Optional[int]] = so.mapped_column(sa.ForeignKey(User.UserID), index=True)
     Updated_At: so.Mapped[datetime] = so.mapped_column(
@@ -1394,6 +1412,13 @@ class RemediationRun(db.Model):
     Outcome: so.Mapped[RemediationOutcome] = so.mapped_column(sa.Enum(RemediationOutcome), index=True)
     Reason: so.Mapped[Optional[str]] = so.mapped_column(sa.String(200))
     Output: so.Mapped[Optional[str]] = so.mapped_column(sa.String(1024))
+    # Operator notification for this run (#153). Notify_Kind is None when none was due.
+    Notify_Kind: so.Mapped[Optional[str]] = so.mapped_column(sa.String(10))
+    Notify_State: so.Mapped[Optional[RemediationNotifyState]] = so.mapped_column(
+        sa.Enum(RemediationNotifyState))
+    Notify_Attempts: so.Mapped[int] = so.mapped_column(sa.Integer(), default=0, server_default="0")
+    Notify_Error: so.Mapped[Optional[str]] = so.mapped_column(sa.String(200))
+    Notify_At: so.Mapped[Optional[datetime]] = so.mapped_column()
 
 
 class RemediationConsumerState(db.Model):

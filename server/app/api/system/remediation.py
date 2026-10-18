@@ -6,6 +6,8 @@ Routes
 ------
 GET    /system/remediation/action-types
     The action types an admin can pick, with their parameter schema (remediation.view).
+GET    /system/remediation/targets
+    Nagios host names with their service names, to suggest in the form (remediation.view).
 GET    /system/remediation/actions
     All actions (remediation.view).
 POST   /system/remediation/actions
@@ -20,7 +22,7 @@ PUT    /system/remediation/services/<hostname>/<service_name>
     Turn it on or off and set the restart limit; the server picks the action and unit
     (remediation.manage).
 GET    /system/remediation/settings
-    The kill switch and the run retention (remediation.view).
+    The kill switch, the run retention and the repeat-recovery count and window (remediation.view).
 PUT    /system/remediation/settings
     Change them; each change is audited (remediation.manage).
 GET    /system/remediation/health
@@ -29,13 +31,16 @@ GET    /system/remediation/runs
     The run log, newest first, with filters and pagination (remediation.view).
 GET    /system/remediation/runs/<id>
     One run, including its (redacted) output (remediation.view).
+GET    /system/remediation/last-runs
+    The newest run for each host and service in the last 7 days, for the badge on a service row
+    (remediation.view).
 
 Creating, changing or deleting an action regenerates the Nagios config; a config Nagios
 rejects rolls the change back and returns 422.
 """
 import hashlib
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import sqlalchemy as sa
 from flask import current_app, request
@@ -50,9 +55,11 @@ from app.history_models import ServiceStatus
 from app.logging.configuration_changes import create_configuration_log
 from app import remediation
 from app.remediation import valid_name
+from app.history_models import ServiceStatus
+from app.network_discovery.device_identity import nagios_host_name
 from app.system_models import (
-    RemediationAction, RemediationActionType, RemediationOutcome, RemediationRun, RemediationScope,
-    SystemSettings,
+    DeviceState, NetworkDiscovery, RemediationAction, RemediationActionType, RemediationOutcome,
+    RemediationRun, RemediationScope, SystemSettings,
 )
 
 NAME_RE = re.compile(r"[A-Za-z0-9 ._-]{3,60}", re.ASCII)
@@ -60,12 +67,21 @@ HOST_PATTERN_RE = re.compile(r"[A-Za-z0-9._*-]{1,100}", re.ASCII)
 SERVICE_PATTERN_RE = re.compile(r"[A-Za-z0-9 ._:/*-]{1,150}", re.ASCII)
 ACTION_FIELDS = {
     "name", "actionType", "scopeKind", "hostPattern", "servicePattern", "parameters", "enabled",
-    "maxRunsPerHour", "cooldownSeconds", "runWhenAcknowledged",
+    "maxRunsPerHour", "cooldownSeconds", "runWhenAcknowledged", "notifyOn",
 }
 LOGGED_FIELDS = (
     "name", "actionType", "scopeKind", "hostPattern", "servicePattern", "parameters", "enabled",
-    "maxRunsPerHour", "cooldownSeconds", "runWhenAcknowledged",
+    "maxRunsPerHour", "cooldownSeconds", "runWhenAcknowledged", "notifyOn",
 )
+NOTIFY_KINDS = ("failed", "capped", "repeated")
+SETTINGS_FIELDS = ("enabled", "retentionDays", "repeatCount", "repeatWindowHours")
+LAST_RUNS_DAYS = 7
+TARGET_SERVICE_DAYS = 7
+MAX_LAST_RUNS = 500
+MIN_REPEAT_COUNT = 2
+MAX_REPEAT_COUNT = 20
+MIN_REPEAT_WINDOW_HOURS = 1
+MAX_REPEAT_WINDOW_HOURS = 168
 MIN_RETENTION_DAYS = 7
 MAX_RETENTION_DAYS = 3650
 MIN_RESTARTS_PER_HOUR = 1
@@ -94,6 +110,7 @@ def serialize_action(row):
         "maxRunsPerHour": row.Max_Runs_Per_Hour,
         "cooldownSeconds": row.Cooldown_Seconds,
         "runWhenAcknowledged": row.Run_When_Acknowledged,
+        "notifyOn": list(row.Notify_On or []),
         "version": row.Version,
         "updatedAt": row.Updated_At.isoformat() if row.Updated_At else None,
         "updatedBy": row.Updated_By,
@@ -116,6 +133,11 @@ def serialize_run(row, with_output=False):
         "finishedAt": row.Finished_At.isoformat() if row.Finished_At else None,
         "outcome": row.Outcome.value,
         "reason": row.Reason,
+        "notifyKind": row.Notify_Kind,
+        "notifyState": row.Notify_State.value if row.Notify_State else None,
+        "notifyAttempts": row.Notify_Attempts or 0,
+        "notifyError": row.Notify_Error,
+        "notifyAt": row.Notify_At.isoformat() if row.Notify_At else None,
     }
     if with_output:
         item["output"] = row.Output
@@ -196,13 +218,19 @@ def validate_action(data, current_id=None):
     if type(run_when_acknowledged) is not bool:
         errors["runWhenAcknowledged"] = "Run when acknowledged must be true or false."
 
+    notify_on = data.get("notifyOn", list(NOTIFY_KINDS))
+    if not isinstance(notify_on, list) or any(kind not in NOTIFY_KINDS for kind in notify_on):
+        errors["notifyOn"] = "Notify on must be a list of failed, capped or repeated."
+    else:
+        notify_on = [kind for kind in NOTIFY_KINDS if kind in notify_on]
+
     if errors:
         return None, errors
     return {
         "Name": name, "Action_Type": RemediationActionType(action_type), "Scope_Kind": RemediationScope(scope),
         "Host_Pattern": host_pattern, "Service_Pattern": service_pattern, "Parameters": parameters,
         "Enabled": enabled, "Max_Runs_Per_Hour": max_runs, "Cooldown_Seconds": cooldown,
-        "Run_When_Acknowledged": run_when_acknowledged,
+        "Run_When_Acknowledged": run_when_acknowledged, "Notify_On": notify_on,
     }, {}
 
 
@@ -259,6 +287,36 @@ def list_remediation_action_types():
     return success({"items": registry.describe_types()})
 
 
+@system_bp.get('/remediation/targets')
+@login_required
+@require_permission('remediation.view')
+def list_remediation_targets():
+    """
+    Return the Nagios host names and, for each, the service names seen in the last
+    TARGET_SERVICE_DAYS days, so the form can suggest names instead of asking the admin to type them.
+    """
+    try:
+        since = datetime.now(timezone.utc) - timedelta(days=TARGET_SERVICE_DAYS)
+        services = {}
+        pairs = db.session.execute(
+            sa.select(ServiceStatus.Hostname, ServiceStatus.Service)
+            .where(ServiceStatus.Timestamp >= since).distinct()
+        ).all()
+        for hostname, service in pairs:
+            services.setdefault(hostname, set()).add(service)
+        names = set(services)
+        devices = db.session.scalars(
+            sa.select(NetworkDiscovery).where(NetworkDiscovery.Device_State != DeviceState.MERGED)
+        ).all()
+        names.update(nagios_host_name(device) for device in devices)
+        items = [{"hostname": name, "services": sorted(services.get(name, ()))} for name in sorted(names)]
+        return success({"items": items})
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("Could not list remediation targets.")
+        return error("An unexpected error occurred.", 500)
+
+
 @system_bp.get('/remediation/actions')
 @login_required
 @require_permission('remediation.view')
@@ -285,7 +343,9 @@ def create_remediation_action():
 
     JSON: {"name": "restart-web", "actionType": "record_only", "scopeKind": "service",
     "hostPattern": "web-*", "servicePattern": "HTTP", "parameters": {}, "enabled": true,
-    "maxRunsPerHour": 2, "cooldownSeconds": 600, "runWhenAcknowledged": false}. Errors: 400 with
+    "maxRunsPerHour": 2, "cooldownSeconds": 600, "runWhenAcknowledged": false,
+    "notifyOn": ["failed", "capped", "repeated"]}. notifyOn lists which problems notify the
+    operator through Nagios; it defaults to all three and may be empty. Errors: 400 with
     data.fields, 422 when Nagios rejects the config.
     """
     data = request.get_json(silent=True)
@@ -562,8 +622,13 @@ def update_service_recovery(hostname, service_name):
 # ==========================================================
 
 def serialize_settings(settings):
-    """Public shape of the two remediation settings."""
-    return {"enabled": settings.Remediation_Enabled, "retentionDays": settings.Remediation_Retention_Days}
+    """Public shape of the remediation settings."""
+    return {
+        "enabled": settings.Remediation_Enabled,
+        "retentionDays": settings.Remediation_Retention_Days,
+        "repeatCount": settings.Remediation_Repeat_Count,
+        "repeatWindowHours": settings.Remediation_Repeat_Window_Hours,
+    }
 
 
 def settings_row():
@@ -580,7 +645,11 @@ def settings_row():
 @login_required
 @require_permission('remediation.view')
 def get_remediation_settings():
-    """Return {"enabled": bool, "retentionDays": int}: the kill switch and how long runs are kept."""
+    """
+    Return {"enabled": bool, "retentionDays": int, "repeatCount": int, "repeatWindowHours": int}:
+    the kill switch, how long runs are kept, and how many automatic recoveries of the same
+    service inside the window send a "repeated" notification.
+    """
     try:
         settings = settings_row()
         data = serialize_settings(settings)
@@ -597,17 +666,18 @@ def get_remediation_settings():
 @require_permission('remediation.manage')
 def update_remediation_settings():
     """
-    Change the kill switch and/or the run retention.
+    Change the kill switch, the run retention and/or the repeat-recovery limits.
 
-    JSON: {"enabled": false, "retentionDays": 90}; send either or both. "enabled" is true or
-    false; "retentionDays" is a whole number from 7 to 3650. Unknown fields are errors. The
+    JSON: {"enabled": false, "retentionDays": 90, "repeatCount": 3, "repeatWindowHours": 24};
+    send any of them. "enabled" is true or false; "retentionDays" is a whole number from 7 to
+    3650; "repeatCount" from 2 to 20; "repeatWindowHours" from 1 to 168. Unknown fields are errors. The
     switch applies on the consumer's next tick. Each changed value is written to the
     configuration log when audit logging is on. Errors: 400 with data.fields.
     """
     data = request.get_json(silent=True)
     if not isinstance(data, dict):
         return bad_fields({"body": "Request body must be a JSON object."})
-    errors = {key: "Unknown field." for key in data if key not in ("enabled", "retentionDays")}
+    errors = {key: "Unknown field." for key in data if key not in SETTINGS_FIELDS}
     if "enabled" in data and type(data["enabled"]) is not bool:
         errors["enabled"] = "Enabled must be true or false."
     if "retentionDays" in data and (
@@ -615,8 +685,20 @@ def update_remediation_settings():
     ):
         errors["retentionDays"] = (
             f"Retention must be a whole number of days from {MIN_RETENTION_DAYS} to {MAX_RETENTION_DAYS}.")
+    if "repeatCount" in data and (
+        not is_int(data["repeatCount"]) or not MIN_REPEAT_COUNT <= data["repeatCount"] <= MAX_REPEAT_COUNT
+    ):
+        errors["repeatCount"] = (
+            f"Repeat count must be a whole number from {MIN_REPEAT_COUNT} to {MAX_REPEAT_COUNT}.")
+    if "repeatWindowHours" in data and (
+        not is_int(data["repeatWindowHours"])
+        or not MIN_REPEAT_WINDOW_HOURS <= data["repeatWindowHours"] <= MAX_REPEAT_WINDOW_HOURS
+    ):
+        errors["repeatWindowHours"] = (
+            f"Repeat window must be a whole number of hours from {MIN_REPEAT_WINDOW_HOURS} "
+            f"to {MAX_REPEAT_WINDOW_HOURS}.")
     if not errors and not data:
-        errors["body"] = "Send enabled, retentionDays or both."
+        errors["body"] = "Send at least one setting."
     if errors:
         return bad_fields(errors)
     try:
@@ -629,6 +711,13 @@ def update_remediation_settings():
         if "retentionDays" in data and data["retentionDays"] != settings.Remediation_Retention_Days:
             changes.append(("retentionDays", settings.Remediation_Retention_Days, data["retentionDays"]))
             settings.Remediation_Retention_Days = data["retentionDays"]
+        if "repeatCount" in data and data["repeatCount"] != settings.Remediation_Repeat_Count:
+            changes.append(("repeatCount", settings.Remediation_Repeat_Count, data["repeatCount"]))
+            settings.Remediation_Repeat_Count = data["repeatCount"]
+        if "repeatWindowHours" in data and data["repeatWindowHours"] != settings.Remediation_Repeat_Window_Hours:
+            changes.append(
+                ("repeatWindowHours", settings.Remediation_Repeat_Window_Hours, data["repeatWindowHours"]))
+            settings.Remediation_Repeat_Window_Hours = data["repeatWindowHours"]
         if audit:
             for name, old, new in changes:
                 create_configuration_log(current_user.UserID, "remediation_setting", name, str(old), str(new))
@@ -723,6 +812,41 @@ def list_remediation_runs():
     except Exception:
         db.session.rollback()
         current_app.logger.exception("Could not list remediation runs.")
+        return error("An unexpected error occurred.", 500)
+
+
+@system_bp.get('/remediation/last-runs')
+@login_required
+@require_permission('remediation.view')
+def list_last_remediation_runs():
+    """
+    Return the newest run for each host and service seen in the last 7 days (at most 500, newest
+    first), so a service row can show whether automatic recovery acted on it. Each item has
+    runId, hostname, service (null for a host), outcome, notifyState and receivedAt; never output.
+    """
+    try:
+        since = datetime.now(timezone.utc) - timedelta(days=LAST_RUNS_DAYS)
+        newest = sa.select(sa.func.max(RemediationRun.Id)).where(
+            RemediationRun.Received_At >= since,
+        ).group_by(RemediationRun.Hostname, RemediationRun.Service)
+        rows = db.session.scalars(
+            sa.select(RemediationRun).where(RemediationRun.Id.in_(newest))
+            .order_by(RemediationRun.Id.desc()).limit(MAX_LAST_RUNS)
+        ).all()
+        items = []
+        for row in rows:
+            items.append({
+                "runId": row.Id,
+                "hostname": row.Hostname,
+                "service": row.Service,
+                "outcome": row.Outcome.value,
+                "notifyState": row.Notify_State.value if row.Notify_State else None,
+                "receivedAt": row.Received_At.isoformat(),
+            })
+        return success({"items": items})
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("Could not list the last remediation runs.")
         return error("An unexpected error occurred.", 500)
 
 

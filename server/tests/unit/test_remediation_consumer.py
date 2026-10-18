@@ -762,3 +762,153 @@ def test_a_failure_to_write_the_heartbeat_never_stops_the_consumer(db_session, s
     monkeypatch.setattr(remediation, "get_state", boom)
     remediation.process_spool(str(spool))
     assert len(runs(db_session)) == 1
+
+
+# ==========================================================
+# OPERATOR NOTIFICATION (#153)
+# ==========================================================
+
+@pytest.fixture()
+def notified(monkeypatch):
+    """Replace the Nagios custom notification commands; each call is recorded and returns ok."""
+    from app.nagios import commands
+    calls = []
+    monkeypatch.setattr(commands, "send_custom_service_notification",
+                        lambda host, service, comment, *a, **k: calls.append((host, service, comment)) or commands.CommandResult(True))
+    monkeypatch.setattr(commands, "send_custom_host_notification",
+                        lambda host, comment, *a, **k: calls.append((host, None, comment)) or commands.CommandResult(True))
+    return calls
+
+
+def break_action(monkeypatch, outcome_error=RuntimeError("nope")):
+    monkeypatch.setitem(registry.ACTION_TYPES, "record_only", registry.ActionType(
+        key="record_only", label="x", description="x", parameters=[], validate=lambda p: ({}, {}),
+        run=lambda params, context: (_ for _ in ()).throw(outcome_error)))
+
+
+def test_a_failed_action_notifies_the_operator_once(db_session, spool, monkeypatch, notified):
+    from app.system_models import RemediationNotifyState
+    add_action(db_session)
+    break_action(monkeypatch)
+    put(spool, event())
+    remediation.process_spool(str(spool))
+    (run,) = runs(db_session)
+    assert run.Outcome == RemediationOutcome.FAILED
+    assert (run.Notify_Kind, run.Notify_State, run.Notify_Attempts) == ("failed", RemediationNotifyState.SENT, 1)
+    assert [c[:2] for c in notified] == [("web-01", "HTTP")]
+    assert "restart-web" in notified[0][2] and str(run.Id) in notified[0][2]
+
+
+def test_the_comment_never_holds_the_action_output(db_session, spool, monkeypatch, notified):
+    add_action(db_session)
+    break_action(monkeypatch, RuntimeError("password=hunter2 $(id)"))
+    put(spool, event())
+    remediation.process_spool(str(spool))
+    assert "hunter2" not in notified[0][2] and "$" not in notified[0][2]
+
+
+def test_a_cooldown_skip_notifies_once_and_says_so(db_session, spool, notified):
+    from app.system_models import RemediationNotifyState
+    add_action(db_session, Cooldown_Seconds=600)
+    put(spool, event(last_change=1760432100))
+    put(spool, event(last_change=1760432400))
+    remediation.process_spool(str(spool))
+    first, second = runs(db_session)
+    assert first.Notify_Kind is None
+    assert (second.Outcome, second.Notify_Kind, second.Notify_State) == (
+        RemediationOutcome.SKIPPED_COOLDOWN, "capped", RemediationNotifyState.SENT)
+    assert len(notified) == 1
+
+
+def test_an_hourly_cap_skip_notifies_once(db_session, spool, notified):
+    action = add_action(db_session, Cooldown_Seconds=60, Max_Runs_Per_Hour=2, Host_Pattern="*")
+    for i in range(2):
+        db_session.session.add(RemediationRun(
+            Event_Key=f"p{i}", Action_Id=action.Id, Action_Name="restart-web", Hostname=f"web-0{i}", Service="HTTP",
+            State=RemediationEventState.CRITICAL, State_Type=RemediationEventStateType.HARD, Attempt=3,
+            Received_At=datetime.now(timezone.utc) - timedelta(minutes=30), Outcome=RemediationOutcome.SUCCEEDED))
+    db_session.session.commit()
+    put(spool, event(host="web-09"))
+    remediation.process_spool(str(spool))
+    assert runs(db_session)[-1].Outcome == RemediationOutcome.SKIPPED_HOURLY_CAP
+    assert len(notified) == 1
+
+
+def test_an_action_that_does_not_ask_for_it_sends_nothing(db_session, spool, monkeypatch, notified):
+    add_action(db_session, Notify_On=[])
+    break_action(monkeypatch)
+    put(spool, event())
+    remediation.process_spool(str(spool))
+    (run,) = runs(db_session)
+    assert (run.Notify_Kind, run.Notify_State) == (None, None)
+    assert notified == []
+
+
+def test_a_success_and_the_deliberate_skips_send_nothing(db_session, spool, notified):
+    add_action(db_session)
+    set_settings(db_session, Remediation_Enabled=False)
+    put(spool, event())
+    remediation.process_spool(str(spool))
+    set_settings(db_session, Remediation_Enabled=True)
+    put(spool, event(last_change=1760432999))
+    remediation.process_spool(str(spool))
+    assert [r.Outcome for r in runs(db_session)] == [RemediationOutcome.SKIPPED_KILL_SWITCH, RemediationOutcome.SUCCEEDED]
+    assert notified == []
+
+
+def test_a_replayed_spool_file_does_not_notify_twice(db_session, spool, monkeypatch, notified):
+    add_action(db_session)
+    break_action(monkeypatch)
+    put(spool, event())
+    put(spool, event())
+    remediation.process_spool(str(spool))
+    remediation.process_spool(str(spool))
+    assert len(runs(db_session)) == 1
+    assert len(notified) == 1
+
+
+def test_an_unwritable_command_file_is_recorded_and_the_consumer_carries_on(db_session, spool, monkeypatch):
+    from app.nagios import commands
+    from app.system_models import RemediationNotifyState
+    add_action(db_session, Host_Pattern="*", Cooldown_Seconds=0, Max_Runs_Per_Hour=50)
+    break_action(monkeypatch)
+    calls = []
+
+    def unavailable(*args, **kwargs):
+        calls.append(args)
+        return commands.CommandResult(False, commands.UNAVAILABLE, "The Nagios command pipe could not be written.")
+
+    monkeypatch.setattr(commands, "send_custom_service_notification", unavailable)
+    put(spool, event(host="web-01"))
+    put(spool, event(host="web-02"))
+    remediation.process_spool(str(spool))
+    first, second = runs(db_session)
+    assert first.Outcome == second.Outcome == RemediationOutcome.FAILED
+    assert first.Notify_State == RemediationNotifyState.PENDING and first.Notify_Attempts == 1
+    assert first.Notify_Error == "The Nagios command pipe could not be written."
+    for _ in range(6):
+        remediation.process_spool(str(spool))
+    assert len(calls) == 2 * 3
+    assert {r.Notify_State for r in runs(db_session)} == {RemediationNotifyState.FAILED}
+
+
+def test_n_successes_for_the_same_object_notify_once_per_window(db_session, spool, notified):
+    from app.system_models import RemediationNotifyState
+    add_action(db_session, Cooldown_Seconds=0, Max_Runs_Per_Hour=50)
+    for n in range(4):
+        put(spool, event(last_change=1760432100 + n * 100))
+    remediation.process_spool(str(spool))
+    rows = runs(db_session)
+    assert [r.Outcome for r in rows] == [RemediationOutcome.SUCCEEDED] * 4
+    assert [r.Notify_Kind for r in rows] == [None, None, "repeated", None]
+    assert rows[2].Notify_State == RemediationNotifyState.SENT
+    assert len(notified) == 1 and "several times" in notified[0][2]
+
+
+def test_the_repeat_count_comes_from_the_settings(db_session, spool, notified):
+    add_action(db_session, Cooldown_Seconds=0, Max_Runs_Per_Hour=50)
+    set_settings(db_session, Remediation_Repeat_Count=2)
+    for n in range(2):
+        put(spool, event(last_change=1760432100 + n * 100))
+    remediation.process_spool(str(spool))
+    assert [r.Notify_Kind for r in runs(db_session)] == [None, "repeated"]

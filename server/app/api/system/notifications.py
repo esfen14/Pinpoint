@@ -39,6 +39,7 @@ from app import db
 from app.api.system import system_bp
 from app.api.helper import success, error
 from app.api.helper.database_access.permissions import require_permission
+from app.remediation_escalation import attach_comments
 from app.system_models import NotificationCursor
 from app.nagios.notifications import (
     request_notifications_range,
@@ -146,11 +147,13 @@ def get_notifications():
             {**normalize_notification(n), "source": SOURCE_NAGIOS}
             for n in _normalize_nagios_list(raw)
         ])
+        for entry in items:
+            entry["is_custom"] = entry.get("notificationtype") == "CUSTOM"
         items.extend(scan_events)
 
         # Sort newest-first, then take only the requested limit
         items.sort(key=lambda n: n.get("timestamp", 0), reverse=True)
-        items = items[:limit]
+        items = attach_comments(items[:limit], "servicedesc")
 
         # Annotate each item with is_read
         unread_count = 0

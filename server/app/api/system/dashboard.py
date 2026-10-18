@@ -67,6 +67,7 @@ from app.history_models import (
 )
 from app.nagios import commands as nagios_commands
 from app.nagios.notifications import request_notifications_last, normalize_notification
+from app.remediation_escalation import attach_comments
 from app.system_models import AlertAcknowledgement, AckHistory, AckAction
 
 # ---------------------------------------------------------------------------
@@ -363,6 +364,7 @@ def _normalize_notification(item: dict) -> dict:
         "state":        item["state"],
         "contact":      item["contact"],
         "message":      item["output"][:200],
+        "is_custom":    item["notificationtype"] == "CUSTOM",
     }
 
 
@@ -844,7 +846,7 @@ def dashboard_notifications():
 
         # Sort newest first and cap at 5.
         notifications.sort(key=_notification_sort_key, reverse=True)
-        notifications = notifications[:5]
+        notifications = attach_comments(notifications[:5], "service_name")
 
         return success({"notifications": notifications})
 

@@ -18,6 +18,10 @@ export type NotificationItem = {
   fullMessage: string
   isRead: boolean
   repeatCount: number
+  // A Nagios custom notification (for example one PinPoint sent when automatic recovery failed).
+  // `comment` is its text, rebuilt by the server from PinPoint's own record; null when no run here sent it.
+  isCustom: boolean
+  comment: string | null
 }
 
 type RawNotification = Record<string, unknown> & { is_read: boolean; repeat_count?: number }
@@ -46,25 +50,41 @@ export function fromRawNotification(raw: RawNotification, index: number): Notifi
       fullMessage,
       isRead: raw.is_read,
       repeatCount: 1,
+      isCustom: false,
+      comment: null,
     }
   }
 
   const hostname = str(raw.hostname) || str(raw.host_name)
-  const fullMessage = str(raw.output) || str(raw.plugin_output) || str(raw.notificationreason) || str(raw.state)
+  const output = str(raw.output) || str(raw.plugin_output) || str(raw.notificationreason) || str(raw.state)
+  const type = (str(raw.notificationtype) || str(raw.type)).toUpperCase()
+  const isCustom = raw.is_custom === true || type === 'CUSTOM'
+  const comment = isCustom ? str(raw.comment) || null : null
+  // A custom notification shows its comment first and keeps the plugin output in the detail.
+  const fullMessage = comment ? `${comment}\n${output}`.trim() : output
 
   return {
     id: `${hostname}-${timestamp}-${index}`,
     source: 'nagios',
     timestamp,
-    type: (str(raw.notificationtype) || str(raw.type)).toUpperCase(),
+    type,
     state: (str(raw.notificationreason) || str(raw.state)).toUpperCase(),
     hostname,
     serviceName: str(raw.servicedesc) || str(raw.description) || null,
-    message: fullMessage.slice(0, 200),
+    message: (comment ?? output).slice(0, 200),
     fullMessage,
     isRead: raw.is_read,
     repeatCount: typeof raw.repeat_count === 'number' ? raw.repeat_count : 1,
+    isCustom,
+    comment,
   }
+}
+
+/** Heading for one notification in the bell panel. */
+export function notificationTitle(n: NotificationItem): string {
+  if (n.source === 'pinpoint') return n.serviceName ?? 'Pinpoint notification'
+  const kind = n.isCustom ? 'Custom notification' : n.type
+  return `${kind} ${n.hostname || 'Unknown host'}${n.serviceName ? ` / ${n.serviceName}` : ''}`.trim()
 }
 
 export type NotificationsResponse = {

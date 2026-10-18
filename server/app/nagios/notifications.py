@@ -185,6 +185,17 @@ def _alert_state(value, is_service: bool) -> str:
     return str(value).upper()
 
 
+# The archive's numeric notification_type for a custom notification (captured on a lab appliance,
+# 2026-10-17: problems are 1, recoveries 4, custom 1024). Other numbers are left as they come.
+_CUSTOM_TYPE_CODES = {"1024", "CUSTOM"}
+
+
+def _notification_type(raw: dict) -> str:
+    """The notification type as text; a custom notification is always CUSTOM."""
+    text = str(_first(raw, _TYPE_KEYS)).upper()
+    return "CUSTOM" if text in _CUSTOM_TYPE_CODES else text
+
+
 def normalize_notification(raw: dict) -> dict:
     """
     Return the raw Nagios notification with canonical keys added
@@ -204,7 +215,7 @@ def normalize_notification(raw: dict) -> dict:
         "servicedesc":        service,
         "service_description": service,
         "state":              str(state).upper(),
-        "notificationtype":   str(_first(raw, _TYPE_KEYS)).upper(),
+        "notificationtype":   _notification_type(raw),
         "contact":            _first(raw, _CONTACT_KEYS),
         "output":             _first(raw, _MESSAGE_KEYS),
         "notificationmethod": _first(raw, _METHOD_KEYS),
@@ -283,7 +294,11 @@ def collapse_repeats(items: list) -> list:
         host = item.get("hostname")
         key = (host, item.get("servicedesc"))
         group = last_group.get(key) if host else None
-        if group is not None and group["state"] == item.get("state"):
+        # A custom notification is its own event: the archive gives it no state, so without this it
+        # would fold into the problem notification before it.
+        same_kind = (group is not None and (group.get("notificationtype") == "CUSTOM")
+                     == (item.get("notificationtype") == "CUSTOM"))
+        if group is not None and same_kind and group["state"] == item.get("state"):
             group["timestamp"] = item.get("timestamp", 0)
             group["repeat_count"] += 1
             continue

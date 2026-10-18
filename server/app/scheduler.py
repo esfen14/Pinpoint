@@ -68,12 +68,16 @@ def _poll_nagios_status():
 
 
 def _mark_interrupted_remediation_runs():
-    """At startup, mark remediation runs left running by a stop as interrupted (never re-run)."""
-    from app import remediation
+    """
+    At startup, mark remediation runs left running by a stop as interrupted (never re-run), and
+    fail operator notifications whose send never saved a result (never re-sent).
+    """
+    from app import remediation, remediation_escalation as escalation
 
     with app.app_context():
         try:
             remediation.mark_interrupted()
+            escalation.fail_unfinished()
         except Exception:
             db.session.rollback()
             current_app.logger.exception("Could not mark interrupted remediation runs")

@@ -17,11 +17,16 @@ Commands (https://assets.nagios.com/downloads/nagioscore/docs/externalcmds/):
     schedule_host_downtime(host, start, end, comment, author)
     schedule_service_downtime(host, service, start, end, comment, author)
     cancel_downtime_by_host_name(host, comment)
+    send_custom_host_notification(host, comment)
+    send_custom_service_notification(host, service, comment)
 
 Acknowledgement type sent: NORMAL (sticky=1), matching AcknowledgementType.NORMACK
 in history_models.py. Nagios removes a normal acknowledgement when the state
 changes, which matches PinPoint's "problem has changed" behaviour. notify=0 (no
 extra notification), persistent=1 (the comment stays visible in Nagios).
+
+Custom notifications always use option 0: the force option is never set, so Nagios still
+applies notification-enabled flags, scheduled downtime, timeperiods and escalations.
 
 Each function returns a CommandResult and never raises, so a stopped Nagios cannot
 fail or hang the web request: the pipe is opened non-blocking and writes give up
@@ -46,6 +51,8 @@ MAX_NAME_CHARS = 255
 WRITE_TIMEOUT_SECONDS = 2.0
 # Never log more than this much of a comment.
 LOG_COMMENT_CHARS = 40
+# Custom notification options bitmask: 0 = no broadcast, no force, no increment (see module docstring).
+CUSTOM_NOTIFICATION_OPTIONS = 0
 
 NORMAL_ACK = 1
 FORBIDDEN_CHARS = ("\n", "\r", "\0")
@@ -310,6 +317,34 @@ def cancel_downtime_by_host_name(hostname, comment, targets=None) -> CommandResu
     return _send(
         "DEL_DOWNTIME_BY_HOST_NAME", [hostname, "", "", _wire_comment(comment)],
         _target_label(hostname, None), comment,
+    )
+
+
+def send_custom_host_notification(hostname, comment, targets=None, author="PinPoint") -> CommandResult:
+    """
+    Ask Nagios for a custom host notification (SEND_CUSTOM_HOST_NOTIFICATION). Never forced, so
+    downtime, disabled notifications and timeperiods still apply. The comment must be fixed text
+    built by the caller; it is never plugin or command output.
+    """
+    bad = _comment_failure(comment) or _validate_target(hostname, None, targets)
+    if bad:
+        return bad
+    return _send(
+        "SEND_CUSTOM_HOST_NOTIFICATION",
+        [hostname, CUSTOM_NOTIFICATION_OPTIONS, _wire_author(author), _wire_comment(comment)],
+        _target_label(hostname, None), comment,
+    )
+
+
+def send_custom_service_notification(hostname, service, comment, targets=None, author="PinPoint") -> CommandResult:
+    """The service form of ``send_custom_host_notification`` (SEND_CUSTOM_SVC_NOTIFICATION)."""
+    bad = _comment_failure(comment) or _validate_target(hostname, service, targets)
+    if bad:
+        return bad
+    return _send(
+        "SEND_CUSTOM_SVC_NOTIFICATION",
+        [hostname, service, CUSTOM_NOTIFICATION_OPTIONS, _wire_author(author), _wire_comment(comment)],
+        _target_label(hostname, service), comment,
     )
 
 
