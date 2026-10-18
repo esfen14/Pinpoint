@@ -7,6 +7,19 @@ TC-ACC-09 and TC-SS-04, whose separate supervised reports record PASS. Source
 coverage is a statement about reviewed test code; it does not indicate that an
 appliance is ready, a case ran, or a live launcher accepts the case.
 
+## Completed cases excluded from this queue
+
+| Case | Current report result | Tested target | Expected items accepted | Report |
+|---|---|---|---|---|
+| TC-ACC-09 | PASS; restoration and baseline accepted | `299ab3ba7203c89a3ca5d8fabea42d9e5f239be2` | E1, E2 | [2026-10-18 next permissions](../test-runs/2026-10-18-next-permissions/REPORT.md) |
+| TC-SS-04 | PASS; restoration and baseline accepted | `299ab3ba7203c89a3ca5d8fabea42d9e5f239be2` | E1 | [2026-10-18 SS-04 recheck](../test-runs/2026-10-18-issue-211-ss04-recheck/REPORT.md) |
+
+The new Module 2–9 queue selects 31 other catalog cases and contains neither
+ID. The catalog's historical `Result` cells and the generated source/result
+view remain `Not run` by design: the workflow preserves original human entries
+and records new executions in attributable reports. These linked reports are
+the current execution record for these two cases; do not rerun them as untested.
+
 ## Case-by-case assessment
 
 | Case | Expected items | Primary source and focused local tests | Prerequisite / mutation / recovery concern |

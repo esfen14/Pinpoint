@@ -45,18 +45,19 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | 5 | Added read-only source adapters for TC-DI-02 and TC-DI-03; refreshed reviewed coverage hashes; updated readiness and implementation status to distinguish 11 source mappings from live support and retain ACC-09/SS-04 report outcomes | `cd client && node --test qa/module-selection.node.mjs`; `cd client && npx tsc --noEmit -p tsconfig.qa.json`; `python3 -I scripts/qa_coverage.py check`; `git diff --check` | 5 offline selection/collection checks pass; TypeScript QA config passes; 239 coverage records validate (11 implemented, 228 unmapped); whitespace check passes. No product case or browser ran. |
 | 6 | Added read-only TC-DASH-07 adapter for no-ping/no-NCPA dashboard state; updated coverage/readiness/status counts and assertion source hashes | `cd client && node --test qa/module-selection.node.mjs`; `cd client && npx tsc --noEmit -p tsconfig.qa.json`; `python3 -I scripts/qa_coverage.py check`; `git diff --check` | 5 offline exact-selection checks pass; TypeScript QA config passes; 239 coverage records validate (12 implemented, 227 unmapped); whitespace check passes. No product case or browser ran. |
 | 7 | Used supported read-only pilot inspection with the last reviewed baseline; updated review matrix with exact currently served target and remaining lab fixture/launcher blockers | `scripts/vmlab preflight --json`; `python3 -I scripts/qa_pilot.py inspect --baseline … --control-dir …` | Same UUID running; controlled inspection passed for deployed target `299ab3ba…`; `live_authorized=false`; no product case or transport ran. Current role/device/dashboard fixtures remain unverified. |
+| 8 | Prepared the 31-case Module 2–9 v2 queue with 12 fixed batches and linked report-backed PASS outcomes for TC-ACC-09/TC-SS-04 in the adapter review | `python3 -I scripts/qa_queue.py check --queue docs/qa/queues/2026-10-18-modules-2-9-v2.json --run modules-2-9-v2` | Queue scope validates; ACC-09 and SS-04 are not selected. The queue is preparation-only and does not start the live suite. Five cards have source adapters but remain blocked on supported launch integration and reviewed live prerequisites; 26 cases remain unmapped. |
 
 ## State for the next session
 
-- Last check run (exact command): `python3 -I scripts/qa_coverage.py check`
-- Result (first failing lines, or "green"): green; 239 coverage records validate, with 12 implemented and 227 unmapped.
-- Hypothesis: The deployed target is verified at `299ab3ba…`, but case-specific account/device/dashboard fixtures and live support remain missing.
+- Last check run (exact command): `python3 -I scripts/qa_queue.py check --queue docs/qa/queues/2026-10-18-modules-2-9-v2.json --run modules-2-9-v2`
+- Result (first failing lines, or "green"): green; scope matches. Preparation is not a live start.
+- Hypothesis: The deployed target is verified at `299ab3ba…`, but case-specific account/device/dashboard fixtures and a supported live launcher remain missing.
 - Next action (one specific step, not "continue"): Implement a source-reviewed TC-ACC-10 adapter with bounded account creation and cleanup, preserving its prior partial report.
 
 ## Decisions and notes
 
 - TC-ACC-09 has a completed supervised PASS in `docs/test-runs/2026-10-18-next-permissions/REPORT.md`; TC-SS-04 has a completed supervised PASS in `docs/test-runs/2026-10-18-issue-211-ss04-recheck/REPORT.md`. They must not be replayed as untested cases.
-- The earlier prepared queue includes both cases because it lacked reviewer-bound run eligibility input; do not mutate it. Prepare a replacement after adapter/source changes are finalized.
+- Queue `docs/qa/queues/2026-10-18-modules-2-9-v2.json` explicitly selects 31 IDs and excludes TC-ACC-09/TC-SS-04; their supervised PASS reports are linked in `docs/qa/Module_2-9_Adapter_Review.md`. Historical catalog result cells remain unchanged per workflow.
 - TC-ACC-10 and TC-DI-10 have earlier partial reports and TC-DI-16–19 have #164 partial reports; the case catalog still says Not run. Queue eligibility and any retest/diagnostic decision must preserve both facts rather than treating the partial report as a pass or silently overwriting it.
 - The per-case source/prerequisite/mutation assessment is in `docs/qa/Module_2-9_Adapter_Review.md`; it does not authorize lab access or itself create execution cards.
 - No product case, live browser run, deployment, or execution start has occurred. A host-only read-only preflight is documented; it does not authorize a live start.
