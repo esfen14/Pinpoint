@@ -103,11 +103,106 @@ class Ledger:
         try:os.fsync(directory)
         finally:os.close(directory)
 
+    def recovered(self,uuid:str,state:dict) -> set[int]:
+        """Validate audited dispositions against exact private pre-recovery archives."""
+        records=state.get('recoveries',[]);indices=set()
+        if not isinstance(records,list):raise ValueError('Invalid recovery history')
+        for number,record in enumerate(records):
+            if not isinstance(record,dict):raise ValueError('Invalid recovery disposition')
+            index=record.get('attempt_index');checksum=record.get('source_checksum')
+            if (type(index) is not int or not 0<=index<len(state['attempts']) or index in indices
+                or not isinstance(checksum,str) or not re.fullmatch(r'[0-9a-f]{64}',checksum)
+                or not re.fullmatch(r'[0-9a-f]{64}',record.get('next_queue_hash',''))
+                or not re.fullmatch(r'[0-9a-f]{64}',record.get('evidence_hash',''))):
+                raise ValueError('Invalid recovery disposition')
+            with os.fdopen(private_file(self.path(uuid,'archive-'+checksum+'.json'),os.O_RDONLY),'rb') as source:
+                raw=source.read(4*1024*1024+1)
+            if len(raw)>4*1024*1024:raise ValueError('Oversized recovery archive')
+            archived=json.loads(raw)
+            if (archived.get('checksum')!=checksum
+                or checksum!=t.x.queue.cat.digest({k:v for k,v in archived.items() if k!='checksum'})
+                or archived.get('lab_uuid')!=uuid or archived.get('halted') is not True
+                or archived.get('attempts')!=state['attempts'][:index+1]
+                or archived['attempts'][-1].get('status')!='halted'
+                or record.get('attempt_hash')!=t.x.queue.cat.digest(state['attempts'][index])
+                or archived.get('recoveries',[])!=records[:number]
+                or any(state['sessions'].get(k,[])[:len(v)]!=v for k,v in archived['sessions'].items())):
+                raise ValueError('Recovery archive/history changed')
+            indices.add(index)
+        return indices
+
+    def recovery_request(self,uuid:str,plan:dict,review:dict) -> dict:
+        """Check an exact expiring recovery grant before any external proof work."""
+        if uuid not in self.held:raise ValueError('Recovery requires the lab lock')
+        with control.claim(inherited_fd=self.control_fd):pass
+        if self.path(uuid,'pending').exists():raise ValueError('Interrupted checkpoint requires manual review')
+        state=self.snapshot(uuid);prior=self.recovered(uuid,state)
+        if (state['halted'] is not True or not state['attempts']
+            or state['attempts'][-1].get('status')!='halted'
+            or any(a.get('status')!='complete' and i not in prior for i,a in enumerate(state['attempts'][:-1]))):
+            raise ValueError('Only one terminal halted attempt can be recovered')
+        if (review.get('version')!=1 or review.get('mode')!='supervised recovery'
+            or review.get('explicit_recovery') is not True
+            or not isinstance(review.get('reviewed_by'),str)
+            or not re.fullmatch(r'[A-Za-z0-9 ._#-]{1,120}',review['reviewed_by'])
+            or review.get('lab_uuid')!=uuid or review.get('source_checksum')!=state['checksum']
+            or review.get('attempt_hash')!=t.x.queue.cat.digest(state['attempts'][-1])
+            or review.get('next_queue_hash')!=plan.get('queue_hash')
+            or review.get('target_revision')!=plan.get('target_revision')
+            or review.get('baseline_hash')!=plan.get('baseline_hash')
+            or not re.fullmatch(r'[0-9a-f]{64}',review.get('evidence_hash',''))
+            or not re.fullmatch(r'[0-9a-f]{64}',plan.get('queue_hash',''))
+            or plan['queue_hash'] in {a['queue_hash'] for a in state['attempts']}
+            or not re.fullmatch(r'[0-9a-f]{40}',plan.get('target_revision',''))
+            or not re.fullmatch(r'[0-9a-f]{64}',plan.get('baseline_hash',''))):
+            raise ValueError('Separate exact recovery review required')
+        expiry=datetime.fromisoformat(review.get('expires_at',''))
+        if expiry.tzinfo is None or expiry<=datetime.now(timezone.utc):raise ValueError('Recovery review expired')
+        return state
+
+    def recover(self,uuid:str,plan:dict,review:dict,proof:dict) -> None:
+        """Archive exact halted state and append a reviewed disposition; never replay.
+
+        This trusted-core API does not collect proof. Only the gated pilot recovery
+        caller may supply independently fresh cleanup/baseline observations. It
+        preserves attempts/session budgets; clearing files or changing stores is
+        never a recovery operation.
+        """
+        state=self.recovery_request(uuid,plan,review)
+        proof_check(proof,plan,uuid)
+        if (any(proof.get(k) is not True for k in ('container_absent','bridge_absent','processes_absent','session_closed'))
+            or not re.fullmatch(r'[0-9a-f]{64}',proof.get('evidence_hash',''))
+            or proof['evidence_hash']!=review.get('evidence_hash')):
+            raise ValueError('Independent recovery cleanup evidence required')
+        # Copy exact original bytes privately before updating the current halt gate.
+        with os.fdopen(private_file(self.path(uuid,'json'),os.O_RDONLY),'rb') as source:
+            raw=source.read(4*1024*1024+1)
+        if len(raw)>4*1024*1024 or json.loads(raw)!=state:raise ValueError('Recovery source changed')
+        archive=self.path(uuid,'archive-'+state['checksum']+'.json')
+        try:fd=private_file(archive,os.O_WRONLY|os.O_CREAT|os.O_EXCL)
+        except FileExistsError:
+            with os.fdopen(private_file(archive,os.O_RDONLY),'rb') as source:
+                if source.read(4*1024*1024+1)!=raw:raise ValueError('Recovery archive changed')
+        else:
+            with os.fdopen(fd,'wb') as output:
+                output.write(raw);output.flush();os.fsync(output.fileno())
+        directory=os.open(self.root,os.O_RDONLY|os.O_DIRECTORY)
+        try:os.fsync(directory)
+        finally:os.close(directory)
+        state.setdefault('recoveries',[]).append(dict(attempt_index=len(state['attempts'])-1,
+            source_checksum=state['checksum'],attempt_hash=review['attempt_hash'],next_queue_hash=plan['queue_hash'],
+            target_revision=plan['target_revision'],baseline_hash=plan['baseline_hash'],
+            reviewed_by=review['reviewed_by'],review_hash=t.x.queue.cat.digest(review),
+            evidence_hash=proof['evidence_hash'],proof_hash=t.x.queue.cat.digest(proof),at=t.x.now()))
+        state['halted']=False
+        self.save(uuid,state)
+
     def ready(self,uuid:str) -> dict:
         """Reject unresolved interruption/halt, even after a process restart."""
         if uuid not in self.held:raise ValueError('Readiness requires the lab lock')
         state=self.snapshot(uuid)
-        if state['halted'] or any(a['status']!='complete' for a in state['attempts']):
+        recovered=self.recovered(uuid,state)
+        if state['halted'] or any(a['status']!='complete' and i not in recovered for i,a in enumerate(state['attempts'])):
             raise ValueError('Lab halted or interrupted; separately verified recovery required')
         if self.path(uuid,'pending').exists():raise ValueError('Interrupted checkpoint; recovery required')
         return state
@@ -118,6 +213,8 @@ class Ledger:
         key=(plan['queue_hash'],plan['set'],plan['case'])
         if any((a['queue_hash'],a['set'],a['case'])==key for a in state['attempts']):
             raise ValueError('Case already consumed; new session cannot replay it')
+        if state.get('recoveries') and plan['queue_hash']!=state['recoveries'][-1]['next_queue_hash']:
+            raise ValueError('Recovery permits only its separately reviewed new queue')
         session=t.x.queue.cat.digest([plan['queue_hash'],plan['set'],plan['owner'],plan['session']])
         batches=state['sessions'].setdefault(session,[])
         if plan['batch'] not in batches:
@@ -131,7 +228,7 @@ class Ledger:
         """Persist outcome or a generic halted state; never save raw exception text."""
         if uuid not in self.held:raise ValueError('Completion requires the lab lock')
         state=self.snapshot(uuid)
-        if not state['attempts'] or (success and state['attempts'][-1]['status']!='running'):raise ValueError('No running attempt')
+        if not state['attempts'] or state['attempts'][-1]['status']!='running':raise ValueError('No running attempt')
         attempt=state['attempts'][-1]
         attempt.update(status='complete' if success else 'halted',ended_at=t.x.now())
         if success:attempt['result']=result

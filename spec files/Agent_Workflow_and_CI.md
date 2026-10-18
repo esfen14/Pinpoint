@@ -345,6 +345,25 @@ No report-only inference authenticates a malicious same-user writer. See the
 uncertainty and trust boundary. The real no-browser timing worker is included in
 the frontend gate; it is synthetic harness evidence, never a case verdict.
 
+### Explicit audited permission-pilot recovery
+
+The narrow `qa_pilot.py recover` entry requires a separate expiring recovery grant,
+current immutable new queue, original consumed scope and unchanged controlled
+baseline. Under the canonical host/UUID claim it checks original terminal transport,
+halted session and browser logout evidence without accepting the old case result;
+then fresh read-only Docker ID/name absence, original same-user process/socket
+absence and supported baseline proof. Failed observations or ambiguous state stop.
+
+The ledger keeps an exact private checksum-named archive before appending a recovery
+disposition and updating its active halt gate. Original attempts remain halted and
+consumed, and session/batch budgets remain counted. Readiness validates the archive
+and its history against unchanged attempt prefixes; only the recovery's exact new
+queue may consume a slot, still under a separate live-start grant and fresh proofs.
+No running-attempt recovery, ledger reset/relocation, implicit retry or resource
+cleanup mutation is supported. A new halt needs new review. See the
+[recovery contract](../docs/qa/Issue_211_Recheck_Review.md); same-user receipts and
+cooperative locks remain a trust boundary, not cryptographic human authorization.
+
 ## Verification commands
 
 | Stage | Command | Notes |

@@ -419,3 +419,16 @@ diagnostic repeat; a later attempt/recovery needs separately reviewed scope.
 The #211 offline timing fix has real pinned-worker and composed real-parser regressions.
 It preserves the first pilot INCONCLUSIVE result and halted store. A fresh recheck
 card, reviewed recovery and explicit start are still required for live acceptance.
+
+## Explicit audited recovery exception
+
+Paeng separately approved implementation of `qa_pilot.py recover`. It is not an
+automatic retry, start or store reset. An expiring `supervised recovery` grant
+binds the original ledger/attempt/evidence, new queue and unchanged target/baseline.
+The caller holds canonical host/UUID locks, proves terminal metadata/logout without
+accepting the old result, rechecks actual daemon/process/socket absence and baseline,
+then archives exact original ledger bytes and appends a disposition. Attempts and
+budget history remain unchanged; only its named new queue can consume a fresh slot.
+Missing/changed archives and subsequent halts reject. The actual ledger is untouched
+until separately authorized use; a browser still needs its own explicit live start.
+See the [reviewed recovery scope](Issue_211_Recheck_Review.md).

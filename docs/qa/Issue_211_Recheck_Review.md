@@ -18,8 +18,9 @@ readiness nor exclusive lab ownership.
 
 The original UUID ledger is halted. The supported supervisor deliberately rejects
 all dispatch while any attempt remains unresolved; a new queue cannot bypass it.
-There is no supported recovery command. Do not clear, replace, delete, relocate
-or manually rewrite that ledger, reclassify the original result, or reuse v4.
+The explicit `qa_pilot.py recover` command implements the approved recovery
+mechanism below. It has not been applied to the real ledger. Do not clear, replace,
+delete, relocate or manually rewrite the store, reclassify the original result or reuse v4.
 
 Before an executable replacement card/start, separately review a recovery scope:
 
@@ -30,8 +31,11 @@ Before an executable replacement card/start, separately review a recovery scope:
    These are prerequisites for recovery, not retrospective PASS evidence.
 3. If recovery is approved, define an auditable recovery mechanism that retains
    the original halted attempt and records the reviewer, evidence and disposition.
-   Implement/review it separately before using it. This change supplies no reset,
-   alternate ledger, recovery code, or manual ledger-edit instruction.
+   Implementation was separately approved by Paeng. The implementation archives
+   exact original ledger bytes privately, leaves every attempt and budget unchanged,
+   appends an evidence/grant-bound recovery disposition, and updates only the active
+   halt gate. Every readiness check verifies the archive/history; only the exact
+   named new queue may consume another slot. This supplies no reset or alternate store.
 4. Obtain fresh exclusive ownership, exact host/guest/boot/runtime/source/Staff/
    served-byte/image/browser observations. A reboot or baseline change blocks;
    preparing this card does not authorize redeployment/restart/reset/account work.
@@ -53,3 +57,39 @@ bridge/process cleanup and fresh independent baseline proof. Save a new attribut
 report, index and execution log; keep original results and TC/E2E counts separate.
 Stop on uncertainty, with no repeat or automatic recovery. Until this run is
 observed, #211 finish condition 6 and broad/unattended readiness remain incomplete.
+
+## Approved mechanism and remaining authorization
+
+The separate `supervised recovery` grant requires `explicit_recovery: true`, reviewer,
+UUID, exact current ledger checksum, last halted-attempt hash, reviewed original
+evidence hash, next queue hash, unchanged target/baseline hashes and expiry. It
+is checked under the existing host/UUID locks before external probes/output work,
+then rechecked before disposition. It is distinct from a `supervised live` start.
+
+`qa_recovery.py` validates the prior immutable queue, original terminal container/
+bridge metadata, halted session and exact browser logout attachment without importing
+its case result. It requires successful fresh empty Docker queries for both original
+ID and name, absence of original same-user transport processes/Unix endpoints,
+unchanged evidence and fresh supported baseline inspection. Queries and observations
+are bounded; total returned proof must fit 90 seconds. No browser, kill/remove,
+restart/reset, account operation or accepted historical verdict is performed.
+
+The original ledger is copied byte-for-byte into a private write-once checksum-named
+archive before the current state is atomically saved. A failed/changed archive,
+interrupted checkpoint, running attempt, missing/expired grant, failed proof or
+subsequent halt remains blocked. Original attempts retain `status=halted`; audit
+records include proof/review/evidence digests, target, baseline, next queue and time.
+Old slots remain consumed and old budgets remain counted.
+
+Implementation authorization has been received. Applying this mechanism on the
+actual appliance/store has **not** been authorized or executed. A separate explicit
+start is still required for a browser run. The v1 card remains historical preparation
+and becomes source-stale after recovery source changes; prepare a replacement.
+
+A recovery grant must bind the exact executable-intent replacement queue. Changing
+that queue after recovery will be rejected. Its source-reviewed adapter needs no
+human product observation (`human_required: false`); that field does not attest
+live prerequisites or authorize launch. Actual recovery, exclusive ownership,
+baseline and separate explicit start are enforced by the supported runtime gates.
+The v1 use of `human_required: true` was a preparation block and cannot be the
+queue authorized for dispatch by a recovery record.

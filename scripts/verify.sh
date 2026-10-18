@@ -39,6 +39,7 @@ docs() {
   python3 -I "$root/scripts/test_qa_transport.py"
   echo "==> docs: durable supervisor lifecycle with synthetic driver only"
   python3 -I "$root/scripts/test_qa_supervisor.py"
+  python3 -I "$root/scripts/test_qa_recovery.py"
   echo "==> docs: bounded local process groups and strict synthetic report parsing"
   python3 -I "$root/scripts/test_qa_process.py"
   python3 -I "$root/scripts/test_qa_results.py"

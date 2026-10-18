@@ -30,7 +30,7 @@ Requirement coverage:
 2. [x] Implement bounded provenance rule in scripts/qa_results.py and, only if necessary, adapter/config/driver sources; add meaningful import/driver regressions in scripts/test_qa_results.py and scripts/test_qa_pilot.py; review source hashes when affected.
 3. [x] Update owning spec files/Agent_Workflow_and_CI.md, spec files/Implementation_Status.md and docs/qa/Automation_Readiness.md; verify focused Python/Node helpers and docs gate, with backend omitted per issue.
 4. [x] Prepare source-reviewed immutable recheck card/queue under docs/qa/queues and docs/qa/Issue_211_Recheck_Review.md, blocked on recovery/start; check freshness and refusal to execute.
-5. [ ] Implement approved audited recovery in scripts/qa_supervisor.py and scripts/qa_recovery.py with isolated tests, preserving original attempt/session data and an exact private ledger archive; gate it on an expiring queue/attempt/checksum-bound recovery grant and fresh cleanup/baseline proof. Wire an explicit recover CLI in scripts/qa_pilot.py, update specs/docs, verify focused helpers/docs.
+5. [x] Implement approved audited recovery in scripts/qa_supervisor.py and scripts/qa_recovery.py with isolated tests, preserving original attempt/session data and an exact private ledger archive; gate it on an expiring queue/attempt/checksum-bound recovery grant and fresh cleanup/baseline proof. Wire an explicit recover CLI in scripts/qa_pilot.py, update specs/docs, verify focused helpers/docs.
 6. [ ] Prepare a replacement recheck card after recovery source changes; obtain authorization before applying live recovery and a separate explicit new start before a browser run. Record a new supervised result only if authorized.
 7. [ ] Re-read issue, verify requirement proofs, checkpoint and open PR against issue-206-qa-readiness; draft if live completion pending. Inspect CI.
 
@@ -42,12 +42,14 @@ Requirement coverage:
 | 1 | Reproduced original rejection before implementation; replaced derived wall end with independent attach bounds/monotonic budget; added real no-browser pinned-worker and real-parser composed regressions; documented timing/trust/uncertainty | scripts/verify.sh docs; scripts/verify.sh frontend; python3 -m py_compile scripts/qa_results.py scripts/qa_pilot.py scripts/qa_container.py; git diff --check | Green: 182 isolated docs contracts, 1003 frontend tests, 8 offline Node checks, build/types/lint (0 errors, 33 existing warnings). Backend skipped per issue; no live access. |
 | 2 | Prepared fresh #211 one-case recheck v1 and concrete recovery review; card deliberately non-executable, original pilot/v4/product sources unchanged | qa_queue.py prepare/check/show; validate_card negative check; git diff --quiet for original pilot/v4/application; scripts/verify.sh docs | Green: fresh scope, missing review fails closed, 182 isolated docs contracts. No live resource or private ledger/evidence accessed. |
 
+| 3 | Implemented user-approved audited recovery core/collector/CLI with exact private original-state archive, preserved halted attempts/budgets, expiring scope/evidence-bound grant, fresh absence/baseline proof and new-queue-only consumption | python3 -I scripts/test_qa_recovery.py; scripts/verify.sh docs > /tmp/issue211-recovery-docs-serial.log 2>&1; Python compile; git diff --check | Green: 11 new recovery contracts, full 193 isolated docs contracts. An earlier docs run collided with my concurrently run helper on the canonical test lock; serial rerun passed without weakening locks/tests. No live commands or real ledger/evidence access. |
+
 ## State for the next session
 
-- Last check run (exact command): scripts/verify.sh docs > /tmp/issue211-docs-final.log 2>&1
-- Result (first failing lines, or "green"): green; docs and frontend gates pass. Focused parser 13, container 17, composed driver 12 tests pass.
+- Last check run (exact command): scripts/verify.sh docs > /tmp/issue211-recovery-docs-serial.log 2>&1
+- Result (first failing lines, or "green"): green; 193 docs contracts pass, including 11 recovery, 13 parser, 17 container and 12 composed driver tests. Earlier frontend gate passed 1003 product and 8 helper tests; no frontend changed during recovery implementation.
 - Hypothesis: Confirmed slot-duration/wall-end category error. Exact attribution of original 44 ms remains unknown without original per-slot telemetry. Independent owned attach bounds remove that inference without a grace period.
-- Next action (one specific step, not "continue"): Add failing isolated recovery tests before implementing the user-approved recovery mechanism; do not apply it to the real ledger or launch a browser.
+- Next action (one specific step, not "continue"): Prepare a source-current v2 replacement queue/card for exactly TC-SS-04, keeping runtime recovery/use and explicit browser start pending; update draft PR #212 with verified recovery implementation.
 
 ## Decisions and notes
 
@@ -65,3 +67,5 @@ Requirement coverage:
 - Prepared queue: docs/qa/queues/2026-10-18-issue-211-ss04-recheck-v1.json; set issue211-ss04-recheck; owner Paeng; target 299ab3ba7203c89a3ca5d8fabea42d9e5f239be2; scope checked source-current.
 
 - User explicitly approved recovery implementation via the PR #212 recovery-scope question. Plan expanded on that authorization; approval is for implementation, not applying live recovery or starting a browser. PR: https://github.com/esfen14/Pinpoint/pull/212 (draft, base issue-206-qa-readiness).
+
+- Recovery core/CLI implemented and verified under the approved scope. Approval does not yet authorize applying it to the real store or a browser run. The historical v1 card remains unexecuted and now correctly stale after recovery source/spec changes.

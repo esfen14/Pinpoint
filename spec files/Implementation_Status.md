@@ -352,8 +352,11 @@ regressions accept the synthetic 44 ms relationship and halt on stale/foreign or
 failed-cleanup evidence. Fresh supervised acceptance remains unverified.
 The supervisor ledger remains halted; no accepted
 result, automatic repeat or reset occurred. See the [pilot report](../docs/test-runs/2026-10-18-issue-206-ss04-pilot/REPORT.md).
-Reviewed recovery, a new recheck card and explicit start
-are needed before another attempt; broader/unattended coverage stays blocked. Controlled launch/build provenance is a trust boundary, not memory
+The separately approved `qa_pilot.py recover` implementation now provides an
+expiring grant-bound, archive-preserving disposition after actual cleanup/baseline
+proof. It retains original halted attempts and budgets and permits only its named
+new queue; it has not been applied to the actual store. Granted recovery use, a
+source-current recheck card and explicit browser start remain needed before another attempt; broader/unattended coverage stays blocked. Controlled launch/build provenance is a trust boundary, not memory
 attestation. The standalone observer's negative readiness fields are unchanged.
 
 The [historical evidence inventory/review](../docs/qa/Historical_Evidence_Review.md)
