@@ -1,7 +1,7 @@
 # Issue #234: Investigate NCPA resource-helper rejection, conflicting deployment results, and missing metrics
 
 Branch: `issue-234-ncpa-helper`
-Status: blocked
+Status: in-progress
 
 ## Finish condition
 
@@ -36,17 +36,17 @@ One row per loop round, newest last.
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | Plan | Read issue, routed specs and source leads; created this plan | `gh issue view 234 --json number,title,body,comments,state`; source/spec inspection | Acceptance criteria are explicit; prior missing-helper report is historical context, not fresh reproduction |
+| Resume | Owner approved the security-sensitive plan; reopened work | `gh pr view 7 --repo lorraine-pangilinan/PinPoint-Installer --json number,title,body,state,headRefName,headRefOid,baseRefName`; `scripts/vmlab status`; `scripts/vmlab preflight` | Installer PR head is `b166953d2e7e5b4bae12bf723712224cc97fae94`; local installer main does not contain the helper; QA VM control preflight passed |
 
 ## State for the next session
 
-- Last check run (exact command): `git status --short --branch`
-- Result (first failing lines, or "green"): clean `issue-234-ncpa-helper` branch at `origin/main` before adding this progress record.
+- Last check run (exact command): `scripts/vmlab status && scripts/vmlab preflight`
+- Result (first failing lines, or "green"): VM running; expected snapshot present; base installer stamp matches; preflight passed.
 - Hypothesis: the issue may be the known missing installer helper/sudo rule, but the report expressly says this is not established for the current environment. Current `add_ncpa_port` marks the run failed after configuration apply failure while per-device install results remain Success, so the UI needs stage-aware outcomes.
-- Next action (one specific step, not "continue"): obtain the required security review/decision for modifying the protected resource helper/configuration path, then inspect the paired installer's current helper contract and capture fresh, sanitized target diagnostics.
+- Next action (one specific step, not "continue"): inspect the exact installer helper patch and collect non-secret live helper/sudo/resource metadata from the running QA VM before reproducing deployment.
 
 ## Decisions and notes
 
 - Do not log or return helper stdout/stderr if it can contain secrets or unsafe paths; diagnostics must be sanitized and stage-specific.
-- `Engineering_Standards.md` explicitly classifies `app/network_discovery/` and `app/ncpa_deployment/` as sensitive and requires injection/secret-exposure review. The work-issue procedure says to stop for a person when a change touches a sensitive module; no implementation change has been made pending that review/decision.
-- Person needed: review and authorize the security-sensitive helper/configuration changes for this issue, including the planned sanitized diagnostics and how a fresh target reproduction can be performed. The workflow explicitly lists sensitive modules as a stop condition.
+- `Engineering_Standards.md` explicitly classifies `app/network_discovery/` and `app/ncpa_deployment/` as sensitive and requires injection/secret-exposure review. The owner approved the security-sensitive plan on 2026-10-19.
 - The installer is maintained in a separate repository. The issue links PR #7 as an investigation lead, but does not establish that its current revision is the cause.
