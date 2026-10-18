@@ -23,7 +23,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 ## Plan
 
-1. [ ] Reconcile the protected-helper installer contract and diagnose the current rejection without exposing secrets; inspect NCPA deployment, resource helper, and Network Health paths. Files: `server/app/network_discovery/resource_macros.py`, `server/app/network_discovery/create_host_cfg.py`, `server/app/ncpa_deployment/ncpa_deployment.py`, `server/app/system_models.py`, `client/src/components/ncpa-deployment/`, `client/src/pages/NcpaDeploymentPage.tsx`, `server/tests/plans/`, `docs/test-runs/`.
+1. [x] Reconcile the protected-helper installer contract and diagnose the current rejection without exposing secrets; inspect NCPA deployment, resource helper, and Network Health paths. Files: `server/app/network_discovery/resource_macros.py`, `server/app/network_discovery/create_host_cfg.py`, `server/app/ncpa_deployment/ncpa_deployment.py`, `server/app/system_models.py`, `client/src/components/ncpa-deployment/`, `client/src/pages/NcpaDeploymentPage.tsx`, `server/tests/plans/`, `docs/test-runs/`.
 2. [ ] Add regression tests that separate successful agent installation from failed monitoring attachment and verify sanitized helper diagnostics. Files: `server/tests/unit/test_resource_macros.py`, `server/tests/unit/test_create_host_cfg.py`, `server/tests/unit/test_ncpa_deployment_runs.py`, relevant frontend test files.
 3. [ ] Implement the smallest supported fix while preserving helper authorization and resource-file ownership/mode safeguards. Files: source files identified in step 1 and, only if required and in scope, the paired installer dependency.
 4. [ ] Update deployment UI/API behavior and specifications to describe installation and monitoring attachment as separate outcomes. Files: relevant files under `client/src/components/ncpa-deployment/`, `server/app/api/system/ncpa_deployment.py`, `spec files/Backend_Modules_and_Routes.md`, `spec files/Frontend_Modules_and_Routes.md`, `spec files/Data_Model_and_Integrations.md`, `spec files/Implementation_Status.md`.
@@ -37,16 +37,18 @@ One row per loop round, newest last.
 |---|---|---|---|
 | Plan | Read issue, routed specs and source leads; created this plan | `gh issue view 234 --json number,title,body,comments,state`; source/spec inspection | Acceptance criteria are explicit; prior missing-helper report is historical context, not fresh reproduction |
 | Resume | Owner approved the security-sensitive plan; reopened work | `gh pr view 7 --repo lorraine-pangilinan/PinPoint-Installer --json number,title,body,state,headRefName,headRefOid,baseRefName`; `scripts/vmlab status`; `scripts/vmlab preflight` | Installer PR head is `b166953d2e7e5b4bae12bf723712224cc97fae94`; local installer main does not contain the helper; QA VM control preflight passed |
+| 1 | Reconciled helper contract and VM state; completed a real deployment and added sanitized evidence report | `scripts/vmlab ncpa 10.77.0.3`; authenticated `/api/system/network-health/services` detail and `/network-health/trends`; SSH metadata/sudo checks | Deployment and live metrics passed; previously reported helper rejection not reproduced; report records historical missing-helper diagnosis separately |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/vmlab status && scripts/vmlab preflight`
-- Result (first failing lines, or "green"): VM running; expected snapshot present; base installer stamp matches; preflight passed.
-- Hypothesis: the issue may be the known missing installer helper/sudo rule, but the report expressly says this is not established for the current environment. Current `add_ncpa_port` marks the run failed after configuration apply failure while per-device install results remain Success, so the UI needs stage-aware outcomes.
-- Next action (one specific step, not "continue"): inspect the exact installer helper patch and collect non-secret live helper/sudo/resource metadata from the running QA VM before reproducing deployment.
+- Last check run (exact command): `scripts/vmlab ncpa 10.77.0.3`
+- Result (first failing lines, or "green"): green: run 2 Success; one device Success; deployed NCPA.
+- Hypothesis: the supported current QA path is healthy; the user-reported mismatch remains unverified. Source already preserves agent install success while failing the overall config stage, but does not annotate per-device results, and the drawer claims checks appear even when attachment failed.
+- Next action (one specific step, not "continue"): add a backend regression assertion that config attachment failure keeps `Success` as the install outcome while adding a sanitized attachment-failure explanation to that device result.
 
 ## Decisions and notes
 
 - Do not log or return helper stdout/stderr if it can contain secrets or unsafe paths; diagnostics must be sanitized and stage-specific.
 - `Engineering_Standards.md` explicitly classifies `app/network_discovery/` and `app/ncpa_deployment/` as sensitive and requires injection/secret-exposure review. The owner approved the security-sensitive plan on 2026-10-19.
 - The installer is maintained in a separate repository. The issue links PR #7 as an investigation lead, but does not establish that its current revision is the cause.
+- Live diagnosis: deployed application files match `4aa4e1eb`; VM base installer stamp is `697869e`; the installed helper hash matches the source from installer PR #7 commit `b166953d2e7e5b4bae12bf723712224cc97fae94`. The earlier missing helper/sudo rule explains that earlier setup only. Current QA helper rejection remains unconfirmed.
