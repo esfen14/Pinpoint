@@ -411,14 +411,16 @@ container work. Canonical shared ledger consumption precedes the actual attempt.
 Container removal, bridge shutdown, browser logout evidence and fresh baseline
 checks are all required; any uncertainty halts without retry/reset/restore.
 
-The first real browser/container attempt remains pending. Passing isolated driver
-contracts or read-only inspection is not live cleanup validation or an acceptance
-PASS. Broader/unattended cases stay blocked. The one-case initial pilot permits no
-diagnostic repeat; a later attempt/recovery needs separately reviewed scope.
+The first v4 browser/container attempt remains INCONCLUSIVE after the original
+timing rejection. The separately authorized v2 recheck now passed the actual full
+supervised result/cleanup path; see the [new report](../test-runs/2026-10-18-issue-211-ss04-recheck/REPORT.md).
+Broader/unattended cases stay blocked. Neither scope allows a diagnostic repeat;
+a later attempt/recovery needs separately reviewed scope/start.
 
 The #211 offline timing fix has real pinned-worker and composed real-parser regressions.
-It preserves the first pilot INCONCLUSIVE result and halted store. A fresh recheck
-card, reviewed recovery and explicit start are still required for live acceptance.
+It preserves the first pilot INCONCLUSIVE result, exact original halted-state
+archive and original attempt/budgets. Separately authorized recovery and the fresh
+v2 explicit start established narrow live acceptance without reclassifying v4.
 
 ## Explicit audited recovery exception
 
@@ -429,6 +431,8 @@ The caller holds canonical host/UUID locks, proves terminal metadata/logout with
 accepting the old result, rechecks actual daemon/process/socket absence and baseline,
 then archives exact original ledger bytes and appends a disposition. Attempts and
 budget history remain unchanged; only its named new queue can consume a fresh slot.
-Missing/changed archives and subsequent halts reject. The actual ledger is untouched
-until separately authorized use; a browser still needs its own explicit live start.
+Missing/changed archives and subsequent halts reject. The authorized actual
+recovery retained the original ledger archive and added one audited disposition;
+the separately started v2 attempt completed with accepted PASS/restored. A future
+browser run still needs its own scope and explicit start; v2 is consumed.
 See the [reviewed recovery scope](Issue_211_Recheck_Review.md).

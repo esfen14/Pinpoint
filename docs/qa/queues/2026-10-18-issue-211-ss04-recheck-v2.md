@@ -340,3 +340,15 @@ Cases not listed here need only a finished setup (TC-AUTH-07) and the lab descri
 | TC-SEQ-21 | TC-NCPA-04 | A deployed NCPA device |
 | TC-SEQ-22 | TC-NCPA-09, TC-REM-10, TC-NCPA-04 | A deployed device with remote restart set |
 
+
+## Execution log
+
+| Session / batch | Case / attempt | Executor | Result / evidence | Restoration / next action |
+|---|---|---|---|---|
+| issue211-ss04-recheck-v2 / issue211-ss04-recheck-v2-001 | TC-SS-04 / 1; 2026-10-18 08:26:45–08:26:57 UTC; no retry | Codex scripted automation; Paeng explicit start after separately authorized recovery | PASS; E1 fixed observation accepted; [new report](../../test-runs/2026-10-18-issue-211-ss04-recheck/REPORT.md) | Logout/401, owned container/bridge/process cleanup and fresh baseline passed; consumed scope complete; no further execution authorized |
+
+One batch opened/completed; unique TC selected/attempted/PASS 1; E2E selected/attempted 0.
+The immutable JSON is unchanged. Source freshness passed before dispatch; subsequent
+known-gap/report inventory updates make this consumed scope historical, never replayable.
+Original v4 INCONCLUSIVE report, private evidence, archived halted ledger, original
+attempt and budgets remain intact; recovery added a disposition, not a reset.

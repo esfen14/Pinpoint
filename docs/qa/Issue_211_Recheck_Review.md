@@ -1,4 +1,4 @@
-# #211 recheck review — prepared, not started
+# #211 recheck review and authorized completion
 
 The [v2 recheck preview](queues/2026-10-18-issue-211-ss04-recheck-v2.md) and
 [immutable JSON](queues/2026-10-18-issue-211-ss04-recheck-v2.json) select only
@@ -19,7 +19,8 @@ readiness nor exclusive lab ownership.
 The original UUID ledger is halted. The supported supervisor deliberately rejects
 all dispatch while any attempt remains unresolved; a new queue cannot bypass it.
 The explicit `qa_pilot.py recover` command implements the approved recovery
-mechanism below. It has not been applied to the real ledger. Do not clear, replace,
+mechanism below. It was applied only after Paeng separately authorized actual use; the original
+ledger/attempt remain preserved as described below. Do not clear, replace,
 delete, relocate or manually rewrite the store, reclassify the original result or reuse v4.
 
 Before an executable replacement card/start, separately review a recovery scope:
@@ -60,8 +61,8 @@ path: durable new-attempt consumption, actual one-case browser execution, strict
 current-run import, logout/401 evidence, owned container removal/daemon absence,
 bridge/process cleanup and fresh independent baseline proof. Save a new attributable
 report, index and execution log; keep original results and TC/E2E counts separate.
-Stop on uncertainty, with no repeat or automatic recovery. Until this run is
-observed, #211 finish condition 6 and broad/unattended readiness remain incomplete.
+Stop on uncertainty, with no repeat or automatic recovery. The [separate v2 run](../test-runs/2026-10-18-issue-211-ss04-recheck/REPORT.md)
+now proves #211 finish condition 6; broad/unattended readiness remains incomplete.
 
 ## Approved mechanism and remaining authorization
 
@@ -86,9 +87,11 @@ subsequent halt remains blocked. Original attempts retain `status=halted`; audit
 records include proof/review/evidence digests, target, baseline, next queue and time.
 Old slots remain consumed and old budgets remain counted.
 
-Implementation authorization has been received. Applying this mechanism on the
-actual appliance/store has **not** been authorized or executed. A separate explicit
-start is still required for a browser run. The v1 card remains historical preparation
+Implementation authorization has been received. Paeng then separately authorized actual use and explicitly started v2 after
+successful recovery. Recovery completed at 08:25:45 UTC and the supervised browser
+result was accepted PASS/restored at 08:26:57 UTC on 2026-10-18. The original v4
+attempt remains halted/INCONCLUSIVE; its exact private archive and budgets were
+verified unchanged. Future browser work still requires a separate explicit start. The v1 card remains historical preparation
 and is source-stale after recovery source changes; v2 is its source-current replacement.
 
 A recovery grant must bind the exact executable-intent replacement queue. Changing

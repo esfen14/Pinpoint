@@ -55,6 +55,7 @@ table while you test, not afterward.
 
 | Run | Kind | Commit | Result | Report |
 |---|---|---|---|---|
+| [2026-10-18 issue-211 SS-04 recheck](2026-10-18-issue-211-ss04-recheck/REPORT.md) | Explicit audited recovery and one supervised TC-SS-04 recheck after timing fix | app `299ab3ba`, harness `724a4b55` | PASS: current-run import, logout, owned cleanup and fresh baseline accepted; original v4 INCONCLUSIVE preserved | [REPORT.md](2026-10-18-issue-211-ss04-recheck/REPORT.md) |
 | [2026-10-18 issue-206 SS-04 pilot](2026-10-18-issue-206-ss04-pilot/REPORT.md) | First supervised scripted TC-SS-04 attempt; exact one-case browser/owned transport | `299ab3ba` | INCONCLUSIVE: browser/assertions/logout passed, parser timing rejection #211; cleanup independently verified; ledger halted | [REPORT.md](2026-10-18-issue-206-ss04-pilot/REPORT.md) |
 | [2026-10-18 issue-206 pilot driver preflight](2026-10-18-issue-206-pilot-driver-preflight/REPORT.md) | Narrow driver, read-only actual baseline/served bytes and explicit-start denial | `299ab3ba` | Preflight complete; TC-SS-04 Not run; no browser/container launched | [REPORT.md](2026-10-18-issue-206-pilot-driver-preflight/REPORT.md) |
 | [2026-10-18 issue-206 pilot preparation](2026-10-18-issue-206-pilot-preflight/REPORT.md) | Exclusive appliance preflight, backup, deployment/migrations and Staff setup | `299ab3ba` | Preparation complete; TC-SS-04 Not run; automatic startup scan disclosed; scheduler off | [REPORT.md](2026-10-18-issue-206-pilot-preflight/REPORT.md) |
