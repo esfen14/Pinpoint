@@ -63,12 +63,13 @@ def validate(value:dict) -> None:
         if not NAME.fullmatch(s.get('name','')) or s['name'] in names:raise ValueError('Invalid/duplicate set name')
         names.add(s['name'])
         if not isinstance(s.get('owner'),str) or not s['owner'].strip():raise ValueError('Owner is required')
-        if s.get('purpose') not in ('untested','retest','recheck'):raise ValueError('Invalid purpose')
+        if s.get('purpose') not in ('untested','retest','recheck','investigate'):raise ValueError('Invalid purpose')
         cases=s.get('cases')
         if not isinstance(cases,list) or not cases:raise ValueError('Set has no eligible cases')
         ids=[]
         for c in cases:
             if not isinstance(c,dict) or not cat.CASE_ID.fullmatch(c.get('id','')):raise ValueError('Invalid case')
+            if s['purpose']=='investigate' and c.get('status')!='partial':raise ValueError('Investigation requires a partial verdict')
             if c['id'] in assigned:raise ValueError(f"{c['id']}: assigned more than once")
             assigned.add(c['id']);ids.append(c['id'])
             if not c.get('procedure') or not c.get('expectations'):raise ValueError('Incomplete case snapshot')
@@ -86,7 +87,7 @@ def validate(value:dict) -> None:
 def prepare(selections:list[str], catalog:dict, target_revision:str,
             purpose:str='untested', evidence:dict|None=None, cards:dict|None=None) -> dict:
     """Expand module/ID selectors once and snapshot eligible cases plus exclusions."""
-    if purpose not in ('untested','recheck','retest'):raise ValueError('Unknown purpose')
+    if purpose not in ('untested','recheck','retest','investigate'):raise ValueError('Unknown purpose')
     evidence=evidence or {};cards=cards or {};sets=[]
     if not isinstance(cards,dict) or any(k not in catalog or not isinstance(v,dict) for k,v in cards.items()):
         raise ValueError('Cards must be a dictionary keyed only by current case IDs')
@@ -114,6 +115,7 @@ def prepare(selections:list[str], catalog:dict, target_revision:str,
             eligible=(status=='untested' and purpose=='untested' and not accepted)
             eligible|=(purpose=='recheck' and status not in ('needs-decision',) and not accepted)
             eligible|=bool(purpose=='retest' and retest and status!='needs-decision')
+            eligible|=(purpose=='investigate' and status=='partial')
             if accepted:reason='accepted historical coverage; '+record['report']
             if not eligible:
                 if k in explicit:raise ValueError(f'{k}: ineligible ({reason})')
@@ -168,6 +170,8 @@ def preview(value:dict,run:str|None=None) -> str:
     lines=['# Prepared module QA queue','','Waiting for explicit start. No tests have started.',
            f"Target revision: `{value['target_revision']}`; scope: `{value['scope_hash']}`",'']
     for s in selected_sets(value,run):
+        if s['purpose']=='investigate':
+            lines += ['', 'Investigation only: review source evidence, search duplicate issues and record a linked disposition. No product case execution or PASS promotion.', '']
         lines.extend([f"## {s['name']} — {s['owner']}",'',f"Modules: {', '.join(s['modules'])}; purpose: {s['purpose']}.",
                       'Five batches per session; at most five ordinary IDs per batch.','',
                       '| Batch | Exact IDs |','|---|---|'])
@@ -189,7 +193,7 @@ def main() -> int:
     p=argparse.ArgumentParser(description=__doc__);cmd=p.add_subparsers(dest='command',required=True)
     prep=cmd.add_parser('prepare');prep.add_argument('--set',dest='selections',action='append',required=True,metavar='NAME:OWNER:MODULE,ID')
     prep.add_argument('--output',type=Path,required=True);prep.add_argument('--target-revision',required=True)
-    prep.add_argument('--purpose',choices=['untested','recheck','retest'],default='untested')
+    prep.add_argument('--purpose',choices=['untested','recheck','retest','investigate'],default='untested')
     prep.add_argument('--cards',type=Path);prep.add_argument('--evidence',type=Path)
     for name in ('check','show'):
         sub=cmd.add_parser(name);sub.add_argument('--queue',type=Path,required=True);sub.add_argument('--run')

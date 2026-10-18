@@ -189,6 +189,13 @@ reports. App/spec conflicts remain decisions, not automatic passes.
   candidates without conferring PASS. Reviewer decisions for the exact target,
   report/case hashes, item coverage and environment/source compatibility determine
   reuse. October 15 remains a provisional cutoff. See [queue guide](../docs/qa/QA_Run_Queues.md).
+- **Partial-pass investigation:** Every catalog partial needs an evidence review,
+  duplicate search, linked issue/disposition and next action in the
+  [partial-pass register](../docs/qa/Partial_Pass_Investigations.md). The
+  `investigate` queue purpose selects partials only and cannot open product cases.
+  Reported gaps may be filed with human attribution; unknown observations require
+  evidence clarification. Preserve original verdicts and apply normal live
+  reproduction/repeat rules before `qa-found`.
 - **QA batch throughput:** One owner's set may span multiple modules, expanded
   to fixed eligible IDs and ordered batches before review/start. The QA-specific
   five-round limit counts batches: up to five ordinary TC IDs per batch, five

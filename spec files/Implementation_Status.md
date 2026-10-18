@@ -258,7 +258,11 @@ hashes, ordered action slots, evidence completeness and cleanup halt. It perform
 no live command dispatch or preflight and cannot constrain an agent with arbitrary
 shell/file access. Empty/missing cards remain blocked. Live scan guarding,
 recovery/resume orchestration and complete current-case browser adapters remain
-unimplemented; no unattended-readiness claim is made.
+unimplemented; no unattended-readiness claim is made. Review-only `investigate`
+queues now retain human partials for mandatory evidence/issue triage and reject
+product case opening. The [partial-pass register](../docs/qa/Partial_Pass_Investigations.md)
+links reported confirmation defect #208 and unexplained-result clarification #209;
+neither is a fresh runtime reproduction.
 
 The [historical evidence inventory/review](../docs/qa/Historical_Evidence_Review.md)
 links 41 post-cutoff-directory-date reports and six partial current-case mappings.

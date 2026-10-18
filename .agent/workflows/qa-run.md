@@ -35,6 +35,22 @@ authoritative. A case's Note about an app/spec difference is evidence of a gap,
 not permission to pass the app against a weaker expectation. Record unresolved
 conflicts as `needs-decision` and continue another unblocked case.
 
+## Mandatory partial-pass investigation
+
+Before treating the remaining queue as complete, review every catalog partial
+against the [partial-pass register](../../docs/qa/Partial_Pass_Investigations.md).
+Use `--purpose investigate` for fixed module/person evidence-review assignments.
+These assignments cannot open product cases in the offline executor. Search open
+and closed issues; link an existing issue or file an attributed reported defect
+when the human observation identifies a requirement violation. Blank or ambiguous
+notes require a `needs-decision` evidence-clarification issue. Record findings,
+source/report references, unknown provenance, issue URL and next action. Do not
+claim fresh reproduction or use `qa-found` without the normal runtime evidence
+and repeat rules. A needed live check requires a separate reviewed `recheck` queue
+and explicit start. Preserve original human verdicts; attach subsequent runs.
+Historical reports with only partial coverage indicate missing coverage, not
+a defect by themselves.
+
 ## Bounded executor rules
 
 These rules apply to every executor, including a less capable model. Do not rely

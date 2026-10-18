@@ -40,6 +40,23 @@ Status: in-progress
 | 1 | Added shared catalog parser with shorthand phase expansion, 239 definitions, complete procedures/expectations and result-conflict handling | `python3 -I scripts/test_qa_catalog.py`; `python3 -I scripts/qa_catalog.py` | 4 tests pass; 231 TC/8 E2E; 26 conflicts plus one free-text verdict flagged; docs gate migration remains step 4 |
 | Plan | Copied approved local documentation/catalog transition into isolated issue checkout; recorded implementation plan | `gh issue view 206 --json body --jq .body` | Finish condition covers offline readiness; no live operations authorized |
 
+## Partial-pass follow-up session (2026-10-18)
+
+User addition: investigate partial passes so issues can be filed.
+
+1. [x] Review all human partial verdicts, source/spec evidence and existing issues.
+2. [x] File attributed acknowledgement confirmation defect [#208](https://github.com/esfen14/Pinpoint/issues/208) and missing-observation clarification [#209](https://github.com/esfen14/Pinpoint/issues/209).
+3. [x] Add review-only `investigate` queues, partial-only validation, executor rejection and mandatory linked dispositions; preserve the catalog.
+4. [x] Verify docs gate, selection/conflict/tampering and execution rejection checks; no live QA.
+5. [ ] Checkpoint/push to PR #207 and inspect new-head CI.
+
+Follow-up round 1: docs gate passes with 68 isolated checks (including two new
+regressions); `git diff --check` passes. ACK source corroborates the human note;
+REM has no stated failing expectation and is not asserted to be a permission bug.
+Prior full product checks and CI passed at `9e8d7f1`; the new-head CI must be
+checked separately. Both investigation issues retain unknown original provenance
+and require separately authorized live evidence where needed.
+
 ## State for the next session
 
 - Last check run: `scripts/verify.sh all` (green, `/tmp/issue-206-verify-all.log`), followed by final docs gate (66 checks) and syntax/whitespace validation for QA-only hardening.

@@ -30,6 +30,21 @@ class QAQueueTests(unittest.TestCase):
             with self.subTest(selections=selections),self.assertRaises(ValueError):
                 queue.prepare(selections,self.catalog(),'a'*40)
 
+    def test_investigation_selects_partial_verdicts_without_silently_retesting(self):
+        catalog=queue.load_catalog()
+        q=queue.prepare(['partial:Reviewer:ACK,REM'],catalog,'a'*40,purpose='investigate')
+        self.assertEqual([c['id'] for c in q['sets'][0]['cases']],['TC-ACK-05','TC-REM-04'])
+        self.assertEqual(q['sets'][0]['purpose'],'investigate')
+        self.assertIn('investigation',queue.preview(q).lower())
+        altered=copy.deepcopy(q);altered['sets'][0]['cases'][0]['status']='pass'
+        queue.seal(altered)
+        with self.assertRaisesRegex(ValueError,'partial'):
+            queue.validate(altered)
+        with self.assertRaises(ValueError):
+            queue.prepare(['partial:Reviewer:TC-NCPA-09'],catalog,'a'*40,purpose='investigate')
+        with self.assertRaises(ValueError):
+            queue.prepare(['partial:Reviewer:TC-ACK-06'],catalog,'a'*40,purpose='investigate')
+
     def test_recheck_is_explicit_and_still_excludes_conflicts(self):
         q=queue.prepare(['one:A:TC-TOP-01'],self.catalog(),'a'*40,purpose='recheck')
         self.assertEqual(q['sets'][0]['purpose'],'recheck')

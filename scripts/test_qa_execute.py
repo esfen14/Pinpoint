@@ -26,6 +26,15 @@ class ExecutorTests(unittest.TestCase):
             recovery_verified=True,network_guard=True,live_authorized=False,observed_at=x.now())
         return q,preflight
 
+    def test_investigation_queue_cannot_be_executed_as_a_product_case(self):
+        with tempfile.TemporaryDirectory() as d:
+            _,p=self.fixture(Path(d));catalog=x.queue.load_catalog()
+            q=x.queue.prepare(['set:Paeng:TC-ACK-05'],catalog,'a'*40,purpose='investigate')
+            s=x.start(q,'set','Paeng','session',p,True)
+            x.begin_batch(q,s,q['sets'][0]['batches'][0]['id'])
+            with self.assertRaisesRegex(ValueError,'investigation'):
+                x.begin_case(q,s,'TC-ACK-05')
+
     def test_no_start_wrong_owner_or_preflight_blocks(self):
         with tempfile.TemporaryDirectory() as d:
             q,p=self.fixture(Path(d))

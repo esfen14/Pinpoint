@@ -361,3 +361,15 @@ sixth batches are rejected. A failed cleanup halts the journal.
 The content hash detects changed scope, not a malicious actor able to rewrite and
 rehash files. Live ownership, process/network controls, private evidence and human
 review still matter. Keep actual runtime authorization separate from offline logs.
+
+## Partial-pass investigations
+
+Partial human verdicts require a linked investigation disposition even though the
+default untested queue excludes them. Follow the
+[partial-pass register and procedure](Partial_Pass_Investigations.md).
+Prepare a review-only assignment with `--purpose investigate` and module selectors
+such as `--set partials:Reviewer:ACK,REM`. Only catalog partials are eligible;
+conflicts remain decisions. The preview disallows product execution and the offline
+executor rejects opening a case. Prepare a separate reviewed `recheck` queue for
+any authorized live investigation. Never promote historical partial coverage to
+a whole-case PASS or invent a defect from missing evidence.

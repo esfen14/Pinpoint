@@ -15,6 +15,7 @@ claim that the product passes or that every case can run without human involveme
 
 - [x] The new catalog, historical human results and new execution records have clear, validated ownership.
 - [x] Queue preparation/checking and the documentation gate work against the new catalog without restoring retired inputs.
+- [x] Investigate current human partials, attach issue/disposition links and preserve original results; follow-up remains in #208/#209 and the [partial-pass register](../../docs/qa/Partial_Pass_Investigations.md).
 - [ ] Every selected case has an unambiguous expectation, executor, environment, prerequisites, evidence and restoration procedure.
 - [ ] Every selected case maps to a specific tool/spec/project, fixture, assertion and evidence output using the reviewed testing stack.
 - [ ] Historical runs have been mapped to current expectations with linked evidence, an agreed cutoff and a version/impact check; only uncovered or invalidated coverage enters the new-execution queue.

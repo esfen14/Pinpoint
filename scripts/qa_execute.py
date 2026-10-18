@@ -98,6 +98,7 @@ def validate_card(c:dict) -> dict:
 def begin_case(q:dict,s:dict,case_id:str) -> None:
     """Open only the next listed case with a complete unchanged execution card."""
     selected=active_set(q,s)
+    if selected['purpose']=='investigate':raise ValueError('An investigation queue cannot execute product cases')
     if s['active_case'] or not s['active_batch']:raise ValueError('Case active or batch not opened')
     batch=next(b for b in selected['batches'] if b['id']==s['active_batch'])
     done={r['case'] for r in s['results']}
