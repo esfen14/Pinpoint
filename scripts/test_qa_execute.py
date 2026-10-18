@@ -10,7 +10,7 @@ x=importlib.util.module_from_spec(spec);spec.loader.exec_module(x)
 
 class ExecutorTests(unittest.TestCase):
     def fixture(self,root):
-        catalog=x.queue.load_catalog();q=x.queue.prepare(['set:Paeng:TC-DI-06'],catalog,'a'*40)
+        catalog=x.queue.load_catalog();q=x.queue.prepare(['set:Paeng:TC-DI-06'],catalog,'a'*40,purpose='recheck')
         adapter=root/'adapter.ts';adapter.write_text('// synthetic fixture; never launched')
         evidence=root/'evidence';evidence.mkdir();(evidence/'observed.txt').write_text('sanitized observation')
         case=q['sets'][0]['cases'][0]
@@ -36,6 +36,8 @@ class ExecutorTests(unittest.TestCase):
     def test_investigation_queue_cannot_be_executed_as_a_product_case(self):
         with tempfile.TemporaryDirectory() as d:
             _,p=self.fixture(Path(d));catalog=x.queue.load_catalog()
+            # Isolate the investigation contract from changing manual verdicts.
+            catalog['TC-ACK-05']['status']='partial'
             q=x.queue.prepare(['set:Paeng:TC-ACK-05'],catalog,'a'*40,purpose='investigate')
             s=x.start(q,'set','Paeng','session',p,True)
             x.begin_batch(q,s,q['sets'][0]['batches'][0]['id'])
@@ -44,7 +46,7 @@ class ExecutorTests(unittest.TestCase):
 
     def test_source_mapping_and_draft_card_do_not_establish_execution_readiness(self):
         catalog=x.queue.load_catalog()
-        q=x.queue.prepare(['set:Paeng:TC-SS-04'],catalog,'a'*40)
+        q=x.queue.prepare(['set:Paeng:TC-SS-04'],catalog,'a'*40,purpose='recheck')
         case=q['sets'][0]['cases'][0]
         case['execution']=x.queue.coverage.card_template(case['coverage'])
         with self.assertRaises(ValueError):x.validate_card(case)

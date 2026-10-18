@@ -1,5 +1,18 @@
 # Current-case adapter preparation
 
+## 2026-10-19 result-only catalog refresh
+
+The Modules 1–11 verdict updates changed the catalog's exact hashes. A comparison
+against `43f0df103752d485f4cab786ee29ce6a5e049add` verified unchanged case behavior,
+requirements, prerequisites and safety classification after masking result fields.
+The coverage register's catalog/case fingerprints were refreshed; adapter source
+hashes, coverage statuses, expected-item assertions and execution permissions were
+preserved. The dated comparison is recorded in the register's
+`catalog_result_review` field. This is not a new automation run or authorization
+to resume an older queue. Existing immutable queues and cards still require their
+normal freshness checks against the updated catalog and register.
+
+
 [Automation coverage](Automation_Coverage.md) accounts for all 231 TC cases and
 eight E2E scenarios. It is generated from `automation-coverage.json` and shows
 source implementation, expected items still missing and unassigned executors.
