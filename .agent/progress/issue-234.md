@@ -46,8 +46,8 @@ One row per loop round, newest last.
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh all`
-- Result (first failing lines, or "green"): green: `scripts/verify.sh all` passed (docs, backend 4,333 passed/14 skipped, frontend 1,016 passed, production build; lint 0 errors and 33 warnings). Installer PR #7 is an open draft with no checks reported. Prior verification: backend green (4,333 passed, 14 skipped); frontend green (1,016 passed, build passed, lint 0 errors/33 warnings). Combined docs gate fails in `scripts/test_qa_supervisor.py` with `ValueError: Host controller unavailable, already owned or unsafe`, followed by ledger assertion failures.
+- Last check run (exact command): `scripts/verify.sh docs`
+- Result (first failing lines, or "green"): green: final docs rerun passed. Combined `scripts/verify.sh all` passed docs, backend (4,333 passed/14 skipped), frontend (1,016 passed), production build, lint (0 errors/33 warnings). Installer PR #7 is an open draft with no checks reported. backend green (4,333 passed, 14 skipped); frontend green (1,016 passed, build passed, lint 0 errors/33 warnings). Combined docs gate fails in `scripts/test_qa_supervisor.py` with `ValueError: Host controller unavailable, already owned or unsafe`, followed by ledger assertion failures.
 - Hypothesis: app behavior and supported live metrics are verified; the originating appliance confirms the helper setup chronology. The only unproven acceptance item is delivery of the helper through a reviewed installer build.
 - Next action (one specific step, not "continue"): have the installer owner review and merge PR #7 or publish an installer build containing its helper, then rerun fresh-installer acceptance before completing issue #234. The supplied origin appliance was checked read-only; its journal confirms the helper rejection and helper/sudoers birth timestamps after the failure.
 
