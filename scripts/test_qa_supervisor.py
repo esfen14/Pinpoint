@@ -171,6 +171,15 @@ class SupervisorTests(unittest.TestCase):
             self.assertEqual(l.snapshot(UUID)['attempts'][0]['result']['result'],'FAIL')
             self.assertFalse(l.snapshot(UUID)['halted'], 'Restored product failure is not unresolved infrastructure')
 
+    def test_parser_cleanup_failure_cannot_be_overridden_by_driver_receipt(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);q,j,l,g,driver=self.fixture(root);original=driver.run
+            def missing_browser_cleanup(plan,timeout):
+                outcome=original(plan,timeout);outcome['restored']=False;return outcome
+            driver.run=missing_browser_cleanup
+            with self.assertRaises(ValueError):self.call(root,q,j,l,g,driver)
+            self.assertTrue(l.snapshot(UUID)['halted'])
+
     def test_prior_offline_result_does_not_substitute_for_supervised_execution(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d);q,j,l,g,driver=self.fixture(root)

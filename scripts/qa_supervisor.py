@@ -201,7 +201,8 @@ def supervise(q:dict,journal:dict,grant:dict,ledger:Ledger,state_dir:Path,bridge
                 if time.monotonic()-cleanup_started>plan['step_timeout_seconds']:clean=False
             except BaseException:clean=False
         try:
-            if failed or not clean:raise ValueError('Run or cleanup unresolved')
+            if failed or not clean or outcome.get('restored',True) is not True:
+                raise ValueError('Run or cleanup evidence unresolved')
             result_journal=json.loads(json.dumps(journal))
             t.x.authorize_action(q,result_journal,case['execution']['actions'][0])
             t.x.record_result(q,result_journal,outcome['result'],outcome['evidence'],True,outcome.get('reason',''))

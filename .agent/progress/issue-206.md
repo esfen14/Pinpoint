@@ -12,7 +12,8 @@ Status: in-progress
 - [x] Migrate legacy validators/rendering/docs links without weakening coverage or rewriting historical outcomes.
 - [x] Update reports/workflows/specs and pass isolated checks/docs gate.
 - [x] Open reviewable PR with pending human decisions, adapter coverage and separately gated live work.
-- [x] Implement the supervisor lifecycle core with separate start binding, cooperative UUID lock, fsynced action consumption, persistent replay/budget checks and halted failures; prove with 14 synthetic-driver contracts.
+- [x] Implement the supervisor lifecycle core with separate start binding, cooperative UUID lock, fsynced action consumption, persistent replay/budget checks and halted failures; prove with 15 synthetic-driver contracts.
+- [x] Implement and test bounded local process-group control (8 contracts) and strict private permission-report parsing (9 contracts); these components remain unwired to live execution.
 - [ ] Complete production supervisor-driver integration and live validation: actual controller/deployment/baseline proofs, shared locks, bounded process-tree control, sanitized result parsing and verified recovery. This is part of overall readiness, not a claim that the offline milestone executes cases.
 
 | Issue requirement | Finish-condition item | Proof |
@@ -61,10 +62,10 @@ and require separately authorized live evidence where needed.
 
 ## State for the next session
 
-- Last relevant check: `scripts/verify.sh docs > /tmp/issue-206-supervisor-docs.log 2>&1`, with 100 isolated contracts including 14 supervisor tests; `git diff --check` and shell syntax checks. Observed final result and exact-head CI proof are recorded in draft PR #207.
-- Result: driver-independent supervisor lifecycle core implements separate grant identity, cooperative UUID lock, fsynced consumption before dispatch, persistent replay/budget and interrupted/halted states, fresh receipt validation and expected-item result checks. Fake-driver tests only; no production driver or live command entry. Existing transport/config blocks remain enforced.
-- Finish-condition checklist: updated both here and in the overall readiness plan. Tested lifecycle core is checked; production integration and all live validation remain unchecked. Original-checkout progress copies are synchronized after checkpoint.
-- Next action: implement and test the production runtime-driver contract for real controller/deployed-version/baseline proof, shared controller locking, bounded process-tree cancellation, private result parsing and verified recovery. Do not promote offline attestations or synthesize live proof; actual case cards and explicit pilot start remain pending.
+- Last relevant check: `scripts/verify.sh docs > /tmp/issue-206-runtime-docs.log 2>&1` (118 isolated contracts), focused process/result tests, Python/shell syntax and whitespace checks. Final observed result and exact-head CI proof are recorded in draft PR #207.
+- Result: runtime process-group helper and strict permission-report parser are implemented. Eight local Python-process tests and nine synthetic-report tests run without Docker, SSH, browser or lab access. Source transport bootstrap now sets private `umask 077`; original human catalog/product source unchanged.
+- Finish conditions: both progress checklists mark tested process/result components complete and retain production integration/live-proof requirements unchecked. Original-checkout copies are synchronized after checkpoint.
+- Next action: implement running-application/frontend deployment identity and controller-lock integration, then wire a bounded production driver with private bridge/container-ID termination, result parsing and verified recovery. Do not equate Git HEAD with running application identity or Docker CLI exit with container cleanup; actual live cards/pilot still require reviewed scope/start.
 
 ## Decisions and notes
 
@@ -190,8 +191,25 @@ Continue production-driver preparation offline. Existing deployment helpers do n
 yet prove running frontend/backend identity for a target SHA; do not invent that
 proof or enable a live entry. Implement concrete runtime components first.
 
-1. [ ] Add `scripts/qa_process.py` with bounded isolated process-group execution, private non-overwriting raw logs, environment control, process-tree termination/reaping and sanitized errors; test with local Python fixture processes, never VM/Docker/browser commands.
-2. [ ] Add `scripts/qa_results.py` strict one-case Playwright parsing: approved configuration, one non-retried attempt, attachment/item identity and private-path limits, complete PASS plus cleanup proof; unavailable/failed assertions without explicit item evidence remain inconclusive. Test synthetic reports, never acceptance runs.
-3. [ ] Wire docs gate/fingerprints, document supported versus pending capability, update finish conditions in both progress files, verify/checkpoint and synchronize original checkout. Runtime identity proof, driver integration and live validation remain unchecked.
+1. [x] Add `scripts/qa_process.py` with bounded isolated process-group execution, private non-overwriting raw logs, environment control, process-tree termination/reaping and sanitized errors; test with local Python fixture processes, never VM/Docker/browser commands.
+2. [x] Add `scripts/qa_results.py` strict one-case Playwright parsing: approved configuration, one non-retried attempt, attachment/item identity and private-path limits, complete PASS plus cleanup proof; unavailable/failed assertions without explicit item evidence remain inconclusive. Test synthetic reports, never acceptance runs.
+3. [x] Wire docs gate/fingerprints, document supported versus pending capability, update finish conditions in both progress files, verify/checkpoint and synchronize original checkout. Runtime identity proof, driver integration and live validation remain unchecked.
 
 Next action: failing process and report-parser contracts; no live command wiring.
+
+Runtime rounds 1–2: both test-first modules initially failed because the modules
+were absent. Eight local-process and nine synthetic-report contracts now pass.
+Process fixtures cover nonzero exit, private non-overwriting raw logs, allowlist/
+environment rejection, TERM-ignoring timeout, descendant termination, output cap
+and uncertain-cleanup halt. The leader PID is not released before group cleanup.
+Parser fixtures cover exact config/case/attempt, private inline/file attachments,
+missing evidence/cleanup, failed browser as inconclusive, stale/unsafe/unreviewed
+observations, duplicates and sanitized errors. Installed pinned Playwright reporter
+source was inspected for JSON/attachment shape. Private umask was added so actual
+future reporter files satisfy strict permission checks. No production driver
+was enabled; deployment/endpoint proof and daemon/container cleanup remain open.
+
+Runtime integration hardening: a new failing supervisor regression demonstrated
+that parser `restored: false` could otherwise be ignored when the runtime driver
+reported successful cleanup. The core now halts on that conflict; supervisor
+contracts increase from 14 to 15, for 118 total docs-stage isolated checks.

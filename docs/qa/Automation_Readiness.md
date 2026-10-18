@@ -174,3 +174,58 @@ Connecting those controls, actual deployed-version/endpoint proof, baseline and
 restoration checks, private raw output parsing and crash recovery requires the
 production integration work still unchecked in the readiness plan. No default
 ledger directory is created and no supported CLI can call a live driver yet.
+
+## Runtime process and result components
+
+`qa_process.py` implements bounded Linux/POSIX process-group execution for a future
+trusted driver. It has no CLI or default executable. The caller supplies an explicit
+canonical executable allowlist and reviewed argv; no shell expansion or inherited
+credential environment is used. Only PATH/HOME/LANG/LC_ALL may be passed. This is
+not an argument/target authorization layer or filesystem/network sandbox.
+
+Each run has fresh, private, non-overwriting stdout/stderr files, a monotonic
+deadline and an aggregate output-size limit. Timeout/interruption/excess output
+triggers TERM then KILL as needed for the owned group. The leader PID remains
+reserved until cleanup, the direct child is reaped and executable group descendants
+must be gone. An uncertain cleanup halts the runner instead of silently resetting
+it. Raw output is retained privately; exceptions and returned summaries contain no
+raw command output. Local Python child fixtures test these behaviors; no Docker,
+SSH, browser or appliance process is invoked by the tests.
+
+This helper cannot terminate a daemon-owned Docker container merely by killing
+its CLI, or a child deliberately escaping the process group. The production driver
+still needs container-ID tracking, kill/remove/inspect checks or an appropriate
+cgroup boundary. Adopted zombie descendants await their parent/init reaper; only
+the direct child is reaped by this helper. A missing/ambiguous process identity
+fails closed. Existing controller locking and real runtime ownership checks are
+still separate requirements.
+
+`qa_results.py` parses only the five reviewed permission adapters. It validates
+pinned Playwright version/configuration, one project/case/initial attempt, no
+retries/captures, fixed origin, consistent totals/status/timestamps and exact
+expected-item/cleanup attachment identities. The actual process-launch time must
+be supplied independently; a stale report cannot certify a new run. JSON duplicate
+keys, unsafe/private-path violations and oversized or unreviewed evidence reject.
+The prepared container bootstrap sets `umask 077` so reporter/artifact files meet
+private-file requirements.
+
+Inline base64 JSON and private `/evidence` attachment paths are supported. The
+parser copies only reviewed fixed observation text and validated timestamps into
+new private item files; arbitrary errors, logs, diagnostics or page text are not
+copied. Existing sanitized evidence is never overwritten. PASS requires the
+successful attempt, every expected item and `session_closed: true` cleanup evidence.
+The supervisor rejects explicit parser `restored: false` even when a driver
+claims successful cleanup. It still needs independent runtime/cleanup proof; an attachment alone
+does not establish restoration.
+
+The current adapters emit PASS items only. A browser/tool failure without explicit
+failed expected-item evidence is INCONCLUSIVE, never an invented product FAIL.
+Missing cleanup remains `restored: false` and must halt supervision. Importing
+structured product failures will need reviewed adapter changes and their own
+regressions. Nine synthetic-report tests validate parsing; they are not runtime
+acceptance results.
+
+These components are not yet wired to a production supervisor driver. Running
+application/frontend revision proof, controller lock adoption, private bridge and
+container lifecycle, real cleanup/recovery and explicitly reviewed live cards
+remain pending. No live entry is enabled by their presence.

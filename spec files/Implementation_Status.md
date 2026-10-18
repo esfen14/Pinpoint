@@ -281,12 +281,22 @@ neither is a fresh runtime reproduction.
 `scripts/qa_supervisor.py` now implements the driver-independent lifecycle core:
 separate start grant, cooperative lab UUID lock, private atomic/fsynced ledger,
 durable pre-dispatch consumption, persistent batch budgets/replay rejection and
-halted interruption/cleanup states. Fourteen synthetic-driver regressions include
+halted interruption/cleanup states. Fifteen synthetic-driver regressions include
 proof drift, prior-offline-result rejection, failures and no secret exception
 persistence. No production driver/live entry exists. Actual deployment/controller
 proof, shared-lock adoption, bounded process-tree cancellation, evidence parser
 and recovery remain unimplemented; elapsed checks cannot interrupt a hanging
 Python callback. This does not authorize or demonstrate live case execution.
+
+The runtime components `qa_process.py` and `qa_results.py` now exist with eight
+local Python-process and nine synthetic-report regressions. The process helper
+bounds time/output, preserves private non-overwriting logs, cancels its owned
+POSIX group and halts on uncertain cleanup. The parser validates one reviewed
+permission attempt/configuration and copies only fixed item observations; it
+requires full PASS and cleanup evidence, otherwise preserves INCONCLUSIVE.
+Neither is connected to a production driver. Actual running frontend/backend
+revision proof, controller locking, bridge/container-ID lifecycle (daemon work
+can outlive its CLI), recovered baseline and live validation remain pending.
 
 The [historical evidence inventory/review](../docs/qa/Historical_Evidence_Review.md)
 links 41 post-cutoff-directory-date reports and six partial current-case mappings.

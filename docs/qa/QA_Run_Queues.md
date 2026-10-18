@@ -391,3 +391,8 @@ adds tested durable locks/action consumption and halted-state handling through
 a synthetic driver. It has no production driver or live CLI. Queues and offline
 journals alone still cannot start a run; actual runtime proofs, process control,
 recovery and a reviewed live start remain required.
+
+Runtime [process and result components](Automation_Readiness.md#runtime-process-and-result-components)
+now have isolated tests. They do not authorize queue execution: the actual
+deployment proof and production driver remain missing. A failed browser process
+without failed-item evidence is inconclusive, and missing cleanup must halt.

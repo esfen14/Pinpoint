@@ -215,6 +215,17 @@ reports. App/spec conflicts remain decisions, not automatic passes.
   sequencing only. Production proof acquisition, bounded process-tree termination,
   shared controller lock integration, parsing/sanitization and verified recovery
   remain pending. Never treat offline receipts or callbacks as live proof.
+- **Runtime components:** `qa_process.py` runs only explicitly allowlisted trusted
+  executables with reviewed argv, a restricted environment, bounded private output,
+  time limits and POSIX-group TERM/KILL/direct-child reaping. Uncertain cleanup
+  halts. It is not a sandbox or Docker-daemon/escaped-child cleanup mechanism.
+  `qa_results.py` imports only one non-retried reviewed permission case, with fixed
+  configuration, fresh timestamps and private expected-item/cleanup attachments.
+  Only reviewed observation text is copied; incomplete/failed browser execution
+  without failed-item evidence is INCONCLUSIVE. The transport bootstrap uses
+  `umask 077`. Eight local-process and nine synthetic-report tests prove component
+  contracts only. Production identity, container lifecycle, controller locks and
+  verified recovery integration remain pending; no live command is exposed.
 - **Partial-pass investigation:** Every catalog partial needs an evidence review,
   duplicate search, linked issue/disposition and next action in the
   [partial-pass register](../docs/qa/Partial_Pass_Investigations.md). The

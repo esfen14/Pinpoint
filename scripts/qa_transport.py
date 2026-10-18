@@ -20,6 +20,7 @@ ROOT=Path(__file__).resolve().parent.parent
 IMAGE='nikolaik/python-nodejs:python3.14-nodejs22'
 # Fixed code only. Credentials never become Docker argv or preview JSON values.
 BOOTSTRAP='''set -euo pipefail
+umask 077
 node /work/lab/unix_web_proxy.mjs /tmp/pinpoint-web.sock &
 tunnel_pid=$!
 trap 'kill "$tunnel_pid" 2>/dev/null || true' EXIT

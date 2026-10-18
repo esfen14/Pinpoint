@@ -16,7 +16,8 @@ claim that the product passes or that every case can run without human involveme
 - [x] The new catalog, historical human results and new execution records have clear, validated ownership.
 - [x] Queue preparation/checking and the documentation gate work against the new catalog without restoring retired inputs.
 - [x] Investigate current human partials, attach issue/disposition links and preserve original results; follow-up remains in #208/#209 and the [partial-pass register](https://github.com/esfen14/Pinpoint/blob/issue-206-qa-readiness/docs/qa/Partial_Pass_Investigations.md).
-- [x] Implement and synthetically test the supervisor lifecycle core: separate start identity, cooperative UUID lock, durable pre-dispatch action consumption, replay/budget persistence and halted interruption/cleanup handling (14 isolated contracts).
+- [x] Implement and synthetically test the supervisor lifecycle core: separate start identity, cooperative UUID lock, durable pre-dispatch action consumption, replay/budget persistence and halted interruption/cleanup handling (15 isolated contracts).
+- [x] Implement/test bounded local process-group control and strict permission-report parsing (8 local-process and 9 synthetic-report contracts), retaining private evidence and inconclusive outcomes.
 - [ ] Connect and prove the production supervisor driver: actual ownership/deployment/baseline receipts, shared controller locks, bounded process-tree cancellation, sanitized result parsing and verified live cleanup/recovery.
 - [ ] Every selected case has an unambiguous expectation, executor, environment, prerequisites, evidence and restoration procedure.
 - [ ] Every selected case maps to a specific tool/spec/project, fixture, assertion and evidence output using the reviewed testing stack.
@@ -42,7 +43,7 @@ claim that the product passes or that every case can run without human involveme
   OS sandbox. Live adapter completion, preflight, enforced scan guard, recovery/resume
   and pilot runs remain separate pending work.
 - Current/historical links and docs checks have migrated. `scripts/verify.sh docs`
-  is green (100 isolated checks). The prior full local baseline passed 4310
+  is green (118 isolated checks). The prior full local baseline passed 4310
   backend/1003 frontend tests plus build/lint. The later combined run passed backend
   but hit intermittent frontend test #210; focused and full frontend stage reruns
   passed. No clean latest combined-run result is inferred from those stage reruns. [Draft PR #207](https://github.com/esfen14/Pinpoint/pull/207)
@@ -270,7 +271,8 @@ Expected output: reproducible green documentation gate without retired-source de
 - [x] Extend `docs/test-runs/TEMPLATE.md` and reporting rules for catalog hash, queue/set, timestamps/time zone, actual deployed app/installer revisions, baseline and executor mode/contributor.
 - [x] Represent PASS, FAIL, PARTIALLY PASS, BLOCKED, Not run and inconclusive explicitly; distinguish unique cases, attempts, setup and completion. Keep TC and E2E totals separate.
 - [x] Require observations for every expected item, per-step E2E results and missing coverage explanations. Mock or intercepted responses cannot certify live acceptance.
-- [ ] Define local machine-readable results if scripted execution is selected; derive sanitized summaries rather than independently editing conflicting totals. Include reused-evidence links, accepted target revision and reuse classification separately from new execution timestamps/verdicts.
+- [x] Implement strict machine-readable import for the five permission adapters: exact non-retried selection, private fresh report/item attachments, fixed sanitized observations and explicit inconclusive/cleanup state.
+- [ ] Integrate result import into the production driver/report index, complete structured failed-item evidence and derived suite/reuse totals, and prove live provenance. Partial parser coverage is not full-suite reporting readiness.
 - [ ] Persist execution/recovery journals and raw evidence outside instances that may be restored. Define sanitization, private storage and evidence references without credentials/cookies/tokens/raw database exports.
 - [x] Verify repeat/retest rules: preserve first failure, repeat only as the approved workflow allows, keep differing outcomes inconclusive, link the same finding and require a real deployed merged fix for retest eligibility.
 - [ ] Distinguish the QA workflow's one diagnostic repeat from automatic runner retries. Resolve retry-policy conflicts with the proposed deterministic approach before implementing unattended execution.
@@ -342,7 +344,8 @@ execution and missing mandatory evidence block the affected cases.
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
-| Supervisor lifecycle core | Added separate grant/receipt checks, shared private OS lock/ledger, durable consumption and halt/replay/budget/result enforcement; production driver stays absent | Fourteen synthetic-driver regressions plus docs gate | Verification recorded in issue progress; no live tools or operations |
+| Runtime process/results | Added allowlisted bounded process groups, private output and strict one-case result parser; bootstrap private umask | Eight local-process/nine synthetic-report tests plus docs gate | No live tools; production proof/driver/container lifecycle/recovery remain pending |
+| Supervisor lifecycle core | Added separate grant/receipt checks, shared private OS lock/ledger, durable consumption and halt/replay/budget/result enforcement; production driver stays absent | Fifteen synthetic-driver regressions plus docs gate | Verification recorded in issue progress; no live tools or operations |
 | Transport preparation | Added offline queue/journal-bound minimal container preview, private mount/credential metadata guards and blocked legacy current-case fallthrough | Nine synthetic transport checks, docs gate and shell syntax/whitespace | Local verification recorded in issue progress; no credential values, live socket, Docker, browser or lab operation |
 | Coverage/adapters implementation | Added all-case source registry, five permission adapters, exact offline collection/private artifacts and queue/card source binding; draft cards fail closed | Docs gate (77 isolated checks), frontend gate (1003 existing tests plus five Node checks), QA type check | Green locally; full verification and final-head CI recorded separately; no browser/lab execution |
 | Checklist audit | Checked verified offline substeps, split partial aggregates and retained open case mapping, reuse approval, live enforcement and pilot requirements; synchronize main-checkout plan | Source/test/report review; `scripts/verify.sh docs`; final-head CI review | Docs gate passed (68 isolated checks); no live QA |
@@ -355,7 +358,7 @@ execution and missing mandatory evidence block the affected cases.
 ## State for the next session
 
 - Checklist audited after the partial-pass follow-up: completed offline work is checked below its owning phase; incomplete aggregates are split rather than marked wholly done.
-- Last relevant check: `scripts/verify.sh docs` (100 isolated checks) after supervisor lifecycle preparation, plus Python/shell syntax and whitespace. Prior backend stage passed 4310 tests/14 skips; the combined coverage run then encountered intermittent frontend failure #210. Focused/full frontend reruns passed (1003 Vitest tests, QA type check, five offline Node checks, build/lint). The earlier clean all-stage baseline and later separate stage results are distinct evidence.
+- Last relevant check: `scripts/verify.sh docs` (118 isolated checks) after runtime component preparation, plus Python/shell syntax and whitespace. Prior backend stage passed 4310 tests/14 skips; the combined coverage run then encountered intermittent frontend failure #210. Focused/full frontend reruns passed (1003 Vitest tests, QA type check, five offline Node checks, build/lint). The earlier clean all-stage baseline and later separate stage results are distinct evidence.
 - Result: 4310 backend tests passed (14 skips), 1003 frontend tests passed, build and lint passed with zero errors. Offline milestone is in draft PR #207; inspect its final-head CI. No live cases have been executed.
 - Next action: Continue current-case adapter/coverage preparation from this checklist after reviewing #207. Next implementation is isolated launcher selection/artifact integration with ownership/recovery enforcement. Live preflight/scan guard/recovery and the pilot still require their reviewed scope/start. Human-result conflicts and the provisional cutoff remain explicit review items.
 

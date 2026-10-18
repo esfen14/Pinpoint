@@ -41,6 +41,7 @@ class TransportTests(unittest.TestCase):
             plan=t.prepare(q,s,root/'state',root/'bridge')
             text=json.dumps(plan)
             self.assertFalse(plan['live_authorized'])
+            self.assertIn('umask 077',t.BOOTSTRAP)
             self.assertIn('BLOCKED',plan['readiness'])
             self.assertNotIn('synthetic-private-value',text)
             self.assertNotIn('admin-password',text)
