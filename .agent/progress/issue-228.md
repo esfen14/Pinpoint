@@ -33,7 +33,7 @@ Write the whole plan first. Precedent: `server/app/nagios/service_availability.p
 2. [x] New `server/app/nagios/host_current_status.py`: normalize one bulk `hostlist` read (details, enumerate) to `{host: {state, last_check, last_state_change}}`, reusing `request_cgi` and `AvailabilityError` from `service_availability.py`.
 3. [x] `server/app/api/system/report.py`: join current status into `/report/availability` and `/report/hosts-by-os` rows, add `current_status` {available, observed_at, notice}, and keep only hosts of monitored devices in `/report/availability` (via `monitoring_state`, `devices_by_host_name`).
 4. [x] Frontend: `client/src/components/reports/HostAvailabilityReportTable.tsx`, `client/src/types` and `ReportsPage.tsx`: show the notice when current status is unavailable, show state `—` for null; extend vitest tests.
-5. [ ] Specs: `spec files/Backend_Modules_and_Routes.md`, `Frontend_Modules_and_Routes.md`, `Reports_Requirements.md` §3, `Implementation_Status.md`, `docs/manuals/Reports.md`.
+5. [x] Specs: `spec files/Backend_Modules_and_Routes.md`, `Frontend_Modules_and_Routes.md`, `Reports_Requirements.md` §3, `Implementation_Status.md`, `docs/manuals/Reports.md`.
 6. [ ] `scripts/verify.sh backend`, `frontend`, `docs`, then `all`.
 
 ## Round log
@@ -47,13 +47,14 @@ One row per loop round, newest last.
 | 2 | New `app/nagios/host_current_status.py` (bulk `hostlist` read, join context) | `pytest tests/unit/test_host_current_status.py` | 12 passed |
 | 3 | `report.py`: join status into availability and hosts-by-os, `current_status` context, monitored-only rows | report test files | 22 new tests pass; the same 9 `time.tzset` failures (Windows) as on clean main, none new |
 | 4 | Frontend: `current_status` in types and mapper, null state shows a dash, notice and export warning, Hosts by OS null state shows Unavailable; tests (3 new fail without the source change, then pass); `ServiceReports.test.tsx` fixtures gained `current_status` | `npx vitest run` ReportsAnalysis and ServiceReports, `npx tsc -b` | 35 passed, tsc clean |
+| 5 | Specs (Backend, Frontend, Reports_Requirements, Implementation_Status, Reports manual); refreshed the one `report.py` digest in `docs/qa/automation-coverage.json` (TC-ROL-04 lists report.py as a source; my diff changes no permission decorator, same refresh as the earlier #199 `Fix` commit) | `scripts/verify.sh docs` on a clean LF export | see next round |
 
 ## State for the next session
 
-- Last check run (exact command): `cd client && npx vitest run src/test/ReportsAnalysis.test.tsx src/test/ServiceReports.test.tsx && npx tsc -b`
-- Result (first failing lines, or "green"): green (35 passed; tsc clean)
-- Hypothesis: code is done. Remaining work is the specs and the full verify gates.
-- Next action: plan step 5. Update `spec files/Backend_Modules_and_Routes.md` (availability row, `current_status`, monitored-only rows), `Frontend_Modules_and_Routes.md` (Host Availability row), `Reports_Requirements.md` section 3 (host rows), `Implementation_Status.md`, `docs/manuals/Reports.md`; then `scripts/verify.sh docs`.
+- Last check run (exact command): `PATH=<python3 shim with -X utf8> scripts/verify.sh docs` on a clean LF export of the branch
+- Result (first failing lines, or "green"): pending; on this Windows checkout `verify.sh docs` fails on clean main too (CRLF changes file hashes; "coverage source changed", "Evidence report changed").
+- Hypothesis: the docs gate is green on an LF export once the TC-ROL-04 `report.py` digest is refreshed.
+- Next action: run the docs gate on `git archive HEAD` output, then `verify.sh backend` and `frontend`, then `verify.sh all` (plan step 6).
 
 ## Decisions and notes
 
@@ -62,3 +63,5 @@ One row per loop round, newest last.
 - Hosts by OS shares the state/last-check join (same root cause) but keeps its own row set; filtering its rows is not in this issue.
 - Live verification on the lab is out of scope here (needs a person to deploy).
 - Backend test environment: this Windows machine fails 9 service-report tests on `time.tzset` with or without this change; CI (Linux) is the real gate. A `python3` shim is needed for `scripts/*.sh`.
+
+- `docs/qa/automation-coverage.json`: only the `server/app/api/system/report.py` digest for TC-ROL-04 changed. A person should confirm that source review still holds (the 403 check on `/api/system/report/availability` is untouched).

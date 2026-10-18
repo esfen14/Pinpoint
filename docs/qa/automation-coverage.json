@@ -404,7 +404,7 @@
         "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
         "server/app/api/helper/database_access/permissions.py": "223c0628444524cdae232fb02c29ebbb18b5e4c2e0307990acbe597a40e2ecff",
         "server/app/api/system/log.py": "0217cd8e0b016a80bb77b01684d8e47a1af0a1ea445a73ddf20b35874be1e706",
-        "server/app/api/system/report.py": "380d7eaa7bb5be0e6f2849c57ef29e5e140f9601f0f6d47e89d7eee44de79bea",
+        "server/app/api/system/report.py": "0c061575f3a3b288575e8c1884f002a2a42870a37864bddb8d7024ae70a63f46",
         "server/app/api/user/management.py": "2ad5a1f3a41c9784fb5688b1455279946f2da9ea63c1deaf13a6723d1adb0c4d",
         "server/app/api/user/login.py": "131d66fec10e1ee90bf98a7838e3ed827edc8d99e461b0ec3f36ab4c069c5e8b"
       },

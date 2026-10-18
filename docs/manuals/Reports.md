@@ -29,6 +29,11 @@ time zone (named in the report and in exports).
 - **Availability %** is time in the good state divided by *known* time. Time Nagios
   has no record of is shown separately as "No recorded data" and is not counted.
 - Durations are in seconds (or a readable form in the drawer).
+- **State**, **Last Check** and **Last State Change** on the host reports are Nagios's
+  current values, read once when you run the report. If Nagios cannot supply them, the
+  history is still shown with a notice and those cells show `—`.
+- Host Availability lists the hosts that are monitored now. A device that is missing,
+  paused or retired is not listed, even if it was monitored earlier in the period.
 - Click **Details** on a host or service (for Network Services, show the instances
   first) to see state durations, both percentages, coverage, the scheduled
   (maintenance) part of each state and a timeline with an interval table.

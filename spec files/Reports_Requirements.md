@@ -71,6 +71,15 @@ missing knowledge. Null denominators show `—`. Scheduled time is a subdivision
 state's duration, never extra time. Group time is object-time (e.g. service-hours).
 No snapshot count exists anywhere in the host or OS contracts.
 
+Host rows also show the host's **current** state, last check and last state change.
+The archive reports durations only, so these come from one bulk current-status read
+joined by Nagios host name, the same pattern as the service reports (one status call,
+no per-row calls, no snapshots). If that read fails the history is still shown with
+an explicit notice and the three fields are empty (`—`); a state is never inferred
+from availability. Host Availability lists the hosts of devices that are monitored now;
+Missing, paused, retired and merged devices and Nagios's `localhost` are not listed, so
+a host that was monitored earlier in the period but is not now does not appear.
+
 ### Detail drawer and timeline
 
 Details opens for an exact host or service instance (Network Services rows expand
