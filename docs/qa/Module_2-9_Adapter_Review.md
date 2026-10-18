@@ -53,8 +53,28 @@ assertion method, its prerequisites are explicit, and its mutations/cleanup are
 reviewed. Partial historical reports (TC-ACC-10, TC-DI-10, TC-DI-16–19) do not
 promote any item to PASS or authorize an unreviewed retest.
 
-For this issue, no browser, product case, appliance preflight, Nagios fault,
+For this issue, no browser or product case has run; no Nagios fault,
 configuration mutation, merge, acknowledgement, scan, deployment, or service
-restart is authorized. Any queue produced here remains BLOCKED for live execution
+restart has occurred. A host-only read-only preflight was taken after the user
+confirmed the same lab. Any queue produced here remains BLOCKED for live execution
 until a supported launcher, reviewed cards, current lab proof, and separate start
 exist. Existing successful permission runs are excluded and never replayed.
+
+## Recorded completions and current host observation
+
+- **TC-ACC-09:** complete supervised PASS for E1 and E2, with cleanup and baseline
+  restoration, in [the October 18 permissions report](../test-runs/2026-10-18-next-permissions/REPORT.md).
+- **TC-SS-04:** complete supervised PASS for E1, with cleanup and baseline
+  restoration, in [the October 18 recheck report](../test-runs/2026-10-18-issue-211-ss04-recheck/REPORT.md).
+
+These execution reports do not overwrite the catalog's original Result fields;
+the QA workflow keeps new report outcomes separate from those historical entries.
+The replacement untested queue must exclude both IDs and retain these report links.
+
+On 2026-10-18 at 10:54 UTC, the read-only `scripts/vmlab preflight --json`
+reported the same lab UUID (`351eb491-f5e1-4854-a7e4-68309ad774ad`) running with
+host ownership and loopback endpoint checks passing. It returned
+`live_authorized: false` and did not establish the served application revision or
+current controlled baseline. The last recorded target (`299ab3ba…`) is historical
+and cannot be assumed current. No broader current-case launcher exists yet, so
+this observation does not make any Module 2–9 case executable.
