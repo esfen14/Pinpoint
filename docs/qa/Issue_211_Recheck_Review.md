@@ -1,0 +1,55 @@
+# #211 recheck review — prepared, not started
+
+The [v1 recheck preview](queues/2026-10-18-issue-211-ss04-recheck-v1.md) and
+[immutable JSON](queues/2026-10-18-issue-211-ss04-recheck-v1.json) select only
+TC-SS-04, one initial attempt, one worker, zero retries, owned by Paeng under
+tracking issue #211. Target remains `299ab3ba7203c89a3ca5d8fabea42d9e5f239be2`.
+This is an explicit diagnostic recheck after the
+[INCONCLUSIVE pilot](../test-runs/2026-10-18-issue-206-ss04-pilot/REPORT.md),
+not a new untested slot or accepted retest of a merged product fix.
+
+Source review covers the unchanged Staff/UI/redirect/logout assertions and the
+[bounded timing fix](QA_Report_Timing.md). No account, product, browser assertion,
+case expectation, scope or verdict rule was changed to obtain a pass. The source
+coverage register remains current. Queue `check` passes; that is neither live
+readiness nor exclusive lab ownership.
+
+## Required recovery review
+
+The original UUID ledger is halted. The supported supervisor deliberately rejects
+all dispatch while any attempt remains unresolved; a new queue cannot bypass it.
+There is no supported recovery command. Do not clear, replace, delete, relocate
+or manually rewrite that ledger, reclassify the original result, or reuse v4.
+
+Before an executable replacement card/start, separately review a recovery scope:
+
+1. Acquire the existing cooperative host/UUID claim, preserving original private
+   evidence and the consumed v4 attempt/session exactly as recorded.
+2. Inspect the owned container/bridge/process cleanup and browser logout evidence,
+   and obtain fresh supported read-only inspection against the controlled baseline.
+   These are prerequisites for recovery, not retrospective PASS evidence.
+3. If recovery is approved, define an auditable recovery mechanism that retains
+   the original halted attempt and records the reviewer, evidence and disposition.
+   Implement/review it separately before using it. This change supplies no reset,
+   alternate ledger, recovery code, or manual ledger-edit instruction.
+4. Obtain fresh exclusive ownership, exact host/guest/boot/runtime/source/Staff/
+   served-byte/image/browser observations. A reboot or baseline change blocks;
+   preparing this card does not authorize redeployment/restart/reset/account work.
+5. Prepare a new immutable executable replacement card reflecting actual recovery
+   and baseline observations; validate its sources and obtain a separate explicit
+   start bound to that queue/set/owner/new session/UUID/target/expiry.
+
+The v1 card keeps `human_required: true` to enforce this missing review gate.
+Its baseline/image values are pins from the previous report, not fabricated fresh
+attestations. Proposed output paths are disjoint from v4; none was created during
+preparation. The listed launcher vector is not permission to execute it.
+
+## Pending live result
+
+After the separately authorized start, require the complete supported supervisor
+path: durable new-attempt consumption, actual one-case browser execution, strict
+current-run import, logout/401 evidence, owned container removal/daemon absence,
+bridge/process cleanup and fresh independent baseline proof. Save a new attributable
+report, index and execution log; keep original results and TC/E2E counts separate.
+Stop on uncertainty, with no repeat or automatic recovery. Until this run is
+observed, #211 finish condition 6 and broad/unattended readiness remain incomplete.
