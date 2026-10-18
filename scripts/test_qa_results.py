@@ -176,6 +176,52 @@ class ResultTests(unittest.TestCase):
                         self.assertEqual(parsed['result'],'PASS' if fault=='none' else 'INCONCLUSIVE')
                         self.assertEqual(set(parsed['evidence']),set(observations) if fault=='none' else set(observations)-{list(observations)[-1]})
 
+    def test_module_cases_require_the_exact_module_project_and_all_items(self):
+        cases={
+            'TC-ACC-08': ('TC-ACC-08: "Send this user email alerts" depends on permission', {
+                'E1':'Super Admin sees the Email Alerts column and email-alert checkbox.',
+                'E2':'The qa-accounts user does not see the email-alert checkbox.'}),
+            'TC-ROL-04': ('TC-ROL-04: A dashboard-only user is limited to the Dashboard', {
+                'E1':'Sidebar contains Overview and Settings only.',
+                'E2':'All 13 protected page addresses redirect to the Dashboard.',
+                'E3':'All three protected API addresses return 403.'}),
+            'TC-DI-02': ('TC-DI-02: Port groups and their order', {
+                'E1':'Port group headers appear in the required order.',
+                'E2':'Every shown group has a matching positive count; empty groups are absent.',
+                'E3':'Each visible port group is ordered TCP then UDP, by port number.'}),
+            'TC-DI-03': ('TC-DI-03: One reason per port', {
+                'E1':'Exactly one reason is shown and the held-back reason is absent.',
+                'E2':'The reason explains the expected/found names and says monitoring waits for acknowledgement.'}),
+            'TC-DASH-07': ('TC-DASH-07: "No data" instead of blank cards', {
+                'E1':'Network Latency and both Network Performance metrics show No data.',
+                'E2':'Average Resource Utilization is absent without NCPA data.'}),
+        }
+        for case_id,(title,observations) in cases.items():
+            with self.subTest(case=case_id),tempfile.TemporaryDirectory() as tmp:
+                root=Path(tmp);root.chmod(0o700)
+                report,path,start=self.fixture(root)
+                config=report['config'];config['configFile']='/work/client/playwright.modules.qa.config.ts'
+                config['metadata']['currentCaseIds']=[case_id]
+                config['projects'][0]['name']='qa-modules-2-9'
+                config['filteredProjects'][0]['name']='qa-modules-2-9'
+                suite=report['suites'][0];suite['title']='qa-modules-2-9.lab.spec.ts'
+                spec_row=suite['specs'][0];spec_row['title']=title;spec_row['file']='qa-modules-2-9.lab.spec.ts'
+                test_row=spec_row['tests'][0];test_row['projectName']='qa-modules-2-9'
+                attempt=test_row['results'][0];attachments=[]
+                for item,observed in observations.items():
+                    obs=dict(case_id=case_id,item=item,verdict='PASS',observed=observed,
+                        at=(r.instant(attempt['startTime'])+timedelta(milliseconds=500)).isoformat())
+                    attachments.append(dict(name=case_id+'-'+item,contentType='application/json',body=body(obs)))
+                attachments.append(dict(name='cleanup',contentType='application/json',body=body(dict(session_closed=True))))
+                attempt['attachments']=attachments
+                path.write_text(json.dumps(report))
+                parsed=r.parse_report(path,case_id,root,start,datetime.now(timezone.utc).isoformat(),
+                    run_elapsed_seconds=2.2,max_run_seconds=300)
+                self.assertEqual(parsed['result'],'PASS')
+                self.assertTrue(parsed['restored'])
+                self.assertEqual(set(parsed['evidence']),set(observations))
+                self.assertEqual(len(list(root.glob('observed-*.json'))),len(observations))
+
     def test_extra_case_retry_skip_wrong_project_and_capture_cannot_pass(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d);root.chmod(0o700);report,path,start=self.fixture(root)

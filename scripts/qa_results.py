@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Parse current permission-adapter reports strictly; never run a browser or lab.
+"""Parse supported current-case reports strictly; never run a browser or lab.
 
 Only reviewed fixed observations are copied into sanitized item files. A failed
 browser attempt without explicit failed-item evidence is INCONCLUSIVE, not a
@@ -32,7 +32,20 @@ OBSERVATIONS={'TC-SS-04': {'E1': 'System Status absent from sidebar; direct addr
                      '403.'},
  'TC-ACC-09': {'E1': 'Manage Accounts absent from sidebar; direct address redirects to Settings.',
                'E2': 'Accounts API address returns 403.'},
- 'TC-NCPA-08': {'E1': 'NCPA Deployment absent from sidebar; direct address redirects to Settings.'}}
+ 'TC-NCPA-08': {'E1': 'NCPA Deployment absent from sidebar; direct address redirects to Settings.'},
+ 'TC-ACC-08': {'E1': 'Super Admin sees the Email Alerts column and email-alert checkbox.',
+               'E2': 'The qa-accounts user does not see the email-alert checkbox.'},
+ 'TC-ROL-04': {'E1': 'Sidebar contains Overview and Settings only.',
+               'E2': 'All 13 protected page addresses redirect to the Dashboard.',
+               'E3': 'All three protected API addresses return 403.'},
+ 'TC-DI-02': {'E1': 'Port group headers appear in the required order.',
+              'E2': 'Every shown group has a matching positive count; empty groups are absent.',
+              'E3': 'Each visible port group is ordered TCP then UDP, by port number.'},
+ 'TC-DI-03': {'E1': 'Exactly one reason is shown and the held-back reason is absent.',
+              'E2': 'The reason explains the expected/found names and says monitoring waits for acknowledgement.'},
+ 'TC-DASH-07': {'E1': 'Network Latency and both Network Performance metrics show No data.',
+                'E2': 'Average Resource Utilization is absent without NCPA data.'}}
+MODULE_CASES=frozenset({'TC-ACC-08','TC-ROL-04','TC-DI-02','TC-DI-03','TC-DASH-07'})
 
 
 def unique_object(pairs):
@@ -121,15 +134,19 @@ def parse_checked(path:Path,case_id:str,evidence_root:Path,run_started_at:str,
     report=decode_json(read_private(path,root,16*1024*1024))
     config=report['config'];project=config['projects'];filtered=config['filteredProjects']
     pinned=json.loads((c.ROOT/'client/package.json').read_text())['devDependencies']['@playwright/test']
+    is_module=case_id in MODULE_CASES
+    project_name='qa-modules-2-9' if is_module else 'qa-permissions'
+    config_path='/work/client/playwright.modules.qa.config.ts' if is_module else '/work/client/playwright.qa.config.ts'
+    spec_file='qa-modules-2-9.lab.spec.ts' if is_module else 'qa-permissions.lab.spec.ts'
     if (config.get('version')!=pinned or config.get('workers')!=1 or config.get('forbidOnly') is not True
-        or config.get('fullyParallel') is not False or config.get('configFile')!='/work/client/playwright.qa.config.ts'
+        or config.get('fullyParallel') is not False or config.get('configFile')!=config_path
         or config.get('rootDir')!='/work/client/e2e'
         or config.get('metadata',{}).get('currentCaseIds')!=[case_id]
         or config.get('metadata',{}).get('mode')!='scripted automation'
         or len(project)!=1 or len(filtered)!=1):raise ValueError('Report configuration differs from reviewed adapter')
-    if (project[0].get('name')!='qa-permissions' or project[0].get('retries')!=0
+    if (project[0].get('name')!=project_name or project[0].get('retries')!=0
         or project[0].get('repeatEach')!=1 or project[0].get('outputDir')!='/evidence/artifacts'
-        or filtered[0].get('name')!='qa-permissions' or filtered[0].get('retries')!=0
+        or filtered[0].get('name')!=project_name or filtered[0].get('retries')!=0
         or filtered[0].get('dependencies')!=[]):raise ValueError('Broader or retried report selection')
     use=filtered[0]['use']
     if use.get('baseURL')!='http://127.0.0.1:18080' or any(use.get(k)!='off' for k in ('trace','video','screenshot')):
@@ -140,10 +157,10 @@ def parse_checked(path:Path,case_id:str,evidence_root:Path,run_started_at:str,
             values.extend(suite.get('specs',[]));values.extend(specs(suite.get('suites',[])))
         return values
     selected=specs(report['suites'])
-    if len(selected)!=1 or selected[0].get('title')!=mapping['adapter']['title'] or selected[0].get('file')!='qa-permissions.lab.spec.ts':
+    if len(selected)!=1 or selected[0].get('title')!=mapping['adapter']['title'] or selected[0].get('file')!=spec_file:
         raise ValueError('Report contains wrong or additional cases')
     tests=selected[0]['tests']
-    if len(tests)!=1 or tests[0].get('projectName')!='qa-permissions' or tests[0].get('expectedStatus')!='passed':
+    if len(tests)!=1 or tests[0].get('projectName')!=project_name or tests[0].get('expectedStatus')!='passed':
         raise ValueError('Unexpected project/expected failure annotation')
     results=tests[0]['results']
     if len(results)!=1 or results[0].get('retry')!=0:raise ValueError('Exactly one initial attempt required')

@@ -65,6 +65,25 @@ class TransportTests(unittest.TestCase):
             with patch.object(Path,'open',guarded):
                 t.prepare(q,s,root/'state',root/'bridge')
 
+    def test_module_transport_mounts_only_the_selected_cases_private_fixture_inputs(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);(root/'state').mkdir(mode=0o700);(root/'evidence').mkdir(mode=0o700);(root/'bridge').mkdir(mode=0o700)
+            cache=root/'home/.cache/ms-playwright';cache.mkdir(parents=True,mode=0o700)
+            names=t.MODULE_STATE_FILES['TC-ACC-08']
+            for name in names:
+                path=root/'state'/name;path.write_text('synthetic-private-value');path.chmod(0o600)
+            with patch.object(Path,'home',return_value=root/'home'):
+                argv=t.container_command(root/'evidence',root/'state',root/'bridge','TC-ACC-08')
+            mounts=[argv[i+1] for i,value in enumerate(argv) if value=='--mount']
+            state_mounts=[value for value in mounts if 'dst=/state/' in value]
+            self.assertEqual(len(state_mounts),len(names))
+            self.assertTrue(all('readonly' in value for value in state_mounts))
+            self.assertTrue(all(any(f'/{name},dst=/state/{name},readonly' in value for value in state_mounts) for name in names))
+            self.assertIn('PINPOINT_QA_CASES=TC-ACC-08',argv)
+            self.assertNotIn('synthetic-private-value',json.dumps(argv))
+            with self.assertRaises(ValueError):
+                t.container_command(root/'evidence',root/'state',root/'bridge','TC-ACC-10')
+
     def test_draft_cards_and_offline_to_live_promotion_are_rejected(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d);q,s=self.fixture(root)

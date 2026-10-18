@@ -28,7 +28,7 @@ Assertion markers and source hashes support review; they do not prove assertion 
 | TC-ACC-06 | ACC | unmapped / unassigned | None | E1, E2, E3 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-ACC-07 | ACC | unmapped / unassigned | None | E1, E2 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-ACC-09 | ACC | implemented / scripted automation | [TC-ACC-09: The accounts page needs permission](../../client/e2e/qa-permissions.lab.spec.ts) | None in source review | Source adapter complete; bounded live launcher support, new reviewed queue/card, current prerequisites and separate explicit start remain required. |
-| TC-ACC-10 | ACC | unmapped / unassigned | None | E1, E2, E3 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
+| TC-ACC-10 | ACC | partial / scripted automation | [TC-ACC-10: Add User uses the default role](../../client/e2e/qa-modules-2-9.lab.spec.ts) | E3 | E1 and E2 have a source adapter. E3 requires the live role-options list to have no active roles; this issue will not deactivate system roles to manufacture that state. Created account rows and audit entries persist after deactivation, so the current bounded baseline cannot certify restoration; the live card remains blocked pending a separately reviewed disposable-appliance recovery plan. |
 | TC-ACC-08 | ACC | implemented / scripted automation | [TC-ACC-08: "Send this user email alerts" depends on permission](../../client/e2e/qa-modules-2-9.lab.spec.ts) | None in source review | Source adapter is complete for every catalog expected item; live launcher support, reviewed current lab prerequisites/cards and a separate explicit start are still required. |
 | TC-ROL-04 | ROL | implemented / scripted automation | [TC-ROL-04: A dashboard-only user is limited to the Dashboard](../../client/e2e/qa-modules-2-9.lab.spec.ts) | None in source review | Source adapter is complete for every catalog expected item; live launcher support, reviewed current lab prerequisites/cards and a separate explicit start are still required. |
 | TC-ROL-05 | ROL | unmapped / unassigned | None | E1, E2, E3 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
@@ -247,4 +247,4 @@ Assertion markers and source hashes support review; they do not prove assertion 
 | E2E-07 | E2E | unmapped / unassigned | None | E1, E2, E3, E4, E5, E6, E7 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | E2E-08 | E2E | unmapped / unassigned | None | E1, E2, E3, E4, E5 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 
-Source register: 12 implemented, 0 partial, 227 unmapped (TC and E2E combined; not execution counts).
+Source register: 12 implemented, 1 partial, 226 unmapped (TC and E2E combined; not execution counts).

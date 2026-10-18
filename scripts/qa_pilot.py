@@ -30,7 +30,12 @@ r=module('results','qa_results.py')
 h=module('host','vmlab_preflight.py')
 ROOT=Path(__file__).resolve().parent.parent
 APP=Path('/opt/pinpoint/Network-Diagnosis-System')
-SUPPORTED_CASES=frozenset({'TC-SS-04','TC-ACC-09','TC-NCPA-08'})
+SUPPORTED_CASES=frozenset({
+    'TC-SS-04','TC-ACC-09','TC-NCPA-08',
+    # Read-only module adapters with a reviewed exact fixture profile.
+    'TC-ACC-08','TC-ROL-04','TC-DI-02','TC-DI-03','TC-DASH-07',
+})
+MODULE_CASES=SUPPORTED_CASES-frozenset({'TC-SS-04','TC-ACC-09','TC-NCPA-08'})
 
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -197,7 +202,7 @@ class Inspector:
 class PilotDriver:
     """Wire trusted observations, owned transport, strict results and cleanup.
 
-    Only the three explicitly supported permission IDs are allowed. Cleanup means session logout proved by adapter,
+    Only explicit permission IDs and the reviewed read-only module IDs are allowed. Cleanup means session logout proved by adapter,
     container removal and bridge shutdown, then a fresh unchanged baseline. Any
     uncertainty halts; this driver never restores snapshots, resets users, retries,
     changes the product or claims a tool failure is a product FAIL.
@@ -214,7 +219,7 @@ class PilotDriver:
             return self.inspector.verify(plan,self.ledger.control_fd)
 
     def run(self,plan,timeout):
-        if self.used or plan.get('case') not in SUPPORTED_CASES:raise ValueError('Single supported permission attempt per driver only')
+        if self.used or plan.get('case') not in SUPPORTED_CASES:raise ValueError('Single supported current-case attempt per driver only')
         self.used=True
         self.bridge=b.Bridge(Path(plan['bridge_socket']).parent,**plan['bridge_limits'])
         self.bridge.start(plan,self.ledger,self.uuid,timeout)
@@ -265,11 +270,12 @@ def save_private(path,value,*,new=False):
 
 
 def run_pilot(queue,run,owner,session,grant,baseline,state_dir,bridge_dir,control_dir,ssh_key):
-    """One explicitly started fixed permission batch; no retries or auto-resume.
+    """One explicitly started fixed current-case batch; no retries or auto-resume.
 
-    Only SS-04, ACC-09 and NCPA-08 are supported. Every case uses a fresh driver,
-    evidence directory, bridge and container and is saved before the next opens.
-    Any non-PASS stops the remaining assignment; cleanup uncertainty halts.
+    Supports three fixed permission cases and five read-only Module 2–9 cases.
+    Every case uses a fresh driver, evidence directory, bridge and container and
+    is saved before the next opens. Any non-PASS stops the remaining assignment;
+    cleanup uncertainty halts.
     """
     errors=s.t.x.queue.check(queue,s.t.x.queue.load_catalog(),run)
     if errors:raise ValueError('Queue source changed; replacement review/start required')
@@ -277,7 +283,7 @@ def run_pilot(queue,run,owner,session,grant,baseline,state_dir,bridge_dir,contro
     ids=[case['id'] for case in selected['cases']]
     if (selected['owner']!=owner or not 1<=len(ids)<=5 or not set(ids)<=SUPPORTED_CASES
         or len(selected['batches'])!=1 or selected['purpose']=='investigate'):
-        raise ValueError('Only one fixed supported permission batch is allowed')
+        raise ValueError('Only one fixed supported current-case batch is allowed')
     validate_baseline(baseline)
     cards=[s.t.x.validate_card(case) for case in selected['cases']]
     for card in cards:

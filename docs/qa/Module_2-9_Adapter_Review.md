@@ -24,7 +24,7 @@ the current execution record for these two cases; do not rerun them as untested.
 
 | Case | Expected items | Primary source and focused local tests | Prerequisite / mutation / recovery concern |
 |---|---:|---|---|
-| TC-ACC-10 | 3 | `ManageAccountsPage.tsx`; `ManageAccountsPage.test.tsx` | Needs an active role and unique disposable account identities. Creates two persistent accounts; cleanup must account for user deactivation and audit history. A partial #191 browser report exists; retain it as partial evidence. |
+| TC-ACC-10 | 3 | `ManageAccountsPage.tsx`; `ManageAccountsPage.test.tsx` | Partial adapter covers E1/E2. Needs an active role, a fresh run token, and a disposable appliance; creates two inactive accounts with alerts disabled. Rows/audit entries persist, so cleanup is not baseline restoration. E3 would require removing all active role options and remains blocked. A partial #191 browser report remains partial evidence. |
 | TC-ACC-08 | 2 | `ManageAccountsPage.tsx`, `ManageRolesPage.tsx`; account/role page tests | Requires pre-created `qa-accounts` role and user. Read-only UI checks across Super Admin and restricted account sessions. |
 | TC-ROL-04 | 3 | `ManageRolesPage.tsx`, `Sidebar.tsx`, `pageAccess.ts`; role/access tests | Requires a `qa-view` account. Iterates 13 pages and three APIs; needs separate restricted credentials and exact redirects/403s. |
 | TC-DI-02 | 3 | `DevicePortsSection.tsx`, `devicePortsLogic.ts`; `DevicePortsSection.test.tsx` | Requires one device with ports in multiple lifecycle groups. Read-only; environment must provide each required state. |
@@ -58,8 +58,12 @@ the current execution record for these two cases; do not rerun them as untested.
 
 ## Adapter and execution boundary
 
-The existing current-case live path is the bounded permission pilot. It does not
-support these 31 cases. Existing component tests provide isolated UI evidence but
+The existing current-case live path is the bounded supervised pilot. It supports
+only the five complete read-only adapters TC-ACC-08, TC-ROL-04, TC-DI-02, TC-DI-03
+and TC-DASH-07 after reviewed cards, current fixture/baseline proof and explicit
+start. TC-ACC-10 has only partial E1/E2 source coverage; it is excluded from the
+live allowlist because E3 is unresolved and account rows persist. The other 26
+cases remain unsupported. Existing component tests provide isolated UI evidence but
 do not replace the written black-box procedures or live adapter assertions. An
 adapter may be marked source-complete only where every expected item has an exact
 assertion method, its prerequisites are explicit, and its mutations/cleanup are
@@ -93,9 +97,11 @@ and confirmed that the served deployment still matches target
 and reports no live authorization. A source comparison from that target to the
 current repository base (`0f0d563e…`) found changes in DashboardPage,
 DeviceInventoryPage and StatusDetailDrawer only for the unacknowledgement
-confirmation prompt; that behavior is outside the five current module adapters.
+confirmation prompt; that behavior is outside the Module 2–9 adapters.
 
 The current baseline does not establish the required `qa-accounts`/`qa-view`
 accounts, device/port fixture for TC-DI-02/03, or no-ping/no-NCPA fixture for
-TC-DASH-07. TC-ACC-10 also remains unmapped. No broader current-case launcher
-exists yet, so no Module 2–9 batch is ready to open.
+TC-DASH-07. TC-ACC-10 is source-partial only; its E3 branch, persistent account
+disposition, and live recovery plan are unresolved. The five-case live allowlist
+does not satisfy the full 31-case queue or establish its role/device/dashboard
+fixtures; no full Module 2–9 batch is ready to open.

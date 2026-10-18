@@ -18,17 +18,40 @@ spec=importlib.util.spec_from_file_location('execution',Path(__file__).with_name
 x=importlib.util.module_from_spec(spec);spec.loader.exec_module(x)
 ROOT=Path(__file__).resolve().parent.parent
 IMAGE='nikolaik/python-nodejs:python3.14-nodejs22'
+MODULE_STATE_FILES={
+    'TC-ACC-08':('admin-email','admin-password','qa-accounts-email','qa-accounts-password'),
+    'TC-ROL-04':('qa-view-email','qa-view-password'),
+    'TC-DI-02':('admin-email','admin-password','qa-device-host'),
+    'TC-DI-03':('admin-email','admin-password','qa-device-host','qa-held-mismatch-port'),
+    'TC-DASH-07':('admin-email','admin-password'),
+}
 # Fixed code only. Credentials never become Docker argv or preview JSON values.
 BOOTSTRAP='''set -euo pipefail
 umask 077
 node /work/lab/unix_web_proxy.mjs /tmp/pinpoint-web.sock &
 tunnel_pid=$!
 trap 'kill "$tunnel_pid" 2>/dev/null || true' EXIT
-export PINPOINT_RESTRICTED_USER="$(cat /state/restricted-email)"
-export PINPOINT_RESTRICTED_NEW_PASSWORD="$(cat /state/restricted-new-password)"
+load_private_value() {
+  local variable="$1" file="$2"
+  if [ -r "$file" ]; then
+    IFS= read -r "$variable" < "$file"
+    export "$variable"
+  fi
+}
+load_private_value PINPOINT_RESTRICTED_USER /state/restricted-email
+load_private_value PINPOINT_RESTRICTED_NEW_PASSWORD /state/restricted-new-password
 cd /work/client
 ./node_modules/.bin/playwright test "$@"
 '''
+MODULE_BOOTSTRAP=BOOTSTRAP.replace('cd /work/client', '''load_private_value PINPOINT_ADMIN_USER /state/admin-email
+load_private_value PINPOINT_ADMIN_PASSWORD /state/admin-password
+load_private_value PINPOINT_QA_ACCOUNTS_USER /state/qa-accounts-email
+load_private_value PINPOINT_QA_ACCOUNTS_PASSWORD /state/qa-accounts-password
+load_private_value PINPOINT_QA_DASHBOARD_USER /state/qa-view-email
+load_private_value PINPOINT_QA_DASHBOARD_PASSWORD /state/qa-view-password
+load_private_value PINPOINT_QA_DEVICE_HOST /state/qa-device-host
+load_private_value PINPOINT_QA_HELD_MISMATCH_PORT /state/qa-held-mismatch-port
+cd /work/client''')
 
 
 def clean_path(path:Path) -> Path:
@@ -91,8 +114,12 @@ def prepare(q:dict,journal:dict,state_dir:Path,bridge_dir:Path) -> dict:
     card=x.validate_card(case)
     elapsed=(datetime.now(timezone.utc)-datetime.fromisoformat(active['started_at'])).total_seconds()
     if not 0<=elapsed<=card['timeout_seconds']:raise ValueError('Case timeout elapsed; review interrupted state')
-    if card['selection']['config']!='client/playwright.qa.config.ts' or card['selection']['project']!='qa-permissions':
-        raise ValueError('Unsupported transport adapter configuration')
+    if active['id'] in MODULE_STATE_FILES:
+        if (card['selection']['config']!='client/playwright.modules.qa.config.ts'
+            or card['selection']['project']!='qa-modules-2-9'):
+            raise ValueError('Unsupported module transport adapter configuration')
+    elif card['selection']['config']!='client/playwright.qa.config.ts' or card['selection']['project']!='qa-permissions':
+        raise ValueError('Unsupported permission transport adapter configuration')
     evidence=private_directory(Path(card['evidence_dir']),empty=True)
     state=private_directory(state_dir);bridge=private_directory(bridge_dir,empty=True)
     clean_path(ROOT)
@@ -128,7 +155,11 @@ def container_command(evidence:Path,state:Path,bridge:Path,case_id:str) -> list[
     for i,a in enumerate(paths):
         for b in paths[i+1:]:
             if a.is_relative_to(b) or b.is_relative_to(a):raise ValueError('Transport paths overlap')
-    credentials=[private_credential(state/name) for name in ('restricted-email','restricted-new-password')]
+    if case_id in MODULE_STATE_FILES:
+        credential_names=MODULE_STATE_FILES[case_id]
+    else:
+        credential_names=('restricted-email','restricted-new-password')
+    credentials=[private_credential(state/name) for name in credential_names]
     cache=clean_path(Path.home()/'.cache/ms-playwright')
     uid,gid=os.getuid(),os.getgid()
     mounts=[f'type=bind,src={ROOT},dst=/work,readonly',
@@ -144,7 +175,8 @@ def container_command(evidence:Path,state:Path,bridge:Path,case_id:str) -> list[
     for env in ('HOME=/tmp','PLAYWRIGHT_BROWSERS_PATH=/ms-playwright','LD_LIBRARY_PATH=/host-libs',
                 f'PINPOINT_QA_CASES={case_id}','PINPOINT_QA_RUN_DIR=/evidence'):
         argv+=['--env',env]
-    argv += [IMAGE,'bash','-c',BOOTSTRAP,'bash',*x.queue.coverage.action_for(cases[case_id])[1:]]
+    bootstrap=MODULE_BOOTSTRAP if case_id in MODULE_STATE_FILES else BOOTSTRAP
+    argv += [IMAGE,'bash','-c',bootstrap,'bash',*x.queue.coverage.action_for(cases[case_id])[1:]]
     return argv
 
 

@@ -45,11 +45,120 @@ async function openDevicePorts(page: Page) {
   return portsHeading.locator('..');
 }
 
+let tcAcc10Emails: string[] = [];
+
+async function deactivateAccountIfPresent(page: Page, email: string) {
+  await page.goto('/accounts');
+  const search = page.getByPlaceholder('Search', { exact: true });
+  await expect(search).toBeVisible();
+  await search.fill(email);
+  const row = page.getByRole('row').filter({ hasText: email });
+  const count = await row.count();
+  expect(count, 'A disposable account identity is unique').toBeLessThanOrEqual(1);
+  if (count === 0) return false;
+  if (await row.getByText('inactive', { exact: true }).count() === 1) return true;
+
+  await row.getByTitle('Edit', { exact: true }).click();
+  await page.locator('#edit-account-status').selectOption('inactive');
+  await page.getByRole('button', { name: 'Save Changes', exact: true }).click();
+  await expect(row.getByText('inactive', { exact: true }), 'Created QA account is inactive after cleanup').toBeVisible();
+  return true;
+}
+
 test.afterEach(async ({ page }, info) => {
+  if (info.title.startsWith('TC-ACC-10:')) {
+    let deactivated = 0;
+    for (const email of tcAcc10Emails) {
+      if (await deactivateAccountIfPresent(page, email)) deactivated += 1;
+    }
+    await info.attach('account-cleanup', {
+      body: JSON.stringify({ created_accounts_deactivated: deactivated, persistent_records_retained: true }),
+      contentType: 'application/json',
+    });
+    tcAcc10Emails = [];
+  }
   const response = await page.request.post('/api/user/logout');
   expect([200, 401].includes(response.status()), 'Session cleanup response').toBe(true);
   expect((await page.request.get('/api/user/me')).status(), 'Session no longer authenticated').toBe(401);
   await info.attach('cleanup', { body: JSON.stringify({ session_closed: true }), contentType: 'application/json' });
+});
+
+test('TC-ACC-10: Add User uses the default role', async ({ page }, info) => {
+  const adminEmail = process.env.PINPOINT_ADMIN_USER;
+  const adminPassword = process.env.PINPOINT_ADMIN_PASSWORD;
+  const runToken = process.env.PINPOINT_QA_ACC10_RUN_TOKEN;
+  const password = process.env.PINPOINT_QA_ACC10_PASSWORD;
+  if (!adminEmail || !adminPassword || !runToken || !/^[a-z0-9-]{8,24}$/.test(runToken) || !password) {
+    throw new Error('Use a unique reviewed run token and private password from the case card.');
+  }
+
+  await signIn(page, adminEmail, adminPassword, 'Super Admin', ['account.view', 'account.edit', 'account.alerts'], []);
+  const rolesResponse = await page.request.get('/api/user/roles/options');
+  expect(rolesResponse.status(), 'Active role list available to Super Admin').toBe(200);
+  const rolesBody = await rolesResponse.json();
+  const activeRoles = rolesBody.data.items;
+  expect(Array.isArray(activeRoles) && activeRoles.length > 0, 'At least one active role is available').toBe(true);
+  const firstRole = activeRoles[0];
+  expect(Number.isInteger(firstRole.id) && typeof firstRole.name === 'string').toBe(true);
+  const accountSummary = await page.request.get('/api/user/accounts?per_page=1');
+  expect(accountSummary.status(), 'Account-list fixture preflight').toBe(200);
+  expect((await accountSummary.json()).data.total, 'UI can display every account created in this case').toBeLessThanOrEqual(98);
+
+  const email1 = `qa-acc10-${runToken}-1@example.invalid`;
+  const email2 = `qa-acc10-${runToken}-2@example.invalid`;
+  for (const email of [email1, email2]) {
+    const existing = await page.request.get(`/api/user/accounts?per_page=2&search=${encodeURIComponent(email)}`);
+    expect(existing.status(), 'Check the disposable address before creating it').toBe(200);
+    expect((await existing.json()).data.items, 'Never modify an account from an earlier run').toHaveLength(0);
+  }
+
+  await page.goto('/accounts', { waitUntil: 'domcontentloaded' });
+  await page.getByRole('button', { name: '+ Add User', exact: true }).click();
+  tcAcc10Emails = [email1, email2];
+
+  for (const email of tcAcc10Emails) {
+    await expect(page.getByRole('heading', { name: 'Profile Info', exact: true })).toBeVisible();
+    const role = page.locator('select').first();
+    await expect(role.locator('option')).not.toHaveCount(0);
+    await expect(role).toHaveValue(String(firstRole.id));
+    await expect(role.locator('option:checked')).toHaveText(firstRole.name);
+
+    await page.getByPlaceholder('e.g. JUAN').fill('QA');
+    await page.getByPlaceholder('e.g. CRUZ').fill('ACC10');
+    await page.getByPlaceholder('e.g. juan.cruz@email.com').fill(email);
+    await page.locator('select').nth(1).selectOption('inactive');
+    const alerts = page.getByRole('checkbox', { name: 'Send this user email alerts', exact: true });
+    await expect(alerts).toBeVisible();
+    if (await alerts.isChecked()) await alerts.uncheck();
+    const [passwordInput, confirmInput] = await page.locator('input[type="password"]').all();
+    await passwordInput.fill(password);
+    await confirmInput.fill(password);
+    await expect(page.getByRole('button', { name: 'SAVE CHANGES', exact: true })).toBeEnabled();
+
+    if (email === email1) {
+      // qa-evidence:TC-ACC-10:E1
+      await observe(info, 'TC-ACC-10', 'E1', 'The first active role is selected and Save is enabled for a valid form.');
+    }
+
+    await page.getByRole('button', { name: 'SAVE CHANGES', exact: true }).click();
+    const row = page.getByRole('row').filter({ hasText: email });
+    await expect(row, 'Created account appears without reloading').toHaveCount(1);
+    await expect(row.getByText('inactive', { exact: true }), 'Disposable account is inactive').toBeVisible();
+    if (email === email1) await page.getByRole('button', { name: '+ Add User', exact: true }).click();
+  }
+
+  await expect(page.getByRole('row').filter({ hasText: email1 })).toHaveCount(1);
+  await expect(page.getByRole('row').filter({ hasText: email2 })).toHaveCount(1);
+  await page.reload();
+  await page.getByPlaceholder('Search', { exact: true }).fill(email1);
+  await expect(page.getByRole('row').filter({ hasText: email1 })).toHaveCount(1);
+  await page.getByPlaceholder('Search', { exact: true }).fill(email2);
+  await expect(page.getByRole('row').filter({ hasText: email2 })).toHaveCount(1);
+  // qa-evidence:TC-ACC-10:E2
+  await observe(info, 'TC-ACC-10', 'E2', 'Both accounts appear without a reload and remain after reloading the page.');
+
+  // E3 requires all active role options to be absent. The current safe fixture must
+  // not disable system roles, so that condition remains a human-reviewed blocker.
 });
 
 test('TC-ACC-08: "Send this user email alerts" depends on permission', async ({ page }, info) => {

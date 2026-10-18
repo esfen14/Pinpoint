@@ -28,11 +28,11 @@ Requirement coverage (every requirement the issue states, and the check that pro
 ## Plan
 
 1. [x] Review all selected case procedures and prerequisite tables, applicable frontend/backend/data/page specifications, existing adapter sources, coverage registry, and status gaps; record per-case source/test/prerequisite/mutation/recovery classifications in `docs/qa/Module_2-9_Adapter_Review.md`.
-2. [ ] Design and implement source adapters plus isolated selection/collection checks for the reviewed runnable cases (`client/e2e/`, `client/qa/`, `client/playwright.qa.config.ts`, focused Node tests); keep tests fail-closed on missing prerequisites and do not connect to a live lab.
-3. [ ] Update reviewed case coverage records and derived coverage view (`docs/qa/automation-coverage.json`, `docs/qa/Automation_Coverage.md`) with exact expected-item markers, source hashes, prerequisites and cleanup.
-4. [ ] Update QA implementation status and any owning specifications only where adapter/workflow support changes (`spec files/Implementation_Status.md`, relevant QA docs).
-5. [ ] Prepare a new immutable explicit-ID queue excluding the two completed cases and record blockers and fixed batches (`docs/qa/queues/`); validate it with the queue checker.
-6. [ ] Run the focused offline harness checks and `scripts/verify.sh docs`; update this progress record and checkpoint.
+2. [ ] Design and implement source adapters plus isolated selection/collection checks for all reviewable cases; retain explicit partial/human blockers and never connect a live lab during issue work.
+3. [x] Update source coverage for complete mappings plus partial TC-ACC-10, with exact expected-item markers, hashes, prerequisites and recovery; derived view is current.
+4. [x] Update QA workflow/readiness/implementation status and fixture plan to distinguish source coverage from live readiness.
+5. [x] Prepare replacement immutable queue v4 excluding the two completed cases, with 31 exact IDs, 12 fixed batches, five source-bound blocked cards and fixture blockers.
+6. [ ] Keep focused offline checks and docs verification green; update this progress record and checkpoint after each round.
 
 ## Round log
 
@@ -46,18 +46,22 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | 6 | Added read-only TC-DASH-07 adapter for no-ping/no-NCPA dashboard state; updated coverage/readiness/status counts and assertion source hashes | `cd client && node --test qa/module-selection.node.mjs`; `cd client && npx tsc --noEmit -p tsconfig.qa.json`; `python3 -I scripts/qa_coverage.py check`; `git diff --check` | 5 offline exact-selection checks pass; TypeScript QA config passes; 239 coverage records validate (12 implemented, 227 unmapped); whitespace check passes. No product case or browser ran. |
 | 7 | Used supported read-only pilot inspection with the last reviewed baseline; updated review matrix with exact currently served target and remaining lab fixture/launcher blockers | `scripts/vmlab preflight --json`; `python3 -I scripts/qa_pilot.py inspect --baseline … --control-dir …` | Same UUID running; controlled inspection passed for deployed target `299ab3ba…`; `live_authorized=false`; no product case or transport ran. Current role/device/dashboard fixtures remain unverified. |
 | 8 | Prepared the 31-case Module 2–9 v2 queue with 12 fixed batches and linked report-backed PASS outcomes for TC-ACC-09/TC-SS-04 in the adapter review | `python3 -I scripts/qa_queue.py check --queue docs/qa/queues/2026-10-18-modules-2-9-v2.json --run modules-2-9-v2` | Queue scope validates; ACC-09 and SS-04 are not selected. The queue is preparation-only and does not start the live suite. Five cards have source adapters but remain blocked on supported launch integration and reviewed live prerequisites; 26 cases remain unmapped. |
+| 9 | Added partial TC-ACC-10 E1/E2 automation with inactive account cleanup and explicit persistent-row/E3 blockers; expanded exact five-module live pilot, module-scoped transport credentials and strict per-item result parsing; added unverified fixture plan and source-bound case-card prerequisites; generated replacement 31-case queue v4 and superseded stale v2/v3 snapshots | `python3 -I scripts/qa_coverage.py check`; `python3 -I scripts/test_qa_coverage.py`; `python3 -I scripts/test_qa_results.py`; `python3 -I scripts/test_qa_transport.py`; `python3 -I scripts/test_qa_pilot.py`; `cd client && node --test qa/module-selection.node.mjs`; `cd client && npx tsc --noEmit -p tsconfig.qa.json`; `python3 -I scripts/qa_queue.py check --queue docs/qa/queues/2026-10-18-modules-2-9-v4.json --run modules-2-9-v4`; `scripts/verify.sh docs` | Green. 239 coverage records validate; 8 coverage, 15 results, 10 transport and 13 pilot contract tests pass; 6 offline selection tests pass; QA TypeScript compiles; queue scope matches; docs verification green. No product case/browser/lab action ran. Five module cases are dispatchable only with completed cards and a separate named start; fixtures remain unverified. |
 
 ## State for the next session
 
-- Last check run (exact command): `python3 -I scripts/qa_queue.py check --queue docs/qa/queues/2026-10-18-modules-2-9-v2.json --run modules-2-9-v2`
-- Result (first failing lines, or "green"): green; scope matches. Preparation is not a live start.
-- Hypothesis: The deployed target is verified at `299ab3ba…`, but case-specific account/device/dashboard fixtures and a supported live launcher remain missing.
-- Next action (one specific step, not "continue"): Implement a source-reviewed TC-ACC-10 adapter with bounded account creation and cleanup, preserving its prior partial report.
+- Last check run (exact command): `scripts/verify.sh docs`
+- Result (first failing lines, or "green"): green; docs and all included synthetic harness contracts passed.
+- Hypothesis: Five complete read-only module mappings are in the exact supervised pilot allowlist and TC-ACC-10 is partial; their lab fixture states are unverified and the 25 other cases lack complete adapters.
+- Next action (one specific step, not "continue"): Review and implement the next low-risk read-only current case adapter, including exact fixture checks, expected-item assertions, cleanup, and collection contracts.
 
 ## Decisions and notes
 
 - TC-ACC-09 has a completed supervised PASS in `docs/test-runs/2026-10-18-next-permissions/REPORT.md`; TC-SS-04 has a completed supervised PASS in `docs/test-runs/2026-10-18-issue-211-ss04-recheck/REPORT.md`. They must not be replayed as untested cases.
 - Queue `docs/qa/queues/2026-10-18-modules-2-9-v2.json` explicitly selects 31 IDs and excludes TC-ACC-09/TC-SS-04; their supervised PASS reports are linked in `docs/qa/Module_2-9_Adapter_Review.md`. Historical catalog result cells remain unchanged per workflow.
+- Queue `docs/qa/queues/2026-10-18-modules-2-9-v4.json` supersedes v2 and the intermediate v3 snapshot because execution references/card templates changed. It includes 31 IDs/12 batches, excludes TC-ACC-09 and TC-SS-04, and passes `qa_queue.py check`. Cards are source-bound but deliberately blocked on live reviewer, fixture observations and output paths. v2/v3 are immutable historical preparation artifacts; use v4 for further review.
+- `docs/qa/Module_2-9_Fixture_Plan.md` lists required live state and mutation/recovery boundaries for every queued case. All entries remain unverified. No fixture was created or changed.
+- TC-ACC-10 covers E1/E2 only and remains partial; two inactive rows/audit records persist even if cleanup deactivates them. Its E3 no-active-role branch is not covered and it is excluded from live dispatch.
 - TC-ACC-10 and TC-DI-10 have earlier partial reports and TC-DI-16–19 have #164 partial reports; the case catalog still says Not run. Queue eligibility and any retest/diagnostic decision must preserve both facts rather than treating the partial report as a pass or silently overwriting it.
 - The per-case source/prerequisite/mutation assessment is in `docs/qa/Module_2-9_Adapter_Review.md`; it does not authorize lab access or itself create execution cards.
 - No product case, live browser run, deployment, or execution start has occurred. A host-only read-only preflight is documented; it does not authorize a live start.

@@ -1,8 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 import { moduleSelection } from './qa/module-selection.mjs';
 
-// Source adapter collection only. The supported live launcher deliberately does
-// not dispatch this configuration; execution needs separate reviewed integration.
+// Exact source selection for the supervised module pilot. Direct legacy
+// playwright-lab dispatch remains blocked; only qa_pilot.py run may execute the
+// five complete read-only mappings with reviewed cards and a separate start.
 const scope = moduleSelection(process.env);
 export default defineConfig({
   testDir: './e2e',

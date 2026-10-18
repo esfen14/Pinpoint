@@ -61,7 +61,15 @@ test('offline collection selects exactly the requested module adapter with no se
   });
 });
 
-test('offline collection selects only mapped untested module adapters', () => {
+test('offline collection selects exactly TC-ACC-10', () => {
+  fixture((dir) => {
+    const result = collect('TC-ACC-10', dir);
+    assert.equal(result.status, 0, result.stderr + result.stdout);
+    assert.deepEqual(titles(JSON.parse(result.stdout).suites), [CASES['TC-ACC-10']]);
+  });
+});
+
+test('offline collection selects only source-reviewed module adapters', () => {
   fixture((dir) => {
     const result = collect(Object.keys(CASES).join(','), dir);
     assert.equal(result.status, 0, result.stderr + result.stdout);

@@ -35,10 +35,15 @@ batch for only TC-SS-04, TC-ACC-09 and TC-NCPA-08; see the
   dependencies, fixed loopback origin and disabled trace/video/screenshot capture.
   A failed test stops further tests; bounded action/navigation/case/global limits apply.
 - The issue #214 module config selects only explicit IDs from
-  `qa-modules-2-9.lab.spec.ts`; the supported legacy launcher rejects this config,
-  so it is currently an offline source/collection suite only. Its five mapped
-  cases require exact approved credential and pre-existing fixture inputs; they
-  do not create accounts, roles, devices, or port state.
+  `qa-modules-2-9.lab.spec.ts`; direct legacy launcher dispatch rejects this
+  config. The supervised `qa_pilot.py run` path now accepts only five complete
+  read-only mappings from this config, after reviewed cards, fresh baseline proof
+  and a separate explicit start. It has one partial TC-ACC-10 mapping (E1/E2 only). TC-ACC-10 creates
+  inactive users with alerts disabled, but the rows persist and E3 would require
+  an unapproved no-active-role state; its card must remain blocked. The five complete
+  mappings require exact approved credentials and pre-existing fixture inputs; they
+  do not create accounts, roles, devices, or port state. The other 26 target cases
+  and TC-ACC-10 remain outside the supervised live allowlist.
 - Each adapter signs in through the UI using an already initialized disposable
   Staff account, checks its role, zero permissions and completed password/setup
   state, then checks the exact hidden sidebar link and redirect. API cases open

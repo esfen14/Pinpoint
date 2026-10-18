@@ -29,13 +29,18 @@ def references() -> dict:
     """Freeze the normative/specification and execution-rule sources for preparation."""
     paths=list((ROOT/'spec files').glob('*.md'))+[ROOT/'.agent/workflows/qa-run.md',
         ROOT/'docs/qa/QA_Run_Queues.md',ROOT/'docs/qa/QA_Journeys_and_Scope.md',ROOT/'docs/qa/Next_Permission_Batch_Review.md',
+        ROOT/'docs/qa/Automation_Readiness.md',ROOT/'docs/qa/Automation_Coverage.md',
+        ROOT/'docs/qa/Module_2-9_Adapter_Review.md',ROOT/'docs/qa/Module_2-9_Fixture_Plan.md',
+        ROOT/'docs/qa/queues/modules-2-9-card-drafts-v1.json',
         ROOT/'scripts/qa_catalog.py',ROOT/'scripts/qa_queue.py',ROOT/'scripts/qa_evidence.py',
         ROOT/'scripts/qa_execute.py',ROOT/'scripts/qa_transport.py',ROOT/'scripts/qa_supervisor.py',ROOT/'scripts/qa_process.py',ROOT/'scripts/qa_results.py',ROOT/'scripts/qa_coverage.py',coverage.REGISTRY,
         ROOT/'scripts/qa_control.py',ROOT/'scripts/vmlab',ROOT/'scripts/vmlab_preflight.py',
         ROOT/'scripts/qa_container.py',
         ROOT/'scripts/qa_bridge.py',ROOT/'scripts/qa_deployment.py',
         ROOT/'scripts/qa_pilot.py',ROOT/'scripts/qa_pilot_guest.py',ROOT/'scripts/qa_recovery.py',ROOT/'scripts/qa_handoff.py',
-        ROOT/'client/playwright.qa.config.ts',ROOT/'client/qa/selection.mjs',ROOT/'lab/unix_web_proxy.mjs',ROOT/'scripts/playwright-lab',ROOT/'client/playwright.config.ts',
+        ROOT/'client/playwright.qa.config.ts',ROOT/'client/qa/selection.mjs',
+        ROOT/'client/playwright.modules.qa.config.ts',ROOT/'client/qa/module-selection.mjs',
+        ROOT/'lab/unix_web_proxy.mjs',ROOT/'scripts/playwright-lab',ROOT/'client/playwright.config.ts',
         ROOT/'client/package.json',ROOT/'client/package-lock.json']+list((ROOT/'client/e2e').glob('*.ts'))
     return {p.relative_to(ROOT).as_posix():cat.digest(p.read_text()) for p in sorted(paths)}
 

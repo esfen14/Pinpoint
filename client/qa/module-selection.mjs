@@ -3,6 +3,7 @@ import { lstatSync, realpathSync, readdirSync } from 'node:fs';
 import { isAbsolute, resolve, join } from 'node:path';
 
 export const CASES = Object.freeze({
+  'TC-ACC-10': 'TC-ACC-10: Add User uses the default role',
   'TC-ACC-08': 'TC-ACC-08: "Send this user email alerts" depends on permission',
   'TC-ROL-04': 'TC-ROL-04: A dashboard-only user is limited to the Dashboard',
   'TC-DI-02': 'TC-DI-02: Port groups and their order',

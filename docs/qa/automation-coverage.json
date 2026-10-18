@@ -272,14 +272,51 @@
     },
     "TC-ACC-10": {
       "case_hash": "4f8ddecf3112a2b79a7168e883dde8599d8a81643a5e650826ad318e1449a7b4",
-      "status": "unmapped",
-      "mode": "unassigned",
-      "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
-      "items": {},
-      "adapter": null,
-      "source_hashes": {},
-      "prerequisites": [],
-      "recovery": []
+      "status": "partial",
+      "mode": "scripted automation",
+      "reason": "E1 and E2 have a source adapter. E3 requires the live role-options list to have no active roles; this issue will not deactivate system roles to manufacture that state. Created account rows and audit entries persist after deactivation, so the current bounded baseline cannot certify restoration; the live card remains blocked pending a separately reviewed disposable-appliance recovery plan.",
+      "items": {
+        "E1": {
+          "marker": "qa-evidence:TC-ACC-10:E1",
+          "method": "Read the actual active role options and assert the first active role is selected in the Add User form; with a valid form, assert Save is enabled."
+        },
+        "E2": {
+          "marker": "qa-evidence:TC-ACC-10:E2",
+          "method": "Create two uniquely named accounts in one open page session; assert each row appears without reload and both remain visible after reload."
+        }
+      },
+      "adapter": {
+        "path": "client/e2e/qa-modules-2-9.lab.spec.ts",
+        "title": "TC-ACC-10: Add User uses the default role",
+        "project": "qa-modules-2-9",
+        "config": "client/playwright.modules.qa.config.ts"
+      },
+      "source_hashes": {
+        "client/e2e/qa-modules-2-9.lab.spec.ts": "e73a39edc751cbb7e4e7ada7f4b58dc3adbe710058aa3da1f70a81af917e2252",
+        "client/playwright.modules.qa.config.ts": "f5174ebcd20ccfbc481e06b6fe606f920d38d2bb11dda3f55143e4c480104347",
+        "client/qa/module-selection.mjs": "e04c4e85e1edb041fd687dece0e4b304c7ba0cddceed4e62864d506eb1232c64",
+        "client/src/pages/ManageAccountsPage.tsx": "e3af9a686f681993cab29109f8623eb624f421f547d2c5db3f0f50164c0ae555",
+        "client/src/components/manage-accounts/UserTable.tsx": "f9e302e459b71dd45807770b3db1feefcfd1951ec8a8b38811d4024f84e602db",
+        "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
+        "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
+        "client/src/lib/api.ts": "41740092051ab506b57b7c9f6b38cd3f38f12bc508a6c034af3133a089d9c5e5",
+        "client/src/types/user.ts": "b67b1d2d488248ff5a24f715622f7b603c752416b663233a4d5c37e51ed27d7e",
+        "server/app/api/user/management.py": "2ad5a1f3a41c9784fb5688b1455279946f2da9ea63c1deaf13a6723d1adb0c4d",
+        "client/src/test/ManageAccountsPage.test.tsx": "102beed4c91771b865c64db3db22999976ed68260d37a2db9d07f979dabd5e38"
+      },
+      "prerequisites": [
+        "An independently reviewed disposable appliance running the exact target build; this adapter is not accepted by the current live launcher.",
+        "Super Admin credentials with account.view, account.edit and account.alerts; at least one active role and no more than 98 existing accounts.",
+        "A fresh lowercase run token (8\u201324 letters, digits or hyphens), two unused addresses under example.invalid, and a private password satisfying the deployed policy.",
+        "The adapter creates inactive accounts with email alerts off to avoid granting a login or changing Nagios contacts; rows and audit entries still persist."
+      ],
+      "recovery": [
+        "After any attempt, locate only the two exact run-token addresses and verify they are inactive through Manage Accounts; preserve audit records.",
+        "Deactivation does not delete account rows or restore the database to its original state. Do not accept PASS/restored or continue on this appliance unless a separately reviewed recovery plan proves the expected persistent fixture disposition."
+      ],
+      "reviewed_by": "Codex source review; not runtime acceptance",
+      "reviewed_at": "2026-10-18",
+      "procedure_review": "Reviewed the full ACC-10 steps and E1\u2013E3 against ManageAccountsPage, account role-options/list APIs, and the local timing/empty-role component contracts. E1/E2 are source-mapped; E3 is explicitly blocked because safely establishing no active roles would require changing shared roles. Test-created users cannot be deleted, so cleanup only verifies inactive rows and is not full baseline restoration."
     },
     "TC-ACC-08": {
       "case_hash": "bc5bbce195fb22385953cea857c9d5c0d82f7a32cb37ca6fb70765c9d80ac818",
@@ -303,9 +340,9 @@
         "config": "client/playwright.modules.qa.config.ts"
       },
       "source_hashes": {
-        "client/e2e/qa-modules-2-9.lab.spec.ts": "2901cda49e34c78661dd7be214116524e4bb065379dd3444c30c0f6b07474a19",
-        "client/playwright.modules.qa.config.ts": "d4224a84015e89d3fa4de7eff768ab4fc8518b28d96a125af36c4f8e39b0687f",
-        "client/qa/module-selection.mjs": "c4da25a6847e671c6a229171d23c866d7aff7a0a2cbdc6136a57bc557617e2fc",
+        "client/e2e/qa-modules-2-9.lab.spec.ts": "e73a39edc751cbb7e4e7ada7f4b58dc3adbe710058aa3da1f70a81af917e2252",
+        "client/playwright.modules.qa.config.ts": "f5174ebcd20ccfbc481e06b6fe606f920d38d2bb11dda3f55143e4c480104347",
+        "client/qa/module-selection.mjs": "e04c4e85e1edb041fd687dece0e4b304c7ba0cddceed4e62864d506eb1232c64",
         "client/src/pages/ManageAccountsPage.tsx": "e3af9a686f681993cab29109f8623eb624f421f547d2c5db3f0f50164c0ae555",
         "client/src/components/manage-accounts/UserTable.tsx": "f9e302e459b71dd45807770b3db1feefcfd1951ec8a8b38811d4024f84e602db",
         "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
@@ -354,9 +391,9 @@
         "config": "client/playwright.modules.qa.config.ts"
       },
       "source_hashes": {
-        "client/e2e/qa-modules-2-9.lab.spec.ts": "2901cda49e34c78661dd7be214116524e4bb065379dd3444c30c0f6b07474a19",
-        "client/playwright.modules.qa.config.ts": "d4224a84015e89d3fa4de7eff768ab4fc8518b28d96a125af36c4f8e39b0687f",
-        "client/qa/module-selection.mjs": "c4da25a6847e671c6a229171d23c866d7aff7a0a2cbdc6136a57bc557617e2fc",
+        "client/e2e/qa-modules-2-9.lab.spec.ts": "e73a39edc751cbb7e4e7ada7f4b58dc3adbe710058aa3da1f70a81af917e2252",
+        "client/playwright.modules.qa.config.ts": "f5174ebcd20ccfbc481e06b6fe606f920d38d2bb11dda3f55143e4c480104347",
+        "client/qa/module-selection.mjs": "e04c4e85e1edb041fd687dece0e4b304c7ba0cddceed4e62864d506eb1232c64",
         "client/src/App.tsx": "05b6afc326a4946b382f222a68276744aa6b365fbe1a40cee04b237240a27579",
         "client/src/components/layout/Sidebar.tsx": "25986b10740143c932f2ffd936e3396b871e703ffd603810b45e9306df1838f2",
         "client/src/components/layout/PageAccessGuard.tsx": "2d0765defe8f5dbc8c33ec735d0d7ba7a57332574b8c77b723cea41bc1ea9c5f",
@@ -1057,9 +1094,9 @@
         "config": "client/playwright.modules.qa.config.ts"
       },
       "source_hashes": {
-        "client/e2e/qa-modules-2-9.lab.spec.ts": "2901cda49e34c78661dd7be214116524e4bb065379dd3444c30c0f6b07474a19",
-        "client/playwright.modules.qa.config.ts": "d4224a84015e89d3fa4de7eff768ab4fc8518b28d96a125af36c4f8e39b0687f",
-        "client/qa/module-selection.mjs": "c4da25a6847e671c6a229171d23c866d7aff7a0a2cbdc6136a57bc557617e2fc",
+        "client/e2e/qa-modules-2-9.lab.spec.ts": "e73a39edc751cbb7e4e7ada7f4b58dc3adbe710058aa3da1f70a81af917e2252",
+        "client/playwright.modules.qa.config.ts": "f5174ebcd20ccfbc481e06b6fe606f920d38d2bb11dda3f55143e4c480104347",
+        "client/qa/module-selection.mjs": "e04c4e85e1edb041fd687dece0e4b304c7ba0cddceed4e62864d506eb1232c64",
         "client/src/pages/DeviceInventoryPage.tsx": "9b8f63fe860eb151c253db31948468e76a3b7e3a805d76a6da37525e760e8a6a",
         "client/src/components/device-inventory/HostTable.tsx": "feb088ad5b68e6fbc7e72c35ea52fec5e84396c0021f7794e0f5efe30db59fdf",
         "client/src/components/device-inventory/StatusDetailDrawer.tsx": "d5314464a53b4197e0b9da51b60fb26338b483e58f5a1d6681a332c671379530",
@@ -1108,9 +1145,9 @@
         "config": "client/playwright.modules.qa.config.ts"
       },
       "source_hashes": {
-        "client/e2e/qa-modules-2-9.lab.spec.ts": "2901cda49e34c78661dd7be214116524e4bb065379dd3444c30c0f6b07474a19",
-        "client/playwright.modules.qa.config.ts": "d4224a84015e89d3fa4de7eff768ab4fc8518b28d96a125af36c4f8e39b0687f",
-        "client/qa/module-selection.mjs": "c4da25a6847e671c6a229171d23c866d7aff7a0a2cbdc6136a57bc557617e2fc",
+        "client/e2e/qa-modules-2-9.lab.spec.ts": "e73a39edc751cbb7e4e7ada7f4b58dc3adbe710058aa3da1f70a81af917e2252",
+        "client/playwright.modules.qa.config.ts": "f5174ebcd20ccfbc481e06b6fe606f920d38d2bb11dda3f55143e4c480104347",
+        "client/qa/module-selection.mjs": "e04c4e85e1edb041fd687dece0e4b304c7ba0cddceed4e62864d506eb1232c64",
         "client/src/pages/DeviceInventoryPage.tsx": "9b8f63fe860eb151c253db31948468e76a3b7e3a805d76a6da37525e760e8a6a",
         "client/src/components/device-inventory/HostTable.tsx": "feb088ad5b68e6fbc7e72c35ea52fec5e84396c0021f7794e0f5efe30db59fdf",
         "client/src/components/device-inventory/StatusDetailDrawer.tsx": "d5314464a53b4197e0b9da51b60fb26338b483e58f5a1d6681a332c671379530",
@@ -1192,9 +1229,9 @@
         "config": "client/playwright.modules.qa.config.ts"
       },
       "source_hashes": {
-        "client/e2e/qa-modules-2-9.lab.spec.ts": "2901cda49e34c78661dd7be214116524e4bb065379dd3444c30c0f6b07474a19",
-        "client/playwright.modules.qa.config.ts": "d4224a84015e89d3fa4de7eff768ab4fc8518b28d96a125af36c4f8e39b0687f",
-        "client/qa/module-selection.mjs": "c4da25a6847e671c6a229171d23c866d7aff7a0a2cbdc6136a57bc557617e2fc",
+        "client/e2e/qa-modules-2-9.lab.spec.ts": "e73a39edc751cbb7e4e7ada7f4b58dc3adbe710058aa3da1f70a81af917e2252",
+        "client/playwright.modules.qa.config.ts": "f5174ebcd20ccfbc481e06b6fe606f920d38d2bb11dda3f55143e4c480104347",
+        "client/qa/module-selection.mjs": "e04c4e85e1edb041fd687dece0e4b304c7ba0cddceed4e62864d506eb1232c64",
         "client/src/pages/DashboardPage.tsx": "b8038c7177a2e498c4feb115a0665406969f290d8f9236ac2e67e154b8da8a40",
         "client/src/components/shared/SummaryStatCard.tsx": "2da439e5d5684c62af52f3f84816d68085d6aa32663cdbaea6d256782fb11f66",
         "client/src/components/dashboard/NetworkPerformanceSection.tsx": "152dfed49ef2b1a45e354b2aa7314a95c9de9c83cc60823a9e1421d0e5349b3f",
