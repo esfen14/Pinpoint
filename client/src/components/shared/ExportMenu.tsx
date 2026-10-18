@@ -8,6 +8,7 @@ type ExportMenuProps = {
   className?: string
   buttonClassName?: string
   label?: boolean
+  disabled?: boolean
 }
 
 // Restricts the offered export formats to the system-wide "Export Formats"
@@ -19,6 +20,7 @@ export function ExportMenu({
   className = '',
   buttonClassName = 'rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-white',
   label = false,
+  disabled = false,
 }: ExportMenuProps) {
   const [open, setOpen] = useState(false)
 
@@ -31,7 +33,8 @@ export function ExportMenu({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className={`flex items-center justify-center gap-2 ${buttonClassName}`}
+        disabled={disabled}
+        className={`flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-50 ${buttonClassName}`}
       >
         <Download className="h-4 w-4" />
         {label && 'Export'}

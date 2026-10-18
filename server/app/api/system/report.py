@@ -39,6 +39,18 @@ GET /report/alerts
 GET /report/notifications
     Notification list and summary count fetched from Nagios archivejson.cgi.
     Optional hostname and service filters. Returns raw Nagios notification data.
+
+GET /report/availability-detail
+    One exact host or service: native state durations, coverage, scheduled
+    subdivisions and a reconciled interval timeline (#199).
+
+GET /report/alert-summary
+    Problem-event totals, distinct objects and a deterministic top-producer
+    ranking over the complete filtered archive result (#199).
+
+GET /report/alert-histogram
+    Recurring alert buckets by month, day of month, weekday or 15-minute
+    hour of day, with an explicit reporting time zone (#199).
 """
 
 from collections import Counter
@@ -53,6 +65,7 @@ from app.api.system import system_bp
 from app.api.helper import get_range_custom, success, error
 from app.api.helper.database_access.permissions import require_permission
 from app.history_models import HostStatus
+from app.nagios import report_events
 from app.nagios.service_availability import AvailabilityError, read_service_report, summarize
 from app.system_models import NetworkDiscovery
 from app.nagios.notifications import (
@@ -64,6 +77,7 @@ from app.nagios.notifications import (
     normalize_alert,
     normalize_notification,
     fill_previous_states,
+    REPORT_HARD_STATE_TYPE,
 )
 
 # ---------------------------------------------------------------------------
@@ -162,6 +176,7 @@ def _period_meta(period, start_dt, end_dt):
         "period": period,
         "start": start_dt.isoformat(),
         "end": end_dt.isoformat(),
+        "time_zone": report_events.reporting_zone(end_dt.timestamp()),
     }
 
 
@@ -188,7 +203,10 @@ def _availability_host(row):
         "hostname": hostname,
         "state": state,
         "uptime_pct": round(up / known * 100, 2) if known else None,
-        "total_snapshots": int(known),
+        "up_seconds": int(up),
+        "down_seconds": int(down),
+        "unreachable_seconds": int(unreachable),
+        "known_seconds": int(known),
         "last_check": row.get("last_check"),
         "last_state_change": row.get("last_state_change"),
         "_up": up,
@@ -213,8 +231,8 @@ def report_host_availability():
     Host availability within the selected period.
 
     For each host, reads Nagios archive durations and computes UP seconds /
-    known host-state seconds. Missing state/check metadata remains unknown/null;
-    the legacy total_snapshots field contains known-state seconds.
+    known host-state seconds. Missing state/check metadata remains unknown/null.
+    Durations are explicit seconds; no snapshot-count field exists.
 
     Response shape:
     {
@@ -228,7 +246,10 @@ def report_host_availability():
                 "hostname":          "...",
                 "state":             "Up|Down|Unreachable",
                 "uptime_pct":        99.5,
-                "total_snapshots":   n,
+                "up_seconds":          n,
+                "down_seconds":        n,
+                "unreachable_seconds": n,
+                "known_seconds":       n,
                 "last_check":        "ISO-8601 | null",
                 "last_state_change": "ISO-8601 | null"
             },
@@ -385,160 +406,6 @@ def report_hosts_by_os():
             "by_os": groups,
         })
 
-        # ── All snapshots for every host within the window ──────────────────
-        # We need ALL rows (not just the latest) to compute uptime %.
-        all_snapshots = db.session.execute(
-            sa.select(
-                HostStatus.Hostname,
-                HostStatus.Current_State,
-                HostStatus.Last_Check,
-                HostStatus.Last_State_Change,
-            )
-            .where(
-                HostStatus.Timestamp >= start_dt,
-                HostStatus.Timestamp <= end_dt,
-            )
-        ).all()
-
-        # ── OS type map: hostname -> os_type (from NetworkDiscovery) ─────────
-        nd_rows = db.session.execute(
-            sa.select(NetworkDiscovery.Nagios_Host_Name, NetworkDiscovery.Hostname, NetworkDiscovery.OS_Type)
-        ).all()
-
-        # Nagios (and so the snapshots) knows a device by its stable
-        # Nagios_Host_Name; Hostname is only the fallback for older rows.
-        os_map = {}
-        for r in nd_rows:
-            name = r.Nagios_Host_Name or r.Hostname
-            if name:
-                os_map[name] = r.OS_Type or "Unknown"
-
-        # ── Aggregate per-host stats from snapshots ──────────────────────────
-        # hostname -> { total, up, last_check, last_state_change }
-        host_stats: dict[str, dict] = {}
-
-        for snap in all_snapshots:
-            h = snap.Hostname
-            if h not in host_stats:
-                host_stats[h] = {
-                    "total": 0,
-                    "up": 0,
-                    "last_check": snap.Last_Check,
-                    "last_state_change": snap.Last_State_Change,
-                }
-            stats = host_stats[h]
-            stats["total"] += 1
-            if snap.Current_State.value == "Up":
-                stats["up"] += 1
-            # Keep the most-recent last_check / last_state_change
-            if snap.Last_Check and (
-                stats["last_check"] is None
-                or snap.Last_Check > stats["last_check"]
-            ):
-                stats["last_check"] = snap.Last_Check
-                stats["last_state_change"] = snap.Last_State_Change
-
-        # ── Build per-OS groups ───────────────────────────────────────────────
-        # Include every host that has data in the window.
-        os_groups: dict[str, list] = {}
-
-        for hostname, stats in sorted(host_stats.items()):
-            os_type = os_map.get(hostname, "Unknown")
-            total = stats["total"]
-            up = stats["up"]
-            uptime_pct = round((up / total) * 100, 2) if total > 0 else None
-
-            # Determine "current" state from the last snapshot
-            down = total - up
-            if up == total:
-                state = "Up"
-            elif up == 0:
-                state = "Down"
-            else:
-                state = "Down"   # majority-down; use last snapshot below
-
-            os_groups.setdefault(os_type, []).append({
-                "hostname":          hostname,
-                "uptime_pct":        uptime_pct,
-                "total_snapshots":   total,
-                "last_check":        stats["last_check"].isoformat() if stats["last_check"] else None,
-                "last_state_change": (
-                    stats["last_state_change"].isoformat()
-                    if stats["last_state_change"]
-                    else None
-                ),
-            })
-
-        # Re-compute last snapshot state per host for the state column
-        # (use a separate pass with the most-recent snapshot per host)
-        latest_state: dict[str, str] = {}
-        for snap in all_snapshots:
-            h = snap.Hostname
-            if h not in latest_state:
-                latest_state[h] = snap.Current_State.value
-            # all_snapshots is unordered; we already tracked last_check above
-            # so overwrite with the row whose Last_Check is most recent
-            if snap.Last_Check and host_stats[h]["last_check"] == snap.Last_Check:
-                latest_state[h] = snap.Current_State.value
-
-        # Inject state back into host entries
-        for hosts_list in os_groups.values():
-            for entry in hosts_list:
-                entry["state"] = latest_state.get(entry["hostname"], "Unknown")
-
-        # ── Build response structure ──────────────────────────────────────────
-        by_os = []
-        global_up = global_total = 0
-
-        for os_type, hosts_list in sorted(os_groups.items()):
-            grp_total_snaps = sum(h["total_snapshots"] for h in hosts_list)
-            grp_up_snaps    = sum(
-                round((h["uptime_pct"] / 100) * h["total_snapshots"])
-                if h["uptime_pct"] is not None else 0
-                for h in hosts_list
-            )
-            grp_uptime = (
-                round((grp_up_snaps / grp_total_snaps) * 100, 2)
-                if grp_total_snaps > 0 else None
-            )
-
-            state_counter = Counter(h["state"] for h in hosts_list)
-
-            global_up    += state_counter.get("Up", 0)
-            global_total += len(hosts_list)
-
-            by_os.append({
-                "os_type":    os_type,
-                "total":      len(hosts_list),
-                "up":         state_counter.get("Up", 0),
-                "down":       state_counter.get("Down", 0),
-                "unreachable": state_counter.get("Unreachable", 0),
-                "uptime_pct": grp_uptime,
-                "hosts":      hosts_list,
-            })
-
-        global_uptime = (
-            round((global_up / global_total) * 100, 2)
-            if global_total > 0 else None
-        )
-        global_state_counts = Counter(
-            entry["state"]
-            for grp in by_os
-            for entry in grp["hosts"]
-        )
-
-        return success({
-            "period": _period_meta(period, start_dt, end_dt),
-            "summary": {
-                "total_hosts": global_total,
-                "up":          global_state_counts.get("Up", 0),
-                "down":        global_state_counts.get("Down", 0),
-                "unreachable": global_state_counts.get("Unreachable", 0),
-                "uptime_pct":  global_uptime,
-            },
-            "by_os": by_os,
-        })
-
     except RuntimeError as exc:
         return error(str(exc), 502)
     except Exception:
@@ -663,6 +530,94 @@ def report_device_services():
     return service_report_response('hostname')
 
 
+def _csv_arg(name):
+    return [v.strip().lower() for v in request.args.get(name, "").split(",") if v.strip()]
+
+
+def _scope_filter(extra):
+    """Validate the optional host/service/both object filter."""
+    scope = request.args.get("scope", "").strip().lower()
+    if scope in ("", "both"):
+        return None
+    if scope not in ("host", "service"):
+        return ({"message": "scope must be host, service or both."}, 400)
+    extra["objecttypes"] = scope
+    return None
+
+
+def _recurrence_arg():
+    """Optional ``recurrence=<breakdown>:<bucket index>`` filter from a histogram selection."""
+    raw = request.args.get("recurrence", "").strip().lower()
+    if not raw:
+        return None, None
+    breakdown, _, index = raw.partition(":")
+    if breakdown not in report_events.BREAKDOWNS or not index.isdigit() \
+            or int(index) >= len(report_events.bucket_labels(breakdown)):
+        return None, ({"message": "Invalid recurrence filter."}, 400)
+    return (breakdown, int(index)), None
+
+
+def _recurrence_filtered(alerts, recurrence):
+    if not recurrence:
+        return alerts
+    breakdown, index = recurrence
+    return [a for a in alerts if report_events.bucket_index(a["timestamp"], breakdown) == index]
+
+
+def _alert_list_filters():
+    """Optional native Alerts filters; with none, the list stays unfiltered."""
+    extra = {}
+    err = _scope_filter(extra)
+    if err:
+        return None, err
+    state_type = request.args.get("state_type", "").strip().lower()
+    if state_type:
+        if state_type not in ("hard", "soft", "both"):
+            return None, ({"message": "state_type must be hard, soft or both."}, 400)
+        extra["statetypes"] = "hard soft" if state_type == "both" else state_type
+    states = _csv_arg("states")
+    valid_host, valid_service = set(report_events.HOST_STATES_ALL), set(report_events.SERVICE_STATES_ALL)
+    if any(s not in valid_host | valid_service for s in states):
+        return None, ({"message": "Unknown state filter."}, 400)
+    if states:
+        host = [s for s in states if s in valid_host]
+        svc = [s for s in states if s in valid_service]
+        # A state of the other object type matches nothing, so name every state we accept.
+        extra["hoststates"] = " ".join(host) if host else "up down unreachable"
+        extra["servicestates"] = " ".join(svc) if svc else "ok warning critical unknown"
+        if not host:
+            extra.setdefault("objecttypes", "service")
+        if not svc:
+            extra.setdefault("objecttypes", "host")
+    return extra, None
+
+
+_HOST_NOTIFICATION_TYPES = {"down", "unreachable", "recovery", "hostcustom", "hostack", "hostflapstart", "hostflapstop"}
+_SERVICE_NOTIFICATION_TYPES = {"critical", "warning", "unknown", "recovery", "custom", "serviceack", "serviceflapstart", "serviceflapstop"}
+
+
+def _notification_list_filters():
+    """Optional native Notifications filters: scope, contact and notification type."""
+    extra = {}
+    err = _scope_filter(extra)
+    if err:
+        return None, err
+    contact = (request.args.get("contact") or "").strip()
+    if contact:
+        extra["contactname"] = contact
+    types = _csv_arg("notification_types")
+    if any(t not in _HOST_NOTIFICATION_TYPES | _SERVICE_NOTIFICATION_TYPES for t in types):
+        return None, ({"message": "Unknown notification type."}, 400)
+    if types:
+        host = [t for t in types if t in _HOST_NOTIFICATION_TYPES]
+        svc = [t for t in types if t in _SERVICE_NOTIFICATION_TYPES]
+        if host:
+            extra["hostnotificationtypes"] = " ".join(host)
+        if svc:
+            extra["servicenotificationtypes"] = " ".join(svc)
+    return extra, None
+
+
 # ---------------------------------------------------------------------------
 # 5. Alerts  (Nagios CGI)
 # ---------------------------------------------------------------------------
@@ -694,7 +649,14 @@ def report_alerts():
         hostname = request.args.get("hostname") or None
         service  = request.args.get("service")  or None
 
-        alerts = request_alerts_range(start_ts, end_ts, hostname=hostname, service=service)
+        extra, filter_err = _alert_list_filters()
+        if filter_err:
+            return filter_err
+        recurrence, recurrence_err = _recurrence_arg()
+        if recurrence_err:
+            return recurrence_err
+
+        alerts = request_alerts_range(start_ts, end_ts, hostname=hostname, service=service, extra=extra)
         count  = request_alert_count_range(start_ts, end_ts, hostname=hostname, service=service)
 
         if alerts is None and count is None:
@@ -707,9 +669,9 @@ def report_alerts():
         return success({
             "period": _period_meta(period, start_dt, end_dt),
             "count":  count,
-            "alerts": None if alerts is None else fill_previous_states(
-                [normalize_alert(a) for a in _as_list(alerts)]
-            ),
+            "alerts": None if alerts is None else _recurrence_filtered(fill_previous_states(
+                [normalize_alert(a, REPORT_HARD_STATE_TYPE) for a in _as_list(alerts)]
+            ), recurrence),
         })
 
     except Exception:
@@ -748,8 +710,12 @@ def report_notifications():
         hostname = request.args.get("hostname") or None
         service  = request.args.get("service")  or None
 
+        extra, filter_err = _notification_list_filters()
+        if filter_err:
+            return filter_err
+
         notifications = request_notifications_range(
-            start_ts, end_ts, hostname=hostname, service=service
+            start_ts, end_ts, hostname=hostname, service=service, extra=extra
         )
         count = request_notification_count_range(
             start_ts, end_ts, hostname=hostname, service=service
@@ -772,4 +738,184 @@ def report_notifications():
 
     except Exception:
         current_app.logger.exception("Unexpected error in report_notifications")
+        return error("An unexpected error occurred.", 500)
+
+
+# ---------------------------------------------------------------------------
+# 7. Availability detail, alert summary and alert histogram (#199)
+# ---------------------------------------------------------------------------
+
+def _bounded_period():
+    """Resolve the period and enforce the 90-day bound and a positive range."""
+    start_ts, end_ts, start_dt, end_dt, err = _period_params()
+    if err:
+        return None, err
+    if end_ts <= start_ts:
+        return None, ({"message": "The report end must be after its start."}, 400)
+    if end_ts - start_ts > report_events.MAX_RANGE_DAYS * 86400:
+        return None, ({"message": f"Reports cover at most {report_events.MAX_RANGE_DAYS} days."}, 400)
+    return (start_ts, end_ts, start_dt, end_dt), None
+
+
+def _flag(name):
+    return request.args.get(name, "").strip().lower() in ("1", "true", "yes")
+
+
+def _event_filters():
+    """Validate the shared alert filters; return (filters, error body)."""
+    scope = request.args.get("scope", "both").strip().lower()
+    state_type = request.args.get("state_type", "hard").strip().lower()
+    if scope not in ("host", "service", "both"):
+        return None, ({"message": "scope must be host, service or both."}, 400)
+    if state_type not in ("hard", "soft", "both"):
+        return None, ({"message": "state_type must be hard, soft or both."}, 400)
+    states = [s.strip().lower() for s in request.args.get("states", "").split(",") if s.strip()]
+    valid = set(report_events.HOST_STATES_ALL) | set(report_events.SERVICE_STATES_ALL)
+    if any(state not in valid for state in states):
+        return None, ({"message": "Unknown state filter."}, 400)
+    return {
+        "scope": scope,
+        "state_type": state_type,
+        "include_recoveries": _flag("include_recoveries"),
+        "hostname": request.args.get("hostname") or None,
+        "service": request.args.get("service") or None,
+        "states": states,
+    }, None
+
+
+def _event_meta(filters, include_initial):
+    return {
+        "scope": filters["scope"],
+        "state_type": filters["state_type"],
+        "include_recoveries": filters["include_recoveries"],
+        "include_initial": include_initial,
+        "hostname": filters["hostname"],
+        "service": filters["service"],
+        "states": filters["states"],
+        "policy": ("HARD problem events only; recoveries and initial-state entries excluded"
+                   if filters["state_type"] == "hard" and not filters["include_recoveries"] and not include_initial
+                   else "Custom filters applied"),
+    }
+
+
+def _report_event_error(exc):
+    current_app.logger.warning("Report archive read failed: %s", exc)
+    return error("Unable to read events from Nagios.", 502)
+
+
+@system_bp.get('/report/availability-detail')
+@login_required
+@require_permission("system.report")
+def report_availability_detail():
+    """Exact host (or host + service) detail: native totals and reconciled intervals."""
+    try:
+        bounds, err = _bounded_period()
+        if err:
+            return err
+        start_ts, end_ts, start_dt, end_dt = bounds
+        hostname = (request.args.get("hostname") or "").strip()
+        service = (request.args.get("service") or "").strip() or None
+        if not hostname:
+            return error("hostname is required.", 400)
+        period = request.args.get("period", "last_24h").strip().lower()
+        try:
+            detail = report_events.read_availability_detail(hostname, service, start_ts, end_ts)
+        except report_events.ReportNotFound as exc:
+            return error(str(exc), 404)
+        return success({
+            "period": _period_meta(period, start_dt, end_dt),
+            "source": "Nagios archive",
+            "generated_at": datetime.now().astimezone().isoformat(),
+            **detail,
+        })
+    except AvailabilityError as exc:
+        return _report_event_error(exc)
+    except Exception:
+        current_app.logger.exception("Unexpected error in report_availability_detail")
+        return error("An unexpected error occurred.", 500)
+
+
+@system_bp.get('/report/alert-summary')
+@login_required
+@require_permission("system.report")
+def report_alert_summary():
+    """Problem-event totals and top producers from the complete filtered archive result."""
+    try:
+        bounds, err = _bounded_period()
+        if err:
+            return err
+        start_ts, end_ts, start_dt, end_dt = bounds
+        filters, err = _event_filters()
+        if err:
+            return err
+        by = request.args.get("by", "service").strip().lower()
+        if by not in ("host", "service"):
+            return error("by must be host or service.", 400)
+        include_initial = _flag("include_initial")
+        period = request.args.get("period", "last_24h").strip().lower()
+        events, complete = report_events.fetch_alerts(
+            start_ts, end_ts, include_initial=include_initial, **filters)
+        payload = {
+            "period": _period_meta(period, start_dt, end_dt),
+            "source": "Nagios archive",
+            "generated_at": datetime.now().astimezone().isoformat(),
+            "filters": _event_meta(filters, include_initial),
+            "by": by,
+            "complete": complete,
+        }
+        if not complete:
+            payload.update({"totals": None, "ranking": [], "top": [],
+                            "notice": "Too many alert events to total for this period; narrow the period or filters."})
+            return success(payload)
+        payload.update(report_events.summarize_alerts(events, by=by))
+        payload["notice"] = None
+        return success(payload)
+    except AvailabilityError as exc:
+        return _report_event_error(exc)
+    except Exception:
+        current_app.logger.exception("Unexpected error in report_alert_summary")
+        return error("An unexpected error occurred.", 500)
+
+
+@system_bp.get('/report/alert-histogram')
+@login_required
+@require_permission("system.report")
+def report_alert_histogram():
+    """Recurring alert buckets (month, day of month, weekday, 15-minute hour of day)."""
+    try:
+        bounds, err = _bounded_period()
+        if err:
+            return err
+        start_ts, end_ts, start_dt, end_dt = bounds
+        filters, err = _event_filters()
+        if err:
+            return err
+        breakdown = request.args.get("breakdown", "hour").strip().lower()
+        if breakdown not in report_events.BREAKDOWNS:
+            return error(f"breakdown must be one of {', '.join(report_events.BREAKDOWNS)}.", 400)
+        include_initial = _flag("include_initial")
+        period = request.args.get("period", "last_24h").strip().lower()
+        events, complete = report_events.fetch_alerts(
+            start_ts, end_ts, include_initial=include_initial, **filters)
+        payload = {
+            "period": _period_meta(period, start_dt, end_dt),
+            "source": "Nagios archive",
+            "generated_at": datetime.now().astimezone().isoformat(),
+            "filters": _event_meta(filters, include_initial),
+            "complete": complete,
+            "recurring": True,
+            "bucketing_note": ("Buckets recur by wall-clock time in the reporting time zone. "
+                               "A repeated DST hour counts twice in its bucket; a skipped hour is zero."),
+        }
+        if not complete:
+            payload.update({"breakdown": breakdown, "buckets": [], "series": {}, "total": None,
+                            "notice": "Too many alert events to bucket for this period; narrow the period or filters."})
+            return success(payload)
+        payload.update(report_events.histogram(events, breakdown))
+        payload["notice"] = None
+        return success(payload)
+    except AvailabilityError as exc:
+        return _report_event_error(exc)
+    except Exception:
+        current_app.logger.exception("Unexpected error in report_alert_histogram")
         return error("An unexpected error occurred.", 500)

@@ -467,12 +467,17 @@ policy and fixed path; responses can still contain hostnames and addresses.
 
 | Method and path | Permission | Purpose |
 |---|---|---|
-| `GET /api/system/report/availability` | `system.report` | Host availability for a period from Nagios `archivejson.cgi` durations; optional `hostname` scope is forwarded |
+| `GET /api/system/report/availability` | `system.report` | Host availability for a period from Nagios `archivejson.cgi` durations, with the shared explicit assumptions (HARD, no assumed initial state, retention on, not assumed during Nagios downtime); optional `hostname` scope is forwarded (a single-host answer arrives as `host`, not `hosts`). Rows carry `up_seconds`, `down_seconds`, `unreachable_seconds`, `known_seconds` |
 | `GET /api/system/report/hosts-by-os` | `system.report` | The same Nagios-backed host availability grouped by OS |
 | `GET /api/system/report/network-services` | `system.report` | Service availability from bulk Nagios archive durations, grouped by exact description; separate current bulk status |
 | `GET /api/system/report/device-services` | `system.report` | The same archive service instances grouped by hostname; device aggregate is service availability, not host uptime |
-| `GET /api/system/report/alerts` | `system.report` | Alert events/count from Nagios archives |
-| `GET /api/system/report/notifications` | `system.report` | Notification events/count from Nagios archives |
+| `GET /api/system/report/alerts` | `system.report` | Alert events/count from Nagios archives. Optional `scope` (host/service/both), `state_type` (hard/soft/both), `states` (comma list of native state names) and `recurrence=<breakdown>:<bucket index>` (a histogram bucket); invalid values are 400. With none of them the list is unfiltered. `state_type` is HARD=1/SOFT=2 as probed on Core 4.5.11 |
+| `GET /api/system/report/notifications` | `system.report` | Notification events/count from Nagios archives. Optional `scope`, `contact` and `notification_types` (comma list); invalid values are 400 |
+| `GET /api/system/report/availability-detail` | `system.report` | One exact `hostname` (and optional `service`): native state durations with % of total and of known time, scheduled/unscheduled split and coverage, plus reconciled intervals clipped to the period. 400 without `hostname` or beyond 90 days, 404 when Nagios has no such object, 502 on an archive failure. `intervals` is empty with `intervals_available: false`, a `notice` and per-state `reconciliation.differences` when intervals cannot be reconciled (events are checked against native availability carried through Nagios downtime; tolerance 2 s) or `complete: false` when state changes exceed the bounds |
+| `GET /api/system/report/alert-summary` | `system.report` | Problem-event totals, distinct host/object counts, recovery count and a ranking (event count desc, host, service) of the complete filtered archive result. Filters: `scope`, `state_type` (default hard), `states`, `include_recoveries`, `include_initial`, `hostname`, `service`, `by` (host/service). `complete: false` returns no totals or ranking |
+| `GET /api/system/report/alert-histogram` | `system.report` | Zero-filled recurring buckets with per-state series: `breakdown` month, day_of_month, weekday (Sunday first) or hour (96 quarter-hour slots), same filters as the summary, reporting-zone and DST note. `complete: false` returns no buckets |
+
+Every report response's `period` carries `time_zone` (`name`, `utc_offset_seconds`). The three new routes are bounded (see [Reports Requirements](Reports_Requirements.md#5-bounds-and-completeness)) and reuse `app/nagios/report_events.py`; the History routes are unchanged.
 
 ## Plugin API
 
@@ -543,7 +548,9 @@ never rounded percentages. `no_recorded_data_seconds = window_seconds - known`;
 its components are native no-data, engine downtime and the unaccounted remainder.
 A zero-history configured instance remains visible with null uptime and full
 missing coverage. No snapshot-count field, including `total_snapshots`, exists
-in either service-report contract. The host report's legacy field is unchanged.
+in either service-report contract or in the host availability and hosts-by-OS
+host rows (#199); the latter carry `up_seconds`, `down_seconds`,
+`unreachable_seconds` and `known_seconds` instead.
 
 `current_status` contains `available`, `observed_at` (UTC ISO timestamp or null),
 and `notice` (null or sanitized status-unavailable text). Instance `state`,

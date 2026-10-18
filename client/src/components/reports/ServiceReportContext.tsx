@@ -7,7 +7,7 @@ export function ServiceReportContext({ period, current, durations }: {
 }) {
   const { settings } = useSystemSettings()
   const display = (value: string | null) => formatServerDateTime(value, settings.dateTimeFormat, settings.timeZone)
-  return <div className="space-y-2 rounded-xl border border-gray-200 p-4 text-sm text-gray-600 dark:border-white/10 dark:text-gray-300">
+  return <div className="space-y-2">
     <p>Availability during recorded time = OK ÷ (OK + Warning + Critical + Unknown) seconds.
       Scheduled maintenance is included. Missing coverage is excluded; — means no recorded state time.</p>
     <p>Period: {display(period.start)} to {display(period.end)} (end exclusive).
