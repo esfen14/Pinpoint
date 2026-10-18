@@ -4,7 +4,7 @@
 
 ## Scope and approach
 
-This suite tests Pinpoint module by module, the way a user (or an API client) sees it, with no knowledge of the code. Every test case tells you what to prepare, the exact steps to follow, and what you should see. Every case traces to a requirement taken from the repository's `spec files/` (see the traceability matrix at the end). It covers 21 modules plus 8 end-to-end scenarios, and it was checked against the repository's `main` branch at commit `4b1ad9f` (merged 2026-10-17).
+This suite tests Pinpoint module by module, the way a user (or an API client) sees it, with no knowledge of the code. Every test case tells you what to prepare, the exact steps to follow, and what you should see. Every case traces to a requirement taken from the repository's `spec files/` (see the traceability matrix at the end). It covers 22 modules plus 8 end-to-end scenarios, and it was checked against the repository's `main` branch at commit `4b1ad9f` (merged 2026-10-17).
 
 **Black-box techniques used**
 
@@ -73,6 +73,91 @@ The cases test the app as built. Where it differs from a spec, the case says so 
 - The built-in role is called Super Admin (it was Administrator before issue #112).
 
 Features covered that were added late: resource forecast "Running out soon" (#156), remote service restart (#182), remediation safety controls and the kill switch (#155), the Add User default role fix (#191), and Clean up on deployed devices.
+
+## Run order and prerequisites
+
+Some cases need something an earlier case creates, for example a user, a role, an active alert, or a deployed agent. Run the cases in the order below. Each case appears once, and the numbers continue within the same module ("TC-ACC-01, 02, 03" means TC-ACC-01, TC-ACC-02, TC-ACC-03). Run the 8 end-to-end scenarios afterwards on a freshly built (or restored) appliance.
+
+### Run order
+
+| Phase | Goal | Run these cases in this order |
+| --- | --- | --- |
+| 1 | Fresh install and first login (clean appliance) | TC-AUTH-05, 06, 07, 01, 02, 03, 04, 09, 12 |
+| 2 | Roles and accounts (this creates the test users used later) | TC-ROL-01, 02, 03, TC-ACC-01, 02, 03, TC-AUTH-08, TC-ACC-04, 05, 06, 07, 09, 10, 08, TC-ROL-04, 05, 06, TC-AUTH-10, 11, TC-SHL-09, 04, 10 |
+| 3 | Permission checks with the Staff user | TC-DASH-08, TC-SS-04, TC-HIS-01, TC-PLG-07, TC-NCPA-08, TC-RPT-07, TC-LOG-05, TC-SHL-06, TC-NFR-01, 02 |
+| 4 | Settings the lab needs (email first) | TC-SET-07, 01, 02, 03, 04, 05, 06, TC-SHL-01, 02, 03 |
+| 5 | Discover the network and enable plugins | TC-DSC-01, 02, 03, 04, 05, 08, 09, TC-PLG-01, 02, 03, 04, 05, 06, TC-DI-01, 02, 03, 04 |
+| 6 | Views with live data, device extras, topology | TC-DASH-01, 05, 07, TC-NH-01, 02, 03, 04, 05, TC-SS-01, 02, 03, TC-DX-01, 02, 03, 04, 05, 06, 07, 08, 09, 10, TC-NH-06, 07, TC-TOP-01, 02, 03, 04, 05, 06 |
+| 7 | Device changes | TC-DI-05, 06, 07, 08, 09, 11, 12, 13, TC-DASH-02, TC-DI-14, 15, 16, 17, 18, 19, TC-DSC-06, 07 |
+| 8 | Faults, alerts, history, and maintenance | TC-DASH-03, TC-ACK-01, 02, 03, 04, 05, 06, 07, 08, TC-DASH-04, TC-HIS-02, 03, 04, 05, 06, 07, 08, TC-SHL-07, 08, TC-MNT-01, 02, 03, 04, 05, 06, 07, 09, 10 |
+| 9 | NCPA and automatic recovery | TC-NCPA-01, 02, 03, 04, 05, 06, 07, 09, 10, 11, TC-DI-10, TC-DASH-09, TC-SS-05, TC-REM-02, 01, 04, 03, 05, 07, 09, 06, 08, 10 |
+| 10 | Reports and logs (after incidents exist) | TC-RPT-01, 02, 03, 04, 05, 06, TC-LOG-01, 02, 03, 04, TC-SHL-05 |
+| 11 | Cases that stop or break services (last, then restore everything) | TC-DASH-06, TC-MNT-08, TC-SET-08, 09 |
+| 12 | Quality and performance | TC-NFR-03, 04, 05, 06, 07, 08, 09, 10, 11 |
+| 13 | Edge cases | TC-EDG-01 to 18 |
+| 14 | End-to-end scenarios on a fresh appliance | E2E-01 to 08 |
+
+### What each case needs first
+
+Cases not listed here need only a finished setup (TC-AUTH-07) and the lab described above.
+
+| Case | Do these first | Why |
+| --- | --- | --- |
+| TC-AUTH-06 | TC-AUTH-05 | The setup window must already be open |
+| TC-AUTH-07 | TC-AUTH-06 | It uses the same window, now with correct values |
+| TC-AUTH-01 to 04, 09, 12 | TC-AUTH-07 | They need a finished setup and a known login |
+| TC-AUTH-08 | TC-ACC-03 | It needs a user created with "Require password change at first sign-in" ticked |
+| TC-ACC-03 | (pair with TC-AUTH-08) | Create users A and B here, then sign in as them in TC-AUTH-08 |
+| TC-ACC-04, 05, 07, 09, 10 | TC-ACC-01 | They need the Staff user |
+| TC-ACC-06 | TC-ACC-01, TC-AUTH-08 | After a reset the user sees the forced password change |
+| TC-ACC-08 | TC-ROL-01 | Needs a role `qa-accounts` and a user with it, made the same way |
+| TC-ROL-04 | TC-ROL-01, TC-ACC-01 | Needs the role `qa-view` and a user with it |
+| TC-ROL-05, TC-DASH-08, TC-SS-04, TC-HIS-01, TC-PLG-07, TC-NCPA-08, TC-RPT-07, TC-LOG-05, TC-MNT-09 | TC-ACC-01 | They use the Staff user |
+| TC-ROL-06, TC-SHL-10 | TC-ROL-01 | Each needs a role with one permission and a user with it, made the same way |
+| TC-AUTH-11 | TC-ACC-01 | A registered user must exist |
+| TC-SHL-09 | TC-AUTH-11 | It reads the password request made there |
+| TC-SHL-06 | TC-ROL-04 | It uses the dashboard-only user |
+| TC-SET-01 to 06 | TC-AUTH-07 | They need a Super Admin sign-in |
+| TC-MNT-10, TC-SHL-08 | TC-SET-07 | They need working email |
+| TC-DSC-02 to 05, 08, 09 | TC-DSC-01 | They need a scan that has found devices |
+| TC-DSC-06 | TC-DSC-01 | Needs two networks with devices |
+| TC-DSC-07 | TC-DSC-01, TC-PLG-03 | Needs a monitored port that you then close |
+| TC-PLG-03 | TC-DSC-01 | Enabling a plugin needs discovered devices |
+| TC-PLG-04, 05, 06 | TC-PLG-03 | They need an enabled plugin with services |
+| TC-DI-01 to 04, 11 to 13, TC-TOP-01 to 06 | TC-DSC-01 | They need discovered devices |
+| TC-DI-05 to 09, TC-DX-01 to 05 | TC-PLG-03 | They need monitored ports and the plugins for them |
+| TC-DX-06, 07 | TC-DSC-01 | Need a device that answers SNMP |
+| TC-NH-06 | TC-DX-07 | An interface must already be monitored |
+| TC-DI-10 | TC-NCPA-04 | The NCPA port is protected only after a deployment |
+| TC-DI-14, 15 | TC-DI-13 | They use a paused device |
+| TC-DASH-02 | TC-DI-13 | The pause is made there |
+| TC-DI-16 to 19 | TC-DSC-01 | Need identity review items (two records for one device) |
+| TC-DASH-03 | TC-DSC-01, TC-PLG-03 | You need monitored services to break |
+| TC-ACK-01, 03, 04, 06, 07, 08 | TC-DASH-03 | They need active alerts |
+| TC-ACK-02 | TC-ROL-04, TC-DASH-03 | Needs the dashboard-only user and an active alert |
+| TC-ACK-05 | TC-ACK-01 | An acknowledgement must exist to remove |
+| TC-HIS-02 to 08 | TC-ACK-08, TC-SET-07 | Alert and notification events must exist |
+| TC-SHL-07 | TC-DSC-02 | The bell needs a new notification, such as a finished scan |
+| TC-MNT-03 to 06 | TC-MNT-02 | They reuse the same form |
+| TC-MNT-07 | TC-MNT-02 | A window must exist to cancel |
+| TC-MNT-08 | TC-MNT-07 | Same cancel flow, with Nagios stopped |
+| TC-NCPA-02 | TC-DSC-01, TC-NCPA-01 | Needs a discovered Linux VM and `check_ncpa` enabled |
+| TC-NCPA-03 | TC-NCPA-02 | The wizard is open from there |
+| TC-NCPA-04 | TC-NCPA-03 | Needs a correct login |
+| TC-NCPA-05, 06, 07, 10 | TC-NCPA-04 | They need a finished (or failed) deployment |
+| TC-NCPA-09 | TC-NCPA-02 | Needs a trusted host key |
+| TC-NCPA-11 | TC-NCPA-04, TC-NCPA-09 | Needs a deployed device with remote restart set |
+| TC-DASH-09, TC-SS-05 | TC-NCPA-04 | Need NCPA data for about 3 days |
+| TC-REM-01, 03, 04, 05 | TC-REM-02 | They need an action to look at or change |
+| TC-REM-07, 08, 09 | TC-REM-02, TC-PLG-03 | They need an action and a service to break |
+| TC-REM-06 | TC-REM-07, TC-REM-09 | The run log needs runs and skipped runs |
+| TC-RPT-01 to 06 | TC-DASH-03, TC-ACK-08, TC-MNT-10 | A report needs incident data |
+| TC-RPT-05 | TC-RPT-03, TC-RPT-04 | The exports must exist |
+| TC-LOG-02 to 04 | TC-ACC-01, TC-DSC-02 | Log entries must exist |
+| TC-DASH-06, TC-MNT-08, TC-SET-08 | everything above | They stop Nagios or break its config, so run them last and restore |
+| TC-NFR-08, 09 | TC-DSC-01 | Need 10 and 15 monitored hosts |
+| TC-NFR-10 | TC-DASH-03 | Needs a target to break |
+| TC-EDG-01 to 18 | TC-ACC-01, TC-DSC-01, TC-DI-13 | They reuse the accounts, scans, and devices from earlier phases |
 
 ## Test cases: access and security
 
@@ -3359,6 +3444,318 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 - No restart of Pinpoint or Nagios, no error 500, the API answered at every sample, new status data arrived each hour, and free memory did not fall by more than 30% without recovering.
 
+### Module 22 – Edge cases and robustness
+
+These cases try the unusual: odd text, repeated clicks, lost connections, two people at once, time changes, and large amounts of data. Run them in phase 13, after the normal cases pass, because they reuse the accounts, scans, and devices made earlier. For each case "no error page" means no blank screen, no stack trace, and no HTTP 500.
+
+**Summary of cases**
+
+| TC | Case | Req | Tech | Pri |
+| --- | --- | --- | --- | --- |
+| TC-EDG-01 | Very long text in names | EDG-01 | BVA | M |
+| TC-EDG-02 | Accents, emoji, and symbols in names | EDG-02 | EG | M |
+| TC-EDG-03 | Blank and space-only values | EDG-03 | EG | H |
+| TC-EDG-04 | Double click on Save | EDG-04 | EG | H |
+| TC-EDG-05 | Back button and page refresh | EDG-05 | EG | M |
+| TC-EDG-06 | Connection lost during a save | EDG-06 | EG | H |
+| TC-EDG-07 | Session ends with a dialog open | EDG-07 | EG | H |
+| TC-EDG-08 | Two administrators edit the same role | EDG-08 | EG | M |
+| TC-EDG-09 | Repeating an action many times | EDG-09 | ST | M |
+| TC-EDG-10 | Time zone change | EDG-10 | EP | M |
+| TC-EDG-11 | A maintenance window across midnight | EDG-11 | BVA | L |
+| TC-EDG-12 | Special characters in search boxes | EDG-12 | EG | M |
+| TC-EDG-13 | Password length boundaries | EDG-13 | BVA | H |
+| TC-EDG-14 | The same email in a different letter case | EDG-14 | EG | M |
+| TC-EDG-15 | Port number and range boundaries | EDG-15 | BVA | M |
+| TC-EDG-16 | Reload during a running scan | EDG-16 | ST | M |
+| TC-EDG-17 | Large amounts of data | EDG-17 | BVA | L |
+| TC-EDG-18 | Starting a second scan while one runs | EDG-18 | ST | M |
+
+#### TC-EDG-01 – Very long text in names
+
+**Requirement:** REQ-EDG-01 · **Technique:** BVA · **Priority:** M
+
+**Steps**
+
+1. As Super Admin open **Manage Roles** and press **+ Add Role**.
+2. Type a **Role Name** of 200 letters `a` and a description of 500 characters. Save.
+3. Press **+ Add Role** again and type a **Role Name** of 1,000 letters `a`. Save.
+4. Look at the roles list, then open each role you made.
+5. Delete or rename the test roles afterwards.
+
+**Expected result**
+
+- Each save either works or is refused with a message that tells you the limit. There is no error page.
+- A saved long name does not break the page layout (it wraps or is shortened with the full text available when you open the role).
+
+#### TC-EDG-02 – Accents, emoji, and symbols in names
+
+**Requirement:** REQ-EDG-02 · **Technique:** EG · **Priority:** M
+
+**Steps**
+
+1. Press **+ Add User** and type **First Name** `José` and **Last Name** `Peña 🙂`. Use a new email and a compliant password. Save.
+2. Press **+ Add User** again with **First Name** `O'Brien "QA"` and **Last Name** `Tom & Jerry <b>`. Save.
+3. Look at both rows. Type part of each name in the **Search** box.
+4. Press **Export** in **Manage Accounts** and open the file.
+
+**Expected result**
+
+- Both accounts are saved and shown exactly as typed, as plain text. No bold text, no cut-off at the `<` or `&`.
+- Search finds them, and the exported file shows the same characters.
+
+#### TC-EDG-03 – Blank and space-only values
+
+**Requirement:** REQ-EDG-03 · **Technique:** EG · **Priority:** H
+
+**Steps**
+
+1. Press **+ Add Role** and type three spaces in **Role Name**. Try to save.
+2. On an active alert press **Acknowledge** and type three spaces as the comment. Look at the confirm button.
+3. Press **New window** in **Maintenance** and type three spaces as the **Reason**. Try to create it.
+4. Press **+ Add User** and type three spaces in **First Name**. Try to save.
+
+**Expected result**
+
+- All four are refused (the button stays disabled or a message shows). No record is created.
+- A value with spaces around it, such as `abc`, is saved without the extra spaces or is shown the same way each time.
+
+#### TC-EDG-04 – Double click on Save
+
+**Requirement:** REQ-EDG-04 · **Technique:** EG · **Priority:** H
+
+**Steps**
+
+1. Press **+ Add User**, fill the form with a new email, and double-click the save button.
+2. Press **+ Add Role**, fill a new name, and double-click the save button.
+3. In **Maintenance** fill a valid new window and double-click **Create window**.
+4. Count the new rows in each list.
+
+**Expected result**
+
+- Exactly one account, one role, and one window are created.
+- No duplicate row appears. A message about the second click (such as "Email already exists.") is acceptable, but there is no error page.
+
+#### TC-EDG-05 – Back button and page refresh
+
+**Requirement:** REQ-EDG-05 · **Technique:** EG · **Priority:** M
+
+**Steps**
+
+1. Sign out through **Sign Out**. Press the browser's Back button several times.
+2. Sign in, press **+ Add User**, type a few fields, and reload the page.
+3. In **NCPA Deployment** open the deploy wizard at **Check logins** and reload the page.
+
+**Expected result**
+
+- After sign-out, Back shows the login page or a page with no data. No protected data appears.
+- After the reload in step 2, the dialog is closed and no account was created.
+- After the reload in step 3, the wizard starts again from the beginning and no deployment started.
+
+#### TC-EDG-06 – Connection lost during a save
+
+**Requirement:** REQ-EDG-06 · **Technique:** EG · **Priority:** H
+
+**Steps**
+
+1. Press **+ Add Role**, type a new name, and tick one permission.
+2. In the browser's developer tools (Network tab) set the connection to **Offline**.
+3. Press save and read the message.
+4. Set the connection back to **Online** and press save again.
+5. In **Settings**, **General Settings** repeat steps 2 to 4 with a changed **Theme** and **Save Changes**.
+
+**Expected result**
+
+- While offline the page shows an error (for example "Unable to create the role."), the dialog stays open with your entries, and nothing is saved.
+- After going online, the second save works once. There is no duplicate role.
+- The Settings change is saved only after the second try, and the old value is not shown as saved while offline.
+
+#### TC-EDG-07 – Session ends with a dialog open
+
+**Requirement:** REQ-EDG-07 · **Technique:** EG · **Priority:** H
+
+**Steps**
+
+1. Sign in, press **+ Add User**, and fill every field with a new email.
+2. In the browser's developer tools delete the session cookie (Application, Cookies).
+3. Press save.
+4. Sign in again and look for the new account.
+
+**Expected result**
+
+- The save is refused (401). The page goes to `/login` or shows an error, and no stack trace shows.
+- After signing in again the new account does not exist.
+
+#### TC-EDG-08 – Two administrators edit the same role
+
+**Requirement:** REQ-EDG-08 · **Technique:** EG · **Priority:** M
+
+**Steps**
+
+1. In browser A and in a private window B, sign in as Super Admin and open the same non-built-in role in **Edit Role**.
+2. In A change the description and save.
+3. In B change the permissions (tick one more) and save.
+4. Reload the role in both windows.
+
+**Expected result**
+
+- Both saves finish with no error page.
+- The role ends in one consistent state, not a mix that neither person chose. Write down which edit won.
+- If B's save silently erased A's description with no warning, report it as a finding (a lost update).
+
+#### TC-EDG-09 – Repeating an action many times
+
+**Requirement:** REQ-EDG-09 · **Technique:** ST · **Priority:** M
+
+**Steps**
+
+1. On one active alert press **Acknowledge** (with a comment) and **Unacknowledge**, 10 times each in turn.
+2. In a host drawer press **Pause monitoring** (confirm) and **Resume monitoring** (confirm), 5 times each in turn.
+3. Open **System Logs**, **Activity Log** and count the entries for those actions.
+
+**Expected result**
+
+- After each action the alert and the device show the state of the last action, and no button stays stuck on "Saving…".
+- The Activity Log has one entry for each pause and resume (10 in total), and the acknowledgements are recorded in History in order.
+
+#### TC-EDG-10 – Time zone change
+
+**Requirement:** REQ-EDG-10 · **Technique:** EP · **Priority:** M
+
+**Steps**
+
+1. In **Settings**, **General Settings** note the **Time Zone** setting. Open **History** and a **Maintenance** window and write down the time of one event and of the window.
+2. Change **Time Zone** to a zone about 8 hours away from the first and press **Save Changes**.
+3. Open the same History event and the same window.
+4. Put the original **Time Zone** back.
+
+**Expected result**
+
+- Every time on screen moves by the difference between the two zones, in History, Maintenance, Reports, and System Logs.
+- The order of the events does not change, and no time shows as invalid.
+
+#### TC-EDG-11 – A maintenance window across midnight
+
+**Requirement:** REQ-EDG-11 · **Technique:** BVA · **Priority:** L
+
+**Steps**
+
+1. In **Maintenance** create a window that starts at 23:30 tomorrow and ends at 00:30 the day after, **Does not repeat**.
+2. Create a second window with **Repeats** set to **Every day**, starting at 22:00 and ending at 23:00.
+3. If you can set the lab's clock to the day before a daylight-saving change, read the next occurrence on both sides of the change.
+
+**Expected result**
+
+- The window across midnight is accepted and its next occurrence shows the right start and end days.
+- The daily window keeps the same local time (22:00) on every occurrence, including across a daylight-saving change when the time zone is the browser's.
+
+#### TC-EDG-12 – Special characters in search boxes
+
+**Requirement:** REQ-EDG-12 · **Technique:** EG · **Priority:** M
+
+**Steps**
+
+1. In **Search hostname** (Device Inventory), **Search host or service** (System Status), and **Search** (Manage Accounts) type, one at a time: `%`, `_`, `'`, `"`, `\`, `<script>`, a string of 500 letters, and three spaces.
+2. Clear each box after each value.
+
+**Expected result**
+
+- No error page and no script runs.
+- Results are consistent for each value (a literal match or no rows), and clearing the box brings the full list back.
+
+#### TC-EDG-13 – Password length boundaries
+
+**Requirement:** REQ-EDG-13 · **Technique:** BVA · **Priority:** H
+
+**Steps**
+
+1. In **Settings**, **Security** set "Require stronger passwords for accounts" to **Enabled** and save.
+2. In **Manage Accounts** press **+ Add User** and type `Lab-Pass1!x` (11 characters) in both password boxes. Then type `Lab-Pass1!xy` (12 characters).
+3. Set the policy to **Disabled** and save. Type `Lab-1xy` (7 characters), then `Lab-1xyz` (8 characters).
+4. Repeat one of the lengths in **Edit Account** (**NEW PASSWORD**) and in **Change your password**.
+
+**Expected result**
+
+- Policy on: 11 characters is refused with the 12-or-more rule, and 12 characters is accepted.
+- Policy off: 7 characters is refused ("Passwords need at least 8 characters.") and 8 characters is accepted.
+- The same limits apply in all three places.
+
+#### TC-EDG-14 – The same email in a different letter case
+
+**Requirement:** REQ-EDG-14 · **Technique:** EG · **Priority:** M
+
+**Steps**
+
+1. Press **+ Add User** and create `Edge.Case@mail-lab.com`.
+2. Press **+ Add User** again and try `edge.case@mail-lab.com`.
+3. On `/login` sign in with `EDGE.CASE@mail-lab.com` and the password.
+
+**Expected result**
+
+- The second account is refused ("Email already exists.") because the same address in another letter case is a duplicate.
+- Write down whether the login in step 3 works. It should either work or be refused with the normal message, and never show an error page.
+
+#### TC-EDG-15 – Port number and range boundaries
+
+**Requirement:** REQ-EDG-15 · **Technique:** BVA · **Priority:** M
+
+**Steps**
+
+1. In **Settings**, **Network Discovery** open the TCP ports list.
+2. Try to add these, one at a time: `0`, `1`, `65535`, `65536`, `-1`, `22,80`, `1-65535`, `100-10`, and an empty entry.
+3. Press **Discard Changes** afterwards.
+
+**Expected result**
+
+- `1`, `65535`, and `1-65535` are accepted. `0`, `65536`, `-1`, and the empty entry are refused with "Enter a port (1-65535) or a range like 1-1024." or "Port must be a number from 1 to 65535."
+- The reversed range `100-10` is refused with a message, and the entry `22,80` is either accepted as two ports or refused with a message, not accepted silently as one bad value.
+
+#### TC-EDG-16 – Reload during a running scan
+
+**Requirement:** REQ-EDG-16 · **Technique:** ST · **Priority:** M
+
+**Steps**
+
+1. Press **Rescan Network** and wait until it shows "Scanning… N%".
+2. Reload the page, then open another page and come back.
+3. Open `/api/system/discover/status`.
+
+**Expected result**
+
+- After the reload the page still shows the scan running, and the **Rescan Network** button is disabled or says "Scanning…".
+- Only one scan runs, and it finishes with exactly one final status.
+
+#### TC-EDG-17 – Large amounts of data
+
+**Requirement:** REQ-EDG-17 · **Technique:** BVA · **Priority:** L
+
+**Before you start:** a lab or a test database with at least 100 hosts, 500 services, and 5,000 History events.
+
+**Steps**
+
+1. Open **Device Inventory**, **System Status**, and **History**. Write down how long each takes to show data.
+2. Go to the last page of each list, change **Rows per page** to 100, and search for a name that is near the end.
+3. Run the **Host Availability** report for **Last 30 days** and export it as CSV.
+
+**Expected result**
+
+- Each page loads with no error page. Paging, sorting, search, and the export all work and give the right counts.
+- Write down the load times. A page that takes more than 10 seconds, or freezes the browser, is a finding.
+
+#### TC-EDG-18 – Starting a second scan while one runs
+
+**Requirement:** REQ-EDG-18 · **Technique:** ST · **Priority:** M
+
+**Steps**
+
+1. Press **Rescan Network** and try to press it again at once.
+2. While the scan runs, open a second browser as Super Admin and press **Rescan Network** there.
+3. Send a start request to `/api/system/discover/start` with a tool such as curl while the scan runs.
+
+**Expected result**
+
+- The button is disabled while scanning. The second browser and the API call are refused (400, "Network discovery is already running."), and only one scan runs.
+
 ## End-to-end scenarios
 
 These eight scenarios run the whole system as a user would, from the browser and the lab's real machines, across several modules in one flow. They check only what the screen, the email, and the API show. Run them in order on a lab with: a fresh appliance, one web server VM (HTTP on port 80, SSH on port 22), a second Linux VM with SSH, an SMTP test mailbox, a Staff user, and a dashboard-only user. Default intervals apply (Check 5 minutes, Retry 1 minute, Maximum attempts 3). Record each step as PASS, FAIL, or PARTIALLY PASS in a test-run report.
@@ -3484,7 +3881,7 @@ Timings to write down: failure time \_\_\_\_ · Critical (hard) shown \_\_\_\_ �
 
 ## Requirements traceability matrix
 
-All 151 requirements trace to at least one of the 189 test cases, and every test case traces to at least one requirement. **Source** abbreviations: **DR** `Display_Requirements.md`, **DIR** `Device_Inventory_Requirements.md`, **AHR** `Alerts_Notifications_History_Requirements.md`, **FMR** `Frontend_Modules_and_Routes.md`, **QA** `docs/qa/QA_Test_Plan.md` (journey case), **MAN** a file in `docs/manuals/`. "#" in a DIR source means its acceptance criterion number, and "(#123)" means the repository issue that added it. "App differs" means the real app does not follow the spec on that point, so the case tests the app and the difference is reported as a finding.
+All 169 requirements trace to at least one of the 207 test cases, and every test case traces to at least one requirement. **Source** abbreviations: **DR** `Display_Requirements.md`, **DIR** `Device_Inventory_Requirements.md`, **AHR** `Alerts_Notifications_History_Requirements.md`, **FMR** `Frontend_Modules_and_Routes.md`, **QA** `docs/qa/QA_Test_Plan.md` (journey case), **MAN** a file in `docs/manuals/`. "#" in a DIR source means its acceptance criterion number, and "(#123)" means the repository issue that added it. "App differs" means the real app does not follow the spec on that point, so the case tests the app and the difference is reported as a finding.
 
 ### Coverage summary
 
@@ -3511,7 +3908,8 @@ All 151 requirements trace to at least one of the 189 test cases, and every test
 | 19 Device Inventory extras | 7 | 10 | 100% |
 | 20 Settings extras and shell | 9 | 10 | 100% |
 | 21 Security and quality | 9 | 11 | 100% |
-| **Total** | **151** | **189** | **100%** |
+| 22 Edge cases and robustness | 18 | 18 | 100% |
+| **Total** | **169** | **207** | **100%** |
 
 ### Authentication, accounts, roles
 
@@ -3693,3 +4091,26 @@ All 151 requirements trace to at least one of the 189 test cases, and every test
 | REQ-NFR-07 | A Dashboard refresh with 15 updates takes 3 seconds or less | QA PT-03 | TC-NFR-09 |
 | REQ-NFR-08 | An alert shows within 3 seconds of the Nagios state change | QA PT-04 | TC-NFR-10 |
 | REQ-NFR-09 | The system stays stable over a 4-hour run | QA PT-05 | TC-NFR-11 |
+
+### Edge cases and robustness
+
+| Req | Requirement | Source | Test cases |
+| --- | --- | --- | --- |
+| REQ-EDG-01 | Very long text is accepted and shown without breaking the page, or refused with a message that names the limit | Test practice | TC-EDG-01 |
+| REQ-EDG-02 | Accents, emoji, quotes, and symbols in names are saved, shown, searched, and exported as typed, as plain text | Test practice | TC-EDG-02 |
+| REQ-EDG-03 | Blank and space-only values are refused | Test practice | TC-EDG-03 |
+| REQ-EDG-04 | A double click on Save creates exactly one record | Test practice | TC-EDG-04 |
+| REQ-EDG-05 | Back and refresh never show protected data after sign-out or leave half-done work behind | Test practice | TC-EDG-05 |
+| REQ-EDG-06 | A lost connection during a save shows an error, keeps the entries, and does not duplicate on retry | Test practice | TC-EDG-06 |
+| REQ-EDG-07 | A request made after the session ended is refused and creates nothing | Test practice, `Backend_Modules_and_Routes.md` | TC-EDG-07 |
+| REQ-EDG-08 | Two people editing one role leave it in one consistent state and a lost update is reported | Test practice | TC-EDG-08 |
+| REQ-EDG-09 | Repeating an action many times ends in the right state and logs each action | Test practice | TC-EDG-09 |
+| REQ-EDG-10 | A time zone change moves every time on screen consistently | FMR | TC-EDG-10 |
+| REQ-EDG-11 | A window across midnight is accepted, and a daily window keeps the same local time | MAN Maintenance windows | TC-EDG-11 |
+| REQ-EDG-12 | Special characters and long text in search boxes cause no error and no script runs | Test practice, `Engineering_Standards.md` | TC-EDG-12 |
+| REQ-EDG-13 | Password length limits are exact: 12 with the strong policy and 8 without it | FMR, `validation.py` rules | TC-EDG-13 |
+| REQ-EDG-14 | An email in a different letter case counts as a duplicate | Test practice | TC-EDG-14 |
+| REQ-EDG-15 | Discovery ports and ranges accept 1 to 65535 and refuse values outside it | FMR | TC-EDG-15 |
+| REQ-EDG-16 | A page reload during a scan keeps showing the scan and starts no second one | QA J2-02 | TC-EDG-16 |
+| REQ-EDG-17 | Pages stay usable with 100 hosts, 500 services, and 5,000 events | Test practice | TC-EDG-17 |
+| REQ-EDG-18 | Only one scan runs at a time and a second start is refused | `Backend_Modules_and_Routes.md` | TC-EDG-18 |
