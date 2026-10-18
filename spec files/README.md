@@ -22,6 +22,8 @@ This directory is the authoritative documentation set for Pinpoint. The root
 | [`Plugins_List.md`](Plugins_List.md) | Nagios Plugins 2.4.12 capability, argument, output, and performance-data reference |
 | [Module-based black-box cases](../docs/qa/Pinpoint%20-%20Black-Box%20Test%20Cases%20by%20Module%20with%20Traceability%20Matrix.md) and [derived status](../docs/qa/QA_Case_Status.md) | Current cases, requirement mappings, original human results and result conflicts; new executions remain in attributable run reports |
 
+Source adapter coverage and blocked/live readiness: [coverage matrix](../docs/qa/Automation_Coverage.md) and [preparation guide](../docs/qa/Automation_Readiness.md).
+
 Related QA scope and decisions: [`QA_Journeys_and_Scope.md`](../docs/qa/QA_Journeys_and_Scope.md).
 Preparing module/person assignments and coordinating case assignments:
 [`QA_Run_Queues.md`](../docs/qa/QA_Run_Queues.md).

@@ -89,6 +89,34 @@ def validate(value:dict,cases:dict,root:Path=ROOT) -> None:
             raise ValueError(f'{key}: implemented adapter requires every expected item and scripted mode')
 
 
+def action_for(record:dict) -> list[str]:
+    """Describe one exact adapter invocation; do not launch or supply live credentials.
+
+    The isolated launcher does not yet forward current-case selection/artifact
+    environment. This vector is an identity constraint for reviewed future cards,
+    not proof that live execution is ready.
+    """
+    adapter=record['adapter']
+    path=adapter['path']
+    if path.startswith('client/'):path=path[len('client/'):]
+    config=adapter['config']
+    if config.startswith('client/'):config=config[len('client/'):]
+    return ['scripts/playwright-lab',f'--config={config}',f"--project={adapter['project']}",path,
+        '--grep=(?:^| )'+re.escape(adapter['title'])+'$', '--workers=1','--retries=0']
+
+
+def validate_card_binding(record:dict,card:dict,root:Path=ROOT) -> None:
+    """Reject stale/partial mappings and cards that select another or broader test."""
+    if record.get('status')!='implemented':raise ValueError('No complete source-reviewed adapter; execution card is blocked')
+    adapter=record['adapter'];path=root/adapter['path']
+    if (card.get('coverage_hash')!=catalog.digest(record) or card.get('selection')!=adapter
+        or card.get('mode')!=record['mode'] or not isinstance(card.get('adapter'),str)
+        or Path(card['adapter']).resolve()!=path.resolve()
+        or card.get('adapter_hash')!=catalog.digest(path.read_text())
+        or card.get('actions')!=[action_for(record)]):
+        raise ValueError('Execution card differs from exact reviewed coverage/adapter selection')
+
+
 def load(cases:dict|None=None,path:Path=REGISTRY,root:Path=ROOT) -> dict:
     """Load only a complete, source-current coverage register."""
     if cases is None:cases=catalog.load_catalog()
@@ -116,17 +144,29 @@ def render(value:dict,cases:dict) -> str:
     return '\n'.join(lines)
 
 
+def card_template(record:dict) -> dict:
+    """Expose reviewed identity, leaving unobserved live readiness explicitly blocked."""
+    if record['status']!='implemented':raise ValueError('No source-complete adapter for this case')
+    adapter=ROOT/record['adapter']['path']
+    return dict(readiness='BLOCKED: launcher integration and reviewed live prerequisites required',
+        coverage_hash=catalog.digest(record),selection=record['adapter'],mode=record['mode'],
+        adapter=str(adapter),adapter_hash=catalog.digest(adapter.read_text()),actions=[action_for(record)],
+        reviewed_by='',timeout_seconds=None,step_timeout_seconds=None,human_required=True,
+        prerequisites=[],recovery=record['recovery'],evidence_dir='',write_paths=[])
+
+
 def main() -> int:
     """Check/render source coverage without importing Playwright or contacting a lab."""
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command',choices=['check','render','show'])
+    parser.add_argument('command',choices=['check','render','show','card-template'])
     parser.add_argument('--write',action='store_true');parser.add_argument('--id')
     args=parser.parse_args()
     try:
         cases=catalog.load_catalog();value=load(cases)
-        if args.command=='show':
+        if args.command in ('show','card-template'):
             if args.id not in cases:raise ValueError('Provide a current case ID')
-            print(json.dumps(value['cases'][args.id],indent=2));return 0
+            record=value['cases'][args.id]
+            print(json.dumps(card_template(record) if args.command=='card-template' else record,indent=2));return 0
         if args.command=='render' and args.write:VIEW.write_text(render(value,cases))
         elif not VIEW.exists() or VIEW.read_text()!=render(value,cases):raise ValueError('Derived coverage differs; render --write after review')
         print(f'{len(cases)} coverage records validated; no product tests executed');return 0

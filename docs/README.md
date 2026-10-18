@@ -34,3 +34,7 @@ Appliance storage and bounded Nagios-log viewing are explained in
 
 Automatic recovery rules and what PinPoint may restart are explained in
 [Automatic recovery](manuals/Automatic_Recovery.md).
+
+Current-case automation preparation: [coverage matrix](qa/Automation_Coverage.md)
+and [adapter/card guide](qa/Automation_Readiness.md). Source implementation and
+runtime acceptance are recorded separately.

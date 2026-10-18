@@ -62,6 +62,28 @@ class CoverageTests(unittest.TestCase):
             (root/'client/e2e/permissions.ts').write_text('// changed')
             with self.assertRaisesRegex(ValueError,'changed'):c.validate(r,catalog,root)
 
+    def test_card_binding_rejects_unmapped_stale_or_broadened_adapter(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);catalog,r=self.fixture(root);record=r['cases']['TC-SS-04']
+            adapter=root/record['adapter']['path']
+            card=dict(mode='scripted automation',adapter=str(adapter),
+                adapter_hash=c.catalog.digest(adapter.read_text()),coverage_hash=c.catalog.digest(record),
+                selection=record['adapter'],actions=[c.action_for(record)])
+            c.validate_card_binding(record,card,root)
+            for field,value in [('coverage_hash','stale'),('selection',{}),('actions',[['scripts/playwright-lab']])]:
+                changed=copy.deepcopy(card);changed[field]=value
+                with self.subTest(field=field),self.assertRaises(ValueError):c.validate_card_binding(record,changed,root)
+            record['status']='unmapped'
+            with self.assertRaises(ValueError):c.validate_card_binding(record,card,root)
+
+    def test_card_template_is_explicitly_blocked_and_not_an_executable_live_card(self):
+        r=c.load();card=c.card_template(r['cases']['TC-SS-04'])
+        self.assertIn('BLOCKED',card['readiness'])
+        self.assertTrue(card['human_required'])
+        self.assertIsNone(card['timeout_seconds'])
+        self.assertFalse(card['reviewed_by'])
+        self.assertFalse(card['prerequisites'])
+
     def test_full_registry_includes_all_cases_without_inventing_coverage(self):
         catalog=c.catalog.load_catalog();r=c.blank_registry(catalog);c.validate(r,catalog)
         self.assertEqual(len(r['cases']),239)

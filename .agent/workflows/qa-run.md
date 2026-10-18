@@ -35,6 +35,17 @@ authoritative. A case's Note about an app/spec difference is evidence of a gap,
 not permission to pass the app against a weaker expectation. Record unresolved
 conflicts as `needs-decision` and continue another unblocked case.
 
+## Source coverage before execution
+
+Read the [current-case adapter preparation guide](../../docs/qa/Automation_Readiness.md)
+and source-reviewed coverage record for each selected ID. `qa_coverage.py check`
+rejects stale source claims. Queue preparation/checking and the offline journal
+reject execution cards not bound to an implemented mapping and its exact command.
+A card template is deliberately BLOCKED; never substitute guessed prerequisites,
+reviewer, timeouts or output paths. Five permission adapters exist in source only.
+Their new config is not yet supported by the isolated launcher; do not bypass it
+with a host browser. Actual live cards, preflight and explicit start remain required.
+
 ## Mandatory partial-pass investigation
 
 Before treating the remaining queue as complete, review every catalog partial

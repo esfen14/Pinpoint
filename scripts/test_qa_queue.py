@@ -45,6 +45,18 @@ class QAQueueTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             queue.prepare(['partial:Reviewer:TC-ACK-06'],catalog,'a'*40,purpose='investigate')
 
+    def test_coverage_snapshot_and_unmapped_card_cannot_be_bypassed(self):
+        q=queue.prepare(['one:A:TC-SS-04'],queue.load_catalog(),'a'*40)
+        self.assertEqual(q['sets'][0]['cases'][0]['coverage']['status'],'implemented')
+        altered=copy.deepcopy(q);altered['sets'][0]['cases'][0]['coverage']['status']='unmapped'
+        queue.seal(altered)
+        self.assertTrue(any('coverage changed' in e for e in queue.check(altered,queue.load_catalog())))
+        with self.assertRaisesRegex(ValueError,'adapter'):
+            queue.prepare(['one:A:TC-DI-06'],queue.load_catalog(),'a'*40,cards={'TC-DI-06':{'mode':'scripted automation'}})
+        card={'actions':[['scripts/playwright-lab']]}
+        with self.assertRaises(ValueError):
+            queue.prepare(['one:A:TC-SS-04'],queue.load_catalog(),'a'*40,cards={'TC-SS-04':card})
+
     def test_recheck_is_explicit_and_still_excludes_conflicts(self):
         q=queue.prepare(['one:A:TC-TOP-01'],self.catalog(),'a'*40,purpose='recheck')
         self.assertEqual(q['sets'][0]['purpose'],'recheck')

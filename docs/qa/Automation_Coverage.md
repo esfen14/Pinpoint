@@ -39,12 +39,12 @@ Assertion markers and source hashes support review; they do not prove assertion 
 | TC-SHL-04 | SHL | unmapped / unassigned | None | E1, E2 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-SHL-10 | SHL | unmapped / unassigned | None | E1, E2 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-DASH-08 | DASH | unmapped / unassigned | None | E1 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
-| TC-SS-04 | SS | unmapped / unassigned | None | E1 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
-| TC-HIS-01 | HIS | unmapped / unassigned | None | E1 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
-| TC-PLG-07 | PLG | unmapped / unassigned | None | E1 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
+| TC-SS-04 | SS | implemented / scripted automation | [TC-SS-04: System Status needs permission](../../client/e2e/qa-permissions.lab.spec.ts) | None in source review | Source adapter complete; live launcher integration, reviewed cards, target/preflight and runtime proof remain pending. |
+| TC-HIS-01 | HIS | implemented / scripted automation | [TC-HIS-01: History needs permission](../../client/e2e/qa-permissions.lab.spec.ts) | None in source review | Source adapter complete; live launcher integration, reviewed cards, target/preflight and runtime proof remain pending. |
+| TC-PLG-07 | PLG | implemented / scripted automation | [TC-PLG-07: Plugins need permission](../../client/e2e/qa-permissions.lab.spec.ts) | None in source review | Source adapter complete; live launcher integration, reviewed cards, target/preflight and runtime proof remain pending. |
 | TC-NCPA-08 | NCPA | unmapped / unassigned | None | E1 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
-| TC-RPT-07 | RPT | unmapped / unassigned | None | E1 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
-| TC-LOG-05 | LOG | unmapped / unassigned | None | E1 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
+| TC-RPT-07 | RPT | implemented / scripted automation | [TC-RPT-07: Reports need permission](../../client/e2e/qa-permissions.lab.spec.ts) | None in source review | Source adapter complete; live launcher integration, reviewed cards, target/preflight and runtime proof remain pending. |
+| TC-LOG-05 | LOG | implemented / scripted automation | [TC-LOG-05: System Logs need permission](../../client/e2e/qa-permissions.lab.spec.ts) | None in source review | Source adapter complete; live launcher integration, reviewed cards, target/preflight and runtime proof remain pending. |
 | TC-SHL-06 | SHL | unmapped / unassigned | None | E1, E2 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-NFR-01 | NFR | unmapped / unassigned | None | E1 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-NFR-02 | NFR | unmapped / unassigned | None | E1 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
@@ -247,4 +247,4 @@ Assertion markers and source hashes support review; they do not prove assertion 
 | E2E-07 | E2E | unmapped / unassigned | None | E1, E2, E3, E4, E5, E6, E7 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | E2E-08 | E2E | unmapped / unassigned | None | E1, E2, E3, E4, E5 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 
-Source register: 0 implemented, 0 partial, 239 unmapped (TC and E2E combined; not execution counts).
+Source register: 5 implemented, 0 partial, 234 unmapped (TC and E2E combined; not execution counts).

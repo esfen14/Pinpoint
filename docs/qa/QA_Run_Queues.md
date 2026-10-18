@@ -373,3 +373,13 @@ conflicts remain decisions. The preview disallows product execution and the offl
 executor rejects opening a case. Prepare a separate reviewed `recheck` queue for
 any authorized live investigation. Never promote historical partial coverage to
 a whole-case PASS or invent a defect from missing evidence.
+
+## Source adapter coverage
+
+Use the [coverage register and card preparation guide](Automation_Readiness.md)
+before supplying cards. Every queue case now snapshots source coverage; unmapped
+cases can be assigned but cannot execute. Complete source coverage alone does not
+make a live card ready. Supplied cards must bind `coverage_hash` and `selection` to
+the reviewed record and its exact argv; no default project list is accepted.
+Five Staff permission adapters are source-complete, with no new live results.
+The launcher integration and all live cards remain pending.

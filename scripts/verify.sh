@@ -32,6 +32,9 @@ docs() {
   python3 -I "$root/scripts/test_qa_evidence.py"
   echo "==> docs: offline execution scope, budget and evidence contracts"
   python3 -I "$root/scripts/test_qa_execute.py"
+  echo "==> docs: current-case automation coverage and source-binding contracts"
+  python3 -I "$root/scripts/qa_coverage.py" check
+  python3 -I "$root/scripts/test_qa_coverage.py"
   echo "==> docs: VM control and endpoint ownership safety"
   python3 -I "$root/scripts/test_vmlab_preflight.py"
   echo "==> docs: VM administrator setup compatibility and saved login validation"
@@ -57,6 +60,9 @@ backend() {
 frontend() {
   echo "==> frontend: test + build"
   cd "$root/client"
+  echo "==> frontend: offline current-case selection and Playwright collection (no browser)"
+  ./node_modules/.bin/tsc -p tsconfig.qa.json
+  node --test qa/selection.node.mjs
   npm run test
   npm run build
   echo "==> frontend: lint (errors block; warnings are tracked in Implementation_Status.md)"

@@ -189,6 +189,14 @@ reports. App/spec conflicts remain decisions, not automatic passes.
   candidates without conferring PASS. Reviewer decisions for the exact target,
   report/case hashes, item coverage and environment/source compatibility determine
   reuse. October 15 remains a provisional cutoff. See [queue guide](../docs/qa/QA_Run_Queues.md).
+- **Source adapter coverage:** `scripts/qa_coverage.py` validates all current IDs,
+  catalog/case/source hashes, review metadata and expected-item source assertions.
+  The [coverage guide](../docs/qa/Automation_Readiness.md) distinguishes source
+  implementation from live readiness and runtime outcomes. Queues snapshot coverage;
+  cards bind its digest, adapter identity and exact argv. Unmapped/partial cards
+  cannot open a case. The journal requires recorded action slots before PASS.
+  Five Staff permission adapters have isolated offline collection/type checks;
+  no live execution is implied. Their launcher integration remains pending.
 - **Partial-pass investigation:** Every catalog partial needs an evidence review,
   duplicate search, linked issue/disposition and next action in the
   [partial-pass register](../docs/qa/Partial_Pass_Investigations.md). The

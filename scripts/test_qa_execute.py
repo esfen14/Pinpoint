@@ -20,6 +20,13 @@ class ExecutorTests(unittest.TestCase):
             timeout_seconds=60,step_timeout_seconds=10,prerequisites=['verified fixture'],
             recovery=['restore original fixture state'],human_required=False,
             evidence_dir=str(evidence),write_paths=[str(evidence)])
+        # Synthetic source-reviewed mapping: no real adapter is launched.
+        mapping=dict(status='implemented',mode='scripted automation',adapter=dict(
+            path=str(adapter),title='TC-DI-06: synthetic fixture',project='qa-permissions',
+            config='client/playwright.qa.config.ts'))
+        case['coverage']=mapping
+        case['execution'].update(coverage_hash=x.queue.cat.digest(mapping),selection=mapping['adapter'],
+            actions=[x.queue.coverage.action_for(mapping)])
         x.queue.seal(q)
         preflight=dict(owner='Paeng',lab='synthetic-only',target_revision='a'*40,
             catalog_hash=case['source_hash'],exclusive=True,baseline_verified=True,
@@ -34,6 +41,17 @@ class ExecutorTests(unittest.TestCase):
             x.begin_batch(q,s,q['sets'][0]['batches'][0]['id'])
             with self.assertRaisesRegex(ValueError,'investigation'):
                 x.begin_case(q,s,'TC-ACK-05')
+
+    def test_source_mapping_and_draft_card_do_not_establish_execution_readiness(self):
+        catalog=x.queue.load_catalog()
+        q=x.queue.prepare(['set:Paeng:TC-SS-04'],catalog,'a'*40)
+        case=q['sets'][0]['cases'][0]
+        case['execution']=x.queue.coverage.card_template(case['coverage'])
+        with self.assertRaises(ValueError):x.validate_card(case)
+        with tempfile.TemporaryDirectory() as d:
+            q,p=self.fixture(Path(d));case=q['sets'][0]['cases'][0]
+            case['coverage']['status']='unmapped'
+            with self.assertRaisesRegex(ValueError,'adapter'):x.validate_card(case)
 
     def test_no_start_wrong_owner_or_preflight_blocks(self):
         with tempfile.TemporaryDirectory() as d:
@@ -58,6 +76,9 @@ class ExecutorTests(unittest.TestCase):
             evidence={f'E{i}':dict(verdict='PASS',observed='Observed fixture',reference='observed.txt')
                 for i,_ in enumerate(q['sets'][0]['cases'][0]['expectations'],1)}
             with self.assertRaises(ValueError):x.record_result(q,s,'PASS',{},True)
+            with self.assertRaisesRegex(ValueError,'action'):
+                x.record_result(q,s,'PASS',evidence,True)
+            x.authorize_action(q,s,q['sets'][0]['cases'][0]['execution']['actions'][0])
             x.record_result(q,s,'PASS',evidence,True)
             self.assertEqual(s['results'][0]['result'],'PASS')
             self.assertIsNone(s['active_case'])

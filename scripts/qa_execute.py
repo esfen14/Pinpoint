@@ -70,6 +70,8 @@ def begin_batch(q:dict,s:dict,batch_id:str) -> None:
 def validate_card(c:dict) -> dict:
     """Require review, immutable adapter, bounded waits, exact actions and recovery."""
     card=c.get('execution',{})
+    if not isinstance(c.get('coverage'),dict):raise ValueError('Missing source-reviewed coverage binding')
+    queue.coverage.validate_card_binding(c['coverage'],card)
     for k in ('reviewed_by','adapter','adapter_hash','mode','evidence_dir'):
         if not isinstance(card.get(k),str) or not card[k].strip():raise ValueError(f'{c["id"]}: missing {k}')
     if card['mode'] not in ('scripted automation','AI-assisted browser/API','human manual','mixed'):
@@ -154,6 +156,8 @@ def record_result(q:dict,s:dict,result:str,evidence:dict,restored:bool,reason:st
     if type(restored) is not bool:raise ValueError('Restoration must be explicitly true/false')
     if result=='FAIL' and not any(v['verdict']=='FAIL' for v in evidence.values()):
         raise ValueError('FAIL requires an observed failed expected item')
+    if result=='PASS' and [a['argv'] for a in s['active_case']['actions']]!=card['actions']:
+        raise ValueError('PASS requires every approved action slot to be recorded')
     if result=='PASS' and (set(evidence)!=required or any(v['verdict']!='PASS' for v in evidence.values())
                            or not restored or elapsed>card['timeout_seconds']):
         raise ValueError('PASS needs all expected items, on-time observation and verified cleanup')

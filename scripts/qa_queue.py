@@ -12,6 +12,8 @@ import subprocess
 ROOT=Path(__file__).resolve().parent.parent
 spec=importlib.util.spec_from_file_location('qa_catalog',Path(__file__).with_name('qa_catalog.py'))
 cat=importlib.util.module_from_spec(spec);spec.loader.exec_module(cat)
+spec=importlib.util.spec_from_file_location('coverage',Path(__file__).with_name('qa_coverage.py'))
+coverage=importlib.util.module_from_spec(spec);spec.loader.exec_module(coverage)
 load_catalog=cat.load_catalog
 NAME=re.compile(r'[A-Za-z0-9][A-Za-z0-9_-]*')
 REV=re.compile(r'[0-9a-f]{40}')
@@ -28,7 +30,8 @@ def references() -> dict:
     paths=list((ROOT/'spec files').glob('*.md'))+[ROOT/'.agent/workflows/qa-run.md',
         ROOT/'docs/qa/QA_Run_Queues.md',ROOT/'docs/qa/QA_Journeys_and_Scope.md',
         ROOT/'scripts/qa_catalog.py',ROOT/'scripts/qa_queue.py',ROOT/'scripts/qa_evidence.py',
-        ROOT/'scripts/qa_execute.py',ROOT/'scripts/playwright-lab',ROOT/'client/playwright.config.ts',
+        ROOT/'scripts/qa_execute.py',ROOT/'scripts/qa_coverage.py',coverage.REGISTRY,
+        ROOT/'client/playwright.qa.config.ts',ROOT/'client/qa/selection.mjs',ROOT/'scripts/playwright-lab',ROOT/'client/playwright.config.ts',
         ROOT/'client/package.json',ROOT/'client/package-lock.json']+list((ROOT/'client/e2e').glob('*.ts'))
     return {p.relative_to(ROOT).as_posix():cat.digest(p.read_text()) for p in sorted(paths)}
 
@@ -89,6 +92,7 @@ def prepare(selections:list[str], catalog:dict, target_revision:str,
     """Expand module/ID selectors once and snapshot eligible cases plus exclusions."""
     if purpose not in ('untested','recheck','retest','investigate'):raise ValueError('Unknown purpose')
     evidence=evidence or {};cards=cards or {};sets=[]
+    registry=coverage.load()['cases']
     if not isinstance(cards,dict) or any(k not in catalog or not isinstance(v,dict) for k,v in cards.items()):
         raise ValueError('Cards must be a dictionary keyed only by current case IDs')
     if evidence:
@@ -120,7 +124,9 @@ def prepare(selections:list[str], catalog:dict, target_revision:str,
             if not eligible:
                 if k in explicit:raise ValueError(f'{k}: ineligible ({reason})')
                 excluded.append({'id':k,'reason':reason});continue
-            cases.append({'id':k,**c,'reuse':record,'execution':cards.get(k,{})})
+            mapping=registry[k]
+            if cards.get(k):coverage.validate_card_binding(mapping,cards[k])
+            cases.append({'id':k,**c,'reuse':record,'coverage':mapping,'execution':cards.get(k,{})})
         if not cases:raise ValueError(f'{name}: no eligible cases')
         batches=[];pending=[]
         def flush():
@@ -145,6 +151,8 @@ def prepare(selections:list[str], catalog:dict, target_revision:str,
 def check(value:dict,catalog:dict,run:str|None=None,evidence_root:Path=ROOT) -> list[str]:
     """Check full selected source snapshots; never add newly eligible cases."""
     errors=[]
+    try:registry=coverage.load()['cases']
+    except (ValueError,OSError,KeyError) as exc:return [f'Coverage changed/invalid: {exc}']
     if value.get('references')!=references():errors.append('Specifications/execution rules changed; prepare and review a replacement')
     sets=selected_sets(value,run)
     relevant={c['id'] for s in sets for c in s['cases']}|{c['id'] for s in sets for c in s['exclusions']}
@@ -160,7 +168,11 @@ def check(value:dict,catalog:dict,run:str|None=None,evidence_root:Path=ROOT) -> 
     for s in sets:
         for saved in s['cases']:
             current=catalog.get(saved['id'])
-            original={k:v for k,v in saved.items() if k not in ('id','execution','reuse')}
+            original={k:v for k,v in saved.items() if k not in ('id','execution','reuse','coverage')}
+            if saved.get('coverage')!=registry.get(saved['id']):errors.append(f"{saved['id']}: coverage changed; review a replacement")
+            if saved.get('execution'):
+                try:coverage.validate_card_binding(registry[saved['id']],saved['execution'])
+                except (ValueError,OSError,KeyError) as exc:errors.append(f"{saved['id']}: adapter binding invalid: {exc}")
             if current!=original:errors.append(f"{saved['id']}: source/procedure/status changed; prepare/review a replacement")
     return errors
 
@@ -181,6 +193,7 @@ def preview(value:dict,run:str|None=None) -> str:
             lines.extend(['',f"### Card: {c['id']} — {c['title']}",'',
                           f"Historical summary: {cell(c['summary_result'])}; detail: {cell(c['detailed_result'])}.",
                           f"Phase: {c['phase']}; singleton: {c['singleton']}; requirements: {', '.join(c['requirements'])}",
+                          f"Source adapter coverage: {c['coverage']['status']} / {c['coverage']['mode']} (not a runtime result).",
                           '', 'Module setup/notes:',c['module_context'],'', 'Prerequisites:', *c['dependencies'],'',c['procedure'],'',
                           'Expected-item evidence checklist:',''])
             lines += [f'- E{i}: {e}' for i,e in enumerate(c['expectations'],1)]

@@ -87,8 +87,8 @@ Scope: continue the approved offline readiness work; no lab connection, test lau
 against an application, account setup or product behavior change.
 
 1. [x] Add a source-bound coverage registry/validator and derived all-case matrix in `scripts/qa_coverage.py`, regression tests and `docs/qa/automation-coverage.json` / `Automation_Coverage.md`. Unknown coverage stays explicitly unmapped; partial coverage cannot become whole-case automation.
-2. [ ] Add reviewed source adapters for Staff permission cases (SS-04, HIS-01, RPT-07, LOG-05, PLG-07), with isolated exact-selection Playwright configuration, no setup dependencies/retries/captures, and per-item evidence. Validate registration with offline `--list`, never a browser launch. Existing human passes stay excluded by normal queue eligibility.
-3. [ ] Bind queue snapshots/freshness to coverage metadata and reject mismatched adapter cards; include registry checks in the docs gate, document source implementation versus live readiness, and update the overall checklist. Complete live cards still require verified prerequisites/environment and a supported reviewed launcher.
+2. [x] Add reviewed source adapters for Staff permission cases (SS-04, HIS-01, RPT-07, LOG-05, PLG-07), with isolated exact-selection Playwright configuration, no setup dependencies/retries/captures, and per-item evidence. Validate registration with offline `--list`, never a browser launch. Existing human passes stay excluded by normal queue eligibility.
+3. [x] Bind queue snapshots/freshness to coverage metadata and reject mismatched adapter cards; include registry checks in the docs gate, document source implementation versus live readiness, and update the overall checklist. Complete live cards still require verified prerequisites/environment and a supported reviewed launcher.
 4. [ ] Verify docs and relevant frontend checks, inspect CI, checkpoint to draft PR #207 and synchronize the main-checkout progress copies.
 
 Next action: round 1 failing coverage registry contracts, then implement validation.
@@ -98,3 +98,22 @@ because `qa_coverage.py` did not exist, then the implementation passed. All 239
 records currently remain unmapped until the next source-review round.
 `python3 -I scripts/qa_coverage.py render --write` generated the matrix; no runtime
 verdict was changed. Next action: source permission adapters and offline collection.
+
+Coverage rounds 2–3: frontend gate passes (1003 Vitest tests, five Node selection/
+Playwright-list checks, QA type check, build and lint with zero errors/33 existing
+warnings). Initial exact collection found zero tests because Playwright matches
+full titles; the bounded title matcher was corrected and actual collection now
+proves exact selection. A Node test filename was changed to `.node.mjs` so Vitest
+does not collect it as a Vitest suite; it remains explicitly required in the
+frontend gate. Registry reports five source-complete/234 unmapped definitions.
+Card binding rejects wrong source/mode/selection/argv; template cards remain
+blocked. A new regression first demonstrated PASS without recorded actions, then
+the journal was hardened to require every approved action slot.
+`python3 -I scripts/test_qa_coverage.py` (7), queue (12), executor (11) pass.
+`verify.sh docs` passes with 77 isolated checks.
+
+No live browser was launched. The existing launcher does not forward the new
+selection/output environment or mount its private artifacts; all actual live
+cards and deployment/ownership/recovery proof remain pending.
+
+Next action: run final local verification, checkpoint and inspect current-head CI.

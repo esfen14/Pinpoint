@@ -258,7 +258,15 @@ hashes, ordered action slots, evidence completeness and cleanup halt. It perform
 no live command dispatch or preflight and cannot constrain an agent with arbitrary
 shell/file access. Empty/missing cards remain blocked. Live scan guarding,
 recovery/resume orchestration and complete current-case browser adapters remain
-unimplemented; no unattended-readiness claim is made. Review-only `investigate`
+unimplemented; no unattended-readiness claim is made.
+The [source coverage register](../docs/qa/Automation_Coverage.md) accounts for all
+239 definitions: five source-complete permission adapters, 234 unmapped.
+`qa_coverage.py` validates hashes/review/item coverage and binds cards to exact
+selection. `playwright.qa.config.ts` has one worker, zero retries, no setup
+dependencies/captures and private unique outputs; offline collection is checked.
+The existing lab launcher does not yet forward/mount its selection/output contract,
+so new-config live execution and all live cards remain blocked. No new case result
+is claimed. See [adapter preparation](../docs/qa/Automation_Readiness.md). Review-only `investigate`
 queues now retain human partials for mandatory evidence/issue triage and reject
 product case opening. The [partial-pass register](../docs/qa/Partial_Pass_Investigations.md)
 links reported confirmation defect #208 and unexplained-result clarification #209;

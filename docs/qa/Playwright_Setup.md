@@ -130,3 +130,9 @@ acceptance. Never launch the entire default project list to satisfy a module que
 New live runs still require the selected queue/set start and authorized lab preflight.
 The offline `scripts/qa_execute.py` validates cards/journals only; it cannot launch
 a browser, provision a guest, recover a lab, or prove the scan guard is enforced.
+
+The separate [current-case adapter configuration](Automation_Readiness.md) has
+source-reviewed permission adapters and exact offline collection tests. It is
+not yet integrated into `scripts/playwright-lab`; direct host execution with live
+credentials remains prohibited. Its private per-run environment/mount contract
+must be implemented in a reviewed launcher before live use.
