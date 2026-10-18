@@ -274,7 +274,7 @@ export function ReportsPage() {
         {view === 'network-services' && networkServices && <ServiceReportContext period={networkServices.period} current={networkServices.current_status} durations={networkServices.summary} />}
 
         {view === 'availability' ? (
-          <HostAvailabilityReportTable hosts={availability?.hosts ?? []} isLoading={isLoading} />
+          <HostAvailabilityReportTable hosts={availability?.hosts ?? []} isLoading={isLoading} currentStatus={availability?.currentStatus} />
         ) : view === 'network-services' ? (
           <NetworkServicesReportTable observedAt={networkServices?.current_status.observed_at} services={networkServices?.services ?? []} isLoading={isLoading} />
         ) : (

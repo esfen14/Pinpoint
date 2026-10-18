@@ -467,8 +467,8 @@ policy and fixed path; responses can still contain hostnames and addresses.
 
 | Method and path | Permission | Purpose |
 |---|---|---|
-| `GET /api/system/report/availability` | `system.report` | Host availability for a period from Nagios `archivejson.cgi` durations; optional `hostname` scope is forwarded |
-| `GET /api/system/report/hosts-by-os` | `system.report` | The same Nagios-backed host availability grouped by OS |
+| `GET /api/system/report/availability` | `system.report` | Host availability for a period from Nagios `archivejson.cgi` durations; optional `hostname` scope is forwarded. Only hosts of devices that are monitored now (monitoring state `monitored`) are listed: Missing, paused, retired and merged devices and Nagios's own `localhost` are not. `state` (`Up`, `Down`, `Unreachable` or `Pending`), `last_check` and `last_state_change` come from one bulk `statusjson.cgi` `hostlist` read joined by Nagios host name (`app/nagios/host_current_status.py`); the archive row carries durations only. `current_status` is `{available, observed_at, notice}`: when that read fails, or a host has no entry, those fields are `null`, `notice` says so and the durations are still returned. The summary counts Up, Down and Unreachable from `state` |
+| `GET /api/system/report/hosts-by-os` | `system.report` | The same Nagios-backed host availability grouped by OS, with the same `state`, `last_check`, `last_state_change` join and `current_status`; its row set is every host the archive returns |
 | `GET /api/system/report/network-services` | `system.report` | Service availability from bulk Nagios archive durations, grouped by exact description; separate current bulk status |
 | `GET /api/system/report/device-services` | `system.report` | The same archive service instances grouped by hostname; device aggregate is service availability, not host uptime |
 | `GET /api/system/report/alerts` | `system.report` | Alert events/count from Nagios archives |

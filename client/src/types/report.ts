@@ -12,7 +12,8 @@ export type PeriodMeta = {
 
 export type HostAvailabilityRow = {
   hostname: string
-  state: string
+  // The current Nagios state; null when current status could not be read for this host.
+  state: string | null
   uptimePct: number | null
   totalSnapshots: number
   lastCheck: string | null
@@ -28,12 +29,13 @@ export type HostAvailabilityReport = {
     unreachable: number
     uptimePct: number | null
   }
+  currentStatus: CurrentServiceStatus
   hosts: HostAvailabilityRow[]
 }
 
 type HostAvailabilityApiRecord = {
   hostname: string
-  state: string
+  state: string | null
   uptime_pct: number | null
   total_snapshots: number
   last_check: string | null
@@ -49,6 +51,7 @@ type HostAvailabilityApiResponse = {
     unreachable: number
     uptime_pct: number | null
   }
+  current_status: CurrentServiceStatus
   hosts: HostAvailabilityApiRecord[]
 }
 
@@ -62,6 +65,7 @@ export function fromHostAvailabilityResponse(data: HostAvailabilityApiResponse):
       unreachable: data.summary.unreachable,
       uptimePct: data.summary.uptime_pct,
     },
+    currentStatus: data.current_status,
     hosts: data.hosts.map((h) => ({
       hostname: h.hostname,
       state: h.state,
