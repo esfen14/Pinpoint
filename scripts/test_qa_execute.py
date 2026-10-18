@@ -121,7 +121,7 @@ class ExecutorTests(unittest.TestCase):
     def test_actual_five_blocked_batches_exhaust_the_session(self):
         with tempfile.TemporaryDirectory() as d:
             _,p=self.fixture(Path(d));catalog=x.queue.load_catalog()
-            q=x.queue.prepare(['set:Paeng:SEQ'],catalog,'a'*40)
+            q=x.queue.prepare(['set:Paeng:SEQ'],catalog,'a'*40,purpose='recheck')
             s=x.start(q,'set','Paeng','session',p,True)
             for batch in q['sets'][0]['batches'][:5]:
                 x.begin_batch(q,s,batch['id'])

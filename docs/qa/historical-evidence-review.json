@@ -31,7 +31,7 @@
       "classification": "retest required",
       "reviewed_by": "Codex mapping review (partial; not full-case acceptance)",
       "reviewed_at": "2026-10-18",
-      "impact_review": "The deployed nondefault NCPA port was protected by the real port lifecycle and generated monitoring used the stored port. The current inventory UI\u2019s unavailable action controls and target compatibility were not fully established. The report retains its stated executor; this does not change the human catalog result, count as a new AI execution, or establish current-build compatibility. The October 15 cutoff remains provisional; no historical credit is accepted. The tested commit is present and is an ancestor of target 299ab3ba7203. Case-specific source review found these relevant post-run product changes: client/src/components/device-inventory/DevicePortsSection.tsx, client/src/components/device-inventory/devicePortsLogic.ts, server/app/api/system/ncpa_deployment.py, server/app/ncpa_deployment/ncpa_deployment.py, server/app/network_discovery/create_host_cfg.py. Re-run this case on the target before omitting checks.",
+      "impact_review": "The deployed nondefault NCPA port was protected by the real port lifecycle and generated monitoring used the stored port. The current inventory UI’s unavailable action controls and target compatibility were not fully established. The report retains its stated executor; this does not change the human catalog result, count as a new AI execution, or establish current-build compatibility. The October 15 cutoff remains provisional; no historical credit is accepted. The tested commit is present and is an ancestor of target 299ab3ba7203. Case-specific source review found these relevant post-run product changes: client/src/components/device-inventory/DevicePortsSection.tsx, client/src/components/device-inventory/devicePortsLogic.ts, server/app/api/system/ncpa_deployment.py, server/app/ncpa_deployment/ncpa_deployment.py, server/app/network_discovery/create_host_cfg.py. Re-run this case on the target before omitting checks.",
       "case_hash": "e4376213658d6f728cdf50eeb90c0078dda99209bdc00912b25eb2122e65db6b",
       "report": "docs/test-runs/2026-10-15-issue-129-finish-journeys/REPORT.md",
       "report_sha256": "74d4ffa605aeaac657a0ea52e0d36ba6d9b98f9030a1177740d9deacf6c85bf3",
@@ -237,7 +237,7 @@
       "reviewed_by": "Codex mapping review (partial; not full-case acceptance)",
       "reviewed_at": "2026-10-18",
       "impact_review": "Isolated tail/security checks included command/output redaction and validation. This is fixture-level overlap, not full live evidence for the current free-text case; current-build compatibility remains open. The source report identifies its executor; this historical run is not represented as a manual catalog result or new AI execution. The October 15 cutoff remains provisional, so no historical credit is accepted. The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/pages/SystemLogsPage.tsx. Re-run this case on the target before using historical evidence to omit checks.",
-      "case_hash": "349720fae2d9bbc144e7f9eab6947d39abcea3486c52981f1c722e5c297ed2d3",
+      "case_hash": "5158b40987d9eb695d1e8554a403ab11190584b48d2534544bbfd6ab31811d24",
       "report": "docs/test-runs/2026-10-15-issue-124-storage-logs/REPORT.md",
       "report_sha256": "eaae0611c1ccae4991ebf0a04feb16d4446256ade38031dc3de1ecb2ca31dff8",
       "tested_revision": "f80d6c1f",
@@ -252,6 +252,11 @@
           "client/src/pages/SystemLogsPage.tsx"
         ],
         "decision": "The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/pages/SystemLogsPage.tsx. Re-run this case on the target before using historical evidence to omit checks."
+      },
+      "catalog_consolidation_binding_review": {
+        "reviewed_at": "2026-10-19",
+        "previous_case_hash": "349720fae2d9bbc144e7f9eab6947d39abcea3486c52981f1c722e5c297ed2d3",
+        "decision": "TC-LOG-04 now explicitly includes restoration and separates redaction from file-read failure. The older isolated report still provides partial overlap only; retest-required classification remains."
       }
     },
     {
@@ -260,7 +265,7 @@
       "reviewed_by": "Codex mapping review (partial; not full-case acceptance)",
       "reviewed_at": "2026-10-18",
       "impact_review": "The API run created and dispatched a one-off window and observed it in state; the current browser confirmation, Scheduled row, Activity Log entry, and current-build compatibility are not all established. The source report identifies its executor; this historical run is not represented as a manual catalog result or new AI execution. The October 15 cutoff remains provisional, so no historical credit is accepted. The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/layout/MaintenanceBanner.tsx, client/src/components/maintenance/MaintenanceWindowForm.tsx, client/src/components/maintenance/MaintenanceWindowsTable.tsx, client/src/pages/MaintenancePage.tsx, server/app/api/system/maintenance.py, server/app/maintenance.py. Re-run this case on the target before using historical evidence to omit checks.",
-      "case_hash": "dbf7148f9e090cef1f9c246c28ff0fa03fb09b4fb97a638f4ca06881f190d6d6",
+      "case_hash": "6d6a703829daec1f31e8e250e76b1fd6157665927ac045b698e45f41e044cd62",
       "report": "docs/test-runs/2026-10-15-issue-122-maintenance-windows/REPORT.md",
       "report_sha256": "d2a6eee50430bd7b604768525135003bea434514c6a85790834a92613af53f96",
       "tested_revision": "0883693c",
@@ -280,6 +285,11 @@
           "server/app/maintenance.py"
         ],
         "decision": "The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/layout/MaintenanceBanner.tsx, client/src/components/maintenance/MaintenanceWindowForm.tsx, client/src/components/maintenance/MaintenanceWindowsTable.tsx, client/src/pages/MaintenancePage.tsx, server/app/api/system/maintenance.py, server/app/maintenance.py. Re-run this case on the target before using historical evidence to omit checks."
+      },
+      "catalog_consolidation_binding_review": {
+        "reviewed_at": "2026-10-19",
+        "previous_case_hash": "dbf7148f9e090cef1f9c246c28ff0fa03fb09b4fb97a638f4ca06881f190d6d6",
+        "decision": "Procedure and expected items unchanged; result metadata and source-report attribution consolidated. Original evidence classification and compatibility review preserved."
       }
     },
     {
@@ -288,7 +298,7 @@
       "reviewed_by": "Codex mapping review (partial; not full-case acceptance)",
       "reviewed_at": "2026-10-18",
       "impact_review": "The API run cancelled windows and observed downtime removal/resumed notifications; it did not exercise the current browser confirmation/Keep it flow or current-build compatibility. The source report identifies its executor; this historical run is not represented as a manual catalog result or new AI execution. The October 15 cutoff remains provisional, so no historical credit is accepted. The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/layout/MaintenanceBanner.tsx, client/src/components/maintenance/MaintenanceWindowForm.tsx, client/src/components/maintenance/MaintenanceWindowsTable.tsx, client/src/pages/MaintenancePage.tsx, server/app/api/system/maintenance.py, server/app/maintenance.py. Re-run this case on the target before using historical evidence to omit checks.",
-      "case_hash": "59408dcf14b7925fbac4cc50b771a0c3fa0ef5af819dbd2d75f9b72d9fa95ee1",
+      "case_hash": "7719ad65689eeb3a16e58316326849a9af4c357f3933e8da32ee4c01a8ba27e9",
       "report": "docs/test-runs/2026-10-15-issue-122-maintenance-windows/REPORT.md",
       "report_sha256": "d2a6eee50430bd7b604768525135003bea434514c6a85790834a92613af53f96",
       "tested_revision": "0883693c",
@@ -308,6 +318,11 @@
           "server/app/maintenance.py"
         ],
         "decision": "The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/layout/MaintenanceBanner.tsx, client/src/components/maintenance/MaintenanceWindowForm.tsx, client/src/components/maintenance/MaintenanceWindowsTable.tsx, client/src/pages/MaintenancePage.tsx, server/app/api/system/maintenance.py, server/app/maintenance.py. Re-run this case on the target before using historical evidence to omit checks."
+      },
+      "catalog_consolidation_binding_review": {
+        "reviewed_at": "2026-10-19",
+        "previous_case_hash": "59408dcf14b7925fbac4cc50b771a0c3fa0ef5af819dbd2d75f9b72d9fa95ee1",
+        "decision": "Procedure and expected items unchanged; result metadata and source-report attribution consolidated. Original evidence classification and compatibility review preserved."
       }
     },
     {
@@ -316,7 +331,7 @@
       "reviewed_by": "Codex mapping review (partial; not full-case acceptance)",
       "reviewed_at": "2026-10-18",
       "impact_review": "A real Nagios host outage during a maintenance window produced no host notifications. Current case also expects the UI downtime indicator, service behavior, email observation, and current-build compatibility. The source report identifies its executor; this historical run is not represented as a manual catalog result or new AI execution. The October 15 cutoff remains provisional, so no historical credit is accepted. The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/layout/MaintenanceBanner.tsx, client/src/components/maintenance/MaintenanceWindowForm.tsx, client/src/components/maintenance/MaintenanceWindowsTable.tsx, client/src/pages/MaintenancePage.tsx, server/app/api/system/maintenance.py, server/app/maintenance.py. Re-run this case on the target before using historical evidence to omit checks.",
-      "case_hash": "c25b47110e8079c063debaa6b3bdc709145bd919433fdd40c4d2e30b2eeb7c79",
+      "case_hash": "a2822f0fcb7fc61e8efe4d8db3750925ed53a298cb51d0f3da69435128c11c1c",
       "report": "docs/test-runs/2026-10-15-issue-122-maintenance-windows/REPORT.md",
       "report_sha256": "d2a6eee50430bd7b604768525135003bea434514c6a85790834a92613af53f96",
       "tested_revision": "0883693c",
@@ -336,6 +351,11 @@
           "server/app/maintenance.py"
         ],
         "decision": "The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/layout/MaintenanceBanner.tsx, client/src/components/maintenance/MaintenanceWindowForm.tsx, client/src/components/maintenance/MaintenanceWindowsTable.tsx, client/src/pages/MaintenancePage.tsx, server/app/api/system/maintenance.py, server/app/maintenance.py. Re-run this case on the target before using historical evidence to omit checks."
+      },
+      "catalog_consolidation_binding_review": {
+        "reviewed_at": "2026-10-19",
+        "previous_case_hash": "c25b47110e8079c063debaa6b3bdc709145bd919433fdd40c4d2e30b2eeb7c79",
+        "decision": "Procedure and expected items unchanged; result metadata and source-report attribution consolidated. Original evidence classification and compatibility review preserved."
       }
     },
     {
@@ -343,7 +363,7 @@
       "classification": "retest required",
       "reviewed_by": "Codex mapping review (partial; not full-case acceptance)",
       "reviewed_at": "2026-10-18",
-      "impact_review": "A real cleanup request after a deliberately failed installation returned per-step results, removed helper/key/sudoers artifacts and reset deployment state. The current dialog\u2019s reopened blank credential fields and current-target compatibility were not established. The report retains its stated executor; this does not change the human catalog result, count as a new AI execution, or establish current-build compatibility. The October 15 cutoff remains provisional; no historical credit is accepted. The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/ncpa-deployment/CleanupDialog.tsx, client/src/components/ncpa-deployment/DeploymentRunDrawer.tsx, client/src/components/ncpa-deployment/NcpaDevicesTable.tsx, client/src/components/ncpa-deployment/RegisterAgentDialog.tsx, client/src/components/ncpa-deployment/RemoteRestartDialog.tsx, client/src/lib/ncpaDeploymentApi.ts, client/src/pages/NcpaDeploymentPage.tsx, server/app/api/system/ncpa_deployment.py, server/app/ncpa_deployment/ncpa_deployment.py, server/app/remote_restart.py. Re-run this case on the target before using historical evidence to omit checks.",
+      "impact_review": "A real cleanup request after a deliberately failed installation returned per-step results, removed helper/key/sudoers artifacts and reset deployment state. The current dialog’s reopened blank credential fields and current-target compatibility were not established. The report retains its stated executor; this does not change the human catalog result, count as a new AI execution, or establish current-build compatibility. The October 15 cutoff remains provisional; no historical credit is accepted. The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/ncpa-deployment/CleanupDialog.tsx, client/src/components/ncpa-deployment/DeploymentRunDrawer.tsx, client/src/components/ncpa-deployment/NcpaDevicesTable.tsx, client/src/components/ncpa-deployment/RegisterAgentDialog.tsx, client/src/components/ncpa-deployment/RemoteRestartDialog.tsx, client/src/lib/ncpaDeploymentApi.ts, client/src/pages/NcpaDeploymentPage.tsx, server/app/api/system/ncpa_deployment.py, server/app/ncpa_deployment/ncpa_deployment.py, server/app/remote_restart.py. Re-run this case on the target before using historical evidence to omit checks.",
       "case_hash": "54a2e019875fcafeb756f21c77f12b8739ebfd763fb66519152f6e2abc3e18ff",
       "report": "docs/test-runs/2026-10-15-issue-129-finish-journeys/REPORT.md",
       "report_sha256": "74d4ffa605aeaac657a0ea52e0d36ba6d9b98f9030a1177740d9deacf6c85bf3",
@@ -466,7 +486,7 @@
       "reviewed_by": "Codex evidence inventory (not full-case acceptance)",
       "reviewed_at": "2026-10-18",
       "impact_review": "Creation/edit/persistence of remote actions observed; Record only setup and cooldown boundary are not fully established. Current target contains later NCPA/remediation changes; no full historical credit. The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/remediation/ActionFormDialog.tsx, client/src/components/remediation/ActionsTable.tsx, client/src/components/remediation/RunDrawer.tsx, client/src/components/remediation/RunLog.tsx, client/src/components/remediation/StatusPanel.tsx, client/src/pages/RemediationPage.tsx, server/app/api/system/remediation.py, server/app/remediation.py, server/app/remediation_escalation.py. Re-run this case on the target before using historical evidence to omit checks.",
-      "case_hash": "e994d8d26b70dc49feaf8216139cc6cf56fca6e5a4a13e5bee9b5389b4114d8f",
+      "case_hash": "86b07b3bf131d5b4cab05ff5769b66f612b400b106b4e38f3d9bfe7faa3c4d85",
       "report": "docs/test-runs/2026-10-17-issue-182-playwright/REPORT.md",
       "report_sha256": "a4f7b988c607841e4461593907b466e8e6514d5990f5745c0f3c9b696c19659d",
       "tested_revision": "910d6f99",
@@ -489,6 +509,11 @@
           "server/app/remediation_escalation.py"
         ],
         "decision": "The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/remediation/ActionFormDialog.tsx, client/src/components/remediation/ActionsTable.tsx, client/src/components/remediation/RunDrawer.tsx, client/src/components/remediation/RunLog.tsx, client/src/components/remediation/StatusPanel.tsx, client/src/pages/RemediationPage.tsx, server/app/api/system/remediation.py, server/app/remediation.py, server/app/remediation_escalation.py. Re-run this case on the target before using historical evidence to omit checks."
+      },
+      "catalog_consolidation_binding_review": {
+        "reviewed_at": "2026-10-19",
+        "previous_case_hash": "e994d8d26b70dc49feaf8216139cc6cf56fca6e5a4a13e5bee9b5389b4114d8f",
+        "decision": "Procedure and expected items unchanged; result metadata and source-report attribution consolidated. Original evidence classification and compatibility review preserved."
       }
     },
     {
@@ -528,7 +553,7 @@
       "reviewed_by": "Codex mapping review (partial; not full-case acceptance)",
       "reviewed_at": "2026-10-18",
       "impact_review": "The browser Run log showed skipped reasons and interrupted/succeeded rows, overlapping this case. Full current detail/filter coverage and build compatibility are not established. The source report identifies its executor; this historical run is not represented as a manual catalog result or new AI execution. The October 15 cutoff remains provisional, so no historical credit is accepted. The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/ncpa-deployment/RemoteRestartDialog.tsx, client/src/components/remediation/ActionFormDialog.tsx, client/src/components/remediation/RunDrawer.tsx, client/src/components/remediation/RunLog.tsx, client/src/components/remediation/StatusPanel.tsx, client/src/pages/RemediationPage.tsx, server/app/api/system/remediation.py, server/app/remediation.py, server/app/remediation_actions.py, server/app/remediation_escalation.py, server/app/remote_restart.py. Re-run this case on the target before using historical evidence to omit checks.",
-      "case_hash": "31136889fdb9ea0f0b9e0a141610d50269b37c7a01e8ebbc01f8484a43bb27fe",
+      "case_hash": "28c997afcb5f203bed22751d86173080ab9389ca636a69d952d09a1e810df3bf",
       "report": "docs/test-runs/2026-10-17-issue-155-remediation-safety/REPORT.md",
       "report_sha256": "2c543cff5a91a6dfcb75f4a977e89ca109c66e8659ab061b84a25494bb7f594f",
       "tested_revision": "b4bbefec",
@@ -553,6 +578,11 @@
           "server/app/remote_restart.py"
         ],
         "decision": "The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/ncpa-deployment/RemoteRestartDialog.tsx, client/src/components/remediation/ActionFormDialog.tsx, client/src/components/remediation/RunDrawer.tsx, client/src/components/remediation/RunLog.tsx, client/src/components/remediation/StatusPanel.tsx, client/src/pages/RemediationPage.tsx, server/app/api/system/remediation.py, server/app/remediation.py, server/app/remediation_actions.py, server/app/remediation_escalation.py, server/app/remote_restart.py. Re-run this case on the target before using historical evidence to omit checks."
+      },
+      "catalog_consolidation_binding_review": {
+        "reviewed_at": "2026-10-19",
+        "previous_case_hash": "31136889fdb9ea0f0b9e0a141610d50269b37c7a01e8ebbc01f8484a43bb27fe",
+        "decision": "Procedure and expected items unchanged; result metadata and source-report attribution consolidated. Original evidence classification and compatibility review preserved."
       }
     },
     {
@@ -561,7 +591,7 @@
       "reviewed_by": "Codex mapping review (partial; not full-case acceptance)",
       "reviewed_at": "2026-10-18",
       "impact_review": "The live API/browser run exercised kill-switch off/on, confirmation, persistence, and a skipped event. It does not establish every current catalog step or current-build compatibility. The source report identifies its executor; this historical run is not represented as a manual catalog result or new AI execution. The October 15 cutoff remains provisional, so no historical credit is accepted. The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/ncpa-deployment/RemoteRestartDialog.tsx, client/src/components/remediation/ActionFormDialog.tsx, client/src/components/remediation/RunDrawer.tsx, client/src/components/remediation/RunLog.tsx, client/src/components/remediation/StatusPanel.tsx, client/src/pages/RemediationPage.tsx, server/app/api/system/remediation.py, server/app/remediation.py, server/app/remediation_actions.py, server/app/remediation_escalation.py, server/app/remote_restart.py. Re-run this case on the target before using historical evidence to omit checks.",
-      "case_hash": "a718afa10862df4583411b3fbacca593e19afb0ee1fa4c97db052998f9133c8d",
+      "case_hash": "10d731bf656306d1a039b7da354c8300f354f94414ae5820d90c9de2979447b7",
       "report": "docs/test-runs/2026-10-17-issue-155-remediation-safety/REPORT.md",
       "report_sha256": "2c543cff5a91a6dfcb75f4a977e89ca109c66e8659ab061b84a25494bb7f594f",
       "tested_revision": "b4bbefec",
@@ -586,6 +616,11 @@
           "server/app/remote_restart.py"
         ],
         "decision": "The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/ncpa-deployment/RemoteRestartDialog.tsx, client/src/components/remediation/ActionFormDialog.tsx, client/src/components/remediation/RunDrawer.tsx, client/src/components/remediation/RunLog.tsx, client/src/components/remediation/StatusPanel.tsx, client/src/pages/RemediationPage.tsx, server/app/api/system/remediation.py, server/app/remediation.py, server/app/remediation_actions.py, server/app/remediation_escalation.py, server/app/remote_restart.py. Re-run this case on the target before using historical evidence to omit checks."
+      },
+      "catalog_consolidation_binding_review": {
+        "reviewed_at": "2026-10-19",
+        "previous_case_hash": "a718afa10862df4583411b3fbacca593e19afb0ee1fa4c97db052998f9133c8d",
+        "decision": "Procedure and expected items unchanged; result metadata and source-report attribution consolidated. Original evidence classification and compatibility review preserved."
       }
     },
     {
@@ -594,7 +629,7 @@
       "reviewed_by": "Codex mapping review (partial; not full-case acceptance)",
       "reviewed_at": "2026-10-18",
       "impact_review": "The health panel counters were observed in the browser and the stalled state through the API; the stalled browser banner relied on frontend tests. Partial evidence only; current-build compatibility remains open. The source report identifies its executor; this historical run is not represented as a manual catalog result or new AI execution. The October 15 cutoff remains provisional, so no historical credit is accepted. The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/ncpa-deployment/RemoteRestartDialog.tsx, client/src/components/remediation/ActionFormDialog.tsx, client/src/components/remediation/RunDrawer.tsx, client/src/components/remediation/RunLog.tsx, client/src/components/remediation/StatusPanel.tsx, client/src/pages/RemediationPage.tsx, server/app/api/system/remediation.py, server/app/remediation.py, server/app/remediation_actions.py, server/app/remediation_escalation.py, server/app/remote_restart.py. Re-run this case on the target before using historical evidence to omit checks.",
-      "case_hash": "3e8d322886da47efba06598189cc7eb3e710b1a5a3c6947032fa0c25bdfc6c2d",
+      "case_hash": "55de12752133e93ceb06d9a17e129b922bbebbeda71226fc20c8db6c391aba07",
       "report": "docs/test-runs/2026-10-17-issue-155-remediation-safety/REPORT.md",
       "report_sha256": "2c543cff5a91a6dfcb75f4a977e89ca109c66e8659ab061b84a25494bb7f594f",
       "tested_revision": "b4bbefec",
@@ -619,6 +654,11 @@
           "server/app/remote_restart.py"
         ],
         "decision": "The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/ncpa-deployment/RemoteRestartDialog.tsx, client/src/components/remediation/ActionFormDialog.tsx, client/src/components/remediation/RunDrawer.tsx, client/src/components/remediation/RunLog.tsx, client/src/components/remediation/StatusPanel.tsx, client/src/pages/RemediationPage.tsx, server/app/api/system/remediation.py, server/app/remediation.py, server/app/remediation_actions.py, server/app/remediation_escalation.py, server/app/remote_restart.py. Re-run this case on the target before using historical evidence to omit checks."
+      },
+      "catalog_consolidation_binding_review": {
+        "reviewed_at": "2026-10-19",
+        "previous_case_hash": "3e8d322886da47efba06598189cc7eb3e710b1a5a3c6947032fa0c25bdfc6c2d",
+        "decision": "Procedure and expected items unchanged; result metadata and source-report attribution consolidated. Original evidence classification and compatibility review preserved."
       }
     },
     {
@@ -627,7 +667,7 @@
       "reviewed_by": "Codex mapping review (partial; not full-case acceptance)",
       "reviewed_at": "2026-10-18",
       "impact_review": "Acknowledged and unacknowledged action behavior was exercised through the API, including skipped_acknowledged and Run when acknowledged. The exact current UI setup and complete run-log assertions are not all established. The source report identifies its executor; this historical run is not represented as a manual catalog result or new AI execution. The October 15 cutoff remains provisional, so no historical credit is accepted. The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/ncpa-deployment/RemoteRestartDialog.tsx, client/src/components/remediation/ActionFormDialog.tsx, client/src/components/remediation/RunDrawer.tsx, client/src/components/remediation/RunLog.tsx, client/src/components/remediation/StatusPanel.tsx, client/src/pages/RemediationPage.tsx, server/app/api/system/remediation.py, server/app/remediation.py, server/app/remediation_actions.py, server/app/remediation_escalation.py, server/app/remote_restart.py. Re-run this case on the target before using historical evidence to omit checks.",
-      "case_hash": "73c6343be82847236a0df98de028c1d584f7cc3952e4a5386c94a859c347da1e",
+      "case_hash": "d7e906445292b32efa0e551e9a675b6e5fa19e496e09bee25e40c71e1c2d4921",
       "report": "docs/test-runs/2026-10-17-issue-155-remediation-safety/REPORT.md",
       "report_sha256": "2c543cff5a91a6dfcb75f4a977e89ca109c66e8659ab061b84a25494bb7f594f",
       "tested_revision": "b4bbefec",
@@ -652,6 +692,11 @@
           "server/app/remote_restart.py"
         ],
         "decision": "The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/ncpa-deployment/RemoteRestartDialog.tsx, client/src/components/remediation/ActionFormDialog.tsx, client/src/components/remediation/RunDrawer.tsx, client/src/components/remediation/RunLog.tsx, client/src/components/remediation/StatusPanel.tsx, client/src/pages/RemediationPage.tsx, server/app/api/system/remediation.py, server/app/remediation.py, server/app/remediation_actions.py, server/app/remediation_escalation.py, server/app/remote_restart.py. Re-run this case on the target before using historical evidence to omit checks."
+      },
+      "catalog_consolidation_binding_review": {
+        "reviewed_at": "2026-10-19",
+        "previous_case_hash": "73c6343be82847236a0df98de028c1d584f7cc3952e4a5386c94a859c347da1e",
+        "decision": "Procedure and expected items unchanged; result metadata and source-report attribution consolidated. Original evidence classification and compatibility review preserved."
       }
     },
     {
@@ -660,7 +705,7 @@
       "reviewed_by": "Codex evidence inventory (not full-case acceptance)",
       "reviewed_at": "2026-10-18",
       "impact_review": "Local and remote unit fields were exercised; all action-type transitions and field clearing are not established. Current target contains later NCPA/remediation changes; no full historical credit. The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/remediation/ActionFormDialog.tsx, client/src/components/remediation/ActionsTable.tsx, client/src/components/remediation/RunDrawer.tsx, client/src/components/remediation/RunLog.tsx, client/src/components/remediation/StatusPanel.tsx, client/src/pages/RemediationPage.tsx, server/app/api/system/remediation.py, server/app/remediation.py, server/app/remediation_escalation.py. Re-run this case on the target before using historical evidence to omit checks.",
-      "case_hash": "b7cf6b099fc81ca740c68c83599e79d1be94c8176909d0927a04a9a83c49a675",
+      "case_hash": "11fe37eeff5242ee7f1f91ea626878268ebf366896e7b1ccb0631621540138ef",
       "report": "docs/test-runs/2026-10-17-issue-182-playwright/REPORT.md",
       "report_sha256": "a4f7b988c607841e4461593907b466e8e6514d5990f5745c0f3c9b696c19659d",
       "tested_revision": "910d6f99",
@@ -683,6 +728,11 @@
           "server/app/remediation_escalation.py"
         ],
         "decision": "The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/remediation/ActionFormDialog.tsx, client/src/components/remediation/ActionsTable.tsx, client/src/components/remediation/RunDrawer.tsx, client/src/components/remediation/RunLog.tsx, client/src/components/remediation/StatusPanel.tsx, client/src/pages/RemediationPage.tsx, server/app/api/system/remediation.py, server/app/remediation.py, server/app/remediation_escalation.py. Re-run this case on the target before using historical evidence to omit checks."
+      },
+      "catalog_consolidation_binding_review": {
+        "reviewed_at": "2026-10-19",
+        "previous_case_hash": "b7cf6b099fc81ca740c68c83599e79d1be94c8176909d0927a04a9a83c49a675",
+        "decision": "Procedure and expected items unchanged; result metadata and source-report attribution consolidated. Original evidence classification and compatibility review preserved."
       }
     },
     {
@@ -691,7 +741,7 @@
       "reviewed_by": "Codex mapping review (partial; not full-case acceptance)",
       "reviewed_at": "2026-10-18",
       "impact_review": "The browser opened a populated Host Availability report and downloaded CSV. It did not establish the current inventory-count/uptime assertions or the exact target-build compatibility. The source report identifies its executor; this historical run is not represented as a manual catalog result or new AI execution. The October 15 cutoff remains provisional, so no historical credit is accepted. The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/reports/ExtraReports.tsx, client/src/components/reports/NetworkServicesReportTable.tsx, client/src/components/reports/ServiceReportContext.tsx, client/src/pages/ReportsPage.tsx, server/app/api/system/report.py, server/app/nagios/service_availability.py. Re-run this case on the target before using historical evidence to omit checks.",
-      "case_hash": "25dfce56d4924591fc1af6c3fe0e00868531298feb0807411568e38a20b11dd4",
+      "case_hash": "d55b55424e5083bd3f27c0e44fee3e8ec893949c2b851951c1ebc3aff57bb8bb",
       "report": "docs/test-runs/2026-10-17-issue-134-reports-documentation/REPORT.md",
       "report_sha256": "4f5740ee27141ba150f3c262cf9bdd1756e2ca4de07541ff80722ca851bbdcb8",
       "tested_revision": "65101a5f",
@@ -711,6 +761,11 @@
           "server/app/nagios/service_availability.py"
         ],
         "decision": "The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/reports/ExtraReports.tsx, client/src/components/reports/NetworkServicesReportTable.tsx, client/src/components/reports/ServiceReportContext.tsx, client/src/pages/ReportsPage.tsx, server/app/api/system/report.py, server/app/nagios/service_availability.py. Re-run this case on the target before using historical evidence to omit checks."
+      },
+      "catalog_consolidation_binding_review": {
+        "reviewed_at": "2026-10-19",
+        "previous_case_hash": "25dfce56d4924591fc1af6c3fe0e00868531298feb0807411568e38a20b11dd4",
+        "decision": "Procedure and expected items unchanged; result metadata and source-report attribution consolidated. Original evidence classification and compatibility review preserved."
       }
     },
     {
@@ -775,7 +830,7 @@
       "reviewed_by": "Codex mapping review (partial; not full-case acceptance)",
       "reviewed_at": "2026-10-18",
       "impact_review": "A maintenance window was cancelled and its downtime removed, but the report does not establish cancellation before the original start time or the later no-downtime/notification sequence required by this case. The report retains its stated executor; this does not change the human catalog result, count as a new AI execution, or establish current-build compatibility. The October 15 cutoff remains provisional; no historical credit is accepted. The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/maintenance/MaintenanceWindowForm.tsx, client/src/components/maintenance/MaintenanceWindowsTable.tsx, client/src/components/ncpa-deployment/CleanupDialog.tsx, client/src/components/ncpa-deployment/DeploymentRunDrawer.tsx, client/src/components/ncpa-deployment/NcpaDevicesTable.tsx, client/src/components/ncpa-deployment/RegisterAgentDialog.tsx, client/src/components/ncpa-deployment/RemoteRestartDialog.tsx, client/src/components/remediation/ActionFormDialog.tsx, client/src/components/remediation/ActionsTable.tsx, client/src/components/remediation/RunDrawer.tsx, client/src/components/remediation/RunLog.tsx, client/src/components/remediation/StatusPanel.tsx, client/src/pages/MaintenancePage.tsx, client/src/pages/NcpaDeploymentPage.tsx, client/src/pages/RemediationPage.tsx, server/app/maintenance.py, server/app/ncpa_deployment/ncpa_deployment.py, server/app/remediation.py, server/app/remediation_actions.py, server/app/remediation_escalation.py, server/app/remote_restart.py. Re-run this case on the target before using historical evidence to omit checks.",
-      "case_hash": "62158ac94e38384425bf2b2d177c2f7ed9c5474e0eb767bf7a6092eb2b0467d7",
+      "case_hash": "d80fb0f1c9add129d41b8b1618de77e478878a3bc4da44143ad7084c7e58fbb2",
       "report": "docs/test-runs/2026-10-15-issue-122-maintenance-windows/REPORT.md",
       "report_sha256": "d2a6eee50430bd7b604768525135003bea434514c6a85790834a92613af53f96",
       "tested_revision": "0883693c",
@@ -810,6 +865,11 @@
           "server/app/remote_restart.py"
         ],
         "decision": "The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/maintenance/MaintenanceWindowForm.tsx, client/src/components/maintenance/MaintenanceWindowsTable.tsx, client/src/components/ncpa-deployment/CleanupDialog.tsx, client/src/components/ncpa-deployment/DeploymentRunDrawer.tsx, client/src/components/ncpa-deployment/NcpaDevicesTable.tsx, client/src/components/ncpa-deployment/RegisterAgentDialog.tsx, client/src/components/ncpa-deployment/RemoteRestartDialog.tsx, client/src/components/remediation/ActionFormDialog.tsx, client/src/components/remediation/ActionsTable.tsx, client/src/components/remediation/RunDrawer.tsx, client/src/components/remediation/RunLog.tsx, client/src/components/remediation/StatusPanel.tsx, client/src/pages/MaintenancePage.tsx, client/src/pages/NcpaDeploymentPage.tsx, client/src/pages/RemediationPage.tsx, server/app/maintenance.py, server/app/ncpa_deployment/ncpa_deployment.py, server/app/remediation.py, server/app/remediation_actions.py, server/app/remediation_escalation.py, server/app/remote_restart.py. Re-run this case on the target before using historical evidence to omit checks."
+      },
+      "catalog_consolidation_binding_review": {
+        "reviewed_at": "2026-10-19",
+        "previous_case_hash": "62158ac94e38384425bf2b2d177c2f7ed9c5474e0eb767bf7a6092eb2b0467d7",
+        "decision": "Procedure and expected items unchanged; result metadata and source-report attribution consolidated. Original evidence classification and compatibility review preserved."
       }
     },
     {
@@ -818,7 +878,7 @@
       "reviewed_by": "Codex mapping review (partial; not full-case acceptance)",
       "reviewed_at": "2026-10-18",
       "impact_review": "The kill switch was turned off, a covered event was skipped, then the switch was restored and a later event ran. Whether the old event stayed unqueued and was never replayed is not fully demonstrated. The report retains its stated executor; this does not change the human catalog result, count as a new AI execution, or establish current-build compatibility. The October 15 cutoff remains provisional; no historical credit is accepted. The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/ncpa-deployment/CleanupDialog.tsx, client/src/components/ncpa-deployment/NcpaDevicesTable.tsx, client/src/components/ncpa-deployment/RegisterAgentDialog.tsx, client/src/components/ncpa-deployment/RemoteRestartDialog.tsx, client/src/components/remediation/ActionFormDialog.tsx, client/src/components/remediation/RunDrawer.tsx, client/src/components/remediation/RunLog.tsx, client/src/components/remediation/StatusPanel.tsx, client/src/pages/NcpaDeploymentPage.tsx, client/src/pages/RemediationPage.tsx, server/app/ncpa_deployment/ncpa_deployment.py, server/app/remediation.py, server/app/remediation_actions.py, server/app/remediation_escalation.py, server/app/remote_restart.py. Re-run this case on the target before using historical evidence to omit checks.",
-      "case_hash": "cd43ebca806e2d3ec260bf8fd67a6993f8cc4b8958dea3d7b7270335ded41db7",
+      "case_hash": "fdb98cd19ae79bf4ba085032437882af54aa29eb1da01eed387926fff1192850",
       "report": "docs/test-runs/2026-10-17-issue-155-remediation-safety/REPORT.md",
       "report_sha256": "2c543cff5a91a6dfcb75f4a977e89ca109c66e8659ab061b84a25494bb7f594f",
       "tested_revision": "b4bbefec",
@@ -847,6 +907,11 @@
           "server/app/remote_restart.py"
         ],
         "decision": "The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/ncpa-deployment/CleanupDialog.tsx, client/src/components/ncpa-deployment/NcpaDevicesTable.tsx, client/src/components/ncpa-deployment/RegisterAgentDialog.tsx, client/src/components/ncpa-deployment/RemoteRestartDialog.tsx, client/src/components/remediation/ActionFormDialog.tsx, client/src/components/remediation/RunDrawer.tsx, client/src/components/remediation/RunLog.tsx, client/src/components/remediation/StatusPanel.tsx, client/src/pages/NcpaDeploymentPage.tsx, client/src/pages/RemediationPage.tsx, server/app/ncpa_deployment/ncpa_deployment.py, server/app/remediation.py, server/app/remediation_actions.py, server/app/remediation_escalation.py, server/app/remote_restart.py. Re-run this case on the target before using historical evidence to omit checks."
+      },
+      "catalog_consolidation_binding_review": {
+        "reviewed_at": "2026-10-19",
+        "previous_case_hash": "cd43ebca806e2d3ec260bf8fd67a6993f8cc4b8958dea3d7b7270335ded41db7",
+        "decision": "Procedure and expected items unchanged; result metadata and source-report attribution consolidated. Original evidence classification and compatibility review preserved."
       }
     },
     {
@@ -854,8 +919,8 @@
       "classification": "retest required",
       "reviewed_by": "Codex mapping review (partial; not full-case acceptance)",
       "reviewed_at": "2026-10-18",
-      "impact_review": "One live sequence observed a successful restart, cooldown skip, maintenance refusal and hourly-cap skip. It does not establish the catalog\u2019s exact four-event order or current-target compatibility. The report retains its stated executor; this does not change the human catalog result, count as a new AI execution, or establish current-build compatibility. The October 15 cutoff remains provisional; no historical credit is accepted. The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/ncpa-deployment/CleanupDialog.tsx, client/src/components/ncpa-deployment/NcpaDevicesTable.tsx, client/src/components/ncpa-deployment/RegisterAgentDialog.tsx, client/src/components/ncpa-deployment/RemoteRestartDialog.tsx, client/src/components/remediation/ActionFormDialog.tsx, client/src/components/remediation/ActionsTable.tsx, client/src/components/remediation/RunDrawer.tsx, client/src/components/remediation/RunLog.tsx, client/src/components/remediation/StatusPanel.tsx, client/src/pages/NcpaDeploymentPage.tsx, client/src/pages/RemediationPage.tsx, server/app/ncpa_deployment/ncpa_deployment.py, server/app/remediation.py, server/app/remediation_actions.py, server/app/remediation_escalation.py, server/app/remote_restart.py. Re-run this case on the target before using historical evidence to omit checks.",
-      "case_hash": "c673c30ea386de8011addf5eb15c53d9ea6496a1b023eddd64e16897e40dd2dc",
+      "impact_review": "One live sequence observed a successful restart, cooldown skip, maintenance refusal and hourly-cap skip. It does not establish the catalog’s exact four-event order or current-target compatibility. The report retains its stated executor; this does not change the human catalog result, count as a new AI execution, or establish current-build compatibility. The October 15 cutoff remains provisional; no historical credit is accepted. The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/ncpa-deployment/CleanupDialog.tsx, client/src/components/ncpa-deployment/NcpaDevicesTable.tsx, client/src/components/ncpa-deployment/RegisterAgentDialog.tsx, client/src/components/ncpa-deployment/RemoteRestartDialog.tsx, client/src/components/remediation/ActionFormDialog.tsx, client/src/components/remediation/ActionsTable.tsx, client/src/components/remediation/RunDrawer.tsx, client/src/components/remediation/RunLog.tsx, client/src/components/remediation/StatusPanel.tsx, client/src/pages/NcpaDeploymentPage.tsx, client/src/pages/RemediationPage.tsx, server/app/ncpa_deployment/ncpa_deployment.py, server/app/remediation.py, server/app/remediation_actions.py, server/app/remediation_escalation.py, server/app/remote_restart.py. Re-run this case on the target before using historical evidence to omit checks.",
+      "case_hash": "5b1df77d732c70e267e0e99a8337c961f2f6276a61643c15977674ccd85838b3",
       "report": "docs/test-runs/2026-10-16-issue-121-local-restart/REPORT.md",
       "report_sha256": "c55aa9c01443e0e14c63d43ba627866b8eeeb8ca3e9baba4fd492169810ea099",
       "tested_revision": "8869235",
@@ -885,6 +950,11 @@
           "server/app/remote_restart.py"
         ],
         "decision": "The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/ncpa-deployment/CleanupDialog.tsx, client/src/components/ncpa-deployment/NcpaDevicesTable.tsx, client/src/components/ncpa-deployment/RegisterAgentDialog.tsx, client/src/components/ncpa-deployment/RemoteRestartDialog.tsx, client/src/components/remediation/ActionFormDialog.tsx, client/src/components/remediation/ActionsTable.tsx, client/src/components/remediation/RunDrawer.tsx, client/src/components/remediation/RunLog.tsx, client/src/components/remediation/StatusPanel.tsx, client/src/pages/NcpaDeploymentPage.tsx, client/src/pages/RemediationPage.tsx, server/app/ncpa_deployment/ncpa_deployment.py, server/app/remediation.py, server/app/remediation_actions.py, server/app/remediation_escalation.py, server/app/remote_restart.py. Re-run this case on the target before using historical evidence to omit checks."
+      },
+      "catalog_consolidation_binding_review": {
+        "reviewed_at": "2026-10-19",
+        "previous_case_hash": "c673c30ea386de8011addf5eb15c53d9ea6496a1b023eddd64e16897e40dd2dc",
+        "decision": "Procedure and expected items unchanged; result metadata and source-report attribution consolidated. Original evidence classification and compatibility review preserved."
       }
     },
     {
@@ -892,8 +962,8 @@
       "classification": "retest required",
       "reviewed_by": "Codex mapping review (partial; not full-case acceptance)",
       "reviewed_at": "2026-10-18",
-      "impact_review": "Maintenance Mode and scheduled downtime each produced skips in separate live trials. This report does not establish the catalog\u2019s combined three-step ordering or intervening action run. The report retains its stated executor; this does not change the human catalog result, count as a new AI execution, or establish current-build compatibility. The October 15 cutoff remains provisional; no historical credit is accepted. The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/ncpa-deployment/CleanupDialog.tsx, client/src/components/ncpa-deployment/NcpaDevicesTable.tsx, client/src/components/ncpa-deployment/RegisterAgentDialog.tsx, client/src/components/ncpa-deployment/RemoteRestartDialog.tsx, client/src/components/remediation/ActionFormDialog.tsx, client/src/components/remediation/RunDrawer.tsx, client/src/components/remediation/RunLog.tsx, client/src/components/remediation/StatusPanel.tsx, client/src/pages/NcpaDeploymentPage.tsx, client/src/pages/RemediationPage.tsx, server/app/ncpa_deployment/ncpa_deployment.py, server/app/remediation.py, server/app/remediation_actions.py, server/app/remediation_escalation.py, server/app/remote_restart.py. Re-run this case on the target before using historical evidence to omit checks.",
-      "case_hash": "8148b6bd90cabdcbfdff66d3786cd5dfb8bdb61648bb9446c4de48c9dee43fe2",
+      "impact_review": "Maintenance Mode and scheduled downtime each produced skips in separate live trials. This report does not establish the catalog’s combined three-step ordering or intervening action run. The report retains its stated executor; this does not change the human catalog result, count as a new AI execution, or establish current-build compatibility. The October 15 cutoff remains provisional; no historical credit is accepted. The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/ncpa-deployment/CleanupDialog.tsx, client/src/components/ncpa-deployment/NcpaDevicesTable.tsx, client/src/components/ncpa-deployment/RegisterAgentDialog.tsx, client/src/components/ncpa-deployment/RemoteRestartDialog.tsx, client/src/components/remediation/ActionFormDialog.tsx, client/src/components/remediation/RunDrawer.tsx, client/src/components/remediation/RunLog.tsx, client/src/components/remediation/StatusPanel.tsx, client/src/pages/NcpaDeploymentPage.tsx, client/src/pages/RemediationPage.tsx, server/app/ncpa_deployment/ncpa_deployment.py, server/app/remediation.py, server/app/remediation_actions.py, server/app/remediation_escalation.py, server/app/remote_restart.py. Re-run this case on the target before using historical evidence to omit checks.",
+      "case_hash": "846b678d37fb14b0756065bf7623516818b7462b35e60e5a6ca07cbd3935cc02",
       "report": "docs/test-runs/2026-10-17-issue-155-remediation-safety/REPORT.md",
       "report_sha256": "2c543cff5a91a6dfcb75f4a977e89ca109c66e8659ab061b84a25494bb7f594f",
       "tested_revision": "b4bbefec",
@@ -922,6 +992,11 @@
           "server/app/remote_restart.py"
         ],
         "decision": "The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/ncpa-deployment/CleanupDialog.tsx, client/src/components/ncpa-deployment/NcpaDevicesTable.tsx, client/src/components/ncpa-deployment/RegisterAgentDialog.tsx, client/src/components/ncpa-deployment/RemoteRestartDialog.tsx, client/src/components/remediation/ActionFormDialog.tsx, client/src/components/remediation/RunDrawer.tsx, client/src/components/remediation/RunLog.tsx, client/src/components/remediation/StatusPanel.tsx, client/src/pages/NcpaDeploymentPage.tsx, client/src/pages/RemediationPage.tsx, server/app/ncpa_deployment/ncpa_deployment.py, server/app/remediation.py, server/app/remediation_actions.py, server/app/remediation_escalation.py, server/app/remote_restart.py. Re-run this case on the target before using historical evidence to omit checks."
+      },
+      "catalog_consolidation_binding_review": {
+        "reviewed_at": "2026-10-19",
+        "previous_case_hash": "8148b6bd90cabdcbfdff66d3786cd5dfb8bdb61648bb9446c4de48c9dee43fe2",
+        "decision": "Procedure and expected items unchanged; result metadata and source-report attribution consolidated. Original evidence classification and compatibility review preserved."
       }
     },
     {
@@ -930,7 +1005,7 @@
       "reviewed_by": "Codex mapping review (partial; not full-case acceptance)",
       "reviewed_at": "2026-10-18",
       "impact_review": "Cleanup, redeployment and a successful remote restart were observed in the same acceptance report. It does not establish the failed restart between cleanup and redeployment required by this sequence. The report retains its stated executor; this does not change the human catalog result, count as a new AI execution, or establish current-build compatibility. The October 15 cutoff remains provisional; no historical credit is accepted. The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/ncpa-deployment/NcpaDevicesTable.tsx, client/src/components/ncpa-deployment/RegisterAgentDialog.tsx, client/src/components/remediation/ActionFormDialog.tsx, client/src/components/remediation/ActionsTable.tsx, client/src/components/remediation/RunDrawer.tsx, client/src/components/remediation/RunLog.tsx, client/src/components/remediation/StatusPanel.tsx, client/src/pages/NcpaDeploymentPage.tsx, client/src/pages/RemediationPage.tsx, server/app/remediation.py, server/app/remediation_escalation.py. Re-run this case on the target before using historical evidence to omit checks.",
-      "case_hash": "44a07454c44392e4c54b3b0b5a0687bdb3de531351bf612280bb3ddee9ab295f",
+      "case_hash": "026bff47734477e3ef66ec9122b32ea49814cd887c568c348a84a3dff0ccc993",
       "report": "docs/test-runs/2026-10-17-issue-182-remote-restart/REPORT.md",
       "report_sha256": "488bdca00f4f50cf00daad29adc70bc4365a776a30002d00e07cb3b731808362",
       "tested_revision": "910d6f99",
@@ -955,6 +1030,11 @@
           "server/app/remediation_escalation.py"
         ],
         "decision": "The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/ncpa-deployment/NcpaDevicesTable.tsx, client/src/components/ncpa-deployment/RegisterAgentDialog.tsx, client/src/components/remediation/ActionFormDialog.tsx, client/src/components/remediation/ActionsTable.tsx, client/src/components/remediation/RunDrawer.tsx, client/src/components/remediation/RunLog.tsx, client/src/components/remediation/StatusPanel.tsx, client/src/pages/NcpaDeploymentPage.tsx, client/src/pages/RemediationPage.tsx, server/app/remediation.py, server/app/remediation_escalation.py. Re-run this case on the target before using historical evidence to omit checks."
+      },
+      "catalog_consolidation_binding_review": {
+        "reviewed_at": "2026-10-19",
+        "previous_case_hash": "44a07454c44392e4c54b3b0b5a0687bdb3de531351bf612280bb3ddee9ab295f",
+        "decision": "Procedure and expected items unchanged; result metadata and source-report attribution consolidated. Original evidence classification and compatibility review preserved."
       }
     },
     {
@@ -962,7 +1042,7 @@
       "classification": "retest required",
       "reviewed_by": "Codex mapping review (partial; not full-case acceptance)",
       "reviewed_at": "2026-10-18",
-      "impact_review": "Real 30/60-second polling, live settings changes without worker restart, persisted nondefault interval after restart, and HTTP guards were observed. The current case\u2019s exact offered values/default and all UI checks are not fully established; source/build compatibility is still open. The report retains its stated executor; this does not change the human catalog result, count as a new AI execution, or establish current-build compatibility. The October 15 cutoff remains provisional; no historical credit is accepted. The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/settings/EmailSettings.tsx, client/src/components/settings/NotificationPolicySettings.tsx, client/src/components/settings/SystemSettings.tsx, client/src/pages/SettingsPage.tsx, server/app/api/system/notifications.py, server/app/api/system/smtp_settings.py, server/app/scheduler.py, server/app/smtp_settings.py. Re-run this case on the target before using historical evidence to omit checks.",
+      "impact_review": "Real 30/60-second polling, live settings changes without worker restart, persisted nondefault interval after restart, and HTTP guards were observed. The current case’s exact offered values/default and all UI checks are not fully established; source/build compatibility is still open. The report retains its stated executor; this does not change the human catalog result, count as a new AI execution, or establish current-build compatibility. The October 15 cutoff remains provisional; no historical credit is accepted. The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/settings/EmailSettings.tsx, client/src/components/settings/NotificationPolicySettings.tsx, client/src/components/settings/SystemSettings.tsx, client/src/pages/SettingsPage.tsx, server/app/api/system/notifications.py, server/app/api/system/smtp_settings.py, server/app/scheduler.py, server/app/smtp_settings.py. Re-run this case on the target before using historical evidence to omit checks.",
       "case_hash": "6e5ac505f2a9702d755a692a22d31c3e030a25d96c9f7338249e1f1fcec6424f",
       "report": "docs/test-runs/2026-10-15-issue-110-polling-retest/REPORT.md",
       "report_sha256": "546ad8f361d3772415f45d3eac36206321600f841014f9a376cd32a55e85504c",
@@ -1296,6 +1376,36 @@
       "TC-DI-17",
       "TC-DI-18",
       "TC-DI-19"
+    ]
+  },
+  "catalog_consolidation_review": {
+    "reviewed_at": "2026-10-19",
+    "reviewed_by": "Codex catalog consolidation review",
+    "baseline_revision": "44471f7cc5ee94348cff18015993dd023d53365d",
+    "behavior_changes": {
+      "TC-LOG-04": [
+        "steps",
+        "expectations"
+      ]
+    },
+    "decision": "All case titles, priorities, requirements, dependencies and safety classifications are unchanged. Procedures and expected items are unchanged except TC-LOG-04: clarified raw-log comparison, unreadable-file check without stopping Nagios, and explicit restoration check. Other edits consolidate recorded results and source attribution. Existing automation coverage and historical evidence acceptance are not expanded; no execution performed.",
+    "refreshed_case_hashes": [
+      "TC-LOG-04",
+      "TC-MNT-02",
+      "TC-MNT-07",
+      "TC-MNT-10",
+      "TC-REM-02",
+      "TC-REM-06",
+      "TC-REM-07",
+      "TC-REM-08",
+      "TC-REM-09",
+      "TC-REM-10",
+      "TC-RPT-01",
+      "TC-SEQ-04",
+      "TC-SEQ-18",
+      "TC-SEQ-19",
+      "TC-SEQ-20",
+      "TC-SEQ-22"
     ]
   }
 }
