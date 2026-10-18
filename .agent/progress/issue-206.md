@@ -18,7 +18,8 @@ Status: in-progress
 - [x] Implement concrete pinned-image Docker lifecycle with durable intent/consumed-transport binding and verified owned-resource cleanup (16 synthetic contracts); fix and offline-test Playwright worker reload without launching a browser (7 frontend helper checks).
 - [x] Implement the owned bounded bridge with durable custody/cleanup (11 Unix-only contracts), connect container custody checks (16 container contracts), and add standalone Git/artifact/process observations (6 fixtures) that never claim verified runtime identity.
 - [x] Prepare the authorized exclusive appliance: verified backup, exact deployment/build/migrations, initialized Staff, served artifacts and closed setup sessions; disclose the startup scan and temporary scheduler pause.
-- [ ] Complete production supervisor-driver integration and live validation: actual controller/deployment/baseline proofs, inherited controller/driver wiring, bounded process-tree control, sanitized result parsing and verified recovery. This is part of overall readiness, not a claim that the offline milestone executes cases.
+- [x] Integrate the narrow TC-SS-04 production driver, fixed read-only actual host/guest/served proof, controlled provenance and complete card/start CLI; pass eleven synthetic contracts and supported actual read-only inspection.
+- [ ] Validate actual browser/container execution and session/resource/baseline cleanup after explicit start; broader/unattended readiness remains open.
 
 | Issue requirement | Finish-condition item | Proof |
 |---|---|---|
@@ -66,9 +67,9 @@ and require separately authorized live evidence where needed.
 
 ## State for the next session
 
-- Current milestone: authorized appliance preparation complete; acceptance Not run. Exact target deployed, Staff ready, scheduler temporarily off; preparation report and checklist updated below.
-- Next action: integrate the trusted pilot driver with fresh actual deployment/baseline proof, bounded bridge/container lifecycle, strict results and verified session cleanup; then complete/review the card and show it for a separate explicit acceptance start. VM setup approval is complete and does not need to be requested again.
-- Preserve the temporary scheduler pause, private backups and raw evidence. A reboot loses the runtime override and requires baseline recheck. Do not restore/re-enable schedules as routine cleanup. No local backend tests while backend application code is unchanged.
+- Narrow pilot driver/card and actual supported read-only inspection are complete; docs gate passes 176 isolated contracts. No local backend or unchanged frontend suite rerun. No acceptance case/batch/browser/container/bridge started.
+- Next action: obtain explicit user start for `docs/qa/queues/2026-10-18-today-ss04-v4.json`, set `today-ss04`, Paeng, one initial TC-SS-04 attempt. Only then write the matching affirmative expiring private grant and execute its exact launcher command. Preserve false template until actual approval.
+- After that attempt, verify actual session/container/bridge/baseline cleanup and publish a separate acceptance report; stop on uncertainty or INCONCLUSIVE, with no automatic repeat, reset, restore, scheduler enable or alternate browser/tool. The VM remains running with scheduler off and private backup retained; reboot invalidates baseline.
 
 ## Decisions and notes
 
@@ -319,7 +320,8 @@ question is pending. See the [preparation report](../../docs/test-runs/2026-10-1
 - [x] Create/initialize disposable Staff through supported APIs with zero permissions; close and verify both setup sessions.
 - [x] Disclose the automatic scan after boot (06:39:54–06:40:05 UTC) before pause; disable the serving scheduler with a temporary runtime environment override. Keep persisted configuration unchanged and record that reboot invalidates this baseline.
 - [x] Record preparation evidence, index and queue log; keep TC-SS-04 Not run (0 attempts, 0 batches), preserve human verdicts.
-- [ ] Integrate the trusted driver and fresh runtime/baseline/session-recovery proof; complete/review the pilot card, then obtain explicit acceptance start.
+- [x] Integrate the narrow trusted driver and fresh runtime/baseline observations; complete/review the pilot card (see the later driver checkpoint).
+- [ ] Obtain explicit acceptance start and verify actual browser/container/session cleanup in the pilot.
 
 Private evidence: `/home/paeng/pinpoint-test-results/2026-10-18-issue-206-preparation`.
 Guest backup: `/var/backups/pinpoint/qa-20261018-299ab3b`. The original administrator
@@ -337,3 +339,24 @@ v3 `today-ss04` source check passed and `git diff --check` passed. Prior head
 `04f317e9` passed all CI jobs in run 39103841594; new checkpoint CI is separate.
 No local backend suite or unchanged frontend suite is required; the actual target's
 frontend build and dependency/migration checks passed during approved deployment.
+
+## Narrow pilot driver checkpoint (2026-10-18)
+
+- [x] Compose supervisor/host claim, owned bridge/container, independent bounded process/recovery runners and strict report parser for TC-SS-04 only; no implicit retry/resume or product/setup repair.
+- [x] Add private reviewed controlled-deployment/build baseline, fixed read-only guest probe, actual served-byte checks and local image/browser fingerprints. Bind 455 target source files, 2383 installed runtime files, configuration, boot/process identities, Staff and scheduler/network/scan state. Standalone observer readiness remains negative; independent controlled provenance is required.
+- [x] Add supported read-only `inspect` and separately start-gated `run` CLI. Validate exact source-current one-case owner/scope, baseline/image pins, private disjoint writes and separate matching expiring start before inspection/output/transport work. Use canonical per-user durable pilot ledger; halt on uncertain cleanup.
+- [x] Pass eleven synthetic composed-driver/proof/gate contracts and actual supported read-only inspection; demonstrate false-start CLI denial with all reserved acceptance outputs still empty.
+- [x] Prepare complete [v4 card](../../docs/qa/queues/2026-10-18-today-ss04-v4.md) and immutable JSON; v3 is superseded, never started. E1 is sidebar absence plus redirect to Settings; one initial attempt, 300-second case envelope, 30-second cleanup, exact adapter selection, no scans/faults/restarts/resets/account changes or diagnostic repeat.
+- [x] Save/index the [driver preflight report](../../docs/test-runs/2026-10-18-issue-206-pilot-driver-preflight/REPORT.md), queue log and private evidence; pass `scripts/verify.sh docs` (176 isolated contracts), source/link/progress/whitespace checks. No local backend or unchanged frontend suite.
+- [ ] Obtain the user's explicit start for v4 `today-ss04`, Paeng; only then create the matching affirmative expiring private start record. Current template is false/expired. No acceptance case, batch, browser, container or bridge started.
+- [ ] Perform first supervised TC-SS-04 attempt, verify actual session/container/bridge/baseline cleanup and publish a separate attributable acceptance report. INCONCLUSIVE is not product FAIL; uncertain restoration halts.
+
+Actual read-only inspection uses SSH, public HTTP and Docker **image inspection**,
+without starting Docker containers or browsers. Positive fresh observation fields
+are not human authorization or acceptance evidence. Controlled launch/build
+provenance is a reviewed trust boundary, not in-memory/kernel attestation. Existing
+scheduler-off baseline, backup and automatic startup-scan disclosure remain intact.
+Private baseline/inspection evidence is under the earlier preparation evidence
+root's `pilot-runtime-proof/`; reserved case evidence/control/bridge paths remain
+empty. Do not remove the shared lock/ledger, recreate an interrupted output path,
+re-enable schedules, change assertions or bypass the launcher with manual argv.

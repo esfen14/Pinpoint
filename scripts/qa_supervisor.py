@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Durable supervisor lifecycle core; NO production driver or live command entry.
 
-Only isolated tests currently supply a driver. A future trusted runtime driver
-must prove actual controller/endpoint/deployment identity and enforce process
-termination and verified cleanup. Offline grants/receipts are not that proof.
+The narrow qa_pilot driver composes this core behind reviewed baseline/card/start
+gates. This core has no default driver. Runtime observations, bounded termination
+and verified cleanup remain the supplied driver's duty; grants are not proof.
 """
 from __future__ import annotations
 from contextlib import contextmanager

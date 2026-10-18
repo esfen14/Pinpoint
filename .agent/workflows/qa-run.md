@@ -48,8 +48,9 @@ offline journal case; its legacy execution path rejects the new config. The
 preview reads credential metadata only and is explicitly not live authorization.
 Never execute printed Docker argv manually or bypass the gate with a host browser. Actual live cards, preflight and explicit start remain required.
 
-The driver-independent `qa_supervisor.py` lifecycle core is tested with a synthetic
-driver only; it has no production driver or live command entry. Its durable UUID
+The driver-independent `qa_supervisor.py` lifecycle core has no default driver.
+Its isolated contracts use a synthetic driver; `qa_pilot.py` supplies the separately
+gated narrow TC-SS-04 integration described below. Its durable UUID
 lock/ledger and grant checks do not establish real ownership, deployment or human
 consent. Never fabricate proof receipts, clear a halted ledger or manually invoke
 transport argv to bypass missing production integration. A running/interrupted
@@ -58,15 +59,41 @@ The supervisor and mutating `vmlab` entries now share a cooperative host claim.
 Never delete its lock/store or call a direct controller to bypass a busy claim.
 `vmlab preflight --json` supplies host observations only: it cannot prove the
 running frontend/backend revision, baseline, restoration or permission to start.
-Production driver integration and live cards remain blocked.
+The narrow TC-SS-04 driver is described below; broader production integration remains blocked.
 The concrete container lifecycle component also has no live CLI/default driver.
 Its consumed-slot/image/cleanup contracts and synthetic worker checks do not
 authorize calling it manually. Keep actual bridge/runtime/baseline proof and
 the explicit named start separate from offline implementation success.
-Owned bridge and deployment-observer components also require trusted integration.
+Owned bridge and deployment-observer components require trusted integration;
+use the narrow pilot path below for TC-SS-04 only.
 Observer disk matches/candidate process metadata always leave runtime/served
 identity false and the verified running revision null. Never promote them into a
 live proof receipt or manually start a bridge to bypass the missing driver/card.
+
+## Narrow TC-SS-04 pilot entry
+
+`python3 -I scripts/qa_pilot.py inspect` is read-only preparation: it checks a
+private reviewed controlled-deployment baseline, host/guest process identity,
+source/config/runtime fingerprints, Staff state, scheduler-off/network/scan state,
+actual served bytes and cached image/browser without starting either. Positive
+inspection fields are not live authorization or evidence that a case passed.
+The standalone deployment observer continues to return false/null readiness.
+
+Only `qa_pilot.py run` may launch the current one-case pilot after its new reviewed
+queue/card and explicit user start. Its private start record must bind exact queue
+hash, set, owner, session, UUID, target and expiry. Create an affirmative record
+only after the actual user start; a prepared false/template record grants nothing.
+Never run preview Docker argv, components or a host browser manually.
+
+The card binds the private baseline checksum, exact adapter action, pinned image,
+private evidence/control/bridge outputs and bounded cleanup. The driver rechecks
+actual inputs before consumption and after cleanup; it uses the canonical shared
+ledger and existing bridge/container/process/result components. One initial
+attempt, no automatic retry/resume, account reset, snapshot restore, scheduler
+change, scan or fault. Unknown cleanup/baseline or interrupted state halts for
+separately reviewed recovery. No report/JSON fabrication may fill missing proof.
+Controlled launch/build provenance is a reviewed trust boundary, not a kernel
+memory attestation or protection against malicious same-user/administrator code.
 
 ## Mandatory partial-pass investigation
 

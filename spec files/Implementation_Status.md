@@ -269,9 +269,9 @@ contract, validated against one unconsumed opened journal case. Its proposed mou
 keep source/root read-only and expose separate private evidence and only two Staff
 credential files, with no credential value reads during preparation. Nine synthetic
 transport tests cover stale scope, slot/budget/state, private paths, forbidden
-config fallthrough and offline/live distinction. Live locking, target-version proof,
-durable action consumption and recovery supervision remain absent; the legacy
-runner rejects the new config. New-config live execution and all live cards remain blocked. No new case result
+config fallthrough and offline/live distinction. The legacy runner still rejects
+the new config; only the narrow pilot entry below adds gated live integration.
+Other live cases remain blocked. No new case result
 is claimed. See [adapter preparation](../docs/qa/Automation_Readiness.md). Review-only `investigate`
 queues now retain human partials for mandatory evidence/issue triage and reject
 product case opening. The [partial-pass register](../docs/qa/Partial_Pass_Investigations.md)
@@ -283,7 +283,8 @@ separate start grant, cooperative lab UUID lock, private atomic/fsynced ledger,
 durable pre-dispatch consumption, persistent batch budgets/replay rejection and
 halted interruption/cleanup states. Sixteen synthetic-driver regressions include
 proof drift, prior-offline-result rejection, failures and no secret exception
-persistence. No production driver/live entry exists. Actual deployment/controller
+persistence. The core has no default driver; the narrow pilot entry is described
+below. Actual deployment/controller
 proof and full production process/parser/recovery integration remain pending;
 elapsed checks cannot interrupt a hanging
 Python callback. This does not authorize or demonstrate live case execution.
@@ -294,7 +295,7 @@ bounds time/output, preserves private non-overwriting logs, cancels its owned
 POSIX group and halts on uncertain cleanup. The parser validates one reviewed
 permission attempt/configuration and copies only fixed item observations; it
 requires full PASS and cleanup evidence, otherwise preserves INCONCLUSIVE.
-Neither is connected to a production driver. Actual running frontend/backend
+Their narrow pilot wiring is described below; broader running frontend/backend
 revision proof, inherited controller/driver wiring, bridge/container-ID lifecycle (daemon work
 can outlive its CLI), recovered baseline and live validation remain pending.
 
@@ -322,7 +323,8 @@ worker-reload defect that collection-only checks missed. Real Playwright IPC
 workers may see their private artifact directory after initial configuration;
 environment markers alone cannot allow evidence reuse. No page/browser, appliance
 or acceptance adapter executes in the worker fixture. The user prioritized a
-TC-SS-04 pilot today but explicitly kept preparation offline; no live run occurred.
+TC-SS-04 pilot today, later authorizing appliance setup and read-only inspection;
+no acceptance case ran. The narrow pilot entry is described below.
 
 `qa_bridge.py` now implements the owned private relay: consumed transport and
 retained host-lock binding, same-user peers, fixed loopback origin, bounded time/
@@ -335,8 +337,15 @@ stable public artifact/candidate-process observations. Six disposable Git/file/
 proc fixtures pass without SSH, real backend processes or an appliance. Observer
 runtime/served readiness stays false and verified running revision stays null:
 disk matches/start ordering alone cannot attest loaded code or actual served bytes.
-Live proof collection, trusted supervisor driver wiring, complete case cards and
-actual session/baseline recovery remain pending. No live entry is enabled.
+The narrow `qa_pilot.py` integration now composes these components for TC-SS-04
+only. Eleven isolated driver/proof/gate contracts and read-only actual appliance
+inspection pass; 455 source files and 2383 installed runtime files are bound to
+the reviewed controlled deployment. Inspection launches no browser/container.
+A complete source-bound card and separate explicit start gate its one initial
+attempt. Actual browser/container execution and post-case session/baseline cleanup
+remain unverified until that supervised pilot; broader/unattended coverage stays
+blocked. Controlled launch/build provenance is a trust boundary, not memory
+attestation. The standalone observer's negative readiness fields are unchanged.
 
 The [historical evidence inventory/review](../docs/qa/Historical_Evidence_Review.md)
 links 41 post-cutoff-directory-date reports and six partial current-case mappings.

@@ -1,7 +1,7 @@
 # AI automated testing readiness plan
 
 Date: 2026-10-18 (Asia/Manila)
-State: Implementation in progress — appliance prepared; acceptance launcher/card pending (#206)
+State: Narrow pilot driver/card and read-only preflight complete; explicit acceptance start pending (#206)
 Tracking issue: [#206](https://github.com/esfen14/Pinpoint/issues/206); issue-scoped progress is [issue-206.md](issue-206.md).
 Current authorization: implement readiness tooling in the isolated issue checkout.
 The later user instruction authorized access to the exclusive local VirtualBox
@@ -24,12 +24,13 @@ claim that the product passes or that every case can run without human involveme
 - [x] Implement/test concrete pinned-image container creation, identity/isolation verification, bounded attach and owned-resource removal/absence with durable intent and consumed-transport binding (16 synthetic contracts); fix worker config reload using 7 offline frontend helper checks.
 - [x] Implement and fixture-test the owned private bridge (11 Unix-only contracts), container custody integration (16 contracts) and standalone Git/artifact/process observer (6 contracts); observed disk/process facts remain separate from actual running/served identity.
 - [x] Complete authorized appliance setup: consistent verified backups, exact-target build/deployment/migrations, Staff initialization and served-artifact checks; disclose startup scan and preserve temporary scheduler pause.
-- [ ] Connect and prove the production supervisor driver: actual ownership/deployment/baseline receipts, inherited controller/driver wiring, bounded process-tree cancellation, sanitized result parsing and verified live cleanup/recovery.
-- [ ] Every selected case has an unambiguous expectation, executor, environment, prerequisites, evidence and restoration procedure.
-- [ ] Every selected case maps to a specific tool/spec/project, fixture, assertion and evidence output using the reviewed testing stack.
+- [x] Integrate the narrow TC-SS-04 production driver, controlled launch/build provenance and fresh actual proof checks; pass eleven composed contracts and supported read-only inspection.
+- [ ] Prove actual browser/container execution and session/resource/baseline cleanup in the explicitly started pilot; broader/unattended integration remains open.
+- [x] The selected initial TC-SS-04 pilot has an unambiguous expectation, executor, observed prerequisites, evidence paths and written cleanup/stop procedure.
+- [x] TC-SS-04 maps to its exact reviewed tool/spec/project/title/assertion and private evidence output; other case mappings remain separately pending.
 - [ ] Historical runs have been mapped to current expectations with linked evidence, an agreed cutoff and a version/impact check; only uncovered or invalidated coverage enters the new-execution queue.
 - [ ] The selected lab and automation tools enforce the approved boundaries and fail closed when those boundaries cannot be proved.
-- [ ] A reviewed pilot queue is ready, with its outstanding human decisions clearly shown.
+- [x] The complete v4 one-case pilot queue/card is ready for its first supervised attempt; separate user start is pending, actual live cleanup unverified.
 - [ ] After a separate explicit start, the pilot demonstrates execution, reporting, failure handling and verified restoration.
 - [ ] Unattended testing is enabled only for cases with deterministic execution and recovery; remaining cases stay explicitly human-assisted or blocked.
 
@@ -118,17 +119,19 @@ that proposal if this choice is approved; it is not automatically superseded.
 ### Tool-readiness tasks before the pilot
 
 - [ ] Confirm this stack during plan review and freeze the runtime/browser/container versions used; package declarations alone do not prove the runtime is installed or the lab is ready.
-- [ ] Verify Docker, VirtualBox where needed, Node/Python, `socat`, Chromium system libraries, private credential files and the Unix-socket bridge during an authorized environment preflight.
+- [x] Verify actual VirtualBox/Node/Python, private credentials, Docker image availability and pinned cached Chromium binary during authorized read-only preflight. The pilot uses the owned bridge and Node proxy, with no socat dependency.
+- [ ] Prove actual container Chromium/library loading and owned Unix bridge/resource/session cleanup during the explicitly started pilot.
 - [ ] Add a case-to-tool/spec/project mapping for every selected ID, including required fixtures, assertion method, evidence output and cleanup. Record reuse rather than claiming every existing spec covers the new case in full.
 - [x] Bind reviewed source mappings/cards to exact file, title, project, config and command; reject unmapped/partial or stale mappings. Offline collection proves one-case/five-case selection with no old setup projects.
 - [x] Add an offline queue/journal-bound transport preview with exact selection, private non-overwriting evidence mounts, read-only source/root, minimal Staff credential exposure and rejected legacy launch fallthrough.
 - [x] Implement and test the driver-independent supervisor lifecycle: bound separate grant, cooperative lab lock, fresh receipt validation, fsynced consumption, persistent budgets and halted failures.
-- [ ] Connect the production no-network driver with actual ownership/target/preflight proof, inherited controller/driver wiring, bounded cancellation and verified recovery. A JSON-only offline transport preview now carries the environment/mount contract; complete driver lock wiring, deployed-version proof, live action consumption and recovery supervision remain pending.
+- [x] Connect the narrow no-network pilot driver, actual controlled baseline/served proof, inherited host claim, durable consumption, cancellation/result/cleanup wiring; retain no automatic retry/resume.
+- [ ] Validate actual container/browser operation and recovery in the explicit pilot; extend other case types only after reviewed mappings.
 - [x] Add a dedicated current-case configuration with one worker, zero retries even under CI, no setup dependencies and no default selection; verify with offline collection.
 - [ ] Prove the reviewed live launcher preserves those limits and separate diagnostic attempts; the legacy config still has different retry behavior and is not inherited by this adapter configuration.
 - [ ] Persist unique run-specific JSON/download/journal outputs before reset or another launch; the current single `playwright-results.json` path must not overwrite earlier run evidence.
 - [ ] Keep login trace/video/screenshot capture disabled. Capture only authorized non-secret evidence after login, sanitize reports and never publish raw auth state or credential-bearing artifacts.
-- [ ] Prove fixture/recovery and runner failure handling with isolated self-tests before approved live pilot use. Mark human-dependent or unmapped cases blocked instead of switching to an unreviewed tool.
+- [x] Prove narrow pilot fixture/runner/cleanup failure handling with eleven isolated composed-driver contracts before approved live use. Mark human-dependent or unmapped cases blocked instead of switching to an unreviewed tool.
 
 ## Plan
 
@@ -221,7 +224,7 @@ document this contract. Queue preparation and offline validation are implemented
 - [x] Partition each set into fixed ordered batches of at most five ordinary TC IDs. Isolate every E2E, disruptive/fault, fresh-appliance or long case in a single-case batch, following catalog phases.
 - [x] Enforce a five-batch limit in persisted offline journals, consuming budget on opening a batch and rejecting reuse/sixth batches. Isolated tests include five actual blocked batches.
 - [ ] Prove interruption/handoff/context-reset and explicit-resume behavior in live orchestration; offline journals alone cannot prevent a model with arbitrary file access from creating another journal.
-- [ ] Make execution cards complete before start: source/target versions, exact steps and E1/E2/... expectations, observed prerequisites, tool/spec/command/target allowlist, permitted outputs, bounded timeouts/repeat policy, evidence and recovery.
+- [x] Make the selected TC-SS-04 execution card complete before start: source/target versions, exact steps and E1/E2/... expectations, observed prerequisites, tool/spec/command/target allowlist, permitted outputs, bounded timeouts/repeat policy, evidence and recovery.
 - [x] Document the executor's prohibition on product/test/scope edits; offline validation rejects changed adapters, missing cards and out-of-order actions.
 - [ ] Enforce and prove that separation in the live launcher/process permissions; documented restrictions and content hashes are not an OS sandbox.
 - [x] Add offline machine validation for queue identity/schema, owner/start attestations, card/adapter hashes, exact action argv slots, ordered batch budgets, evidence completeness and cleanup halts.
@@ -242,7 +245,8 @@ of the model's reasoning ability. No agent delegation is started by this plan.
 - [x] Remove the retired-renderer/mandatory-ISO dependency; support module selectors and explicit IDs with owners and exclusion reasons in queue v2. Run-phase metadata controls catalog order and singleton batching.
 - [ ] Add an explicit phase selector if required; the CLI currently accepts module/case selectors only. Optional ISO tags still need a reviewed mapping.
 - [x] Implement queue v2 JSON/Markdown previews with owner/module assignments, immutable batches, source snapshots and optional execution cards; reject legacy JSON. Offline session journals track batch budgets.
-- [ ] Complete selected-case execution cards/allowlists and live session/resume enforcement; a valid queue with empty cards remains blocked.
+- [x] Complete the selected TC-SS-04 card/allowlist and initial-attempt start/consumption path; all older empty-card drafts stay superseded/blocked.
+- [ ] Prove actual live session cleanup and interruption/recovery before extending resume support; no automatic resume exists.
 - [x] Select pending cases using preserved source results and the reviewed historical evidence map. Exclude accepted unchanged historical coverage as well as PASS/FAIL/partial/conflicted entries by default, except explicitly allowed rechecks or verified merged-fix retests. Revalidate reuse decisions against the target revision before selection/start.
 - [x] Reject duplicate names/assignments, unknown or ineligible IDs and empty selections. Never silently substitute cases, add dependencies or broaden a set.
 - [x] Snapshot source/target revisions, hashes, full case definitions, global dependencies, original results and supplied execution metadata into immutable queue scope.
@@ -292,9 +296,11 @@ Files: report template/rules, result helpers/schema if needed, workflow and test
 
 - [ ] Confirm exclusive ownership of the disposable appliance and targets, capacity, endpoints, versions and a restoration baseline; keep shared-environment reservations separate from queue assignment.
 - [ ] Choose VM versus isolated Docker per selected case. Do not substitute Docker for installer/systemd/NCPA requirements it cannot prove; do not use the forbidden libvirt harness.
-- [ ] Verify VM controller/UUID/runtime endpoint identity through existing preflight. Prove restoration through the actual SSH/HTTP endpoints; snapshot command success alone is insufficient.
+- [x] Verify actual VM/controller/UUID/runtime forwarding through host preflight and controlled deployed target through SSH/HTTP.
+- [ ] Prove restoration through actual SSH/HTTP endpoints for cases that need it; no snapshot restore was performed or authorized for this permission pilot.
 - [ ] Identify baseline/setup profiles for fresh first-run tests, normal configured tests, seeded-history cases and E2E. Avoid completing first-run setup before a case that must test it.
-- [ ] Provision disposable Super Admin, Staff and limited-permission roles through supported setup paths when authorized. Keep credentials private, isolated and invalidated/recreated after restores; no fallback personal credentials.
+- [x] Provision and initialize the disposable zero-permission Staff user through supported setup paths; close its setup sessions.
+- [ ] Provision additional Super Admin/limited-permission fixtures for other cases when authorized. Keep credentials private, isolated and invalidated/recreated after restores; no fallback personal credentials.
 - [ ] Verify browser installation/pins, account/session isolation and existing `scripts/playwright-lab` network restrictions. Live credentials must remain within the documented isolated runner, with one worker and no broader egress.
 - [ ] Validate selected discovery networks against `10.77.0.0/28` and prohibit overlapping scans. The separate DHCP acceptance exception is not authorization for this suite.
 - [ ] Before any unattended scan, implement/prove an enforced guard at scan start that cannot race with configuration changes. A manual read-back alone leaves unattended scan cases blocked; record scan-code scope and applicable backend/data/security specifications before implementation.
@@ -322,7 +328,8 @@ Expected output: executable coverage and recovery for the reviewed subset, with 
 
 ### 8. Review and start a pilot, then expand
 
-- [ ] Choose a small representative pilot after eligibility/environment review: a safe browser flow, a permission/negative case and a reversible state change. Name exact IDs only after confirming prerequisites and result history.
+- [x] Choose TC-SS-04 as the initial safe permission/browser pilot after eligibility/environment review; exact one-case v4 scope excludes inherited PASS reruns.
+- [ ] Expand representative coverage to a reversible state change and other journeys only after initial pilot review and separately reviewed scope.
 - [ ] Prepare its fixed queue with owner/module mapping, ordered batches and exact tool/spec/command selections; show full cases, prior human results, selection reasons, executor, setup, evidence, restoration, timeouts and remaining decisions.
 - [ ] Obtain an explicit start for that queue/set. A go signal to implement this readiness plan does not automatically start product testing.
 - [ ] Execute the pilot, retain failures, verify cleanup and publish only authorized sanitized report/index/queue updates. Address harness defects separately from product defects.
@@ -366,9 +373,9 @@ execution and missing mandatory evidence block the affected cases.
 
 ## State for the next session
 
-- The appliance now runs target `299ab3b` after controlled deployment/restart; initialized Staff has zero permissions. Raw evidence and a verified backup are private. The scheduler is temporarily off; reboot invalidates the baseline.
-- Latest completed offline checks remain 165 isolated contracts. The actual target frontend build, dependency check and both database migrations/integrity checks passed during approved setup. Report-only docs verification is recorded in the latest checkpoint below; no local backend suite or unchanged frontend suite is repeated.
-- Next action: integrate trusted pilot driver, fresh runtime/baseline proof and session recovery, then complete/review the TC-SS-04 execution card and obtain explicit test start. No acceptance case has run; no VM-setup approval question is pending.
+- Narrow pilot driver/card and actual supported read-only inspection are complete; docs gate passes 176 isolated contracts. No local backend or unchanged frontend suite rerun. No acceptance case/batch/browser/container/bridge started.
+- Next action: obtain explicit user start for `docs/qa/queues/2026-10-18-today-ss04-v4.json`, set `today-ss04`, Paeng, one initial TC-SS-04 attempt. Only then write the matching affirmative expiring private grant and execute its exact launcher command. Preserve false template until actual approval.
+- After that attempt, verify actual session/container/bridge/baseline cleanup and publish a separate acceptance report; stop on uncertainty or INCONCLUSIVE, with no automatic repeat, reset, restore, scheduler enable or alternate browser/tool. The VM remains running with scheduler off and private backup retained; reboot invalidates baseline.
 
 ## Decisions and notes
 
@@ -401,7 +408,8 @@ question is pending. See the [preparation report](../../docs/test-runs/2026-10-1
 - [x] Create/initialize disposable Staff through supported APIs with zero permissions; close and verify both setup sessions.
 - [x] Disclose the automatic scan after boot (06:39:54–06:40:05 UTC) before pause; disable the serving scheduler with a temporary runtime environment override. Keep persisted configuration unchanged and record that reboot invalidates this baseline.
 - [x] Record preparation evidence, index and queue log; keep TC-SS-04 Not run (0 attempts, 0 batches), preserve human verdicts.
-- [ ] Integrate the trusted driver and fresh runtime/baseline/session-recovery proof; complete/review the pilot card, then obtain explicit acceptance start.
+- [x] Integrate the narrow trusted driver and fresh runtime/baseline observations; complete/review the pilot card (see the later driver checkpoint).
+- [ ] Obtain explicit acceptance start and verify actual browser/container/session cleanup in the pilot.
 
 Private evidence: `/home/paeng/pinpoint-test-results/2026-10-18-issue-206-preparation`.
 Guest backup: `/var/backups/pinpoint/qa-20261018-299ab3b`. The original administrator
@@ -419,3 +427,24 @@ v3 `today-ss04` source check passed and `git diff --check` passed. Prior head
 `04f317e9` passed all CI jobs in run 39103841594; new checkpoint CI is separate.
 No local backend suite or unchanged frontend suite is required; the actual target's
 frontend build and dependency/migration checks passed during approved deployment.
+
+## Narrow pilot driver checkpoint (2026-10-18)
+
+- [x] Compose supervisor/host claim, owned bridge/container, independent bounded process/recovery runners and strict report parser for TC-SS-04 only; no implicit retry/resume or product/setup repair.
+- [x] Add private reviewed controlled-deployment/build baseline, fixed read-only guest probe, actual served-byte checks and local image/browser fingerprints. Bind 455 target source files, 2383 installed runtime files, configuration, boot/process identities, Staff and scheduler/network/scan state. Standalone observer readiness remains negative; independent controlled provenance is required.
+- [x] Add supported read-only `inspect` and separately start-gated `run` CLI. Validate exact source-current one-case owner/scope, baseline/image pins, private disjoint writes and separate matching expiring start before inspection/output/transport work. Use canonical per-user durable pilot ledger; halt on uncertain cleanup.
+- [x] Pass eleven synthetic composed-driver/proof/gate contracts and actual supported read-only inspection; demonstrate false-start CLI denial with all reserved acceptance outputs still empty.
+- [x] Prepare complete [v4 card](../../docs/qa/queues/2026-10-18-today-ss04-v4.md) and immutable JSON; v3 is superseded, never started. E1 is sidebar absence plus redirect to Settings; one initial attempt, 300-second case envelope, 30-second cleanup, exact adapter selection, no scans/faults/restarts/resets/account changes or diagnostic repeat.
+- [x] Save/index the [driver preflight report](../../docs/test-runs/2026-10-18-issue-206-pilot-driver-preflight/REPORT.md), queue log and private evidence; pass `scripts/verify.sh docs` (176 isolated contracts), source/link/progress/whitespace checks. No local backend or unchanged frontend suite.
+- [ ] Obtain the user's explicit start for v4 `today-ss04`, Paeng; only then create the matching affirmative expiring private start record. Current template is false/expired. No acceptance case, batch, browser, container or bridge started.
+- [ ] Perform first supervised TC-SS-04 attempt, verify actual session/container/bridge/baseline cleanup and publish a separate attributable acceptance report. INCONCLUSIVE is not product FAIL; uncertain restoration halts.
+
+Actual read-only inspection uses SSH, public HTTP and Docker **image inspection**,
+without starting Docker containers or browsers. Positive fresh observation fields
+are not human authorization or acceptance evidence. Controlled launch/build
+provenance is a reviewed trust boundary, not in-memory/kernel attestation. Existing
+scheduler-off baseline, backup and automatic startup-scan disclosure remain intact.
+Private baseline/inspection evidence is under the earlier preparation evidence
+root's `pilot-runtime-proof/`; reserved case evidence/control/bridge paths remain
+empty. Do not remove the shared lock/ledger, recreate an interrupted output path,
+re-enable schedules, change assertions or bypass the launcher with manual argv.

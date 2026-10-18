@@ -6,15 +6,16 @@ User confirmed the local VirtualBox appliance is exclusively available.
 ## Finish condition
 
 - [x] Choose one untested case with an existing source-reviewed adapter: TC-SS-04.
-- [x] Prepare and show fixed one-case scope: `docs/qa/queues/2026-10-18-today-ss04-v3.json`, set `today-ss04`, owner Paeng.
+- [x] Prepare and show fixed one-case scope: `docs/qa/queues/2026-10-18-today-ss04-v4.json`, set `today-ss04`, owner Paeng.
 - [x] Obtain explicit user authorization for appliance preflight and subsequent backup/deployment/migration/restart/Staff setup.
 - [x] Verify actual VM/controller/endpoints; deploy/restart exact target, match tracked source and all served build artifacts, initialize Staff and verify local runner image availability.
-- [ ] Bind fresh backend runtime/baseline/session-recovery proof into the trusted execution driver; setup observations and Git HEAD alone are not supervisor receipts.
+- [x] Bind fresh actual host/guest/source/config/runtime/Staff/served proof to the independently reviewed controlled launch/build record; require adapter logout and fresh post-case proof. Actual post-case cleanup is still unverified.
 - [x] Implement concrete container lifecycle with 16 synthetic contracts and fix Playwright worker reload with 7 offline helper checks. No acceptance case or browser executes in these fixtures.
 - [x] Implement the owned private bridge and container custody checks (11 Unix-only/16 container contracts), plus read-only Git/artifact/process observations (6 fixture contracts). Observer output is not verified runtime identity.
-- [ ] Complete only the launcher/identity/cleanup controls needed for this permission pilot; verify them offline. The broader unattended framework and unmapped cases are not prerequisites for implementing this narrow lane.
-- [ ] Produce a complete execution card with the observed environment/version, exact bounded Playwright selection, private evidence and session/container/bridge cleanup.
-- [ ] Show the final executable scope and obtain an explicit start covering the test and its actual operations. Read-only preflight approval is not approval to launch a case or change setup.
+- [x] Complete the narrow pilot launcher/identity/cleanup wiring and eleven isolated integration contracts; pass supported actual read-only inspection. The broader unattended framework and unmapped cases are not prerequisites for implementing this narrow lane.
+- [x] Produce a complete execution card with the observed environment/version, exact bounded Playwright selection, private evidence and session/container/bridge cleanup.
+- [x] Publish the final v4 executable scope/card with observed baseline and exact command.
+- [ ] Obtain explicit user start for v4 `today-ss04`; preparation/inspection approval does not launch acceptance.
 - [ ] Execute TC-SS-04, save an attributable PASS/FAIL/INCONCLUSIVE/BLOCKED report and prove cleanup; preserve the original human Result field.
 - [x] Save/index the appliance preparation report, queue log and checklist, including automatic startup scan and temporary scheduler pause.
 - [ ] Save/index the actual acceptance result and pass its docs gate after an explicit test start.
@@ -30,25 +31,17 @@ Target `299ab3ba7203c89a3ca5d8fabea42d9e5f239be2`, the user's original checkout
 revision, is now deployed after the approved build/migration/restart. This is not
 a tested acceptance revision or a fresh supervisor proof receipt. The readiness
 branch freezes its source adapter/helper/configuration hashes separately.
-The generated queue currently has no complete execution card and remains blocked.
+The v4 card is complete for one initial supervised attempt; explicit acceptance start is pending.
 Existing human PASS cases are excluded. The later explicit setup approval covered backup, deployment, dependency/build/migration
 work, restart and disposable Staff initialization. It did not authorize acceptance,
 fault injection, snapshot restore or scan starts. The automatic startup scan and
 scheduler pause are disclosed below.
 
-## Current state
+## State for the next session
 
-Authorized appliance setup is complete. Target `299ab3b` is deployed; both databases
-are migrated and pass integrity checks; the disposable Staff user has zero permissions
-and no pending setup/password change. Both setup sessions were closed. The VM is
-running with its scheduler temporarily disabled. A startup automatic scan occurred
-before the pause and is disclosed; no acceptance case was executed.
-
-No approval question is pending. Remaining preparation is the trusted driver and
-fresh runtime/baseline/session-recovery proof, followed by a complete reviewed card
-and a separate explicit test start. Never copy transport previews or use a host
-browser to bypass the missing integration. Earlier offline-only statements below
-are historical checkpoints, superseded for the approved setup operations.
+- Narrow pilot driver/card and actual supported read-only inspection are complete; docs gate passes 176 isolated contracts. No local backend or unchanged frontend suite rerun. No acceptance case/batch/browser/container/bridge started.
+- Next action: obtain explicit user start for `docs/qa/queues/2026-10-18-today-ss04-v4.json`, set `today-ss04`, Paeng, one initial TC-SS-04 attempt. Only then write the matching affirmative expiring private grant and execute its exact launcher command. Preserve false template until actual approval.
+- After that attempt, verify actual session/container/bridge/baseline cleanup and publish a separate acceptance report; stop on uncertainty or INCONCLUSIVE, with no automatic repeat, reset, restore, scheduler enable or alternate browser/tool. The VM remains running with scheduler off and private backup retained; reboot invalidates baseline.
 
 ## Current offline implementation
 
@@ -105,7 +98,8 @@ question is pending. See the [preparation report](../../docs/test-runs/2026-10-1
 - [x] Create/initialize disposable Staff through supported APIs with zero permissions; close and verify both setup sessions.
 - [x] Disclose the automatic scan after boot (06:39:54–06:40:05 UTC) before pause; disable the serving scheduler with a temporary runtime environment override. Keep persisted configuration unchanged and record that reboot invalidates this baseline.
 - [x] Record preparation evidence, index and queue log; keep TC-SS-04 Not run (0 attempts, 0 batches), preserve human verdicts.
-- [ ] Integrate the trusted driver and fresh runtime/baseline/session-recovery proof; complete/review the pilot card, then obtain explicit acceptance start.
+- [x] Integrate the narrow trusted driver and fresh runtime/baseline observations; complete/review the pilot card (see the later driver checkpoint).
+- [ ] Obtain explicit acceptance start and verify actual browser/container/session cleanup in the pilot.
 
 Private evidence: `/home/paeng/pinpoint-test-results/2026-10-18-issue-206-preparation`.
 Guest backup: `/var/backups/pinpoint/qa-20261018-299ab3b`. The original administrator
@@ -123,3 +117,24 @@ v3 `today-ss04` source check passed and `git diff --check` passed. Prior head
 `04f317e9` passed all CI jobs in run 39103841594; new checkpoint CI is separate.
 No local backend suite or unchanged frontend suite is required; the actual target's
 frontend build and dependency/migration checks passed during approved deployment.
+
+## Narrow pilot driver checkpoint (2026-10-18)
+
+- [x] Compose supervisor/host claim, owned bridge/container, independent bounded process/recovery runners and strict report parser for TC-SS-04 only; no implicit retry/resume or product/setup repair.
+- [x] Add private reviewed controlled-deployment/build baseline, fixed read-only guest probe, actual served-byte checks and local image/browser fingerprints. Bind 455 target source files, 2383 installed runtime files, configuration, boot/process identities, Staff and scheduler/network/scan state. Standalone observer readiness remains negative; independent controlled provenance is required.
+- [x] Add supported read-only `inspect` and separately start-gated `run` CLI. Validate exact source-current one-case owner/scope, baseline/image pins, private disjoint writes and separate matching expiring start before inspection/output/transport work. Use canonical per-user durable pilot ledger; halt on uncertain cleanup.
+- [x] Pass eleven synthetic composed-driver/proof/gate contracts and actual supported read-only inspection; demonstrate false-start CLI denial with all reserved acceptance outputs still empty.
+- [x] Prepare complete [v4 card](../../docs/qa/queues/2026-10-18-today-ss04-v4.md) and immutable JSON; v3 is superseded, never started. E1 is sidebar absence plus redirect to Settings; one initial attempt, 300-second case envelope, 30-second cleanup, exact adapter selection, no scans/faults/restarts/resets/account changes or diagnostic repeat.
+- [x] Save/index the [driver preflight report](../../docs/test-runs/2026-10-18-issue-206-pilot-driver-preflight/REPORT.md), queue log and private evidence; pass `scripts/verify.sh docs` (176 isolated contracts), source/link/progress/whitespace checks. No local backend or unchanged frontend suite.
+- [ ] Obtain the user's explicit start for v4 `today-ss04`, Paeng; only then create the matching affirmative expiring private start record. Current template is false/expired. No acceptance case, batch, browser, container or bridge started.
+- [ ] Perform first supervised TC-SS-04 attempt, verify actual session/container/bridge/baseline cleanup and publish a separate attributable acceptance report. INCONCLUSIVE is not product FAIL; uncertain restoration halts.
+
+Actual read-only inspection uses SSH, public HTTP and Docker **image inspection**,
+without starting Docker containers or browsers. Positive fresh observation fields
+are not human authorization or acceptance evidence. Controlled launch/build
+provenance is a reviewed trust boundary, not in-memory/kernel attestation. Existing
+scheduler-off baseline, backup and automatic startup-scan disclosure remain intact.
+Private baseline/inspection evidence is under the earlier preparation evidence
+root's `pilot-runtime-proof/`; reserved case evidence/control/bridge paths remain
+empty. Do not remove the shared lock/ledger, recreate an interrupted output path,
+re-enable schedules, change assertions or bypass the launcher with manual argv.

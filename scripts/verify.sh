@@ -47,6 +47,8 @@ docs() {
   echo "==> docs: owned private bridge and read-only deployment observations (fixtures only)"
   python3 -I "$root/scripts/test_qa_bridge.py"
   python3 -I "$root/scripts/test_qa_deployment.py"
+  echo "==> docs: composed pilot driver (isolated observers/resources only)"
+  python3 -I "$root/scripts/test_qa_pilot.py"
   echo "==> docs: VM control and endpoint ownership safety"
   python3 -I "$root/scripts/test_qa_control.py"
   python3 -I "$root/scripts/test_vmlab_preflight.py"

@@ -107,7 +107,7 @@ execute only the approved selection and persist result/cleanup evidence. An offl
 journal's attestation cannot substitute for these checks. Preview metadata may
 contain local private paths; keep it outside committed evidence.
 
-No live card is complete yet. Actual account readiness, target revision, lab claim,
+The reviewed TC-SS-04 card is the narrow exception described below. Account readiness, target revision, lab claim,
 preflight, output lifetime, interruption/recovery and set start must be reviewed and
 proved. Browser hooks may fail because a fixture is unavailable; that is not proof
 of a product permission defect. E1 alone cannot pass a case if cleanup failed.
@@ -126,8 +126,8 @@ selection/private paths. They are harness checks, not live acceptance evidence.
 
 ## Supervisor lifecycle core
 
-`scripts/qa_supervisor.py` provides an importable lifecycle core with **no live
-command entry and no production driver**. Isolated tests supply a synthetic driver;
+`scripts/qa_supervisor.py` provides an importable core with no default driver.
+The narrow `qa_pilot.py` caller is described below. Isolated core tests supply a synthetic driver;
 none of these tests accesses Docker, SSH, sockets, a browser or an appliance.
 
 The core requires a separate reviewed `supervised live` start grant bound to queue
@@ -225,10 +225,9 @@ structured product failures will need reviewed adapter changes and their own
 regressions. Nine synthetic-report tests validate parsing; they are not runtime
 acceptance results.
 
-These components are not yet wired to a production supervisor driver. Running
-application/frontend revision proof, private bridge and
-container lifecycle, real cleanup/recovery and explicitly reviewed live cards
-remain pending. No live entry is enabled by their presence.
+These components are now wired through the narrow pilot entry below. Their
+isolated tests do not prove actual browser/container execution or post-case
+session/baseline cleanup; those remain pending the explicitly started pilot.
 
 ## Shared host controller claim and structured observations
 
@@ -332,9 +331,9 @@ selection/collection/worker checks; the worker fixture requests no page/browser,
 imports no acceptance spec and produces no current-case result.
 
 The same-day pilot scope is TC-SS-04 only, with no inherited human PASS reruns.
-The user chose continued offline preparation. Real running frontend/backend
-identity, bridge integration, initialized Staff baseline, complete live card and
-an explicit named start are still needed; no claim that the pilot ran is made.
+The later authorized appliance preparation deployed the exact target and
+initialized Staff. The narrow driver and complete pilot card now use that reviewed
+baseline. A separate explicit acceptance start is still needed; no pilot ran.
 
 ## Owned bridge and read-only deployment observations
 
@@ -389,5 +388,28 @@ Even a full disk match reports `runtime_identity_verified: false`,
 `live_authorized: false`. Actual served frontend bytes, trusted backend launch/
 import identity, dependency/configuration and baseline/session recovery still
 need independently collected live proof. Never fill those fields from Git HEAD,
-disk hashes or an observer result alone. The pilot remains blocked pending that
-integration, observed prerequisites, a complete card and explicit named start.
+disk hashes or an observer result alone. The narrow pilot integration below adds
+independent controlled launch/build provenance and fresh actual observations.
+Acceptance remains pending an explicit named start.
+
+## Narrow pilot launcher
+
+`qa_pilot.py inspect --baseline <private-record> --control-dir <fresh-private-dir>`
+checks the reviewed controlled launch/build record against fresh host/guest/source/
+configuration/dependency/Staff/served-byte observations, plus cached image/browser
+pins. It sends fixed read-only code over bounded SSH and returns no secrets. The
+standalone observer remains negative; the independent controlled deployment record
+is necessary. Source/config/runtime inputs must precede the recorded process launch;
+current file stamps, boot and master/worker identities must stay unchanged.
+
+`qa_pilot.py run` requires the exact source-current one-case queue, private baseline
+checksum, initialized credential state, bounded private outputs and a separately
+reviewed explicit start/expiry. No start record means no inspection, bridge or
+container work. Canonical shared ledger consumption precedes the actual attempt.
+Container removal, bridge shutdown, browser logout evidence and fresh baseline
+checks are all required; any uncertainty halts without retry/reset/restore.
+
+The first real browser/container attempt remains pending. Passing isolated driver
+contracts or read-only inspection is not live cleanup validation or an acceptance
+PASS. Broader/unattended cases stay blocked. The one-case initial pilot permits no
+diagnostic repeat; a later attempt/recovery needs separately reviewed scope.

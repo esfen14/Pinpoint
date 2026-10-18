@@ -217,19 +217,18 @@ reports. App/spec conflicts remain decisions, not automatic passes.
   evidence, and only two Staff credential mounts. Metadata checks never read
   credential values. Invalid/stale journals, private paths, used slots or draft
   cards reject the preview. The legacy runner rejects the current-case config
-  before private-state/socket/Docker work. Live locking, deployed-version proof,
-  slot consumption, dispatch and recovery remain pending; executing printed argv
+  before private-state/socket/Docker work. The narrow pilot below adds locking,
+  fresh identity checks and composed dispatch; executing printed argv
   manually is not a supported workflow or authorization.
-- **Supervisor lifecycle core:** `scripts/qa_supervisor.py` has no live CLI or
-  production driver. A separately bound explicit start/expiry, cooperative UUID
+- **Supervisor lifecycle core:** `scripts/qa_supervisor.py` has no default driver or
+  CLI of its own; the narrow pilot caller is described below. A separately bound explicit start/expiry, cooperative UUID
   lock, fresh matching runtime-driver receipts and durable fsynced running entry
   precede driver invocation. Restart/replay, missing supervised prior results and
   exhausted persisted budgets block. Cancellation/cleanup/proof/result failures
   persist a lab halt; validated restored FAIL remains FAIL. The existing item
   validator checks returned evidence. Synthetic-driver tests prove lifecycle
-  sequencing only. Production proof acquisition, bounded process-tree termination,
-  complete controller/driver integration, parsing/sanitization and verified recovery
-  remain pending. Never treat offline receipts or callbacks as live proof.
+  sequencing only. The narrow pilot composes these controls; actual browser/container
+  execution and post-case recovery validation remain pending. Never treat offline receipts or callbacks as live proof.
 - **Runtime components:** `qa_process.py` runs only explicitly allowlisted trusted
   executables with reviewed argv, a restricted environment, bounded private output,
   time limits and POSIX-group TERM/KILL/direct-child reaping. Uncertain cleanup
@@ -239,8 +238,8 @@ reports. App/spec conflicts remain decisions, not automatic passes.
   Only reviewed observation text is copied; incomplete/failed browser execution
   without failed-item evidence is INCONCLUSIVE. The transport bootstrap uses
   `umask 077`. Eight local-process and nine synthetic-report tests prove component
-  contracts only. Production identity, container lifecycle, inherited controller lock wiring and
-  verified recovery integration remain pending; no live command is exposed.
+  contracts only. The narrow pilot below supplies integration; actual browser/container
+  operation and post-case recovery still require the explicitly started pilot.
 - **Concrete container lifecycle component:** `qa_container.py` requires a held
   host/UUID claim, durable matching consumed transport digest, scope-bound approved
   image ID, empty private evidence and existing private bridge socket. Independent
@@ -267,6 +266,16 @@ reports. App/spec conflicts remain decisions, not automatic passes.
   All positive runtime/served/version authorization fields stay false/null;
   trusted launch/import identity and actual served frontend bytes are separate
   missing proof. No SSH/restart/network/default live entry is added.
+- **Narrow pilot integration:** `qa_pilot.py inspect` performs read-only checks;
+  `run` supports only one TC-SS-04 initial attempt behind source-bound card,
+  private reviewed controlled-deployment baseline and separate explicit start.
+  It composes the shared ledger, bridge/container/process/results components.
+  Fresh VM/boot/process/source/config/runtime/Staff/served-byte checks surround
+  execution; local image and browser pins are checked without launching them.
+  Missing proof, drift or uncertain session/resource cleanup halts. It never
+  restores, resets users, enables schedules, scans or retries. Launch/build
+  provenance is a reviewed trust boundary; disk or timestamp observations alone
+  cannot create it. Broader/unattended cases remain blocked.
 - **Partial-pass investigation:** Every catalog partial needs an evidence review,
   duplicate search, linked issue/disposition and next action in the
   [partial-pass register](../docs/qa/Partial_Pass_Investigations.md). The
