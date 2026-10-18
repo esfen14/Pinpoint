@@ -13,8 +13,8 @@ The original planning-only instruction was superseded by the user's go signal.
 This checklist defines readiness to execute the new black-box cases. It does not
 claim that the product passes or that every case can run without human involvement.
 
-- [ ] The new catalog, historical human results and new execution records have clear, validated ownership.
-- [ ] Queue preparation/checking and the documentation gate work against the new catalog without restoring retired inputs.
+- [x] The new catalog, historical human results and new execution records have clear, validated ownership.
+- [x] Queue preparation/checking and the documentation gate work against the new catalog without restoring retired inputs.
 - [ ] Every selected case has an unambiguous expectation, executor, environment, prerequisites, evidence and restoration procedure.
 - [ ] Every selected case maps to a specific tool/spec/project, fixture, assertion and evidence output using the reviewed testing stack.
 - [ ] Historical runs have been mapped to current expectations with linked evidence, an agreed cutoff and a version/impact check; only uncovered or invalidated coverage enters the new-execution queue.
@@ -37,7 +37,9 @@ claim that the product passes or that every case can run without human involveme
   OS sandbox. Live adapter completion, preflight, enforced scan guard, recovery/resume
   and pilot runs remain separate pending work.
 - Current/historical links and docs checks have migrated. `scripts/verify.sh docs`
-  is green. Read the issue progress for latest edge-case tests and publication state.
+  is green (66 isolated checks). Full local verification passed 4310 backend and
+  1003 frontend tests, build and lint (zero errors). [Draft PR #207](https://github.com/esfen14/Pinpoint/pull/207)
+  contains the offline milestone; final-head CI is checked separately.
 
 The original checklist below is intentionally retained. Only mark its broader
 items complete when the whole requirement (including live evidence where needed)
@@ -312,7 +314,7 @@ execution and missing mandatory evidence block the affected cases.
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
-| Offline implementation #206 | Parser/queues/evidence/session validation and documentation migration implemented in the isolated issue checkout | `scripts/verify.sh docs` and syntax/whitespace checks | Green; broad regression/PR still in progress; live readiness remains pending |
+| Offline implementation #206 | Parser/queues/evidence/session validation and documentation migration implemented in the isolated issue checkout | `scripts/verify.sh docs` and syntax/whitespace checks | Green: 4310 backend/1003 frontend plus build/lint; draft PR #207 published, final-head CI to inspect; live readiness remains pending |
 | Batch/guardrail documentation | Updated QA workflow/guide and owning specifications for owner/module assignments, up to 25 ordinary cases in five fixed batches, execution cards and explicit stop actions; added independent-enforcement tasks here | Nine fix-found contracts; one queue workflow contract; changed-document link/guardrail assertions; `git diff --check`; `scripts/verify.sh docs` | Focused checks passed; full docs gate still blocked by the same 11 legacy links. Documentation only; no implementation or live QA started |
 | Tool-stack planning | Added explicit tool-by-test-type matrix, AI execution flow, existing versus planned capability, exact selection, retry and artifact-isolation tasks | Plan local-link/tool-stack assertions and `git diff --check` | Passed; planning only, no implementation or test execution |
 | Evidence-reuse planning | Added provisional October 15 cutoff, case-to-report matching, version/impact review, separate reused-coverage totals and rerun triggers; no mapping accepted or case executed | Updated-plan local-link/policy assertions and `git diff --check` | Passed; planning only |
@@ -320,9 +322,10 @@ execution and missing mandatory evidence block the affected cases.
 
 ## State for the next session
 
-- Last check run: `scripts/verify.sh docs` (green, 65 isolated checks); `scripts/verify.sh all` is running in the isolated issue checkout.
-- Result: Offline catalog/queues/evidence/session validation and docs migration are implemented. See issue-206 progress for final regression/PR state. No live cases have been executed.
-- Next action: Complete issue-206 validation/publication, then prepare separate current-case adapter/lab/pilot scope. Human-result conflicts and the provisional cutoff still need explicit review.
+- Last check run: `scripts/verify.sh all` (green), followed by final `scripts/verify.sh docs` (66 isolated checks) for QA-only hardening.
+- Result: 4310 backend tests passed (14 skips), 1003 frontend tests passed, build and lint passed with zero errors. Offline milestone is in draft PR #207; inspect its final-head CI. No live cases have been executed.
+- Next action: Continue current-case adapter/coverage preparation from this checklist after reviewing #207. Live preflight/scan guard/recovery and the pilot still require their reviewed scope/start. Human-result conflicts and the provisional cutoff remain explicit review items.
+
 
 ## Decisions and notes
 

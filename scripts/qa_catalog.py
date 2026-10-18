@@ -139,6 +139,11 @@ def parse_catalog(text: str) -> dict:
                             if not e2e else 'E2E requires the documented fresh/restored appliance and complete integrated sequence.'),
             singleton=singleton,
             source_hash=digest(text), procedure_hash=digest(body))
+    for case_id,rows in dependencies.items():
+        if case_id not in cases:raise ValueError(f'Unknown prerequisite owner: {case_id}')
+        for row in rows:
+            for reference in expand_ids(columns(row)[1]):
+                if reference not in cases:raise ValueError(f'{case_id}: unknown prerequisite {reference}')
     if set(summaries) != {k for k in cases if k.startswith('TC-')}:
         raise ValueError('Module summary IDs differ from definitions')
     if set(phases) != set(cases): raise ValueError('Run phase IDs differ from definitions')

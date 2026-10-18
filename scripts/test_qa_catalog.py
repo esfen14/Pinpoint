@@ -30,6 +30,11 @@ class CatalogTests(unittest.TestCase):
         self.assertEqual(c['TC-NFR-07']['status'], 'needs-decision')
         self.assertEqual(c['TC-ACC-06']['status'], 'fail')
 
+    def test_unknown_prerequisite_is_not_silently_ignored(self):
+        text=cat.PLAN.read_text().replace('| TC-AUTH-06 | TC-AUTH-05 |','| TC-AUTH-06 | TC-AUTH-99 |',1)
+        with self.assertRaisesRegex(ValueError,'unknown prerequisite'):
+            cat.parse_catalog(text)
+
     def test_shorthand_and_ranges(self):
         self.assertEqual(cat.expand_ids('TC-AUTH-05, 06, TC-ACC-01 to 03'),
                          ['TC-AUTH-05','TC-AUTH-06','TC-ACC-01','TC-ACC-02','TC-ACC-03'])
