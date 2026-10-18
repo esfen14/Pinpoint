@@ -407,3 +407,21 @@ The timing defect and accepted-pilot recheck are complete. Broader testing is
 blocked by narrow supported scope/next-queue handoff and missing case adapters,
 not by a remaining #211 parser failure. No further TC-SS-04 run, reset, recovery,
 VM change or new test start occurred during this pull/review.
+
+## Next bounded permission batch preparation (2026-10-18)
+
+Authorized scope: readiness implementation and preparation for Paeng's exclusive
+existing appliance. Proposed new IDs: TC-ACC-09 (phase 2; Accounts sidebar/redirect
+and API 403) and TC-NCPA-08 (phase 3; NCPA sidebar/redirect). Both catalog summary
+and detail say Not run. Reuse initialized zero-permission Staff; no account,
+monitoring, scheduler, discovery, deployment or product changes are needed.
+The old TC-SS-04 PASS is retained and excluded from this proposed batch.
+
+- [ ] Review source/specs and implement exact browser adapters for TC-ACC-09 E1/E2 and TC-NCPA-08 E1 in `client/e2e/qa-permissions.lab.spec.ts`; update selection, source coverage and strict multi-item result import. Prove offline collection and malformed/missing-item rejection.
+- [ ] Implement an explicitly reviewed forward-assignment handoff after a fully accounted complete queue, preserving exact original ledger archives, recoveries, attempts and budgets; prove denial of unfinished/foreign/replayed/changed grants and archives in isolated fixtures.
+- [ ] Extend the supervised permission launcher for only TC-SS-04 plus the two chosen new IDs, at most five fixed cases, serial per-case private outputs and saved results, no automatic retry/resume; preserve every gate and stop on inconclusive/cleanup uncertainty.
+- [ ] Prepare a fresh two-case queue/preview and reviewable cards with exact target, command, output paths, expectations and cleanup; use supported read-only checks for actual prerequisites. Any unobserved readiness remains BLOCKED.
+- [ ] Verify relevant isolated/docs/frontend gates, synchronize all finish checklists and PR #207, and checkpoint. Live handoff and case execution require their concrete reviewed scope/start after preparation.
+
+Next action: implement the two selected permission adapters and multi-item parser;
+then add reviewed handoff and bounded serial launch support before a new live start.
