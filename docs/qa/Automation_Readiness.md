@@ -480,3 +480,21 @@ archives, incomplete outcomes, stale/foreign reviews, replay and an already-pass
 ID in the new untested scope reject. This does not start a case or grant a new live
 start. No actual handoff was applied during preparation. See
 [the concrete two-case scope and start contract](Next_Permission_Batch_Review.md).
+
+## Issue #214 seven-case execution readiness (2026-10-18)
+
+The current seven-case preparation snapshot is
+[`2026-10-18-modules-2-9-adapters-v8.json`](queues/2026-10-18-modules-2-9-adapters-v8.json)
+with two named sets: `modules-2-9-adapters-01` (five cases) and
+`modules-2-9-adapters-02` (two cases). Both pass queue freshness/scope checks.
+Their source-bound v6 cards contain reviewed action vectors, timeouts, cleanup,
+private evidence paths and the inspected runtime baseline identity. Current case
+fixtures remain `UNVERIFIED` on every card. See the
+[fixture checklist](Module_2-9_Fixture_Plan.md) and
+[case review](Module_2-9_Adapter_Review.md).
+
+The read-only inspection proves only the controlled target/baseline. Before any
+case action, each set still needs its exact fixture facts verified, a fresh
+preflight, a named lab allocation and its own explicit start. The first set
+cannot be treated as authorizing the second. Offline queue/docs checks are not
+product test results.

@@ -1,0 +1,1110 @@
+{
+  "version": 2,
+  "prepared_at": "2026-10-18T12:40:09.147980+00:00",
+  "catalog": "docs/qa/Pinpoint - Black-Box Test Cases by Module with Traceability Matrix.md",
+  "source_revision": "99bb757f4ea8a1619ff854379cfd69966b800030",
+  "target_revision": "299ab3ba7203c89a3ca5d8fabea42d9e5f239be2",
+  "references": {
+    ".agent/workflows/qa-run.md": "72540b42d6760a7986070ef5cf93356d08e41e0c4f98f3405eab545c7f481414",
+    "client/e2e/auth.host-recipients.setup.ts": "8b7e587dcd5cabd2989dd97284232e559dbebffe5b5bf9f3448d7913e2fcaed6",
+    "client/e2e/auth.restricted.setup.ts": "c84e0d91069a8742a9450aa53242205622b902ad552a217075140ac25704d556",
+    "client/e2e/auth.setup.ts": "6e2e84298a029fe57bdf6781e5fb5df0edc068ff0e8d63bac2a4f58404c2c737",
+    "client/e2e/device-identity.lab.spec.ts": "f4d23f4eb925315e48154f4f638c38dbde012511808ca8eefb108bd977c123d0",
+    "client/e2e/dhcp-history.lab.spec.ts": "0332f6cc451b30bd12eeb7f2c7d35b7d2fa8fa2de8e1b1477ce29ddcaeb7dbd5",
+    "client/e2e/email-settings.lab.spec.ts": "7ae36f2e7f82e43b68da4e45559abeac64f3a020a164b7d61d2719cd7c6f8e39",
+    "client/e2e/escalations.lab.spec.ts": "6bf95be6b89832e7e00b5337fb5b6345a85732d2947f4d08e3398cfa3b9e2309",
+    "client/e2e/host-recipients.lab.spec.ts": "0787f29e1fe1d6e6d0d2e5cebb24b08adc2db9d38cded77b2ed23df981720cdb",
+    "client/e2e/host-recipients.restricted.lab.spec.ts": "b4377394f0b116c0361345ea90040735c4175299f6517f2de96299581ed475d0",
+    "client/e2e/issue-133.lab.spec.ts": "3538fc7fa193763941a700728547d7e89c528454c841bbf164d853d4c2212204",
+    "client/e2e/issue-133.restricted.lab.spec.ts": "fbe6ac05443028fe08c010f17241508c0acc2f55d7b55a91ddc40d2af9ebfc97",
+    "client/e2e/notification-policy.lab.spec.ts": "04683bdfae3262f6192b3bb4f2fe2284ea1febcff4d3172fe3a5847b1ee60550",
+    "client/e2e/qa-modules-2-9.lab.spec.ts": "49f82ae6f6996d784082d575da9013a7a4827100fc797d5e47c73848977b43bc",
+    "client/e2e/qa-permissions.lab.spec.ts": "a6edb79e3d7edb4c040e149f927ad242cc34d4f6eb615af4f8a5bdcaeb8d6ddf",
+    "client/e2e/remote-restart.lab.spec.ts": "11481c25c54e0a123175da4d4f6c657b33c97574453861968e263c0c08bd05e4",
+    "client/e2e/service-reports.lab.spec.ts": "eabcb276e4c3ad7f306d85d755444abf03dec3319a8038fba304e6f0d4d65f80",
+    "client/e2e/smoke.admin.spec.ts": "bfe0193d0e37aabb950c34f09506ca401a16ba112c53ed9641b6daee65e369eb",
+    "client/e2e/smoke.restricted.spec.ts": "1f283089f01ed1dd7e74313b7eefec1c1da92cf2b4552e120ed901e311dc466e",
+    "client/e2e/storage-logs.lab.spec.ts": "85f15f7764931e6c83925b26099bda02f3ecd20cbf65e9a7399ed0b32c425358",
+    "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
+    "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
+    "client/playwright.config.ts": "bd713c3081485b567ceaa3092d4bbc3663044189772157d4c0dec895d9d36490",
+    "client/playwright.modules.qa.config.ts": "49dbe58e8e6547495ced6abe204a5ccd3854e917db47dea2f7c4acd846d6085c",
+    "client/playwright.qa.config.ts": "bd93c4be8518993af9dd734d48c498e065802db67d7934c6733313a7f47423e1",
+    "client/qa/module-selection.mjs": "5b648a29d597eb7ecdf3e7ea38f2a44560c5f7a2c1259e8041a503c3c4f4d99e",
+    "client/qa/module-selection.node.mjs": "6f1239a273512298a9f043020119a39703ba1ae99a415f41c9c990b6c3be1e75",
+    "client/qa/selection.mjs": "1aba1bb9749b4d1bf6b5fc1d4052ef16c6ce4b126ea8353cc4cd43b9733650b1",
+    "docs/qa/Automation_Coverage.md": "919a6b75c77ed79fbcd40227fe7a74052059afe6024ab72131f2c5ffaa1c5a0d",
+    "docs/qa/Automation_Readiness.md": "80a84231200f6bab242640ea28a8ecdedddcfd9a19030750636a8c6a230cc649",
+    "docs/qa/Module_2-9_Adapter_Review.md": "e37108f1c113c4be410e7b9897a9f3743a5e9346eb6ee2406c49681b4587ef96",
+    "docs/qa/Module_2-9_Fixture_Plan.md": "76e8f211776cbb96ffd0626909ca895d6e1625d91b6cde2b98d349a702837c93",
+    "docs/qa/Next_Permission_Batch_Review.md": "faff34a50d9fd3b8f7f40eff3db97a928d1c18498c938c03a4fdef4dbd016aaa",
+    "docs/qa/QA_Journeys_and_Scope.md": "abc4df17e78ee363fecf24c55f58acf65d53e662688b4864ac9e36068ad6b369",
+    "docs/qa/QA_Run_Queues.md": "4ad07920eaab9db4e7c1dcf99bebe4ee7da890d9378037579e5adebb808f4c26",
+    "docs/qa/automation-coverage.json": "adf31ebd1673ba8011eb08d0c5f1d33cbf0031f8d6df74f9da2de944aa61ed66",
+    "docs/qa/queues/modules-2-9-card-drafts-v5.json": "004187abb3c142fa33d06ec154b9b68d2cc4b64f09fb849b6394525c2aa505f4",
+    "lab/unix_web_proxy.mjs": "a23c641683d0c351c531e01ed7b9d8712697ea4bc6524c297915293faa456571",
+    "scripts/playwright-lab": "509b081810c8b5af2a5db0e7e6767698229a745c3f6b44f73a67e941b5014eb1",
+    "scripts/qa_bridge.py": "e16c0280c9ced2b6beeb6bfc85a8452a4a832164765e7e8a9065648c42c2e674",
+    "scripts/qa_catalog.py": "2d435a4f168c5a3a0633800efb301be55e6c86c478836ef8ba7dcebf49a4ff39",
+    "scripts/qa_container.py": "d71efb8bfe34c61f0b84119d0cca39374a50de413fcfa93ad0e53efd45b5ef15",
+    "scripts/qa_control.py": "f673eccb52c43fbef9f629532a00cae0b107a7d59fe142f82a4329c17d857b65",
+    "scripts/qa_coverage.py": "dd0d7e39ac7ad168fc16bc3231758db3e5838b960e6bd1bd8956a8f8a5988b2e",
+    "scripts/qa_deployment.py": "13ff0f4bb53b345cf2b88394874a070c61137477fc98ccde8ac36df7d94c4efa",
+    "scripts/qa_evidence.py": "e8727531235ab46c2927fc106be1c20ec7d9478ad5211ed98bc7ee07bf47bebf",
+    "scripts/qa_execute.py": "2a9f36b8007adbf2d7b0b178b3186874fb7c27c01523791caf497fa9b89b2d0e",
+    "scripts/qa_handoff.py": "45bb120a37119760c5804d8badd3fdf5a322d57e4e785c5876e62c77d8084780",
+    "scripts/qa_pilot.py": "d0adb484fe0fb615d305b251666f8d825cdf4285e48c71022fa7ac3dfde9227a",
+    "scripts/qa_pilot_guest.py": "ddaba1ddbd484264caf130c52d739fd67c5ec13c57bca84fcd1c9d4eeb1de2c6",
+    "scripts/qa_process.py": "4ea340cf5ecb2e87680f017e1a6fcc4abb24db9e2fa97d27b0ca1b019ea2e290",
+    "scripts/qa_queue.py": "1016664f1de78f801b70cb6d4ac83b3064ffbc8dd8c4511fb32afe92497f19e2",
+    "scripts/qa_recovery.py": "4aa6d2bc8e1b6d08d268ddffed16614ba8343e22a852063095fbe0babdb899c5",
+    "scripts/qa_results.py": "64b33bcdd0551f43b4419f2ae752f8f75bef3a4d192d6ac5ada6f179cfed42cf",
+    "scripts/qa_supervisor.py": "42a55d1af1869a42cd9cc70e6b299558b44c4bd79a35516cbe7b5f65bb3c699c",
+    "scripts/qa_transport.py": "aebbc8ebf34b7fa8e0515dd900054addd564e54a13e835954860d841f98af026",
+    "scripts/vmlab": "9366dc4937e139459e63d02ecd026f0974b373e5334632d2a99775fca5ddb9ec",
+    "scripts/vmlab_preflight.py": "0177922832a85fdabe945fd416e4719a08a5450adaefd743d473be5c244d77a6",
+    "spec files/Agent_Workflow_and_CI.md": "ceb899eef91c6cf9113c9fb2cd7feca088c91df6c7744cdc9ceb670f86bcc515",
+    "spec files/Alerts_Notifications_History_Requirements.md": "b60a3b2d92fea24a2f483d3eb3f2a10b244454906d187eb39651e32d826cc807",
+    "spec files/Backend_Modules_and_Routes.md": "806a23a1a023265dcc485331a9127bab9a38a229d64829c253aa7a300b5dca9a",
+    "spec files/Data_Model_and_Integrations.md": "1d1f87d206df806a27fad4a08048fdc6fb07b738fd88052a560102983a166637",
+    "spec files/Device_Inventory_Requirements.md": "83d7cecd9e355c03b56b15be35ef96599d3b92fb55aa2f8958a360cc3172cbc5",
+    "spec files/Display_Requirements.md": "a45351ca3a592e92e25c4ab4e40bb0c1e5051ed83d7d80ad76dbc90c26648579",
+    "spec files/Engineering_Standards.md": "bf9aa85f06df5dc762d8c70d1af98f194ffa7aa10a7c39fce06f1d55d11fee2e",
+    "spec files/Frontend_Modules_and_Routes.md": "fe7d26dcafd605ce864f7a6a749c4c40121f4a81ba5268472880887c9341f9cd",
+    "spec files/Implementation_Status.md": "457af0894e205bcb7552734f33f3a5d63dccabe08fc3cf42403cc212e9a60412",
+    "spec files/Plugins_List.md": "609699fa3498f7bb90cb564c2b2680aee31c1f3ebcc83bc1f6953e1b1ae007ed",
+    "spec files/README.md": "2a379eea8750589b39594d0ded1d582377c2445c5d474fb1c817462e408041cf",
+    "spec files/System_Overview_and_Architecture.md": "4cbc3319968b0428cb997bd0f88cb43e7777ce6386eb7b40abcbf1635db71c83"
+  },
+  "evidence": {},
+  "sets": [
+    {
+      "name": "modules-2-9-adapters-01",
+      "owner": "Paeng",
+      "purpose": "untested",
+      "modules": [
+        "ACC",
+        "DASH",
+        "DI",
+        "ROL"
+      ],
+      "cases": [
+        {
+          "id": "TC-ACC-08",
+          "title": "\"Send this user email alerts\" depends on permission",
+          "priority": "L",
+          "module": "ACC",
+          "module_title": "Manage Accounts (`/accounts`)",
+          "phase": 2,
+          "order": 22,
+          "requirements": [
+            "REQ-ACC-07"
+          ],
+          "summary_result": "Not run",
+          "detailed_result": "Not run",
+          "status": "untested",
+          "steps": "1. As Super Admin press **+ Add User** and look for the checkbox **Send this user email alerts**. Look at the **Email Alerts** column in the table.\n2. Sign in as the `qa-accounts` user, open **Manage Accounts**, and press **+ Add User**.",
+          "expectations": [
+            "Super Admin sees the checkbox and the column shows On or Off per user.",
+            "The `qa-accounts` user does not see the checkbox."
+          ],
+          "procedure": "#### TC-ACC-08 \u2013 \"Send this user email alerts\" depends on permission\n\n**Requirement:** REQ-ACC-07 \u00b7 **Technique:** DT \u00b7 **Priority:** L \u00b7 **Result:** Not run\n\n**Before you start:** a role `qa-accounts` with `account.view` and `account.edit` but not `account.alerts`, and a user with that role.\n\n**Steps**\n\n1. As Super Admin press **+ Add User** and look for the checkbox **Send this user email alerts**. Look at the **Email Alerts** column in the table.\n2. Sign in as the `qa-accounts` user, open **Manage Accounts**, and press **+ Add User**.\n\n**Expected result**\n\n- Super Admin sees the checkbox and the column shows On or Off per user.\n- The `qa-accounts` user does not see the checkbox.",
+          "dependencies": [
+            "| TC-ACC-08 | TC-ROL-01 | Needs a role `qa-accounts` and a user with it, made the same way |"
+          ],
+          "global_context": "# Pinpoint - Black-Box Test Cases by Module with Traceability Matrix\n\nOct 16, 2026 \u00b7 @Raf\n\n## Scope and approach\n\nThis suite tests Pinpoint module by module, the way a user (or an API client) sees it, with no knowledge of the code. Every test case tells you what to prepare, the exact steps to follow, and what you should see. Every case traces to a requirement taken from the repository's `spec files/` (see the traceability matrix at the end). It covers 23 modules plus 8 end-to-end scenarios, and it was checked against the repository's `main` branch at commit `4b1ad9f` (merged 2026-10-17).\n\n**Black-box techniques used**\n\n- **EP**: equivalence partitioning, one valid and one invalid class per input\n- **BVA**: boundary value analysis, on limits the spec states (for example flap thresholds 0 to 100, retry interval 1 to 10 minutes)\n- **DT**: decision table, for permission and state combinations\n- **ST**: state transition, for pause/resume, acknowledge/unacknowledge, and enable/disable flows\n- **EG**: error guessing, for empty states, cancelled dialogs, and double submits\n\n**Conventions**\n\n- **Test case ID:** `TC-<MODULE>-<nn>`, such as `TC-AUTH-03`.\n- **Requirement ID:** `REQ-<MODULE>-<nn>`. The specs have no requirement IDs of their own, so each one here is a short statement of a spec rule and names its source section in the traceability matrix.\n- **Priority:** H = a failure blocks the module or is a security issue, M = a failure breaks a feature, L = a cosmetic or edge case.\n- **Result values:** PASS, FAIL (write what you saw), PARTIALLY PASS (write what was missing), BLOCKED (write which case blocked it), or Not run. Results already recorded by the tester are kept in this revision.\n- **Passwords for test accounts:** use a value such as `Lab-Pinpoint-2026!`. It has 12 or more characters with upper and lower case letters, a number, and a symbol, so it passes both the strong policy (Settings, Security) and the relaxed policy (8 or more characters).\n- **Data setup:** unless a case says otherwise, the lab has at least one host Up, one host Down, one service Critical, and one acknowledged alert.\n\nThe repository's `docs/qa/QA_Test_Plan.md` is organized by user journey (J1 to J9). This document regroups coverage by module and adds boundary, negative, and permission cases. Where a journey case covers the same check, the traceability matrix names it in the Source column (for example QA J1-03).\n\n**How to read a test case**\n\n- The first line gives the requirement, the technique, the priority, and the result.\n- **Before you start** lists what must be ready. Skip it only if the case does not have one.\n- **Steps** are done in order. Button, tab, and field names are in **bold** exactly as they appear on screen. Addresses and API paths are in `code`.\n- **Expected result** is a list. Every item must be true for PASS.\n- **Note** appears where the spec and the real app differ. The app's behavior is what you test, and the difference is reported as a finding.\n\n**Test accounts and lab**\n\n- **Super Admin:** the built-in role with every permission. It was called \"Administrator\" before issue #112. `flask sync-permissions` renames an existing one. If a different role already used the name \"Super Admin\", the old one is kept as \"Administrator (Legacy)\". On a development database filled by `flask seed`, the account is `admin@test.com` with password `Password123!` (development only).\n- **Staff user:** any user whose role is the built-in **Staff** role. Staff holds no permissions, so after signing in the user can open only **Settings**, and only the **General Settings** tab. This one account is used wherever a case needs a user who is denied everything. On a development database use `emily.davis@test.com` with `Password123!`. On any other install create one in TC-ACC-01.\n- **Dashboard-only user:** only a few cases need a user who can open the Dashboard and nothing else. Create the role `qa-view` with only `system.dashboard` (TC-ROL-01) and a user with that role.\n- **Lab:** the Pinpoint appliance, a web VM (HTTP on port 80, SSH on port 22), a second Linux VM, an SMTP test mailbox, and a browser plus a private window for second sessions.\n\n**Where to find each page**\n\n| Sidebar label | Address | Permission needed |\n| --- | --- | --- |\n| Overview | `/dashboard` | `system.dashboard` |\n| Network Health | `/network-health` | `system.network_health` |\n| Device Inventory | `/device-inventory` | `system.network_health` |\n| Topology | `/topology` | `system.network_health` |\n| System Status | `/system-status` | `system.network_health` |\n| Plugins | `/plugins` | `plugin.view` |\n| NCPA Deployment | `/ncpa-deployment` | `system.deploy.ncpa` |\n| Maintenance | `/maintenance` | `maintenance.manage` |\n| Remediation | `/remediation` | `remediation.view` |\n| History | `/history` | `system.history` |\n| Report | `/reports` | `system.report` |\n| System Logs | `/system-logs` | `system.logs` |\n| Manage Accounts | `/accounts` | `account.view` |\n| Manage Roles | `/manage-roles` | `role.view` |\n| Settings | `/settings` | none. Tabs: General Settings (everyone), Security (`settings.security`), System (`settings.system`), Network Discovery (`settings.discovery`), Plugins (`settings.plugins`), Email (`settings.email`) |\n\nA user who opens a page they may not use is sent to the first page they can use (a Staff user lands on Settings).\n\n**What changed in this revision**\n\n- **Role name:** \"Administrator\" is now \"Super Admin\" (#112).\n- **Test users:** the old `viewer` and `noperm` are replaced by the Staff user, and a dashboard-only user only where a case needs one.\n- **Steps:** every case now has numbered steps using the button and tab names in the app code.\n- **Spec and app differ (marked Note in the case):** the Dashboard has four cards (Total Hosts, Network Latency, Active Warnings, Critical Issues), not the spec's Active Alerts and Hosts in Downtime cards. Unacknowledge asks no confirmation. The Active Alerts list has no acknowledgement filter. Rescan Network starts at once with no confirmation. The host table and host drawer are on Device Inventory, not Network Health.\n- **New in `main` since the first revision:** resource forecast \"Running out soon\" (#156), remote service restart (#182), remediation safety controls and the kill switch (#155), the Add User default role fix (#191), and Clean up now offered on deployed devices.\n\n## Run order and prerequisites\n\nSome cases need something an earlier case creates, for example a user, a role, an active alert, or a deployed agent. Run the cases in the order below. Each case appears once, and the numbers continue within the same module (\"TC-ACC-01, 02, 03\" means TC-ACC-01, TC-ACC-02, TC-ACC-03). Run the 8 end-to-end scenarios afterwards on a freshly built (or restored) appliance.\n\n### Run order\n\n| Phase | Goal | Run these cases in this order |\n| --- | --- | --- |\n| 1 | Fresh install and first login (clean appliance) | TC-AUTH-05, 06, 07, 01, 02, 03, 04, 09, 12 |\n| 2 | Roles and accounts (this creates the test users used later) | TC-ROL-01, 02, 03, TC-ACC-01, 02, 03, TC-AUTH-08, TC-ACC-04, 05, 06, 07, 09, 10, 08, TC-ROL-04, 05, 06, TC-AUTH-10, 11, TC-SHL-09, 04, 10 |\n| 3 | Permission checks with the Staff user | TC-DASH-08, TC-SS-04, TC-HIS-01, TC-PLG-07, TC-NCPA-08, TC-RPT-07, TC-LOG-05, TC-SHL-06, TC-NFR-01, 02 |\n| 4 | Settings the lab needs (email first) | TC-SET-07, 01, 02, 03, 04, 05, 06, TC-SHL-01, 02, 03 |\n| 5 | Discover the network and enable plugins | TC-DSC-01, 02, 03, 04, 05, 08, 09, TC-PLG-01, 02, 03, 04, 05, 06, TC-DI-01, 02, 03, 04 |\n| 6 | Views with live data, device extras, topology | TC-DASH-01, 05, 07, TC-NH-01, 02, 03, 04, 05, TC-SS-01, 02, 03, TC-DX-01, 02, 03, 04, 05, 06, 07, 08, 09, 10, TC-NH-06, 07, TC-TOP-01, 02, 03, 04, 05, 06 |\n| 7 | Device changes | TC-DI-05, 06, 07, 08, 09, 11, 12, 13, TC-DASH-02, TC-DI-14, 15, 16, 17, 18, 19, TC-DSC-06, 07 |\n| 8 | Faults, alerts, history, and maintenance | TC-DASH-03, TC-ACK-01, 02, 03, 04, 05, 06, 07, 08, TC-DASH-04, TC-HIS-02, 03, 04, 05, 06, 07, 08, TC-SHL-07, 08, TC-MNT-01, 02, 03, 04, 05, 06, 07, 09, 10 |\n| 9 | NCPA and automatic recovery | TC-NCPA-01, 02, 03, 04, 05, 06, 07, 09, 10, 11, TC-DI-10, TC-DASH-09, TC-SS-05, TC-REM-02, 01, 04, 03, 05, 07, 09, 06, 08, 10 |\n| 10 | Reports and logs (after incidents exist) | TC-RPT-01, 02, 03, 04, 05, 06, TC-LOG-01, 02, 03, 04, TC-SHL-05 |\n| 11 | Cases that stop or break services (last, then restore everything) | TC-DASH-06, TC-MNT-08, TC-SET-08, 09 |\n| 12 | Quality and performance | TC-NFR-03, 04, 05, 06, 07, 08, 09, 10, 11 |\n| 13 | Edge cases | TC-EDG-01 to 18 |\n| 14 | Order of events (one at a time, restore the lab after each) | TC-SEQ-01, 02, 03, 04, 05, 06, 07, 08, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 22, 23, 24 |\n| 15 | Cases that need a fresh appliance (restore the clean snapshot before each one) | TC-SEQ-09, TC-SEQ-17, then E2E-01 to 08 |\n\n### What each case needs first\n\nCases not listed here need only a finished setup (TC-AUTH-07) and the lab described above.\n\n| Case | Do these first | Why |\n| --- | --- | --- |\n| TC-AUTH-06 | TC-AUTH-05 | The setup window must already be open |\n| TC-AUTH-07 | TC-AUTH-06 | It uses the same window, now with correct values |\n| TC-AUTH-01 to 04, 09, 12 | TC-AUTH-07 | They need a finished setup and a known login |\n| TC-AUTH-08 | TC-ACC-03 | It needs a user created with \"Require password change at first sign-in\" ticked |\n| TC-ACC-03 | (pair with TC-AUTH-08) | Create users A and B here, then sign in as them in TC-AUTH-08 |\n| TC-ACC-04, 05, 07, 09, 10 | TC-ACC-01 | They need the Staff user |\n| TC-ACC-06 | TC-ACC-01, TC-AUTH-08 | After a reset the user sees the forced password change |\n| TC-ACC-08 | TC-ROL-01 | Needs a role `qa-accounts` and a user with it, made the same way |\n| TC-ROL-04 | TC-ROL-01, TC-ACC-01 | Needs the role `qa-view` and a user with it |\n| TC-ROL-05, TC-DASH-08, TC-SS-04, TC-HIS-01, TC-PLG-07, TC-NCPA-08, TC-RPT-07, TC-LOG-05, TC-MNT-09 | TC-ACC-01 | They use the Staff user |\n| TC-ROL-06, TC-SHL-10 | TC-ROL-01 | Each needs a role with one permission and a user with it, made the same way |\n| TC-AUTH-11 | TC-ACC-01 | A registered user must exist |\n| TC-SHL-09 | TC-AUTH-11 | It reads the password request made there |\n| TC-SHL-06 | TC-ROL-04 | It uses the dashboard-only user |\n| TC-SET-01 to 06 | TC-AUTH-07 | They need a Super Admin sign-in |\n| TC-MNT-10, TC-SHL-08 | TC-SET-07 | They need working email |\n| TC-DSC-02 to 05, 08, 09 | TC-DSC-01 | They need a scan that has found devices |\n| TC-DSC-06 | TC-DSC-01 | Needs two networks with devices |\n| TC-DSC-07 | TC-DSC-01, TC-PLG-03 | Needs a monitored port that you then close |\n| TC-PLG-03 | TC-DSC-01 | Enabling a plugin needs discovered devices |\n| TC-PLG-04, 05, 06 | TC-PLG-03 | They need an enabled plugin with services |\n| TC-DI-01 to 04, 11 to 13, TC-TOP-01 to 06 | TC-DSC-01 | They need discovered devices |\n| TC-DI-05 to 09, TC-DX-01 to 05 | TC-PLG-03 | They need monitored ports and the plugins for them |\n| TC-DX-06, 07 | TC-DSC-01 | Need a device that answers SNMP |\n| TC-NH-06 | TC-DX-07 | An interface must already be monitored |\n| TC-DI-10 | TC-NCPA-04 | The NCPA port is protected only after a deployment |\n| TC-DI-14, 15 | TC-DI-13 | They use a paused device |\n| TC-DASH-02 | TC-DI-13 | The pause is made there |\n| TC-DI-16 to 19 | TC-DSC-01 | Need identity review items (two records for one device) |\n| TC-DASH-03 | TC-DSC-01, TC-PLG-03 | You need monitored services to break |\n| TC-ACK-01, 03, 04, 06, 07, 08 | TC-DASH-03 | They need active alerts |\n| TC-ACK-02 | TC-ROL-04, TC-DASH-03 | Needs the dashboard-only user and an active alert |\n| TC-ACK-05 | TC-ACK-01 | An acknowledgement must exist to remove |\n| TC-HIS-02 to 08 | TC-ACK-08, TC-SET-07 | Alert and notification events must exist |\n| TC-SHL-07 | TC-DSC-02 | The bell needs a new notification, such as a finished scan |\n| TC-MNT-03 to 06 | TC-MNT-02 | They reuse the same form |\n| TC-MNT-07 | TC-MNT-02 | A window must exist to cancel |\n| TC-MNT-08 | TC-MNT-07 | Same cancel flow, with Nagios stopped |\n| TC-NCPA-02 | TC-DSC-01, TC-NCPA-01 | Needs a discovered Linux VM and `check_ncpa` enabled |\n| TC-NCPA-03 | TC-NCPA-02 | The wizard is open from there |\n| TC-NCPA-04 | TC-NCPA-03 | Needs a correct login |\n| TC-NCPA-05, 06, 07, 10 | TC-NCPA-04 | They need a finished (or failed) deployment |\n| TC-NCPA-09 | TC-NCPA-02 | Needs a trusted host key |\n| TC-NCPA-11 | TC-NCPA-04, TC-NCPA-09 | Needs a deployed device with remote restart set |\n| TC-DASH-09, TC-SS-05 | TC-NCPA-04 | Need NCPA data for about 3 days |\n| TC-REM-01, 03, 04, 05 | TC-REM-02 | They need an action to look at or change |\n| TC-REM-07, 08, 09 | TC-REM-02, TC-PLG-03 | They need an action and a service to break |\n| TC-REM-06 | TC-REM-07, TC-REM-09 | The run log needs runs and skipped runs |\n| TC-RPT-01 to 06 | TC-DASH-03, TC-ACK-08, TC-MNT-10 | A report needs incident data |\n| TC-RPT-05 | TC-RPT-03, TC-RPT-04 | The exports must exist |\n| TC-LOG-02 to 04 | TC-ACC-01, TC-DSC-02 | Log entries must exist |\n| TC-DASH-06, TC-MNT-08, TC-SET-08 | everything above | They stop Nagios or break its config, so run them last and restore |\n| TC-NFR-08, 09 | TC-DSC-01 | Need 10 and 15 monitored hosts |\n| TC-NFR-10 | TC-DASH-03 | Needs a target to break |\n| TC-EDG-01 to 18 | TC-ACC-01, TC-DSC-01, TC-DI-13 | They reuse the accounts, scans, and devices from earlier phases |\n\n**Order-of-events cases (TC-SEQ) need first**\n\n| Case | Do these first | Why |\n| --- | --- | --- |\n| TC-SEQ-01, 02, 06, 23 | TC-DASH-03, TC-PLG-03 | You need a monitored service to stop and start |\n| TC-SEQ-03, 04, 05 | TC-MNT-02, TC-SET-07 | You need the window form and working email |\n| TC-SEQ-06, 07 | TC-DI-13 | Pause and resume work |\n| TC-SEQ-08, 24 | TC-DSC-02 | A scan can be started |\n| TC-SEQ-09 | a fresh appliance | `check_http` disabled and no scan yet |\n| TC-SEQ-10, 11 | TC-PLG-03, TC-DI-05 | A plugin is monitoring a port |\n| TC-SEQ-12 | TC-ROL-04 | The role `qa-view` and its user exist |\n| TC-SEQ-13 | TC-ROL-01 | Make a role with two permissions and a user |\n| TC-SEQ-14, 15 | TC-ACC-01 | The Staff user exists |\n| TC-SEQ-16 | TC-ACC-03 | A user with the forced change exists |\n| TC-SEQ-17 | a fresh appliance | The bootstrap login is not used yet |\n| TC-SEQ-18, 19, 20 | TC-REM-02, TC-PLG-03 | An action and a service to break |\n| TC-SEQ-21 | TC-NCPA-04 | A deployed NCPA device |\n| TC-SEQ-22 | TC-NCPA-09, TC-REM-10, TC-NCPA-04 | A deployed device with remote restart set |",
+          "module_context": "### Module 2 \u2013 Manage Accounts (`/accounts`)\n\n**Summary of cases**\n\n| TC | Case | Req | Tech | Pri | Result |\n| --- | --- | --- | --- | --- | --- |\n| TC-ACC-01 | Add an account | ACC-01 | EP | H | PASS |\n| TC-ACC-02 | Duplicate and invalid emails are refused | ACC-01 | EP | M | PASS |\n| TC-ACC-03 | \"Require password change at first sign-in\" | ACC-02 | EG | M | PASS |\n| TC-ACC-04 | Inactive and suspended users cannot sign in | ACC-03 | DT | H | PASS |\n| TC-ACC-05 | Editing a signed-in user signs them out | ACC-04 | ST | M | FAIL |\n| TC-ACC-06 | Administrator resets another user's password | ACC-05 | ST | H | FAIL |\n| TC-ACC-07 | The first (bootstrap) account is protected | ACC-06 | DT | H | PASS |\n| TC-ACC-08 | \"Send this user email alerts\" depends on permission | ACC-07 | DT | L | Not run |\n| TC-ACC-09 | The accounts page needs permission | ACC-08 | DT | H | Not run |\n| TC-ACC-10 | Add User uses the default role (issue #191) | ACC-09 | EG | M | Not run |\n\n",
+          "singleton": false,
+          "source_hash": "d9374c41d7f4e5304c3475735d765ad66cb4352cc9745f76e96d78c4de0e398f",
+          "procedure_hash": "33cd3bed4c6caed5c812310ff425eb8b0bea57bbd49009956c3beb0356c78e46",
+          "reuse": null,
+          "coverage": {
+            "case_hash": "bc5bbce195fb22385953cea857c9d5c0d82f7a32cb37ca6fb70765c9d80ac818",
+            "status": "implemented",
+            "mode": "scripted automation",
+            "reason": "Source adapter is complete for every catalog expected item; live launcher support, reviewed current lab prerequisites/cards and a separate explicit start are still required.",
+            "items": {
+              "E1": {
+                "marker": "qa-evidence:TC-ACC-08:E1",
+                "method": "As Super Admin, the Email Alerts column and Send this user email alerts checkbox are visible; an account row shows On or Off."
+              },
+              "E2": {
+                "marker": "qa-evidence:TC-ACC-08:E2",
+                "method": "As the qa-accounts user with account.view/account.edit but without account.alerts, the Add User dialog has no email-alert checkbox."
+              }
+            },
+            "adapter": {
+              "path": "client/e2e/qa-modules-2-9.lab.spec.ts",
+              "title": "TC-ACC-08: \"Send this user email alerts\" depends on permission",
+              "project": "qa-modules-2-9",
+              "config": "client/playwright.modules.qa.config.ts"
+            },
+            "source_hashes": {
+              "client/e2e/qa-modules-2-9.lab.spec.ts": "49f82ae6f6996d784082d575da9013a7a4827100fc797d5e47c73848977b43bc",
+              "client/playwright.modules.qa.config.ts": "49dbe58e8e6547495ced6abe204a5ccd3854e917db47dea2f7c4acd846d6085c",
+              "client/qa/module-selection.mjs": "5b648a29d597eb7ecdf3e7ea38f2a44560c5f7a2c1259e8041a503c3c4f4d99e",
+              "client/src/pages/ManageAccountsPage.tsx": "e3af9a686f681993cab29109f8623eb624f421f547d2c5db3f0f50164c0ae555",
+              "client/src/components/manage-accounts/UserTable.tsx": "f9e302e459b71dd45807770b3db1feefcfd1951ec8a8b38811d4024f84e602db",
+              "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
+              "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
+              "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
+              "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
+              "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
+              "server/app/api/user/management.py": "2ad5a1f3a41c9784fb5688b1455279946f2da9ea63c1deaf13a6723d1adb0c4d",
+              "server/app/api/helper/database_access/permissions.py": "223c0628444524cdae232fb02c29ebbb18b5e4c2e0307990acbe597a40e2ecff"
+            },
+            "prerequisites": [
+              "An initialized Super Admin account with account.view and account.alerts.",
+              "A pre-created qa-accounts role with account.view and account.edit but not account.alerts, plus an initialized user assigned to that role.",
+              "Credentials for both users remain in the approved private store; no account or role is created or edited by this adapter."
+            ],
+            "recovery": [
+              "No account or role writes. After each session, POST logout, verify GET /api/user/me returns 401, and dispose the browser context. Preserve login/logout audit entries."
+            ],
+            "reviewed_by": "Codex source review; not runtime acceptance",
+            "reviewed_at": "2026-10-18",
+            "procedure_review": "The catalog procedure and REQ-ACC-07 were reviewed against ManageAccountsPage permission gating, UserTable email-alert column rendering, real UI login, and the pre-created role/user state. E1 checks the table header/value and Super Admin add form. E2 checks the actual restricted user Add User form. No account/role mutation or mock response is used."
+          },
+          "execution": {
+            "readiness": "BLOCKED: case-specific fixture observations and private fixture inputs are missing or unverified",
+            "coverage_hash": "a8fab40be27e163e4826b730441f19d5a1b5c96a16cb58009c610732a89ed5cb",
+            "selection": {
+              "path": "client/e2e/qa-modules-2-9.lab.spec.ts",
+              "title": "TC-ACC-08: \"Send this user email alerts\" depends on permission",
+              "project": "qa-modules-2-9",
+              "config": "client/playwright.modules.qa.config.ts"
+            },
+            "mode": "scripted automation",
+            "adapter": "/home/paeng/Documents/Capstone-FIles/Capstone-Project/Network-Diagnosis-System-qa214/client/e2e/qa-modules-2-9.lab.spec.ts",
+            "adapter_hash": "49f82ae6f6996d784082d575da9013a7a4827100fc797d5e47c73848977b43bc",
+            "actions": [
+              [
+                "scripts/playwright-lab",
+                "--config=playwright.modules.qa.config.ts",
+                "--project=qa-modules-2-9",
+                "e2e/qa-modules-2-9.lab.spec.ts",
+                "--grep=(?:^| )TC\\-ACC\\-08:\\ \"Send\\ this\\ user\\ email\\ alerts\"\\ depends\\ on\\ permission$",
+                "--workers=1",
+                "--retries=0"
+              ]
+            ],
+            "reviewed_by": "Codex source/spec/assertion/action/recovery review; 2026-10-18; live fixtures not verified",
+            "timeout_seconds": 300,
+            "step_timeout_seconds": 30,
+            "human_required": false,
+            "prerequisites": [
+              "An initialized Super Admin account with account.view and account.alerts.",
+              "A pre-created qa-accounts role with account.view and account.edit but not account.alerts, plus an initialized user assigned to that role.",
+              "Credentials for both users remain in the approved private store; no account or role is created or edited by this adapter."
+            ],
+            "recovery": [
+              "No account or role writes. After each session, POST logout, verify GET /api/user/me returns 401, and dispose the browser context. Preserve login/logout audit entries."
+            ],
+            "evidence_dir": "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/evidence/TC-ACC-08",
+            "write_paths": [
+              "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/evidence/TC-ACC-08",
+              "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/modules-2-9-adapters-01/control",
+              "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/modules-2-9-adapters-01/bridge"
+            ],
+            "container_image_id": "sha256:e37b02e1817b35e6a0953bdfed1e4a285cc9f3d1d86ac77c1d2fedef0da6c7a5",
+            "baseline_hash": "da42da6cdbc38dab7ba6f9d96c2abd9cfb822123429fdd3f1e613ea50f8e07c3",
+            "control_dir": "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/modules-2-9-adapters-01/control/TC-ACC-08",
+            "bridge_dir": "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/modules-2-9-adapters-01/bridge/TC-ACC-08",
+            "public_write_paths": [
+              "docs/test-runs/2026-10-18-modules-2-9-seven/REPORT.md",
+              "docs/test-runs/README.md",
+              "docs/qa/queues/2026-10-18-modules-2-9-adapters-v4-execution.md",
+              ".agent/progress/issue-214.md"
+            ],
+            "live_prerequisite_status": {
+              "runtime_baseline": "PASS at 2026-10-18T12:29:16.826139Z; private inspection retained outside repository",
+              "case_fixtures": "UNVERIFIED"
+            },
+            "timeout_source": "Existing qa_pilot reviewed envelope: 300 seconds per case, 30 seconds per action; bounded by qa_pilot.py."
+          }
+        },
+        {
+          "id": "TC-ROL-04",
+          "title": "A dashboard-only user is limited to the Dashboard",
+          "priority": "H",
+          "module": "ROL",
+          "module_title": "Manage Roles (`/manage-roles`)",
+          "phase": 2,
+          "order": 23,
+          "requirements": [
+            "REQ-ROL-04"
+          ],
+          "summary_result": "Not run",
+          "detailed_result": "Not run",
+          "status": "untested",
+          "steps": "1. Sign in as that user and read the sidebar.\n2. Type each of these addresses one at a time: `/network-health`, `/device-inventory`, `/topology`, `/system-status`, `/plugins`, `/ncpa-deployment`, `/maintenance`, `/remediation`, `/history`, `/reports`, `/system-logs`, `/accounts`, `/manage-roles`.\n3. Open these API addresses in the address bar: `/api/system/log`, `/api/system/report/availability`, `/api/user/accounts`.",
+          "expectations": [
+            "The sidebar shows **Overview** (and **Settings**) only.",
+            "Every address in step 2 redirects back to the Dashboard.",
+            "Every API address in step 3 returns 403."
+          ],
+          "procedure": "#### TC-ROL-04 \u2013 A dashboard-only user is limited to the Dashboard\n\n**Requirement:** REQ-ROL-04 \u00b7 **Technique:** DT \u00b7 **Priority:** H \u00b7 **Result:** Not run\n\n**Before you start:** the role `qa-view` (TC-ROL-01) and a user with that role, for example `qa.view@mail-lab.com`.\n\n**Steps**\n\n1. Sign in as that user and read the sidebar.\n2. Type each of these addresses one at a time: `/network-health`, `/device-inventory`, `/topology`, `/system-status`, `/plugins`, `/ncpa-deployment`, `/maintenance`, `/remediation`, `/history`, `/reports`, `/system-logs`, `/accounts`, `/manage-roles`.\n3. Open these API addresses in the address bar: `/api/system/log`, `/api/system/report/availability`, `/api/user/accounts`.\n\n**Expected result**\n\n- The sidebar shows **Overview** (and **Settings**) only.\n- Every address in step 2 redirects back to the Dashboard.\n- Every API address in step 3 returns 403.",
+          "dependencies": [
+            "| TC-ROL-04 | TC-ROL-01, TC-ACC-01 | Needs the role `qa-view` and a user with it |"
+          ],
+          "global_context": "# Pinpoint - Black-Box Test Cases by Module with Traceability Matrix\n\nOct 16, 2026 \u00b7 @Raf\n\n## Scope and approach\n\nThis suite tests Pinpoint module by module, the way a user (or an API client) sees it, with no knowledge of the code. Every test case tells you what to prepare, the exact steps to follow, and what you should see. Every case traces to a requirement taken from the repository's `spec files/` (see the traceability matrix at the end). It covers 23 modules plus 8 end-to-end scenarios, and it was checked against the repository's `main` branch at commit `4b1ad9f` (merged 2026-10-17).\n\n**Black-box techniques used**\n\n- **EP**: equivalence partitioning, one valid and one invalid class per input\n- **BVA**: boundary value analysis, on limits the spec states (for example flap thresholds 0 to 100, retry interval 1 to 10 minutes)\n- **DT**: decision table, for permission and state combinations\n- **ST**: state transition, for pause/resume, acknowledge/unacknowledge, and enable/disable flows\n- **EG**: error guessing, for empty states, cancelled dialogs, and double submits\n\n**Conventions**\n\n- **Test case ID:** `TC-<MODULE>-<nn>`, such as `TC-AUTH-03`.\n- **Requirement ID:** `REQ-<MODULE>-<nn>`. The specs have no requirement IDs of their own, so each one here is a short statement of a spec rule and names its source section in the traceability matrix.\n- **Priority:** H = a failure blocks the module or is a security issue, M = a failure breaks a feature, L = a cosmetic or edge case.\n- **Result values:** PASS, FAIL (write what you saw), PARTIALLY PASS (write what was missing), BLOCKED (write which case blocked it), or Not run. Results already recorded by the tester are kept in this revision.\n- **Passwords for test accounts:** use a value such as `Lab-Pinpoint-2026!`. It has 12 or more characters with upper and lower case letters, a number, and a symbol, so it passes both the strong policy (Settings, Security) and the relaxed policy (8 or more characters).\n- **Data setup:** unless a case says otherwise, the lab has at least one host Up, one host Down, one service Critical, and one acknowledged alert.\n\nThe repository's `docs/qa/QA_Test_Plan.md` is organized by user journey (J1 to J9). This document regroups coverage by module and adds boundary, negative, and permission cases. Where a journey case covers the same check, the traceability matrix names it in the Source column (for example QA J1-03).\n\n**How to read a test case**\n\n- The first line gives the requirement, the technique, the priority, and the result.\n- **Before you start** lists what must be ready. Skip it only if the case does not have one.\n- **Steps** are done in order. Button, tab, and field names are in **bold** exactly as they appear on screen. Addresses and API paths are in `code`.\n- **Expected result** is a list. Every item must be true for PASS.\n- **Note** appears where the spec and the real app differ. The app's behavior is what you test, and the difference is reported as a finding.\n\n**Test accounts and lab**\n\n- **Super Admin:** the built-in role with every permission. It was called \"Administrator\" before issue #112. `flask sync-permissions` renames an existing one. If a different role already used the name \"Super Admin\", the old one is kept as \"Administrator (Legacy)\". On a development database filled by `flask seed`, the account is `admin@test.com` with password `Password123!` (development only).\n- **Staff user:** any user whose role is the built-in **Staff** role. Staff holds no permissions, so after signing in the user can open only **Settings**, and only the **General Settings** tab. This one account is used wherever a case needs a user who is denied everything. On a development database use `emily.davis@test.com` with `Password123!`. On any other install create one in TC-ACC-01.\n- **Dashboard-only user:** only a few cases need a user who can open the Dashboard and nothing else. Create the role `qa-view` with only `system.dashboard` (TC-ROL-01) and a user with that role.\n- **Lab:** the Pinpoint appliance, a web VM (HTTP on port 80, SSH on port 22), a second Linux VM, an SMTP test mailbox, and a browser plus a private window for second sessions.\n\n**Where to find each page**\n\n| Sidebar label | Address | Permission needed |\n| --- | --- | --- |\n| Overview | `/dashboard` | `system.dashboard` |\n| Network Health | `/network-health` | `system.network_health` |\n| Device Inventory | `/device-inventory` | `system.network_health` |\n| Topology | `/topology` | `system.network_health` |\n| System Status | `/system-status` | `system.network_health` |\n| Plugins | `/plugins` | `plugin.view` |\n| NCPA Deployment | `/ncpa-deployment` | `system.deploy.ncpa` |\n| Maintenance | `/maintenance` | `maintenance.manage` |\n| Remediation | `/remediation` | `remediation.view` |\n| History | `/history` | `system.history` |\n| Report | `/reports` | `system.report` |\n| System Logs | `/system-logs` | `system.logs` |\n| Manage Accounts | `/accounts` | `account.view` |\n| Manage Roles | `/manage-roles` | `role.view` |\n| Settings | `/settings` | none. Tabs: General Settings (everyone), Security (`settings.security`), System (`settings.system`), Network Discovery (`settings.discovery`), Plugins (`settings.plugins`), Email (`settings.email`) |\n\nA user who opens a page they may not use is sent to the first page they can use (a Staff user lands on Settings).\n\n**What changed in this revision**\n\n- **Role name:** \"Administrator\" is now \"Super Admin\" (#112).\n- **Test users:** the old `viewer` and `noperm` are replaced by the Staff user, and a dashboard-only user only where a case needs one.\n- **Steps:** every case now has numbered steps using the button and tab names in the app code.\n- **Spec and app differ (marked Note in the case):** the Dashboard has four cards (Total Hosts, Network Latency, Active Warnings, Critical Issues), not the spec's Active Alerts and Hosts in Downtime cards. Unacknowledge asks no confirmation. The Active Alerts list has no acknowledgement filter. Rescan Network starts at once with no confirmation. The host table and host drawer are on Device Inventory, not Network Health.\n- **New in `main` since the first revision:** resource forecast \"Running out soon\" (#156), remote service restart (#182), remediation safety controls and the kill switch (#155), the Add User default role fix (#191), and Clean up now offered on deployed devices.\n\n## Run order and prerequisites\n\nSome cases need something an earlier case creates, for example a user, a role, an active alert, or a deployed agent. Run the cases in the order below. Each case appears once, and the numbers continue within the same module (\"TC-ACC-01, 02, 03\" means TC-ACC-01, TC-ACC-02, TC-ACC-03). Run the 8 end-to-end scenarios afterwards on a freshly built (or restored) appliance.\n\n### Run order\n\n| Phase | Goal | Run these cases in this order |\n| --- | --- | --- |\n| 1 | Fresh install and first login (clean appliance) | TC-AUTH-05, 06, 07, 01, 02, 03, 04, 09, 12 |\n| 2 | Roles and accounts (this creates the test users used later) | TC-ROL-01, 02, 03, TC-ACC-01, 02, 03, TC-AUTH-08, TC-ACC-04, 05, 06, 07, 09, 10, 08, TC-ROL-04, 05, 06, TC-AUTH-10, 11, TC-SHL-09, 04, 10 |\n| 3 | Permission checks with the Staff user | TC-DASH-08, TC-SS-04, TC-HIS-01, TC-PLG-07, TC-NCPA-08, TC-RPT-07, TC-LOG-05, TC-SHL-06, TC-NFR-01, 02 |\n| 4 | Settings the lab needs (email first) | TC-SET-07, 01, 02, 03, 04, 05, 06, TC-SHL-01, 02, 03 |\n| 5 | Discover the network and enable plugins | TC-DSC-01, 02, 03, 04, 05, 08, 09, TC-PLG-01, 02, 03, 04, 05, 06, TC-DI-01, 02, 03, 04 |\n| 6 | Views with live data, device extras, topology | TC-DASH-01, 05, 07, TC-NH-01, 02, 03, 04, 05, TC-SS-01, 02, 03, TC-DX-01, 02, 03, 04, 05, 06, 07, 08, 09, 10, TC-NH-06, 07, TC-TOP-01, 02, 03, 04, 05, 06 |\n| 7 | Device changes | TC-DI-05, 06, 07, 08, 09, 11, 12, 13, TC-DASH-02, TC-DI-14, 15, 16, 17, 18, 19, TC-DSC-06, 07 |\n| 8 | Faults, alerts, history, and maintenance | TC-DASH-03, TC-ACK-01, 02, 03, 04, 05, 06, 07, 08, TC-DASH-04, TC-HIS-02, 03, 04, 05, 06, 07, 08, TC-SHL-07, 08, TC-MNT-01, 02, 03, 04, 05, 06, 07, 09, 10 |\n| 9 | NCPA and automatic recovery | TC-NCPA-01, 02, 03, 04, 05, 06, 07, 09, 10, 11, TC-DI-10, TC-DASH-09, TC-SS-05, TC-REM-02, 01, 04, 03, 05, 07, 09, 06, 08, 10 |\n| 10 | Reports and logs (after incidents exist) | TC-RPT-01, 02, 03, 04, 05, 06, TC-LOG-01, 02, 03, 04, TC-SHL-05 |\n| 11 | Cases that stop or break services (last, then restore everything) | TC-DASH-06, TC-MNT-08, TC-SET-08, 09 |\n| 12 | Quality and performance | TC-NFR-03, 04, 05, 06, 07, 08, 09, 10, 11 |\n| 13 | Edge cases | TC-EDG-01 to 18 |\n| 14 | Order of events (one at a time, restore the lab after each) | TC-SEQ-01, 02, 03, 04, 05, 06, 07, 08, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 22, 23, 24 |\n| 15 | Cases that need a fresh appliance (restore the clean snapshot before each one) | TC-SEQ-09, TC-SEQ-17, then E2E-01 to 08 |\n\n### What each case needs first\n\nCases not listed here need only a finished setup (TC-AUTH-07) and the lab described above.\n\n| Case | Do these first | Why |\n| --- | --- | --- |\n| TC-AUTH-06 | TC-AUTH-05 | The setup window must already be open |\n| TC-AUTH-07 | TC-AUTH-06 | It uses the same window, now with correct values |\n| TC-AUTH-01 to 04, 09, 12 | TC-AUTH-07 | They need a finished setup and a known login |\n| TC-AUTH-08 | TC-ACC-03 | It needs a user created with \"Require password change at first sign-in\" ticked |\n| TC-ACC-03 | (pair with TC-AUTH-08) | Create users A and B here, then sign in as them in TC-AUTH-08 |\n| TC-ACC-04, 05, 07, 09, 10 | TC-ACC-01 | They need the Staff user |\n| TC-ACC-06 | TC-ACC-01, TC-AUTH-08 | After a reset the user sees the forced password change |\n| TC-ACC-08 | TC-ROL-01 | Needs a role `qa-accounts` and a user with it, made the same way |\n| TC-ROL-04 | TC-ROL-01, TC-ACC-01 | Needs the role `qa-view` and a user with it |\n| TC-ROL-05, TC-DASH-08, TC-SS-04, TC-HIS-01, TC-PLG-07, TC-NCPA-08, TC-RPT-07, TC-LOG-05, TC-MNT-09 | TC-ACC-01 | They use the Staff user |\n| TC-ROL-06, TC-SHL-10 | TC-ROL-01 | Each needs a role with one permission and a user with it, made the same way |\n| TC-AUTH-11 | TC-ACC-01 | A registered user must exist |\n| TC-SHL-09 | TC-AUTH-11 | It reads the password request made there |\n| TC-SHL-06 | TC-ROL-04 | It uses the dashboard-only user |\n| TC-SET-01 to 06 | TC-AUTH-07 | They need a Super Admin sign-in |\n| TC-MNT-10, TC-SHL-08 | TC-SET-07 | They need working email |\n| TC-DSC-02 to 05, 08, 09 | TC-DSC-01 | They need a scan that has found devices |\n| TC-DSC-06 | TC-DSC-01 | Needs two networks with devices |\n| TC-DSC-07 | TC-DSC-01, TC-PLG-03 | Needs a monitored port that you then close |\n| TC-PLG-03 | TC-DSC-01 | Enabling a plugin needs discovered devices |\n| TC-PLG-04, 05, 06 | TC-PLG-03 | They need an enabled plugin with services |\n| TC-DI-01 to 04, 11 to 13, TC-TOP-01 to 06 | TC-DSC-01 | They need discovered devices |\n| TC-DI-05 to 09, TC-DX-01 to 05 | TC-PLG-03 | They need monitored ports and the plugins for them |\n| TC-DX-06, 07 | TC-DSC-01 | Need a device that answers SNMP |\n| TC-NH-06 | TC-DX-07 | An interface must already be monitored |\n| TC-DI-10 | TC-NCPA-04 | The NCPA port is protected only after a deployment |\n| TC-DI-14, 15 | TC-DI-13 | They use a paused device |\n| TC-DASH-02 | TC-DI-13 | The pause is made there |\n| TC-DI-16 to 19 | TC-DSC-01 | Need identity review items (two records for one device) |\n| TC-DASH-03 | TC-DSC-01, TC-PLG-03 | You need monitored services to break |\n| TC-ACK-01, 03, 04, 06, 07, 08 | TC-DASH-03 | They need active alerts |\n| TC-ACK-02 | TC-ROL-04, TC-DASH-03 | Needs the dashboard-only user and an active alert |\n| TC-ACK-05 | TC-ACK-01 | An acknowledgement must exist to remove |\n| TC-HIS-02 to 08 | TC-ACK-08, TC-SET-07 | Alert and notification events must exist |\n| TC-SHL-07 | TC-DSC-02 | The bell needs a new notification, such as a finished scan |\n| TC-MNT-03 to 06 | TC-MNT-02 | They reuse the same form |\n| TC-MNT-07 | TC-MNT-02 | A window must exist to cancel |\n| TC-MNT-08 | TC-MNT-07 | Same cancel flow, with Nagios stopped |\n| TC-NCPA-02 | TC-DSC-01, TC-NCPA-01 | Needs a discovered Linux VM and `check_ncpa` enabled |\n| TC-NCPA-03 | TC-NCPA-02 | The wizard is open from there |\n| TC-NCPA-04 | TC-NCPA-03 | Needs a correct login |\n| TC-NCPA-05, 06, 07, 10 | TC-NCPA-04 | They need a finished (or failed) deployment |\n| TC-NCPA-09 | TC-NCPA-02 | Needs a trusted host key |\n| TC-NCPA-11 | TC-NCPA-04, TC-NCPA-09 | Needs a deployed device with remote restart set |\n| TC-DASH-09, TC-SS-05 | TC-NCPA-04 | Need NCPA data for about 3 days |\n| TC-REM-01, 03, 04, 05 | TC-REM-02 | They need an action to look at or change |\n| TC-REM-07, 08, 09 | TC-REM-02, TC-PLG-03 | They need an action and a service to break |\n| TC-REM-06 | TC-REM-07, TC-REM-09 | The run log needs runs and skipped runs |\n| TC-RPT-01 to 06 | TC-DASH-03, TC-ACK-08, TC-MNT-10 | A report needs incident data |\n| TC-RPT-05 | TC-RPT-03, TC-RPT-04 | The exports must exist |\n| TC-LOG-02 to 04 | TC-ACC-01, TC-DSC-02 | Log entries must exist |\n| TC-DASH-06, TC-MNT-08, TC-SET-08 | everything above | They stop Nagios or break its config, so run them last and restore |\n| TC-NFR-08, 09 | TC-DSC-01 | Need 10 and 15 monitored hosts |\n| TC-NFR-10 | TC-DASH-03 | Needs a target to break |\n| TC-EDG-01 to 18 | TC-ACC-01, TC-DSC-01, TC-DI-13 | They reuse the accounts, scans, and devices from earlier phases |\n\n**Order-of-events cases (TC-SEQ) need first**\n\n| Case | Do these first | Why |\n| --- | --- | --- |\n| TC-SEQ-01, 02, 06, 23 | TC-DASH-03, TC-PLG-03 | You need a monitored service to stop and start |\n| TC-SEQ-03, 04, 05 | TC-MNT-02, TC-SET-07 | You need the window form and working email |\n| TC-SEQ-06, 07 | TC-DI-13 | Pause and resume work |\n| TC-SEQ-08, 24 | TC-DSC-02 | A scan can be started |\n| TC-SEQ-09 | a fresh appliance | `check_http` disabled and no scan yet |\n| TC-SEQ-10, 11 | TC-PLG-03, TC-DI-05 | A plugin is monitoring a port |\n| TC-SEQ-12 | TC-ROL-04 | The role `qa-view` and its user exist |\n| TC-SEQ-13 | TC-ROL-01 | Make a role with two permissions and a user |\n| TC-SEQ-14, 15 | TC-ACC-01 | The Staff user exists |\n| TC-SEQ-16 | TC-ACC-03 | A user with the forced change exists |\n| TC-SEQ-17 | a fresh appliance | The bootstrap login is not used yet |\n| TC-SEQ-18, 19, 20 | TC-REM-02, TC-PLG-03 | An action and a service to break |\n| TC-SEQ-21 | TC-NCPA-04 | A deployed NCPA device |\n| TC-SEQ-22 | TC-NCPA-09, TC-REM-10, TC-NCPA-04 | A deployed device with remote restart set |",
+          "module_context": "### Module 3 \u2013 Manage Roles (`/manage-roles`)\n\n**Summary of cases**\n\n| TC | Case | Req | Tech | Pri | Result |\n| --- | --- | --- | --- | --- | --- |\n| TC-ROL-01 | Create a role | ROL-01 | EP | H | PASS |\n| TC-ROL-02 | The Super Admin role is read-only | ROL-02 | EG | M | PASS |\n| TC-ROL-03 | The bootstrap administrator's role is locked | ROL-03 | DT | H | PASS |\n| TC-ROL-04 | A dashboard-only user is limited to the Dashboard | ROL-04 | DT | H | Not run |\n| TC-ROL-05 | A Staff user can open only Settings | ROL-04 | DT | H | PASS |\n| TC-ROL-06 | Settings tabs follow their own permissions | ROL-05 | DT | M | PASS |\n\n",
+          "singleton": false,
+          "source_hash": "d9374c41d7f4e5304c3475735d765ad66cb4352cc9745f76e96d78c4de0e398f",
+          "procedure_hash": "958824d636b08fe39755306c1e5740f8c485ee7b5b1dce6e39b367d30a514fd2",
+          "reuse": null,
+          "coverage": {
+            "case_hash": "18647647b5a4840371c5559f2af1eccbf6bf89964af049079239878ca0dab6cd",
+            "status": "implemented",
+            "mode": "scripted automation",
+            "reason": "Source adapter is complete for every catalog expected item; live launcher support, reviewed current lab prerequisites/cards and a separate explicit start are still required.",
+            "items": {
+              "E1": {
+                "marker": "qa-evidence:TC-ROL-04:E1",
+                "method": "The qa-view sidebar contains Overview and Settings only."
+              },
+              "E2": {
+                "marker": "qa-evidence:TC-ROL-04:E2",
+                "method": "Each of the 13 catalog page addresses redirects to /dashboard."
+              },
+              "E3": {
+                "marker": "qa-evidence:TC-ROL-04:E3",
+                "method": "Opening /api/system/log, /api/system/report/availability, and /api/user/accounts returns HTTP 403 for qa-view."
+              }
+            },
+            "adapter": {
+              "path": "client/e2e/qa-modules-2-9.lab.spec.ts",
+              "title": "TC-ROL-04: A dashboard-only user is limited to the Dashboard",
+              "project": "qa-modules-2-9",
+              "config": "client/playwright.modules.qa.config.ts"
+            },
+            "source_hashes": {
+              "client/e2e/qa-modules-2-9.lab.spec.ts": "49f82ae6f6996d784082d575da9013a7a4827100fc797d5e47c73848977b43bc",
+              "client/playwright.modules.qa.config.ts": "49dbe58e8e6547495ced6abe204a5ccd3854e917db47dea2f7c4acd846d6085c",
+              "client/qa/module-selection.mjs": "5b648a29d597eb7ecdf3e7ea38f2a44560c5f7a2c1259e8041a503c3c4f4d99e",
+              "client/src/App.tsx": "05b6afc326a4946b382f222a68276744aa6b365fbe1a40cee04b237240a27579",
+              "client/src/components/layout/Sidebar.tsx": "25986b10740143c932f2ffd936e3396b871e703ffd603810b45e9306df1838f2",
+              "client/src/components/layout/PageAccessGuard.tsx": "2d0765defe8f5dbc8c33ec735d0d7ba7a57332574b8c77b723cea41bc1ea9c5f",
+              "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
+              "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
+              "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
+              "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
+              "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
+              "server/app/api/helper/database_access/permissions.py": "223c0628444524cdae232fb02c29ebbb18b5e4c2e0307990acbe597a40e2ecff",
+              "server/app/api/system/log.py": "0217cd8e0b016a80bb77b01684d8e47a1af0a1ea445a73ddf20b35874be1e706",
+              "server/app/api/system/report.py": "c8995b4ada8817603604bc411646de70d6cf707de749fe322fc0efd9a5d0f13d",
+              "server/app/api/user/management.py": "2ad5a1f3a41c9784fb5688b1455279946f2da9ea63c1deaf13a6723d1adb0c4d",
+              "server/app/api/user/login.py": "131d66fec10e1ee90bf98a7838e3ed827edc8d99e461b0ec3f36ab4c069c5e8b"
+            },
+            "prerequisites": [
+              "An initialized qa-view user with system.dashboard and no permissions for the catalog protected pages/APIs.",
+              "The qa-view credentials remain in the approved private store; no role or account is created or edited by this adapter."
+            ],
+            "recovery": [
+              "No account or role writes. POST logout, verify GET /api/user/me returns 401, and dispose the browser context. Preserve login/logout audit entries."
+            ],
+            "reviewed_by": "Codex source review; not runtime acceptance",
+            "reviewed_at": "2026-10-18",
+            "procedure_review": "The full catalog route/API list and REQ-ROL-04 were reviewed against the frontend page-permission map, sidebar filtering and PageAccessGuard, plus Flask permission decorators for the three listed APIs. The adapter signs in through the real UI, reads actual hrefs, navigates each page address, and browser-navigates each API address. No mocked request or alternate API assertion replaces a step."
+          },
+          "execution": {
+            "readiness": "BLOCKED: case-specific fixture observations and private fixture inputs are missing or unverified",
+            "coverage_hash": "ebaa57e3b93b4eecd8d73ebea1b413588a489ca152af73f8cfa00337950353fb",
+            "selection": {
+              "path": "client/e2e/qa-modules-2-9.lab.spec.ts",
+              "title": "TC-ROL-04: A dashboard-only user is limited to the Dashboard",
+              "project": "qa-modules-2-9",
+              "config": "client/playwright.modules.qa.config.ts"
+            },
+            "mode": "scripted automation",
+            "adapter": "/home/paeng/Documents/Capstone-FIles/Capstone-Project/Network-Diagnosis-System-qa214/client/e2e/qa-modules-2-9.lab.spec.ts",
+            "adapter_hash": "49f82ae6f6996d784082d575da9013a7a4827100fc797d5e47c73848977b43bc",
+            "actions": [
+              [
+                "scripts/playwright-lab",
+                "--config=playwright.modules.qa.config.ts",
+                "--project=qa-modules-2-9",
+                "e2e/qa-modules-2-9.lab.spec.ts",
+                "--grep=(?:^| )TC\\-ROL\\-04:\\ A\\ dashboard\\-only\\ user\\ is\\ limited\\ to\\ the\\ Dashboard$",
+                "--workers=1",
+                "--retries=0"
+              ]
+            ],
+            "reviewed_by": "Codex source/spec/assertion/action/recovery review; 2026-10-18; live fixtures not verified",
+            "timeout_seconds": 300,
+            "step_timeout_seconds": 30,
+            "human_required": false,
+            "prerequisites": [
+              "An initialized qa-view user with system.dashboard and no permissions for the catalog protected pages/APIs.",
+              "The qa-view credentials remain in the approved private store; no role or account is created or edited by this adapter."
+            ],
+            "recovery": [
+              "No account or role writes. POST logout, verify GET /api/user/me returns 401, and dispose the browser context. Preserve login/logout audit entries."
+            ],
+            "evidence_dir": "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/evidence/TC-ROL-04",
+            "write_paths": [
+              "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/evidence/TC-ROL-04",
+              "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/modules-2-9-adapters-01/control",
+              "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/modules-2-9-adapters-01/bridge"
+            ],
+            "container_image_id": "sha256:e37b02e1817b35e6a0953bdfed1e4a285cc9f3d1d86ac77c1d2fedef0da6c7a5",
+            "baseline_hash": "da42da6cdbc38dab7ba6f9d96c2abd9cfb822123429fdd3f1e613ea50f8e07c3",
+            "control_dir": "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/modules-2-9-adapters-01/control/TC-ROL-04",
+            "bridge_dir": "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/modules-2-9-adapters-01/bridge/TC-ROL-04",
+            "public_write_paths": [
+              "docs/test-runs/2026-10-18-modules-2-9-seven/REPORT.md",
+              "docs/test-runs/README.md",
+              "docs/qa/queues/2026-10-18-modules-2-9-adapters-v4-execution.md",
+              ".agent/progress/issue-214.md"
+            ],
+            "live_prerequisite_status": {
+              "runtime_baseline": "PASS at 2026-10-18T12:29:16.826139Z; private inspection retained outside repository",
+              "case_fixtures": "UNVERIFIED"
+            },
+            "timeout_source": "Existing qa_pilot reviewed envelope: 300 seconds per case, 30 seconds per action; bounded by qa_pilot.py."
+          }
+        },
+        {
+          "id": "TC-DI-02",
+          "title": "Port groups and their order",
+          "priority": "M",
+          "module": "DI",
+          "module_title": "Device Inventory (`/device-inventory`)",
+          "phase": 5,
+          "order": 65,
+          "requirements": [
+            "REQ-DI-02"
+          ],
+          "summary_result": "Not run",
+          "detailed_result": "Not run",
+          "status": "untested",
+          "steps": "1. Open that device's drawer and read the **Ports** groups from top to bottom.\n2. Read the count in each group header and the order inside a group.",
+          "expectations": [
+            "Groups appear in this order: **Needs attention**, **Monitored**, **Suggested**, **Stopped**, **Archived** (collapsed).",
+            "Each header has a count, and a group with no ports is not shown.",
+            "Inside a group, TCP ports come before UDP, each by port number."
+          ],
+          "procedure": "#### TC-DI-02 \u2013 Port groups and their order\n\n**Requirement:** REQ-DI-02 \u00b7 **Technique:** EP \u00b7 **Priority:** M \u00b7 **Result:** Not run\n\n**Before you start:** a device with ports in several states (Monitored, Suggested, Ignored, Archived).\n\n**Steps**\n\n1. Open that device's drawer and read the **Ports** groups from top to bottom.\n2. Read the count in each group header and the order inside a group.\n\n**Expected result**\n\n- Groups appear in this order: **Needs attention**, **Monitored**, **Suggested**, **Stopped**, **Archived** (collapsed).\n- Each header has a count, and a group with no ports is not shown.\n- Inside a group, TCP ports come before UDP, each by port number.",
+          "dependencies": [
+            "| TC-DI-01 to 04, 11 to 13, TC-TOP-01 to 06 | TC-DSC-01 | They need discovered devices |"
+          ],
+          "global_context": "# Pinpoint - Black-Box Test Cases by Module with Traceability Matrix\n\nOct 16, 2026 \u00b7 @Raf\n\n## Scope and approach\n\nThis suite tests Pinpoint module by module, the way a user (or an API client) sees it, with no knowledge of the code. Every test case tells you what to prepare, the exact steps to follow, and what you should see. Every case traces to a requirement taken from the repository's `spec files/` (see the traceability matrix at the end). It covers 23 modules plus 8 end-to-end scenarios, and it was checked against the repository's `main` branch at commit `4b1ad9f` (merged 2026-10-17).\n\n**Black-box techniques used**\n\n- **EP**: equivalence partitioning, one valid and one invalid class per input\n- **BVA**: boundary value analysis, on limits the spec states (for example flap thresholds 0 to 100, retry interval 1 to 10 minutes)\n- **DT**: decision table, for permission and state combinations\n- **ST**: state transition, for pause/resume, acknowledge/unacknowledge, and enable/disable flows\n- **EG**: error guessing, for empty states, cancelled dialogs, and double submits\n\n**Conventions**\n\n- **Test case ID:** `TC-<MODULE>-<nn>`, such as `TC-AUTH-03`.\n- **Requirement ID:** `REQ-<MODULE>-<nn>`. The specs have no requirement IDs of their own, so each one here is a short statement of a spec rule and names its source section in the traceability matrix.\n- **Priority:** H = a failure blocks the module or is a security issue, M = a failure breaks a feature, L = a cosmetic or edge case.\n- **Result values:** PASS, FAIL (write what you saw), PARTIALLY PASS (write what was missing), BLOCKED (write which case blocked it), or Not run. Results already recorded by the tester are kept in this revision.\n- **Passwords for test accounts:** use a value such as `Lab-Pinpoint-2026!`. It has 12 or more characters with upper and lower case letters, a number, and a symbol, so it passes both the strong policy (Settings, Security) and the relaxed policy (8 or more characters).\n- **Data setup:** unless a case says otherwise, the lab has at least one host Up, one host Down, one service Critical, and one acknowledged alert.\n\nThe repository's `docs/qa/QA_Test_Plan.md` is organized by user journey (J1 to J9). This document regroups coverage by module and adds boundary, negative, and permission cases. Where a journey case covers the same check, the traceability matrix names it in the Source column (for example QA J1-03).\n\n**How to read a test case**\n\n- The first line gives the requirement, the technique, the priority, and the result.\n- **Before you start** lists what must be ready. Skip it only if the case does not have one.\n- **Steps** are done in order. Button, tab, and field names are in **bold** exactly as they appear on screen. Addresses and API paths are in `code`.\n- **Expected result** is a list. Every item must be true for PASS.\n- **Note** appears where the spec and the real app differ. The app's behavior is what you test, and the difference is reported as a finding.\n\n**Test accounts and lab**\n\n- **Super Admin:** the built-in role with every permission. It was called \"Administrator\" before issue #112. `flask sync-permissions` renames an existing one. If a different role already used the name \"Super Admin\", the old one is kept as \"Administrator (Legacy)\". On a development database filled by `flask seed`, the account is `admin@test.com` with password `Password123!` (development only).\n- **Staff user:** any user whose role is the built-in **Staff** role. Staff holds no permissions, so after signing in the user can open only **Settings**, and only the **General Settings** tab. This one account is used wherever a case needs a user who is denied everything. On a development database use `emily.davis@test.com` with `Password123!`. On any other install create one in TC-ACC-01.\n- **Dashboard-only user:** only a few cases need a user who can open the Dashboard and nothing else. Create the role `qa-view` with only `system.dashboard` (TC-ROL-01) and a user with that role.\n- **Lab:** the Pinpoint appliance, a web VM (HTTP on port 80, SSH on port 22), a second Linux VM, an SMTP test mailbox, and a browser plus a private window for second sessions.\n\n**Where to find each page**\n\n| Sidebar label | Address | Permission needed |\n| --- | --- | --- |\n| Overview | `/dashboard` | `system.dashboard` |\n| Network Health | `/network-health` | `system.network_health` |\n| Device Inventory | `/device-inventory` | `system.network_health` |\n| Topology | `/topology` | `system.network_health` |\n| System Status | `/system-status` | `system.network_health` |\n| Plugins | `/plugins` | `plugin.view` |\n| NCPA Deployment | `/ncpa-deployment` | `system.deploy.ncpa` |\n| Maintenance | `/maintenance` | `maintenance.manage` |\n| Remediation | `/remediation` | `remediation.view` |\n| History | `/history` | `system.history` |\n| Report | `/reports` | `system.report` |\n| System Logs | `/system-logs` | `system.logs` |\n| Manage Accounts | `/accounts` | `account.view` |\n| Manage Roles | `/manage-roles` | `role.view` |\n| Settings | `/settings` | none. Tabs: General Settings (everyone), Security (`settings.security`), System (`settings.system`), Network Discovery (`settings.discovery`), Plugins (`settings.plugins`), Email (`settings.email`) |\n\nA user who opens a page they may not use is sent to the first page they can use (a Staff user lands on Settings).\n\n**What changed in this revision**\n\n- **Role name:** \"Administrator\" is now \"Super Admin\" (#112).\n- **Test users:** the old `viewer` and `noperm` are replaced by the Staff user, and a dashboard-only user only where a case needs one.\n- **Steps:** every case now has numbered steps using the button and tab names in the app code.\n- **Spec and app differ (marked Note in the case):** the Dashboard has four cards (Total Hosts, Network Latency, Active Warnings, Critical Issues), not the spec's Active Alerts and Hosts in Downtime cards. Unacknowledge asks no confirmation. The Active Alerts list has no acknowledgement filter. Rescan Network starts at once with no confirmation. The host table and host drawer are on Device Inventory, not Network Health.\n- **New in `main` since the first revision:** resource forecast \"Running out soon\" (#156), remote service restart (#182), remediation safety controls and the kill switch (#155), the Add User default role fix (#191), and Clean up now offered on deployed devices.\n\n## Run order and prerequisites\n\nSome cases need something an earlier case creates, for example a user, a role, an active alert, or a deployed agent. Run the cases in the order below. Each case appears once, and the numbers continue within the same module (\"TC-ACC-01, 02, 03\" means TC-ACC-01, TC-ACC-02, TC-ACC-03). Run the 8 end-to-end scenarios afterwards on a freshly built (or restored) appliance.\n\n### Run order\n\n| Phase | Goal | Run these cases in this order |\n| --- | --- | --- |\n| 1 | Fresh install and first login (clean appliance) | TC-AUTH-05, 06, 07, 01, 02, 03, 04, 09, 12 |\n| 2 | Roles and accounts (this creates the test users used later) | TC-ROL-01, 02, 03, TC-ACC-01, 02, 03, TC-AUTH-08, TC-ACC-04, 05, 06, 07, 09, 10, 08, TC-ROL-04, 05, 06, TC-AUTH-10, 11, TC-SHL-09, 04, 10 |\n| 3 | Permission checks with the Staff user | TC-DASH-08, TC-SS-04, TC-HIS-01, TC-PLG-07, TC-NCPA-08, TC-RPT-07, TC-LOG-05, TC-SHL-06, TC-NFR-01, 02 |\n| 4 | Settings the lab needs (email first) | TC-SET-07, 01, 02, 03, 04, 05, 06, TC-SHL-01, 02, 03 |\n| 5 | Discover the network and enable plugins | TC-DSC-01, 02, 03, 04, 05, 08, 09, TC-PLG-01, 02, 03, 04, 05, 06, TC-DI-01, 02, 03, 04 |\n| 6 | Views with live data, device extras, topology | TC-DASH-01, 05, 07, TC-NH-01, 02, 03, 04, 05, TC-SS-01, 02, 03, TC-DX-01, 02, 03, 04, 05, 06, 07, 08, 09, 10, TC-NH-06, 07, TC-TOP-01, 02, 03, 04, 05, 06 |\n| 7 | Device changes | TC-DI-05, 06, 07, 08, 09, 11, 12, 13, TC-DASH-02, TC-DI-14, 15, 16, 17, 18, 19, TC-DSC-06, 07 |\n| 8 | Faults, alerts, history, and maintenance | TC-DASH-03, TC-ACK-01, 02, 03, 04, 05, 06, 07, 08, TC-DASH-04, TC-HIS-02, 03, 04, 05, 06, 07, 08, TC-SHL-07, 08, TC-MNT-01, 02, 03, 04, 05, 06, 07, 09, 10 |\n| 9 | NCPA and automatic recovery | TC-NCPA-01, 02, 03, 04, 05, 06, 07, 09, 10, 11, TC-DI-10, TC-DASH-09, TC-SS-05, TC-REM-02, 01, 04, 03, 05, 07, 09, 06, 08, 10 |\n| 10 | Reports and logs (after incidents exist) | TC-RPT-01, 02, 03, 04, 05, 06, TC-LOG-01, 02, 03, 04, TC-SHL-05 |\n| 11 | Cases that stop or break services (last, then restore everything) | TC-DASH-06, TC-MNT-08, TC-SET-08, 09 |\n| 12 | Quality and performance | TC-NFR-03, 04, 05, 06, 07, 08, 09, 10, 11 |\n| 13 | Edge cases | TC-EDG-01 to 18 |\n| 14 | Order of events (one at a time, restore the lab after each) | TC-SEQ-01, 02, 03, 04, 05, 06, 07, 08, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 22, 23, 24 |\n| 15 | Cases that need a fresh appliance (restore the clean snapshot before each one) | TC-SEQ-09, TC-SEQ-17, then E2E-01 to 08 |\n\n### What each case needs first\n\nCases not listed here need only a finished setup (TC-AUTH-07) and the lab described above.\n\n| Case | Do these first | Why |\n| --- | --- | --- |\n| TC-AUTH-06 | TC-AUTH-05 | The setup window must already be open |\n| TC-AUTH-07 | TC-AUTH-06 | It uses the same window, now with correct values |\n| TC-AUTH-01 to 04, 09, 12 | TC-AUTH-07 | They need a finished setup and a known login |\n| TC-AUTH-08 | TC-ACC-03 | It needs a user created with \"Require password change at first sign-in\" ticked |\n| TC-ACC-03 | (pair with TC-AUTH-08) | Create users A and B here, then sign in as them in TC-AUTH-08 |\n| TC-ACC-04, 05, 07, 09, 10 | TC-ACC-01 | They need the Staff user |\n| TC-ACC-06 | TC-ACC-01, TC-AUTH-08 | After a reset the user sees the forced password change |\n| TC-ACC-08 | TC-ROL-01 | Needs a role `qa-accounts` and a user with it, made the same way |\n| TC-ROL-04 | TC-ROL-01, TC-ACC-01 | Needs the role `qa-view` and a user with it |\n| TC-ROL-05, TC-DASH-08, TC-SS-04, TC-HIS-01, TC-PLG-07, TC-NCPA-08, TC-RPT-07, TC-LOG-05, TC-MNT-09 | TC-ACC-01 | They use the Staff user |\n| TC-ROL-06, TC-SHL-10 | TC-ROL-01 | Each needs a role with one permission and a user with it, made the same way |\n| TC-AUTH-11 | TC-ACC-01 | A registered user must exist |\n| TC-SHL-09 | TC-AUTH-11 | It reads the password request made there |\n| TC-SHL-06 | TC-ROL-04 | It uses the dashboard-only user |\n| TC-SET-01 to 06 | TC-AUTH-07 | They need a Super Admin sign-in |\n| TC-MNT-10, TC-SHL-08 | TC-SET-07 | They need working email |\n| TC-DSC-02 to 05, 08, 09 | TC-DSC-01 | They need a scan that has found devices |\n| TC-DSC-06 | TC-DSC-01 | Needs two networks with devices |\n| TC-DSC-07 | TC-DSC-01, TC-PLG-03 | Needs a monitored port that you then close |\n| TC-PLG-03 | TC-DSC-01 | Enabling a plugin needs discovered devices |\n| TC-PLG-04, 05, 06 | TC-PLG-03 | They need an enabled plugin with services |\n| TC-DI-01 to 04, 11 to 13, TC-TOP-01 to 06 | TC-DSC-01 | They need discovered devices |\n| TC-DI-05 to 09, TC-DX-01 to 05 | TC-PLG-03 | They need monitored ports and the plugins for them |\n| TC-DX-06, 07 | TC-DSC-01 | Need a device that answers SNMP |\n| TC-NH-06 | TC-DX-07 | An interface must already be monitored |\n| TC-DI-10 | TC-NCPA-04 | The NCPA port is protected only after a deployment |\n| TC-DI-14, 15 | TC-DI-13 | They use a paused device |\n| TC-DASH-02 | TC-DI-13 | The pause is made there |\n| TC-DI-16 to 19 | TC-DSC-01 | Need identity review items (two records for one device) |\n| TC-DASH-03 | TC-DSC-01, TC-PLG-03 | You need monitored services to break |\n| TC-ACK-01, 03, 04, 06, 07, 08 | TC-DASH-03 | They need active alerts |\n| TC-ACK-02 | TC-ROL-04, TC-DASH-03 | Needs the dashboard-only user and an active alert |\n| TC-ACK-05 | TC-ACK-01 | An acknowledgement must exist to remove |\n| TC-HIS-02 to 08 | TC-ACK-08, TC-SET-07 | Alert and notification events must exist |\n| TC-SHL-07 | TC-DSC-02 | The bell needs a new notification, such as a finished scan |\n| TC-MNT-03 to 06 | TC-MNT-02 | They reuse the same form |\n| TC-MNT-07 | TC-MNT-02 | A window must exist to cancel |\n| TC-MNT-08 | TC-MNT-07 | Same cancel flow, with Nagios stopped |\n| TC-NCPA-02 | TC-DSC-01, TC-NCPA-01 | Needs a discovered Linux VM and `check_ncpa` enabled |\n| TC-NCPA-03 | TC-NCPA-02 | The wizard is open from there |\n| TC-NCPA-04 | TC-NCPA-03 | Needs a correct login |\n| TC-NCPA-05, 06, 07, 10 | TC-NCPA-04 | They need a finished (or failed) deployment |\n| TC-NCPA-09 | TC-NCPA-02 | Needs a trusted host key |\n| TC-NCPA-11 | TC-NCPA-04, TC-NCPA-09 | Needs a deployed device with remote restart set |\n| TC-DASH-09, TC-SS-05 | TC-NCPA-04 | Need NCPA data for about 3 days |\n| TC-REM-01, 03, 04, 05 | TC-REM-02 | They need an action to look at or change |\n| TC-REM-07, 08, 09 | TC-REM-02, TC-PLG-03 | They need an action and a service to break |\n| TC-REM-06 | TC-REM-07, TC-REM-09 | The run log needs runs and skipped runs |\n| TC-RPT-01 to 06 | TC-DASH-03, TC-ACK-08, TC-MNT-10 | A report needs incident data |\n| TC-RPT-05 | TC-RPT-03, TC-RPT-04 | The exports must exist |\n| TC-LOG-02 to 04 | TC-ACC-01, TC-DSC-02 | Log entries must exist |\n| TC-DASH-06, TC-MNT-08, TC-SET-08 | everything above | They stop Nagios or break its config, so run them last and restore |\n| TC-NFR-08, 09 | TC-DSC-01 | Need 10 and 15 monitored hosts |\n| TC-NFR-10 | TC-DASH-03 | Needs a target to break |\n| TC-EDG-01 to 18 | TC-ACC-01, TC-DSC-01, TC-DI-13 | They reuse the accounts, scans, and devices from earlier phases |\n\n**Order-of-events cases (TC-SEQ) need first**\n\n| Case | Do these first | Why |\n| --- | --- | --- |\n| TC-SEQ-01, 02, 06, 23 | TC-DASH-03, TC-PLG-03 | You need a monitored service to stop and start |\n| TC-SEQ-03, 04, 05 | TC-MNT-02, TC-SET-07 | You need the window form and working email |\n| TC-SEQ-06, 07 | TC-DI-13 | Pause and resume work |\n| TC-SEQ-08, 24 | TC-DSC-02 | A scan can be started |\n| TC-SEQ-09 | a fresh appliance | `check_http` disabled and no scan yet |\n| TC-SEQ-10, 11 | TC-PLG-03, TC-DI-05 | A plugin is monitoring a port |\n| TC-SEQ-12 | TC-ROL-04 | The role `qa-view` and its user exist |\n| TC-SEQ-13 | TC-ROL-01 | Make a role with two permissions and a user |\n| TC-SEQ-14, 15 | TC-ACC-01 | The Staff user exists |\n| TC-SEQ-16 | TC-ACC-03 | A user with the forced change exists |\n| TC-SEQ-17 | a fresh appliance | The bootstrap login is not used yet |\n| TC-SEQ-18, 19, 20 | TC-REM-02, TC-PLG-03 | An action and a service to break |\n| TC-SEQ-21 | TC-NCPA-04 | A deployed NCPA device |\n| TC-SEQ-22 | TC-NCPA-09, TC-REM-10, TC-NCPA-04 | A deployed device with remote restart set |",
+          "module_context": "### Module 9 \u2013 Device Inventory (`/device-inventory`)\n\n**Summary of cases**\n\n| TC | Case | Req | Tech | Pri | Result |\n| --- | --- | --- | --- | --- | --- |\n| TC-DI-01 | Who sees the Ports section | DI-01 | DT | H | PASS |\n| TC-DI-02 | Port groups and their order | DI-02 | EP | M | Not run |\n| TC-DI-03 | One reason per port | DI-03 | DT | M | Not run |\n| TC-DI-04 | View-only without edit permission | DI-04 | DT | H | PASS |\n| TC-DI-05 | Stop and resume monitoring | DI-05, DI-06 | ST | H | Not run |\n| TC-DI-06 | Leave suggested holds the port | DI-07 | ST | M | Not run |\n| TC-DI-07 | Service name rules in Set service | DI-08 | BVA | H | Not run |\n| TC-DI-08 | The \"Checked by\" line | DI-08 | EP | M | Not run |\n| TC-DI-09 | Pin and Remove pin | DI-09 | ST | M | Not run |\n| TC-DI-10 | The NCPA port is protected | DI-10 | EG | M | Not run |\n| TC-DI-11 | One monitoring label per device | DI-11 | DT | H | Not run |\n| TC-DI-12 | Monitoring filter | DI-11 | EP | M | Not run |\n| TC-DI-13 | Pause and resume | DI-12 | ST | H | Not run |\n| TC-DI-14 | Invalid pause and resume | DI-12 | DT | M | Not run |\n| TC-DI-15 | Out-of-config devices show \"last known status\" | DI-13 | EG | M | Not run |\n| TC-DI-16 | Needs Review section | DI-14 | DT | M | Not run |\n| TC-DI-17 | The review drawer writes nothing | DI-14 | EP | M | Not run |\n| TC-DI-18 | Merging needs edit permission and two distinct records | DI-14 | DT | H | Not run |\n| TC-DI-19 | Merge confirmation | DI-14 | ST | H | Not run |\n\nTo open a host's drawer press **View host details** on its row. The drawer has the **Services** list, **Performance data**, **Timestamps**, **Acknowledgement**, and, for a discovered device, sections such as **Monitoring**, **Ports**, **SNMP**, **Interfaces**, **Email alert recipients**, and **Parent devices**. Pressing a service in the list shows the service view, and **Back to host** returns.\n\n**9a. Ports**\n\n",
+          "singleton": false,
+          "source_hash": "d9374c41d7f4e5304c3475735d765ad66cb4352cc9745f76e96d78c4de0e398f",
+          "procedure_hash": "d7d849c0260d19c262294bd4e66fd94a31d633e7112d90be7416d8e830d444f2",
+          "reuse": null,
+          "coverage": {
+            "case_hash": "ff89ca1fa16e26dfb6d3e16182dd759ed7a608789b5dc612916e7865a2422ac6",
+            "status": "implemented",
+            "mode": "scripted automation",
+            "reason": "Source adapter covers every catalog expected item with read-only browser assertions; current live launcher, reviewed current prerequisites/cards and a separate explicit start are still required.",
+            "items": {
+              "E1": {
+                "marker": "qa-evidence:TC-DI-02:E1",
+                "method": "The actual Ports group headings are checked against the required order, with only absent empty groups omitted."
+              },
+              "E2": {
+                "marker": "qa-evidence:TC-DI-02:E2",
+                "method": "For every visible group, the count is positive and equals the rendered port rows; the archived group is opened before inspection."
+              },
+              "E3": {
+                "marker": "qa-evidence:TC-DI-02:E3",
+                "method": "Each visible group is checked for TCP before UDP and ascending numeric port order."
+              }
+            },
+            "adapter": {
+              "path": "client/e2e/qa-modules-2-9.lab.spec.ts",
+              "title": "TC-DI-02: Port groups and their order",
+              "project": "qa-modules-2-9",
+              "config": "client/playwright.modules.qa.config.ts"
+            },
+            "source_hashes": {
+              "client/e2e/qa-modules-2-9.lab.spec.ts": "49f82ae6f6996d784082d575da9013a7a4827100fc797d5e47c73848977b43bc",
+              "client/playwright.modules.qa.config.ts": "49dbe58e8e6547495ced6abe204a5ccd3854e917db47dea2f7c4acd846d6085c",
+              "client/qa/module-selection.mjs": "5b648a29d597eb7ecdf3e7ea38f2a44560c5f7a2c1259e8041a503c3c4f4d99e",
+              "client/src/pages/DeviceInventoryPage.tsx": "9b8f63fe860eb151c253db31948468e76a3b7e3a805d76a6da37525e760e8a6a",
+              "client/src/components/device-inventory/HostTable.tsx": "feb088ad5b68e6fbc7e72c35ea52fec5e84396c0021f7794e0f5efe30db59fdf",
+              "client/src/components/device-inventory/StatusDetailDrawer.tsx": "d5314464a53b4197e0b9da51b60fb26338b483e58f5a1d6681a332c671379530",
+              "client/src/components/device-inventory/DevicePortsSection.tsx": "7379de62eebd72f7a8a5410a6aa74bd9ff1a978035716522d248c7600659be30",
+              "client/src/components/device-inventory/devicePortsLogic.ts": "c817a5967fdb5982a4601bf7bfd582f89393547b1903395b368aea9a73ed306e",
+              "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
+              "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
+              "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
+              "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
+              "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
+              "server/app/api/system/network_hosts.py": "dd238e3cca7d1b5434f07c0f3e61f2ca9da021dd186f1683d3d844a176a5f8bf",
+              "server/app/api/system/device_identity.py": "8e6e9c77b8d0adec67b0db5e317adf10fbcce474d2fc989dc859eeef65692e30",
+              "server/app/api/helper/database_access/permissions.py": "223c0628444524cdae232fb02c29ebbb18b5e4c2e0307990acbe597a40e2ecff"
+            },
+            "prerequisites": [
+              "PINPOINT_QA_DEVICE_HOST identifies a previously reviewed discovered device; no scan or device creation is performed.",
+              "The device has existing Monitored, Suggested, Ignored/Stopped, and Archived ports. The private fixture fact is rechecked before execution.",
+              "An initialized Super Admin account is available from the approved private credential store with system.network_health and system.hosts."
+            ],
+            "recovery": [
+              "No inventory, port, plugin, or service writes. POST logout, verify GET /api/user/me returns 401, and dispose the browser context; preserve expected login/logout audit entries."
+            ],
+            "reviewed_by": "Codex source review; not runtime acceptance",
+            "reviewed_at": "2026-10-18",
+            "procedure_review": "The complete TC-DI-02 procedure and REQ-DI-02 were reviewed against Device Inventory routing, the host detail drawer, DevicePortsSection group rendering, and groupPorts ordering. The adapter reads the actual Ports headings and rows, expands only the Archived disclosure, verifies positive header counts against rendered rows, and sorts by protocol/number. It does not mutate inventory or substitute unit tests for the browser checks."
+          },
+          "execution": {
+            "readiness": "BLOCKED: case-specific fixture observations and private fixture inputs are missing or unverified",
+            "coverage_hash": "f57b781aae0c73417b3d498fa1b4b4d475107b576dc3667d196888cb43c80334",
+            "selection": {
+              "path": "client/e2e/qa-modules-2-9.lab.spec.ts",
+              "title": "TC-DI-02: Port groups and their order",
+              "project": "qa-modules-2-9",
+              "config": "client/playwright.modules.qa.config.ts"
+            },
+            "mode": "scripted automation",
+            "adapter": "/home/paeng/Documents/Capstone-FIles/Capstone-Project/Network-Diagnosis-System-qa214/client/e2e/qa-modules-2-9.lab.spec.ts",
+            "adapter_hash": "49f82ae6f6996d784082d575da9013a7a4827100fc797d5e47c73848977b43bc",
+            "actions": [
+              [
+                "scripts/playwright-lab",
+                "--config=playwright.modules.qa.config.ts",
+                "--project=qa-modules-2-9",
+                "e2e/qa-modules-2-9.lab.spec.ts",
+                "--grep=(?:^| )TC\\-DI\\-02:\\ Port\\ groups\\ and\\ their\\ order$",
+                "--workers=1",
+                "--retries=0"
+              ]
+            ],
+            "reviewed_by": "Codex source/spec/assertion/action/recovery review; 2026-10-18; live fixtures not verified",
+            "timeout_seconds": 300,
+            "step_timeout_seconds": 30,
+            "human_required": false,
+            "prerequisites": [
+              "PINPOINT_QA_DEVICE_HOST identifies a previously reviewed discovered device; no scan or device creation is performed.",
+              "The device has existing Monitored, Suggested, Ignored/Stopped, and Archived ports. The private fixture fact is rechecked before execution.",
+              "An initialized Super Admin account is available from the approved private credential store with system.network_health and system.hosts."
+            ],
+            "recovery": [
+              "No inventory, port, plugin, or service writes. POST logout, verify GET /api/user/me returns 401, and dispose the browser context; preserve expected login/logout audit entries."
+            ],
+            "evidence_dir": "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/evidence/TC-DI-02",
+            "write_paths": [
+              "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/evidence/TC-DI-02",
+              "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/modules-2-9-adapters-01/control",
+              "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/modules-2-9-adapters-01/bridge"
+            ],
+            "container_image_id": "sha256:e37b02e1817b35e6a0953bdfed1e4a285cc9f3d1d86ac77c1d2fedef0da6c7a5",
+            "baseline_hash": "da42da6cdbc38dab7ba6f9d96c2abd9cfb822123429fdd3f1e613ea50f8e07c3",
+            "control_dir": "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/modules-2-9-adapters-01/control/TC-DI-02",
+            "bridge_dir": "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/modules-2-9-adapters-01/bridge/TC-DI-02",
+            "public_write_paths": [
+              "docs/test-runs/2026-10-18-modules-2-9-seven/REPORT.md",
+              "docs/test-runs/README.md",
+              "docs/qa/queues/2026-10-18-modules-2-9-adapters-v4-execution.md",
+              ".agent/progress/issue-214.md"
+            ],
+            "live_prerequisite_status": {
+              "runtime_baseline": "PASS at 2026-10-18T12:29:16.826139Z; private inspection retained outside repository",
+              "case_fixtures": "UNVERIFIED"
+            },
+            "timeout_source": "Existing qa_pilot reviewed envelope: 300 seconds per case, 30 seconds per action; bounded by qa_pilot.py."
+          }
+        },
+        {
+          "id": "TC-DI-03",
+          "title": "One reason per port",
+          "priority": "M",
+          "module": "DI",
+          "module_title": "Device Inventory (`/device-inventory`)",
+          "phase": 5,
+          "order": 66,
+          "requirements": [
+            "REQ-DI-03"
+          ],
+          "summary_result": "Not run",
+          "detailed_result": "Not run",
+          "status": "untested",
+          "steps": "1. Open the device drawer and find that port in **Ports**.\n2. Read the reason text under it.",
+          "expectations": [
+            "Exactly one reason shows.",
+            "It is \"Not used as intended: expected \u2026, found \u2026. Not monitored until acknowledged.\" (the first matching reason wins), not the \"Held back\" reason."
+          ],
+          "procedure": "#### TC-DI-03 \u2013 One reason per port\n\n**Requirement:** REQ-DI-03 \u00b7 **Technique:** DT \u00b7 **Priority:** M \u00b7 **Result:** Not run\n\n**Before you start:** a Suggested port that is both held (**Leave suggested**) and flagged **Not used as intended**.\n\n**Steps**\n\n1. Open the device drawer and find that port in **Ports**.\n2. Read the reason text under it.\n\n**Expected result**\n\n- Exactly one reason shows.\n- It is \"Not used as intended: expected \u2026, found \u2026. Not monitored until acknowledged.\" (the first matching reason wins), not the \"Held back\" reason.",
+          "dependencies": [
+            "| TC-DI-01 to 04, 11 to 13, TC-TOP-01 to 06 | TC-DSC-01 | They need discovered devices |"
+          ],
+          "global_context": "# Pinpoint - Black-Box Test Cases by Module with Traceability Matrix\n\nOct 16, 2026 \u00b7 @Raf\n\n## Scope and approach\n\nThis suite tests Pinpoint module by module, the way a user (or an API client) sees it, with no knowledge of the code. Every test case tells you what to prepare, the exact steps to follow, and what you should see. Every case traces to a requirement taken from the repository's `spec files/` (see the traceability matrix at the end). It covers 23 modules plus 8 end-to-end scenarios, and it was checked against the repository's `main` branch at commit `4b1ad9f` (merged 2026-10-17).\n\n**Black-box techniques used**\n\n- **EP**: equivalence partitioning, one valid and one invalid class per input\n- **BVA**: boundary value analysis, on limits the spec states (for example flap thresholds 0 to 100, retry interval 1 to 10 minutes)\n- **DT**: decision table, for permission and state combinations\n- **ST**: state transition, for pause/resume, acknowledge/unacknowledge, and enable/disable flows\n- **EG**: error guessing, for empty states, cancelled dialogs, and double submits\n\n**Conventions**\n\n- **Test case ID:** `TC-<MODULE>-<nn>`, such as `TC-AUTH-03`.\n- **Requirement ID:** `REQ-<MODULE>-<nn>`. The specs have no requirement IDs of their own, so each one here is a short statement of a spec rule and names its source section in the traceability matrix.\n- **Priority:** H = a failure blocks the module or is a security issue, M = a failure breaks a feature, L = a cosmetic or edge case.\n- **Result values:** PASS, FAIL (write what you saw), PARTIALLY PASS (write what was missing), BLOCKED (write which case blocked it), or Not run. Results already recorded by the tester are kept in this revision.\n- **Passwords for test accounts:** use a value such as `Lab-Pinpoint-2026!`. It has 12 or more characters with upper and lower case letters, a number, and a symbol, so it passes both the strong policy (Settings, Security) and the relaxed policy (8 or more characters).\n- **Data setup:** unless a case says otherwise, the lab has at least one host Up, one host Down, one service Critical, and one acknowledged alert.\n\nThe repository's `docs/qa/QA_Test_Plan.md` is organized by user journey (J1 to J9). This document regroups coverage by module and adds boundary, negative, and permission cases. Where a journey case covers the same check, the traceability matrix names it in the Source column (for example QA J1-03).\n\n**How to read a test case**\n\n- The first line gives the requirement, the technique, the priority, and the result.\n- **Before you start** lists what must be ready. Skip it only if the case does not have one.\n- **Steps** are done in order. Button, tab, and field names are in **bold** exactly as they appear on screen. Addresses and API paths are in `code`.\n- **Expected result** is a list. Every item must be true for PASS.\n- **Note** appears where the spec and the real app differ. The app's behavior is what you test, and the difference is reported as a finding.\n\n**Test accounts and lab**\n\n- **Super Admin:** the built-in role with every permission. It was called \"Administrator\" before issue #112. `flask sync-permissions` renames an existing one. If a different role already used the name \"Super Admin\", the old one is kept as \"Administrator (Legacy)\". On a development database filled by `flask seed`, the account is `admin@test.com` with password `Password123!` (development only).\n- **Staff user:** any user whose role is the built-in **Staff** role. Staff holds no permissions, so after signing in the user can open only **Settings**, and only the **General Settings** tab. This one account is used wherever a case needs a user who is denied everything. On a development database use `emily.davis@test.com` with `Password123!`. On any other install create one in TC-ACC-01.\n- **Dashboard-only user:** only a few cases need a user who can open the Dashboard and nothing else. Create the role `qa-view` with only `system.dashboard` (TC-ROL-01) and a user with that role.\n- **Lab:** the Pinpoint appliance, a web VM (HTTP on port 80, SSH on port 22), a second Linux VM, an SMTP test mailbox, and a browser plus a private window for second sessions.\n\n**Where to find each page**\n\n| Sidebar label | Address | Permission needed |\n| --- | --- | --- |\n| Overview | `/dashboard` | `system.dashboard` |\n| Network Health | `/network-health` | `system.network_health` |\n| Device Inventory | `/device-inventory` | `system.network_health` |\n| Topology | `/topology` | `system.network_health` |\n| System Status | `/system-status` | `system.network_health` |\n| Plugins | `/plugins` | `plugin.view` |\n| NCPA Deployment | `/ncpa-deployment` | `system.deploy.ncpa` |\n| Maintenance | `/maintenance` | `maintenance.manage` |\n| Remediation | `/remediation` | `remediation.view` |\n| History | `/history` | `system.history` |\n| Report | `/reports` | `system.report` |\n| System Logs | `/system-logs` | `system.logs` |\n| Manage Accounts | `/accounts` | `account.view` |\n| Manage Roles | `/manage-roles` | `role.view` |\n| Settings | `/settings` | none. Tabs: General Settings (everyone), Security (`settings.security`), System (`settings.system`), Network Discovery (`settings.discovery`), Plugins (`settings.plugins`), Email (`settings.email`) |\n\nA user who opens a page they may not use is sent to the first page they can use (a Staff user lands on Settings).\n\n**What changed in this revision**\n\n- **Role name:** \"Administrator\" is now \"Super Admin\" (#112).\n- **Test users:** the old `viewer` and `noperm` are replaced by the Staff user, and a dashboard-only user only where a case needs one.\n- **Steps:** every case now has numbered steps using the button and tab names in the app code.\n- **Spec and app differ (marked Note in the case):** the Dashboard has four cards (Total Hosts, Network Latency, Active Warnings, Critical Issues), not the spec's Active Alerts and Hosts in Downtime cards. Unacknowledge asks no confirmation. The Active Alerts list has no acknowledgement filter. Rescan Network starts at once with no confirmation. The host table and host drawer are on Device Inventory, not Network Health.\n- **New in `main` since the first revision:** resource forecast \"Running out soon\" (#156), remote service restart (#182), remediation safety controls and the kill switch (#155), the Add User default role fix (#191), and Clean up now offered on deployed devices.\n\n## Run order and prerequisites\n\nSome cases need something an earlier case creates, for example a user, a role, an active alert, or a deployed agent. Run the cases in the order below. Each case appears once, and the numbers continue within the same module (\"TC-ACC-01, 02, 03\" means TC-ACC-01, TC-ACC-02, TC-ACC-03). Run the 8 end-to-end scenarios afterwards on a freshly built (or restored) appliance.\n\n### Run order\n\n| Phase | Goal | Run these cases in this order |\n| --- | --- | --- |\n| 1 | Fresh install and first login (clean appliance) | TC-AUTH-05, 06, 07, 01, 02, 03, 04, 09, 12 |\n| 2 | Roles and accounts (this creates the test users used later) | TC-ROL-01, 02, 03, TC-ACC-01, 02, 03, TC-AUTH-08, TC-ACC-04, 05, 06, 07, 09, 10, 08, TC-ROL-04, 05, 06, TC-AUTH-10, 11, TC-SHL-09, 04, 10 |\n| 3 | Permission checks with the Staff user | TC-DASH-08, TC-SS-04, TC-HIS-01, TC-PLG-07, TC-NCPA-08, TC-RPT-07, TC-LOG-05, TC-SHL-06, TC-NFR-01, 02 |\n| 4 | Settings the lab needs (email first) | TC-SET-07, 01, 02, 03, 04, 05, 06, TC-SHL-01, 02, 03 |\n| 5 | Discover the network and enable plugins | TC-DSC-01, 02, 03, 04, 05, 08, 09, TC-PLG-01, 02, 03, 04, 05, 06, TC-DI-01, 02, 03, 04 |\n| 6 | Views with live data, device extras, topology | TC-DASH-01, 05, 07, TC-NH-01, 02, 03, 04, 05, TC-SS-01, 02, 03, TC-DX-01, 02, 03, 04, 05, 06, 07, 08, 09, 10, TC-NH-06, 07, TC-TOP-01, 02, 03, 04, 05, 06 |\n| 7 | Device changes | TC-DI-05, 06, 07, 08, 09, 11, 12, 13, TC-DASH-02, TC-DI-14, 15, 16, 17, 18, 19, TC-DSC-06, 07 |\n| 8 | Faults, alerts, history, and maintenance | TC-DASH-03, TC-ACK-01, 02, 03, 04, 05, 06, 07, 08, TC-DASH-04, TC-HIS-02, 03, 04, 05, 06, 07, 08, TC-SHL-07, 08, TC-MNT-01, 02, 03, 04, 05, 06, 07, 09, 10 |\n| 9 | NCPA and automatic recovery | TC-NCPA-01, 02, 03, 04, 05, 06, 07, 09, 10, 11, TC-DI-10, TC-DASH-09, TC-SS-05, TC-REM-02, 01, 04, 03, 05, 07, 09, 06, 08, 10 |\n| 10 | Reports and logs (after incidents exist) | TC-RPT-01, 02, 03, 04, 05, 06, TC-LOG-01, 02, 03, 04, TC-SHL-05 |\n| 11 | Cases that stop or break services (last, then restore everything) | TC-DASH-06, TC-MNT-08, TC-SET-08, 09 |\n| 12 | Quality and performance | TC-NFR-03, 04, 05, 06, 07, 08, 09, 10, 11 |\n| 13 | Edge cases | TC-EDG-01 to 18 |\n| 14 | Order of events (one at a time, restore the lab after each) | TC-SEQ-01, 02, 03, 04, 05, 06, 07, 08, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 22, 23, 24 |\n| 15 | Cases that need a fresh appliance (restore the clean snapshot before each one) | TC-SEQ-09, TC-SEQ-17, then E2E-01 to 08 |\n\n### What each case needs first\n\nCases not listed here need only a finished setup (TC-AUTH-07) and the lab described above.\n\n| Case | Do these first | Why |\n| --- | --- | --- |\n| TC-AUTH-06 | TC-AUTH-05 | The setup window must already be open |\n| TC-AUTH-07 | TC-AUTH-06 | It uses the same window, now with correct values |\n| TC-AUTH-01 to 04, 09, 12 | TC-AUTH-07 | They need a finished setup and a known login |\n| TC-AUTH-08 | TC-ACC-03 | It needs a user created with \"Require password change at first sign-in\" ticked |\n| TC-ACC-03 | (pair with TC-AUTH-08) | Create users A and B here, then sign in as them in TC-AUTH-08 |\n| TC-ACC-04, 05, 07, 09, 10 | TC-ACC-01 | They need the Staff user |\n| TC-ACC-06 | TC-ACC-01, TC-AUTH-08 | After a reset the user sees the forced password change |\n| TC-ACC-08 | TC-ROL-01 | Needs a role `qa-accounts` and a user with it, made the same way |\n| TC-ROL-04 | TC-ROL-01, TC-ACC-01 | Needs the role `qa-view` and a user with it |\n| TC-ROL-05, TC-DASH-08, TC-SS-04, TC-HIS-01, TC-PLG-07, TC-NCPA-08, TC-RPT-07, TC-LOG-05, TC-MNT-09 | TC-ACC-01 | They use the Staff user |\n| TC-ROL-06, TC-SHL-10 | TC-ROL-01 | Each needs a role with one permission and a user with it, made the same way |\n| TC-AUTH-11 | TC-ACC-01 | A registered user must exist |\n| TC-SHL-09 | TC-AUTH-11 | It reads the password request made there |\n| TC-SHL-06 | TC-ROL-04 | It uses the dashboard-only user |\n| TC-SET-01 to 06 | TC-AUTH-07 | They need a Super Admin sign-in |\n| TC-MNT-10, TC-SHL-08 | TC-SET-07 | They need working email |\n| TC-DSC-02 to 05, 08, 09 | TC-DSC-01 | They need a scan that has found devices |\n| TC-DSC-06 | TC-DSC-01 | Needs two networks with devices |\n| TC-DSC-07 | TC-DSC-01, TC-PLG-03 | Needs a monitored port that you then close |\n| TC-PLG-03 | TC-DSC-01 | Enabling a plugin needs discovered devices |\n| TC-PLG-04, 05, 06 | TC-PLG-03 | They need an enabled plugin with services |\n| TC-DI-01 to 04, 11 to 13, TC-TOP-01 to 06 | TC-DSC-01 | They need discovered devices |\n| TC-DI-05 to 09, TC-DX-01 to 05 | TC-PLG-03 | They need monitored ports and the plugins for them |\n| TC-DX-06, 07 | TC-DSC-01 | Need a device that answers SNMP |\n| TC-NH-06 | TC-DX-07 | An interface must already be monitored |\n| TC-DI-10 | TC-NCPA-04 | The NCPA port is protected only after a deployment |\n| TC-DI-14, 15 | TC-DI-13 | They use a paused device |\n| TC-DASH-02 | TC-DI-13 | The pause is made there |\n| TC-DI-16 to 19 | TC-DSC-01 | Need identity review items (two records for one device) |\n| TC-DASH-03 | TC-DSC-01, TC-PLG-03 | You need monitored services to break |\n| TC-ACK-01, 03, 04, 06, 07, 08 | TC-DASH-03 | They need active alerts |\n| TC-ACK-02 | TC-ROL-04, TC-DASH-03 | Needs the dashboard-only user and an active alert |\n| TC-ACK-05 | TC-ACK-01 | An acknowledgement must exist to remove |\n| TC-HIS-02 to 08 | TC-ACK-08, TC-SET-07 | Alert and notification events must exist |\n| TC-SHL-07 | TC-DSC-02 | The bell needs a new notification, such as a finished scan |\n| TC-MNT-03 to 06 | TC-MNT-02 | They reuse the same form |\n| TC-MNT-07 | TC-MNT-02 | A window must exist to cancel |\n| TC-MNT-08 | TC-MNT-07 | Same cancel flow, with Nagios stopped |\n| TC-NCPA-02 | TC-DSC-01, TC-NCPA-01 | Needs a discovered Linux VM and `check_ncpa` enabled |\n| TC-NCPA-03 | TC-NCPA-02 | The wizard is open from there |\n| TC-NCPA-04 | TC-NCPA-03 | Needs a correct login |\n| TC-NCPA-05, 06, 07, 10 | TC-NCPA-04 | They need a finished (or failed) deployment |\n| TC-NCPA-09 | TC-NCPA-02 | Needs a trusted host key |\n| TC-NCPA-11 | TC-NCPA-04, TC-NCPA-09 | Needs a deployed device with remote restart set |\n| TC-DASH-09, TC-SS-05 | TC-NCPA-04 | Need NCPA data for about 3 days |\n| TC-REM-01, 03, 04, 05 | TC-REM-02 | They need an action to look at or change |\n| TC-REM-07, 08, 09 | TC-REM-02, TC-PLG-03 | They need an action and a service to break |\n| TC-REM-06 | TC-REM-07, TC-REM-09 | The run log needs runs and skipped runs |\n| TC-RPT-01 to 06 | TC-DASH-03, TC-ACK-08, TC-MNT-10 | A report needs incident data |\n| TC-RPT-05 | TC-RPT-03, TC-RPT-04 | The exports must exist |\n| TC-LOG-02 to 04 | TC-ACC-01, TC-DSC-02 | Log entries must exist |\n| TC-DASH-06, TC-MNT-08, TC-SET-08 | everything above | They stop Nagios or break its config, so run them last and restore |\n| TC-NFR-08, 09 | TC-DSC-01 | Need 10 and 15 monitored hosts |\n| TC-NFR-10 | TC-DASH-03 | Needs a target to break |\n| TC-EDG-01 to 18 | TC-ACC-01, TC-DSC-01, TC-DI-13 | They reuse the accounts, scans, and devices from earlier phases |\n\n**Order-of-events cases (TC-SEQ) need first**\n\n| Case | Do these first | Why |\n| --- | --- | --- |\n| TC-SEQ-01, 02, 06, 23 | TC-DASH-03, TC-PLG-03 | You need a monitored service to stop and start |\n| TC-SEQ-03, 04, 05 | TC-MNT-02, TC-SET-07 | You need the window form and working email |\n| TC-SEQ-06, 07 | TC-DI-13 | Pause and resume work |\n| TC-SEQ-08, 24 | TC-DSC-02 | A scan can be started |\n| TC-SEQ-09 | a fresh appliance | `check_http` disabled and no scan yet |\n| TC-SEQ-10, 11 | TC-PLG-03, TC-DI-05 | A plugin is monitoring a port |\n| TC-SEQ-12 | TC-ROL-04 | The role `qa-view` and its user exist |\n| TC-SEQ-13 | TC-ROL-01 | Make a role with two permissions and a user |\n| TC-SEQ-14, 15 | TC-ACC-01 | The Staff user exists |\n| TC-SEQ-16 | TC-ACC-03 | A user with the forced change exists |\n| TC-SEQ-17 | a fresh appliance | The bootstrap login is not used yet |\n| TC-SEQ-18, 19, 20 | TC-REM-02, TC-PLG-03 | An action and a service to break |\n| TC-SEQ-21 | TC-NCPA-04 | A deployed NCPA device |\n| TC-SEQ-22 | TC-NCPA-09, TC-REM-10, TC-NCPA-04 | A deployed device with remote restart set |",
+          "module_context": "### Module 9 \u2013 Device Inventory (`/device-inventory`)\n\n**Summary of cases**\n\n| TC | Case | Req | Tech | Pri | Result |\n| --- | --- | --- | --- | --- | --- |\n| TC-DI-01 | Who sees the Ports section | DI-01 | DT | H | PASS |\n| TC-DI-02 | Port groups and their order | DI-02 | EP | M | Not run |\n| TC-DI-03 | One reason per port | DI-03 | DT | M | Not run |\n| TC-DI-04 | View-only without edit permission | DI-04 | DT | H | PASS |\n| TC-DI-05 | Stop and resume monitoring | DI-05, DI-06 | ST | H | Not run |\n| TC-DI-06 | Leave suggested holds the port | DI-07 | ST | M | Not run |\n| TC-DI-07 | Service name rules in Set service | DI-08 | BVA | H | Not run |\n| TC-DI-08 | The \"Checked by\" line | DI-08 | EP | M | Not run |\n| TC-DI-09 | Pin and Remove pin | DI-09 | ST | M | Not run |\n| TC-DI-10 | The NCPA port is protected | DI-10 | EG | M | Not run |\n| TC-DI-11 | One monitoring label per device | DI-11 | DT | H | Not run |\n| TC-DI-12 | Monitoring filter | DI-11 | EP | M | Not run |\n| TC-DI-13 | Pause and resume | DI-12 | ST | H | Not run |\n| TC-DI-14 | Invalid pause and resume | DI-12 | DT | M | Not run |\n| TC-DI-15 | Out-of-config devices show \"last known status\" | DI-13 | EG | M | Not run |\n| TC-DI-16 | Needs Review section | DI-14 | DT | M | Not run |\n| TC-DI-17 | The review drawer writes nothing | DI-14 | EP | M | Not run |\n| TC-DI-18 | Merging needs edit permission and two distinct records | DI-14 | DT | H | Not run |\n| TC-DI-19 | Merge confirmation | DI-14 | ST | H | Not run |\n\nTo open a host's drawer press **View host details** on its row. The drawer has the **Services** list, **Performance data**, **Timestamps**, **Acknowledgement**, and, for a discovered device, sections such as **Monitoring**, **Ports**, **SNMP**, **Interfaces**, **Email alert recipients**, and **Parent devices**. Pressing a service in the list shows the service view, and **Back to host** returns.\n\n**9a. Ports**\n\n",
+          "singleton": false,
+          "source_hash": "d9374c41d7f4e5304c3475735d765ad66cb4352cc9745f76e96d78c4de0e398f",
+          "procedure_hash": "35420fa3bfdcbf40f1e8a49e3fa53f4ab381634eae9185445434ea970920f543",
+          "reuse": null,
+          "coverage": {
+            "case_hash": "072ad33fa2218d0e813c217d063d1cd795123a67f7a31481bdba09db11da6209",
+            "status": "implemented",
+            "mode": "scripted automation",
+            "reason": "Source adapter covers every catalog expected item with read-only browser assertions; current live launcher, reviewed current prerequisites/cards and a separate explicit start are still required.",
+            "items": {
+              "E1": {
+                "marker": "qa-evidence:TC-DI-03:E1",
+                "method": "The selected row shows exactly one reason paragraph and does not show the Held back reason."
+              },
+              "E2": {
+                "marker": "qa-evidence:TC-DI-03:E2",
+                "method": "The reason text exactly explains the expected and found service names and states that monitoring waits for acknowledgement."
+              }
+            },
+            "adapter": {
+              "path": "client/e2e/qa-modules-2-9.lab.spec.ts",
+              "title": "TC-DI-03: One reason per port",
+              "project": "qa-modules-2-9",
+              "config": "client/playwright.modules.qa.config.ts"
+            },
+            "source_hashes": {
+              "client/e2e/qa-modules-2-9.lab.spec.ts": "49f82ae6f6996d784082d575da9013a7a4827100fc797d5e47c73848977b43bc",
+              "client/playwright.modules.qa.config.ts": "49dbe58e8e6547495ced6abe204a5ccd3854e917db47dea2f7c4acd846d6085c",
+              "client/qa/module-selection.mjs": "5b648a29d597eb7ecdf3e7ea38f2a44560c5f7a2c1259e8041a503c3c4f4d99e",
+              "client/src/pages/DeviceInventoryPage.tsx": "9b8f63fe860eb151c253db31948468e76a3b7e3a805d76a6da37525e760e8a6a",
+              "client/src/components/device-inventory/HostTable.tsx": "feb088ad5b68e6fbc7e72c35ea52fec5e84396c0021f7794e0f5efe30db59fdf",
+              "client/src/components/device-inventory/StatusDetailDrawer.tsx": "d5314464a53b4197e0b9da51b60fb26338b483e58f5a1d6681a332c671379530",
+              "client/src/components/device-inventory/DevicePortsSection.tsx": "7379de62eebd72f7a8a5410a6aa74bd9ff1a978035716522d248c7600659be30",
+              "client/src/components/device-inventory/devicePortsLogic.ts": "c817a5967fdb5982a4601bf7bfd582f89393547b1903395b368aea9a73ed306e",
+              "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
+              "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
+              "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
+              "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
+              "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
+              "server/app/api/system/network_hosts.py": "dd238e3cca7d1b5434f07c0f3e61f2ca9da021dd186f1683d3d844a176a5f8bf",
+              "server/app/api/system/device_identity.py": "8e6e9c77b8d0adec67b0db5e317adf10fbcce474d2fc989dc859eeef65692e30",
+              "server/app/api/helper/database_access/permissions.py": "223c0628444524cdae232fb02c29ebbb18b5e4c2e0307990acbe597a40e2ecff"
+            },
+            "prerequisites": [
+              "PINPOINT_QA_DEVICE_HOST identifies a previously reviewed discovered device; no scan or device creation is performed.",
+              "PINPOINT_QA_HELD_MISMATCH_PORT identifies a preexisting Suggested port that is both held and flagged Not used as intended, with mismatch unacknowledged.",
+              "An initialized Super Admin account is available from the approved private credential store with system.network_health and system.hosts."
+            ],
+            "recovery": [
+              "No inventory, port, plugin, or service writes. POST logout, verify GET /api/user/me returns 401, and dispose the browser context; preserve expected login/logout audit entries."
+            ],
+            "reviewed_by": "Codex source review; not runtime acceptance",
+            "reviewed_at": "2026-10-18",
+            "procedure_review": "The complete TC-DI-03 procedure and REQ-DI-03 were reviewed against DevicePortsSection reason rendering and devicePortsLogic precedence. The adapter opens the selected existing port, verifies both Held and Not used as intended indicators, then checks the single reason paragraph and exact required wording. It makes no writes; the fixture must already satisfy both conditions."
+          },
+          "execution": {
+            "readiness": "BLOCKED: case-specific fixture observations and private fixture inputs are missing or unverified",
+            "coverage_hash": "bea9833bc91fa9bc118e839dd946f187970e6dc29216305bc0159c1b9f3c570a",
+            "selection": {
+              "path": "client/e2e/qa-modules-2-9.lab.spec.ts",
+              "title": "TC-DI-03: One reason per port",
+              "project": "qa-modules-2-9",
+              "config": "client/playwright.modules.qa.config.ts"
+            },
+            "mode": "scripted automation",
+            "adapter": "/home/paeng/Documents/Capstone-FIles/Capstone-Project/Network-Diagnosis-System-qa214/client/e2e/qa-modules-2-9.lab.spec.ts",
+            "adapter_hash": "49f82ae6f6996d784082d575da9013a7a4827100fc797d5e47c73848977b43bc",
+            "actions": [
+              [
+                "scripts/playwright-lab",
+                "--config=playwright.modules.qa.config.ts",
+                "--project=qa-modules-2-9",
+                "e2e/qa-modules-2-9.lab.spec.ts",
+                "--grep=(?:^| )TC\\-DI\\-03:\\ One\\ reason\\ per\\ port$",
+                "--workers=1",
+                "--retries=0"
+              ]
+            ],
+            "reviewed_by": "Codex source/spec/assertion/action/recovery review; 2026-10-18; live fixtures not verified",
+            "timeout_seconds": 300,
+            "step_timeout_seconds": 30,
+            "human_required": false,
+            "prerequisites": [
+              "PINPOINT_QA_DEVICE_HOST identifies a previously reviewed discovered device; no scan or device creation is performed.",
+              "PINPOINT_QA_HELD_MISMATCH_PORT identifies a preexisting Suggested port that is both held and flagged Not used as intended, with mismatch unacknowledged.",
+              "An initialized Super Admin account is available from the approved private credential store with system.network_health and system.hosts."
+            ],
+            "recovery": [
+              "No inventory, port, plugin, or service writes. POST logout, verify GET /api/user/me returns 401, and dispose the browser context; preserve expected login/logout audit entries."
+            ],
+            "evidence_dir": "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/evidence/TC-DI-03",
+            "write_paths": [
+              "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/evidence/TC-DI-03",
+              "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/modules-2-9-adapters-01/control",
+              "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/modules-2-9-adapters-01/bridge"
+            ],
+            "container_image_id": "sha256:e37b02e1817b35e6a0953bdfed1e4a285cc9f3d1d86ac77c1d2fedef0da6c7a5",
+            "baseline_hash": "da42da6cdbc38dab7ba6f9d96c2abd9cfb822123429fdd3f1e613ea50f8e07c3",
+            "control_dir": "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/modules-2-9-adapters-01/control/TC-DI-03",
+            "bridge_dir": "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/modules-2-9-adapters-01/bridge/TC-DI-03",
+            "public_write_paths": [
+              "docs/test-runs/2026-10-18-modules-2-9-seven/REPORT.md",
+              "docs/test-runs/README.md",
+              "docs/qa/queues/2026-10-18-modules-2-9-adapters-v4-execution.md",
+              ".agent/progress/issue-214.md"
+            ],
+            "live_prerequisite_status": {
+              "runtime_baseline": "PASS at 2026-10-18T12:29:16.826139Z; private inspection retained outside repository",
+              "case_fixtures": "UNVERIFIED"
+            },
+            "timeout_source": "Existing qa_pilot reviewed envelope: 300 seconds per case, 30 seconds per action; bounded by qa_pilot.py."
+          }
+        },
+        {
+          "id": "TC-DASH-07",
+          "title": "\"No data\" instead of blank cards",
+          "priority": "M",
+          "module": "DASH",
+          "module_title": "Dashboard (sidebar: Overview, `/dashboard`)",
+          "phase": 6,
+          "order": 70,
+          "requirements": [
+            "REQ-DASH-06"
+          ],
+          "summary_result": "Not run",
+          "detailed_result": "Not run",
+          "status": "untested",
+          "steps": "1. Open **Overview**.\n2. Read **Network Latency**, **Network Performance**, and look for **Average Resource Utilization**.",
+          "expectations": [
+            "**Network Latency** and **Network Performance** show \"No data\", not an empty box.",
+            "**Average Resource Utilization** is not shown at all."
+          ],
+          "procedure": "#### TC-DASH-07 \u2013 \"No data\" instead of blank cards\n\n**Requirement:** REQ-DASH-06 \u00b7 **Technique:** EG \u00b7 **Priority:** M \u00b7 **Result:** Not run\n\n**Before you start:** a lab with no ping check on any host and no NCPA host.\n\n**Steps**\n\n1. Open **Overview**.\n2. Read **Network Latency**, **Network Performance**, and look for **Average Resource Utilization**.\n\n**Expected result**\n\n- **Network Latency** and **Network Performance** show \"No data\", not an empty box.\n- **Average Resource Utilization** is not shown at all.",
+          "dependencies": [],
+          "global_context": "# Pinpoint - Black-Box Test Cases by Module with Traceability Matrix\n\nOct 16, 2026 \u00b7 @Raf\n\n## Scope and approach\n\nThis suite tests Pinpoint module by module, the way a user (or an API client) sees it, with no knowledge of the code. Every test case tells you what to prepare, the exact steps to follow, and what you should see. Every case traces to a requirement taken from the repository's `spec files/` (see the traceability matrix at the end). It covers 23 modules plus 8 end-to-end scenarios, and it was checked against the repository's `main` branch at commit `4b1ad9f` (merged 2026-10-17).\n\n**Black-box techniques used**\n\n- **EP**: equivalence partitioning, one valid and one invalid class per input\n- **BVA**: boundary value analysis, on limits the spec states (for example flap thresholds 0 to 100, retry interval 1 to 10 minutes)\n- **DT**: decision table, for permission and state combinations\n- **ST**: state transition, for pause/resume, acknowledge/unacknowledge, and enable/disable flows\n- **EG**: error guessing, for empty states, cancelled dialogs, and double submits\n\n**Conventions**\n\n- **Test case ID:** `TC-<MODULE>-<nn>`, such as `TC-AUTH-03`.\n- **Requirement ID:** `REQ-<MODULE>-<nn>`. The specs have no requirement IDs of their own, so each one here is a short statement of a spec rule and names its source section in the traceability matrix.\n- **Priority:** H = a failure blocks the module or is a security issue, M = a failure breaks a feature, L = a cosmetic or edge case.\n- **Result values:** PASS, FAIL (write what you saw), PARTIALLY PASS (write what was missing), BLOCKED (write which case blocked it), or Not run. Results already recorded by the tester are kept in this revision.\n- **Passwords for test accounts:** use a value such as `Lab-Pinpoint-2026!`. It has 12 or more characters with upper and lower case letters, a number, and a symbol, so it passes both the strong policy (Settings, Security) and the relaxed policy (8 or more characters).\n- **Data setup:** unless a case says otherwise, the lab has at least one host Up, one host Down, one service Critical, and one acknowledged alert.\n\nThe repository's `docs/qa/QA_Test_Plan.md` is organized by user journey (J1 to J9). This document regroups coverage by module and adds boundary, negative, and permission cases. Where a journey case covers the same check, the traceability matrix names it in the Source column (for example QA J1-03).\n\n**How to read a test case**\n\n- The first line gives the requirement, the technique, the priority, and the result.\n- **Before you start** lists what must be ready. Skip it only if the case does not have one.\n- **Steps** are done in order. Button, tab, and field names are in **bold** exactly as they appear on screen. Addresses and API paths are in `code`.\n- **Expected result** is a list. Every item must be true for PASS.\n- **Note** appears where the spec and the real app differ. The app's behavior is what you test, and the difference is reported as a finding.\n\n**Test accounts and lab**\n\n- **Super Admin:** the built-in role with every permission. It was called \"Administrator\" before issue #112. `flask sync-permissions` renames an existing one. If a different role already used the name \"Super Admin\", the old one is kept as \"Administrator (Legacy)\". On a development database filled by `flask seed`, the account is `admin@test.com` with password `Password123!` (development only).\n- **Staff user:** any user whose role is the built-in **Staff** role. Staff holds no permissions, so after signing in the user can open only **Settings**, and only the **General Settings** tab. This one account is used wherever a case needs a user who is denied everything. On a development database use `emily.davis@test.com` with `Password123!`. On any other install create one in TC-ACC-01.\n- **Dashboard-only user:** only a few cases need a user who can open the Dashboard and nothing else. Create the role `qa-view` with only `system.dashboard` (TC-ROL-01) and a user with that role.\n- **Lab:** the Pinpoint appliance, a web VM (HTTP on port 80, SSH on port 22), a second Linux VM, an SMTP test mailbox, and a browser plus a private window for second sessions.\n\n**Where to find each page**\n\n| Sidebar label | Address | Permission needed |\n| --- | --- | --- |\n| Overview | `/dashboard` | `system.dashboard` |\n| Network Health | `/network-health` | `system.network_health` |\n| Device Inventory | `/device-inventory` | `system.network_health` |\n| Topology | `/topology` | `system.network_health` |\n| System Status | `/system-status` | `system.network_health` |\n| Plugins | `/plugins` | `plugin.view` |\n| NCPA Deployment | `/ncpa-deployment` | `system.deploy.ncpa` |\n| Maintenance | `/maintenance` | `maintenance.manage` |\n| Remediation | `/remediation` | `remediation.view` |\n| History | `/history` | `system.history` |\n| Report | `/reports` | `system.report` |\n| System Logs | `/system-logs` | `system.logs` |\n| Manage Accounts | `/accounts` | `account.view` |\n| Manage Roles | `/manage-roles` | `role.view` |\n| Settings | `/settings` | none. Tabs: General Settings (everyone), Security (`settings.security`), System (`settings.system`), Network Discovery (`settings.discovery`), Plugins (`settings.plugins`), Email (`settings.email`) |\n\nA user who opens a page they may not use is sent to the first page they can use (a Staff user lands on Settings).\n\n**What changed in this revision**\n\n- **Role name:** \"Administrator\" is now \"Super Admin\" (#112).\n- **Test users:** the old `viewer` and `noperm` are replaced by the Staff user, and a dashboard-only user only where a case needs one.\n- **Steps:** every case now has numbered steps using the button and tab names in the app code.\n- **Spec and app differ (marked Note in the case):** the Dashboard has four cards (Total Hosts, Network Latency, Active Warnings, Critical Issues), not the spec's Active Alerts and Hosts in Downtime cards. Unacknowledge asks no confirmation. The Active Alerts list has no acknowledgement filter. Rescan Network starts at once with no confirmation. The host table and host drawer are on Device Inventory, not Network Health.\n- **New in `main` since the first revision:** resource forecast \"Running out soon\" (#156), remote service restart (#182), remediation safety controls and the kill switch (#155), the Add User default role fix (#191), and Clean up now offered on deployed devices.\n\n## Run order and prerequisites\n\nSome cases need something an earlier case creates, for example a user, a role, an active alert, or a deployed agent. Run the cases in the order below. Each case appears once, and the numbers continue within the same module (\"TC-ACC-01, 02, 03\" means TC-ACC-01, TC-ACC-02, TC-ACC-03). Run the 8 end-to-end scenarios afterwards on a freshly built (or restored) appliance.\n\n### Run order\n\n| Phase | Goal | Run these cases in this order |\n| --- | --- | --- |\n| 1 | Fresh install and first login (clean appliance) | TC-AUTH-05, 06, 07, 01, 02, 03, 04, 09, 12 |\n| 2 | Roles and accounts (this creates the test users used later) | TC-ROL-01, 02, 03, TC-ACC-01, 02, 03, TC-AUTH-08, TC-ACC-04, 05, 06, 07, 09, 10, 08, TC-ROL-04, 05, 06, TC-AUTH-10, 11, TC-SHL-09, 04, 10 |\n| 3 | Permission checks with the Staff user | TC-DASH-08, TC-SS-04, TC-HIS-01, TC-PLG-07, TC-NCPA-08, TC-RPT-07, TC-LOG-05, TC-SHL-06, TC-NFR-01, 02 |\n| 4 | Settings the lab needs (email first) | TC-SET-07, 01, 02, 03, 04, 05, 06, TC-SHL-01, 02, 03 |\n| 5 | Discover the network and enable plugins | TC-DSC-01, 02, 03, 04, 05, 08, 09, TC-PLG-01, 02, 03, 04, 05, 06, TC-DI-01, 02, 03, 04 |\n| 6 | Views with live data, device extras, topology | TC-DASH-01, 05, 07, TC-NH-01, 02, 03, 04, 05, TC-SS-01, 02, 03, TC-DX-01, 02, 03, 04, 05, 06, 07, 08, 09, 10, TC-NH-06, 07, TC-TOP-01, 02, 03, 04, 05, 06 |\n| 7 | Device changes | TC-DI-05, 06, 07, 08, 09, 11, 12, 13, TC-DASH-02, TC-DI-14, 15, 16, 17, 18, 19, TC-DSC-06, 07 |\n| 8 | Faults, alerts, history, and maintenance | TC-DASH-03, TC-ACK-01, 02, 03, 04, 05, 06, 07, 08, TC-DASH-04, TC-HIS-02, 03, 04, 05, 06, 07, 08, TC-SHL-07, 08, TC-MNT-01, 02, 03, 04, 05, 06, 07, 09, 10 |\n| 9 | NCPA and automatic recovery | TC-NCPA-01, 02, 03, 04, 05, 06, 07, 09, 10, 11, TC-DI-10, TC-DASH-09, TC-SS-05, TC-REM-02, 01, 04, 03, 05, 07, 09, 06, 08, 10 |\n| 10 | Reports and logs (after incidents exist) | TC-RPT-01, 02, 03, 04, 05, 06, TC-LOG-01, 02, 03, 04, TC-SHL-05 |\n| 11 | Cases that stop or break services (last, then restore everything) | TC-DASH-06, TC-MNT-08, TC-SET-08, 09 |\n| 12 | Quality and performance | TC-NFR-03, 04, 05, 06, 07, 08, 09, 10, 11 |\n| 13 | Edge cases | TC-EDG-01 to 18 |\n| 14 | Order of events (one at a time, restore the lab after each) | TC-SEQ-01, 02, 03, 04, 05, 06, 07, 08, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 22, 23, 24 |\n| 15 | Cases that need a fresh appliance (restore the clean snapshot before each one) | TC-SEQ-09, TC-SEQ-17, then E2E-01 to 08 |\n\n### What each case needs first\n\nCases not listed here need only a finished setup (TC-AUTH-07) and the lab described above.\n\n| Case | Do these first | Why |\n| --- | --- | --- |\n| TC-AUTH-06 | TC-AUTH-05 | The setup window must already be open |\n| TC-AUTH-07 | TC-AUTH-06 | It uses the same window, now with correct values |\n| TC-AUTH-01 to 04, 09, 12 | TC-AUTH-07 | They need a finished setup and a known login |\n| TC-AUTH-08 | TC-ACC-03 | It needs a user created with \"Require password change at first sign-in\" ticked |\n| TC-ACC-03 | (pair with TC-AUTH-08) | Create users A and B here, then sign in as them in TC-AUTH-08 |\n| TC-ACC-04, 05, 07, 09, 10 | TC-ACC-01 | They need the Staff user |\n| TC-ACC-06 | TC-ACC-01, TC-AUTH-08 | After a reset the user sees the forced password change |\n| TC-ACC-08 | TC-ROL-01 | Needs a role `qa-accounts` and a user with it, made the same way |\n| TC-ROL-04 | TC-ROL-01, TC-ACC-01 | Needs the role `qa-view` and a user with it |\n| TC-ROL-05, TC-DASH-08, TC-SS-04, TC-HIS-01, TC-PLG-07, TC-NCPA-08, TC-RPT-07, TC-LOG-05, TC-MNT-09 | TC-ACC-01 | They use the Staff user |\n| TC-ROL-06, TC-SHL-10 | TC-ROL-01 | Each needs a role with one permission and a user with it, made the same way |\n| TC-AUTH-11 | TC-ACC-01 | A registered user must exist |\n| TC-SHL-09 | TC-AUTH-11 | It reads the password request made there |\n| TC-SHL-06 | TC-ROL-04 | It uses the dashboard-only user |\n| TC-SET-01 to 06 | TC-AUTH-07 | They need a Super Admin sign-in |\n| TC-MNT-10, TC-SHL-08 | TC-SET-07 | They need working email |\n| TC-DSC-02 to 05, 08, 09 | TC-DSC-01 | They need a scan that has found devices |\n| TC-DSC-06 | TC-DSC-01 | Needs two networks with devices |\n| TC-DSC-07 | TC-DSC-01, TC-PLG-03 | Needs a monitored port that you then close |\n| TC-PLG-03 | TC-DSC-01 | Enabling a plugin needs discovered devices |\n| TC-PLG-04, 05, 06 | TC-PLG-03 | They need an enabled plugin with services |\n| TC-DI-01 to 04, 11 to 13, TC-TOP-01 to 06 | TC-DSC-01 | They need discovered devices |\n| TC-DI-05 to 09, TC-DX-01 to 05 | TC-PLG-03 | They need monitored ports and the plugins for them |\n| TC-DX-06, 07 | TC-DSC-01 | Need a device that answers SNMP |\n| TC-NH-06 | TC-DX-07 | An interface must already be monitored |\n| TC-DI-10 | TC-NCPA-04 | The NCPA port is protected only after a deployment |\n| TC-DI-14, 15 | TC-DI-13 | They use a paused device |\n| TC-DASH-02 | TC-DI-13 | The pause is made there |\n| TC-DI-16 to 19 | TC-DSC-01 | Need identity review items (two records for one device) |\n| TC-DASH-03 | TC-DSC-01, TC-PLG-03 | You need monitored services to break |\n| TC-ACK-01, 03, 04, 06, 07, 08 | TC-DASH-03 | They need active alerts |\n| TC-ACK-02 | TC-ROL-04, TC-DASH-03 | Needs the dashboard-only user and an active alert |\n| TC-ACK-05 | TC-ACK-01 | An acknowledgement must exist to remove |\n| TC-HIS-02 to 08 | TC-ACK-08, TC-SET-07 | Alert and notification events must exist |\n| TC-SHL-07 | TC-DSC-02 | The bell needs a new notification, such as a finished scan |\n| TC-MNT-03 to 06 | TC-MNT-02 | They reuse the same form |\n| TC-MNT-07 | TC-MNT-02 | A window must exist to cancel |\n| TC-MNT-08 | TC-MNT-07 | Same cancel flow, with Nagios stopped |\n| TC-NCPA-02 | TC-DSC-01, TC-NCPA-01 | Needs a discovered Linux VM and `check_ncpa` enabled |\n| TC-NCPA-03 | TC-NCPA-02 | The wizard is open from there |\n| TC-NCPA-04 | TC-NCPA-03 | Needs a correct login |\n| TC-NCPA-05, 06, 07, 10 | TC-NCPA-04 | They need a finished (or failed) deployment |\n| TC-NCPA-09 | TC-NCPA-02 | Needs a trusted host key |\n| TC-NCPA-11 | TC-NCPA-04, TC-NCPA-09 | Needs a deployed device with remote restart set |\n| TC-DASH-09, TC-SS-05 | TC-NCPA-04 | Need NCPA data for about 3 days |\n| TC-REM-01, 03, 04, 05 | TC-REM-02 | They need an action to look at or change |\n| TC-REM-07, 08, 09 | TC-REM-02, TC-PLG-03 | They need an action and a service to break |\n| TC-REM-06 | TC-REM-07, TC-REM-09 | The run log needs runs and skipped runs |\n| TC-RPT-01 to 06 | TC-DASH-03, TC-ACK-08, TC-MNT-10 | A report needs incident data |\n| TC-RPT-05 | TC-RPT-03, TC-RPT-04 | The exports must exist |\n| TC-LOG-02 to 04 | TC-ACC-01, TC-DSC-02 | Log entries must exist |\n| TC-DASH-06, TC-MNT-08, TC-SET-08 | everything above | They stop Nagios or break its config, so run them last and restore |\n| TC-NFR-08, 09 | TC-DSC-01 | Need 10 and 15 monitored hosts |\n| TC-NFR-10 | TC-DASH-03 | Needs a target to break |\n| TC-EDG-01 to 18 | TC-ACC-01, TC-DSC-01, TC-DI-13 | They reuse the accounts, scans, and devices from earlier phases |\n\n**Order-of-events cases (TC-SEQ) need first**\n\n| Case | Do these first | Why |\n| --- | --- | --- |\n| TC-SEQ-01, 02, 06, 23 | TC-DASH-03, TC-PLG-03 | You need a monitored service to stop and start |\n| TC-SEQ-03, 04, 05 | TC-MNT-02, TC-SET-07 | You need the window form and working email |\n| TC-SEQ-06, 07 | TC-DI-13 | Pause and resume work |\n| TC-SEQ-08, 24 | TC-DSC-02 | A scan can be started |\n| TC-SEQ-09 | a fresh appliance | `check_http` disabled and no scan yet |\n| TC-SEQ-10, 11 | TC-PLG-03, TC-DI-05 | A plugin is monitoring a port |\n| TC-SEQ-12 | TC-ROL-04 | The role `qa-view` and its user exist |\n| TC-SEQ-13 | TC-ROL-01 | Make a role with two permissions and a user |\n| TC-SEQ-14, 15 | TC-ACC-01 | The Staff user exists |\n| TC-SEQ-16 | TC-ACC-03 | A user with the forced change exists |\n| TC-SEQ-17 | a fresh appliance | The bootstrap login is not used yet |\n| TC-SEQ-18, 19, 20 | TC-REM-02, TC-PLG-03 | An action and a service to break |\n| TC-SEQ-21 | TC-NCPA-04 | A deployed NCPA device |\n| TC-SEQ-22 | TC-NCPA-09, TC-REM-10, TC-NCPA-04 | A deployed device with remote restart set |",
+          "module_context": "### Module 4 \u2013 Dashboard (sidebar: Overview, `/dashboard`)\n\n**Summary of cases**\n\n| TC | Case | Req | Tech | Pri | Result |\n| --- | --- | --- | --- | --- | --- |\n| TC-DASH-01 | The four summary cards | DASH-01 | EP | H | PASS |\n| TC-DASH-02 | A paused device is left out of the counts | DASH-02 | ST | H | PASS |\n| TC-DASH-03 | The Active Alerts table matches the cards | DASH-03 | DT | H | PASS |\n| TC-DASH-04 | All-clear state | DASH-03 | EG | M | PASS |\n| TC-DASH-05 | Service Overview panel | DASH-04 | EP | M | PASS |\n| TC-DASH-06 | Refresh text and stale Nagios warning | DASH-05 | BVA | M | Not run |\n| TC-DASH-07 | \"No data\" instead of blank cards | DASH-06 | EG | M | Not run |\n| TC-DASH-08 | The Dashboard needs permission | DASH-07 | DT | H | PASS |\n| TC-DASH-09 | \"Running out soon\" forecast list (issue #156) | DASH-08 | EP | M | Not run |\n\nThe page has: the header with the refresh text and the **Rescan Network** button, the **Appliance storage** card, four cards (**Total Hosts**, **Network Latency**, **Active Warnings**, **Critical Issues**), **Network Status Overview** (Online and Offline), **Network Performance**, **Average Resource Utilization** (only when an NCPA host reports), **Running out soon**, the **Active Alerts** table, **Recent Notifications**, and the **Service Overview** panel on the right.\n\n",
+          "singleton": false,
+          "source_hash": "d9374c41d7f4e5304c3475735d765ad66cb4352cc9745f76e96d78c4de0e398f",
+          "procedure_hash": "e8d92c3770a990f366f2f74b1aa7103790f0a109dddbb18230580f1743382c7f",
+          "reuse": null,
+          "coverage": {
+            "case_hash": "2616c5d0ef1b19ab7b0a3bff759ab656c7c852288019eff2b97a40a05a849c8e",
+            "status": "implemented",
+            "mode": "scripted automation",
+            "reason": "Source adapter covers each catalog expected item using read-only Dashboard assertions; current live launcher, reviewed current data prerequisites/cards and a separate explicit start are still required.",
+            "items": {
+              "E1": {
+                "marker": "qa-evidence:TC-DASH-07:E1",
+                "method": "Network Latency and both Network Performance metric cards display No data, rather than blank values."
+              },
+              "E2": {
+                "marker": "qa-evidence:TC-DASH-07:E2",
+                "method": "Average Resource Utilization is absent when the lab has no NCPA host/data."
+              }
+            },
+            "adapter": {
+              "path": "client/e2e/qa-modules-2-9.lab.spec.ts",
+              "title": "TC-DASH-07: \"No data\" instead of blank cards",
+              "project": "qa-modules-2-9",
+              "config": "client/playwright.modules.qa.config.ts"
+            },
+            "source_hashes": {
+              "client/e2e/qa-modules-2-9.lab.spec.ts": "49f82ae6f6996d784082d575da9013a7a4827100fc797d5e47c73848977b43bc",
+              "client/playwright.modules.qa.config.ts": "49dbe58e8e6547495ced6abe204a5ccd3854e917db47dea2f7c4acd846d6085c",
+              "client/qa/module-selection.mjs": "5b648a29d597eb7ecdf3e7ea38f2a44560c5f7a2c1259e8041a503c3c4f4d99e",
+              "client/src/pages/DashboardPage.tsx": "b8038c7177a2e498c4feb115a0665406969f290d8f9236ac2e67e154b8da8a40",
+              "client/src/components/shared/SummaryStatCard.tsx": "2da439e5d5684c62af52f3f84816d68085d6aa32663cdbaea6d256782fb11f66",
+              "client/src/components/dashboard/NetworkPerformanceSection.tsx": "152dfed49ef2b1a45e354b2aa7314a95c9de9c83cc60823a9e1421d0e5349b3f",
+              "client/src/components/dashboard/MetricCard.tsx": "a414ba058ac82dd32427f9cd02dc974c407a95c21703ac3ae230942afd9955d3",
+              "client/src/components/dashboard/ResourceUtilizationSection.tsx": "a7ce05dd37a06c8ab76d7c931cbd23c669f14bd853705ba07eb88810b8c0ba69",
+              "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
+              "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
+              "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
+              "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
+              "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
+              "server/app/api/system/dashboard.py": "d984eecb2f6ad5a86680ef211b842117b659ec158b0cc58390b9b8a332374d32",
+              "server/app/api/helper/database_access/permissions.py": "223c0628444524cdae232fb02c29ebbb18b5e4c2e0307990acbe597a40e2ecff"
+            },
+            "prerequisites": [
+              "No host has a ping check and no NCPA host/data exists; these lab facts must be independently reviewed before start. The adapter does not alter them.",
+              "An initialized Super Admin account is available in the approved private credential store."
+            ],
+            "recovery": [
+              "Read-only Dashboard visit. POST logout, verify GET /api/user/me returns 401, and dispose the browser context; preserve expected login/logout audit entries."
+            ],
+            "reviewed_by": "Codex source review; not runtime acceptance",
+            "reviewed_at": "2026-10-18",
+            "procedure_review": "The complete TC-DASH-07 procedure and REQ-DASH-06 were reviewed against DashboardPage summary/conditional resource rendering, NetworkPerformanceSection metric states, and the shared SummaryStatCard/MetricCard. The adapter uses the real UI and asserts both No data displays plus absence of Average Resource Utilization. No fixture or API response is mocked and no lab data is changed."
+          },
+          "execution": {
+            "readiness": "BLOCKED: case-specific fixture observations and private fixture inputs are missing or unverified",
+            "coverage_hash": "e5fa12320ebb2fc4caaf7fb59cf2bf2d14d7b792b78801dbfc4ff28a7bf26ed3",
+            "selection": {
+              "path": "client/e2e/qa-modules-2-9.lab.spec.ts",
+              "title": "TC-DASH-07: \"No data\" instead of blank cards",
+              "project": "qa-modules-2-9",
+              "config": "client/playwright.modules.qa.config.ts"
+            },
+            "mode": "scripted automation",
+            "adapter": "/home/paeng/Documents/Capstone-FIles/Capstone-Project/Network-Diagnosis-System-qa214/client/e2e/qa-modules-2-9.lab.spec.ts",
+            "adapter_hash": "49f82ae6f6996d784082d575da9013a7a4827100fc797d5e47c73848977b43bc",
+            "actions": [
+              [
+                "scripts/playwright-lab",
+                "--config=playwright.modules.qa.config.ts",
+                "--project=qa-modules-2-9",
+                "e2e/qa-modules-2-9.lab.spec.ts",
+                "--grep=(?:^| )TC\\-DASH\\-07:\\ \"No\\ data\"\\ instead\\ of\\ blank\\ cards$",
+                "--workers=1",
+                "--retries=0"
+              ]
+            ],
+            "reviewed_by": "Codex source/spec/assertion/action/recovery review; 2026-10-18; live fixtures not verified",
+            "timeout_seconds": 300,
+            "step_timeout_seconds": 30,
+            "human_required": false,
+            "prerequisites": [
+              "No host has a ping check and no NCPA host/data exists; these lab facts must be independently reviewed before start. The adapter does not alter them.",
+              "An initialized Super Admin account is available in the approved private credential store."
+            ],
+            "recovery": [
+              "Read-only Dashboard visit. POST logout, verify GET /api/user/me returns 401, and dispose the browser context; preserve expected login/logout audit entries."
+            ],
+            "evidence_dir": "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/evidence/TC-DASH-07",
+            "write_paths": [
+              "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/evidence/TC-DASH-07",
+              "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/modules-2-9-adapters-01/control",
+              "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/modules-2-9-adapters-01/bridge"
+            ],
+            "container_image_id": "sha256:e37b02e1817b35e6a0953bdfed1e4a285cc9f3d1d86ac77c1d2fedef0da6c7a5",
+            "baseline_hash": "da42da6cdbc38dab7ba6f9d96c2abd9cfb822123429fdd3f1e613ea50f8e07c3",
+            "control_dir": "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/modules-2-9-adapters-01/control/TC-DASH-07",
+            "bridge_dir": "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/modules-2-9-adapters-01/bridge/TC-DASH-07",
+            "public_write_paths": [
+              "docs/test-runs/2026-10-18-modules-2-9-seven/REPORT.md",
+              "docs/test-runs/README.md",
+              "docs/qa/queues/2026-10-18-modules-2-9-adapters-v4-execution.md",
+              ".agent/progress/issue-214.md"
+            ],
+            "live_prerequisite_status": {
+              "runtime_baseline": "PASS at 2026-10-18T12:29:16.826139Z; private inspection retained outside repository",
+              "case_fixtures": "UNVERIFIED"
+            },
+            "timeout_source": "Existing qa_pilot reviewed envelope: 300 seconds per case, 30 seconds per action; bounded by qa_pilot.py."
+          }
+        }
+      ],
+      "exclusions": [],
+      "batches": [
+        {
+          "id": "modules-2-9-adapters-01-001",
+          "ids": [
+            "TC-ACC-08",
+            "TC-ROL-04",
+            "TC-DI-02",
+            "TC-DI-03",
+            "TC-DASH-07"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "modules-2-9-adapters-02",
+      "owner": "Paeng",
+      "purpose": "untested",
+      "modules": [
+        "DI",
+        "HIS"
+      ],
+      "cases": [
+        {
+          "id": "TC-DI-08",
+          "title": "The \"Checked by\" line",
+          "priority": "M",
+          "module": "DI",
+          "module_title": "Device Inventory (`/device-inventory`)",
+          "phase": 7,
+          "order": 100,
+          "requirements": [
+            "REQ-DI-08"
+          ],
+          "summary_result": "Not run",
+          "detailed_result": "Not run",
+          "status": "untested",
+          "steps": "1. In **Set service\u2026** on a TCP port type `http`.\n2. Type an unknown name such as `myapp` on the same TCP port.\n3. Open the dialog on a UDP port and type `myapp`.",
+          "expectations": [
+            "`http` shows the plugin `check_http`.",
+            "The unknown TCP name shows \"check\\_tcp (generic TCP check)\".",
+            "The unknown UDP name shows \"Skipped: no check exists for this UDP service\".",
+            "The text \"Scans will no longer change this port's service on this device.\" is always shown."
+          ],
+          "procedure": "#### TC-DI-08 \u2013 The \"Checked by\" line\n\n**Requirement:** REQ-DI-08 \u00b7 **Technique:** EP \u00b7 **Priority:** M \u00b7 **Result:** Not run\n\n**Steps**\n\n1. In **Set service\u2026** on a TCP port type `http`.\n2. Type an unknown name such as `myapp` on the same TCP port.\n3. Open the dialog on a UDP port and type `myapp`.\n\n**Expected result**\n\n- `http` shows the plugin `check_http`.\n- The unknown TCP name shows \"check\\_tcp (generic TCP check)\".\n- The unknown UDP name shows \"Skipped: no check exists for this UDP service\".\n- The text \"Scans will no longer change this port's service on this device.\" is always shown.",
+          "dependencies": [
+            "| TC-DI-05 to 09, TC-DX-01 to 05 | TC-PLG-03 | They need monitored ports and the plugins for them |"
+          ],
+          "global_context": "# Pinpoint - Black-Box Test Cases by Module with Traceability Matrix\n\nOct 16, 2026 \u00b7 @Raf\n\n## Scope and approach\n\nThis suite tests Pinpoint module by module, the way a user (or an API client) sees it, with no knowledge of the code. Every test case tells you what to prepare, the exact steps to follow, and what you should see. Every case traces to a requirement taken from the repository's `spec files/` (see the traceability matrix at the end). It covers 23 modules plus 8 end-to-end scenarios, and it was checked against the repository's `main` branch at commit `4b1ad9f` (merged 2026-10-17).\n\n**Black-box techniques used**\n\n- **EP**: equivalence partitioning, one valid and one invalid class per input\n- **BVA**: boundary value analysis, on limits the spec states (for example flap thresholds 0 to 100, retry interval 1 to 10 minutes)\n- **DT**: decision table, for permission and state combinations\n- **ST**: state transition, for pause/resume, acknowledge/unacknowledge, and enable/disable flows\n- **EG**: error guessing, for empty states, cancelled dialogs, and double submits\n\n**Conventions**\n\n- **Test case ID:** `TC-<MODULE>-<nn>`, such as `TC-AUTH-03`.\n- **Requirement ID:** `REQ-<MODULE>-<nn>`. The specs have no requirement IDs of their own, so each one here is a short statement of a spec rule and names its source section in the traceability matrix.\n- **Priority:** H = a failure blocks the module or is a security issue, M = a failure breaks a feature, L = a cosmetic or edge case.\n- **Result values:** PASS, FAIL (write what you saw), PARTIALLY PASS (write what was missing), BLOCKED (write which case blocked it), or Not run. Results already recorded by the tester are kept in this revision.\n- **Passwords for test accounts:** use a value such as `Lab-Pinpoint-2026!`. It has 12 or more characters with upper and lower case letters, a number, and a symbol, so it passes both the strong policy (Settings, Security) and the relaxed policy (8 or more characters).\n- **Data setup:** unless a case says otherwise, the lab has at least one host Up, one host Down, one service Critical, and one acknowledged alert.\n\nThe repository's `docs/qa/QA_Test_Plan.md` is organized by user journey (J1 to J9). This document regroups coverage by module and adds boundary, negative, and permission cases. Where a journey case covers the same check, the traceability matrix names it in the Source column (for example QA J1-03).\n\n**How to read a test case**\n\n- The first line gives the requirement, the technique, the priority, and the result.\n- **Before you start** lists what must be ready. Skip it only if the case does not have one.\n- **Steps** are done in order. Button, tab, and field names are in **bold** exactly as they appear on screen. Addresses and API paths are in `code`.\n- **Expected result** is a list. Every item must be true for PASS.\n- **Note** appears where the spec and the real app differ. The app's behavior is what you test, and the difference is reported as a finding.\n\n**Test accounts and lab**\n\n- **Super Admin:** the built-in role with every permission. It was called \"Administrator\" before issue #112. `flask sync-permissions` renames an existing one. If a different role already used the name \"Super Admin\", the old one is kept as \"Administrator (Legacy)\". On a development database filled by `flask seed`, the account is `admin@test.com` with password `Password123!` (development only).\n- **Staff user:** any user whose role is the built-in **Staff** role. Staff holds no permissions, so after signing in the user can open only **Settings**, and only the **General Settings** tab. This one account is used wherever a case needs a user who is denied everything. On a development database use `emily.davis@test.com` with `Password123!`. On any other install create one in TC-ACC-01.\n- **Dashboard-only user:** only a few cases need a user who can open the Dashboard and nothing else. Create the role `qa-view` with only `system.dashboard` (TC-ROL-01) and a user with that role.\n- **Lab:** the Pinpoint appliance, a web VM (HTTP on port 80, SSH on port 22), a second Linux VM, an SMTP test mailbox, and a browser plus a private window for second sessions.\n\n**Where to find each page**\n\n| Sidebar label | Address | Permission needed |\n| --- | --- | --- |\n| Overview | `/dashboard` | `system.dashboard` |\n| Network Health | `/network-health` | `system.network_health` |\n| Device Inventory | `/device-inventory` | `system.network_health` |\n| Topology | `/topology` | `system.network_health` |\n| System Status | `/system-status` | `system.network_health` |\n| Plugins | `/plugins` | `plugin.view` |\n| NCPA Deployment | `/ncpa-deployment` | `system.deploy.ncpa` |\n| Maintenance | `/maintenance` | `maintenance.manage` |\n| Remediation | `/remediation` | `remediation.view` |\n| History | `/history` | `system.history` |\n| Report | `/reports` | `system.report` |\n| System Logs | `/system-logs` | `system.logs` |\n| Manage Accounts | `/accounts` | `account.view` |\n| Manage Roles | `/manage-roles` | `role.view` |\n| Settings | `/settings` | none. Tabs: General Settings (everyone), Security (`settings.security`), System (`settings.system`), Network Discovery (`settings.discovery`), Plugins (`settings.plugins`), Email (`settings.email`) |\n\nA user who opens a page they may not use is sent to the first page they can use (a Staff user lands on Settings).\n\n**What changed in this revision**\n\n- **Role name:** \"Administrator\" is now \"Super Admin\" (#112).\n- **Test users:** the old `viewer` and `noperm` are replaced by the Staff user, and a dashboard-only user only where a case needs one.\n- **Steps:** every case now has numbered steps using the button and tab names in the app code.\n- **Spec and app differ (marked Note in the case):** the Dashboard has four cards (Total Hosts, Network Latency, Active Warnings, Critical Issues), not the spec's Active Alerts and Hosts in Downtime cards. Unacknowledge asks no confirmation. The Active Alerts list has no acknowledgement filter. Rescan Network starts at once with no confirmation. The host table and host drawer are on Device Inventory, not Network Health.\n- **New in `main` since the first revision:** resource forecast \"Running out soon\" (#156), remote service restart (#182), remediation safety controls and the kill switch (#155), the Add User default role fix (#191), and Clean up now offered on deployed devices.\n\n## Run order and prerequisites\n\nSome cases need something an earlier case creates, for example a user, a role, an active alert, or a deployed agent. Run the cases in the order below. Each case appears once, and the numbers continue within the same module (\"TC-ACC-01, 02, 03\" means TC-ACC-01, TC-ACC-02, TC-ACC-03). Run the 8 end-to-end scenarios afterwards on a freshly built (or restored) appliance.\n\n### Run order\n\n| Phase | Goal | Run these cases in this order |\n| --- | --- | --- |\n| 1 | Fresh install and first login (clean appliance) | TC-AUTH-05, 06, 07, 01, 02, 03, 04, 09, 12 |\n| 2 | Roles and accounts (this creates the test users used later) | TC-ROL-01, 02, 03, TC-ACC-01, 02, 03, TC-AUTH-08, TC-ACC-04, 05, 06, 07, 09, 10, 08, TC-ROL-04, 05, 06, TC-AUTH-10, 11, TC-SHL-09, 04, 10 |\n| 3 | Permission checks with the Staff user | TC-DASH-08, TC-SS-04, TC-HIS-01, TC-PLG-07, TC-NCPA-08, TC-RPT-07, TC-LOG-05, TC-SHL-06, TC-NFR-01, 02 |\n| 4 | Settings the lab needs (email first) | TC-SET-07, 01, 02, 03, 04, 05, 06, TC-SHL-01, 02, 03 |\n| 5 | Discover the network and enable plugins | TC-DSC-01, 02, 03, 04, 05, 08, 09, TC-PLG-01, 02, 03, 04, 05, 06, TC-DI-01, 02, 03, 04 |\n| 6 | Views with live data, device extras, topology | TC-DASH-01, 05, 07, TC-NH-01, 02, 03, 04, 05, TC-SS-01, 02, 03, TC-DX-01, 02, 03, 04, 05, 06, 07, 08, 09, 10, TC-NH-06, 07, TC-TOP-01, 02, 03, 04, 05, 06 |\n| 7 | Device changes | TC-DI-05, 06, 07, 08, 09, 11, 12, 13, TC-DASH-02, TC-DI-14, 15, 16, 17, 18, 19, TC-DSC-06, 07 |\n| 8 | Faults, alerts, history, and maintenance | TC-DASH-03, TC-ACK-01, 02, 03, 04, 05, 06, 07, 08, TC-DASH-04, TC-HIS-02, 03, 04, 05, 06, 07, 08, TC-SHL-07, 08, TC-MNT-01, 02, 03, 04, 05, 06, 07, 09, 10 |\n| 9 | NCPA and automatic recovery | TC-NCPA-01, 02, 03, 04, 05, 06, 07, 09, 10, 11, TC-DI-10, TC-DASH-09, TC-SS-05, TC-REM-02, 01, 04, 03, 05, 07, 09, 06, 08, 10 |\n| 10 | Reports and logs (after incidents exist) | TC-RPT-01, 02, 03, 04, 05, 06, TC-LOG-01, 02, 03, 04, TC-SHL-05 |\n| 11 | Cases that stop or break services (last, then restore everything) | TC-DASH-06, TC-MNT-08, TC-SET-08, 09 |\n| 12 | Quality and performance | TC-NFR-03, 04, 05, 06, 07, 08, 09, 10, 11 |\n| 13 | Edge cases | TC-EDG-01 to 18 |\n| 14 | Order of events (one at a time, restore the lab after each) | TC-SEQ-01, 02, 03, 04, 05, 06, 07, 08, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 22, 23, 24 |\n| 15 | Cases that need a fresh appliance (restore the clean snapshot before each one) | TC-SEQ-09, TC-SEQ-17, then E2E-01 to 08 |\n\n### What each case needs first\n\nCases not listed here need only a finished setup (TC-AUTH-07) and the lab described above.\n\n| Case | Do these first | Why |\n| --- | --- | --- |\n| TC-AUTH-06 | TC-AUTH-05 | The setup window must already be open |\n| TC-AUTH-07 | TC-AUTH-06 | It uses the same window, now with correct values |\n| TC-AUTH-01 to 04, 09, 12 | TC-AUTH-07 | They need a finished setup and a known login |\n| TC-AUTH-08 | TC-ACC-03 | It needs a user created with \"Require password change at first sign-in\" ticked |\n| TC-ACC-03 | (pair with TC-AUTH-08) | Create users A and B here, then sign in as them in TC-AUTH-08 |\n| TC-ACC-04, 05, 07, 09, 10 | TC-ACC-01 | They need the Staff user |\n| TC-ACC-06 | TC-ACC-01, TC-AUTH-08 | After a reset the user sees the forced password change |\n| TC-ACC-08 | TC-ROL-01 | Needs a role `qa-accounts` and a user with it, made the same way |\n| TC-ROL-04 | TC-ROL-01, TC-ACC-01 | Needs the role `qa-view` and a user with it |\n| TC-ROL-05, TC-DASH-08, TC-SS-04, TC-HIS-01, TC-PLG-07, TC-NCPA-08, TC-RPT-07, TC-LOG-05, TC-MNT-09 | TC-ACC-01 | They use the Staff user |\n| TC-ROL-06, TC-SHL-10 | TC-ROL-01 | Each needs a role with one permission and a user with it, made the same way |\n| TC-AUTH-11 | TC-ACC-01 | A registered user must exist |\n| TC-SHL-09 | TC-AUTH-11 | It reads the password request made there |\n| TC-SHL-06 | TC-ROL-04 | It uses the dashboard-only user |\n| TC-SET-01 to 06 | TC-AUTH-07 | They need a Super Admin sign-in |\n| TC-MNT-10, TC-SHL-08 | TC-SET-07 | They need working email |\n| TC-DSC-02 to 05, 08, 09 | TC-DSC-01 | They need a scan that has found devices |\n| TC-DSC-06 | TC-DSC-01 | Needs two networks with devices |\n| TC-DSC-07 | TC-DSC-01, TC-PLG-03 | Needs a monitored port that you then close |\n| TC-PLG-03 | TC-DSC-01 | Enabling a plugin needs discovered devices |\n| TC-PLG-04, 05, 06 | TC-PLG-03 | They need an enabled plugin with services |\n| TC-DI-01 to 04, 11 to 13, TC-TOP-01 to 06 | TC-DSC-01 | They need discovered devices |\n| TC-DI-05 to 09, TC-DX-01 to 05 | TC-PLG-03 | They need monitored ports and the plugins for them |\n| TC-DX-06, 07 | TC-DSC-01 | Need a device that answers SNMP |\n| TC-NH-06 | TC-DX-07 | An interface must already be monitored |\n| TC-DI-10 | TC-NCPA-04 | The NCPA port is protected only after a deployment |\n| TC-DI-14, 15 | TC-DI-13 | They use a paused device |\n| TC-DASH-02 | TC-DI-13 | The pause is made there |\n| TC-DI-16 to 19 | TC-DSC-01 | Need identity review items (two records for one device) |\n| TC-DASH-03 | TC-DSC-01, TC-PLG-03 | You need monitored services to break |\n| TC-ACK-01, 03, 04, 06, 07, 08 | TC-DASH-03 | They need active alerts |\n| TC-ACK-02 | TC-ROL-04, TC-DASH-03 | Needs the dashboard-only user and an active alert |\n| TC-ACK-05 | TC-ACK-01 | An acknowledgement must exist to remove |\n| TC-HIS-02 to 08 | TC-ACK-08, TC-SET-07 | Alert and notification events must exist |\n| TC-SHL-07 | TC-DSC-02 | The bell needs a new notification, such as a finished scan |\n| TC-MNT-03 to 06 | TC-MNT-02 | They reuse the same form |\n| TC-MNT-07 | TC-MNT-02 | A window must exist to cancel |\n| TC-MNT-08 | TC-MNT-07 | Same cancel flow, with Nagios stopped |\n| TC-NCPA-02 | TC-DSC-01, TC-NCPA-01 | Needs a discovered Linux VM and `check_ncpa` enabled |\n| TC-NCPA-03 | TC-NCPA-02 | The wizard is open from there |\n| TC-NCPA-04 | TC-NCPA-03 | Needs a correct login |\n| TC-NCPA-05, 06, 07, 10 | TC-NCPA-04 | They need a finished (or failed) deployment |\n| TC-NCPA-09 | TC-NCPA-02 | Needs a trusted host key |\n| TC-NCPA-11 | TC-NCPA-04, TC-NCPA-09 | Needs a deployed device with remote restart set |\n| TC-DASH-09, TC-SS-05 | TC-NCPA-04 | Need NCPA data for about 3 days |\n| TC-REM-01, 03, 04, 05 | TC-REM-02 | They need an action to look at or change |\n| TC-REM-07, 08, 09 | TC-REM-02, TC-PLG-03 | They need an action and a service to break |\n| TC-REM-06 | TC-REM-07, TC-REM-09 | The run log needs runs and skipped runs |\n| TC-RPT-01 to 06 | TC-DASH-03, TC-ACK-08, TC-MNT-10 | A report needs incident data |\n| TC-RPT-05 | TC-RPT-03, TC-RPT-04 | The exports must exist |\n| TC-LOG-02 to 04 | TC-ACC-01, TC-DSC-02 | Log entries must exist |\n| TC-DASH-06, TC-MNT-08, TC-SET-08 | everything above | They stop Nagios or break its config, so run them last and restore |\n| TC-NFR-08, 09 | TC-DSC-01 | Need 10 and 15 monitored hosts |\n| TC-NFR-10 | TC-DASH-03 | Needs a target to break |\n| TC-EDG-01 to 18 | TC-ACC-01, TC-DSC-01, TC-DI-13 | They reuse the accounts, scans, and devices from earlier phases |\n\n**Order-of-events cases (TC-SEQ) need first**\n\n| Case | Do these first | Why |\n| --- | --- | --- |\n| TC-SEQ-01, 02, 06, 23 | TC-DASH-03, TC-PLG-03 | You need a monitored service to stop and start |\n| TC-SEQ-03, 04, 05 | TC-MNT-02, TC-SET-07 | You need the window form and working email |\n| TC-SEQ-06, 07 | TC-DI-13 | Pause and resume work |\n| TC-SEQ-08, 24 | TC-DSC-02 | A scan can be started |\n| TC-SEQ-09 | a fresh appliance | `check_http` disabled and no scan yet |\n| TC-SEQ-10, 11 | TC-PLG-03, TC-DI-05 | A plugin is monitoring a port |\n| TC-SEQ-12 | TC-ROL-04 | The role `qa-view` and its user exist |\n| TC-SEQ-13 | TC-ROL-01 | Make a role with two permissions and a user |\n| TC-SEQ-14, 15 | TC-ACC-01 | The Staff user exists |\n| TC-SEQ-16 | TC-ACC-03 | A user with the forced change exists |\n| TC-SEQ-17 | a fresh appliance | The bootstrap login is not used yet |\n| TC-SEQ-18, 19, 20 | TC-REM-02, TC-PLG-03 | An action and a service to break |\n| TC-SEQ-21 | TC-NCPA-04 | A deployed NCPA device |\n| TC-SEQ-22 | TC-NCPA-09, TC-REM-10, TC-NCPA-04 | A deployed device with remote restart set |",
+          "module_context": "### Module 9 \u2013 Device Inventory (`/device-inventory`)\n\n**Summary of cases**\n\n| TC | Case | Req | Tech | Pri | Result |\n| --- | --- | --- | --- | --- | --- |\n| TC-DI-01 | Who sees the Ports section | DI-01 | DT | H | PASS |\n| TC-DI-02 | Port groups and their order | DI-02 | EP | M | Not run |\n| TC-DI-03 | One reason per port | DI-03 | DT | M | Not run |\n| TC-DI-04 | View-only without edit permission | DI-04 | DT | H | PASS |\n| TC-DI-05 | Stop and resume monitoring | DI-05, DI-06 | ST | H | Not run |\n| TC-DI-06 | Leave suggested holds the port | DI-07 | ST | M | Not run |\n| TC-DI-07 | Service name rules in Set service | DI-08 | BVA | H | Not run |\n| TC-DI-08 | The \"Checked by\" line | DI-08 | EP | M | Not run |\n| TC-DI-09 | Pin and Remove pin | DI-09 | ST | M | Not run |\n| TC-DI-10 | The NCPA port is protected | DI-10 | EG | M | Not run |\n| TC-DI-11 | One monitoring label per device | DI-11 | DT | H | Not run |\n| TC-DI-12 | Monitoring filter | DI-11 | EP | M | Not run |\n| TC-DI-13 | Pause and resume | DI-12 | ST | H | Not run |\n| TC-DI-14 | Invalid pause and resume | DI-12 | DT | M | Not run |\n| TC-DI-15 | Out-of-config devices show \"last known status\" | DI-13 | EG | M | Not run |\n| TC-DI-16 | Needs Review section | DI-14 | DT | M | Not run |\n| TC-DI-17 | The review drawer writes nothing | DI-14 | EP | M | Not run |\n| TC-DI-18 | Merging needs edit permission and two distinct records | DI-14 | DT | H | Not run |\n| TC-DI-19 | Merge confirmation | DI-14 | ST | H | Not run |\n\nTo open a host's drawer press **View host details** on its row. The drawer has the **Services** list, **Performance data**, **Timestamps**, **Acknowledgement**, and, for a discovered device, sections such as **Monitoring**, **Ports**, **SNMP**, **Interfaces**, **Email alert recipients**, and **Parent devices**. Pressing a service in the list shows the service view, and **Back to host** returns.\n\n**9a. Ports**\n\n",
+          "singleton": false,
+          "source_hash": "d9374c41d7f4e5304c3475735d765ad66cb4352cc9745f76e96d78c4de0e398f",
+          "procedure_hash": "8232c25c82ceda424f8fe79f7d3d19f74a21c5a611b3cff06796f2bb0bf6d0c8",
+          "reuse": null,
+          "coverage": {
+            "case_hash": "2d6e9ef19e5f506ef7ecddc4c1704679284a4bc29b103bb5c103dac474674279",
+            "status": "implemented",
+            "mode": "scripted automation",
+            "reason": "Source adapter covers all catalog items using existing TCP/UDP fixtures, blocks port mutations, and closes both dialogs without saving; live fixture/card/preflight and explicit start remain required.",
+            "items": {
+              "E1": {
+                "marker": "qa-evidence:TC-DI-08:E1",
+                "method": "Type the known service http on a reviewed TCP port and assert the live Checked by value is exactly check_http."
+              },
+              "E2": {
+                "marker": "qa-evidence:TC-DI-08:E2",
+                "method": "Type unknown service myapp on the TCP port and assert the generic check_tcp label."
+              },
+              "E3": {
+                "marker": "qa-evidence:TC-DI-08:E3",
+                "method": "Type unknown service myapp on a reviewed UDP port and assert the no-UDP-check message."
+              },
+              "E4": {
+                "marker": "qa-evidence:TC-DI-08:E4",
+                "method": "Assert the service pin warning in both protocol dialogs, cancel both, and verify the route guard observed no PUT."
+              }
+            },
+            "adapter": {
+              "path": "client/e2e/qa-modules-2-9.lab.spec.ts",
+              "title": "TC-DI-08: The Checked by line",
+              "project": "qa-modules-2-9",
+              "config": "client/playwright.modules.qa.config.ts"
+            },
+            "source_hashes": {
+              "client/e2e/qa-modules-2-9.lab.spec.ts": "49f82ae6f6996d784082d575da9013a7a4827100fc797d5e47c73848977b43bc",
+              "client/playwright.modules.qa.config.ts": "49dbe58e8e6547495ced6abe204a5ccd3854e917db47dea2f7c4acd846d6085c",
+              "client/qa/module-selection.mjs": "5b648a29d597eb7ecdf3e7ea38f2a44560c5f7a2c1259e8041a503c3c4f4d99e",
+              "client/src/pages/DeviceInventoryPage.tsx": "9b8f63fe860eb151c253db31948468e76a3b7e3a805d76a6da37525e760e8a6a",
+              "client/src/components/device-inventory/DevicePortsSection.tsx": "7379de62eebd72f7a8a5410a6aa74bd9ff1a978035716522d248c7600659be30",
+              "client/src/components/device-inventory/SetServiceDialog.tsx": "f1843a4f044046e3fa5a30e24baad01d62cb590a827d051d8ec7e739df8beebb",
+              "client/src/components/device-inventory/devicePortsLogic.ts": "c817a5967fdb5982a4601bf7bfd582f89393547b1903395b368aea9a73ed306e",
+              "client/src/lib/devicePortsApi.ts": "8bb807775007ebaecf3f461f24ab2d1ab7464d589faaa1a448bdd8602be6c15e",
+              "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
+              "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
+              "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
+              "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
+              "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
+              "server/app/api/system/network_hosts.py": "dd238e3cca7d1b5434f07c0f3e61f2ca9da021dd186f1683d3d844a176a5f8bf",
+              "server/app/api/system/device_identity.py": "8e6e9c77b8d0adec67b0db5e317adf10fbcce474d2fc989dc859eeef65692e30",
+              "server/app/api/helper/database_access/permissions.py": "223c0628444524cdae232fb02c29ebbb18b5e4c2e0307990acbe597a40e2ecff"
+            },
+            "prerequisites": [
+              "PINPOINT_QA_DEVICE_HOST identifies a reviewed existing discovered device; no scan or device creation is performed.",
+              "PINPOINT_QA_TCP_PORT identifies a non-archived, editable TCP port on that device whose service options include http.",
+              "PINPOINT_QA_UDP_PORT identifies a non-archived, editable UDP port on that device; both port rows offer Set service.",
+              "An initialized Super Admin credential is available privately with system.hosts.edit; fixture labels are private same-owner files."
+            ],
+            "recovery": [
+              "Read-only dialog interaction. A Playwright route guard blocks every PUT to the port change endpoint; cancel both dialogs, verify no write was attempted, POST logout and verify GET /api/user/me returns 401. Preserve expected login/logout audit entries."
+            ],
+            "reviewed_by": "Codex source review; not runtime acceptance",
+            "reviewed_at": "2026-10-18",
+            "procedure_review": "Reviewed the full TC-DI-08 procedure and Device Inventory \u00a76/\u00a713. The adapter uses one pre-existing TCP and UDP port, checks the known http mapping, generic TCP and skipped UDP messages, confirms the pin warning on both protocols, blocks port PUTs and cancels both dialogs. It does not save a pin or alter a port."
+          },
+          "execution": {
+            "readiness": "BLOCKED: case-specific fixture observations and private fixture inputs are missing or unverified",
+            "coverage_hash": "aa49889ca5aa4eb1997a091bcb21c413f4655ef49d17359301e66bdf0206ff26",
+            "selection": {
+              "path": "client/e2e/qa-modules-2-9.lab.spec.ts",
+              "title": "TC-DI-08: The Checked by line",
+              "project": "qa-modules-2-9",
+              "config": "client/playwright.modules.qa.config.ts"
+            },
+            "mode": "scripted automation",
+            "adapter": "/home/paeng/Documents/Capstone-FIles/Capstone-Project/Network-Diagnosis-System-qa214/client/e2e/qa-modules-2-9.lab.spec.ts",
+            "adapter_hash": "49f82ae6f6996d784082d575da9013a7a4827100fc797d5e47c73848977b43bc",
+            "actions": [
+              [
+                "scripts/playwright-lab",
+                "--config=playwright.modules.qa.config.ts",
+                "--project=qa-modules-2-9",
+                "e2e/qa-modules-2-9.lab.spec.ts",
+                "--grep=(?:^| )TC\\-DI\\-08:\\ The\\ Checked\\ by\\ line$",
+                "--workers=1",
+                "--retries=0"
+              ]
+            ],
+            "reviewed_by": "Codex source/spec/assertion/action/recovery review; 2026-10-18; live fixtures not verified",
+            "timeout_seconds": 300,
+            "step_timeout_seconds": 30,
+            "human_required": false,
+            "prerequisites": [
+              "PINPOINT_QA_DEVICE_HOST identifies a reviewed existing discovered device; no scan or device creation is performed.",
+              "PINPOINT_QA_TCP_PORT identifies a non-archived, editable TCP port on that device whose service options include http.",
+              "PINPOINT_QA_UDP_PORT identifies a non-archived, editable UDP port on that device; both port rows offer Set service.",
+              "An initialized Super Admin credential is available privately with system.hosts.edit; fixture labels are private same-owner files."
+            ],
+            "recovery": [
+              "Read-only dialog interaction. A Playwright route guard blocks every PUT to the port change endpoint; cancel both dialogs, verify no write was attempted, POST logout and verify GET /api/user/me returns 401. Preserve expected login/logout audit entries."
+            ],
+            "evidence_dir": "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/evidence/TC-DI-08",
+            "write_paths": [
+              "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/evidence/TC-DI-08",
+              "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/modules-2-9-adapters-02/control",
+              "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/modules-2-9-adapters-02/bridge"
+            ],
+            "container_image_id": "sha256:e37b02e1817b35e6a0953bdfed1e4a285cc9f3d1d86ac77c1d2fedef0da6c7a5",
+            "baseline_hash": "da42da6cdbc38dab7ba6f9d96c2abd9cfb822123429fdd3f1e613ea50f8e07c3",
+            "control_dir": "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/modules-2-9-adapters-02/control/TC-DI-08",
+            "bridge_dir": "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/modules-2-9-adapters-02/bridge/TC-DI-08",
+            "public_write_paths": [
+              "docs/test-runs/2026-10-18-modules-2-9-seven/REPORT.md",
+              "docs/test-runs/README.md",
+              "docs/qa/queues/2026-10-18-modules-2-9-adapters-v4-execution.md",
+              ".agent/progress/issue-214.md"
+            ],
+            "live_prerequisite_status": {
+              "runtime_baseline": "PASS at 2026-10-18T12:29:16.826139Z; private inspection retained outside repository",
+              "case_fixtures": "UNVERIFIED"
+            },
+            "timeout_source": "Existing qa_pilot reviewed envelope: 300 seconds per case, 30 seconds per action; bounded by qa_pilot.py."
+          }
+        },
+        {
+          "id": "TC-HIS-04",
+          "title": "Date range rules (API)",
+          "priority": "M",
+          "module": "HIS",
+          "module_title": "History (`/history`)",
+          "phase": 8,
+          "order": 126,
+          "requirements": [
+            "REQ-HIS-03"
+          ],
+          "summary_result": "Not run",
+          "detailed_result": "Not run",
+          "status": "untested",
+          "steps": "1. Open `/api/system/history/alerts?start_date=2026-10-01&end_date=2026-10-02`.\n2. Open it with only `start_date`.\n3. Open it with `start_date=2026-10-02&end_date=2026-10-01` (reversed).\n4. Open it with `start_date=abc&end_date=def`.",
+          "expectations": [
+            "Step 1 returns events (or an empty list).",
+            "Steps 2, 3, and 4 are refused with an error and no data.",
+            "With no dates and no preset the range is the past 24 hours."
+          ],
+          "procedure": "#### TC-HIS-04 \u2013 Date range rules (API)\n\n**Requirement:** REQ-HIS-03 \u00b7 **Technique:** BVA \u00b7 **Priority:** M \u00b7 **Result:** Not run\n\n**Steps**\n\n1. Open `/api/system/history/alerts?start_date=2026-10-01&end_date=2026-10-02`.\n2. Open it with only `start_date`.\n3. Open it with `start_date=2026-10-02&end_date=2026-10-01` (reversed).\n4. Open it with `start_date=abc&end_date=def`.\n\n**Expected result**\n\n- Step 1 returns events (or an empty list).\n- Steps 2, 3, and 4 are refused with an error and no data.\n- With no dates and no preset the range is the past 24 hours.",
+          "dependencies": [
+            "| TC-HIS-02 to 08 | TC-ACK-08, TC-SET-07 | Alert and notification events must exist |"
+          ],
+          "global_context": "# Pinpoint - Black-Box Test Cases by Module with Traceability Matrix\n\nOct 16, 2026 \u00b7 @Raf\n\n## Scope and approach\n\nThis suite tests Pinpoint module by module, the way a user (or an API client) sees it, with no knowledge of the code. Every test case tells you what to prepare, the exact steps to follow, and what you should see. Every case traces to a requirement taken from the repository's `spec files/` (see the traceability matrix at the end). It covers 23 modules plus 8 end-to-end scenarios, and it was checked against the repository's `main` branch at commit `4b1ad9f` (merged 2026-10-17).\n\n**Black-box techniques used**\n\n- **EP**: equivalence partitioning, one valid and one invalid class per input\n- **BVA**: boundary value analysis, on limits the spec states (for example flap thresholds 0 to 100, retry interval 1 to 10 minutes)\n- **DT**: decision table, for permission and state combinations\n- **ST**: state transition, for pause/resume, acknowledge/unacknowledge, and enable/disable flows\n- **EG**: error guessing, for empty states, cancelled dialogs, and double submits\n\n**Conventions**\n\n- **Test case ID:** `TC-<MODULE>-<nn>`, such as `TC-AUTH-03`.\n- **Requirement ID:** `REQ-<MODULE>-<nn>`. The specs have no requirement IDs of their own, so each one here is a short statement of a spec rule and names its source section in the traceability matrix.\n- **Priority:** H = a failure blocks the module or is a security issue, M = a failure breaks a feature, L = a cosmetic or edge case.\n- **Result values:** PASS, FAIL (write what you saw), PARTIALLY PASS (write what was missing), BLOCKED (write which case blocked it), or Not run. Results already recorded by the tester are kept in this revision.\n- **Passwords for test accounts:** use a value such as `Lab-Pinpoint-2026!`. It has 12 or more characters with upper and lower case letters, a number, and a symbol, so it passes both the strong policy (Settings, Security) and the relaxed policy (8 or more characters).\n- **Data setup:** unless a case says otherwise, the lab has at least one host Up, one host Down, one service Critical, and one acknowledged alert.\n\nThe repository's `docs/qa/QA_Test_Plan.md` is organized by user journey (J1 to J9). This document regroups coverage by module and adds boundary, negative, and permission cases. Where a journey case covers the same check, the traceability matrix names it in the Source column (for example QA J1-03).\n\n**How to read a test case**\n\n- The first line gives the requirement, the technique, the priority, and the result.\n- **Before you start** lists what must be ready. Skip it only if the case does not have one.\n- **Steps** are done in order. Button, tab, and field names are in **bold** exactly as they appear on screen. Addresses and API paths are in `code`.\n- **Expected result** is a list. Every item must be true for PASS.\n- **Note** appears where the spec and the real app differ. The app's behavior is what you test, and the difference is reported as a finding.\n\n**Test accounts and lab**\n\n- **Super Admin:** the built-in role with every permission. It was called \"Administrator\" before issue #112. `flask sync-permissions` renames an existing one. If a different role already used the name \"Super Admin\", the old one is kept as \"Administrator (Legacy)\". On a development database filled by `flask seed`, the account is `admin@test.com` with password `Password123!` (development only).\n- **Staff user:** any user whose role is the built-in **Staff** role. Staff holds no permissions, so after signing in the user can open only **Settings**, and only the **General Settings** tab. This one account is used wherever a case needs a user who is denied everything. On a development database use `emily.davis@test.com` with `Password123!`. On any other install create one in TC-ACC-01.\n- **Dashboard-only user:** only a few cases need a user who can open the Dashboard and nothing else. Create the role `qa-view` with only `system.dashboard` (TC-ROL-01) and a user with that role.\n- **Lab:** the Pinpoint appliance, a web VM (HTTP on port 80, SSH on port 22), a second Linux VM, an SMTP test mailbox, and a browser plus a private window for second sessions.\n\n**Where to find each page**\n\n| Sidebar label | Address | Permission needed |\n| --- | --- | --- |\n| Overview | `/dashboard` | `system.dashboard` |\n| Network Health | `/network-health` | `system.network_health` |\n| Device Inventory | `/device-inventory` | `system.network_health` |\n| Topology | `/topology` | `system.network_health` |\n| System Status | `/system-status` | `system.network_health` |\n| Plugins | `/plugins` | `plugin.view` |\n| NCPA Deployment | `/ncpa-deployment` | `system.deploy.ncpa` |\n| Maintenance | `/maintenance` | `maintenance.manage` |\n| Remediation | `/remediation` | `remediation.view` |\n| History | `/history` | `system.history` |\n| Report | `/reports` | `system.report` |\n| System Logs | `/system-logs` | `system.logs` |\n| Manage Accounts | `/accounts` | `account.view` |\n| Manage Roles | `/manage-roles` | `role.view` |\n| Settings | `/settings` | none. Tabs: General Settings (everyone), Security (`settings.security`), System (`settings.system`), Network Discovery (`settings.discovery`), Plugins (`settings.plugins`), Email (`settings.email`) |\n\nA user who opens a page they may not use is sent to the first page they can use (a Staff user lands on Settings).\n\n**What changed in this revision**\n\n- **Role name:** \"Administrator\" is now \"Super Admin\" (#112).\n- **Test users:** the old `viewer` and `noperm` are replaced by the Staff user, and a dashboard-only user only where a case needs one.\n- **Steps:** every case now has numbered steps using the button and tab names in the app code.\n- **Spec and app differ (marked Note in the case):** the Dashboard has four cards (Total Hosts, Network Latency, Active Warnings, Critical Issues), not the spec's Active Alerts and Hosts in Downtime cards. Unacknowledge asks no confirmation. The Active Alerts list has no acknowledgement filter. Rescan Network starts at once with no confirmation. The host table and host drawer are on Device Inventory, not Network Health.\n- **New in `main` since the first revision:** resource forecast \"Running out soon\" (#156), remote service restart (#182), remediation safety controls and the kill switch (#155), the Add User default role fix (#191), and Clean up now offered on deployed devices.\n\n## Run order and prerequisites\n\nSome cases need something an earlier case creates, for example a user, a role, an active alert, or a deployed agent. Run the cases in the order below. Each case appears once, and the numbers continue within the same module (\"TC-ACC-01, 02, 03\" means TC-ACC-01, TC-ACC-02, TC-ACC-03). Run the 8 end-to-end scenarios afterwards on a freshly built (or restored) appliance.\n\n### Run order\n\n| Phase | Goal | Run these cases in this order |\n| --- | --- | --- |\n| 1 | Fresh install and first login (clean appliance) | TC-AUTH-05, 06, 07, 01, 02, 03, 04, 09, 12 |\n| 2 | Roles and accounts (this creates the test users used later) | TC-ROL-01, 02, 03, TC-ACC-01, 02, 03, TC-AUTH-08, TC-ACC-04, 05, 06, 07, 09, 10, 08, TC-ROL-04, 05, 06, TC-AUTH-10, 11, TC-SHL-09, 04, 10 |\n| 3 | Permission checks with the Staff user | TC-DASH-08, TC-SS-04, TC-HIS-01, TC-PLG-07, TC-NCPA-08, TC-RPT-07, TC-LOG-05, TC-SHL-06, TC-NFR-01, 02 |\n| 4 | Settings the lab needs (email first) | TC-SET-07, 01, 02, 03, 04, 05, 06, TC-SHL-01, 02, 03 |\n| 5 | Discover the network and enable plugins | TC-DSC-01, 02, 03, 04, 05, 08, 09, TC-PLG-01, 02, 03, 04, 05, 06, TC-DI-01, 02, 03, 04 |\n| 6 | Views with live data, device extras, topology | TC-DASH-01, 05, 07, TC-NH-01, 02, 03, 04, 05, TC-SS-01, 02, 03, TC-DX-01, 02, 03, 04, 05, 06, 07, 08, 09, 10, TC-NH-06, 07, TC-TOP-01, 02, 03, 04, 05, 06 |\n| 7 | Device changes | TC-DI-05, 06, 07, 08, 09, 11, 12, 13, TC-DASH-02, TC-DI-14, 15, 16, 17, 18, 19, TC-DSC-06, 07 |\n| 8 | Faults, alerts, history, and maintenance | TC-DASH-03, TC-ACK-01, 02, 03, 04, 05, 06, 07, 08, TC-DASH-04, TC-HIS-02, 03, 04, 05, 06, 07, 08, TC-SHL-07, 08, TC-MNT-01, 02, 03, 04, 05, 06, 07, 09, 10 |\n| 9 | NCPA and automatic recovery | TC-NCPA-01, 02, 03, 04, 05, 06, 07, 09, 10, 11, TC-DI-10, TC-DASH-09, TC-SS-05, TC-REM-02, 01, 04, 03, 05, 07, 09, 06, 08, 10 |\n| 10 | Reports and logs (after incidents exist) | TC-RPT-01, 02, 03, 04, 05, 06, TC-LOG-01, 02, 03, 04, TC-SHL-05 |\n| 11 | Cases that stop or break services (last, then restore everything) | TC-DASH-06, TC-MNT-08, TC-SET-08, 09 |\n| 12 | Quality and performance | TC-NFR-03, 04, 05, 06, 07, 08, 09, 10, 11 |\n| 13 | Edge cases | TC-EDG-01 to 18 |\n| 14 | Order of events (one at a time, restore the lab after each) | TC-SEQ-01, 02, 03, 04, 05, 06, 07, 08, 10, 11, 12, 13, 14, 15, 16, 18, 19, 20, 21, 22, 23, 24 |\n| 15 | Cases that need a fresh appliance (restore the clean snapshot before each one) | TC-SEQ-09, TC-SEQ-17, then E2E-01 to 08 |\n\n### What each case needs first\n\nCases not listed here need only a finished setup (TC-AUTH-07) and the lab described above.\n\n| Case | Do these first | Why |\n| --- | --- | --- |\n| TC-AUTH-06 | TC-AUTH-05 | The setup window must already be open |\n| TC-AUTH-07 | TC-AUTH-06 | It uses the same window, now with correct values |\n| TC-AUTH-01 to 04, 09, 12 | TC-AUTH-07 | They need a finished setup and a known login |\n| TC-AUTH-08 | TC-ACC-03 | It needs a user created with \"Require password change at first sign-in\" ticked |\n| TC-ACC-03 | (pair with TC-AUTH-08) | Create users A and B here, then sign in as them in TC-AUTH-08 |\n| TC-ACC-04, 05, 07, 09, 10 | TC-ACC-01 | They need the Staff user |\n| TC-ACC-06 | TC-ACC-01, TC-AUTH-08 | After a reset the user sees the forced password change |\n| TC-ACC-08 | TC-ROL-01 | Needs a role `qa-accounts` and a user with it, made the same way |\n| TC-ROL-04 | TC-ROL-01, TC-ACC-01 | Needs the role `qa-view` and a user with it |\n| TC-ROL-05, TC-DASH-08, TC-SS-04, TC-HIS-01, TC-PLG-07, TC-NCPA-08, TC-RPT-07, TC-LOG-05, TC-MNT-09 | TC-ACC-01 | They use the Staff user |\n| TC-ROL-06, TC-SHL-10 | TC-ROL-01 | Each needs a role with one permission and a user with it, made the same way |\n| TC-AUTH-11 | TC-ACC-01 | A registered user must exist |\n| TC-SHL-09 | TC-AUTH-11 | It reads the password request made there |\n| TC-SHL-06 | TC-ROL-04 | It uses the dashboard-only user |\n| TC-SET-01 to 06 | TC-AUTH-07 | They need a Super Admin sign-in |\n| TC-MNT-10, TC-SHL-08 | TC-SET-07 | They need working email |\n| TC-DSC-02 to 05, 08, 09 | TC-DSC-01 | They need a scan that has found devices |\n| TC-DSC-06 | TC-DSC-01 | Needs two networks with devices |\n| TC-DSC-07 | TC-DSC-01, TC-PLG-03 | Needs a monitored port that you then close |\n| TC-PLG-03 | TC-DSC-01 | Enabling a plugin needs discovered devices |\n| TC-PLG-04, 05, 06 | TC-PLG-03 | They need an enabled plugin with services |\n| TC-DI-01 to 04, 11 to 13, TC-TOP-01 to 06 | TC-DSC-01 | They need discovered devices |\n| TC-DI-05 to 09, TC-DX-01 to 05 | TC-PLG-03 | They need monitored ports and the plugins for them |\n| TC-DX-06, 07 | TC-DSC-01 | Need a device that answers SNMP |\n| TC-NH-06 | TC-DX-07 | An interface must already be monitored |\n| TC-DI-10 | TC-NCPA-04 | The NCPA port is protected only after a deployment |\n| TC-DI-14, 15 | TC-DI-13 | They use a paused device |\n| TC-DASH-02 | TC-DI-13 | The pause is made there |\n| TC-DI-16 to 19 | TC-DSC-01 | Need identity review items (two records for one device) |\n| TC-DASH-03 | TC-DSC-01, TC-PLG-03 | You need monitored services to break |\n| TC-ACK-01, 03, 04, 06, 07, 08 | TC-DASH-03 | They need active alerts |\n| TC-ACK-02 | TC-ROL-04, TC-DASH-03 | Needs the dashboard-only user and an active alert |\n| TC-ACK-05 | TC-ACK-01 | An acknowledgement must exist to remove |\n| TC-HIS-02 to 08 | TC-ACK-08, TC-SET-07 | Alert and notification events must exist |\n| TC-SHL-07 | TC-DSC-02 | The bell needs a new notification, such as a finished scan |\n| TC-MNT-03 to 06 | TC-MNT-02 | They reuse the same form |\n| TC-MNT-07 | TC-MNT-02 | A window must exist to cancel |\n| TC-MNT-08 | TC-MNT-07 | Same cancel flow, with Nagios stopped |\n| TC-NCPA-02 | TC-DSC-01, TC-NCPA-01 | Needs a discovered Linux VM and `check_ncpa` enabled |\n| TC-NCPA-03 | TC-NCPA-02 | The wizard is open from there |\n| TC-NCPA-04 | TC-NCPA-03 | Needs a correct login |\n| TC-NCPA-05, 06, 07, 10 | TC-NCPA-04 | They need a finished (or failed) deployment |\n| TC-NCPA-09 | TC-NCPA-02 | Needs a trusted host key |\n| TC-NCPA-11 | TC-NCPA-04, TC-NCPA-09 | Needs a deployed device with remote restart set |\n| TC-DASH-09, TC-SS-05 | TC-NCPA-04 | Need NCPA data for about 3 days |\n| TC-REM-01, 03, 04, 05 | TC-REM-02 | They need an action to look at or change |\n| TC-REM-07, 08, 09 | TC-REM-02, TC-PLG-03 | They need an action and a service to break |\n| TC-REM-06 | TC-REM-07, TC-REM-09 | The run log needs runs and skipped runs |\n| TC-RPT-01 to 06 | TC-DASH-03, TC-ACK-08, TC-MNT-10 | A report needs incident data |\n| TC-RPT-05 | TC-RPT-03, TC-RPT-04 | The exports must exist |\n| TC-LOG-02 to 04 | TC-ACC-01, TC-DSC-02 | Log entries must exist |\n| TC-DASH-06, TC-MNT-08, TC-SET-08 | everything above | They stop Nagios or break its config, so run them last and restore |\n| TC-NFR-08, 09 | TC-DSC-01 | Need 10 and 15 monitored hosts |\n| TC-NFR-10 | TC-DASH-03 | Needs a target to break |\n| TC-EDG-01 to 18 | TC-ACC-01, TC-DSC-01, TC-DI-13 | They reuse the accounts, scans, and devices from earlier phases |\n\n**Order-of-events cases (TC-SEQ) need first**\n\n| Case | Do these first | Why |\n| --- | --- | --- |\n| TC-SEQ-01, 02, 06, 23 | TC-DASH-03, TC-PLG-03 | You need a monitored service to stop and start |\n| TC-SEQ-03, 04, 05 | TC-MNT-02, TC-SET-07 | You need the window form and working email |\n| TC-SEQ-06, 07 | TC-DI-13 | Pause and resume work |\n| TC-SEQ-08, 24 | TC-DSC-02 | A scan can be started |\n| TC-SEQ-09 | a fresh appliance | `check_http` disabled and no scan yet |\n| TC-SEQ-10, 11 | TC-PLG-03, TC-DI-05 | A plugin is monitoring a port |\n| TC-SEQ-12 | TC-ROL-04 | The role `qa-view` and its user exist |\n| TC-SEQ-13 | TC-ROL-01 | Make a role with two permissions and a user |\n| TC-SEQ-14, 15 | TC-ACC-01 | The Staff user exists |\n| TC-SEQ-16 | TC-ACC-03 | A user with the forced change exists |\n| TC-SEQ-17 | a fresh appliance | The bootstrap login is not used yet |\n| TC-SEQ-18, 19, 20 | TC-REM-02, TC-PLG-03 | An action and a service to break |\n| TC-SEQ-21 | TC-NCPA-04 | A deployed NCPA device |\n| TC-SEQ-22 | TC-NCPA-09, TC-REM-10, TC-NCPA-04 | A deployed device with remote restart set |",
+          "module_context": "### Module 8 \u2013 History (`/history`)\n\n**Summary of cases**\n\n| TC | Case | Req | Tech | Pri | Result |\n| --- | --- | --- | --- | --- | --- |\n| TC-HIS-01 | History needs permission | HIS-01 | DT | H | PASS |\n| TC-HIS-02 | Time presets | HIS-02 | EP | M | PASS |\n| TC-HIS-03 | Filters work together | HIS-02 | DT | M | PASS |\n| TC-HIS-04 | Date range rules (API) | HIS-03 | BVA | M | Not run |\n| TC-HIS-05 | Sorting | HIS-04 | EP | L | PASS |\n| TC-HIS-06 | Rows per page | HIS-05 | BVA | L | PASS |\n| TC-HIS-07 | Row detail and the link between tabs | HIS-06 | EP | M | PASS |\n| TC-HIS-08 | Filters with no results | HIS-02 | EG | L | PASS |\n\nThe page has two tabs, **Alerts** and **Notifications**. Filters: **Time range**, **Type**, **Host**, **Service**, **New state**, **Acknowledged**, **State type**, **Source** (notifications), **Apply**, **Clear filters**, and **Rows per page**.\n\n",
+          "singleton": false,
+          "source_hash": "d9374c41d7f4e5304c3475735d765ad66cb4352cc9745f76e96d78c4de0e398f",
+          "procedure_hash": "0ef160a5a9b86ba0b457519da69bd44fe4d6569c60cdd50587f8b5da5bd009d5",
+          "reuse": null,
+          "coverage": {
+            "case_hash": "ea55071c6c432050cfd81796072161128a153fb8c13fa7ea2b79d2251c326863",
+            "status": "implemented",
+            "mode": "scripted automation",
+            "reason": "Source adapter covers all expected items using read-only history API requests; E3 requires real history older than 25 hours and remains unprovable when no qualifying event exists. Reviewed cards, current baseline and explicit start are still required.",
+            "items": {
+              "E1": {
+                "marker": "qa-evidence:TC-HIS-04:E1",
+                "method": "GET a complete valid date range and assert HTTP 200, success=true and a list response (which may be empty)."
+              },
+              "E2": {
+                "marker": "qa-evidence:TC-HIS-04:E2",
+                "method": "GET missing, reversed and malformed bounds and assert each returns HTTP 400, success=false and no data key."
+              },
+              "E3": {
+                "marker": "qa-evidence:TC-HIS-04:E3",
+                "method": "Find a real event older than 25 hours within 30-day history; assert the no-date/no-preset response excludes it and returns no event older than the 24-hour range with clock tolerance."
+              }
+            },
+            "adapter": {
+              "path": "client/e2e/qa-modules-2-9.lab.spec.ts",
+              "title": "TC-HIS-04: Date range rules (API)",
+              "project": "qa-modules-2-9",
+              "config": "client/playwright.modules.qa.config.ts"
+            },
+            "source_hashes": {
+              "client/e2e/qa-modules-2-9.lab.spec.ts": "49f82ae6f6996d784082d575da9013a7a4827100fc797d5e47c73848977b43bc",
+              "client/playwright.modules.qa.config.ts": "49dbe58e8e6547495ced6abe204a5ccd3854e917db47dea2f7c4acd846d6085c",
+              "client/qa/module-selection.mjs": "5b648a29d597eb7ecdf3e7ea38f2a44560c5f7a2c1259e8041a503c3c4f4d99e",
+              "client/src/pages/HistoryPage.tsx": "6e5e4673f35349cf11b78f87e5391fd9e9a66b57d5c02d9ba5b5a6eb09339b57",
+              "client/src/test/HistoryPage.test.tsx": "ac1086099b603a87ae1b26d12aa26984fc9542216727d685fa2cc4c862aa69ba",
+              "client/src/lib/api.ts": "41740092051ab506b57b7c9f6b38cd3f38f12bc508a6c034af3133a089d9c5e5",
+              "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
+              "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
+              "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
+              "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
+              "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
+              "server/app/api/system/history.py": "bac073e7b026e6309106231e526f9c083c091d07ac8ea7bb184cbb62965a2cf4",
+              "server/app/api/helper/responses.py": "1fa6d94e99c13c91bdb60002f804d06c1d3195269afeb5e64b47dc4de832b56f",
+              "server/app/api/helper/database_access/permissions.py": "223c0628444524cdae232fb02c29ebbb18b5e4c2e0307990acbe597a40e2ecff"
+            },
+            "prerequisites": [
+              "An initialized Super Admin account is available privately with system.history.",
+              "Existing alert history has at least one real event older than 25 hours but within the rolling 30-day range; no history is seeded or edited.",
+              "The API is served from the reviewed target and the device/server clocks differ by no more than the stated 5-minute tolerance."
+            ],
+            "recovery": [
+              "Read-only GET requests only. No history, acknowledgement, or alert data is changed. POST logout, verify GET /api/user/me returns 401, dispose the browser context, and preserve expected login/logout audit entries."
+            ],
+            "reviewed_by": "Codex source review; not runtime acceptance",
+            "reviewed_at": "2026-10-18",
+            "procedure_review": "Reviewed the complete TC-HIS-04 case and Alerts/Notifications History \u00a73.3, plus Backend_Modules_and_Routes history contracts. The adapter checks a valid complete day range, missing/reversed/malformed bounds, then compares a known real event older than 25 hours with the no-date/no-preset API response. If the fixture event is absent, E3 is not inferred from an empty response and the attempt remains incomplete."
+          },
+          "execution": {
+            "readiness": "BLOCKED: case-specific fixture observations and private fixture inputs are missing or unverified",
+            "coverage_hash": "a79d53246107d6d7b0f5928eb254e993945e747a476aed7b9af9f9549643509a",
+            "selection": {
+              "path": "client/e2e/qa-modules-2-9.lab.spec.ts",
+              "title": "TC-HIS-04: Date range rules (API)",
+              "project": "qa-modules-2-9",
+              "config": "client/playwright.modules.qa.config.ts"
+            },
+            "mode": "scripted automation",
+            "adapter": "/home/paeng/Documents/Capstone-FIles/Capstone-Project/Network-Diagnosis-System-qa214/client/e2e/qa-modules-2-9.lab.spec.ts",
+            "adapter_hash": "49f82ae6f6996d784082d575da9013a7a4827100fc797d5e47c73848977b43bc",
+            "actions": [
+              [
+                "scripts/playwright-lab",
+                "--config=playwright.modules.qa.config.ts",
+                "--project=qa-modules-2-9",
+                "e2e/qa-modules-2-9.lab.spec.ts",
+                "--grep=(?:^| )TC\\-HIS\\-04:\\ Date\\ range\\ rules\\ \\(API\\)$",
+                "--workers=1",
+                "--retries=0"
+              ]
+            ],
+            "reviewed_by": "Codex source/spec/assertion/action/recovery review; 2026-10-18; live fixtures not verified",
+            "timeout_seconds": 300,
+            "step_timeout_seconds": 30,
+            "human_required": false,
+            "prerequisites": [
+              "An initialized Super Admin account is available privately with system.history.",
+              "Existing alert history has at least one real event older than 25 hours but within the rolling 30-day range; no history is seeded or edited.",
+              "The API is served from the reviewed target and the device/server clocks differ by no more than the stated 5-minute tolerance."
+            ],
+            "recovery": [
+              "Read-only GET requests only. No history, acknowledgement, or alert data is changed. POST logout, verify GET /api/user/me returns 401, dispose the browser context, and preserve expected login/logout audit entries."
+            ],
+            "evidence_dir": "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/evidence/TC-HIS-04",
+            "write_paths": [
+              "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/evidence/TC-HIS-04",
+              "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/modules-2-9-adapters-02/control",
+              "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/modules-2-9-adapters-02/bridge"
+            ],
+            "container_image_id": "sha256:e37b02e1817b35e6a0953bdfed1e4a285cc9f3d1d86ac77c1d2fedef0da6c7a5",
+            "baseline_hash": "da42da6cdbc38dab7ba6f9d96c2abd9cfb822123429fdd3f1e613ea50f8e07c3",
+            "control_dir": "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/modules-2-9-adapters-02/control/TC-HIS-04",
+            "bridge_dir": "/home/paeng/pinpoint-test-results/2026-10-18-issue-214-modules-2-9-seven/modules-2-9-adapters-02/bridge/TC-HIS-04",
+            "public_write_paths": [
+              "docs/test-runs/2026-10-18-modules-2-9-seven/REPORT.md",
+              "docs/test-runs/README.md",
+              "docs/qa/queues/2026-10-18-modules-2-9-adapters-v4-execution.md",
+              ".agent/progress/issue-214.md"
+            ],
+            "live_prerequisite_status": {
+              "runtime_baseline": "PASS at 2026-10-18T12:29:16.826139Z; private inspection retained outside repository",
+              "case_fixtures": "UNVERIFIED"
+            },
+            "timeout_source": "Existing qa_pilot reviewed envelope: 300 seconds per case, 30 seconds per action; bounded by qa_pilot.py."
+          }
+        }
+      ],
+      "exclusions": [],
+      "batches": [
+        {
+          "id": "modules-2-9-adapters-02-001",
+          "ids": [
+            "TC-DI-08",
+            "TC-HIS-04"
+          ]
+        }
+      ]
+    }
+  ],
+  "scope_hash": "9fbcf07fa555e282ae7d97fb7c98f5e3b6aa4af81f08ce064ab5a1de4c14dcb1"
+}

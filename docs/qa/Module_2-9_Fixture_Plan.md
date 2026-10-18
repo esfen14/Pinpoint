@@ -50,6 +50,42 @@ not substitutes.
 
 ## Current fixture gate
 
+### 2026-10-18 execution-readiness check
+
+At `2026-10-18T12:29:16.826139Z`, the supported read-only `qa_pilot.py inspect`
+verified the controlled runtime baseline for lab
+`351eb491-f5e1-4854-a7e4-68309ad774ad`, target
+`299ab3ba7203c89a3ca5d8fabea42d9e5f239be2`, and baseline checksum
+`da42da6cdbc38dab7ba6f9d96c2abd9cfb822123429fdd3f1e613ea50f8e07c3`.
+This is environment evidence only; it is not a case run or authorization.
+The private inspection is stored outside the repository. The approved private
+fixture-input files for the two QA accounts and the device/port labels were
+absent at inspection time. No credential values were read, and no accounts,
+roles, ports, alerts, or other appliance records were created or changed.
+
+Queue v4, `2026-10-18-modules-2-9-adapters-v4.json`, splits the seven exact
+IDs into two runner-compatible named sets: set 01 has five cases in one batch;
+set 02 has two cases in one batch. Each card now binds its source adapter,
+per-case timeout, expected-item evidence path, private control/bridge paths,
+container image, baseline hash and recovery instructions. Each card explicitly
+records `case_fixtures: UNVERIFIED`, so the set remains blocked.
+
+| Case | Fixture evidence still required before its set can start |
+|---|---|
+| TC-ACC-08 | Confirm the pre-created `qa-accounts` role grants account.view and account.edit but not account.alerts, assigned user exists, and both users' private credentials are available. |
+| TC-ROL-04 | Confirm the pre-created `qa-view` account has only system.dashboard among protected page/API permissions and its private credentials are available. |
+| TC-DI-02 | Identify the exact existing device and independently observe Monitored, Suggested, Stopped, and Archived ports and their expected ordering data. |
+| TC-DI-03 | Identify an exact existing Suggested port that is held, marked Not used as intended, with the expected/found mismatch and unacknowledged state visible. |
+| TC-DASH-07 | Observe that no host has a ping check and no NCPA host/data is present. Do not remove checks or deployments to manufacture this state. |
+| TC-DI-08 | Identify exact existing editable, non-archived TCP and UDP port labels on the reviewed device; prove TCP options include `http`. |
+| TC-HIS-04 | Confirm Super Admin has system.history and capture the identifier/time of a real alert event older than 25 hours but within the rolling 30-day range, without modifying history. |
+
+After the fixture facts are collected, update the private input files and the
+matching card's fixture status, then refresh/review the queue hashes and
+preflight immediately before start. Cases that cannot meet a prerequisite stay
+blocked; do not create or mutate shared appliance state as an improvised setup.
+The two named sets require separate explicit starts under the shared workflow.
+
 The first batch contains four complete adapters and partial TC-ACC-10; the complete adapters depend on these unverified states:
 
 - TC-ACC-08: `qa-accounts` role and user.
