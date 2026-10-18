@@ -1,6 +1,6 @@
 # Module Black-Box Test Cases and Traceability Matrix
 
-**Status:** current as of `main` at commit `4b1ad9f` (2026-10-17). **Feeds:** [Frontend modules and routes](../../spec%20files/Frontend_Modules_and_Routes.md), [Display requirements](../../spec%20files/Display_Requirements.md), [Device inventory requirements](../../spec%20files/Device_Inventory_Requirements.md), and [Alerts, notifications and history requirements](../../spec%20files/Alerts_Notifications_History_Requirements.md). **Companion to:** the journey-based [QA test plan](QA_Test_Plan.md). Record results in `docs/test-runs/`, not here.
+**Status:** current as of `main` at commit `4b1ad9f` (2026-10-17). **Feeds:** [Frontend modules and routes](../../spec%20files/Frontend_Modules_and_Routes.md), [Display requirements](../../spec%20files/Display_Requirements.md), [Device inventory requirements](../../spec%20files/Device_Inventory_Requirements.md), and [Alerts, notifications and history requirements](../../spec%20files/Alerts_Notifications_History_Requirements.md). **Companion to:** the journey-based [QA journeys and scope](QA_Journeys_and_Scope.md). Record results in `docs/test-runs/`, not here.
 
 ## Scope and approach
 
@@ -23,7 +23,7 @@ This suite tests Pinpoint module by module, the way a user (or an API client) se
 - **Passwords for test accounts:** use a value such as `Lab-Pinpoint-2026!`. It has 12 or more characters with upper and lower case letters, a number, and a symbol, so it passes both the strong policy (Settings, Security) and the relaxed policy (8 or more characters).
 - **Data setup:** unless a case says otherwise, the lab has at least one host Up, one host Down, one service Critical, and one acknowledged alert.
 
-The repository's `docs/qa/QA_Test_Plan.md` is organized by user journey (J1 to J9). This document regroups coverage by module and adds boundary, negative, and permission cases. Where a journey case covers the same check, the traceability matrix names it in the Source column (for example QA J1-03).
+The repository's `docs/qa/QA_Journeys_and_Scope.md` is organized by user journey (J1 to J9). This document regroups coverage by module and adds boundary, negative, and permission cases. Where a journey case covers the same check, the traceability matrix names it in the Source column (for example QA J1-03).
 
 **How to read a test case**
 
@@ -4331,7 +4331,7 @@ Timings to write down: failure time \_\_\_\_ Â· Critical (hard) shown \_\_\_\_ Â
 
 ## Requirements traceability matrix
 
-All 193 requirements trace to at least one of the 231 test cases, and every test case traces to at least one requirement. **Source** abbreviations: **DR** `Display_Requirements.md`, **DIR** `Device_Inventory_Requirements.md`, **AHR** `Alerts_Notifications_History_Requirements.md`, **FMR** `Frontend_Modules_and_Routes.md`, **QA** `docs/qa/QA_Test_Plan.md` (journey case), **MAN** a file in `docs/manuals/`. "#" in a DIR source means its acceptance criterion number, and "(#123)" means the repository issue that added it. "App differs" means the real app does not follow the spec on that point, so the case tests the app and the difference is reported as a finding.
+All 193 requirements trace to at least one of the 231 test cases, and every test case traces to at least one requirement. **Source** abbreviations: **DR** `Display_Requirements.md`, **DIR** `Device_Inventory_Requirements.md`, **AHR** `Alerts_Notifications_History_Requirements.md`, **FMR** `Frontend_Modules_and_Routes.md`, **QA** `docs/qa/QA_Journeys_and_Scope.md` (journey case), **MAN** a file in `docs/manuals/`. "#" in a DIR source means its acceptance criterion number, and "(#123)" means the repository issue that added it. "App differs" means the real app does not follow the spec on that point, so the case tests the app and the difference is reported as a finding.
 
 ### Coverage summary
 
