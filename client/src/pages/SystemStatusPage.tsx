@@ -10,7 +10,7 @@ import { apiDelete, apiGet, apiPost, errorMessage } from '../lib/api'
 import { listActions } from '../lib/remediationApi'
 import { recoveryKey } from '../types/remediation'
 import { NagiosSyncNotice } from '../components/shared/NagiosSyncNotice'
-import { nagiosSyncNotice, type NagiosSyncResult } from '../types/nagiosSync'
+import { nagiosSyncNotice, UNACK_CONFIRM, type NagiosSyncResult } from '../types/nagiosSync'
 import { fromServiceRecord, type ServiceListResponse, type ServiceRow, type ServiceState } from '../types/service'
 
 const PER_PAGE = 10
@@ -147,6 +147,7 @@ export function SystemStatusPage() {
   }
 
   async function unacknowledgeService(service: ServiceRow) {
+    if (!window.confirm(UNACK_CONFIRM)) return
     try {
       const result = await apiDelete<NagiosSyncResult>('/api/system/network-health/services/acknowledge', {
         hostname: service.hostname,

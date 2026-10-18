@@ -246,15 +246,29 @@ describe('DeviceInventoryPage', () => {
     })
   })
 
-  it('removes an acknowledgement', async () => {
+  it('removes an acknowledgement only after confirmation', async () => {
     const user = userEvent.setup()
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
     await renderLoaded()
 
     await user.click(within(row('printer')).getByRole('button', { name: 'Unacknowledge' }))
 
+    expect(confirm).toHaveBeenCalledWith('Remove acknowledgement for this alert?')
     await waitFor(() => {
+      expect(apiDelete).toHaveBeenCalledTimes(1)
       expect(apiDelete).toHaveBeenCalledWith('/api/system/network-health/hosts/acknowledge', { hostname: 'printer' })
     })
+  })
+
+  it('keeps the acknowledgement when removal is cancelled', async () => {
+    const user = userEvent.setup()
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false)
+    await renderLoaded()
+
+    await user.click(within(row('printer')).getByRole('button', { name: 'Unacknowledge' }))
+
+    expect(confirm).toHaveBeenCalledTimes(1)
+    expect(apiDelete).not.toHaveBeenCalled()
   })
 
   it('shows an error banner when loading fails', async () => {

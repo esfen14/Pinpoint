@@ -18,7 +18,7 @@ import { trendBuckets } from '../utils/trendHours'
 import { fromPluginsResponse, type PluginGroup, type PluginsApiResponse } from '../types/networkHealth'
 import { apiDelete, apiGet, apiPost, ApiError, errorMessage } from '../lib/api'
 import { NagiosSyncNotice } from '../components/shared/NagiosSyncNotice'
-import { nagiosSyncNotice, type NagiosSyncResult } from '../types/nagiosSync'
+import { nagiosSyncNotice, UNACK_CONFIRM, type NagiosSyncResult } from '../types/nagiosSync'
 import {
   fromAlertRecord,
   fromDashboardStatusResponse,
@@ -159,6 +159,7 @@ export function DashboardPage() {
   }
 
   async function unacknowledgeAlert(alert: AlertRow) {
+    if (!window.confirm(UNACK_CONFIRM)) return
     try {
       const result = await apiDelete<NagiosSyncResult>('/api/system/dashboard/alerts/acknowledge', {
         hostname: alert.hostname,
