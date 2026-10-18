@@ -178,3 +178,8 @@ deadlines; measuring return time alone cannot terminate a hung callback.
 User reminder: update the finish-condition checklist. Added explicit checked
 lifecycle-core and unchecked production/live-proof items at the top of both
 progress files; retain incomplete broader readiness conditions.
+
+Checklist verification-note correction: the overall plan no longer labels the
+later combined local run green. It retains #210's intermittent failure and
+separately attributes passing stage reruns and the earlier clean baseline. This
+is a documentation accuracy correction; no test/product behavior changed.

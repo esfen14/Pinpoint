@@ -42,8 +42,10 @@ claim that the product passes or that every case can run without human involveme
   OS sandbox. Live adapter completion, preflight, enforced scan guard, recovery/resume
   and pilot runs remain separate pending work.
 - Current/historical links and docs checks have migrated. `scripts/verify.sh docs`
-  is green (100 isolated checks). Full local verification passed 4310 backend and
-  1003 frontend tests, build and lint (zero errors). [Draft PR #207](https://github.com/esfen14/Pinpoint/pull/207)
+  is green (100 isolated checks). The prior full local baseline passed 4310
+  backend/1003 frontend tests plus build/lint. The later combined run passed backend
+  but hit intermittent frontend test #210; focused and full frontend stage reruns
+  passed. No clean latest combined-run result is inferred from those stage reruns. [Draft PR #207](https://github.com/esfen14/Pinpoint/pull/207)
   contains the offline milestone; final-head CI is checked separately.
 
 Checklist audit: completed items below are checked against the implementation in
@@ -353,7 +355,7 @@ execution and missing mandatory evidence block the affected cases.
 ## State for the next session
 
 - Checklist audited after the partial-pass follow-up: completed offline work is checked below its owning phase; incomplete aggregates are split rather than marked wholly done.
-- Last check run: `scripts/verify.sh all` (green), followed by final `scripts/verify.sh docs` (100 isolated checks) after supervisor lifecycle preparation; frontend gate includes QA type checking and five offline Node selection tests.
+- Last relevant check: `scripts/verify.sh docs` (100 isolated checks) after supervisor lifecycle preparation, plus Python/shell syntax and whitespace. Prior backend stage passed 4310 tests/14 skips; the combined coverage run then encountered intermittent frontend failure #210. Focused/full frontend reruns passed (1003 Vitest tests, QA type check, five offline Node checks, build/lint). The earlier clean all-stage baseline and later separate stage results are distinct evidence.
 - Result: 4310 backend tests passed (14 skips), 1003 frontend tests passed, build and lint passed with zero errors. Offline milestone is in draft PR #207; inspect its final-head CI. No live cases have been executed.
 - Next action: Continue current-case adapter/coverage preparation from this checklist after reviewing #207. Next implementation is isolated launcher selection/artifact integration with ownership/recovery enforcement. Live preflight/scan guard/recovery and the pilot still require their reviewed scope/start. Human-result conflicts and the provisional cutoff remain explicit review items.
 
