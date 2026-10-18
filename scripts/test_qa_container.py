@@ -96,7 +96,10 @@ class ContainerTests(unittest.TestCase):
             def __init__(self):self.root=commands.root
             def run(self,*a,**kw):return commands.run(*a,**kw)
             def idle(self):return commands.idle()
-        runtime=c.ContainerRuntime(root/'control',str(Path('/bin/true').resolve()),commands,Cleanup())
+        class Custody:
+            def __init__(self):self.valid=True
+            def verify(self,*args):return self.valid
+        runtime=c.ContainerRuntime(root/'control',str(Path('/bin/true').resolve()),commands,Cleanup(),bridge=Custody())
         return plan,ledger,commands,runtime
 
     def run_case(self,root,change=None):
@@ -182,7 +185,7 @@ class ContainerTests(unittest.TestCase):
                 ledger.consume(UUID,plan)
                 with self.assertRaises(ValueError):runtime.execute(plan,ledger,UUID,IMAGE,60,10)
             self.assertTrue(runtime.halted)
-            with self.assertRaises(ValueError):c.ContainerRuntime(runtime.root,runtime.docker,commands,commands)
+            with self.assertRaises(ValueError):c.ContainerRuntime(runtime.root,runtime.docker,commands,commands,bridge=runtime.bridge)
 
     def test_nonzero_container_exit_is_not_a_product_verdict(self):
         with tempfile.TemporaryDirectory() as d:
@@ -242,6 +245,40 @@ class ContainerTests(unittest.TestCase):
                 with self.assertRaises(ValueError):runtime.execute(plan,ledger,UUID,IMAGE,60,10)
             self.assertIsNone(commands.resource)
             self.assertEqual(json.loads(runtime.intent.read_text())['status'],'halted')
+
+    def test_lost_bridge_never_starts_a_container(self):
+        with tempfile.TemporaryDirectory() as d:
+            plan,ledger,commands,runtime=self.fixture(Path(d));runtime.bridge.valid=False
+            with ledger.claim(UUID):
+                ledger.consume(UUID,plan)
+                with self.assertRaises(ValueError):runtime.execute(plan,ledger,UUID,IMAGE,60,10)
+            self.assertFalse(commands.calls)
+
+    def test_real_owned_bridge_with_synthetic_docker_lifecycle(self):
+        bridge_module=module('owned_bridge','qa_bridge.py')
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);plan,ledger,commands,runtime=self.fixture(root)
+            (root/'bridge'/'web.sock').unlink()
+            bridge=bridge_module.Bridge(root/'bridge');self.addCleanup(bridge.stop)
+            runtime.bridge=bridge
+            with ledger.claim(UUID),patch.object(bridge_module,'connect_origin') as connector:
+                ledger.consume(UUID,plan);bridge.start(plan,ledger,UUID,10)
+                result=runtime.execute(plan,ledger,UUID,IMAGE,60,10)
+                self.assertTrue(result['container_clean'])
+                self.assertTrue(bridge.verify(plan,ledger,UUID))
+                self.assertTrue(bridge.stop());connector.assert_not_called()
+
+    def test_bridge_failure_during_attach_cleans_container_and_halts(self):
+        with tempfile.TemporaryDirectory() as d:
+            plan,ledger,commands,runtime=self.fixture(Path(d));original=commands.run
+            def interrupted(argv,*args,**kwargs):
+                result=original(argv,*args,**kwargs)
+                if argv[1:3]==['start','--attach']:runtime.bridge.valid=False
+                return result
+            with ledger.claim(UUID),patch.object(commands,'run',side_effect=interrupted):
+                ledger.consume(UUID,plan)
+                with self.assertRaises(ValueError):runtime.execute(plan,ledger,UUID,IMAGE,60,10)
+            self.assertIsNone(commands.resource);self.assertTrue(runtime.halted)
 
 
 if __name__=='__main__':unittest.main()

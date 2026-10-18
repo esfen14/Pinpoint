@@ -36,11 +36,13 @@ class ContainerRuntime:
     or interrupted create remains halted even if no resource is currently visible,
     because an asynchronous daemon operation could finish later.
     """
-    def __init__(self,root:Path,docker:str,runner,cleanup_runner):
+    def __init__(self,root:Path,docker:str,runner,cleanup_runner,*,bridge):
         self.root=t.private_directory(root,empty=True)
         if not Path(docker).is_file() or str(Path(docker).resolve())!=docker:
             raise ValueError('Canonical reviewed Docker executable required')
         self.docker=docker;self.runner=runner;self.cleanup_runner=cleanup_runner
+        self.bridge=bridge
+        if not callable(getattr(bridge,'verify',None)):raise ValueError('Owned bridge custody checks required')
         if (runner is cleanup_runner or getattr(runner,'root',None)!=self.root
             or getattr(cleanup_runner,'root',None)!=self.root):
             raise ValueError('Independent bounded runners with shared private output required')
@@ -142,6 +144,7 @@ class ContainerRuntime:
             or attempts[-1].get('transport_hash')!=t.x.queue.cat.digest(plan)
             or any(attempts[-1].get(k)!=plan.get(k) for k in ('queue_hash','set','case','session','batch','owner'))):
             raise ValueError('Durable consumed supervisor slot required')
+        if self.bridge.verify(plan,ledger,uuid) is not True:raise ValueError('Owned bridge unavailable or changed')
         expected=t.container_command(Path(plan['evidence_dir']),Path(plan['state_dir']),
                                      Path(plan['bridge_socket']).parent,plan['case'])
         if plan.get('docker_argv')!=expected:raise ValueError('Prepared transport changed')
@@ -168,9 +171,11 @@ class ContainerRuntime:
             if not ID.fullmatch(raw) or stored!=raw:raise ValueError('Created resource identity ambiguous')
             self.cid=raw;self.persist('created',plan,image)
             if self.inspected(plan,image,deadline)['Running']:raise ValueError('Container started outside lifecycle')
+            if self.bridge.verify(plan,ledger,uuid) is not True:raise ValueError('Bridge custody lost before attach')
             started=datetime.now(timezone.utc).isoformat()
             self.call(['start','--attach',self.cid],deadline,limit=8*1024*1024,allow_nonzero=True)
             attach_code=self.last_returncode
+            if self.bridge.verify(plan,ledger,uuid) is not True:raise ValueError('Bridge custody lost during attach')
             observed=self.inspected(plan,image,deadline)
             if (observed['Running'] or observed.get('Status')!='exited'
                 or type(observed.get('ExitCode')) is not int or not 0<=observed['ExitCode']<=255

@@ -15,7 +15,8 @@ Status: in-progress
 - [x] Implement the supervisor lifecycle core with separate start binding, cooperative UUID lock, fsynced action consumption, persistent replay/budget checks and halted failures; prove with 16 synthetic-driver contracts.
 - [x] Implement and test bounded local process-group control (8 contracts) and strict private permission-report parsing (9 contracts); these components remain unwired to live execution.
 - [x] Share a fixed per-user host claim between supervisor and mutating VM controllers, and collect structured host-only ownership observations; verify with local fixtures without claiming running application identity.
-- [x] Implement concrete pinned-image Docker lifecycle with durable intent/consumed-transport binding and verified owned-resource cleanup (13 synthetic contracts); fix and offline-test Playwright worker reload without launching a browser (7 frontend helper checks).
+- [x] Implement concrete pinned-image Docker lifecycle with durable intent/consumed-transport binding and verified owned-resource cleanup (16 synthetic contracts); fix and offline-test Playwright worker reload without launching a browser (7 frontend helper checks).
+- [x] Implement the owned bounded bridge with durable custody/cleanup (11 Unix-only contracts), connect container custody checks (16 container contracts), and add standalone Git/artifact/process observations (6 fixtures) that never claim verified runtime identity.
 - [ ] Complete production supervisor-driver integration and live validation: actual controller/deployment/baseline proofs, inherited controller/driver wiring, bounded process-tree control, sanitized result parsing and verified recovery. This is part of overall readiness, not a claim that the offline milestone executes cases.
 
 | Issue requirement | Finish-condition item | Proof |
@@ -64,10 +65,10 @@ and require separately authorized live evidence where needed.
 
 ## State for the next session
 
-- Last relevant check: `scripts/verify.sh docs > /tmp/issue-206-today-docs.log 2>&1` (145 isolated contracts), `scripts/verify.sh frontend > /tmp/issue-206-today-frontend.log 2>&1`, focused container contracts, Python/shell syntax and whitespace checks. Final observed results and exact-head CI proof are recorded in draft PR #207. Final observed result and exact-head CI proof are recorded in draft PR #207.
-- Result: concrete Docker lifecycle now verifies pinned image/consumed transport, fsynced intent, actual identity/isolation, bounded attach and verified owned-resource removal using 13 synthetic contracts only. A reproduced Playwright worker-reload defect is fixed; all 7 selection/collection/no-browser-worker checks pass. No Docker daemon, VirtualBox, SSH, browser, lab or account access; original human catalog/product source unchanged. The user explicitly chose continued offline preparation for today’s TC-SS-04 pilot.
-- Finish conditions: both progress checklists mark process/result, shared host-control and concrete container/worker components complete and retain production integration/live-proof requirements unchecked. Original-checkout copies are synchronized after checkpoint.
-- Next action: implement running-application/frontend deployment identity and the owned private bridge, then connect the tested container/process/result components through a bounded production driver and verified recovery. Today’s pilot is TC-SS-04; no live preflight was started because the user chose offline preparation. Do not equate Git HEAD with running application identity or Docker CLI exit with container cleanup; actual live cards/pilot still require reviewed scope/start.
+- Last relevant check: `scripts/verify.sh docs > /tmp/issue-206-bridge-docs.log 2>&1` (165 isolated contracts), focused bridge/deployment/container checks, Python/shell syntax and whitespace. Frontend application/adapter code is unchanged in this pass; prior frontend proof remains attributed separately. Final observed results and exact-head CI proof are recorded in draft PR #207.
+- Result: owned bridge and standalone read-only deployment observation components are implemented and exercised using local Unix sockets and disposable Git/file/proc fixtures only. Container checks bridge custody and has 16 synthetic contracts. Observer matches never become running-version proof; no live entry, SSH, appliance origin, Docker daemon, browser or account was used. Backend and frontend application code is unchanged.
+- Finish conditions: both progress checklists mark process/result, shared host-control, concrete container/worker, owned bridge and read-only observation components complete and retain production integration/live-proof requirements unchecked. Original-checkout copies are synchronized after checkpoint.
+- Next action: connect the tested bridge/container/process/results through a trusted pilot driver with actual backend launch/import and served-frontend proof, baseline/session recovery and complete TC-SS-04 card. Read-only observer facts are insufficient for runtime readiness. The user chose offline preparation; no lab-access approval is pending. Skip local backend tests while application backend code is unchanged.
 
 ## Decisions and notes
 
@@ -261,3 +262,34 @@ unstarted draft is retained as superseded. Both finish-condition checklists and
 the separate today checklist are synchronized to the original checkout after
 checkpoint. Exact-head CI results are recorded in PR #207, with backend CI
 automatically scheduled by the existing workflow rather than locally requested.
+
+## Offline bridge and deployment-observation session (2026-10-18)
+
+Current user direction: continue offline preparation, prioritize the TC-SS-04
+pilot, and skip backend tests when backend application source is unchanged.
+
+1. [x] Implement/test the owned private Unix-to-fixed-loopback bridge: consumed-slot/host-lock binding, retained lock descriptor, same-user peers, bounded time/connections/bytes/buffers, safe shutdown and durable interruption/cleanup state. Use local Unix socket-pair fixtures only; never contact the appliance origin.
+2. [x] Add a read-only deployment observer/verifier that distinguishes checked source/build manifests and running process identity from Git HEAD alone. Validate with disposable file/process metadata fixtures, without SSH or live deployment claims.
+3. [x] Connect bridge custody checks to the container component, update fingerprints/specifications and all finish-condition checklists, refresh the blocked pilot scope, run focused QA/docs checks (frontend only if affected), checkpoint and synchronize the original checkout. Do not enable or start live testing.
+
+Bridge round 1: test-first bridge module was absent. Eleven real Unix-socket/pair
+contracts now verify duplex/half-close/backpressure, fixed-origin custody, limits,
+foreign peers, deadlines, claim loss, checkpoint failure and socket replacement.
+Container contracts increase to 16, including real owned bridge plus fake Docker
+and bridge loss during attach; cleanup still removes only its owned container.
+
+Observation round 2: six disposable Git/file/proc contracts verify expected source
+comes from immutable Git objects despite dirty worktrees, artifact mismatches and
+untracked Python detection, unsafe path/secret exclusion, process metadata and
+mid-probe changes. The standalone module disables Git network protocols/replacement
+objects and does not copy process arguments/environments. It always leaves runtime/
+served identity false and verified running revision null. No live proof is invented.
+
+Bridge/observer round 3: `scripts/verify.sh docs` passes 165 isolated contracts;
+Python compilation, shell syntax and whitespace checks pass. No local backend
+suite or unchanged frontend gate ran, per the user’s instruction and affected
+scope. Fresh blocked scope is `docs/qa/queues/2026-10-18-today-ss04-v3.json`;
+v1/v2 are preserved as superseded, never started. Both finish-condition checklists
+and today progress are synchronized to the original checkout after checkpoint.
+PR #207 records exact-head CI; backend is automatically scheduled by existing CI,
+not a requested local test or a reason to delay this helper-only pass.

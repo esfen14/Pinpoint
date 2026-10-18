@@ -63,6 +63,10 @@ The concrete container lifecycle component also has no live CLI/default driver.
 Its consumed-slot/image/cleanup contracts and synthetic worker checks do not
 authorize calling it manually. Keep actual bridge/runtime/baseline proof and
 the explicit named start separate from offline implementation success.
+Owned bridge and deployment-observer components also require trusted integration.
+Observer disk matches/candidate process metadata always leave runtime/served
+identity false and the verified running revision null. Never promote them into a
+live proof receipt or manually start a bridge to bypass the missing driver/card.
 
 ## Mandatory partial-pass investigation
 

@@ -289,8 +289,10 @@ plan. Mutable tags alone cannot execute. Case/cleanup budgets cannot exceed the
 consumed plan, and elapsed time since consumption reduces the remaining budget.
 
 Private control output must be separate from source, credentials, bridge and
-evidence. A private Unix socket must already exist; proving its fixed upstream
-and creating/disposing the bridge remain the future driver's responsibility.
+evidence. The private socket must belong to an active owned bridge; the container
+component verifies its custody before creation, before attach and after attach.
+The concrete bridge component is described below; connecting both components to
+the production supervisor and collecting actual deployment proof remain pending.
 The case evidence root must still be empty. Two independent bounded process
 runners share the private control-output directory so recovery can run when the
 attach runner has halted. Child commands now use `umask 077`, including Docker's
@@ -313,9 +315,11 @@ isolation drift, failed checkpoints, uncertain cleanup and interruption halt;
 existing control output/intent prevents an implicit restart or retry. Cleanup
 cannot clear the supervisor's halted ledger or claim the baseline is restored.
 
-Thirteen synthetic command-response contracts exercise these paths. Local Unix
+Sixteen synthetic command-response contracts exercise these paths. Local Unix
 sockets are disposable metadata fixtures with no upstream. No Docker daemon,
 container, browser, SSH endpoint, account or appliance is used by those tests.
+One integration fixture uses the real owned bridge with synthetic Docker commands
+and asserts that no upstream connection occurs.
 
 A synthetic Playwright worker exposed an adapter preparation defect: Playwright
 creates its artifact directory before its IPC worker reloads the configuration,
@@ -331,3 +335,59 @@ The same-day pilot scope is TC-SS-04 only, with no inherited human PASS reruns.
 The user chose continued offline preparation. Real running frontend/backend
 identity, bridge integration, initialized Staff baseline, complete live card and
 an explicit named start are still needed; no claim that the pilot ran is made.
+
+## Owned bridge and read-only deployment observations
+
+`qa_bridge.py` provides the private Unix-socket relay for the future trusted driver.
+It has no CLI or automatic start. It requires the matching durable consumed
+transport and held host/UUID claim, and retains its own duplicate of the host-lock
+descriptor until shutdown. The socket path, fixed `127.0.0.1:18080` upstream,
+connection/byte limits and time budget bind to that transport. Production accepts
+only same-user Unix peers. User-namespace mappings that cannot satisfy this check
+remain blocked; do not relax the peer guard at execution time.
+
+The standard plan permits at most 16 concurrent connections and 32 MiB total
+bidirectional traffic, with 64 KiB buffers in each direction and a one-second
+maximum origin-connect timeout bounded further by the remaining case budget.
+The relay handles partial writes, backpressure and half-close without recording
+request bytes, cookies, credentials or response content. Normal disconnects close
+that connection; lost scope/socket custody, foreign peers, origin-connect failure,
+exhausted limits and deadlines halt the bridge. Socket identity/mode/owner and
+the consumed ledger entry are rechecked throughout the relay.
+
+Private fsynced intent precedes bind. Stop joins the owned thread, closes its
+connections/listener, removes only the matching socket and checkpoints complete
+or halted state before releasing the retained lock. Existing intent blocks implicit
+reuse; socket replacement is left intact and never certified as cleanup. A future
+driver must stop the container before disposing the bridge, require successful
+cleanup for both, and retain its enclosing supervisor claim through actual baseline
+verification. Neither component alone proves session or appliance restoration.
+Eleven local Unix-socket/pair contracts include large duplex transfer, half-close,
+limits, foreign peers, claim loss, failed persistence and socket replacement. No
+appliance TCP, Docker, SSH or browser is used.
+
+`qa_deployment.py` is a standalone standard-library read-only observation module,
+with no SSH, service restart, network request or live CLI. Local preparation reads
+source hashes from the specified full Git revision's objects, independent of dirty
+working files, plus reviewed frontend artifact hashes. Git subprocesses have a
+restricted environment, disabled replacement objects/lazy fetch and denied network
+protocols. A reviewed build hash is still not proof of that build's provenance.
+
+The observer checks regular canonical public source/build files, required
+entrypoints, SHA-256 hashes, size limits, unexpected Python files and stable
+file/inventory metadata. Hidden secret stores, environment files, virtualenvs and
+tests are outside its source inventory. It does not read process environments.
+Candidate Gunicorn processes under the application server directory have PID,
+parent/start identity and command hashes rechecked; command arguments are never
+copied. Start-time ordering is a conservative observation, not an import/launch
+attestation. Six disposable Git/file/proc contracts exercise source drift,
+untracked modules, build mismatch, unsafe paths, process metadata and mid-probe
+changes without using an appliance or actual backend process.
+
+Even a full disk match reports `runtime_identity_verified: false`,
+`served_frontend_verified: false`, `verified_running_revision: null` and
+`live_authorized: false`. Actual served frontend bytes, trusted backend launch/
+import identity, dependency/configuration and baseline/session recovery still
+need independently collected live proof. Never fill those fields from Git HEAD,
+disk hashes or an observer result alone. The pilot remains blocked pending that
+integration, observed prerequisites, a complete card and explicit named start.

@@ -107,6 +107,7 @@ def prepare(q:dict,journal:dict,state_dir:Path,bridge_dir:Path) -> dict:
         batch=journal['active_batch'],case=case['id'],target_revision=q['target_revision'],
         evidence_dir=str(evidence),state_dir=str(state),bridge_socket=str(bridge/'web.sock'),
         approved_image_id=card.get('container_image_id'),
+        bridge_limits=dict(max_bytes=32*1024*1024,max_connections=16),
         bridge_origin='http://127.0.0.1:18080',docker_argv=argv,
         missing_live_guards=['Exclusive lab lock and runtime ownership proof',
             'Actual deployed revision and baseline/recovery verification',

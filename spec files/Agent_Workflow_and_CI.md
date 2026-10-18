@@ -249,10 +249,24 @@ reports. App/spec conflicts remain decisions, not automatic passes.
   isolation and mounts are checked before bounded attach. Cleanup kills/removes
   only the identified owned container and proves absence through a successful
   daemon query. Failed/uncertain create, ownership drift, persistence/cleanup
-  failures and existing intent halt without retry. Thirteen synthetic contracts
+  failures and existing intent halt without retry. Sixteen synthetic contracts
   are not live isolation/restoration evidence. No CLI/default production driver
-  exists; bridge/runtime identity/baseline/session proof and explicit start remain
+  exists; production bridge wiring/runtime identity/baseline/session proof and explicit start remain
   required. Never manually invoke this component to bypass missing integration.
+- **Owned bridge:** `qa_bridge.py` binds the consumed transport/host claim, retains
+  its lock descriptor, checks same-user Unix peers and relays only to fixed
+  `127.0.0.1:18080`. Time/connection/byte/buffer bounds, durable intent, custody
+  checks and joined cleanup fail closed. The container component checks bridge
+  custody before create/attach and after attach. Eleven Unix-only fixture tests
+  are not live isolation proof. The driver still must stop the container, dispose
+  the bridge and verify actual baseline/session recovery under its outer claim.
+- **Deployment observations:** standalone `qa_deployment.py` reads expected source
+  from full Git objects plus reviewed build hashes, compares stable canonical
+  public artifacts and rechecks candidate process metadata without copying command
+  arguments or environment values. Six Git/file/proc fixtures are not a live run.
+  All positive runtime/served/version authorization fields stay false/null;
+  trusted launch/import identity and actual served frontend bytes are separate
+  missing proof. No SSH/restart/network/default live entry is added.
 - **Partial-pass investigation:** Every catalog partial needs an evidence review,
   duplicate search, linked issue/disposition and next action in the
   [partial-pass register](../docs/qa/Partial_Pass_Investigations.md). The

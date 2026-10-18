@@ -309,12 +309,12 @@ running application/frontend proof, baseline or restoration claim. No lab was
 contacted or acceptance result added by these fixture tests.
 
 `qa_container.py` adds the concrete bounded create/attach/inspect/kill/remove
-component with 13 synthetic-command contracts. It binds a pinned image and exact
+component with 16 synthetic-command contracts. It binds a pinned image and exact
 transport digest to a durable consumed supervisor slot, fsyncs intent before
 creation, verifies actual container identity/isolation and proves absence through
 a successful daemon query. Uncertain create/cleanup and persisted intent block
 retry; child commands use private umask. It has no CLI/default production driver.
-Actual bridge ownership/lifecycle, running application/frontend identity, Staff
+Production bridge wiring, running application/frontend identity, Staff
 baseline, session recovery and reviewed live cards/start remain pending.
 
 Seven frontend selection/collection/synthetic-worker checks now include a fixed
@@ -323,6 +323,20 @@ workers may see their private artifact directory after initial configuration;
 environment markers alone cannot allow evidence reuse. No page/browser, appliance
 or acceptance adapter executes in the worker fixture. The user prioritized a
 TC-SS-04 pilot today but explicitly kept preparation offline; no live run occurred.
+
+`qa_bridge.py` now implements the owned private relay: consumed transport and
+retained host-lock binding, same-user peers, fixed loopback origin, bounded time/
+connections/bytes/buffers, durable intent and joined cleanup with socket custody.
+Eleven Unix-only fixture tests pass; the container component also verifies bridge
+custody and has an integration fixture with no upstream connection or Docker.
+
+Standalone `qa_deployment.py` adds expected Git-object source/build manifests and
+stable public artifact/candidate-process observations. Six disposable Git/file/
+proc fixtures pass without SSH, real backend processes or an appliance. Observer
+runtime/served readiness stays false and verified running revision stays null:
+disk matches/start ordering alone cannot attest loaded code or actual served bytes.
+Live proof collection, trusted supervisor driver wiring, complete case cards and
+actual session/baseline recovery remain pending. No live entry is enabled.
 
 The [historical evidence inventory/review](../docs/qa/Historical_Evidence_Review.md)
 links 41 post-cutoff-directory-date reports and six partial current-case mappings.
