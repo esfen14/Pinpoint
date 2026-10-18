@@ -1348,7 +1348,7 @@ The page has two tabs, **Alerts** and **Notifications**. Filters: **Time range**
 | TC-DI-08 | The "Checked by" line | DI-08 | EP | M | PASS |
 | TC-DI-09 | Pin and Remove pin | DI-09 | ST | M | FAIL - Notes in the step-by-step  |
 | TC-DI-10 | The NCPA port is protected | DI-10 | EG | M | PASS |
-| TC-DI-11 | One monitoring label per device | DI-11 | DT | H | Not run |
+| TC-DI-11 | One monitoring label per device | DI-11 | DT | H | PASS |
 | TC-DI-12 | Monitoring filter | DI-11 | EP | M | PASS |
 | TC-DI-13 | Pause and resume | DI-12 | ST | H | PASS |
 | TC-DI-14 | Invalid pause and resume | DI-12 | DT | M | PASS |
@@ -1532,7 +1532,7 @@ To open a host's drawer press **View host details** on its row. The drawer has t
 
 #### TC-DI-11 – One monitoring label per device
 
-**Requirement:** REQ-DI-11 · **Technique:** DT · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-DI-11 · **Technique:** DT · **Priority:** H · **Result:** PASS
 
 **Steps**
 

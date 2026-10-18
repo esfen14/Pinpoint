@@ -14,6 +14,8 @@ queue = importlib.util.module_from_spec(spec);spec.loader.exec_module(queue)
 class QAQueueTests(unittest.TestCase):
     def catalog(self):
         c=queue.load_catalog()
+        # Keep a synthetic pending fixture even after all manual DI cases finish.
+        c['TC-DI-11']['status']='untested'
         return {k:v for k,v in c.items() if k in ['TC-DI-01','TC-DI-05','TC-DI-06','TC-DI-07','TC-DI-08','TC-DI-09','TC-DI-11','TC-TOP-01','TC-SEQ-09','TC-DSC-01']}
 
     def test_default_pending_selection_and_exclusions(self):

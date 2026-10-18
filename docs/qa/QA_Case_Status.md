@@ -6,7 +6,7 @@ Historical catalog results are human manual results. Historical reports retain t
 E2E with no recorded result is pending/unrecorded, not proof it was never attempted.
 Accepted evidence and new execution totals must be reported separately.
 
-Source SHA-256: `4064c125cd88d602b8e9bcec3d533a7ab32c393aeeb371bb1481c1636989fc33`.
+Source SHA-256: `2ef796eb541796e43187acd965431e4a40554a9f8b770fbee40a2bab3f7ba10e`.
 Cases: 231 TC plus 8 E2E.
 Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 
@@ -114,7 +114,7 @@ Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 | TC-DI-07 | DI / 7 | PASS | PASS | pass | No reviewed mapping |
 | TC-DI-08 | DI / 7 | PASS | PASS | pass | No reviewed mapping |
 | TC-DI-09 | DI / 7 | FAIL - Notes in the step-by-step | FAIL - Using network discovery again assigns the device with a port 80 named into a different service name to a new record in network discovery, and saying that the old record has an unknown IP address. The same device is said to have a different SSH key despite being the same device, this needs to be investigated, the device used is 10.77.0.8. | fail | No reviewed mapping |
-| TC-DI-11 | DI / 7 | Not run | Not run | untested | No reviewed mapping |
+| TC-DI-11 | DI / 7 | PASS | PASS | pass | No reviewed mapping |
 | TC-DI-12 | DI / 7 | PASS | PASS | pass | No reviewed mapping |
 | TC-DI-13 | DI / 7 | PASS | PASS | pass | No reviewed mapping |
 | TC-DASH-02 | DASH / 7 | PASS | PASS | pass | No reviewed mapping |
