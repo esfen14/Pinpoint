@@ -124,7 +124,8 @@ class TransportTests(unittest.TestCase):
     def test_legacy_runner_denies_current_config_before_any_external_command(self):
         script=Path(__file__).with_name('playwright-lab')
         for args in [['--config=playwright.qa.config.ts'],['--project=qa-permissions'],['-c','playwright.qa.config.ts'],
-                     ['--config','./playwright.qa.config.ts']]:
+                     ['--config','./playwright.qa.config.ts'],
+                     ['--config=playwright.modules.qa.config.ts'],['--project=qa-modules-2-9']]:
             result=subprocess.run(['bash',str(script),*args],capture_output=True,text=True,
                 env={'PATH':'/usr/bin:/bin','HOME':'/nonexistent'},timeout=5)
             self.assertNotEqual(result.returncode,0)

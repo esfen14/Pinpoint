@@ -40,13 +40,14 @@ Requirement coverage (every requirement the issue states, and the check that pro
 |---|---|---|---|
 | 1 | Read the 31 catalog procedures, phase/prerequisite tables, frontend route map, page requirements, architecture/engineering rules, current status and adapter/coverage constraints; found historical partial-report triage needed for several listed cases | `python3 scripts/qa_catalog.py`; `python3 -I scripts/qa_coverage.py check` | Catalog valid (231 TC/8 E2E, 27 existing verdict conflicts); all 239 coverage records source-current; no product tests executed |
 | 2 | Added case-by-case review matrix with source/test references and explicit prerequisite, mutation, and cleanup concerns | `python3 -I scripts/qa_coverage.py check` | Green; existing coverage unchanged. Matrix explicitly notes that the bounded pilot is not a general launcher and no live action is authorized. |
+| 3 | Added exact-ID source adapters for TC-ACC-08 and TC-ROL-04, a private-directory selector, isolated Playwright collection config and offline collection checks; updated source coverage and blocked legacy-launch routing | `cd client && node --test qa/module-selection.node.mjs`; `cd client && npx tsc --noEmit -p tsconfig.qa.json`; `python3 -I scripts/qa_coverage.py check` | 5 offline selection/collection checks pass; QA config type-check passes; all 239 coverage records validate. These are adapter checks, not product-case results. No live browser or lab was contacted. |
 
 ## State for the next session
 
-- Last check run (exact command): `python3 -I scripts/qa_coverage.py check`
-- Result (first failing lines, or "green"): green; all 239 coverage records validate against current catalog/source hashes.
-- Hypothesis: The source map confirms the initial permission adapter pipeline does not cover these cases; current code has isolated page tests we can use to source-review exact assertions while keeping live cards blocked.
-- Next action (one specific step, not "continue"): Implement one explicit-ID current-case collection config and browser adapter tests for the first safe read-only cases, without adding a live dispatch path.
+- Last check run (exact command): `cd client && npx tsc --noEmit -p tsconfig.qa.json`
+- Result (first failing lines, or "green"): green; five offline selection/collection checks and the QA config type-check pass; `qa_coverage.py check` validates all records.
+- Hypothesis: The two adapters are source-complete, but they remain unexecutable through supported live tooling; all other selected IDs remain unmapped and current lab facts are unverified.
+- Next action (one specific step, not "continue"): Implement and review the next exact read-only adapter (TC-DI-02), then extend its source mapping and collection test without adding a live dispatch path.
 
 ## Decisions and notes
 
