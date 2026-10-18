@@ -72,3 +72,11 @@ and require separately authorized live evidence where needed.
 - Overall readiness plan remains `.agent/progress/ai-testing-readiness.md`; this file tracks the authorized offline implementation milestone.
 
 - The last hardening check rejects unknown prerequisite references instead of silently ignoring them. Local full-gate product tests ran against unchanged product source; the final QA-only parser change passed the rerun docs gate.
+
+## Readiness checklist audit (2026-10-18)
+
+- User asked whether the entire readiness plan was complete and to check applicable items.
+- Checked completed offline tasks against source, tests and reporting rules; split aggregate requirements where live enforcement/cards remain missing. The full plan is not complete.
+- Refreshed stack/status descriptions and synchronized the overall plan and this progress file into the original checkout for visibility. Implementation remains in the isolated checkout.
+- `scripts/verify.sh docs` and `git diff --check` pass. At pre-checkpoint head `9828931`, docs and frontend CI passed; backend was still running. New-head CI remains separate. No live tests or product changes.
+- Next work: selected-case coverage/cards and evidence/ambiguity review, then live boundaries/recovery and a separately started pilot.

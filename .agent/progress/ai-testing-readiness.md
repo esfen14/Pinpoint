@@ -15,7 +15,7 @@ claim that the product passes or that every case can run without human involveme
 
 - [x] The new catalog, historical human results and new execution records have clear, validated ownership.
 - [x] Queue preparation/checking and the documentation gate work against the new catalog without restoring retired inputs.
-- [x] Investigate current human partials, attach issue/disposition links and preserve original results; follow-up remains in #208/#209 and the [partial-pass register](../../docs/qa/Partial_Pass_Investigations.md).
+- [x] Investigate current human partials, attach issue/disposition links and preserve original results; follow-up remains in #208/#209 and the [partial-pass register](https://github.com/esfen14/Pinpoint/blob/issue-206-qa-readiness/docs/qa/Partial_Pass_Investigations.md).
 - [ ] Every selected case has an unambiguous expectation, executor, environment, prerequisites, evidence and restoration procedure.
 - [ ] Every selected case maps to a specific tool/spec/project, fixture, assertion and evidence output using the reviewed testing stack.
 - [ ] Historical runs have been mapped to current expectations with linked evidence, an agreed cutoff and a version/impact check; only uncovered or invalidated coverage enters the new-execution queue.
@@ -38,13 +38,16 @@ claim that the product passes or that every case can run without human involveme
   OS sandbox. Live adapter completion, preflight, enforced scan guard, recovery/resume
   and pilot runs remain separate pending work.
 - Current/historical links and docs checks have migrated. `scripts/verify.sh docs`
-  is green (66 isolated checks). Full local verification passed 4310 backend and
+  is green (68 isolated checks). Full local verification passed 4310 backend and
   1003 frontend tests, build and lint (zero errors). [Draft PR #207](https://github.com/esfen14/Pinpoint/pull/207)
   contains the offline milestone; final-head CI is checked separately.
 
-The original checklist below is intentionally retained. Only mark its broader
-items complete when the whole requirement (including live evidence where needed)
-is proved; offline tooling alone does not satisfy full unattended readiness.
+Checklist audit: completed items below are checked against the implementation in
+[PR #207](https://github.com/esfen14/Pinpoint/pull/207), source files and isolated
+checks. Aggregate items are split where only the offline portion is implemented.
+Unchecked items remain work to do; no live case execution or unattended readiness
+is claimed. The main checkout receives a copy of this plan for visibility; the
+implementation and validation live in `../Network-Diagnosis-System-qa-readiness`.
 
 ## Current baseline (planning snapshot, retained for context)
 
@@ -85,10 +88,10 @@ AI-assisted browser session must be labelled separately from scripted automation
 | Timing, performance and four-hour stability | Playwright/Node monotonic timing (`performance.now()`), or Python `time.monotonic()` for controller measurements, plus bounded repeated observations | Record defined start/end events, timestamps, load and measured durations; validate cross-system clock alignment where needed | Implement case-specific measurements. Do not use AI response/tool-call duration as application latency or add an unrelated load tool by default. |
 | CSV/Excel exports and print views | Playwright download events, browser print-view assertions and Node filesystem/content checks | Verify downloaded filename/format, expected rows/columns/values and print-view content according to the case | Reuse existing export specs. Add format-aware checks; a download or successful HTTP response alone is insufficient. Review any additional parser dependency first. |
 | Email delivery | Real configured SMTP path plus actual mailbox confirmation when the case requires it | Correlate event/dispatch with recipient inbox evidence, or an approved isolated mailbox fixture for cases allowing one | SMTP/API/browser checks exist. External mailbox access is not assumed: retain a human step until an explicitly configured mailbox reader is available. SMTP acceptance is not inbox receipt. |
-| Case selection and historical evidence reuse | Python standard-library catalog parser, migrated `scripts/qa_queue.py` and reviewed case-to-report map | Produce/check fixed case sets and exclude accepted unchanged historical coverage | Queue script exists in legacy form; new parser/schema and reuse-aware selection are planned work. |
-| Result collection and reporting | Playwright JSON output; Python report/evidence processing; `scripts/new_test_run.sh` | Unique per-run raw artifact directory outside restored guests; sanitized `docs/test-runs/.../REPORT.md`, index and queue log | JSON reporter and report helper exist. Add run IDs, current-case mappings, partial/inconclusive states and historical-credit fields. |
-| Unattended orchestration | A small Python controller around existing queue, lab and Playwright tools | Validate manifest, hold one lab lock, execute dependencies sequentially, journal interruption, recover and finalize a complete report | Not implemented for this suite. Proposed `scripts/qa_execute.py` is a planned filename, not an available command; confirm placement during implementation. |
-| Implementation regression checks | `scripts/verify.sh docs/backend/frontend/all` using existing standard-library checks, pytest, Vitest, TypeScript build and lint | Verify changes to tooling or product code as applicable | Exists; docs migration must first remove retired-source assumptions. Passing these checks is not evidence that the black-box cases ran. |
+| Case selection and historical evidence reuse | Python standard-library catalog parser, migrated `scripts/qa_queue.py` and reviewed case-to-report map | Produce/check fixed case sets and exclude accepted unchanged historical coverage | Implemented: shared parser, queue v2 and reviewer-bound reuse validation. Actual accepted target-build coverage remains pending. |
+| Result collection and reporting | Playwright JSON output; Python report/evidence processing; `scripts/new_test_run.sh` | Unique per-run raw artifact directory outside restored guests; sanitized `docs/test-runs/.../REPORT.md`, index and queue log | Report template/rules and offline JSON journal include executor, queue/session, expected-item observations and distinct historical credit. Automated sanitized summary generation and run-specific Playwright artifact routing remain pending. |
+| Unattended orchestration | A small Python controller around existing queue, lab and Playwright tools | Validate manifest, hold one lab lock, execute dependencies sequentially, journal interruption, recover and finalize a complete report | `scripts/qa_execute.py` exists as an offline-only journal/card/result validator. Live dispatch, lock enforcement, recovery/resume and automatic report generation are not implemented. |
+| Implementation regression checks | `scripts/verify.sh docs/backend/frontend/all` using existing standard-library checks, pytest, Vitest, TypeScript build and lint | Verify changes to tooling or product code as applicable | Exists; new-catalog docs migration passes. These checks verify implementation, not live black-box acceptance. |
 
 Implementation files already inspected for this choice:
 [Playwright config](../../client/playwright.config.ts),
@@ -118,23 +121,24 @@ the saved queue/set still needs its explicit start under the QA workflow.
 
 ### 1. Establish the approved source and execution model
 
-- [ ] After the go signal, establish a real tracking issue and dedicated implementation checkout/branch; use an issue-scoped progress file without mixing owner changes into the work.
-- [ ] Freeze the catalog revision/content hash, review the existing deletions and identify which source changes belong in the migration.
-- [ ] Review the proposed TypeScript Playwright/Chromium stack above and the first milestone: a scripted pilot launched by the AI, with exploratory AI-assisted cases labelled separately. Build shared catalog/queue/reporting support first; unattended orchestration remains a later gate.
-- [ ] Inventory all live references to the retired documents, old case IDs and ISO queue assumptions across `.agent/`, skill/command adapters, `scripts/`, `docs/`, `spec files/`, `AGENTS.md`, client E2E specs and CI.
-- [ ] Keep historical journey reports and their original IDs/results intact. Use an archived source revision for historical links where needed; do not remap historical evidence to new case IDs without review.
-- [ ] Establish ownership: catalog = procedures/requirements plus preserved human history; run reports = new observed executions; queues = reviewed assignments/eligibility. Decide whether a derived current-status view is useful; never create competing editable ledgers.
+- [x] After the go signal, establish a real tracking issue and dedicated implementation checkout/branch; use an issue-scoped progress file without mixing owner changes into the work.
+- [x] Freeze the catalog revision/content hash, review the existing deletions and identify which source changes belong in the migration.
+- [x] Document the existing TypeScript Playwright/Chromium stack and separate AI-assisted exploration from scripted automation; implement shared catalog/queue/reporting support as the offline first milestone. Runtime validation and the scripted pilot remain open below.
+- [x] Inventory all live references to the retired documents, old case IDs and ISO queue assumptions across `.agent/`, skill/command adapters, `scripts/`, `docs/`, `spec files/`, `AGENTS.md`, client E2E specs and CI.
+- [x] Keep historical journey reports and their original IDs/results intact. Use an archived source revision for historical links where needed; do not remap historical evidence to new case IDs without review.
+- [x] Establish ownership: catalog = procedures/requirements plus preserved human history; run reports = new observed executions; queues = reviewed assignments/eligibility. Decide whether a derived current-status view is useful; never create competing editable ledgers.
 
 Expected output: agreed source/result contract and migration scope.
 Files: current catalog, QA workflow/guide, tracking progress, owning workflow/status specifications.
 
 ### 2. Reconcile eligibility and make selected cases executable
 
-- [ ] Recount and list summary/detail conflicts by ID, copying both human entries and observations into a decision record.
+- [x] Recount and list summary/detail conflicts by ID, copying both human entries and observations into a decision record.
 - [ ] Obtain the human tester's clarification where possible. Preserve original observations and record who resolved each conflict and why; never infer missing tester/date/SHA/evidence.
-- [ ] Keep unresolved cases `needs-decision` and exclude them from ordinary pending queues. An explicitly approved diagnostic recheck may gather new evidence without changing the old result.
-- [ ] Handle EDG/SEQ tables that have no Result column using detailed Result lines; distinguish absent columns, missing verdicts, free-text notes and explicit Not run.
-- [ ] Review the four recorded failures, two partial passes and unclassified acknowledgement-filter observation; search existing issues by ID and symptom before deciding finding/retest/recheck eligibility.
+- [x] Keep unresolved cases `needs-decision` and exclude them from ordinary pending queues. An explicitly approved diagnostic recheck may gather new evidence without changing the old result.
+- [x] Handle EDG/SEQ tables that have no Result column using detailed Result lines; distinguish absent columns, missing verdicts, free-text notes and explicit Not run.
+- [x] Investigate both catalog partials and search existing issues; link attributed defect #208 and evidence clarification #209 in the [partial-pass register](https://github.com/esfen14/Pinpoint/blob/issue-206-qa-readiness/docs/qa/Partial_Pass_Investigations.md). No fresh runtime reproduction is claimed.
+- [ ] Finish issue/disposition review for the four recorded failures and unclassified acknowledgement-filter observation. Resolve TC-REM-04's missing observation and obtain live verification where required.
 - [ ] Check selected expectations against behavioral specifications and team decisions. Document app/spec conflicts rather than weakening the case to match current behavior.
 - [ ] Specify exact timing boundaries, clocks, target counts/load, polling limits, warm/cold assumptions and sampling rules for NFR cases. Preserve specified thresholds; ask for decisions on undefined rules.
 - [ ] Define state-based prerequisites and concrete setup data for selected cases: accounts/permissions, hosts/services, active incidents, identity candidates, SNMP devices, deployed NCPA agents and sufficient history.
@@ -157,9 +161,11 @@ still have tested an older build. Check execution time and actual product revisi
 If the significant change landed later, move the baseline to that revision.
 
 - [ ] Confirm the cutoff/transition commit as part of plan review. Use October 15 as the provisional default; do not claim it is already approved or proves compatibility.
-- [ ] Inventory `docs/test-runs/` using the index and report bodies. Select post-cutoff execution candidates, retaining tested application/installer SHA, timestamp, executor, environment, exact case observations and limitations.
+- [x] Inventory 41 reports with post-cutoff directory dates in `docs/qa/historical-report-inventory.json`; retain report links/hashes and provisional candidate status.
+- [ ] Finish execution-time/provenance review of inventory candidates: actual app/installer SHA, executor, environment, observations and limitations. Directory dates alone do not establish eligible execution dates.
 - [ ] Keep pre-cutoff evidence as background or defect history by default. An exception needs explicit rationale/review and the same full coverage/version checks; do not automatically import old passes.
-- [ ] Map old report case IDs to current `TC-*` or `E2E-*` expected items by observed behavior, not title similarity. Attach a clickable report link with section/row identification and explain the mapping.
+- [x] Attach six provisional current-case mappings to the October 17 issue-182 report with report/case hashes and scope limitations in `docs/qa/historical-evidence-review.json`. None confers a whole-case PASS.
+- [ ] Complete behavior/item-level mappings for the remaining applicable reports, with exact row references, covered/missing expectations and target-build compatibility review.
 - [ ] For each mapping, compare report scope, steps, prerequisites, permissions, environment and every current expected item. Record exact items covered and missing, including negative/boundary checks. A report's overall Pass is not a blanket case pass.
 - [ ] Compare the actual tested source/configuration and relevant dependencies against the target build, including shared auth, polling, Nagios generation, schema, installer and integration changes. Verify branch changes were integrated or equivalent. Missing SHA, unexplained dirty runtime changes or unavailable provenance means current-build reuse remains unverified.
 - [ ] Classify each mapping as `accepted historical coverage`, `partial historical coverage`, `retest required`, or `not applicable`, with reason, reviewer and target revision. Keep these evidence classifications distinct from execution verdicts.
@@ -190,15 +196,18 @@ No current case receives inherited credit merely because its report was attached
 
 User direction: support larger QA assignments by module/person and explicit
 constraints suitable for a less capable executing model. The QA guide/workflow
-now document this contract; the independent enforcement below remains todo.
+document this contract. Queue preparation and offline validation are implemented; live enforcement and actual reviewed assignments remain pending.
 
 - [ ] Prepare owner-to-module assignments and expand each to fixed eligible IDs after evidence review. Show exclusions, conflicts and accepted historical coverage; do not allocate the same case to multiple owners.
 - [ ] Verify each person's own appliance AND targets or agree on exclusive access windows. Module ownership does not reserve the lab or establish another module's prerequisites.
-- [ ] Partition each set into fixed ordered batches of at most five ordinary TC IDs. Isolate every E2E, disruptive/fault, fresh-appliance or long case in a single-case batch, following catalog phases.
-- [ ] Enforce five batches per session (up to 25 ordinary TC IDs) with persistent session/batch counters. Explicit resume creates a new session; compaction, tool/model changes and handoff must not reset a session's counters.
+- [x] Partition each set into fixed ordered batches of at most five ordinary TC IDs. Isolate every E2E, disruptive/fault, fresh-appliance or long case in a single-case batch, following catalog phases.
+- [x] Enforce a five-batch limit in persisted offline journals, consuming budget on opening a batch and rejecting reuse/sixth batches. Isolated tests include five actual blocked batches.
+- [ ] Prove interruption/handoff/context-reset and explicit-resume behavior in live orchestration; offline journals alone cannot prevent a model with arbitrary file access from creating another journal.
 - [ ] Make execution cards complete before start: source/target versions, exact steps and E1/E2/... expectations, observed prerequisites, tool/spec/command/target allowlist, permitted outputs, bounded timeouts/repeat policy, evidence and recovery.
-- [ ] Keep execution separate from test authoring/debugging. The executing model cannot edit product/tests/selectors/fixtures, historical results, approved scope or expectations; missing/broken adapters block cases instead of inviting improvisation.
-- [ ] Add machine validation outside the model for queue schema, immutable source/scope, exact spec/test allowlists, command/target boundaries, batch budgets and per-expectation evidence completeness. Do not claim prose alone constrains unattended execution.
+- [x] Document the executor's prohibition on product/test/scope edits; offline validation rejects changed adapters, missing cards and out-of-order actions.
+- [ ] Enforce and prove that separation in the live launcher/process permissions; documented restrictions and content hashes are not an OS sandbox.
+- [x] Add offline machine validation for queue identity/schema, owner/start attestations, card/adapter hashes, exact action argv slots, ordered batch budgets, evidence completeness and cleanup halts.
+- [ ] Implement live command/spec/target/network boundaries, exclusive lab ownership and recovery enforcement outside the executing model.
 - [ ] Test boundary scenarios: owner/set mismatch; duplicate IDs; unlisted dependency; missing timeout/evidence; ambiguous selector; unsafe target; ownership loss; denied permission; failed cleanup; sixth batch; hidden retry; attempted context-reset bypass.
 - [ ] Persist each case before the next and checkpoint every batch. Record blocked IDs in their original slots; never backfill/reorder dynamically or call a partially tested module PASS.
 - [ ] Keep the supervised Markdown fallback until these enforcement checks exist. After one set start, execute only its reviewed batches within budget without approval after each case; stop at the limit and wait for explicit resume, or at any earlier stop condition.
@@ -209,47 +218,52 @@ of the model's reasoning ability. No agent delegation is started by this plan.
 
 ### 3. Migrate catalog parsing and queue tooling
 
-- [ ] Add a shared parser for module headings, `TC-*` cases, E2E step tables, requirements, result notes, run phases and prerequisite tables; choose its module location during implementation.
-- [ ] Preserve full procedures/expected results/Notes and relevant global setup. Validate duplicate/malformed IDs, missing blocks, broken requirement mappings and incomplete prerequisites with actionable errors.
-- [ ] Treat the current 231 TC and eight E2E counts as the migration baseline; future deliberate catalog additions should require reviewed coverage updates, not silent omission.
-- [ ] Remove the queue tool's dependency on the retired renderer and mandatory ISO classification. Support module/phase selection and explicit IDs with owners and selection reasons; optional ISO tags require a reviewed mapping.
-- [ ] Define a versioned queue schema and stable JSON/Markdown relationship, adopting the reviewed Markdown contract already documented, including owner/module assignments, immutable batches, session counters, allowlists and complete execution cards. Reject legacy JSON as incompatible rather than silently converting old IDs.
-- [ ] Select pending cases using preserved source results and the reviewed historical evidence map. Exclude accepted unchanged historical coverage as well as PASS/FAIL/partial/conflicted entries by default, except explicitly allowed rechecks or verified merged-fix retests. Revalidate reuse decisions against the target revision before selection/start.
-- [ ] Reject duplicate names/assignments, unknown or ineligible IDs and empty selections. Never silently substitute cases, add dependencies or broaden a set.
-- [ ] Snapshot source revisions/hashes, full case definitions, global dependencies, results, executor, prerequisites, setup/restoration and evidence plans into the reviewed queue.
+- [x] Add a shared parser for module headings, `TC-*` cases, E2E step tables, requirements, result notes, run phases and prerequisite tables; choose its module location during implementation.
+- [x] Preserve full procedures/expected results/Notes and relevant global setup. Validate duplicate/malformed IDs, missing blocks, broken requirement mappings and incomplete prerequisites with actionable errors.
+- [x] Treat the current 231 TC and eight E2E counts as the migration baseline; future deliberate catalog additions should require reviewed coverage updates, not silent omission.
+- [x] Remove the retired-renderer/mandatory-ISO dependency; support module selectors and explicit IDs with owners and exclusion reasons in queue v2. Run-phase metadata controls catalog order and singleton batching.
+- [ ] Add an explicit phase selector if required; the CLI currently accepts module/case selectors only. Optional ISO tags still need a reviewed mapping.
+- [x] Implement queue v2 JSON/Markdown previews with owner/module assignments, immutable batches, source snapshots and optional execution cards; reject legacy JSON. Offline session journals track batch budgets.
+- [ ] Complete selected-case execution cards/allowlists and live session/resume enforcement; a valid queue with empty cards remains blocked.
+- [x] Select pending cases using preserved source results and the reviewed historical evidence map. Exclude accepted unchanged historical coverage as well as PASS/FAIL/partial/conflicted entries by default, except explicitly allowed rechecks or verified merged-fix retests. Revalidate reuse decisions against the target revision before selection/start.
+- [x] Reject duplicate names/assignments, unknown or ineligible IDs and empty selections. Never silently substitute cases, add dependencies or broaden a set.
+- [x] Snapshot source/target revisions, hashes, full case definitions, global dependencies, original results and supplied execution metadata into immutable queue scope.
+- [ ] Supply and review actual selected-case executor, prerequisites, setup/restoration and evidence cards; empty cards remain blocked.
 - [ ] Validate case-card readiness and execution budgets independently of the executing model; reject missing fields, unlisted targets/specs/commands, scope edits and exhausted sessions before live operations.
-- [ ] Implement freshness checking before start/resume. Detect relevant procedure, dependency, result and note changes; require a replacement preview/start when scope changes. Preserve completed evidence without adding newly pending cases.
-- [ ] Keep preparation read-only with respect to the product, lab and human results. Refuse queue overwrite and keep execution logs separate from immutable reviewed scope.
-- [ ] Update `scripts/test_qa_queue.py` with synthetic fixtures and real-catalog validation for both TC/E2E formats, absent result columns, conflicting/free-text results, duplicates, ordering, hashes, resume and selection boundaries.
+- [x] Detect changed case definitions, results, notes, normative/harness sources and accepted evidence; require replacement review without adding newly eligible cases. The offline CLI checks freshness before journal operations.
+- [ ] Implement and prove freshness/ownership checks in the live resume dispatcher; no dispatcher exists yet.
+- [x] Keep preparation read-only with respect to the product, lab and human results. Refuse queue overwrite and keep execution logs separate from immutable reviewed scope.
+- [x] Add synthetic/real-catalog regressions across parser, queue, evidence and offline executor tests for TC/E2E definitions, absent/conflicting results, duplicate assignments, ordering, hashes, selection, adapter/evidence rejection and batch limits.
+- [ ] Add live resume/interruption boundary tests when the dispatcher and recovery implementation exist.
 
 Expected output: working prepare/show/check commands and tested queue schema for the new suite.
 Files: `scripts/qa_queue.py`, shared parser, queue tests, QA guide/workflow.
 
 ### 4. Restore documentation and CI verification
 
-- [ ] Update active routing/index links in `AGENTS.md`, `spec files/README.md`, `docs/README.md`, `server/tests/plans/README.md` and QA scope/Playwright documentation to the new catalog.
-- [ ] Preserve historical report meaning when repairing old links: point to the historical source revision or archived source, not to an unrelated new case with a similar title.
-- [ ] Migrate `scripts/check_traceability.py` to validate the new requirement/case matrix and source references, including E2E coverage where declared.
-- [ ] Decide the fate of `scripts/render_qa_case_tables.py`: adapt it to produce an explicitly derived view only if useful, otherwise retire its active invocation. Do not recreate the deleted paper tables solely for the old check.
-- [ ] Replace legacy fixture assumptions in `scripts/test_traceability.py`, queue tests and workflow contract tests with meaningful new-source checks; keep regression checks for scope, evidence, safety and stop rules.
-- [ ] Align `scripts/verify.sh docs` and CI descriptions/wiring with the supported new checks. Preserve the verification coverage rather than simply removing failing checks.
-- [ ] Align `.agent/workflows/fix-found.md` and its contract tests with new-case finding/retest handoff, preserving original failures, real merged-fix proof, duplicate prevention and failed-fix limits.
-- [ ] Update `spec files/Agent_Workflow_and_CI.md` and `Implementation_Status.md` to distinguish implemented tooling, remaining gaps and deferred runner work; keep thin skill adapters thin.
-- [ ] Run focused parser/queue/traceability/workflow tests, relative-link checks and `git diff --check`, then get `scripts/verify.sh docs` green. Use backend/frontend verification too if implementation touches those areas.
+- [x] Update active routing/index links in `AGENTS.md`, `spec files/README.md`, `docs/README.md`, `server/tests/plans/README.md` and QA scope/Playwright documentation to the new catalog.
+- [x] Preserve historical report meaning when repairing old links: point to the historical source revision or archived source, not to an unrelated new case with a similar title.
+- [x] Migrate `scripts/check_traceability.py` to validate the new requirement/case matrix and source references, including E2E coverage where declared.
+- [x] Decide the fate of `scripts/render_qa_case_tables.py`: adapt it to produce an explicitly derived view only if useful, otherwise retire its active invocation. Do not recreate the deleted paper tables solely for the old check.
+- [x] Replace legacy fixture assumptions in `scripts/test_traceability.py`, queue tests and workflow contract tests with meaningful new-source checks; keep regression checks for scope, evidence, safety and stop rules.
+- [x] Align `scripts/verify.sh docs` and CI descriptions/wiring with the supported new checks. Preserve the verification coverage rather than simply removing failing checks.
+- [x] Align `.agent/workflows/fix-found.md` and its contract tests with new-case finding/retest handoff, preserving original failures, real merged-fix proof, duplicate prevention and failed-fix limits.
+- [x] Update `spec files/Agent_Workflow_and_CI.md` and `Implementation_Status.md` to distinguish implemented tooling, remaining gaps and deferred runner work; keep thin skill adapters thin.
+- [x] Run focused parser/queue/traceability/workflow tests, relative-link checks and `git diff --check`, then get `scripts/verify.sh docs` green. Use backend/frontend verification too if implementation touches those areas.
 - [ ] For a published implementation PR, confirm required CI checks are green before calling that milestone complete.
 
 Expected output: reproducible green documentation gate without retired-source dependencies.
 
 ### 5. Define reports, evidence and retest records
 
-- [ ] Extend `docs/test-runs/TEMPLATE.md` and reporting rules for catalog hash, queue/set, timestamps/time zone, actual deployed app/installer revisions, baseline and executor mode/contributor.
-- [ ] Represent PASS, FAIL, PARTIALLY PASS, BLOCKED, Not run and inconclusive explicitly; distinguish unique cases, attempts, setup and completion. Keep TC and E2E totals separate.
-- [ ] Require observations for every expected item, per-step E2E results and missing coverage explanations. Mock or intercepted responses cannot certify live acceptance.
+- [x] Extend `docs/test-runs/TEMPLATE.md` and reporting rules for catalog hash, queue/set, timestamps/time zone, actual deployed app/installer revisions, baseline and executor mode/contributor.
+- [x] Represent PASS, FAIL, PARTIALLY PASS, BLOCKED, Not run and inconclusive explicitly; distinguish unique cases, attempts, setup and completion. Keep TC and E2E totals separate.
+- [x] Require observations for every expected item, per-step E2E results and missing coverage explanations. Mock or intercepted responses cannot certify live acceptance.
 - [ ] Define local machine-readable results if scripted execution is selected; derive sanitized summaries rather than independently editing conflicting totals. Include reused-evidence links, accepted target revision and reuse classification separately from new execution timestamps/verdicts.
 - [ ] Persist execution/recovery journals and raw evidence outside instances that may be restored. Define sanitization, private storage and evidence references without credentials/cookies/tokens/raw database exports.
-- [ ] Verify repeat/retest rules: preserve first failure, repeat only as the approved workflow allows, keep differing outcomes inconclusive, link the same finding and require a real deployed merged fix for retest eligibility.
+- [x] Verify repeat/retest rules: preserve first failure, repeat only as the approved workflow allows, keep differing outcomes inconclusive, link the same finding and require a real deployed merged fix for retest eligibility.
 - [ ] Distinguish the QA workflow's one diagnostic repeat from automatic runner retries. Resolve retry-policy conflicts with the proposed deterministic approach before implementing unattended execution.
-- [ ] Define fail/blocked issue handling and report indexing. Retain the same issue-search and installer-ownership rules; no duplicate or fabricated issue links.
+- [x] Define fail/blocked issue handling and report indexing. Retain the same issue-search and installer-ownership rules; no duplicate or fabricated issue links.
 - [ ] Test reporting with synthetic pass/fail/partial/blocked/interrupted/cleanup-failure records without creating real product findings.
 
 Expected output: attributable reports that preserve human history and expose incomplete evidence.
@@ -315,6 +329,7 @@ execution and missing mandatory evidence block the affected cases.
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| Checklist audit | Checked verified offline substeps, split partial aggregates and retained open case mapping, reuse approval, live enforcement and pilot requirements; synchronize main-checkout plan | Source/test/report review; `scripts/verify.sh docs`; final-head CI review | Docs gate passed (68 isolated checks); no live QA |
 | Offline implementation #206 | Parser/queues/evidence/session validation and documentation migration implemented in the isolated issue checkout | `scripts/verify.sh docs` and syntax/whitespace checks | Green: 4310 backend/1003 frontend plus build/lint; draft PR #207 published, final-head CI to inspect; live readiness remains pending |
 | Batch/guardrail documentation | Updated QA workflow/guide and owning specifications for owner/module assignments, up to 25 ordinary cases in five fixed batches, execution cards and explicit stop actions; added independent-enforcement tasks here | Nine fix-found contracts; one queue workflow contract; changed-document link/guardrail assertions; `git diff --check`; `scripts/verify.sh docs` | Focused checks passed; full docs gate still blocked by the same 11 legacy links. Documentation only; no implementation or live QA started |
 | Tool-stack planning | Added explicit tool-by-test-type matrix, AI execution flow, existing versus planned capability, exact selection, retry and artifact-isolation tasks | Plan local-link/tool-stack assertions and `git diff --check` | Passed; planning only, no implementation or test execution |
@@ -323,7 +338,8 @@ execution and missing mandatory evidence block the affected cases.
 
 ## State for the next session
 
-- Last check run: `scripts/verify.sh all` (green), followed by final `scripts/verify.sh docs` (66 isolated checks) for QA-only hardening.
+- Checklist audited after the partial-pass follow-up: completed offline work is checked below its owning phase; incomplete aggregates are split rather than marked wholly done.
+- Last check run: `scripts/verify.sh all` (green), followed by final `scripts/verify.sh docs` (68 isolated checks) after partial-pass follow-up.
 - Result: 4310 backend tests passed (14 skips), 1003 frontend tests passed, build and lint passed with zero errors. Offline milestone is in draft PR #207; inspect its final-head CI. No live cases have been executed.
 - Next action: Continue current-case adapter/coverage preparation from this checklist after reviewing #207. Live preflight/scan guard/recovery and the pilot still require their reviewed scope/start. Human-result conflicts and the provisional cutoff remain explicit review items.
 
