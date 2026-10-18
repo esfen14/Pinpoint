@@ -30,6 +30,8 @@ Status: in-progress
 | Migration | Fifth item | Traceability/render/link validators and docs gate |
 | Records and review | Last two items | Report schema, specifications, PR and CI |
 
+- [x] Complete the explicitly approved `next-permissions` handoff and real browser batch: TC-ACC-09 E1/E2 and TC-NCPA-08 E1 PASS (2/2 cases); independently verify resource/session/baseline cleanup, preserve old history and publish the attributable report.
+
 ## Plan
 
 1. [x] Add shared catalog parser/tests in `scripts/qa_catalog.py`, `scripts/test_qa_catalog.py`.
@@ -68,10 +70,11 @@ and require separately authorized live evidence where needed.
 
 ## State for the next session
 
-- Next action: review `docs/qa/Next_Permission_Batch_Review.md` and the source-current `docs/qa/queues/2026-10-18-next-permissions.json`, set/session `next-permissions`, owner Paeng. Preparation is complete; obtain explicit approval for its exact audited forward handoff and start of its fixed TC-ACC-09 / TC-NCPA-08 batch. Do not turn the false private grant templates affirmative from a preparation/continue instruction.
-- Implemented: seven source mappings (232 unmapped), strict independent E1/E2 Accounts evidence, audited complete-queue handoff with preserved archives/recoveries/attempts/budgets, and serial supported permission dispatch with each result saved before the next and stop on non-PASS. Other cases and unattended testing remain pending.
-- Supported actual read-only inspection passed at 2026-10-18T09:06:49.892257+00:00 against unchanged application `299ab3b`, controlled baseline, Staff, scheduler-off, processes/runtime/served files and image/browser pins. Local accepted prior evidence and archive audit passed; active halt false, original halted attempt plus accepted TC-SS-04 recheck retained. No actual handoff, new case, container/browser, batch consumption or application mutation occurred.
-- Verification: final docs gate PASS, 200 isolated contracts. Frontend final stage PASS: 1003 product tests, 9 offline helpers, QA type check/build/lint (0 errors, 33 existing warnings). The first full frontend run failed the unchanged repeat-limit `saves both values` test (expected 4, saved 3); related #210 remains open. The focused five-test group and full stage rerun passed without changes, skips or weakening. No local backend suite ran.
+- `next-permissions` is COMPLETE/PASS and consumed. Report: `docs/test-runs/2026-10-18-next-permissions/REPORT.md`. TC-ACC-09 E1/E2 and TC-NCPA-08 E1 all passed on application `299ab3b`, harness `7947da1a`. Two initial attempts, no diagnostic repeats, one batch opened/completed; E2E 0. These are two permission cases, not whole-module passes.
+- Paeng explicitly approved handoff and start. Actual audited handoff and separate start succeeded; private authorization/grants/receipts retained. Per-case accepted results precede the next case. Independent final actual container ID/name absence, process/socket absence, closed sessions and controlled baseline checks passed. VM remains running/scheduler off, original configuration/accounts/devices/scan baseline preserved.
+- Canonical ledger audit: four total attempts, one recovery and one handoff, active halt false. Original halted SS-04 and its accepted recheck/archives/budgets remain unchanged. Never replay the completed queue or clear/relocate the store.
+- Next action: review this completed report and prepare a finite assignment from one or two related modules, prioritizing ready untested cases; do not launch anything outside a new reviewed named start. The present live runner still has only three literal permission IDs; further mapped adapters/fixtures and a narrowly reviewed extension are needed. Seven source adapters/232 unmapped; broad historical credit/cutoff and unattended readiness remain open.
+- Reporting validation passed: `scripts/verify.sh docs` (200 isolated contracts), document/progress/source-current queue and whitespace checks. No backend or unchanged frontend suite is needed for this reporting-only pass. Pre-run docs/frontend CI at the tested harness commit succeeded; reporting-commit CI is separate.
 
 
 ## Decisions and notes
@@ -445,8 +448,61 @@ reruns passed without deleting/replacing locks or touching actual ledger history
 - [x] Supported actual read-only preflight and local prior-evidence/archive audit pass; publish/index the [preparation report](../../docs/test-runs/2026-10-18-issue-206-next-permissions-preflight/REPORT.md) and zero-attempt queue log.
 - [x] Verify supported false-start and false-handoff CLI denial before external probes/reserved writes. Private grant templates remain false/expired; evidence/control/bridge/handoff outputs are empty.
 - [x] Final docs (200) and frontend stage (1003 + 9 offline helpers/type/build/lint) pass; retain first unchanged RemediationPage failure, related #210, focused five-test PASS and full-stage rerun PASS. No backend tests or application changes.
-- [ ] Apply the separately approved exact forward handoff and explicitly start the two fixed new cases; both remain Not run, batches 0/0, new attempts 0.
+- [x] Apply the separately approved exact forward handoff and explicitly start/complete the two fixed new cases: 2 PASS, one batch opened/completed, no retry; original history preserved.
 
 The selected supervised next-batch preparation is complete. Broad historical
 credit/cutoff decisions, 232 unmapped definitions and unattended readiness remain
 open. No new runtime result, reuse credit or authorization is inferred.
+
+## Approved next-permissions start (2026-10-18)
+
+Paeng explicitly approved the handoff and start of `next-permissions` at 2026-10-18T09:25:04.858226+00:00.
+Exact source-current two-case scope and successful docs/frontend CI verified at
+harness `7947da1a`; local accepted prior evidence/history still match. Owner/session
+Paeng / `next-permissions`; fixed batch `next-permissions-001`: TC-ACC-09,
+TC-NCPA-08. No retry or additional case/setup operation is authorized.
+
+- [x] Preserve false grant templates and save actual user authorization privately.
+- [x] Validate and bind the affirmative handoff review to exact prepared prior
+  ledger/evidence and new queue; case-start grant waits for successful handoff.
+- [x] Apply reviewed handoff, freshly verify prerequisites and start/complete the fixed batch.
+- [x] Record every expected item/result, independently verify actual final cleanup,
+  publish report/index/log and update finish checklists before checkpoint.
+
+Initial grant preparation rejected a semicolon in the reviewer label before any
+external probe or ledger disposition. The corrected metadata passes the same
+review gate; no code/card/scope changed and no attempt was consumed.
+
+## Completed next-permissions batch (2026-10-18)
+
+- [x] Apply the exact separately approved handoff; preserve original archives,
+  attempts, recovery history and session budgets. An initial reviewer-label format
+  rejection was corrected before external probes/ledger mutation; no test retry.
+- [x] Execute the approved fixed serial browser batch: TC-ACC-09 PASS (E1/E2),
+  TC-NCPA-08 PASS (E1), with three accepted observations and per-case durable results.
+- [x] Verify adapter logout/401 and fresh post-case proof; separately confirm actual
+  owned container ID/name, process and socket absence and unchanged controlled
+  runtime/served/configuration/Staff/image/browser baseline after the full batch.
+- [x] Preserve human catalog fields and old INCONCLUSIVE/recheck reports. Canonical
+  ledger now has four attempts, one recovery and one handoff, active halt false.
+- [x] Publish/index the [actual report](../../docs/test-runs/2026-10-18-next-permissions/REPORT.md), append execution log and synchronize all finish checklists.
+- [x] Complete reporting docs/whitespace gate (200 isolated contracts), source/link/progress checks; checkpoint this batch and update draft PR #207.
+
+Current batch: selected/attempted/PASS 2/2/2; FAIL/partial/blocked/inconclusive/
+Not run 0; E2E 0; initial attempts 2, repeats 0; batches opened/completed 1/1.
+Across attributable automation, three unique case IDs now have accepted PASS
+(SS-04, ACC-09, NCPA-08); preserve the additional original SS-04 INCONCLUSIVE
+attempt as separate history, not a fourth unique pass. No new finding established.
+
+User asked about a faster approach. Recommended preparing explicit cases from one
+or two related modules at a time, split into up-to-five-case batches with ready
+fixtures, while deferring general unattended work. Current two permission checks
+do not establish full Accounts/NCPA module acceptance. No next set is started.
+
+Result-recording checkpoint: final `scripts/verify.sh docs` PASS (200 isolated
+contracts); source-current consumed queue check, links, progress and whitespace
+checks pass. Only approved reports/index/execution-log/progress artifacts changed;
+no application, adapter, assertion, fixture or approved scope was edited. No local
+backend or unchanged frontend suite ran. Draft PR #207 records this completed
+batch and remaining module/adapters/unattended work; new reporting-head CI is
+separate. No next set has been authorized or started.

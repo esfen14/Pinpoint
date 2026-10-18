@@ -24,3 +24,28 @@ E2E selected/attempted 0/0; batches opened/completed 0/0; diagnostic repeats 0.
 Handoff applied: no. No affirmative start/review record exists. Preserve all human
 catalog results and the original pilot/recheck reports. Append actual runtime
 result/evidence/restoration/finding references here only after the named start.
+
+## Approved execution — complete/PASS
+
+Paeng approved the exact handoff and `next-permissions` start at `2026-10-18T09:25:04.858226+00:00`.
+The source-current queue, owner, fixed IDs and docs/frontend CI were checked before
+connection/start. Actual handoff succeeded at `2026-10-18T09:25:41.260526+00:00`;
+original attempts/recovery/archive/budgets were preserved. Initial reviewer-label
+formatting was corrected before any probe/disposition/consumption; no case retry.
+
+[Attributable report](../../test-runs/2026-10-18-next-permissions/REPORT.md).
+
+| Batch | Case | Actual result | Required items | Restoration |
+|---|---|---|---|---|
+| next-permissions-001 | TC-ACC-09 | PASS | E1 sidebar absence/Settings redirect; E2 browser API 403 | Verified |
+| next-permissions-001 | TC-NCPA-08 | PASS | E1 sidebar absence/Settings redirect | Verified |
+
+Session `next-permissions`: one batch opened/completed, two cases/initial attempts,
+2 PASS, 0 FAIL/partial/blocked/inconclusive/Not run, no diagnostic repeats. E2E 0.
+Per-case evidence/results were persisted before the next case. Separate final
+actual daemon/process/socket/baseline audit passed at `2026-10-18T09:28:05.785006+00:00`. Canonical
+history: four attempts, one recovery, one handoff, active halt false; original
+halted SS-04 attempt and accepted recheck remain unchanged. No extra case/setup
+operation occurred. Human catalog results and original preparation snapshot above
+remain intact. This queue is complete/consumed: never replay it. Next action is
+separate preparation of explicit cases from one or two related modules.
