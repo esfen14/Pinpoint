@@ -21,13 +21,18 @@ spec=importlib.util.spec_from_file_location('coverage',Path(__file__).with_name(
 c=importlib.util.module_from_spec(spec);spec.loader.exec_module(c)
 transport_spec=importlib.util.spec_from_file_location('transport',Path(__file__).with_name('qa_transport.py'))
 t=importlib.util.module_from_spec(transport_spec);transport_spec.loader.exec_module(t)
-OBSERVATIONS={
- 'TC-SS-04':'System Status absent from sidebar; direct address redirects to Settings.',
- 'TC-HIS-01':'History absent from sidebar; direct address redirects to Settings; API address returns 403.',
- 'TC-RPT-07':'Report absent from sidebar; direct address redirects to Settings; API address returns 403.',
- 'TC-LOG-05':'System Logs absent from sidebar; direct address redirects to Settings; API address returns 403.',
- 'TC-PLG-07':'Plugins absent from sidebar; direct address redirects to Settings; API address returns 403.',
-}
+OBSERVATIONS={'TC-SS-04': {'E1': 'System Status absent from sidebar; direct address redirects to Settings.'},
+ 'TC-HIS-01': {'E1': 'History absent from sidebar; direct address redirects to Settings; API address returns '
+                     '403.'},
+ 'TC-RPT-07': {'E1': 'Report absent from sidebar; direct address redirects to Settings; API address returns '
+                     '403.'},
+ 'TC-LOG-05': {'E1': 'System Logs absent from sidebar; direct address redirects to Settings; API address '
+                     'returns 403.'},
+ 'TC-PLG-07': {'E1': 'Plugins absent from sidebar; direct address redirects to Settings; API address returns '
+                     '403.'},
+ 'TC-ACC-09': {'E1': 'Manage Accounts absent from sidebar; direct address redirects to Settings.',
+               'E2': 'Accounts API address returns 403.'},
+ 'TC-NCPA-08': {'E1': 'NCPA Deployment absent from sidebar; direct address redirects to Settings.'}}
 
 
 def unique_object(pairs):
@@ -112,7 +117,7 @@ def parse_checked(path:Path,case_id:str,evidence_root:Path,run_started_at:str,
     root=t.private_directory(evidence_root)
     if case_id not in OBSERVATIONS:raise ValueError('Unsupported current-case report')
     mapping=c.load()['cases'][case_id]
-    if mapping['status']!='implemented' or set(mapping['items'])!={'E1'}:raise ValueError('Unreviewed adapter coverage')
+    if mapping['status']!='implemented' or set(mapping['items'])!=set(OBSERVATIONS[case_id]):raise ValueError('Unreviewed adapter coverage')
     report=decode_json(read_private(path,root,16*1024*1024))
     config=report['config'];project=config['projects'];filtered=config['filteredProjects']
     pinned=json.loads((c.ROOT/'client/package.json').read_text())['devDependencies']['@playwright/test']
@@ -170,7 +175,7 @@ def parse_checked(path:Path,case_id:str,evidence_root:Path,run_started_at:str,
         or type(report_duration) not in (int,float) or not math.isfinite(report_duration)
         or not duration<=report_duration<=min(90000,run_elapsed_seconds*1000)):
         raise ValueError('Stale or inconsistent report time')
-    attachments={};allowed={case_id+'-E1','cleanup'}
+    attachments={};allowed={case_id+'-'+item for item in OBSERVATIONS[case_id]}|{'cleanup'}
     for att in attempt.get('attachments',[]):
         name=att.get('name')
         if name not in allowed:
@@ -183,14 +188,20 @@ def parse_checked(path:Path,case_id:str,evidence_root:Path,run_started_at:str,
     cleanup_data=attachments.get('cleanup')
     cleanup=(isinstance(cleanup_data,dict) and set(cleanup_data)=={'session_closed'}
              and cleanup_data['session_closed'] is True)
-    evidence={};observation=attachments.get(case_id+'-E1')
-    if observation is not None:
+    # Validate every supplied expected item before writing any sanitized output.
+    observations={}
+    for item,text in OBSERVATIONS[case_id].items():
+        observation=attachments.get(case_id+'-'+item)
+        if observation is None:continue
         if (set(observation)!={'case_id','item','verdict','observed','at'} or observation['case_id']!=case_id
-            or observation['item']!='E1' or observation['verdict']!='PASS'
-            or observation['observed']!=OBSERVATIONS[case_id] or not began<=instant(observation['at'])<=finished):
+            or observation['item']!=item or observation['verdict']!='PASS'
+            or observation['observed']!=text or not began<=instant(observation['at'])<=finished):
             raise ValueError('Unreviewed or stale expected-item observation')
-        name=f'observed-{case_id}-E1.json'
-        # Validate all report data before creating output; never overwrite earlier evidence.
+        observations[item]=observation
+    evidence={}
+    for item,observation in observations.items():
+        name=f'observed-{case_id}-{item}.json'
+        # Never overwrite earlier evidence, including an interrupted import.
         try:fd=os.open(root/name,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW|os.O_CLOEXEC,0o600)
         except OSError:raise ValueError('Sanitized evidence already exists or is unsafe') from None
         with os.fdopen(fd,'w') as output:
@@ -198,8 +209,8 @@ def parse_checked(path:Path,case_id:str,evidence_root:Path,run_started_at:str,
         directory=os.open(root,os.O_RDONLY|os.O_DIRECTORY)
         try:os.fsync(directory)
         finally:os.close(directory)
-        evidence['E1']=dict(verdict='PASS',observed=OBSERVATIONS[case_id],reference=name)
+        evidence[item]=dict(verdict='PASS',observed=OBSERVATIONS[case_id][item],reference=name)
     passed=(status=='passed' and not attempt.get('errors') and not attempt.get('error') and not report.get('errors')
-            and cleanup and set(evidence)=={'E1'})
+            and cleanup and set(evidence)==set(OBSERVATIONS[case_id]))
     return dict(result='PASS' if passed else 'INCONCLUSIVE',evidence=evidence,restored=cleanup,
         reason='' if passed else 'Browser execution or expected-item/cleanup evidence incomplete; review private artifacts')

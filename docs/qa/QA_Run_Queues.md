@@ -99,8 +99,9 @@ remain partial/blocked/inconclusive. A module cannot be declared PASS merely bec
 its attempted cases passed while others were blocked, excluded or untested.
 
 The queue and offline journal validate schema/scope, adapter hashes, exact action
-order, budgets and evidence references. Live dispatch, enforced scan guards, actual
-network/lab checks and automatic recovery remain future runner work. The current offline journal validator checks these fields and budgets, but it
+order, budgets and evidence references. The bounded permission launcher supports only TC-SS-04, TC-ACC-09 and TC-NCPA-08
+in one fixed serial batch with complete cards and separate start. Other live
+dispatch, enforced scan guards and automatic recovery remain future runner work. The current offline journal validator checks these fields and budgets, but it
 neither dispatches actions nor verifies live preflight assertions. Human review and
 supervision remain required; these tools are not an OS sandbox or a model-proof
 unattended runner.
@@ -396,3 +397,15 @@ Runtime [process and result components](Automation_Readiness.md#runtime-process-
 now have isolated tests. They do not authorize queue execution: the actual
 deployment proof and production driver remain missing. A failed browser process
 without failed-item evidence is inconclusive, and missing cleanup must halt.
+
+## Moving from the completed pilot to new cases
+
+The accepted #211 recheck remains a consumed historical queue. The next finite
+permission scope is governed by [its review](Next_Permission_Batch_Review.md).
+Use the canonical ledger and reviewed `qa_pilot.py handoff` to archive the prior
+complete state and append the next queue hash. All previous IDs must be complete,
+restored PASS and new untested IDs must have no prior accepted PASS in that ledger.
+Actual terminal-resource/baseline proof and separate expiring handoff review are
+required; clearing/relocating the store is forbidden. Handoff is not a test start.
+The subsequent start names the new queue, owner, set and fixed cases; no generic
+"continue preparation" instruction creates an affirmative live-start record.

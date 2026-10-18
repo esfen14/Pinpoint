@@ -224,14 +224,51 @@
     },
     "TC-ACC-09": {
       "case_hash": "834b5caf2228d21cd33609b3db2cbd8c36ca2bc09273b61f681a2f444ff0a592",
-      "status": "unmapped",
-      "mode": "unassigned",
-      "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
-      "items": {},
-      "adapter": null,
-      "source_hashes": {},
-      "prerequisites": [],
-      "recovery": []
+      "status": "implemented",
+      "mode": "scripted automation",
+      "reason": "Source adapter complete; bounded live launcher support, new reviewed queue/card, current prerequisites and separate explicit start remain required.",
+      "items": {
+        "E1": {
+          "marker": "qa-evidence:TC-ACC-09:E1",
+          "method": "UI Staff sign-in, direct /accounts navigation, exact Manage Accounts sidebar-link absence and Settings redirect/heading."
+        },
+        "E2": {
+          "marker": "qa-evidence:TC-ACC-09:E2",
+          "method": "Browser navigates /api/user/accounts and asserts the actual HTTP status equals 403."
+        }
+      },
+      "adapter": {
+        "path": "client/e2e/qa-permissions.lab.spec.ts",
+        "title": "TC-ACC-09: The accounts page needs permission",
+        "project": "qa-permissions",
+        "config": "client/playwright.qa.config.ts"
+      },
+      "source_hashes": {
+        "client/e2e/qa-permissions.lab.spec.ts": "a6edb79e3d7edb4c040e149f927ad242cc34d4f6eb615af4f8a5bdcaeb8d6ddf",
+        "client/playwright.qa.config.ts": "bd93c4be8518993af9dd734d48c498e065802db67d7934c6733313a7f47423e1",
+        "client/qa/selection.mjs": "1aba1bb9749b4d1bf6b5fc1d4052ef16c6ce4b126ea8353cc4cd43b9733650b1",
+        "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
+        "client/src/components/layout/Sidebar.tsx": "25986b10740143c932f2ffd936e3396b871e703ffd603810b45e9306df1838f2",
+        "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
+        "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
+        "server/app/api/user/login.py": "131d66fec10e1ee90bf98a7838e3ed827edc8d99e461b0ec3f36ab4c069c5e8b",
+        "server/app/api/user/management.py": "2ad5a1f3a41c9784fb5688b1455279946f2da9ea63c1deaf13a6723d1adb0c4d",
+        "server/app/api/commands/seed.py": "a1768b1aee8b898d8af3b7d4ae56ea392a15012d46315e1874c1b1aa519726f4",
+        "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
+        "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a"
+      },
+      "prerequisites": [
+        "Exclusive disposable lab with reviewed deployed SHA and supported no-network launcher.",
+        "Existing initialized disposable Staff account, no granted permissions, needs_setup=false and must_change_password=false.",
+        "Private current Staff credentials, unique empty same-owner 0700 artifact directory and explicit case IDs."
+      ],
+      "recovery": [
+        "Use supported POST logout; verify GET /api/user/me returns 401; dispose browser context.",
+        "No monitoring/configuration changes. Login/logout audit entries remain attributable; do not erase them. Halt on cleanup failure."
+      ],
+      "reviewed_by": "Codex source review; not runtime acceptance",
+      "reviewed_at": "2026-10-18",
+      "procedure_review": "Source-reviewed full written procedure and each expected item against pageAccess/Sidebar/routes and real browser navigation assertions; no mocks or product changes. Existing initialized zero-permission Staff and supported logout/401 cleanup reused."
     },
     "TC-ACC-10": {
       "case_hash": "4f8ddecf3112a2b79a7168e883dde8599d8a81643a5e650826ad318e1449a7b4",
@@ -372,9 +409,9 @@
         "config": "client/playwright.qa.config.ts"
       },
       "source_hashes": {
-        "client/e2e/qa-permissions.lab.spec.ts": "5a89a5f31b07498bbe23665b4e32c01bfe89c79c03fda5442b6e472a1f94d1f7",
+        "client/e2e/qa-permissions.lab.spec.ts": "a6edb79e3d7edb4c040e149f927ad242cc34d4f6eb615af4f8a5bdcaeb8d6ddf",
         "client/playwright.qa.config.ts": "bd93c4be8518993af9dd734d48c498e065802db67d7934c6733313a7f47423e1",
-        "client/qa/selection.mjs": "e8cd2bc53d940280fdfb03d332d386975376a77e5746d96964c3d5b32ebea626",
+        "client/qa/selection.mjs": "1aba1bb9749b4d1bf6b5fc1d4052ef16c6ce4b126ea8353cc4cd43b9733650b1",
         "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
         "client/src/components/layout/Sidebar.tsx": "25986b10740143c932f2ffd936e3396b871e703ffd603810b45e9306df1838f2",
         "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
@@ -416,9 +453,9 @@
         "config": "client/playwright.qa.config.ts"
       },
       "source_hashes": {
-        "client/e2e/qa-permissions.lab.spec.ts": "5a89a5f31b07498bbe23665b4e32c01bfe89c79c03fda5442b6e472a1f94d1f7",
+        "client/e2e/qa-permissions.lab.spec.ts": "a6edb79e3d7edb4c040e149f927ad242cc34d4f6eb615af4f8a5bdcaeb8d6ddf",
         "client/playwright.qa.config.ts": "bd93c4be8518993af9dd734d48c498e065802db67d7934c6733313a7f47423e1",
-        "client/qa/selection.mjs": "e8cd2bc53d940280fdfb03d332d386975376a77e5746d96964c3d5b32ebea626",
+        "client/qa/selection.mjs": "1aba1bb9749b4d1bf6b5fc1d4052ef16c6ce4b126ea8353cc4cd43b9733650b1",
         "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
         "client/src/components/layout/Sidebar.tsx": "25986b10740143c932f2ffd936e3396b871e703ffd603810b45e9306df1838f2",
         "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
@@ -460,9 +497,9 @@
         "config": "client/playwright.qa.config.ts"
       },
       "source_hashes": {
-        "client/e2e/qa-permissions.lab.spec.ts": "5a89a5f31b07498bbe23665b4e32c01bfe89c79c03fda5442b6e472a1f94d1f7",
+        "client/e2e/qa-permissions.lab.spec.ts": "a6edb79e3d7edb4c040e149f927ad242cc34d4f6eb615af4f8a5bdcaeb8d6ddf",
         "client/playwright.qa.config.ts": "bd93c4be8518993af9dd734d48c498e065802db67d7934c6733313a7f47423e1",
-        "client/qa/selection.mjs": "e8cd2bc53d940280fdfb03d332d386975376a77e5746d96964c3d5b32ebea626",
+        "client/qa/selection.mjs": "1aba1bb9749b4d1bf6b5fc1d4052ef16c6ce4b126ea8353cc4cd43b9733650b1",
         "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
         "client/src/components/layout/Sidebar.tsx": "25986b10740143c932f2ffd936e3396b871e703ffd603810b45e9306df1838f2",
         "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
@@ -488,14 +525,47 @@
     },
     "TC-NCPA-08": {
       "case_hash": "0e2e4c523fb9e141782d1df5e09e65687c743091727c7375de929ebad051bb65",
-      "status": "unmapped",
-      "mode": "unassigned",
-      "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
-      "items": {},
-      "adapter": null,
-      "source_hashes": {},
-      "prerequisites": [],
-      "recovery": []
+      "status": "implemented",
+      "mode": "scripted automation",
+      "reason": "Source adapter complete; bounded live launcher support, new reviewed queue/card, current prerequisites and separate explicit start remain required.",
+      "items": {
+        "E1": {
+          "marker": "qa-evidence:TC-NCPA-08:E1",
+          "method": "UI Staff sign-in, direct /ncpa-deployment navigation, exact NCPA Deployment sidebar-link absence and Settings redirect/heading."
+        }
+      },
+      "adapter": {
+        "path": "client/e2e/qa-permissions.lab.spec.ts",
+        "title": "TC-NCPA-08: NCPA Deployment needs permission",
+        "project": "qa-permissions",
+        "config": "client/playwright.qa.config.ts"
+      },
+      "source_hashes": {
+        "client/e2e/qa-permissions.lab.spec.ts": "a6edb79e3d7edb4c040e149f927ad242cc34d4f6eb615af4f8a5bdcaeb8d6ddf",
+        "client/playwright.qa.config.ts": "bd93c4be8518993af9dd734d48c498e065802db67d7934c6733313a7f47423e1",
+        "client/qa/selection.mjs": "1aba1bb9749b4d1bf6b5fc1d4052ef16c6ce4b126ea8353cc4cd43b9733650b1",
+        "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
+        "client/src/components/layout/Sidebar.tsx": "25986b10740143c932f2ffd936e3396b871e703ffd603810b45e9306df1838f2",
+        "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
+        "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
+        "server/app/api/user/login.py": "131d66fec10e1ee90bf98a7838e3ed827edc8d99e461b0ec3f36ab4c069c5e8b",
+        "server/app/api/user/management.py": "2ad5a1f3a41c9784fb5688b1455279946f2da9ea63c1deaf13a6723d1adb0c4d",
+        "server/app/api/commands/seed.py": "a1768b1aee8b898d8af3b7d4ae56ea392a15012d46315e1874c1b1aa519726f4",
+        "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
+        "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a"
+      },
+      "prerequisites": [
+        "Exclusive disposable lab with reviewed deployed SHA and supported no-network launcher.",
+        "Existing initialized disposable Staff account, no granted permissions, needs_setup=false and must_change_password=false.",
+        "Private current Staff credentials, unique empty same-owner 0700 artifact directory and explicit case IDs."
+      ],
+      "recovery": [
+        "Use supported POST logout; verify GET /api/user/me returns 401; dispose browser context.",
+        "No monitoring/configuration changes. Login/logout audit entries remain attributable; do not erase them. Halt on cleanup failure."
+      ],
+      "reviewed_by": "Codex source review; not runtime acceptance",
+      "reviewed_at": "2026-10-18",
+      "procedure_review": "Source-reviewed full written procedure and each expected item against pageAccess/Sidebar/routes and real browser navigation assertions; no mocks or product changes. Existing initialized zero-permission Staff and supported logout/401 cleanup reused."
     },
     "TC-RPT-07": {
       "case_hash": "1b965f284a13208aa97da97768bf96fce821dac1b14c9f89bbface83f642fc54",
@@ -515,9 +585,9 @@
         "config": "client/playwright.qa.config.ts"
       },
       "source_hashes": {
-        "client/e2e/qa-permissions.lab.spec.ts": "5a89a5f31b07498bbe23665b4e32c01bfe89c79c03fda5442b6e472a1f94d1f7",
+        "client/e2e/qa-permissions.lab.spec.ts": "a6edb79e3d7edb4c040e149f927ad242cc34d4f6eb615af4f8a5bdcaeb8d6ddf",
         "client/playwright.qa.config.ts": "bd93c4be8518993af9dd734d48c498e065802db67d7934c6733313a7f47423e1",
-        "client/qa/selection.mjs": "e8cd2bc53d940280fdfb03d332d386975376a77e5746d96964c3d5b32ebea626",
+        "client/qa/selection.mjs": "1aba1bb9749b4d1bf6b5fc1d4052ef16c6ce4b126ea8353cc4cd43b9733650b1",
         "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
         "client/src/components/layout/Sidebar.tsx": "25986b10740143c932f2ffd936e3396b871e703ffd603810b45e9306df1838f2",
         "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
@@ -559,9 +629,9 @@
         "config": "client/playwright.qa.config.ts"
       },
       "source_hashes": {
-        "client/e2e/qa-permissions.lab.spec.ts": "5a89a5f31b07498bbe23665b4e32c01bfe89c79c03fda5442b6e472a1f94d1f7",
+        "client/e2e/qa-permissions.lab.spec.ts": "a6edb79e3d7edb4c040e149f927ad242cc34d4f6eb615af4f8a5bdcaeb8d6ddf",
         "client/playwright.qa.config.ts": "bd93c4be8518993af9dd734d48c498e065802db67d7934c6733313a7f47423e1",
-        "client/qa/selection.mjs": "e8cd2bc53d940280fdfb03d332d386975376a77e5746d96964c3d5b32ebea626",
+        "client/qa/selection.mjs": "1aba1bb9749b4d1bf6b5fc1d4052ef16c6ce4b126ea8353cc4cd43b9733650b1",
         "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
         "client/src/components/layout/Sidebar.tsx": "25986b10740143c932f2ffd936e3396b871e703ffd603810b45e9306df1838f2",
         "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",

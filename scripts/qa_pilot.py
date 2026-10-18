@@ -30,6 +30,7 @@ r=module('results','qa_results.py')
 h=module('host','vmlab_preflight.py')
 ROOT=Path(__file__).resolve().parent.parent
 APP=Path('/opt/pinpoint/Network-Diagnosis-System')
+SUPPORTED_CASES=frozenset({'TC-SS-04','TC-ACC-09','TC-NCPA-08'})
 
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -171,7 +172,7 @@ class Inspector:
         """Combine trusted preparation provenance with independently fresh facts."""
         with s.control.claim(inherited_fd=control_fd):pass
         expected=self.baseline
-        if (plan.get('case')!='TC-SS-04' or plan.get('baseline_hash')!=expected['checksum']
+        if (plan.get('case') not in SUPPORTED_CASES or plan.get('baseline_hash')!=expected['checksum']
             or plan.get('target_revision')!=expected['manifest']['target_revision']
             or plan.get('bridge_origin')!=b.ORIGIN):raise ValueError('Pilot/baseline scope mismatch')
         if plan.get('state_dir') is not None:
@@ -196,7 +197,7 @@ class Inspector:
 class PilotDriver:
     """Wire trusted observations, owned transport, strict results and cleanup.
 
-    Only TC-SS-04 is supported. Recovery means session logout proved by adapter,
+    Only the three explicitly supported permission IDs are allowed. Cleanup means session logout proved by adapter,
     container removal and bridge shutdown, then a fresh unchanged baseline. Any
     uncertainty halts; this driver never restores snapshots, resets users, retries,
     changes the product or claims a tool failure is a product FAIL.
@@ -213,7 +214,7 @@ class PilotDriver:
             return self.inspector.verify(plan,self.ledger.control_fd)
 
     def run(self,plan,timeout):
-        if self.used or plan.get('case')!='TC-SS-04':raise ValueError('Single permission-pilot attempt only')
+        if self.used or plan.get('case') not in SUPPORTED_CASES:raise ValueError('Single supported permission attempt per driver only')
         self.used=True
         self.bridge=b.Bridge(Path(plan['bridge_socket']).parent,**plan['bridge_limits'])
         self.bridge.start(plan,self.ledger,self.uuid,timeout)
@@ -264,61 +265,90 @@ def save_private(path,value,*,new=False):
 
 
 def run_pilot(queue,run,owner,session,grant,baseline,state_dir,bridge_dir,control_dir,ssh_key):
-    """One explicitly started case; no dynamic selection, retry or auto-resume."""
+    """One explicitly started fixed permission batch; no retries or auto-resume.
+
+    Only SS-04, ACC-09 and NCPA-08 are supported. Every case uses a fresh driver,
+    evidence directory, bridge and container and is saved before the next opens.
+    Any non-PASS stops the remaining assignment; cleanup uncertainty halts.
+    """
     errors=s.t.x.queue.check(queue,s.t.x.queue.load_catalog(),run)
     if errors:raise ValueError('Queue source changed; replacement review/start required')
     selected=s.t.x.queue.selected_sets(queue,run)[0]
-    if (selected['owner']!=owner or [case['id'] for case in selected['cases']]!=['TC-SS-04']
+    ids=[case['id'] for case in selected['cases']]
+    if (selected['owner']!=owner or not 1<=len(ids)<=5 or not set(ids)<=SUPPORTED_CASES
         or len(selected['batches'])!=1 or selected['purpose']=='investigate'):
-        raise ValueError('Only the single-owner TC-SS-04 pilot is supported')
-    card=s.t.x.validate_card(selected['cases'][0]);validate_baseline(baseline)
-    if (card.get('baseline_hash')!=baseline['checksum']
-        or not isinstance(card.get('container_image_id'),str)
-        or not card['container_image_id'].startswith('sha256:')
-        or not d.HASH.fullmatch(card['container_image_id'][7:])):raise ValueError('Card baseline/image mismatch')
+        raise ValueError('Only one fixed supported permission batch is allowed')
+    validate_baseline(baseline)
+    cards=[s.t.x.validate_card(case) for case in selected['cases']]
+    for card in cards:
+        if (card.get('baseline_hash')!=baseline['checksum']
+            or card.get('container_image_id')!=baseline['container_image_id']
+            or card['timeout_seconds']>300 or card['step_timeout_seconds']>30):
+            raise ValueError('Card baseline/image/budget mismatch')
     if str(state_dir)!=baseline['state_dir']:raise ValueError('Reviewed credential state required')
     identity=dict(owner=owner,set=run,session_id=session)
     s.grant_check(queue,identity,grant)
     if grant['lab_uuid']!=baseline['lab_uuid']:raise ValueError('Start/baseline lab mismatch')
-    # Everything above precedes runner/socket/Docker work or output creation.
+    # All scope/card/start checks precede probes, output creation and transport.
     control_dir=s.t.private_directory(control_dir,empty=True)
     bridge_dir=s.t.private_directory(bridge_dir,empty=True);state_dir=s.t.private_directory(state_dir)
-    evidence=s.t.private_directory(Path(card['evidence_dir']),empty=True)
-    paths=[control_dir,bridge_dir,state_dir,evidence,ROOT]
+    evidence=[s.t.private_directory(Path(card['evidence_dir']),empty=True) for card in cards]
+    paths=[control_dir,bridge_dir,state_dir,ROOT,*evidence]
     for i,a in enumerate(paths):
         for other in paths[i+1:]:
-            if a.is_relative_to(other) or other.is_relative_to(a):raise ValueError('Pilot paths overlap')
-    for path in (control_dir,bridge_dir):
-        if not any(path.is_relative_to(s.t.clean_path(Path(p))) for p in card['write_paths']):
-            raise ValueError('Control/bridge outputs outside approved write paths')
-    for name in ('probes','container'):(control_dir/name).mkdir(mode=0o700)
+            if a.is_relative_to(other) or other.is_relative_to(a):raise ValueError('Permission batch paths overlap')
+    multi=len(ids)>1
+    for case,card in zip(selected['cases'],cards):
+        case_control=control_dir/case['id'] if multi else control_dir
+        case_bridge=bridge_dir/case['id'] if multi else bridge_dir
+        if (card.get('control_dir',str(case_control))!=str(case_control)
+            or card.get('bridge_dir',str(case_bridge))!=str(case_bridge)):
+            raise ValueError('Card runtime output paths differ from fixed case paths')
+        for path in (control_dir,bridge_dir):
+            if not any(path.is_relative_to(s.t.clean_path(Path(p))) for p in card['write_paths']):
+                raise ValueError('Control/bridge outputs outside approved write paths')
+    (control_dir/'probes').mkdir(mode=0o700)
     inspector=Inspector(baseline,control_dir/'probes',ssh_key)
-    proof_plan=dict(case='TC-SS-04',baseline_hash=baseline['checksum'],target_revision=queue['target_revision'],bridge_origin=b.ORIGIN)
+    proof_plan=dict(case=ids[0],baseline_hash=baseline['checksum'],target_revision=queue['target_revision'],bridge_origin=b.ORIGIN)
     with s.control.claim() as fd:proof=inspector.verify(proof_plan,fd)
     preflight=dict(owner=owner,lab=baseline['lab_uuid'],target_revision=queue['target_revision'],
         catalog_hash=selected['cases'][0]['source_hash'],observed_at=proof['observed_at'],exclusive=True,
         baseline_verified=True,recovery_verified=True,network_guard=True,live_authorized=False)
     journal=s.t.x.start(queue,run,owner,session,preflight,True)
-    s.t.x.begin_batch(queue,journal,selected['batches'][0]['id']);s.t.x.begin_case(queue,journal,'TC-SS-04')
-    journal['journal_hash']=s.t.x.queue.cat.digest(journal)
-    journal_path=control_dir/'session.json';save_private(journal_path,journal,new=True)
-    # One canonical per-user store across all checkouts and caller output paths.
+    s.t.x.begin_batch(queue,journal,selected['batches'][0]['id'])
+    journal_path=control_dir/'session.json'
+    def checkpoint(*,new=False):
+        journal.pop('journal_hash',None);journal['journal_hash']=s.t.x.queue.cat.digest(journal)
+        save_private(journal_path,journal,new=new)
+    checkpoint(new=True)
     ledger_root=s.control.canonical_root()/'pilot-ledger'
     ledger_root.mkdir(mode=0o700,exist_ok=True);ledger=s.Ledger(ledger_root)
-    driver=PilotDriver(inspector,ledger,baseline['lab_uuid'],control_dir/'container')
-    try:
-        result=s.supervise(queue,journal,grant,ledger,state_dir,bridge_dir,driver)
-        journal['results'].append(result);journal['active_case']=None;journal['active_batch']=None
-        journal['events'].append({'at':s.t.x.now(),'event':'supervised-pilot-complete'})
-    except BaseException:
-        journal['status']='halted'
-        journal['events'].append({'at':s.t.x.now(),'event':'pilot-stopped-review-required'})
-        journal.pop('journal_hash');journal['journal_hash']=s.t.x.queue.cat.digest(journal)
-        save_private(journal_path,journal)
-        raise ValueError('Pilot stopped; preserve private outputs and obtain reviewed recovery') from None
-    journal.pop('journal_hash');journal['journal_hash']=s.t.x.queue.cat.digest(journal)
-    save_private(journal_path,journal)
-    return result
+    for case in selected['cases']:
+        try:
+            case_control=control_dir/case['id'] if multi else control_dir
+            case_bridge=bridge_dir/case['id'] if multi else bridge_dir
+            if multi:case_control.mkdir(mode=0o700);case_bridge.mkdir(mode=0o700)
+            (case_control/'container').mkdir(mode=0o700)
+            s.t.x.begin_case(queue,journal,case['id']);checkpoint()
+            driver=PilotDriver(inspector,ledger,baseline['lab_uuid'],case_control/'container')
+            result=s.supervise(queue,journal,grant,ledger,state_dir,case_bridge,driver)
+            journal['results'].append(result);journal['active_case']=None
+            journal['events'].append({'at':s.t.x.now(),'event':'supervised-permission-case-complete','case':case['id']})
+            if len(journal['results'])==len(ids):
+                journal['active_batch']=None
+                journal['events'].append({'at':s.t.x.now(),'event':'batch-closed','batch':selected['batches'][0]['id']})
+                journal['status']='complete'
+            if result['result']!='PASS':journal['status']='stopped'
+            checkpoint()
+            if result['result']!='PASS':break
+        except BaseException:
+            journal['status']='halted'
+            journal['events'].append({'at':s.t.x.now(),'event':'permission-batch-stopped-review-required'})
+            checkpoint()
+            raise ValueError('Permission batch stopped; preserve outputs and obtain reviewed recovery') from None
+    if len(ids)==1:return journal['results'][0]
+    return dict(results=journal['results'],status=journal['status'],
+        next_case=ids[len(journal['results'])] if len(journal['results'])<len(ids) else None)
 
 
 def main():
@@ -329,13 +359,15 @@ def main():
     inspect=sub.add_parser('inspect')
     run=sub.add_parser('run')
     recovery=sub.add_parser('recover')
-    for command in (inspect,run,recovery):
+    handoff=sub.add_parser('handoff')
+    for command in (inspect,run,recovery,handoff):
         command.add_argument('--baseline',type=Path,required=True)
         command.add_argument('--ssh-key',type=Path)
         command.add_argument('--control-dir',type=Path,required=True)
     for name in ('queue','grant','state-dir','bridge-dir'):run.add_argument('--'+name,type=Path,required=True)
     for name in ('run','owner','session'):run.add_argument('--'+name,required=True)
     for name in ('queue','prior-queue','grant'):recovery.add_argument('--'+name,type=Path,required=True)
+    for name in ('queue','prior-queue','grant'):handoff.add_argument('--'+name,type=Path,required=True)
     args=parser.parse_args()
     try:
         baseline=private_json(args.baseline)
@@ -347,6 +379,10 @@ def main():
             with s.control.claim() as fd:proof=inspector.verify(plan,fd)
             save_private(directory/'inspection.json',dict(proof=proof,live_authorized=False,test_cases_executed=0),new=True)
             print('Read-only pilot inspection passed. No test or transport launched; this is not a test start.')
+        elif args.command=='handoff':
+            handoff_module=module('handoff','qa_handoff.py')
+            print(json.dumps(handoff_module.advance(r.decode_json(args.queue.read_bytes()),
+                r.decode_json(args.prior_queue.read_bytes()),private_json(args.grant),baseline,args.control_dir,key)))
         elif args.command=='recover':
             recovery_module=module('recovery','qa_recovery.py')
             result=recovery_module.recover_pilot(r.decode_json(args.queue.read_bytes()),

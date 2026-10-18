@@ -126,6 +126,7 @@ class Ledger:
                 or archived['attempts'][-1].get('status')!='halted'
                 or record.get('attempt_hash')!=t.x.queue.cat.digest(state['attempts'][index])
                 or archived.get('recoveries',[])!=records[:number]
+                or archived.get('handoffs',[])!=state.get('handoffs',[])[:len(archived.get('handoffs',[]))]
                 or any(state['sessions'].get(k,[])[:len(v)]!=v for k,v in archived['sessions'].items())):
                 raise ValueError('Recovery archive/history changed')
             indices.add(index)
@@ -197,11 +198,119 @@ class Ledger:
         state['halted']=False
         self.save(uuid,state)
 
+    def handoff_history(self,uuid:str,state:dict) -> None:
+        """Verify forward-assignment archives preserve exact prefixes and budgets."""
+        records=state.get('handoffs',[]);previous=0
+        if not isinstance(records,list):raise ValueError('Invalid handoff history')
+        for number,record in enumerate(records):
+            count=record.get('attempt_count');checksum=record.get('source_checksum')
+            if (type(count) is not int or not previous<count<=len(state['attempts'])
+                or not isinstance(checksum,str) or not re.fullmatch(r'[0-9a-f]{64}',checksum)
+                or any(not re.fullmatch(r'[0-9a-f]{64}',record.get(k,''))
+                    for k in ('prior_queue_hash','next_queue_hash','review_hash','proof_hash','evidence_hash'))):
+                raise ValueError('Invalid handoff disposition')
+            with os.fdopen(private_file(self.path(uuid,'handoff-'+checksum+'.json'),os.O_RDONLY),'rb') as source:
+                raw=source.read(4*1024*1024+1)
+            if len(raw)>4*1024*1024:raise ValueError('Oversized handoff archive')
+            archived=json.loads(raw)
+            if (archived.get('checksum')!=checksum
+                or checksum!=t.x.queue.cat.digest({k:v for k,v in archived.items() if k!='checksum'})
+                or archived.get('lab_uuid')!=uuid or archived.get('halted') is not False
+                or archived.get('attempts')!=state['attempts'][:count]
+                or archived['attempts'][-1].get('queue_hash')!=record['prior_queue_hash']
+                or archived.get('handoffs',[])!=records[:number]
+                or archived.get('recoveries',[])!=state.get('recoveries',[])[:len(archived.get('recoveries',[]))]
+                or any(state['sessions'].get(k,[])[:len(v)]!=v for k,v in archived['sessions'].items())):
+                raise ValueError('Handoff archive/history changed')
+            previous=count
+
+    def authorized_queue(self,state:dict) -> str|None:
+        """Return the latest reviewed recovery or forward-assignment queue."""
+        recoveries=state.get('recoveries',[]);handoffs=state.get('handoffs',[])
+        if handoffs and (not recoveries or handoffs[-1]['attempt_count']>recoveries[-1]['attempt_index']):
+            return handoffs[-1]['next_queue_hash']
+        return recoveries[-1]['next_queue_hash'] if recoveries else None
+
+    def handoff_request(self,uuid:str,prior:dict,plan:dict,review:dict) -> dict:
+        """Require an exact separate review after every prior case was accepted PASS.
+
+        This narrow permission lane does not advance from partial, blocked,
+        inconclusive or failed work. Old queue source fingerprints may be stale;
+        its frozen checksum and supervisor-backed case outcomes must still agree.
+        A handoff grants no case start and never consumes or replays a case.
+        """
+        state=self.ready(uuid);t.x.queue.validate(prior)
+        if (review.get('version')!=1 or review.get('mode')!='supervised assignment handoff'
+            or review.get('explicit_handoff') is not True
+            or not isinstance(review.get('reviewed_by'),str)
+            or not re.fullmatch(r'[A-Za-z0-9 ._#-]{1,120}',review['reviewed_by'])
+            or review.get('lab_uuid')!=uuid or review.get('source_checksum')!=state.get('checksum')
+            or review.get('prior_queue_hash')!=prior['scope_hash']
+            or review.get('next_queue_hash')!=plan.get('queue_hash')
+            or review.get('next_set')!=plan.get('set') or review.get('next_owner')!=plan.get('owner')
+            or review.get('target_revision')!=plan.get('target_revision')
+            or review.get('baseline_hash')!=plan.get('baseline_hash')
+            or prior['target_revision']!=plan.get('target_revision')
+            or not re.fullmatch(r'[0-9a-f]{40}',plan.get('target_revision',''))
+            or any(not re.fullmatch(r'[0-9a-f]{64}',value or '') for value in
+                (plan.get('queue_hash'),plan.get('baseline_hash'),review.get('evidence_hash')))
+            or not isinstance(plan.get('case_ids'),list) or not plan['case_ids']
+            or len(set(plan['case_ids']))!=len(plan['case_ids'])
+            or set(plan['case_ids']) & {a['case'] for a in state['attempts'] if a.get('result',{}).get('result')=='PASS'}
+            or plan['queue_hash']==prior['scope_hash']
+            or plan['queue_hash'] in {a['queue_hash'] for a in state['attempts']}
+            or not state['attempts'] or state['attempts'][-1]['queue_hash']!=prior['scope_hash']
+            or self.authorized_queue(state) not in (None,prior['scope_hash'])):
+            raise ValueError('Separate exact forward-assignment review required')
+        expiry=datetime.fromisoformat(review.get('expires_at',''))
+        if expiry.tzinfo is None or expiry<=datetime.now(timezone.utc):raise ValueError('Handoff review expired')
+        selected=[group for group in prior['sets'] if group['name']==review.get('prior_set') and group['owner']==review.get('prior_owner')]
+        if len(prior['sets'])!=1 or len(selected)!=1:raise ValueError('Exact previous owner/set required')
+        attempts=[a for a in state['attempts'] if a['queue_hash']==prior['scope_hash']]
+        if ([a['case'] for a in attempts]!=[c['id'] for c in selected[0]['cases']]
+            or any(a['status']!='complete' or a['set']!=selected[0]['name'] or a['owner']!=selected[0]['owner']
+                or a.get('result',{}).get('case')!=a['case'] or a['result'].get('result')!='PASS'
+                or a['result'].get('restored') is not True for a in attempts)):
+            raise ValueError('Previous queue needs every accepted complete restored PASS')
+        return state
+
+    def handoff(self,uuid:str,prior:dict,plan:dict,review:dict,proof:dict) -> None:
+        """Archive the complete current ledger and append one reviewed next queue.
+
+        Trusted integration supplies independently fresh terminal-resource and
+        baseline proof; it must check review before probing. Separate live-start
+        authorization is still mandatory at execution. No prior record is cleared.
+        """
+        state=self.handoff_request(uuid,prior,plan,review)
+        proof_check(proof,plan,uuid)
+        if (any(proof.get(k) is not True for k in ('container_absent','bridge_absent','processes_absent','session_closed'))
+            or proof.get('evidence_hash')!=review.get('evidence_hash')):
+            raise ValueError('Independent terminal cleanup and baseline proof required')
+        with os.fdopen(private_file(self.path(uuid,'json'),os.O_RDONLY),'rb') as source:raw=source.read(4*1024*1024+1)
+        if len(raw)>4*1024*1024 or json.loads(raw)!=state:raise ValueError('Handoff source changed')
+        archive=self.path(uuid,'handoff-'+state['checksum']+'.json')
+        try:fd=private_file(archive,os.O_WRONLY|os.O_CREAT|os.O_EXCL)
+        except FileExistsError:
+            with os.fdopen(private_file(archive,os.O_RDONLY),'rb') as source:
+                if source.read(4*1024*1024+1)!=raw:raise ValueError('Handoff archive changed')
+        else:
+            with os.fdopen(fd,'wb') as output:output.write(raw);output.flush();os.fsync(output.fileno())
+        directory=os.open(self.root,os.O_RDONLY|os.O_DIRECTORY)
+        try:os.fsync(directory)
+        finally:os.close(directory)
+        state.setdefault('handoffs',[]).append(dict(attempt_count=len(state['attempts']),source_checksum=state['checksum'],
+            prior_queue_hash=prior['scope_hash'],next_queue_hash=plan['queue_hash'],
+            target_revision=plan['target_revision'],baseline_hash=plan['baseline_hash'],
+            reviewed_by=review['reviewed_by'],review_hash=t.x.queue.cat.digest(review),
+            evidence_hash=proof['evidence_hash'],proof_hash=t.x.queue.cat.digest(proof),at=t.x.now()))
+        self.save(uuid,state)
+
     def ready(self,uuid:str) -> dict:
         """Reject unresolved interruption/halt, even after a process restart."""
         if uuid not in self.held:raise ValueError('Readiness requires the lab lock')
         state=self.snapshot(uuid)
         recovered=self.recovered(uuid,state)
+        self.handoff_history(uuid,state)
         if state['halted'] or any(a['status']!='complete' and i not in recovered for i,a in enumerate(state['attempts'])):
             raise ValueError('Lab halted or interrupted; separately verified recovery required')
         if self.path(uuid,'pending').exists():raise ValueError('Interrupted checkpoint; recovery required')
@@ -213,8 +322,9 @@ class Ledger:
         key=(plan['queue_hash'],plan['set'],plan['case'])
         if any((a['queue_hash'],a['set'],a['case'])==key for a in state['attempts']):
             raise ValueError('Case already consumed; new session cannot replay it')
-        if state.get('recoveries') and plan['queue_hash']!=state['recoveries'][-1]['next_queue_hash']:
-            raise ValueError('Recovery permits only its separately reviewed new queue')
+        allowed=self.authorized_queue(state)
+        if allowed is not None and plan['queue_hash']!=allowed:
+            raise ValueError('Only the latest separately reviewed queue is permitted')
         session=t.x.queue.cat.digest([plan['queue_hash'],plan['set'],plan['owner'],plan['session']])
         batches=state['sessions'].setdefault(session,[])
         if plan['batch'] not in batches:

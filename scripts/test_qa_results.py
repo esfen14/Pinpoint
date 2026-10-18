@@ -137,6 +137,45 @@ class ResultTests(unittest.TestCase):
             self.assertTrue((root/result['evidence']['E1']['reference']).is_file())
             self.assertNotIn('body',json.dumps(result))
 
+    def test_new_permission_cases_require_each_exact_reviewed_item(self):
+        cases={
+            'TC-ACC-09': ('TC-ACC-09: The accounts page needs permission', {
+                'E1':'Manage Accounts absent from sidebar; direct address redirects to Settings.',
+                'E2':'Accounts API address returns 403.'}),
+            'TC-NCPA-08': ('TC-NCPA-08: NCPA Deployment needs permission', {
+                'E1':'NCPA Deployment absent from sidebar; direct address redirects to Settings.'}),
+        }
+        for case_id,(title,observations) in cases.items():
+            for fault in ('none','missing-last','forged-last','foreign-item'):
+                with self.subTest(case=case_id,fault=fault),tempfile.TemporaryDirectory() as tmp:
+                    root=Path(tmp);root.chmod(0o700)
+                    report,path,start=self.fixture(root)
+                    report['config']['metadata']['currentCaseIds']=[case_id]
+                    spec=report['suites'][0]['specs'][0];spec['title']=title
+                    attempt=spec['tests'][0]['results'][0]
+                    attached=[]
+                    for item,observed in observations.items():
+                        obs=dict(case_id=case_id,item=item,verdict='PASS',observed=observed,
+                            at=(r.instant(attempt['startTime'])+timedelta(milliseconds=500)).isoformat())
+                        attached.append(dict(name=case_id+'-'+item,contentType='application/json',body=body(obs)))
+                    if fault=='missing-last':attached.pop()
+                    elif fault in ('forged-last','foreign-item'):
+                        obs=json.loads(base64.b64decode(attached[-1]['body']))
+                        obs['observed' if fault=='forged-last' else 'item']='unreviewed'
+                        attached[-1]['body']=body(obs)
+                    attempt['attachments']=attached+[attempt['attachments'][-1]]
+                    path.write_text(json.dumps(report))
+                    if fault in ('forged-last','foreign-item'):
+                        with self.assertRaises(ValueError):
+                            r.parse_report(path,case_id,root,start,datetime.now(timezone.utc).isoformat(),
+                                run_elapsed_seconds=2.2,max_run_seconds=300)
+                        self.assertEqual(list(root.glob('observed-*.json')),[])
+                    else:
+                        parsed=r.parse_report(path,case_id,root,start,datetime.now(timezone.utc).isoformat(),
+                            run_elapsed_seconds=2.2,max_run_seconds=300)
+                        self.assertEqual(parsed['result'],'PASS' if fault=='none' else 'INCONCLUSIVE')
+                        self.assertEqual(set(parsed['evidence']),set(observations) if fault=='none' else set(observations)-{list(observations)[-1]})
+
     def test_extra_case_retry_skip_wrong_project_and_capture_cannot_pass(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d);root.chmod(0o700);report,path,start=self.fixture(root)

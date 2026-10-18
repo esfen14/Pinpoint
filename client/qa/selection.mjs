@@ -4,6 +4,8 @@ import { isAbsolute, resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const CASES = Object.freeze({
+  'TC-ACC-09': 'TC-ACC-09: The accounts page needs permission',
+  'TC-NCPA-08': 'TC-NCPA-08: NCPA Deployment needs permission',
   'TC-SS-04': 'TC-SS-04: System Status needs permission',
   'TC-HIS-01': 'TC-HIS-01: History needs permission',
   'TC-RPT-07': 'TC-RPT-07: Reports need permission',

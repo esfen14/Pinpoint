@@ -42,7 +42,7 @@ and source-reviewed coverage record for each selected ID. `qa_coverage.py check`
 rejects stale source claims. Queue preparation/checking and the offline journal
 reject execution cards not bound to an implemented mapping and its exact command.
 A card template is deliberately BLOCKED; never substitute guessed prerequisites,
-reviewer, timeouts or output paths. Five permission adapters exist in source only.
+reviewer, timeouts or output paths. Seven permission adapters have source coverage. The bounded live launcher supports only TC-SS-04, TC-ACC-09 and TC-NCPA-08; the proposed next untested batch is the latter two.
 The isolated launcher supports a JSON-only `--qa-preview`, bound to one opened
 offline journal case; its legacy execution path rejects the new config. The
 preview reads credential metadata only and is explicitly not live authorization.
@@ -59,18 +59,18 @@ The supervisor and mutating `vmlab` entries now share a cooperative host claim.
 Never delete its lock/store or call a direct controller to bypass a busy claim.
 `vmlab preflight --json` supplies host observations only: it cannot prove the
 running frontend/backend revision, baseline, restoration or permission to start.
-The narrow TC-SS-04 driver is described below; broader production integration remains blocked.
+The bounded permission driver is described below; other production integration remains blocked.
 The concrete container lifecycle component also has no live CLI/default driver.
 Its consumed-slot/image/cleanup contracts and synthetic worker checks do not
 authorize calling it manually. Keep actual bridge/runtime/baseline proof and
 the explicit named start separate from offline implementation success.
 Owned bridge and deployment-observer components require trusted integration;
-use the narrow pilot path below for TC-SS-04 only.
+use the bounded permission path below only for its three literal supported IDs.
 Observer disk matches/candidate process metadata always leave runtime/served
 identity false and the verified running revision null. Never promote them into a
 live proof receipt or manually start a bridge to bypass the missing driver/card.
 
-## Narrow TC-SS-04 pilot entry
+## Bounded permission entry
 
 `python3 -I scripts/qa_pilot.py inspect` is read-only preparation: it checks a
 private reviewed controlled-deployment baseline, host/guest process identity,
@@ -79,8 +79,12 @@ actual served bytes and cached image/browser without starting either. Positive
 inspection fields are not live authorization or evidence that a case passed.
 The standalone deployment observer continues to return false/null readiness.
 
-Only `qa_pilot.py run` may launch the current one-case pilot after its new reviewed
-queue/card and explicit user start. Its private start record must bind exact queue
+Only `qa_pilot.py run` may launch one fixed batch of supported permission IDs
+(TC-SS-04, TC-ACC-09, TC-NCPA-08), after its reviewed queue/cards and explicit
+user start. It uses one case/driver/container at a time, saves each result before
+opening the next, and stops on every non-PASS. No automatic retry or resume.
+The next untested queue contains only TC-ACC-09 and TC-NCPA-08; the accepted
+TC-SS-04 run is excluded. Its private start record must bind exact queue
 hash, set, owner, session, UUID, target and expiry. Create an affirmative record
 only after the actual user start; a prepared false/template record grants nothing.
 Never run preview Docker argv, components or a host browser manually.
@@ -94,6 +98,17 @@ change, scan or fault. Unknown cleanup/baseline or interrupted state halts for
 separately reviewed recovery. No report/JSON fabrication may fill missing proof.
 Controlled launch/build provenance is a reviewed trust boundary, not a kernel
 memory attestation or protection against malicious same-user/administrator code.
+
+Before leaving a recovered queue, use only `qa_pilot.py handoff` with its separate
+expiring `supervised assignment handoff` review. It requires the frozen previous
+queue's every case to have a supervisor-backed complete/restored PASS, unchanged
+accepted observation files/session/transport custody, actual ID/name daemon and
+process/socket absence, and fresh controlled baseline proof. It archives exact
+ledger bytes and appends the next hash; all attempts, recoveries, archives and
+session budgets stay intact. It rejects an already passed ID in the next untested
+scope. Handoff is not a case start. Never clear/relocate a ledger or create an
+affirmative handoff/start record from preparation. See the
+[next permission review](../../docs/qa/Next_Permission_Batch_Review.md).
 
 ## Mandatory partial-pass investigation
 

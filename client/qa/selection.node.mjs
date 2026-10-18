@@ -66,11 +66,22 @@ test('offline Playwright collection selects exactly one current case, with no se
   });
 });
 
-test('offline collection can select all five adapters without executing login or assertions', () => {
+test('offline collection can select all seven adapters without executing login or assertions', () => {
   fixture((dir) => {
     const result = collect(Object.keys(CASES).join(','), dir);
     assert.equal(result.status, 0, result.stderr + result.stdout);
     assert.deepEqual(titles(JSON.parse(result.stdout).suites).sort(), Object.values(CASES).sort());
+  });
+});
+
+test('offline collection selects only the new Accounts and NCPA permission cases', () => {
+  fixture((dir) => {
+    const result = collect('TC-ACC-09,TC-NCPA-08', dir);
+    assert.equal(result.status, 0, result.stderr + result.stdout);
+    assert.deepEqual(titles(JSON.parse(result.stdout).suites), [
+      'TC-ACC-09: The accounts page needs permission',
+      'TC-NCPA-08: NCPA Deployment needs permission',
+    ]);
   });
 });
 

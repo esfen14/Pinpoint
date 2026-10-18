@@ -260,7 +260,17 @@ shell/file access. Empty/missing cards remain blocked. Live scan guarding,
 recovery/resume orchestration and complete current-case browser adapters remain
 unimplemented; no unattended-readiness claim is made.
 The [source coverage register](../docs/qa/Automation_Coverage.md) accounts for all
-239 definitions: five source-complete permission adapters, 234 unmapped.
+239 definitions: seven source-complete permission adapters, 232 unmapped.
+The two new untested adapters are TC-ACC-09 (page denial plus API 403 as
+independent E1/E2 items) and TC-NCPA-08 (page denial). Their source-complete
+status does not authorize execution. `qa_pilot.py run` now implements a fixed
+serial batch for only TC-SS-04, TC-ACC-09 and TC-NCPA-08, with independent private
+resources, per-case durable results and stop on non-PASS. `qa_pilot.py handoff`
+separately checks complete supervisor-backed PASS/cleanup/evidence/baseline before
+archiving the exact old ledger and appending the new queue; no prior attempts,
+recoveries or budgets are cleared. Concrete cards, current proof, handoff review
+and a new explicit start are required. The new two cases have not run. See the
+[next batch review](../docs/qa/Next_Permission_Batch_Review.md).
 `qa_coverage.py` validates hashes/review/item coverage and binds cards to exact
 selection. `playwright.qa.config.ts` has one worker, zero retries, no setup
 dependencies/captures and private unique outputs; offline collection is checked.

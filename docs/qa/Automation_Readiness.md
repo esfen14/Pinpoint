@@ -5,11 +5,18 @@ eight E2E scenarios. It is generated from `automation-coverage.json` and shows
 source implementation, expected items still missing and unassigned executors.
 It does not change the human catalog or certify any runtime PASS.
 
-Five permission adapters are source-complete: TC-SS-04, TC-HIS-01, TC-RPT-07,
-TC-LOG-05 and TC-PLG-07. Only TC-SS-04 is currently untested in the human catalog;
-the other four remain excluded from default pending queues. An intentional
-`recheck` needs its own reviewed assignment. The remaining 234 cases/scenarios
-are explicitly unmapped, not automatically classified as suitable for automation.
+Seven permission adapters are source-complete: TC-SS-04, TC-HIS-01, TC-RPT-07,
+TC-LOG-05, TC-PLG-07, TC-ACC-09 and TC-NCPA-08. The next proposed untested batch
+is TC-ACC-09 followed by TC-NCPA-08; each uses the existing initialized Staff
+account with zero permissions. TC-ACC-09 has separate E1 page-denial and E2 API-403
+evidence; missing either cannot yield PASS. TC-SS-04 already has an attributable
+accepted supervised PASS. The other four original adapters have human PASS and
+remain excluded from default pending queues. The remaining 232 cases/scenarios
+are unmapped. Source coverage does not authorize the next batch or imply runtime
+acceptance; its cards, current prerequisite observations, reviewed ledger handoff and explicit
+start remain separate requirements. The launcher now implements a fixed serial
+batch for only TC-SS-04, TC-ACC-09 and TC-NCPA-08; see the
+[next batch review](Next_Permission_Batch_Review.md).
 
 ## What is implemented
 
@@ -200,7 +207,7 @@ the direct child is reaped by this helper. A missing/ambiguous process identity
 fails closed. Existing controller locking and real runtime ownership checks are
 still separate requirements.
 
-`qa_results.py` parses only the five reviewed permission adapters. It validates
+`qa_results.py` parses only the seven reviewed permission adapters. It validates
 pinned Playwright version/configuration, one project/case/initial attempt, no
 retries/captures, fixed origin, consistent totals/status/timestamps and exact
 expected-item/cleanup attachment identities. The actual owned attach launch/completion UTC and monotonic elapsed time must
@@ -332,10 +339,10 @@ lifecycle still reject reused evidence. The frontend gate has seven offline
 selection/collection/worker checks; the worker fixture requests no page/browser,
 imports no acceptance spec and produces no current-case result.
 
-The same-day pilot scope is TC-SS-04 only, with no inherited human PASS reruns.
-The later authorized appliance preparation deployed the exact target and
-initialized Staff. The narrow driver and complete pilot card now use that reviewed
-baseline. A separate explicit acceptance start is still needed; no pilot ran.
+The initial TC-SS-04 pilot was inconclusive and the separately started #211
+recheck passed. The next prepared scope contains TC-ACC-09 and TC-NCPA-08 only,
+using the same controlled target and Staff state after fresh read-only checks.
+No new case runs until its separate reviewed handoff and explicit start.
 
 ## Owned bridge and read-only deployment observations
 
@@ -404,12 +411,17 @@ standalone observer remains negative; the independent controlled deployment reco
 is necessary. Source/config/runtime inputs must precede the recorded process launch;
 current file stamps, boot and master/worker identities must stay unchanged.
 
-`qa_pilot.py run` requires the exact source-current one-case queue, private baseline
+`qa_pilot.py run` permits one fixed batch (at most five cases, drawn only from
+TC-SS-04, TC-ACC-09 and TC-NCPA-08). It requires the exact source-current queue, private baseline
 checksum, initialized credential state, bounded private outputs and a separately
 reviewed explicit start/expiry. No start record means no inspection, bridge or
 container work. Canonical shared ledger consumption precedes the actual attempt.
 Container removal, bridge shutdown, browser logout evidence and fresh baseline
 checks are all required; any uncertainty halts without retry/reset/restore.
+Each case gets an independent driver/bridge/container and private evidence. Results
+and the batch journal are saved before the next case opens. Any non-PASS stops
+remaining work; there is no automatic resume or diagnostic repeat in this lane.
+The five-batch offline budget does not authorize extra batches in this launcher.
 
 The first v4 browser/container attempt remains INCONCLUSIVE after the original
 timing rejection. The separately authorized v2 recheck now passed the actual full
@@ -436,3 +448,17 @@ recovery retained the original ledger archive and added one audited disposition;
 the separately started v2 attempt completed with accepted PASS/restored. A future
 browser run still needs its own scope and explicit start; v2 is consumed.
 See the [reviewed recovery scope](Issue_211_Recheck_Review.md).
+
+## Reviewed next-assignment handoff
+
+`qa_pilot.py handoff` is a separate audited operation after a complete recovered
+queue. An expiring review binds the original ledger checksum, frozen prior queue,
+owner/set, accepted evidence digest, new exact queue/owner/set and unchanged
+target/baseline. The caller verifies every original PASS/restored item, terminal
+container/bridge/session metadata, current daemon/process/socket absence and fresh
+baseline before appending. The exact old ledger is archived; attempts, recovery
+records and budgets are preserved and audited on later readiness checks. Missing
+archives, incomplete outcomes, stale/foreign reviews, replay and an already-passed
+ID in the new untested scope reject. This does not start a case or grant a new live
+start. No actual handoff was applied during preparation. See
+[the concrete two-case scope and start contract](Next_Permission_Batch_Review.md).

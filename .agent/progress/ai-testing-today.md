@@ -40,10 +40,11 @@ scheduler pause are disclosed below.
 
 ## State for the next session
 
-- Pulled merged PR #212 at `91357da8`. #211 timing fix, audited recovery and accepted TC-SS-04 recheck are complete; report is `docs/test-runs/2026-10-18-issue-211-ss04-recheck/REPORT.md`. Actual ledger audit confirms active halt false, original halted attempt preserved, new attempt complete/PASS and one valid archived recovery disposition.
-- Next action: prepare broader bounded execution support before a new assignment. The launcher is still TC-SS-04-only, and recovery's next-queue hash still restricts consumption to the already completed recheck queue. Implement a reviewed forward handoff preserving history, select new eligible case adapters/fixtures and extend only that scope, then freeze new queue/cards, recheck prerequisites and obtain its explicit start.
-- Five source adapters exist; four are original human PASS, TC-SS-04 has a new attributable PASS, 234 definitions remain unmapped. Do not rerun passed cases or reset the store to create throughput. Product application remains target `299ab3b`, scheduler off; no VM or case action occurred during this pull/review.
-- Post-pull local docs verification passed 193 isolated contracts plus the pinned no-browser timing worker; no local backend or unchanged frontend suite needed. The observed PR #212 ready-policy CI failure is inherited unfinished parent progress, after successful docs/tooling checks; it is not a failing parser/unit gate or a reason to erase parent progress.
+- Next action: review `docs/qa/Next_Permission_Batch_Review.md` and the source-current `docs/qa/queues/2026-10-18-next-permissions.json`, set/session `next-permissions`, owner Paeng. Preparation is complete; obtain explicit approval for its exact audited forward handoff and start of its fixed TC-ACC-09 / TC-NCPA-08 batch. Do not turn the false private grant templates affirmative from a preparation/continue instruction.
+- Implemented: seven source mappings (232 unmapped), strict independent E1/E2 Accounts evidence, audited complete-queue handoff with preserved archives/recoveries/attempts/budgets, and serial supported permission dispatch with each result saved before the next and stop on non-PASS. Other cases and unattended testing remain pending.
+- Supported actual read-only inspection passed at 2026-10-18T09:06:49.892257+00:00 against unchanged application `299ab3b`, controlled baseline, Staff, scheduler-off, processes/runtime/served files and image/browser pins. Local accepted prior evidence and archive audit passed; active halt false, original halted attempt plus accepted TC-SS-04 recheck retained. No actual handoff, new case, container/browser, batch consumption or application mutation occurred.
+- Verification: final docs gate PASS, 200 isolated contracts. Frontend final stage PASS: 1003 product tests, 9 offline helpers, QA type check/build/lint (0 errors, 33 existing warnings). The first full frontend run failed the unchanged repeat-limit `saves both values` test (expected 4, saved 3); related #210 remains open. The focused five-test group and full stage rerun passed without changes, skips or weakening. No local backend suite ran.
+
 
 ## Current offline implementation
 
@@ -176,10 +177,10 @@ No application/harness source was edited during execution or investigation.
 - [x] Read the actual canonical ledger under its existing host/UUID claim: active halt false, one preserved original halted attempt, one complete TC-SS-04 PASS, one audited recovery disposition; original archive/history passes `ready()` verification. No live state was changed in this review.
 - [x] Reconcile finish checklists with the accepted supervised import/logout/container/bridge/process/baseline path. No additional browser case ran in this pull/review pass.
 - [x] Complete local post-pull docs checks: 193 isolated contracts pass; the pinned no-browser Playwright timing worker test also passes. Skip local backend/unchanged product frontend suites. PR #212's observed red docs job passed the docs/tooling checks, then rejected the inherited unfinished `issue-206.md` under ready-PR policy; preserve parent progress rather than deleting unfinished work or weakening CI.
-- [ ] Implement/test a reviewed next-assignment handoff: `Ledger.consume()` currently permits only the recovery disposition's exact v2 queue hash, including after that queue completes. Preserve old attempts, archives and budgets; do not clear/relocate the store to launch a new queue.
-- [ ] Select the next eligible untested cases/module and implement their reviewed adapters/fixtures/assertions/cleanup. Registry has five implemented source adapters, 234 unmapped; the other four permission adapters have original human PASS, while TC-SS-04 now has accepted attributable PASS. No redundant rerun is implied.
-- [ ] Expand the live executor beyond its explicit TC-SS-04-only/single-case checks for only the selected reviewed IDs and bounded batches. Existing ordinary maximum remains five cases/batch and five batches/session, not automatic permission to drain the catalog.
-- [ ] Prepare a fresh source-current module/person queue/card with target/baseline/evidence paths, verify its actual prerequisites and obtain its own explicit start. Scheduler remains off; monitoring/timing/discovery fixtures need separately reviewed baseline changes.
+- [x] Implement/test a separately reviewed forward handoff after every previous case is complete/restored PASS, with exact archived prior ledger and preserved recoveries/attempts/budgets. No actual handoff was applied.
+- [x] Select the next eligible untested cases/module and implement their reviewed adapters/fixtures/assertions/cleanup. Registry now has seven implemented source adapters, 232 unmapped; the other four permission adapters have original human PASS, while TC-SS-04 now has accepted attributable PASS. No redundant rerun is implied.
+- [x] Expand the live executor beyond its explicit TC-SS-04-only/single-case checks for only the selected reviewed IDs and bounded batches. Existing ordinary maximum remains five cases/batch and five batches/session, not automatic permission to drain the catalog.
+- [x] Prepare the fresh source-current two-case queue/cards with target/baseline/evidence paths and supported actual read-only prerequisite inspection. Separate handoff approval and start remain pending. Scheduler remains off; monitoring/timing/discovery fixtures need separately reviewed baseline changes.
 
 The timing defect and accepted-pilot recheck are complete. Broader testing is
 blocked by narrow supported scope/next-queue handoff and missing case adapters,
@@ -195,11 +196,35 @@ and detail say Not run. Reuse initialized zero-permission Staff; no account,
 monitoring, scheduler, discovery, deployment or product changes are needed.
 The old TC-SS-04 PASS is retained and excluded from this proposed batch.
 
-- [ ] Review source/specs and implement exact browser adapters for TC-ACC-09 E1/E2 and TC-NCPA-08 E1 in `client/e2e/qa-permissions.lab.spec.ts`; update selection, source coverage and strict multi-item result import. Prove offline collection and malformed/missing-item rejection.
-- [ ] Implement an explicitly reviewed forward-assignment handoff after a fully accounted complete queue, preserving exact original ledger archives, recoveries, attempts and budgets; prove denial of unfinished/foreign/replayed/changed grants and archives in isolated fixtures.
-- [ ] Extend the supervised permission launcher for only TC-SS-04 plus the two chosen new IDs, at most five fixed cases, serial per-case private outputs and saved results, no automatic retry/resume; preserve every gate and stop on inconclusive/cleanup uncertainty.
-- [ ] Prepare a fresh two-case queue/preview and reviewable cards with exact target, command, output paths, expectations and cleanup; use supported read-only checks for actual prerequisites. Any unobserved readiness remains BLOCKED.
-- [ ] Verify relevant isolated/docs/frontend gates, synchronize all finish checklists and PR #207, and checkpoint. Live handoff and case execution require their concrete reviewed scope/start after preparation.
+- [x] Review source/specs and implement exact browser adapters for TC-ACC-09 E1/E2 and TC-NCPA-08 E1 in `client/e2e/qa-permissions.lab.spec.ts`; update selection, source coverage and strict multi-item result import. Prove offline collection and malformed/missing-item rejection.
+- [x] Implement an explicitly reviewed forward-assignment handoff after a fully accounted complete queue, preserving exact original ledger archives, recoveries, attempts and budgets; prove denial of unfinished/foreign/replayed/changed grants and archives in isolated fixtures.
+- [x] Extend the supervised permission launcher for only TC-SS-04 plus the two chosen new IDs, at most five fixed cases, serial per-case private outputs and saved results, no automatic retry/resume; preserve every gate and stop on inconclusive/cleanup uncertainty.
+- [x] Prepare a fresh two-case queue/preview and reviewable cards with exact target, command, output paths, expectations and cleanup; use supported read-only checks for actual prerequisites. Any unobserved readiness remains BLOCKED.
+- [x] Verify relevant isolated/docs/frontend gates, synchronize all finish checklists and PR #207, and checkpoint. Live handoff and case execution require their concrete reviewed scope/start after preparation.
 
-Next action: implement the two selected permission adapters and multi-item parser;
-then add reviewed handoff and bounded serial launch support before a new live start.
+Next action: obtain approval for the exact reviewed forward handoff and explicit start of `next-permissions`; no new case has run.
+
+Preparation round 1: added TC-ACC-09 E1/E2 and TC-NCPA-08 E1 adapters with
+unchanged initialized-Staff login/logout fixtures. Multi-item strict import first
+failed the new synthetic cases, then passed all 14 parser contracts, including
+missing/forged/foreign-item rejection before output. Offline Playwright collection
+and selection checks pass (8), QA TypeScript check passes. Seven source mappings,
+232 unmapped; zero product cases executed. Live scope and reviewed ledger handoff
+remain pending.
+
+Preparation rounds 2–5 complete: 16 recovery/handoff contracts, 13 composed-driver
+contracts and 14 parser contracts pass within the final 200-contract docs gate.
+The two-case fixture uses the real supervisor ledger and proves the first saved
+result is present before the second case opens, plus stop after INCONCLUSIVE.
+Initial overlapping fixture/docs runs contended the cooperative host lock; serial
+reruns passed without deleting/replacing locks or touching actual ledger history.
+
+- [x] Freeze [next permission scope](../../docs/qa/queues/2026-10-18-next-permissions.md), exact cards/commands and finite output/recovery/stop rules; source check passes.
+- [x] Supported actual read-only preflight and local prior-evidence/archive audit pass; publish/index the [preparation report](../../docs/test-runs/2026-10-18-issue-206-next-permissions-preflight/REPORT.md) and zero-attempt queue log.
+- [x] Verify supported false-start and false-handoff CLI denial before external probes/reserved writes. Private grant templates remain false/expired; evidence/control/bridge/handoff outputs are empty.
+- [x] Final docs (200) and frontend stage (1003 + 9 offline helpers/type/build/lint) pass; retain first unchanged RemediationPage failure, related #210, focused five-test PASS and full-stage rerun PASS. No backend tests or application changes.
+- [ ] Apply the separately approved exact forward handoff and explicitly start the two fixed new cases; both remain Not run, batches 0/0, new attempts 0.
+
+The selected supervised next-batch preparation is complete. Broad historical
+credit/cutoff decisions, 232 unmapped definitions and unattended readiness remain
+open. No new runtime result, reuse credit or authorization is inferred.

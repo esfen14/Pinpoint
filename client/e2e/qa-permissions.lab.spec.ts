@@ -52,6 +52,21 @@ async function deniedApi(page: Page, path: string) {
   expect(response?.status(), 'Protected API denies Staff').toBe(403);
 }
 
+test('TC-ACC-09: The accounts page needs permission', async ({ page }, info) => {
+  await deniedPage(page, '/accounts', 'Manage Accounts');
+  // qa-evidence:TC-ACC-09:E1
+  await observe(info, 'E1', 'Manage Accounts absent from sidebar; direct address redirects to Settings.');
+  await deniedApi(page, '/api/user/accounts');
+  // qa-evidence:TC-ACC-09:E2
+  await observe(info, 'E2', 'Accounts API address returns 403.');
+});
+
+test('TC-NCPA-08: NCPA Deployment needs permission', async ({ page }, info) => {
+  await deniedPage(page, '/ncpa-deployment', 'NCPA Deployment');
+  // qa-evidence:TC-NCPA-08:E1
+  await observe(info, 'E1', 'NCPA Deployment absent from sidebar; direct address redirects to Settings.');
+});
+
 test('TC-SS-04: System Status needs permission', async ({ page }, info) => {
   await deniedPage(page, '/system-status', 'System Status');
   // qa-evidence:TC-SS-04:E1

@@ -190,6 +190,51 @@ class DriverTests(unittest.TestCase):
             self.assertEqual(journal['journal_hash'],v.s.t.x.queue.cat.digest({k:value for k,value in journal.items() if k!='journal_hash'}))
             self.assertEqual((control/'session.json').stat().st_mode & 0o777,0o600)
 
+    def test_two_case_permission_batch_saves_each_result_and_stops_on_nonpass(self):
+        for first_result in ('PASS','INCONCLUSIVE'):
+            with self.subTest(first=first_result),tempfile.TemporaryDirectory() as tmp:
+                root=Path(tmp);q,j,l,g,driver=self.fixture(root);baseline=self.baseline()
+                baseline['state_dir']=str(root/'state');v.d.seal(baseline)
+                q=v.s.t.x.queue.prepare(['set:Reviewer:TC-ACC-09,TC-NCPA-08'],v.s.t.x.queue.load_catalog(),'a'*40)
+                for case in q['sets'][0]['cases']:
+                    evidence=root/case['id'];evidence.mkdir(mode=0o700)
+                    card=v.s.t.x.queue.coverage.card_template(case['coverage'])
+                    card.update(reviewed_by='Synthetic reviewer',timeout_seconds=300,step_timeout_seconds=30,
+                        human_required=False,prerequisites=['Synthetic observed Staff baseline'],
+                        baseline_hash=baseline['checksum'],container_image_id=baseline['container_image_id'],
+                        evidence_dir=str(evidence),control_dir=str(root/'control'/case['id']),
+                        bridge_dir=str(root/'bridge'/case['id']),
+                        write_paths=[str(root/name) for name in ('control','bridge',case['id'])])
+                    case['execution']=card
+                v.s.t.x.queue.seal(q);g['queue_hash']=q['scope_hash'];(root/'control').mkdir(mode=0o700)
+                calls=[];original_supervise=v.s.supervise
+                def supervised(queue,journal,grant,ledger,state,bridge,actual_driver):
+                    case=journal['active_case']['id'];calls.append(case)
+                    if len(calls)==2:
+                        saved=v.private_json(root/'control/session.json')
+                        self.assertEqual(saved['results'][0]['case'],'TC-ACC-09')
+                        self.assertEqual(saved['active_case']['id'],'TC-NCPA-08')
+                    self.assertEqual(bridge,root/'bridge'/case)
+                    self.assertEqual(actual_driver.root,root/'control'/case/'container')
+                    def synthetic_run(plan,timeout):
+                        card=next(c['execution'] for c in queue['sets'][0]['cases'] if c['id']==case)
+                        observations={}
+                        for item in v.r.OBSERVATIONS[case]:
+                            file=Path(card['evidence_dir'])/(item+'.json');file.write_text('{}')
+                            observations[item]=dict(verdict='PASS',observed='Synthetic orchestration '+item,reference=file.name)
+                        return dict(result=first_result if len(calls)==1 else 'PASS',restored=True,
+                            evidence=observations,reason='Synthetic orchestration evidence')
+                    with patch.object(actual_driver,'run',side_effect=synthetic_run),patch.object(actual_driver,'cleanup',return_value=True):
+                        return original_supervise(queue,journal,grant,ledger,state,bridge,actual_driver)
+                with patch.object(v,'Inspector',return_value=driver.inspector),patch.object(v.s,'supervise',side_effect=supervised),patch.object(v.s.control,'canonical_root',return_value=root/'host-control'):
+                    result=v.run_pilot(q,'set','Reviewer','session',g,baseline,root/'state',root/'bridge',root/'control',root/'key')
+                saved=v.private_json(root/'control/session.json')
+                self.assertEqual(calls,['TC-ACC-09','TC-NCPA-08'] if first_result=='PASS' else ['TC-ACC-09'])
+                self.assertEqual(len(saved['results']),2 if first_result=='PASS' else 1)
+                self.assertEqual(saved['status'],'complete' if first_result=='PASS' else 'stopped')
+                self.assertEqual(result['next_case'],None if first_result=='PASS' else 'TC-NCPA-08')
+                self.assertEqual(saved['batches_started'],['set-001'])
+
     def test_runtime_hardlinks_are_hashed_but_symlinks_rejected(self):
         import os
         namespace=dict(vars(v.d));exec((v.ROOT/'scripts/qa_pilot_guest.py').read_text(),namespace)

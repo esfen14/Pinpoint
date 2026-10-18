@@ -124,6 +124,83 @@ class RecoveryTests(unittest.TestCase):
                 with self.assertRaises(ValueError):l.ready(f.UUID)
 
 
+class HandoffTests(unittest.TestCase):
+    """Forward assignment is distinct from recovery and from a test start."""
+    def handoff_fixture(self,root):
+        l,before,plan,review,proof=RecoveryTests().fixture(root)
+        # Frozen queue structure is independent of its now-stale source hashes.
+        q,_,_,_,_=f.SupervisorTests().fixture(root/'new-fixture')
+        q['sets'][0]['name']='next';q['sets'][0]['batches'][0]['id']='next-001'
+        s.t.x.queue.seal(q)
+        plan['queue_hash']=q['scope_hash'];review['next_queue_hash']=q['scope_hash']
+        with l.claim(f.UUID):
+            l.recover(f.UUID,plan,review,proof)
+            consumed=dict(before['attempts'][0],queue_hash=q['scope_hash'],set='next',batch='next-001',session='recheck')
+            l.consume(f.UUID,consumed)
+            result=dict(case='TC-SS-04',result='PASS',restored=True)
+            l.finish(f.UUID,True,result)
+            state=l.ready(f.UUID)
+        target=dict(queue_hash='e'*64,set='new-batch',owner='Reviewer',target_revision='a'*40,
+            baseline_hash='c'*64,bridge_origin=plan['bridge_origin'],case_ids=['TC-ACC-09'])
+        grant=dict(version=1,mode='supervised assignment handoff',explicit_handoff=True,reviewed_by='Paeng',
+            lab_uuid=f.UUID,source_checksum=state['checksum'],prior_queue_hash=q['scope_hash'],
+            prior_set='next',prior_owner='Reviewer',next_queue_hash=target['queue_hash'],
+            next_set=target['set'],next_owner=target['owner'],target_revision=target['target_revision'],
+            baseline_hash=target['baseline_hash'],evidence_hash='d'*64,
+            expires_at=(datetime.now(timezone.utc)+timedelta(minutes=5)).isoformat())
+        return l,q,target,grant,proof
+
+    def test_forward_handoff_preserves_complete_and_recovered_history(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);(root/'new-fixture').mkdir()
+            l,q,plan,grant,proof=self.handoff_fixture(root)
+            old=l.path(f.UUID,'json').read_bytes();before=l.snapshot(f.UUID)
+            with l.claim(f.UUID):
+                l.handoff(f.UUID,q,plan,grant,proof)
+                state=l.ready(f.UUID)
+                self.assertEqual(state['attempts'],before['attempts'])
+                self.assertEqual(state['recoveries'],before['recoveries'])
+                self.assertEqual(state['sessions'],before['sessions'])
+                self.assertEqual(l.path(f.UUID,'handoff-'+before['checksum']+'.json').read_bytes(),old)
+                with self.assertRaises(ValueError):l.consume(f.UUID,{**before['attempts'][-1],'case':'TC-ACC-09'})
+                new={**before['attempts'][-1],**plan,'case':'TC-ACC-09','session':'new-session'}
+                l.consume(f.UUID,new);l.finish(f.UUID,True,dict(case='TC-ACC-09',result='PASS',restored=True))
+                l.ready(f.UUID)
+                with self.assertRaises(ValueError):l.consume(f.UUID,new)
+
+    def test_forward_handoff_rejects_missing_review_incomplete_prior_or_changed_archive(self):
+        for fault in ('explicit','expired','source','prior','owner','next','baseline','proof','unaccounted','inconclusive','already-pass','archive'):
+            with self.subTest(fault=fault),tempfile.TemporaryDirectory() as tmp:
+                root=Path(tmp);(root/'new-fixture').mkdir()
+                l,q,plan,grant,proof=self.handoff_fixture(root)
+                if fault=='explicit':grant['explicit_handoff']=False
+                elif fault=='expired':grant['expires_at']='2000-01-01T00:00:00+00:00'
+                elif fault=='source':grant['source_checksum']='f'*64
+                elif fault=='prior':grant['prior_queue_hash']='f'*64
+                elif fault=='owner':grant['next_owner']='Foreign'
+                elif fault=='next':grant['next_queue_hash']='f'*64
+                elif fault=='baseline':grant['baseline_hash']='f'*64
+                elif fault=='proof':proof['baseline_verified']=False
+                elif fault=='unaccounted':
+                    q['sets'][0]['cases'].append({**q['sets'][0]['cases'][0],'id':'TC-ACC-09'})
+                    q['sets'][0]['batches'][0]['ids'].append('TC-ACC-09')
+                    s.t.x.queue.seal(q)
+                elif fault=='already-pass':plan['case_ids']=['TC-SS-04']
+                elif fault=='inconclusive':
+                    with l.claim(f.UUID):
+                        state=l.snapshot(f.UUID);state['attempts'][-1]['result']['result']='INCONCLUSIVE';l.save(f.UUID,state)
+                    grant['source_checksum']=l.snapshot(f.UUID)['checksum']
+                with l.claim(f.UUID):
+                    before=l.path(f.UUID,'json').read_bytes()
+                    if fault=='archive':
+                        l.handoff(f.UUID,q,plan,grant,proof)
+                        l.path(f.UUID,'handoff-'+grant['source_checksum']+'.json').write_text('{}')
+                        with self.assertRaises(ValueError):l.ready(f.UUID)
+                    else:
+                        with self.assertRaises(ValueError):l.handoff(f.UUID,q,plan,grant,proof)
+                        self.assertEqual(l.path(f.UUID,'json').read_bytes(),before)
+
+
 class ProbeTests(unittest.TestCase):
     def setUp(self):self.r=module('recovery','qa_recovery.py')
 
@@ -238,5 +315,72 @@ class ProbeTests(unittest.TestCase):
                         if fault=='unapproved':factory.assert_not_called();old.assert_not_called()
                 self.assertEqual(l.snapshot(f.UUID)['attempts'],before['attempts'])
 
+
+
+class HandoffIntegrationTests(unittest.TestCase):
+    def fixture(self,root):
+        h=module('handoff','qa_handoff.py')
+        probe=ProbeTests();probe.setUp();prior,attempt,report=probe.old_fixture(root)
+        text=h.v.r.OBSERVATIONS['TC-SS-04']['E1']
+        observation=dict(case_id='TC-SS-04',item='E1',verdict='PASS',observed=text,at='2026-10-18T07:21:19.023Z')
+        h.v.save_private(root/'evidence/observed-TC-SS-04-E1.json',observation,new=True)
+        attempt.update(status='complete',result=dict(case='TC-SS-04',result='PASS',restored=True,
+            evidence={'E1':dict(verdict='PASS',observed=text,reference='observed-TC-SS-04-E1.json')}))
+        journal=h.v.private_json(root/'control/session.json')
+        journal.update(status='active',active_case=None,active_batch=None,results=[attempt['result']],owner='Reviewer',set='set')
+        journal.pop('journal_hash');journal['journal_hash']=s.t.x.queue.cat.digest(journal)
+        h.v.save_private(root/'control/session.json',journal)
+        return h,prior,dict(attempts=[attempt],checksum='c'*64)
+
+    def test_complete_evidence_checks_accepted_items_journal_and_terminal_custody(self):
+        for fault in ('none','item','result','journal','container'):
+            with self.subTest(fault=fault),tempfile.TemporaryDirectory() as tmp:
+                root=Path(tmp);h,prior,state=self.fixture(root)
+                if fault=='item':
+                    value=h.v.private_json(root/'evidence/observed-TC-SS-04-E1.json');value['observed']='unreviewed'
+                    h.v.save_private(root/'evidence/observed-TC-SS-04-E1.json',value)
+                elif fault=='result':state['attempts'][0]['result']['restored']=False
+                elif fault=='journal':
+                    value=h.v.private_json(root/'control/session.json');value['active_case']={'id':'TC-ACC-09'}
+                    h.v.save_private(root/'control/session.json',value)
+                elif fault=='container':
+                    value=h.v.private_json(root/'control/container/container-intent.json');value['transport_hash']='f'*64
+                    h.v.save_private(root/'control/container/container-intent.json',value)
+                if fault=='none':
+                    before=(root/'evidence/results.json').read_bytes()
+                    identity=h.completed_evidence(prior,state,f.UUID)
+                    self.assertEqual(len(identity['identities']),1)
+                    self.assertEqual(len(identity['evidence_hash']),64)
+                    self.assertEqual((root/'evidence/results.json').read_bytes(),before)
+                else:
+                    with self.assertRaises(ValueError):h.completed_evidence(prior,state,f.UUID)
+
+    def test_missing_handoff_review_never_reaches_probes_or_outputs(self):
+        from contextlib import nullcontext
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);h,prior,state=self.fixture(root)
+            ledger=Mock(root=root/'ledger',control_fd=123)
+            ledger.claim.return_value=nullcontext();ledger.handoff_request.side_effect=ValueError('Missing review')
+            with patch.object(h,'request_plan',return_value={}),patch.object(h.v.s,'Ledger',return_value=ledger),patch.object(h,'completed_evidence') as evidence,patch.object(h.v,'Inspector') as inspector:
+                with self.assertRaises(ValueError):h.advance({},prior,{},dict(lab_uuid=f.UUID),root/'new-output',root/'key')
+            inspector.assert_not_called();evidence.assert_not_called();self.assertFalse((root/'new-output').exists())
+
+    def test_composed_handoff_uses_fresh_absence_and_baseline_without_case_start(self):
+        from contextlib import nullcontext
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);h,prior,state=self.fixture(root)
+            (root/'handoff').mkdir(mode=0o700)
+            info=h.completed_evidence(prior,state,f.UUID)
+            plan=dict(write_paths=[str(root/'handoff')],queue_hash='e'*64)
+            ledger=Mock(root=root/'ledger',control_fd=123)
+            ledger.claim.return_value=nullcontext();ledger.handoff_request.return_value=state
+            inspector=Mock();inspector.verify.return_value=dict(observed_at=s.t.x.now())
+            review=dict(evidence_hash=info['evidence_hash']);baseline=dict(lab_uuid=f.UUID,state_dir=str(root/'state'))
+            with patch.object(h,'request_plan',return_value=plan),patch.object(h.v.s,'Ledger',return_value=ledger),patch.object(h.v,'Inspector',return_value=inspector),patch.object(h.r,'process_absence') as process,patch.object(h.r,'daemon_absence') as daemon:
+                result=h.advance(dict(scope_hash='e'*64,sets=[dict(cases=[])]),prior,review,baseline,root/'handoff',root/'key')
+            self.assertEqual(process.call_count,2);self.assertEqual(daemon.call_count,2)
+            ledger.handoff.assert_called_once();self.assertFalse(result['case_attempted'])
+            self.assertTrue(result['explicit_start_still_required'])
+            self.assertTrue((root/'handoff/handoff-proof.json').is_file())
 
 if __name__=='__main__':unittest.main()

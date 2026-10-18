@@ -457,3 +457,17 @@ This repository's side of the contract, all implemented as of 2026-10-08:
 A change that breaks any item above breaks every installed server on upgrade;
 raise it with the installer owners first. Installer code stays in its own
 repository (`Implementation_Status.md`).
+
+### Bounded permission batch handoff
+
+The supported supervised permission lane is limited to TC-SS-04, TC-ACC-09 and
+TC-NCPA-08 in one fixed serial batch. Each case needs its own source-bound card,
+private evidence and fresh verification; results persist before the next case.
+Any non-PASS stops remaining work. This does not enable generic unattended QA.
+After the accepted pilot/recovery queue, `qa_pilot.py handoff` requires a separate
+exact expiring review plus accepted prior items/terminal custody and independently
+fresh absence/baseline proof. It archives exact ledger bytes and appends the new
+queue hash, preserving original attempts, recovery archives and budgets. It grants
+no case start. Missing archives, unfinished prior cases, old accepted IDs in an
+untested scope or changed review reject. See
+[the concrete permission batch review](../docs/qa/Next_Permission_Batch_Review.md).
