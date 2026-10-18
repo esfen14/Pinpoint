@@ -1,7 +1,7 @@
 type PageHeaderProps = {
   title: string
   highlight?: string
-  description?: string
+  description: string
 }
 
 export function PageHeader({ title, highlight, description }: PageHeaderProps) {
@@ -13,7 +13,7 @@ export function PageHeader({ title, highlight, description }: PageHeaderProps) {
           <span className="ml-2 font-bold text-emerald-600">{highlight}</span>
         )}
       </h1>
-      {description && <p className="mt-1 text-base font-light text-[var(--text-muted)]">{description}</p>}
+      <p className="mt-1 text-base font-light text-[var(--text-muted)]">{description}</p>
     </header>
   )
 }

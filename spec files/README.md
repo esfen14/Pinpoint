@@ -19,7 +19,6 @@ This directory is the authoritative documentation set for Pinpoint. The root
 | [`Display_Requirements.md`](Display_Requirements.md) | Normative Dashboard, Network Health, and alert-acknowledgement behavior and API shapes |
 | [`Alerts_Notifications_History_Requirements.md`](Alerts_Notifications_History_Requirements.md) | Normative Alerts and Notifications History page behavior |
 | [`Device_Inventory_Requirements.md`](Device_Inventory_Requirements.md) | Normative Device Inventory behavior: a device's ports and why each is or is not monitored, pin/hold/ignore actions, the monitoring-state label, pause/resume, identity review/manual merge, and manual multiple-parent relationships with the supported topology view, with acceptance criteria |
-| [`Reports_Requirements.md`](Reports_Requirements.md) | Normative Reports page behavior: applied-query model, availability detail and timeline, Alerts/Notifications filters, Alert Summary, Alert Histogram, bounds, accessibility and exports |
 | [`Plugins_List.md`](Plugins_List.md) | Nagios Plugins 2.4.12 capability, argument, output, and performance-data reference |
 | [Module-based black-box cases](../docs/qa/Pinpoint%20-%20Black-Box%20Test%20Cases%20by%20Module%20with%20Traceability%20Matrix.md) and [derived status](../docs/qa/QA_Case_Status.md) | Current cases, requirement mappings, original human results and result conflicts; new executions remain in attributable run reports |
 

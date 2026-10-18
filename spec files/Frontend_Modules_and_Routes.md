@@ -89,7 +89,7 @@ When adding a page:
 | `components/ncpa-deployment/` | NCPA device table, deploy wizard, `CleanupDialog` for trusted failed devices with ephemeral credentials and per-step results, run banner, history table, run drawer, outcome badges and the header bell item |
 | `components/plugins/` | Older installed/available plugin table components; do not assume these drive the current page |
 | `components/remediation/` | `StatusPanel` (the health of the consumer, a stalled banner and the kill switch), `ActionsTable` (the actions with their enable switch and a "Paused by the kill switch" note), `ActionFormDialog` (add and edit, including the Run when acknowledged option, per-field server errors, reload prompt on 409), `RunLog` (filters, table with the Operator column, pagination) and `RunDrawer` (one run with its output and notification details). `components/system-status/ServiceStatusTable` shows a last-recovery badge under a service name (Auto-recovered, Recovery failed, Recovery limited, Recovery skipped) that links to the run; the data comes from `hooks/useLastRecoveries`, which only calls `/api/system/remediation/last-runs` for a user with `remediation.view` and stays silent when the call fails. Data comes from `lib/remediationApi.ts` and `types/remediation.ts` |
-| `components/reports/` | Host availability and network-services tables (Details actions, stale-run state, export context); `ExtraReports.tsx` supplies Hosts by OS, Device Services, Alerts and Notifications; `AvailabilityDetailDrawer.tsx` (state durations, coverage, timeline and interval table); `AlertAnalysisReports.tsx` (Alert Summary and Alert Histogram); `ReportNotes.tsx` (the "About this report" text below each table); `lib/reportFormat.ts` (durations, state colours, export context); `hooks/useDialogFocus.ts` (Escape, focus trap and focus return) |
+| `components/reports/` | Host availability and network-services tables; `ExtraReports.tsx` supplies Hosts by OS, Device Services, Alerts and Notifications |
 | `components/manage-accounts/` | Account management table/UI |
 | `components/settings/` | General, security, and system settings controls; the Network Discovery tab edits networks, scan ports and one Port → Service table per protocol (NCPA's port fixed, each entry showing the check it leads to); the Plugins tab (`PluginSettings`) shows one editable table per installed plugin: SNMP OIDs (description, OID) once `check_snmp` is installed and NCPA metrics (description, metric path, optional warning, critical, units, query args) once `check_ncpa` is installed. The NCPA table also offers Add process check: exact process name (24 safe characters) and expected count (0–1000000) produce a reviewable `processes` row with `name=<name>` query args and inclusive count thresholds; invalid names/counts and duplicate descriptions show an error, and the existing Save action persists the row. Help explains swap, editable sda disk-rate defaults, skipped paths and the load-average limitation. Cells edit in place, Add appends an empty row, rows can be removed, Reset restores the `config.py` defaults; each table warns when its plugin is not Enabled/Active and that a new or renamed description starts a new Nagios service; the Email tab (`EmailSettings`) edits the Gmail account notification mail uses: a locked Gmail preset (`smtp.gmail.com`, 587, STARTTLS), the Gmail address, a sender that follows it (warning when changed, because Gmail rewrites From), an "App password" field (`xxxx xxxx xxxx xxxx`, sent exactly as typed, write-only, blank keeps the saved one) with help text and a new-tab link to `https://myaccount.google.com/apppasswords`, and a "Send test email" card that shows a plain-language message for each failure (rejected login, blocked port, unknown host) with a technical explanation and the server's own response under "Details" |
 | `components/layout/` | Authenticated application shell and global session/access behavior |
@@ -334,17 +334,14 @@ and local unit forms, and real read-only permissions. See
 
 ## Reports
 
-`pages/ReportsPage.tsx` exposes six views plus the Alert Summary and Alert Histogram
-analysis views, chosen on one row of tabs, those with summary cards first (Host Availability, Network Services, Alerts, Alert Summary, Notifications) then Hosts by OS, Device Services and Alert Histogram (period, Filters button and Run Report sit on a single row below; Host, Service and the other narrowing filters open from **Filters**),
-all requiring `system.report` in both the page guard and the server routes in
-`app/api/system/report.py`. The behavior contract (draft/applied query, scope,
-drawer, analysis, exports) is [Reports Requirements](Reports_Requirements.md).
+`pages/ReportsPage.tsx` exposes six views, all requiring `system.report` in
+both the page guard and the server routes in `app/api/system/report.py`.
 Pinpoint shows measured uptime; availability targets, breach comparisons and
 scheduled or recurring emailed reports are outside the supported scope.
 
 | View | API route (GET) | Displayed data |
 |---|---|---|
-| Host Availability | `/api/system/report/availability` | Hostname, state, uptime %, Up / Down / Unreachable / Known time (seconds), last check and last state change; summary cards show total hosts, Up, Down / Unreachable and overall uptime |
+| Host Availability | `/api/system/report/availability` | Hostname, state, uptime %, Snapshots (legacy label for known-state seconds), last check and last state change; summary cards show total hosts, Up, Down / Unreachable and overall uptime |
 | Network Services | `/api/system/report/network-services` | One row per service name: instance count, Current OK / Warning / Critical / Unknown / Pending / Unavailable counts, recorded-time availability %, recorded and missing seconds; summary cards show service and instance totals, OK, Warning / Critical and overall uptime |
 | Hosts by OS | `/api/system/report/hosts-by-os` | Flattened host rows with OS, hostname, state, uptime %, last check and last state change; no summary cards |
 | Device Services | `/api/system/report/device-services` | One row per host/service pair: hostname, service, current state, recorded-time availability %, recorded/missing seconds with no-data/engine-down/unaccounted components, observation time, current last check and state change; no summary cards |
@@ -372,11 +369,9 @@ validates periods and dates. Service custom dates use the next midnight after
 the inclusive end date as an exclusive boundary. Service reports stop at the
 last completed second, and show exact offset-bearing bounds through display
 preferences. They explain server-local date interpretation and current-status
-observation time, including for a past period. Period, custom-date, Host, Service and Filters controls
-edit a draft query only (#199): **Run Report** applies it atomically, and until
-then the page shows "Changes not applied" while results and exports keep the last
-applied query. Controls a view cannot honour are disabled; a failed run marks old rows stale and withholds export. Changing the view loads that view with the applied query. An
-incomplete custom range is not applied. Host Availability and Network Services load in `ReportsPage`;
+observation time, including for a past period. Changing a view or period loads its report; after
+editing custom dates, **Run Report** loads the chosen range. It also reruns the
+current report. Host Availability and Network Services load in `ReportsPage`;
 the other four load in `ExtraReports` on view change or a changed run key.
 Tables have loading and empty states, and request errors appear above them.
 Service reruns clear old data before loading and hide export until a successful
@@ -403,15 +398,16 @@ time zone. No report period metadata or summary cards are included in exports.
 
 | View | Filename stem | Export columns |
 |---|---|---|
-| Host Availability | `host-availability-report` | Hostname, State, Uptime %, Up (seconds), Down (seconds), Unreachable (seconds), Known time (seconds), Last Check, Last State Change |
+| Host Availability | `host-availability-report` | Hostname, State, Uptime %, Total Snapshots, Last Check, Last State Change |
 | Network Services | `network-services-report` | Service, Current status observed at, Total Instances, Current OK/Warning/Critical/Unknown/Pending/Unavailable, Availability during recorded time %, Recorded time (seconds), No recorded data (seconds), Nagios no data (seconds), Engine not running (seconds), Unaccounted time (seconds) |
 | Hosts by OS | `hosts-by-os-report` | OS, Hostname, State, Uptime %, Last Check, Last State Change |
 | Device Services | `device-services-report` | Hostname, Service, Current state, Availability during recorded time %, Recorded time (seconds), No recorded data (seconds), Nagios no data (seconds), Engine not running (seconds), Unaccounted time (seconds), Current status observed at, Current last check, Current last state change |
 | Alerts | `alerts-report` | Time, Hostname, Service, Previous State, New State, Output |
 | Notifications | `notifications-report` | Time, Hostname, Service, State, Contact, Message |
 
-Host Availability shows and exports explicit Nagios duration seconds; no snapshot
-count or label remains (#199). Export logging posts to `/api/system/exportlog`;
+Host Availability retains `Snapshots` on screen and `Total Snapshots` in exports, but its
+API `total_snapshots` value is known-state duration in seconds from Nagios,
+not a polling snapshot count. Export logging posts to `/api/system/exportlog`;
 a logging failure does not prevent the download.
 
 Service-report browser comparison is opt-in: Playwright project `issue-198-live`,
