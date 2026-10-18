@@ -29,9 +29,9 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 Write the whole plan first. Precedent: `server/app/nagios/service_availability.py` already reads one archive plus at most one bulk status list and joins by full identity, with an explicit notice if current status fails ("no snapshot or live-status fallback" in Reports_Requirements §5 means no substitute for failed history; a bulk current-status read is the spec's own pattern for the service reports).
 
-1. [ ] Tests first (red): `server/tests/unit/test_report_availability.py` and a new `server/tests/unit/test_host_current_status.py`: status join, ISO timestamps, summary counts, unavailable status notice with null state, pending host, monitored-only filter, hosts-by-os state.
-2. [ ] New `server/app/nagios/host_current_status.py`: normalize one bulk `hostlist` read (details, enumerate) to `{host: {state, last_check, last_state_change}}`, reusing `request_cgi` and `AvailabilityError` from `service_availability.py`.
-3. [ ] `server/app/api/system/report.py`: join current status into `/report/availability` and `/report/hosts-by-os` rows, add `current_status` {available, observed_at, notice}, and keep only hosts of monitored devices in `/report/availability` (via `monitoring_state`, `devices_by_host_name`).
+1. [x] Tests first (red): `server/tests/unit/test_report_availability.py` and a new `server/tests/unit/test_host_current_status.py`: status join, ISO timestamps, summary counts, unavailable status notice with null state, pending host, monitored-only filter, hosts-by-os state.
+2. [x] New `server/app/nagios/host_current_status.py`: normalize one bulk `hostlist` read (details, enumerate) to `{host: {state, last_check, last_state_change}}`, reusing `request_cgi` and `AvailabilityError` from `service_availability.py`.
+3. [x] `server/app/api/system/report.py`: join current status into `/report/availability` and `/report/hosts-by-os` rows, add `current_status` {available, observed_at, notice}, and keep only hosts of monitored devices in `/report/availability` (via `monitoring_state`, `devices_by_host_name`).
 4. [ ] Frontend: `client/src/components/reports/HostAvailabilityReportTable.tsx`, `client/src/types` and `ReportsPage.tsx`: show the notice when current status is unavailable, show state `—` for null; extend vitest tests.
 5. [ ] Specs: `spec files/Backend_Modules_and_Routes.md`, `Frontend_Modules_and_Routes.md`, `Reports_Requirements.md` §3, `Implementation_Status.md`, `docs/manuals/Reports.md`.
 6. [ ] `scripts/verify.sh backend`, `frontend`, `docs`, then `all`.
@@ -43,13 +43,16 @@ One row per loop round, newest last.
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 0 | Plan written; branch from origin/main 138d3a30; baseline `pytest tests/unit/test_report_availability.py` | pytest | 7 passed |
+| 1 | Tests first: `test_host_current_status.py` (new) and new classes in `test_report_availability.py`; existing tests now seed monitored devices | pytest | red: module `host_current_status` missing |
+| 2 | New `app/nagios/host_current_status.py` (bulk `hostlist` read, join context) | `pytest tests/unit/test_host_current_status.py` | 12 passed |
+| 3 | `report.py`: join status into availability and hosts-by-os, `current_status` context, monitored-only rows | report test files | 22 new tests pass; the same 9 `time.tzset` failures (Windows) as on clean main, none new |
 
 ## State for the next session
 
-- Last check run (exact command): `cd server && python -m pytest tests/unit/test_report_availability.py -q`
-- Result (first failing lines, or "green"): green (7 passed, baseline)
-- Hypothesis: `_availability_host` reads `state`, `last_check`, `last_state_change` from the archive availability row, which does not carry them; existing tests hid this by putting `"state": "UP"` in mocked rows.
-- Next action: write the failing tests of plan step 1.
+- Last check run (exact command): `cd server && python -m pytest tests/unit/test_report_availability.py tests/unit/test_host_current_status.py tests/unit/test_report_events.py tests/unit/test_report_notifications_alerts.py tests/unit/test_report_service_availability.py -q`
+- Result (first failing lines, or "green"): 147 passed, 9 failed; the 9 are `AttributeError: module 'time' has no attribute 'tzset'` in `test_report_service_availability.py` and fail the same on clean main (Windows only). No new failures.
+- Hypothesis: backend done. Frontend still reads `state` and `last_check` from the row, so it should already show them; needs the `current_status` notice and null-state text.
+- Next action: plan step 4. Read `client/src/components/reports/HostAvailabilityReportTable.tsx`, the Reports types and `ReportsPage.tsx`; write the failing vitest first.
 
 ## Decisions and notes
 
@@ -57,3 +60,4 @@ One row per loop round, newest last.
 - Rows: only hosts of currently monitored devices (lab owner's choice). Consequence to document: a host that was monitored earlier in the period but is paused, retired or removed now is not listed.
 - Hosts by OS shares the state/last-check join (same root cause) but keeps its own row set; filtering its rows is not in this issue.
 - Live verification on the lab is out of scope here (needs a person to deploy).
+- Backend test environment: this Windows machine fails 9 service-report tests on `time.tzset` with or without this change; CI (Linux) is the real gate. A `python3` shim is needed for `scripts/*.sh`.

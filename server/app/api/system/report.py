@@ -66,7 +66,9 @@ from app.api.helper import get_range_custom, success, error
 from app.api.helper.database_access.permissions import require_permission
 from app.history_models import HostStatus
 from app.nagios import report_events
+from app.nagios.host_current_status import read_current_hosts
 from app.nagios.service_availability import AvailabilityError, read_service_report, summarize
+from app.network_discovery.device_identity import devices_by_host_name, monitoring_state
 from app.system_models import NetworkDiscovery
 from app.nagios.notifications import (
     request_alerts_range,
@@ -189,29 +191,52 @@ def _availability_rows(start_ts, end_ts, hostname=None):
 
 
 def _availability_host(row):
-    """Normalize one Nagios availability row to the existing report shape."""
+    """Normalize one Nagios archive availability row to the report row shape.
+
+    The archive row carries durations only. State, last check and last state change
+    are joined from one bulk current-status read by _attach_current_status().
+    """
     hostname = row.get("hostname") or row.get("host_name") or row.get("name") or ""
     up = float(row.get("time_up") or 0)
     down = float(row.get("time_down") or 0)
     unreachable = float(row.get("time_unreachable") or 0)
     known = up + down + unreachable
-    state = row.get("state") or row.get("current_state") or row.get("status")
-    if isinstance(state, int):
-        state = {0: "Up", 1: "Down", 2: "Down", 4: "Unreachable"}.get(state, "Unknown")
-    state = str(state or "Unknown").replace("UP", "Up").replace("DOWN", "Down").replace("UNREACHABLE", "Unreachable")
     return {
         "hostname": hostname,
-        "state": state,
+        "state": None,
         "uptime_pct": round(up / known * 100, 2) if known else None,
         "up_seconds": int(up),
         "down_seconds": int(down),
         "unreachable_seconds": int(unreachable),
         "known_seconds": int(known),
-        "last_check": row.get("last_check"),
-        "last_state_change": row.get("last_state_change"),
+        "last_check": None,
+        "last_state_change": None,
         "_up": up,
         "_known": known,
     }
+
+
+def _monitored_host_names():
+    """Nagios host names of the devices Nagios is checking now (monitoring state "monitored")."""
+    return {
+        name for name, device in devices_by_host_name().items()
+        if monitoring_state(device) == "monitored"
+    }
+
+
+def _attach_current_status(host_rows):
+    """Join one bulk current-status read into the rows and return its context.
+
+    A host with no status entry, or any host when the read fails, keeps a null state
+    and null times; nothing is guessed. The context says whether status was available.
+    """
+    current, context = read_current_hosts()
+    for host in host_rows:
+        status = current.get(host["hostname"])
+        host["state"] = status["state"] if status else None
+        host["last_check"] = status["last_check"] if status else None
+        host["last_state_change"] = status["last_state_change"] if status else None
+    return context
 
 
 def _clean_availability_host(host):
@@ -230,9 +255,13 @@ def report_host_availability():
     """
     Host availability within the selected period.
 
-    For each host, reads Nagios archive durations and computes UP seconds /
-    known host-state seconds. Missing state/check metadata remains unknown/null.
-    Durations are explicit seconds; no snapshot-count field exists.
+    For each monitored host, reads Nagios archive durations and computes UP seconds /
+    known host-state seconds. State, last check and last state change come from one
+    bulk current-status read joined by Nagios host name; if that read fails, or a host
+    has no entry, they stay null and "current_status" says so. Only hosts of devices
+    that are monitored now are listed (not Missing, paused, retired or merged devices,
+    and not Nagios's own localhost). Durations are explicit seconds; no snapshot-count
+    field exists.
 
     Response shape:
     {
@@ -241,10 +270,11 @@ def report_host_availability():
             "total": n, "up": n, "down": n, "unreachable": n,
             "uptime_pct": 99.5
         },
+        "current_status": { "available": true, "observed_at": "ISO-8601 | null", "notice": "text | null" },
         "hosts": [
             {
                 "hostname":          "...",
-                "state":             "Up|Down|Unreachable",
+                "state":             "Up|Down|Unreachable|Pending|null",
                 "uptime_pct":        99.5,
                 "up_seconds":          n,
                 "down_seconds":        n,
@@ -273,6 +303,9 @@ def report_host_availability():
         ]
         if hostname:
             host_rows = [host for host in host_rows if host["hostname"] == hostname]
+        monitored = _monitored_host_names()
+        host_rows = [host for host in host_rows if host["hostname"] in monitored]
+        current_status = _attach_current_status(host_rows)
         hosts = [_clean_availability_host(host) for host in sorted(host_rows, key=lambda item: item["hostname"])]
         state_counts = Counter(host["state"] for host in hosts)
         total_known = sum(host["_known"] for host in host_rows)
@@ -288,6 +321,7 @@ def report_host_availability():
                 "unreachable": state_counts.get("Unreachable", 0),
                 "uptime_pct":  overall_uptime,
             },
+            "current_status": current_status,
             "hosts": hosts,
         })
 
@@ -318,7 +352,9 @@ def report_hosts_by_os():
 
     Uptime % per group = UP seconds / known host-state seconds * 100.
     Only hosts returned by Nagios are included, with OS from NetworkDiscovery
-    or "Unknown". No database snapshot fallback is used.
+    or "Unknown". State, last check and last state change are joined from one bulk
+    current-status read (see /report/availability). No database snapshot fallback
+    is used.
 
     Response shape:
     {
@@ -339,7 +375,7 @@ def report_hosts_by_os():
                 "hosts": [
                     {
                         "hostname":          "...",
-                        "state":             "Up|Down|Unreachable|No Data",
+                        "state":             "Up|Down|Unreachable|Pending|null",
                         "uptime_pct":        99.5,
                         "last_check":        "ISO-8601 | null",
                         "last_state_change": "ISO-8601 | null"
@@ -366,6 +402,7 @@ def report_hosts_by_os():
         ]
         if hostname:
             host_rows = [host for host in host_rows if host["hostname"] == hostname]
+        current_status = _attach_current_status(host_rows)
         nd_rows = db.session.execute(
             sa.select(NetworkDiscovery.Nagios_Host_Name, NetworkDiscovery.Hostname, NetworkDiscovery.OS_Type)
         ).all()
@@ -403,6 +440,7 @@ def report_hosts_by_os():
                 "unreachable": sum(group["unreachable"] for group in groups),
                 "uptime_pct": round(total_up / total_known * 100, 2) if total_known else None,
             },
+            "current_status": current_status,
             "by_os": groups,
         })
 
