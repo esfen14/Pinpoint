@@ -6,7 +6,7 @@ Catalog results include human manual confirmations and report-attributed outcome
 E2E without a detailed Result field is pending/unrecorded, not proof it was never attempted.
 Accepted evidence and new execution totals must be reported separately.
 
-Source SHA-256: `61c352f34706d0e2f03966b45a6a9158130201ebeacbe4f138b1af78b3519758`.
+Source SHA-256: `2060387c8749ef93b1e63b79980055388b61289b45886b474feaf0e95cbd217c`.
 Cases: 231 TC plus 8 E2E.
 Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 
@@ -47,7 +47,7 @@ Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 | TC-SS-04 | SS / 3 | PASS | PASS | pass | No reviewed mapping |
 | TC-HIS-01 | HIS / 3 | PASS | PASS | pass | No reviewed mapping |
 | TC-PLG-07 | PLG / 3 | PASS | PASS | pass | No reviewed mapping |
-| TC-NCPA-08 | NCPA / 3 | Not run | Not run | untested | No reviewed mapping |
+| TC-NCPA-08 | NCPA / 3 | PASS | Not run | needs-decision | No reviewed mapping |
 | TC-RPT-07 | RPT / 3 | PASS | PASS | pass | No reviewed mapping |
 | TC-LOG-05 | LOG / 3 | PASS | PASS | pass | No reviewed mapping |
 | TC-SHL-06 | SHL / 3 | PASS | Not run | needs-decision | No reviewed mapping |
@@ -154,16 +154,16 @@ Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 | TC-MNT-07 | MNT / 8 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-122-maintenance-windows/REPORT.md) |
 | TC-MNT-09 | MNT / 8 | PASS | PASS | pass | No reviewed mapping |
 | TC-MNT-10 | MNT / 8 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-122-maintenance-windows/REPORT.md) |
-| TC-NCPA-01 | NCPA / 9 | Not run | Not run | untested | No reviewed mapping |
-| TC-NCPA-02 | NCPA / 9 | Not run | Not run | untested | No reviewed mapping |
-| TC-NCPA-03 | NCPA / 9 | Not run | Not run | untested | No reviewed mapping |
-| TC-NCPA-04 | NCPA / 9 | Not run | Not run | untested | No reviewed mapping |
-| TC-NCPA-05 | NCPA / 9 | Not run | Not run | untested | No reviewed mapping |
-| TC-NCPA-06 | NCPA / 9 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-15-issue-129-finish-journeys/REPORT.md) |
-| TC-NCPA-07 | NCPA / 9 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-17-issue-182-playwright/REPORT.md) |
-| TC-NCPA-09 | NCPA / 9 | Not run | Not run | untested | partial historical coverage: [source report](../test-runs/2026-10-17-issue-182-playwright/REPORT.md) |
-| TC-NCPA-10 | NCPA / 9 | Not run | Not run | untested | partial historical coverage: [source report](../test-runs/2026-10-17-issue-182-playwright/REPORT.md) |
-| TC-NCPA-11 | NCPA / 9 | Not run | Not run | untested | partial historical coverage: [source report](../test-runs/2026-10-17-issue-182-playwright/REPORT.md) |
+| TC-NCPA-01 | NCPA / 9 | PASS | Not run | needs-decision | No reviewed mapping |
+| TC-NCPA-02 | NCPA / 9 | PASS | Not run | needs-decision | No reviewed mapping |
+| TC-NCPA-03 | NCPA / 9 | PASS | Not run | needs-decision | No reviewed mapping |
+| TC-NCPA-04 | NCPA / 9 | PASS | Not run | needs-decision | No reviewed mapping |
+| TC-NCPA-05 | NCPA / 9 | PASS | Not run | needs-decision | No reviewed mapping |
+| TC-NCPA-06 | NCPA / 9 | PASS | Not run | needs-decision | retest required: [source report](../test-runs/2026-10-15-issue-129-finish-journeys/REPORT.md) |
+| TC-NCPA-07 | NCPA / 9 | PASS | Not run | needs-decision | retest required: [source report](../test-runs/2026-10-17-issue-182-playwright/REPORT.md) |
+| TC-NCPA-09 | NCPA / 9 | PASS | Not run | needs-decision | partial historical coverage: [source report](../test-runs/2026-10-17-issue-182-playwright/REPORT.md) |
+| TC-NCPA-10 | NCPA / 9 | PASS | Not run | needs-decision | partial historical coverage: [source report](../test-runs/2026-10-17-issue-182-playwright/REPORT.md) |
+| TC-NCPA-11 | NCPA / 9 | PASS | Not run | needs-decision | partial historical coverage: [source report](../test-runs/2026-10-17-issue-182-playwright/REPORT.md) |
 | TC-DI-10 | DI / 9 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-129-finish-journeys/REPORT.md) |
 | TC-DASH-09 | DASH / 9 | PASS | PASS | pass | No reviewed mapping |
 | TC-SS-05 | SS / 9 | PASS | PASS | pass | No reviewed mapping |
