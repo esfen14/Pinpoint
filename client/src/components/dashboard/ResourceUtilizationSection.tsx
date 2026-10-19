@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown, MoreHorizontal } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import type { TrendPoint } from '../../types/dashboard'
 import { TREND_HOURS_OPTIONS, type TrendHours } from '../../utils/trendHours'
@@ -61,9 +61,6 @@ export function ResourceUtilizationSection({ cpuTrend, isLoading, hours, onHours
               </div>
             )}
           </div>
-          <button type="button" className="rounded-xl bg-[var(--card-alt)] p-2 text-[var(--text-muted)] hover:bg-[var(--hover)]" aria-label="More options">
-            <MoreHorizontal className="h-4 w-4" />
-          </button>
         </div>
       </div>
       <div className="h-96 w-full min-w-0">

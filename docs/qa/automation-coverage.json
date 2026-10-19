@@ -1234,9 +1234,9 @@
         "client/qa/module-selection.mjs": "5b648a29d597eb7ecdf3e7ea38f2a44560c5f7a2c1259e8041a503c3c4f4d99e",
         "client/src/pages/DashboardPage.tsx": "b8038c7177a2e498c4feb115a0665406969f290d8f9236ac2e67e154b8da8a40",
         "client/src/components/shared/SummaryStatCard.tsx": "2da439e5d5684c62af52f3f84816d68085d6aa32663cdbaea6d256782fb11f66",
-        "client/src/components/dashboard/NetworkPerformanceSection.tsx": "152dfed49ef2b1a45e354b2aa7314a95c9de9c83cc60823a9e1421d0e5349b3f",
+        "client/src/components/dashboard/NetworkPerformanceSection.tsx": "d67af2c66ca5bd710ab9c3aec62feb52b3d4b2e99b242533dea046658226525b",
         "client/src/components/dashboard/MetricCard.tsx": "a414ba058ac82dd32427f9cd02dc974c407a95c21703ac3ae230942afd9955d3",
-        "client/src/components/dashboard/ResourceUtilizationSection.tsx": "a7ce05dd37a06c8ab76d7c931cbd23c669f14bd853705ba07eb88810b8c0ba69",
+        "client/src/components/dashboard/ResourceUtilizationSection.tsx": "6add9991307a661a4d32336e6460fb3226fb8232c1c590eeaa8248b8af3f0466",
         "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
         "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
         "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
@@ -3259,5 +3259,15 @@
     "reviewed_at": "2026-10-19",
     "compared_catalog_revision": "4b6063d797bc5166887de60e05b6be8a3d2ed682",
     "decision": "Compared the catalog against the base revision: titles, priorities, requirements, steps, expected items and dependencies are unchanged. Only recorded Result fields, Recorded run and Finding links changed: TC-SHL-01 to 10 and TC-NFR-01 to 05 and 10 detail lines aligned to their PASS summaries; TC-NFR-09 and 11 PASS; TC-NFR-06 FAIL (Overview has no Retry, issue #245); TC-NFR-07 keeps its FAIL verdict with a tester-reported retest PASS noted (issue #220); TC-NFR-08 keeps its FAIL verdict with a tester-reported retest PASS noted (issue #221); TC-DX-06 FAIL with issue #244. All results are tester-reported, human manual. Refresh bindings; retain adapter claims and historical compatibility/cutoff decisions. This adds no execution or historical acceptance."
+  "source_change_review_issue_247": {
+    "reviewed_by": "Claude source review of issue #247, requested by the tester",
+    "reviewed_at": "2026-10-19",
+    "refreshed_sources": {
+      "TC-DASH-07": [
+        "client/src/components/dashboard/NetworkPerformanceSection.tsx",
+        "client/src/components/dashboard/ResourceUtilizationSection.tsx"
+      ]
+    },
+    "decision": "Issue #247 removed the unused 'More options' button and its MoreHorizontal import from the Overview cards. The TC-DASH-07 adapter navigates to the Network Performance card with heading.locator('..').locator('..'), which is unchanged (the heading's parent is still the header row and its parent the card), and it only asserts 'No data' text and the absence of the Average Resource Utilization heading. The assertions and expected-item markers are unchanged, so only the source hashes are refreshed. This is a source review, not runtime acceptance, and adds no execution or historical acceptance."
   }
 }
