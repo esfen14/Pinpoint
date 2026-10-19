@@ -3031,7 +3031,7 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 | TC-DX-03 | Save and reset check options | DX-03 | ST | H | PASS |
 | TC-DX-04 | Check options are read-only without edit permission | DX-04 | DT | M | PASS |
 | TC-DX-05 | Fields depend on the service | DX-02 | EP | L | PASS |
-| TC-DX-06 | SNMP section | DX-05 | DT | H | PARTIALLY PASS |
+| TC-DX-06 | SNMP section | DX-05 | DT | H | FAIL |
 | TC-DX-07 | Interfaces section | DX-06 | DT | M | PASS |
 | TC-DX-08 | Who sees the alert recipients | DX-07 | DT | M | Not run |
 | TC-DX-09 | Default recipients and ineligible users | DX-07 | EG | M | Not run |
@@ -3109,7 +3109,7 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-DX-06 – SNMP section
 
-**Requirement:** REQ-DX-05 · **Technique:** DT · **Priority:** H · **Result:** PARTIALLY PASS (messages accurate; SNMP section disappears after Save, Test and Reset until refresh)
+**Requirement:** REQ-DX-05 · **Technique:** DT · **Priority:** H · **Result:** FAIL (messages accurate; SNMP section disappears after Save, Test and Reset until refresh; [#244](https://github.com/esfen14/Pinpoint/issues/244))
 
 **Recorded run:** [report](../test-runs/2026-10-19-module-19-device-extras/REPORT.md)
 
@@ -3205,7 +3205,9 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-SHL-01 – Create an escalation
 
-**Requirement:** REQ-SHL-01 · **Technique:** EP · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-SHL-01 · **Technique:** EP · **Priority:** M · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-20-21-records/REPORT.md)
 
 **Steps**
 
@@ -3219,7 +3221,9 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-SHL-02 – Invalid escalations are refused
 
-**Requirement:** REQ-SHL-02 · **Technique:** DT · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-SHL-02 · **Technique:** DT · **Priority:** H · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-20-21-records/REPORT.md)
 
 **Steps**
 
@@ -3235,7 +3239,9 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-SHL-03 – Delete an escalation
 
-**Requirement:** REQ-SHL-03 · **Technique:** ST · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-SHL-03 · **Technique:** ST · **Priority:** M · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-20-21-records/REPORT.md)
 
 **Steps**
 
@@ -3250,7 +3256,9 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-SHL-04 – The strong-password policy
 
-**Requirement:** REQ-SHL-04 · **Technique:** DT · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-SHL-04 · **Technique:** DT · **Priority:** H · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-20-21-records/REPORT.md)
 
 **Steps**
 
@@ -3266,7 +3274,9 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-SHL-05 – Appliance storage card
 
-**Requirement:** REQ-SHL-05 · **Technique:** EG · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-SHL-05 · **Technique:** EG · **Priority:** M · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-20-21-records/REPORT.md)
 
 **Steps**
 
@@ -3282,7 +3292,9 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-SHL-06 – Storage card permission
 
-**Requirement:** REQ-SHL-05 · **Technique:** DT · **Priority:** L · **Result:** Not run
+**Requirement:** REQ-SHL-05 · **Technique:** DT · **Priority:** L · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-20-21-records/REPORT.md)
 
 **Steps**
 
@@ -3296,7 +3308,9 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-SHL-07 – Notification bell
 
-**Requirement:** REQ-SHL-06 · **Technique:** ST · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-SHL-06 · **Technique:** ST · **Priority:** M · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-20-21-records/REPORT.md)
 
 **Steps**
 
@@ -3313,7 +3327,9 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-SHL-08 – "Show notification bell in the header"
 
-**Requirement:** REQ-SHL-07 · **Technique:** DT · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-SHL-07 · **Technique:** DT · **Priority:** M · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-20-21-records/REPORT.md)
 
 **Steps**
 
@@ -3328,7 +3344,9 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-SHL-09 – Password request in the bell
 
-**Requirement:** REQ-SHL-08 · **Technique:** EP · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-SHL-08 · **Technique:** EP · **Priority:** M · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-20-21-records/REPORT.md)
 
 **Steps**
 
@@ -3342,7 +3360,9 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-SHL-10 – Sidebar follows permissions
 
-**Requirement:** REQ-SHL-09 · **Technique:** DT · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-SHL-09 · **Technique:** DT · **Priority:** H · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-20-21-records/REPORT.md)
 
 **Steps**
 
@@ -3365,16 +3385,18 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 | TC-NFR-03 | Script and SQL characters are plain text | NFR-02 | EG | H | PASS |
 | TC-NFR-04 | Light and dark mode | NFR-03 | EP | L | PASS |
 | TC-NFR-05 | Narrow width | NFR-03 | BVA | L | PASS |
-| TC-NFR-06 | Failure shows an error with Retry | NFR-04 | EG | H | Not run |
+| TC-NFR-06 | Failure shows an error with Retry | NFR-04 | EG | H | FAIL |
 | TC-NFR-07 | Start-up time | NFR-05 | BVA | M | FAIL - returns to login, other result is, data is showing but plaintext only without UI |
 | TC-NFR-08 | Availability for 10 hosts | NFR-06 | BVA | M | FAIL - returns to login, other result is, data is showing but plaintext only without UI |
-| TC-NFR-09 | Dashboard refresh time | NFR-07 | BVA | M | Not run |
+| TC-NFR-09 | Dashboard refresh time | NFR-07 | BVA | M | PASS |
 | TC-NFR-10 | An alert appears quickly | NFR-08 | BVA | M | PASS |
-| TC-NFR-11 | Four-hour stability run | NFR-09 | ST | L | Not run |
+| TC-NFR-11 | Four-hour stability run | NFR-09 | ST | L | PASS |
 
 #### TC-NFR-01 – API needs a session
 
-**Requirement:** REQ-NFR-01 · **Technique:** DT · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-NFR-01 · **Technique:** DT · **Priority:** H · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-20-21-records/REPORT.md)
 
 **Steps**
 
@@ -3387,7 +3409,9 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-NFR-02 – An ended session is refused
 
-**Requirement:** REQ-NFR-01 · **Technique:** EG · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-NFR-01 · **Technique:** EG · **Priority:** H · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-20-21-records/REPORT.md)
 
 **Steps**
 
@@ -3401,7 +3425,9 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-NFR-03 – Script and SQL characters are plain text
 
-**Requirement:** REQ-NFR-02 · **Technique:** EG · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-NFR-02 · **Technique:** EG · **Priority:** H · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-20-21-records/REPORT.md)
 
 **Steps**
 
@@ -3415,7 +3441,9 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-NFR-04 – Light and dark mode
 
-**Requirement:** REQ-NFR-03 · **Technique:** EP · **Priority:** L · **Result:** Not run
+**Requirement:** REQ-NFR-03 · **Technique:** EP · **Priority:** L · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-20-21-records/REPORT.md)
 
 **Steps**
 
@@ -3428,7 +3456,9 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-NFR-05 – Narrow width
 
-**Requirement:** REQ-NFR-03 · **Technique:** BVA · **Priority:** L · **Result:** Not run
+**Requirement:** REQ-NFR-03 · **Technique:** BVA · **Priority:** L · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-20-21-records/REPORT.md)
 
 **Steps**
 
@@ -3441,7 +3471,9 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-NFR-06 – Failure shows an error with Retry
 
-**Requirement:** REQ-NFR-04 · **Technique:** EG · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-NFR-04 · **Technique:** EG · **Priority:** H · **Result:** FAIL (Overview shows its load error with no Retry button; [#245](https://github.com/esfen14/Pinpoint/issues/245))
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-20-21-records/REPORT.md)
 
 **Steps**
 
@@ -3455,7 +3487,11 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-NFR-07 – Start-up time
 
-**Requirement:** REQ-NFR-05 · **Technique:** BVA · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-NFR-05 · **Technique:** BVA · **Priority:** M · **Result:** FAIL (initial run; later tester-reported retest PASS, no timings recorded)
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-20-21-records/REPORT.md)
+
+**Finding:** [#220](https://github.com/esfen14/Pinpoint/issues/220) (open; asks to clarify the conflicting results)
 
 **Steps**
 
@@ -3469,7 +3505,11 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-NFR-08 – Availability for 10 hosts
 
-**Requirement:** REQ-NFR-06 · **Technique:** BVA · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-NFR-06 · **Technique:** BVA · **Priority:** M · **Result:** FAIL (initial run; later tester-reported retest PASS, no timings recorded)
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-20-21-records/REPORT.md)
+
+**Finding:** [#221](https://github.com/esfen14/Pinpoint/issues/221) (open; asks to clarify the conflicting results)
 
 **Steps**
 
@@ -3481,7 +3521,9 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-NFR-09 – Dashboard refresh time
 
-**Requirement:** REQ-NFR-07 · **Technique:** BVA · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-NFR-07 · **Technique:** BVA · **Priority:** M · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-20-21-records/REPORT.md)
 
 **Steps**
 
@@ -3494,7 +3536,9 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-NFR-10 – An alert appears quickly
 
-**Requirement:** REQ-NFR-08 · **Technique:** BVA · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-NFR-08 · **Technique:** BVA · **Priority:** M · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-20-21-records/REPORT.md)
 
 **Steps**
 
@@ -3508,7 +3552,9 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-NFR-11 – Four-hour stability run
 
-**Requirement:** REQ-NFR-09 · **Technique:** ST · **Priority:** L · **Result:** Not run
+**Requirement:** REQ-NFR-09 · **Technique:** ST · **Priority:** L · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-20-21-records/REPORT.md)
 
 **Steps**
 
