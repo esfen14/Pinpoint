@@ -1,7 +1,10 @@
+import userEvent from '@testing-library/user-event'
 import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Outlet } from 'react-router-dom'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import App from '../App'
+
+vi.mock('../pages/SettingsPage', () => ({ SettingsPage: () => <div>Settings Page</div> }))
 
 vi.mock('../pages/wagpakielaman', () => ({ TopologyPage: () => <div>Topology Page</div> }))
 
@@ -69,20 +72,25 @@ describe('App routing', () => {
     renderApp('/login')
     expect(await screen.findByRole('alert')).toHaveTextContent('Unable to check your session')
     expect(screen.queryByText('Log In to your Account')).not.toBeInTheDocument()
-    screen.getByRole('button', { name: 'Try again' }).click()
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Try again' }))
     expect(await screen.findByText('Log In to your Account')).toBeInTheDocument()
   })
 
-  it('renders without crashing', () => {
+  it('renders without crashing', async () => {
     renderApp('/')
+    expect(await screen.findByText('Log In to your Account')).toBeInTheDocument()
   })
 
-  it('redirects / to /login', () => {
+  it('redirects / to /login', async () => {
     renderApp('/')
-    // The root "/" is nested under AdminLayout which redirects to /login
-    // AdminLayout is mocked, so Navigate inside it renders the login page redirect
-    // With the mock, AdminLayout renders a plain div — we just confirm no crash
-    expect(document.body).toBeTruthy()
+    expect(await screen.findByText('Log In to your Account')).toBeInTheDocument()
+  })
+
+  it('sends a signed-in account without page grants to settings', async () => {
+    vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify({ data: { permissions: [] } })))
+    renderApp('/login')
+    expect(await screen.findByText('Settings Page')).toBeInTheDocument()
+    expect(screen.queryByText('Log In to your Account')).not.toBeInTheDocument()
   })
 
   it('renders login page at /login route', async () => {

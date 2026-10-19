@@ -6,10 +6,10 @@ Status: in-progress
 ## Finish condition
 
 - [ ] Record manual role pair, tested build, before/after identity and sanitized evidence.
-- [ ] Guard authenticated `/login` access.
-- [ ] Reject existing-session login explicitly and document the contract.
-- [ ] Cover conflicting login identity and permissions with backend regressions.
-- [ ] Cover direct login navigation and conflicting response with frontend regressions.
+- [x] Guard authenticated `/login` access.
+- [x] Reject existing-session login explicitly and document the contract.
+- [x] Cover conflicting login identity and permissions with backend regressions.
+- [x] Cover direct login navigation and conflicting response with frontend regressions.
 - [ ] Manually verify signed-out login, logout then another login, and differing privileges.
 - [ ] Run verification gates and update session specifications.
 
@@ -26,8 +26,8 @@ Requirement coverage:
 
 ## Plan
 
-1. [ ] Add failing backend/session and frontend route/conflict tests in test_auth.py, App.test.tsx and LoginPage.test.tsx.
-2. [ ] Reject authenticated login with 409 in server/app/api/user/login.py; add LoginRoute.tsx session check and wire App.tsx.
+1. [x] Add failing backend/session and frontend route/conflict tests in test_auth.py, App.test.tsx and LoginPage.test.tsx.
+2. [x] Reject authenticated login with 409 in server/app/api/user/login.py; add LoginRoute.tsx session check and wire App.tsx.
 3. [ ] Update backend/frontend specifications and Implementation_Status.md; run focused tests and repository gates.
 4. [ ] Record manual appliance verification with differing roles if available; otherwise preserve the blocker in a draft PR.
 
@@ -35,6 +35,7 @@ Requirement coverage:
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| 2 | Implemented 409 rejection and LoginRoute; updated specifications | Focused pytest and Vitest | 11 backend and 23 frontend passed; frontend pre-fix 3 failed, 20 passed |
 | 1 | Added backend and frontend regressions | pytest tests/unit/test_auth.py -q | Expected red: 3 failed, 8 passed; API returns 200 instead of 409. Frontend dependency install pending |
 | Plan | Read issue and sources; chose explicit logout with 409 rejection | git status --short | Separate clean worktree; original NCPA changes preserved |
 
@@ -43,7 +44,7 @@ Requirement coverage:
 - Last check run (exact command): FLASK_DEBUG=1 python -m pytest tests/unit/test_auth.py -q
 - Result (first failing lines, or "green"): 3 failed, 8 passed; assert 200 == 409
 - Hypothesis: Reject all login attempts while authenticated before credential validation; check /me before exposing login form.
-- Next action: Finish frontend dependency installation, run route regressions, then implement the session guard and 409 rejection.
+- Next action: Run repository verification gates and record platform limitations, then prepare draft PR pending manual evidence.
 
 ## Decisions and notes
 
