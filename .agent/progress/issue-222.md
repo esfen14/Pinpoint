@@ -28,24 +28,26 @@ Requirement coverage:
 
 1. [x] Add failing backend/session and frontend route/conflict tests in test_auth.py, App.test.tsx and LoginPage.test.tsx.
 2. [x] Reject authenticated login with 409 in server/app/api/user/login.py; add LoginRoute.tsx session check and wire App.tsx.
-3. [ ] Update reviewed QA dependency fingerprints in automation-coverage.json and Automation_Readiness.md after source changes; update backend/frontend specifications and Implementation_Status.md; run focused tests and repository gates.
+3. [x] Update reviewed QA dependency fingerprints in automation-coverage.json and Automation_Readiness.md after source changes; update backend/frontend specifications and Implementation_Status.md; run focused tests and repository gates.
 4. [ ] Record manual appliance verification with differing roles if available; otherwise preserve the blocker in a draft PR.
 
 ## Round log
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
-| 2 | Implemented 409 rejection and LoginRoute; updated specifications | Focused pytest and Vitest | 11 backend and 23 frontend passed; frontend pre-fix 3 failed, 20 passed |
-| 1 | Added backend and frontend regressions | pytest tests/unit/test_auth.py -q | Expected red: 3 failed, 8 passed; API returns 200 instead of 409. Frontend dependency install pending |
-| 3 | Ran repository gates and full frontend unit suite; requested manual evidence | verify.sh all, backend, frontend; npm test | Full gate blocked by Windows catalog decoding; direct UTF-8 traceability passes. Frontend QA gate: 14 failed, 4 passed (Unix directory custody). Frontend unit suite: 1035 passed. Backend/build/lint pending |
-| Plan | Read issue and sources; chose explicit logout with 409 rejection | git status --short | Separate clean worktree; original NCPA changes preserved |
+| Plan | Reviewed issue and sources; chose explicit sign-out | git status --short | Separate worktree preserves original NCPA work |
+| 1 | Added failing backend/frontend regressions | pytest test_auth.py; focused Vitest | Expected red: backend 3 failed/8 passed, frontend 3 failed/20 passed |
+| 2 | Implemented 409 and login route guard; updated specifications | Focused pytest and Vitest | 11 backend and 23 frontend passed |
+| 3 | Ran full gates and requested manual evidence | verify.sh all/backend/frontend; npm test/build/lint | Windows catalog decoding and Unix QA custody gate failures. All 1035 frontend tests, production build and lint pass (33 existing warnings) |
+| 4 | Reviewed eight affected permission cases and refreshed login/App/guard source bindings after CI detected stale dependencies | python -X utf8 -I scripts/qa_coverage.py check; test_qa_queue.py | 239 coverage records valid; queue tests 11 pass/1 Windows subprocess decoding failure |
+| 5 | Verified adjacent auth behavior, syntax and final diff; prepared draft PR | pytest test_auth.py test_session_timeout.py test_password_change.py test_password_requests.py -q; py_compile; git diff --check | 45 passed; syntax and diff clean. Linux CI and full local backend still running; manual acceptance blocked |
 
 ## State for the next session
 
-- Last check run (exact command): python -X utf8 -I scripts/check_traceability.py
-- Result (first failing lines, or "green"): green; normal verify.sh docs fails No TC/E2E definitions because isolated Python uses Windows default encoding
+- Last check run (exact command): FLASK_DEBUG=1 python -m pytest tests/unit/test_auth.py tests/unit/test_session_timeout.py tests/unit/test_password_change.py tests/unit/test_password_requests.py -q
+- Result (first failing lines, or "green"): green, 45 passed in 16.79s; full frontend 1035 passed, build/lint exit 0. Full local backend gate is still running (test-results/verify-backend.log); Windows-only failures already observed. Latest CI checks pending after the metadata correction.
 - Hypothesis: Reject all login attempts while authenticated before credential validation; check /me before exposing login form.
-- Next action: Collect running backend/build/lint results and Linux CI, then obtain manual acceptance evidence before marking PR ready.
+- Next action: Inspect PR #258 Linux CI and local test-results/verify-backend.log; obtain the unavailable manual QA environment and evidence before marking ready.
 
 ## Decisions and notes
 
@@ -54,3 +56,5 @@ Issue explicitly permits rejection or switching; choose rejection requiring expl
 Manual acceptance blocker: the user confirmed the QA environment cannot be provided. No endpoint, second role/account or original sanitized request evidence is available. Credentials shared in chat were not used or persisted. A person must supply an endpoint and manual before/after evidence for both role directions, normal login and logout then another login.
 
 Round 4 decision: CI docs exposed stale source bindings for login.py and App.tsx. Reviewed the eight affected permission cases, assertion/fixture/cleanup paths and added LoginRoute to their source dependencies. This metadata update is required for the login change; it does not change QA scope, coverage, historical results or authorization.
+
+Session limit: five rounds recorded. Draft PR: https://github.com/esfen14/Pinpoint/pull/258 . Do not mark ready or remove the progress file until manual acceptance and required gates are complete.
