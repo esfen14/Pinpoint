@@ -1,9 +1,10 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import { NetworkPerformanceSection } from '../components/dashboard/NetworkPerformanceSection'
 import { NetworkStatusOverview } from '../components/dashboard/NetworkStatusOverview'
 import { RecentOutageTable } from '../components/dashboard/RecentOutageTable'
 import { ResourceUtilizationSection } from '../components/dashboard/ResourceUtilizationSection'
+import { ResourceUsageCard } from '../components/network-health/ResourceUsageCard'
 
 // Charts render SVG through recharts, which jsdom cannot lay out; the headers are what is under test.
 vi.mock('../components/dashboard/NetworkChart', () => ({
@@ -45,5 +46,16 @@ describe('Overview card headers', () => {
     expect(screen.getByText('Active Alerts')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Acknowledge all/ })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'More options' })).not.toBeInTheDocument()
+  })
+})
+
+describe('Network Health card headers', () => {
+  it('shows no "More options" button on Average Resource and keeps the card clickable', () => {
+    const onClick = vi.fn()
+    render(<ResourceUsageCard cpuPct={20} memoryPct={40} diskPct={60} onClick={onClick} />)
+    expect(screen.getByText('Average Resource')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'More options' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByText('Average Resource'))
+    expect(onClick).toHaveBeenCalledTimes(1)
   })
 })
