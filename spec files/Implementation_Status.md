@@ -71,6 +71,19 @@ with temporary SQLite and a stubbed Nagios writer. The API has no one-account ca
 unconfirmed; password policy and mismatch checks intentionally still block Save.
 See [the investigation](../docs/plans/Issue_191_Account_Creation_Investigation.md).
 
+## NCPA resource trend selection (#242)
+
+Historical CPU, disk and memory samples now use the existing command-first plugin
+classifier, including generated `ncpa-*` descriptions and command-identified
+checks. The requested time window excludes old and future samples, and non-NCPA
+checks are excluded even when their names or metrics resemble NCPA. A shared classifier also maps real short `percent`/`used_percent` labels in trends
+and current summaries, keeping swap, disk I/O and ambiguous identities out.
+Existing full-path history remains supported without rewriting stored labels.
+Forecasts still use their separate full-path filter and are tracked by the
+[forecast-label follow-up #259](https://github.com/esfen14/Pinpoint/issues/259). Numeric API/summary regressions and both real-agent Docker browser resource
+journeys pass; see the [live chart report](../docs/test-runs/2026-10-19-issue-242-resource-charts/REPORT.md).
+The user's appliance, installer deployment and scale remain unverified.
+
 ## Implemented backend areas
 
 - Session login/logout and current-user identity. Existing-session login is

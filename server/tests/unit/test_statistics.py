@@ -527,6 +527,25 @@ class TestNcpaAverages:
         assert result["avg_memory_pct"] == pytest.approx(40.0)
         assert result["avg_disk_pct"] == pytest.approx(30.0)
 
+    def test_short_resource_labels_share_summary_classification(self, db_session, app):
+        from app.api.system.statistics import ncpa_averages, get_latest_services, get_latest_hosts
+        with app.app_context():
+            for host in ["agent-a", "agent-b"]:
+                for service, metric, value in [
+                    ("ncpa-cpu-5693-tcp", "'percent'", 12.0),
+                    ("ncpa-memory-5693-tcp", "'percent'", 34.0),
+                    ("ncpa-disk_root-5693-tcp", "'used_percent'", 56.0),
+                    ("ncpa-swap-5693-tcp", "memory/swap/percent", 99.0),
+                    ("ncpa-disk_write-5693-tcp", "'used_percent'", 99.0),
+                ]:
+                    sample = _make_service(db_session, host, service, check_command="pinpoint_nd_ncpa")
+                    _make_service_perf(db_session, sample, metric, value, "%")
+            db_session.session.commit()
+            result = ncpa_averages(get_latest_services(), get_latest_hosts())
+        assert result["avg_cpu_pct"] == 12.0
+        assert result["avg_memory_pct"] == 34.0
+        assert result["avg_disk_pct"] == 56.0
+
     def test_ncpa_host_count_tracked(self, db_session, app):
         from app.api.system.statistics import ncpa_averages, get_latest_services, get_latest_hosts
         with app.app_context():
