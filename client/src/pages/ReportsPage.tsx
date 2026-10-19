@@ -86,7 +86,7 @@ export function ReportsPage() {
         const report = fromHostAvailabilityResponse(data)
         setAvailability(report)
         // No host has recorded time: the table says so, so no success banner as if data existed.
-        if (report.hosts.length > 0 && report.hosts.every((h) => h.totalSnapshots === 0)) showStatus = false
+        if (report.hosts.length > 0 && report.hosts.every((h) => h.knownSeconds === 0)) showStatus = false
       } else {
         const data = await apiGet<Parameters<typeof fromNetworkServicesResponse>[0]>(
           `/api/system/report/network-services?${qs}`

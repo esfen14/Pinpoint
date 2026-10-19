@@ -562,7 +562,9 @@ never rounded percentages. `no_recorded_data_seconds = window_seconds - known`;
 its components are native no-data, engine downtime and the unaccounted remainder.
 A zero-history configured instance remains visible with null uptime and full
 missing coverage. No snapshot-count field, including `total_snapshots`, exists
-in either service-report contract. The host report's legacy field is unchanged.
+in the service-report or host-report contracts. The host reports (`/report/availability`
+and `/report/hosts-by-os`) expose each host's known-state duration (up + down +
+unreachable, from the Nagios archive) as `known_seconds`.
 
 `current_status` contains `available`, `observed_at` (UTC ISO timestamp or null),
 and `notice` (null or sanitized status-unavailable text). Instance `state`,

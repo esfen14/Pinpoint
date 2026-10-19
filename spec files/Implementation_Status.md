@@ -487,6 +487,14 @@ currently monitored devices. Not covered: a host monitored earlier in the period
 not now is not listed, Hosts by OS keeps its own row set, and the lab re-run of
 TC-RPT-01 on a deployed build is pending.
 
+## Host report duration wording (#240)
+
+Host Availability and Hosts by OS rows now expose `known_seconds` (up + down + unreachable
+seconds from Nagios) instead of the legacy `total_snapshots`. Host Availability shows and
+exports it as `Known Time (seconds)`. The unreachable pre-Nagios snapshot code in the
+Hosts by OS route was removed. Isolated backend and frontend regressions cover the field
+and label; no live-lab run has been made.
+
 ## Service-report availability (#198)
 
 The issue branch replaces Network Services and Device Services snapshot counting

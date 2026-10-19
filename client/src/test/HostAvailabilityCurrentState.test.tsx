@@ -8,7 +8,7 @@ vi.mock('../contexts/SystemSettingsContext', () => ({ useSystemSettings: () => (
 } }) }))
 
 // Host Availability shows the host's current state, last check and last state change (#228).
-const row = (overrides = {}) => ({ hostname: 'web-01', state: 'Up' as string | null, uptimePct: 80, totalSnapshots: 100,
+const row = (overrides = {}) => ({ hostname: 'web-01', state: 'Up' as string | null, uptimePct: 80, knownSeconds: 100,
   lastCheck: '2026-10-18T15:59:00+00:00', lastStateChange: '2026-10-17T09:00:00+00:00', ...overrides })
 const available = { available: true, observed_at: '2026-10-18T16:00:00+00:00', notice: null }
 const unavailable = { available: false, observed_at: null,
@@ -46,9 +46,27 @@ describe('host availability current state', () => {
       period: { period: 'last_24h', start: '2026-10-17T16:00:00+00:00', end: '2026-10-18T16:00:00+00:00' },
       summary: { total: 1, up: 0, down: 0, unreachable: 0, uptime_pct: 80 },
       current_status: unavailable,
-      hosts: [{ hostname: 'web-01', state: null, uptime_pct: 80, total_snapshots: 100, last_check: null, last_state_change: null }],
+      hosts: [{ hostname: 'web-01', state: null, uptime_pct: 80, known_seconds: 100, last_check: null, last_state_change: null }],
     })
     expect(report.hosts[0].state).toBeNull()
     expect(report.currentStatus).toEqual(unavailable)
+  })
+
+  it('labels known-state duration in seconds and never says snapshots', () => {
+    const { container } = render(<HostAvailabilityReportTable hosts={[row({ knownSeconds: 86400 })]} isLoading={false} currentStatus={available} />)
+    expect(screen.getByRole('columnheader', { name: 'Known Time (seconds)' })).toBeInTheDocument()
+    expect(within(screen.getByRole('row', { name: /web-01/ })).getByText('86400')).toBeInTheDocument()
+    expect(container.textContent).not.toMatch(/snapshot/i)
+  })
+
+  it('maps known_seconds from the response', () => {
+    const report = fromHostAvailabilityResponse({
+      period: { period: 'last_24h', start: 'a', end: 'b' },
+      summary: { total: 1, up: 1, down: 0, unreachable: 0, uptime_pct: 80 },
+      current_status: available,
+      hosts: [{ hostname: 'web-01', state: 'Up', uptime_pct: 80, known_seconds: 86400, last_check: null, last_state_change: null }],
+    })
+    expect(report.hosts[0].knownSeconds).toBe(86400)
+    expect(JSON.stringify(report)).not.toMatch(/snapshot/i)
   })
 })

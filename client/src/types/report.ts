@@ -15,7 +15,7 @@ export type HostAvailabilityRow = {
   // The current Nagios state; null when current status could not be read for this host.
   state: string | null
   uptimePct: number | null
-  totalSnapshots: number
+  knownSeconds: number
   lastCheck: string | null
   lastStateChange: string | null
 }
@@ -37,7 +37,7 @@ type HostAvailabilityApiRecord = {
   hostname: string
   state: string | null
   uptime_pct: number | null
-  total_snapshots: number
+  known_seconds: number
   last_check: string | null
   last_state_change: string | null
 }
@@ -70,7 +70,7 @@ export function fromHostAvailabilityResponse(data: HostAvailabilityApiResponse):
       hostname: h.hostname,
       state: h.state,
       uptimePct: h.uptime_pct,
-      totalSnapshots: h.total_snapshots,
+      knownSeconds: h.known_seconds,
       lastCheck: h.last_check,
       lastStateChange: h.last_state_change,
     })),
