@@ -2987,7 +2987,7 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 | TC-DX-03 | Save and reset check options | DX-03 | ST | H | PASS |
 | TC-DX-04 | Check options are read-only without edit permission | DX-04 | DT | M | PASS |
 | TC-DX-05 | Fields depend on the service | DX-02 | EP | L | PASS |
-| TC-DX-06 | SNMP section | DX-05 | DT | H | PARTIALLY PASS |
+| TC-DX-06 | SNMP section | DX-05 | DT | H | FAIL |
 | TC-DX-07 | Interfaces section | DX-06 | DT | M | PASS |
 | TC-DX-08 | Who sees the alert recipients | DX-07 | DT | M | Not run |
 | TC-DX-09 | Default recipients and ineligible users | DX-07 | EG | M | Not run |
@@ -3065,7 +3065,7 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-DX-06 – SNMP section
 
-**Requirement:** REQ-DX-05 · **Technique:** DT · **Priority:** H · **Result:** PARTIALLY PASS (messages accurate; SNMP section disappears after Save, Test and Reset until refresh)
+**Requirement:** REQ-DX-05 · **Technique:** DT · **Priority:** H · **Result:** FAIL (messages accurate; SNMP section disappears after Save, Test and Reset until refresh; [#244](https://github.com/esfen14/Pinpoint/issues/244))
 
 **Recorded run:** [report](../test-runs/2026-10-19-module-19-device-extras/REPORT.md)
 

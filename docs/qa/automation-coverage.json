@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "catalog_hash": "73a078df61a4196e1c3910074e085b97c6ace2b001c202e36ec79e92035bc19f",
+  "catalog_hash": "f1adc06f3ee2bfb7082e2af64c21868aa0b601b0dd9408277996aaf5d1b5611f",
   "cases": {
     "TC-AUTH-05": {
-      "case_hash": "b4183e74012691fba6798a9ebe23fa93b68c6ef7a7767fd20b68d5b212d226eb",
+      "case_hash": "e63dc317cbbef7d0dc78a8a4d81cf926591ad5d8950969daeb6c1881290a8e24",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -14,7 +14,7 @@
       "recovery": []
     },
     "TC-AUTH-06": {
-      "case_hash": "0d8848e1912528be9a1607eea41c4923b2dc475e7bb019e1bea6417dab8b83fd",
+      "case_hash": "6e1613c4b2f400be39160002584b292ce430c71acd5b57226f0d31e1c47edca8",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -25,7 +25,7 @@
       "recovery": []
     },
     "TC-AUTH-07": {
-      "case_hash": "682f884f9b3e87ac7bd0271cb8fb28b7d0eb2a09c2fd5cfc9719a65c59dc263f",
+      "case_hash": "2f53d557245f5df2743b3042696c73e55ab859300646e01766c462e55f77ff38",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -36,7 +36,7 @@
       "recovery": []
     },
     "TC-AUTH-01": {
-      "case_hash": "9c37ad1ceae4fc06dec3c77ecbbc94e546a376ffa4a81b2a6f092262ab7241c7",
+      "case_hash": "89407537052a2a38b2e2c22dad752ca109e759217a1343137f360cb605d9fe87",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -47,7 +47,7 @@
       "recovery": []
     },
     "TC-AUTH-02": {
-      "case_hash": "ce0ea8fd4c60f9470b6737dc8733cbb6204ab326892543cb64112ad384a0f41d",
+      "case_hash": "8cea9f998ffffc0d0c4874df17379a2496ba19a14a9bf72d0a9edb78b2245b6d",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -58,7 +58,7 @@
       "recovery": []
     },
     "TC-AUTH-03": {
-      "case_hash": "12133588106db8bd1aea9009968189920617a12a1f922c3d0de115884d286b00",
+      "case_hash": "2f8a568e621feffdefbe69b01900ea3c76c7840b99389b504af69ffd7eec7dcc",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -69,7 +69,7 @@
       "recovery": []
     },
     "TC-AUTH-04": {
-      "case_hash": "aabd34caf00a8010949f8cdba0b303fd3d84b3521f456b7568fad0da32c7af64",
+      "case_hash": "ebfc8c4684cf85b9076ed492929efbc1eccbcf3236f22e531f30e8263da36d0d",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -80,7 +80,7 @@
       "recovery": []
     },
     "TC-AUTH-09": {
-      "case_hash": "a7333cf7cdc336060be23e06496498b8a3ae9965a25cddffc9db53396638c3bb",
+      "case_hash": "c5bc173ad1cfbf8dfab19b7990f0f628201e771e524cc2c682d8c3fe44cd0237",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -91,7 +91,7 @@
       "recovery": []
     },
     "TC-AUTH-12": {
-      "case_hash": "b37da55795d9f6b88ff18cc7a3ab7fbf39eb84936a2a57864ee2116f7b251eea",
+      "case_hash": "4bbb719fb7381a077ef8838add8966c2369aa49f4ea48b9fb995c5980762d0df",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -102,7 +102,7 @@
       "recovery": []
     },
     "TC-ROL-01": {
-      "case_hash": "d2ffc0466c7eb3be2a53dcbca980f1597926862660eaee958532616f2046d665",
+      "case_hash": "ebca84c18bde29b5b5d11a768bf93299234c14c52a6f35499ad6911cfd0c9229",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -113,7 +113,7 @@
       "recovery": []
     },
     "TC-ROL-02": {
-      "case_hash": "5d4aaca2ad7865f37e577449f274acfb0b81d9fb2a5f2f57523a56f9c1d68a9b",
+      "case_hash": "b8e513e59030c91c1eb236e6f5e865264eea3d00bc4f6e3f9f8d55ed258eca50",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -124,7 +124,7 @@
       "recovery": []
     },
     "TC-ROL-03": {
-      "case_hash": "78b1c8fbc21418f8580c21120615ff29a7e858cc75c74f826a9a23c4eec1a5e9",
+      "case_hash": "d5deb861cd0231f3a441fdb7a2ddf5039a722e3a71b29700a544372f19c1c9c6",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -135,7 +135,7 @@
       "recovery": []
     },
     "TC-ACC-01": {
-      "case_hash": "9e7181962695e63b90e4a89d2f9a99d7cc77bfe9a342d4e876bd1b667bd27739",
+      "case_hash": "b07e181966de0626f6c09fc69aedb66c6e020b71faf9f542c1e6fe92b97a1a0f",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -146,7 +146,7 @@
       "recovery": []
     },
     "TC-ACC-02": {
-      "case_hash": "d411e5bea053d7e9b448f7c22dcbb6f4bb06bc432f33bcefcf6016da6fb8ff21",
+      "case_hash": "ff494b075b84eef70ea6a11b5e0a78568c8df15645c71dd925d338bd6ef095e2",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -157,7 +157,7 @@
       "recovery": []
     },
     "TC-ACC-03": {
-      "case_hash": "cfbe788aff97bbb62a9a3a7385a5ff388a9268ba2babc8db97f5db8fb14f413e",
+      "case_hash": "6db00a87563504c7a8883d195f77d2c70a8c8fc0e70c59fb1cc9369f42984164",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -168,7 +168,7 @@
       "recovery": []
     },
     "TC-AUTH-08": {
-      "case_hash": "b6c728d97106707f1c2c6a9a897695a1bb4f510ee63c5499f8ff305ed038d6ee",
+      "case_hash": "65a1c08a85aa2de90080802295b635263a8ad3b35ba5e851f0794ec0bcc9c6c4",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -179,7 +179,7 @@
       "recovery": []
     },
     "TC-ACC-04": {
-      "case_hash": "8a6411cae10850ed2b6aa7ba1c1cee8acf02d948c6e325331961910ea70533f3",
+      "case_hash": "7107b7f459e00839a5c75d900e556dbfdb4562d5e57fa21459f20fd49be3c2f1",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -190,7 +190,7 @@
       "recovery": []
     },
     "TC-ACC-05": {
-      "case_hash": "1ac3cc087658305d1f32341eb689be4819dfcd34839e6c72d0b56d2b57d05ef1",
+      "case_hash": "7a54b07a3390c9fa8e6659ad039ff6b78ef5561e5f64a9c5b04318afa5b92a7b",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -201,7 +201,7 @@
       "recovery": []
     },
     "TC-ACC-06": {
-      "case_hash": "e1e9c3baa140a4828460e12dedb7f2cd32cb6fb94cf1cdc05a818e3fc22a31a7",
+      "case_hash": "5dfd8d3f8c1f836dec69cfd9774e93e2677dfe5f574494bb73d6a691e32899fb",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -212,7 +212,7 @@
       "recovery": []
     },
     "TC-ACC-07": {
-      "case_hash": "4a39aa680171d6b77a1527b8e8a47c44e363431758b2c3d4bb6573b105b58a3b",
+      "case_hash": "c41d007dc4e0935dfa931f3b39da4a4cba73873fb3b7a494f9a37b03d56d7194",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -223,7 +223,7 @@
       "recovery": []
     },
     "TC-ACC-09": {
-      "case_hash": "584ae28af8192e81a99063dcc0df2c9b31071d5d677894ed305db020e4ef0211",
+      "case_hash": "d723986a5521ace3fdc84bebb917bee5afa12f9a8cff6140b24c7c7cfe77416e",
       "status": "implemented",
       "mode": "scripted automation",
       "reason": "Source adapter complete; bounded live launcher support, new reviewed queue/card, current prerequisites and separate explicit start remain required.",
@@ -271,7 +271,7 @@
       "procedure_review": "Source-reviewed full written procedure and each expected item against pageAccess/Sidebar/routes and real browser navigation assertions; no mocks or product changes. Existing initialized zero-permission Staff and supported logout/401 cleanup reused."
     },
     "TC-ACC-10": {
-      "case_hash": "5a5b7286c8789dec97d211e07907b34a8cd49f22a53be7e034003e6f46bbfe3a",
+      "case_hash": "e751136f6a736e5b4553709c3d3b9b51de0eb07044ce334692bce0a66976686d",
       "status": "partial",
       "mode": "scripted automation",
       "reason": "E1 and E2 have a source adapter. E3 requires the live role-options list to have no active roles; this issue will not deactivate system roles to manufacture that state. Created account rows and audit entries persist after deactivation, so the current bounded baseline cannot certify restoration; the live card remains blocked pending a separately reviewed disposable-appliance recovery plan.",
@@ -319,7 +319,7 @@
       "procedure_review": "Reviewed the full ACC-10 steps and E1–E3 against ManageAccountsPage, account role-options/list APIs, and the local timing/empty-role component contracts. E1/E2 are source-mapped; E3 is explicitly blocked because safely establishing no active roles would require changing shared roles. Test-created users cannot be deleted, so cleanup only verifies inactive rows and is not full baseline restoration."
     },
     "TC-ACC-08": {
-      "case_hash": "bad777b9f4e15a3b0ed87a6c7614743566102b7e20f773d85d37c90532a00f08",
+      "case_hash": "ff4818bd1553c5853f6dce130ce24116dd1fe1c3ba035fc6f26f4cf73a9bcc0c",
       "status": "implemented",
       "mode": "scripted automation",
       "reason": "Source adapter is complete for every catalog expected item; live launcher support, reviewed current lab prerequisites/cards and a separate explicit start are still required.",
@@ -366,7 +366,7 @@
       "procedure_review": "The catalog procedure and REQ-ACC-07 were reviewed against ManageAccountsPage permission gating, UserTable email-alert column rendering, real UI login, and the pre-created role/user state. E1 checks the table header/value and Super Admin add form. E2 checks the actual restricted user Add User form. No account/role mutation or mock response is used."
     },
     "TC-ROL-04": {
-      "case_hash": "4c81b356a8d6fec8d1f22276bd65dae704eef242052dba299fef28e725c32fde",
+      "case_hash": "e763958d4892f2f49a9fe45ba8ac5d53a89c5b6a021e73c4a959102af415ccb0",
       "status": "implemented",
       "mode": "scripted automation",
       "reason": "Source adapter is complete for every catalog expected item; live launcher support, reviewed current lab prerequisites/cards and a separate explicit start are still required.",
@@ -420,7 +420,7 @@
       "procedure_review": "The full catalog route/API list and REQ-ROL-04 were reviewed against the frontend page-permission map, sidebar filtering and PageAccessGuard, plus Flask permission decorators for the three listed APIs. The adapter signs in through the real UI, reads actual hrefs, navigates each page address, and browser-navigates each API address. No mocked request or alternate API assertion replaces a step."
     },
     "TC-ROL-05": {
-      "case_hash": "e36af7189fd47e40ead85cc84c6198b9a4a386e7258c8e7cc2e06c82ca220c0b",
+      "case_hash": "aff3e082629845ff0eed97406fc32438158ba6ce5b591caea862a0995d2f8b4c",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -431,7 +431,7 @@
       "recovery": []
     },
     "TC-ROL-06": {
-      "case_hash": "72e07bf469807c68fbc09aa36fe0ec99436e68d66a9316ff613b249023f5ac6d",
+      "case_hash": "79891862f48bb154392177386c0563421f3f8281d9f4fbca69ff0b8ad8d136ef",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -442,7 +442,7 @@
       "recovery": []
     },
     "TC-AUTH-10": {
-      "case_hash": "135dfb7387ad2535c38c0b4ecb4f7d70b893b4c587ddd15698700e692a392e9f",
+      "case_hash": "1697ab3924c3f07a10b225fedbf0432af597e959ec8eb084c3d132bdac08f95b",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -453,7 +453,7 @@
       "recovery": []
     },
     "TC-AUTH-11": {
-      "case_hash": "36bfe727d734523ab8997e319d1518e9ecbb7716a3dc02ba748c6d4e31929193",
+      "case_hash": "035e51b7625f0b1ee63f36cb8807df81bea53b1eb67df073618cd1ce1265896e",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -464,7 +464,7 @@
       "recovery": []
     },
     "TC-SHL-09": {
-      "case_hash": "a73764870caf209bd6dbfa90fbe305ecc0241a5a05e6e0d571b2322e71361351",
+      "case_hash": "c9e91ff2b8f07f4316047b0b7dd5fb03bbaaf94de109bc0e75b9ff2b0962cbfb",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -475,7 +475,7 @@
       "recovery": []
     },
     "TC-SHL-04": {
-      "case_hash": "423f9eda0c4f1cce3688f0c0b00694e4b823365a3f30a8d70b69120a0220e549",
+      "case_hash": "ae1493b06254178c83fbc753ccb24569682bcfdf54b0f75d4b1532bc4447cfa1",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -486,7 +486,7 @@
       "recovery": []
     },
     "TC-SHL-10": {
-      "case_hash": "ebe705dfbbe1558dd4ce1056834928de94eb0685777248743e78bdf56b8fa591",
+      "case_hash": "3d9d01193a1e2d74f70bcdd691c9af83fde281e1709bbfc1d893b90914c7f1a5",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -497,7 +497,7 @@
       "recovery": []
     },
     "TC-DASH-08": {
-      "case_hash": "c7df6c94aae58a9c395c509538b52c8f53044d62be8014c404e5ba9b0d9d9113",
+      "case_hash": "685c63563255e1e0f539d7e1c9025999ecc1b7f37c3a5e4d3cf3d043da50b6c5",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -508,7 +508,7 @@
       "recovery": []
     },
     "TC-SS-04": {
-      "case_hash": "dbbd9c2404be2f24d175aeb35dab24b445814ade16bc337aef7414813c51c00d",
+      "case_hash": "854c56f35ad2a6b4a5b7579b9501c186b1cf8503ebc616e300459fa5438951f5",
       "status": "implemented",
       "mode": "scripted automation",
       "reason": "Source adapter complete; live launcher integration, reviewed cards, target/preflight and runtime proof remain pending.",
@@ -552,7 +552,7 @@
       "procedure_review": "UI sign-in as Staff; direct page navigation; hidden exact sidebar link and redirect asserted. API cases open the exact API address in the browser and assert 403. No mock or substituted UI step."
     },
     "TC-HIS-01": {
-      "case_hash": "03dbb8cc472b3fc20ed20590baa41ea3e89d4862da73c555d06c7023948fd882",
+      "case_hash": "18cba79dcd5e27beb383981325c04a993c00745b927afd77053e2936658b374a",
       "status": "implemented",
       "mode": "scripted automation",
       "reason": "Source adapter complete; live launcher integration, reviewed cards, target/preflight and runtime proof remain pending.",
@@ -596,7 +596,7 @@
       "procedure_review": "UI sign-in as Staff; direct page navigation; hidden exact sidebar link and redirect asserted. API cases open the exact API address in the browser and assert 403. No mock or substituted UI step."
     },
     "TC-PLG-07": {
-      "case_hash": "02c4075fcc3dbf00f80f041ba399eb662410d7a47342f027a9797dfeaa97dc30",
+      "case_hash": "dad729380edfe846b75a7659aa64827b5fcc01d6e04437b6d06b3eb9acfe45f9",
       "status": "implemented",
       "mode": "scripted automation",
       "reason": "Source adapter complete; live launcher integration, reviewed cards, target/preflight and runtime proof remain pending.",
@@ -640,7 +640,7 @@
       "procedure_review": "UI sign-in as Staff; direct page navigation; hidden exact sidebar link and redirect asserted. API cases open the exact API address in the browser and assert 403. No mock or substituted UI step."
     },
     "TC-NCPA-08": {
-      "case_hash": "05c0e4140d4178eb7d2512b1ba478668da1bded914bf4ce892c00f4bf35f0014",
+      "case_hash": "b0883db0ecf0d636736608a43a6d013f15f78daf3592d144ffe9be709a720248",
       "status": "implemented",
       "mode": "scripted automation",
       "reason": "Source adapter complete; bounded live launcher support, new reviewed queue/card, current prerequisites and separate explicit start remain required.",
@@ -684,7 +684,7 @@
       "procedure_review": "Source-reviewed full written procedure and each expected item against pageAccess/Sidebar/routes and real browser navigation assertions; no mocks or product changes. Existing initialized zero-permission Staff and supported logout/401 cleanup reused."
     },
     "TC-RPT-07": {
-      "case_hash": "14b9e6b3e2e343a653c9a201fbf0f1b98393ea02ff96f5b947250817088f6b9b",
+      "case_hash": "5efbb92aed730c768e93b8f059a9d28549a69cb3afca7aa03da161625942bc46",
       "status": "implemented",
       "mode": "scripted automation",
       "reason": "Source adapter complete; live launcher integration, reviewed cards, target/preflight and runtime proof remain pending.",
@@ -728,7 +728,7 @@
       "procedure_review": "UI sign-in as Staff; direct page navigation; hidden exact sidebar link and redirect asserted. API cases open the exact API address in the browser and assert 403. No mock or substituted UI step."
     },
     "TC-LOG-05": {
-      "case_hash": "f23f396f020ea6b43e8faf37ef4f944b8d6a4a1e6185b7832639945d33f4b6fa",
+      "case_hash": "124256aeeb61e931ef2247868ed761ec3a7809ac5a78a9d23f052d7285f772f2",
       "status": "implemented",
       "mode": "scripted automation",
       "reason": "Source adapter complete; live launcher integration, reviewed cards, target/preflight and runtime proof remain pending.",
@@ -772,7 +772,7 @@
       "procedure_review": "UI sign-in as Staff; direct page navigation; hidden exact sidebar link and redirect asserted. API cases open the exact API address in the browser and assert 403. No mock or substituted UI step."
     },
     "TC-SHL-06": {
-      "case_hash": "04ef2b71b3bb0dbe9efba93576cb227b94621357bdd65c1211b43a3e9e6307ba",
+      "case_hash": "5ead8e83d21154313097906619665699246a1df7a332191f37615538fc4d5687",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -783,7 +783,7 @@
       "recovery": []
     },
     "TC-NFR-01": {
-      "case_hash": "83de10ee42bf3384d0e663a1fa06b23af0662f23c078469abaaebffa788408a9",
+      "case_hash": "b4044d4b6e70f0f993cd0972b9bce37a27618c808b1f5a883f91cc3200f9a22c",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -794,7 +794,7 @@
       "recovery": []
     },
     "TC-NFR-02": {
-      "case_hash": "1fae772d18d1dbe0ddbc2c9b4bbe787ae012f4a93d256a8b1d2aea8dbfc5a7e6",
+      "case_hash": "db53695fc3fe254c8e79177d9c02b76480417af92c6553add9820dde149d8898",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -805,7 +805,7 @@
       "recovery": []
     },
     "TC-SET-07": {
-      "case_hash": "75cbde08d0805ee49f5ffda15a513f6b6b93e0328f4d981b0b8dc340408f233d",
+      "case_hash": "75e6da2ac61d60d69a5ae2d4359fc3858fa75ae900fc04fbb9a3223958a00d15",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -816,7 +816,7 @@
       "recovery": []
     },
     "TC-SET-01": {
-      "case_hash": "0adc20d94c2374fca9bd3ec4216c22de1460534b9a0145732694556874b95f5b",
+      "case_hash": "f1705aeb5130ad2b9a7c01b59ea7e9dd2b6f739dc69ee0b7cb0265d63aea87d1",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -827,7 +827,7 @@
       "recovery": []
     },
     "TC-SET-02": {
-      "case_hash": "90041ecd291a23c3df47183d4de306eb409760a43d4b91f41c3593db90fc7ae4",
+      "case_hash": "65f8772199172cc8a1a692f9fe09e3d7f6e1a6737a822a66a5c29e6dd2c05d8f",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -838,7 +838,7 @@
       "recovery": []
     },
     "TC-SET-03": {
-      "case_hash": "dd232d564e15a3db1bf60c5b67c2f2b4fa800427fc2282276da55bbfeee6ad88",
+      "case_hash": "41af1442bbce718d5bec9ecaad65ee4bac1b31bfb4250cc11712d425c951666c",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -849,7 +849,7 @@
       "recovery": []
     },
     "TC-SET-04": {
-      "case_hash": "79597de0b36a1f3cab7c534632910f71ef5f07cb39693ac53b88680c64d9f293",
+      "case_hash": "1a074f161ad5bcca44a344155b502ca4d6ab3fbc3d866dc7c79a71391d88ec3b",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -860,7 +860,7 @@
       "recovery": []
     },
     "TC-SET-05": {
-      "case_hash": "305ee908de25c253e7e9e1240f9e8bff5316659a94522f815deeb7af8b32df6b",
+      "case_hash": "0cd5390aee721cd05dc6f2b15f20a9a3e4cf28d01c55ffe6232c0120ebcee686",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -871,7 +871,7 @@
       "recovery": []
     },
     "TC-SET-06": {
-      "case_hash": "a95b2beb0fb94445dc1b49fc542b1315d82f8aeb42868cb7a2dec376d6e775b6",
+      "case_hash": "cc1d55a73caac163a9e4f7e2d07079b930709dddc534737df712d08bb6b2df6f",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -882,7 +882,7 @@
       "recovery": []
     },
     "TC-SHL-01": {
-      "case_hash": "935894e846e753e6b56cebfa6f08aecf447d2af1c8ac58b108a62c252f75f1a0",
+      "case_hash": "bc1cb78a21d22bde8bf1ba817785a5163b9822332db2cc5305aed3f6ef2a5fad",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -893,7 +893,7 @@
       "recovery": []
     },
     "TC-SHL-02": {
-      "case_hash": "879a9a642c7d7c0b3932df9ad5c08624589bb523ce7a954e0d982218e94371f8",
+      "case_hash": "421c13c3350a8978b3115ace5ca03c48d1dced87efe80cf0d813042b7e197538",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -904,7 +904,7 @@
       "recovery": []
     },
     "TC-SHL-03": {
-      "case_hash": "18a9ffde0755ce459cf62b879a5c84465481a88a32401a6c9340345d82953a3f",
+      "case_hash": "ab784df9609940a4bde228a640a6082a13eb41ab8336005471ee3eada018771a",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -915,7 +915,7 @@
       "recovery": []
     },
     "TC-DSC-01": {
-      "case_hash": "b5f282b9f6f66dec17736f55b7a967075b4fe4438a862c53da38601c0d9c0f80",
+      "case_hash": "3a891816f619bce59bafad56fdd11a448e9262ab8c4e3abd268055f3eefde629",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -926,7 +926,7 @@
       "recovery": []
     },
     "TC-DSC-02": {
-      "case_hash": "55fc99b8b2d8816cb3565701f2101c6d7a4dec0f7aa0d93de14bb58f6d74c430",
+      "case_hash": "a20d89b95abe11aea1740489f8cc4fcb6f6f1bedf8fff213711c754d9475fcb7",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -937,7 +937,7 @@
       "recovery": []
     },
     "TC-DSC-03": {
-      "case_hash": "c4f9019ee72aae13e97d6a6a13c514220d287ca3c9a9d4f452eb2c11c2af1dd2",
+      "case_hash": "74d52e26dcba68abe3c073549b2be1af34729ddd0f781bed28e237ab0f7a83b8",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -948,7 +948,7 @@
       "recovery": []
     },
     "TC-DSC-04": {
-      "case_hash": "596f91cb5aa5d1e757bcfa38677abdeade255d7fc54bd2b2c93b91854c970224",
+      "case_hash": "e08592d4076a587265965b60001fe8d3d5f0d9c26af43046ec16bf80497af065",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -959,7 +959,7 @@
       "recovery": []
     },
     "TC-DSC-05": {
-      "case_hash": "6a1c173191551e45d1f55039c9fd31aaebae93655a75f3fe9a91740839389cf7",
+      "case_hash": "8ff38bbc09b449528e0d019db7f27d51439bf771e4b03c568b8eedf47eff7eb0",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -970,7 +970,7 @@
       "recovery": []
     },
     "TC-DSC-08": {
-      "case_hash": "4638266989a44703d55556bf1d93b9be180867fa86dafabbe01588a8f58eba25",
+      "case_hash": "e44ed1630bedb00d055ffb7dc5c3eda89cbbebc19655b48202cd9856aeefe891",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -981,7 +981,7 @@
       "recovery": []
     },
     "TC-DSC-09": {
-      "case_hash": "d0a25e9218d78288e354f6c21859c7e2016782a717dc2fe4f88c10b84e714ee0",
+      "case_hash": "1e68fb3978ce30dcde610e887f05ea11bc24ca0a67166e0a3a342cb468a4a4d5",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -992,7 +992,7 @@
       "recovery": []
     },
     "TC-PLG-01": {
-      "case_hash": "11d1e83e851043f27d894c820b39b584de1691a630fcb1990c5d28c8df96f75d",
+      "case_hash": "ee68870abdd159a0d87dd3dd4712ec475a8ca20f6e014e6d9c6b08a7c682acdb",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1003,7 +1003,7 @@
       "recovery": []
     },
     "TC-PLG-02": {
-      "case_hash": "ce8e84ebefd84c9000668229c274aa2be038cd9a7d0989340de4af1ba972f644",
+      "case_hash": "3f7f956a0c9b1e4d5bb184fcfb67b7b796af8098a3c48cdb66a0ada859a737b9",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1014,7 +1014,7 @@
       "recovery": []
     },
     "TC-PLG-03": {
-      "case_hash": "367e81c839129d2266ad445aca849193b1a502dd14224f2d3264511cf30630cf",
+      "case_hash": "820ff9665a58d416db879a787ca5de00d583ad921273617812bb641aee9d6c4e",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1025,7 +1025,7 @@
       "recovery": []
     },
     "TC-PLG-04": {
-      "case_hash": "d3b751d3bd0342be46507766543fa865fe2e95ae01bee55d5e2d7cd90a343018",
+      "case_hash": "9bbf99ef92db8864fa4561177de9139832c7c1ca9de96f61c9838f7ca5605b6d",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1036,7 +1036,7 @@
       "recovery": []
     },
     "TC-PLG-05": {
-      "case_hash": "883f1337e9a97d9dfdb762656720736b82a8643b7aad5670351814e59aa44357",
+      "case_hash": "00698269237e6d4c5df90221610ee981078378ed71eb9958e6eeb785ca8e0b36",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1047,7 +1047,7 @@
       "recovery": []
     },
     "TC-PLG-06": {
-      "case_hash": "630c027887f612eedd95dc1bdc2fd9f0c06cec374aa47902255498a883572785",
+      "case_hash": "fa66d8e9088ac170da7b7274fa324b895bbfcf053f3cc786ec80eef3afb31d1a",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1058,7 +1058,7 @@
       "recovery": []
     },
     "TC-DI-01": {
-      "case_hash": "c1aca50d011e9bbd2f12104ca9c386594ddd94791749f9958c25a8dcc6cc519a",
+      "case_hash": "020b75cd00639aa68569124d6c1a6bcabdb8260d963a464b8ef7138929314b6f",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1069,7 +1069,7 @@
       "recovery": []
     },
     "TC-DI-02": {
-      "case_hash": "3edb72a30079e031391d27bff3a1b858759880891498e135c43d1fd25bfb4028",
+      "case_hash": "0f91626eb36dbf35b24c8e37804e43ce8ec2b7c06d7488c6e90f4716b99500c7",
       "status": "implemented",
       "mode": "scripted automation",
       "reason": "Source adapter covers every catalog expected item with read-only browser assertions; current live launcher, reviewed current prerequisites/cards and a separate explicit start are still required.",
@@ -1124,7 +1124,7 @@
       "procedure_review": "The complete TC-DI-02 procedure and REQ-DI-02 were reviewed against Device Inventory routing, the host detail drawer, DevicePortsSection group rendering, and groupPorts ordering. The adapter reads the actual Ports headings and rows, expands only the Archived disclosure, verifies positive header counts against rendered rows, and sorts by protocol/number. It does not mutate inventory or substitute unit tests for the browser checks."
     },
     "TC-DI-03": {
-      "case_hash": "457e4ae6f146f79dd78ab1305a13f135e4dca64b3e863bf8c707d8c9376badd7",
+      "case_hash": "8d65701b0f377b63bb8549e9fd7c27a00c38324871cf1952a3d1f094020f4c63",
       "status": "implemented",
       "mode": "scripted automation",
       "reason": "Source adapter covers every catalog expected item with read-only browser assertions; current live launcher, reviewed current prerequisites/cards and a separate explicit start are still required.",
@@ -1175,7 +1175,7 @@
       "procedure_review": "The complete TC-DI-03 procedure and REQ-DI-03 were reviewed against DevicePortsSection reason rendering and devicePortsLogic precedence. The adapter opens the selected existing port, verifies both Held and Not used as intended indicators, then checks the single reason paragraph and exact required wording. It makes no writes; the fixture must already satisfy both conditions."
     },
     "TC-DI-04": {
-      "case_hash": "3f0dfed17496a4ab640badd2f04a2c8707903ab88fe8cfdec1cfd6111fba9b26",
+      "case_hash": "1a46c49b165616d20ff79dae4c4ffb5592c8aedd3c0b7f7a5680aa010bcd8425",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1186,7 +1186,7 @@
       "recovery": []
     },
     "TC-DASH-01": {
-      "case_hash": "bc0393b326e2e0b43ab7b19656d722472b00f7b28747f06f39668c6396774b70",
+      "case_hash": "39a3e6e3d13c5b10e4fdbc2303b8826ddc60a08b906f9320cb2f33ab2ddf30a3",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1197,7 +1197,7 @@
       "recovery": []
     },
     "TC-DASH-05": {
-      "case_hash": "ed0bc50b617fdf092f9e9259ab8a6a6e780e380368b58fbdb83e4460582aa62e",
+      "case_hash": "451831d7533f3b81a3630a0ceeb85977c55260bfa8e670314fba0a123c896a3a",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1208,7 +1208,7 @@
       "recovery": []
     },
     "TC-DASH-07": {
-      "case_hash": "74f266a13a13ab044cb3cca0278a33146b6f5574bc1f5ac8259196156c44d1c9",
+      "case_hash": "817a32f21262c29559d81d1b9cb69f774df0c393a1274295de22d2cc40b09a0a",
       "status": "implemented",
       "mode": "scripted automation",
       "reason": "Source adapter covers each catalog expected item using read-only Dashboard assertions; current live launcher, reviewed current data prerequisites/cards and a separate explicit start are still required.",
@@ -1257,7 +1257,7 @@
       "procedure_review": "The complete TC-DASH-07 procedure and REQ-DASH-06 were reviewed against DashboardPage summary/conditional resource rendering, NetworkPerformanceSection metric states, and the shared SummaryStatCard/MetricCard. The adapter uses the real UI and asserts both No data displays plus absence of Average Resource Utilization. No fixture or API response is mocked and no lab data is changed."
     },
     "TC-NH-01": {
-      "case_hash": "2f6f0c2ccd68fa07081287cf4b6fd8494f3b704e7c30e6a65e549ed1adf033e2",
+      "case_hash": "a5803b8c76dc4451f7676dd05ce0972f165639f977e4c03c2fd8c2bd43e05eae",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1268,7 +1268,7 @@
       "recovery": []
     },
     "TC-NH-02": {
-      "case_hash": "8022924a0a5e40fa7e4275a16670fa4a8281ff5f5d233943265a006dc3f99ace",
+      "case_hash": "bfc095e461a2efaa8cb236705efe359fdee9bd2117d4541fa26d8c22f789f1ed",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1279,7 +1279,7 @@
       "recovery": []
     },
     "TC-NH-03": {
-      "case_hash": "1d14799145f2553104be2e69b05642bfb5914a0c8512d0567d28ff36df66453d",
+      "case_hash": "9934ac0ce34432818550f53b271d0b52bc9738c72bfe6de4f3036e12d1639efe",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1290,7 +1290,7 @@
       "recovery": []
     },
     "TC-NH-04": {
-      "case_hash": "293574bbd2ba1b2a7353152b7f3cbebc45d9ae9507743759bd78674f4cb65181",
+      "case_hash": "10020aa1536e324937c34385560fbaed93f94c71abf38095489d61ad79f6405f",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1301,7 +1301,7 @@
       "recovery": []
     },
     "TC-NH-05": {
-      "case_hash": "dbbc075c5338333fb1ef9928e8d141b640127e74956d0d9ee77dec1d7c6ad87f",
+      "case_hash": "12684f9e15a8ec59a231de37914d98597cc328c0146992da27a064c7df910881",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1312,7 +1312,7 @@
       "recovery": []
     },
     "TC-SS-01": {
-      "case_hash": "ab4eab008e040cd845cd0d75fda6e75c4bea6ec004748f5ab9b26deee26e7b6d",
+      "case_hash": "1363c76514c72aeabde505b14a5201dbe1e77de4b11621adb46765c20cad0dc3",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1323,7 +1323,7 @@
       "recovery": []
     },
     "TC-SS-02": {
-      "case_hash": "5767092d7ea3c9a05800ec6aa5b4f893488619e9a8103d7f35e2de58009b13bd",
+      "case_hash": "9119b19c1ec29fecc8ceb6727bfcf3c3cbfc0d299e7ba5a1c1605b5c51799ff6",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1334,7 +1334,7 @@
       "recovery": []
     },
     "TC-SS-03": {
-      "case_hash": "e6e9f5bcbf9b9029a7d158bb9f773dc4ad744de7fe30f3f2ef8ad56d048aff79",
+      "case_hash": "e3e7f01244b64e34d2f72d8abedf649ef8ce9fc4e6f8f118ad00ab2c06e7a494",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1345,7 +1345,7 @@
       "recovery": []
     },
     "TC-DX-01": {
-      "case_hash": "4b3b9a38da9d30a326e15431e0133d4410076ca7014e28eea6c838f726906ffd",
+      "case_hash": "cf82366a6a5bc0e5d41bdceee2113d4487b963a347e9df78be0683ddc46aaaaa",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1356,7 +1356,7 @@
       "recovery": []
     },
     "TC-DX-02": {
-      "case_hash": "3740bbaf1e210ab2ce0f496a3986e5311bc48f6b3a2325f29ae5a97b2b8d29dc",
+      "case_hash": "b75d03e922e4edb028132085d859249aeeb8ca3a23a7adaef315f7a3b820425a",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1367,7 +1367,7 @@
       "recovery": []
     },
     "TC-DX-03": {
-      "case_hash": "3dbcbc4578cda1e0792bc5f69f93b08a346f6a7747a42b860a7e9dccffa7245b",
+      "case_hash": "5b17e57a6ba62bb8656a606352816f0f0f9fb95c8c45f30572d5a256940dbf3a",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1378,7 +1378,7 @@
       "recovery": []
     },
     "TC-DX-04": {
-      "case_hash": "2b73a341fed2c5426966b0ffb3a663dd19fad178530a42524591817019c19a3f",
+      "case_hash": "754d449d9cfcd524e8211df9a7aec6cc2506716fef6b27aa245c1bf5ddf88ba7",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1389,7 +1389,7 @@
       "recovery": []
     },
     "TC-DX-05": {
-      "case_hash": "5bee45f011cba264cda82d45f9e54b19c2238b111d470c52db268163ac658f75",
+      "case_hash": "dd3f76a6eb811cd03bf1a7afd5637f98b03a755e5c52c1bd6d18f368c60b3b85",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1400,7 +1400,7 @@
       "recovery": []
     },
     "TC-DX-06": {
-      "case_hash": "d7e4c380e878db483b162a39404ec4d54c2b8da9838be0ca1a26b21091200cf7",
+      "case_hash": "2f18d7dedcec8d23cfc4fe5ce4bad7dff91f4525e5adeeca477307ef69d04dec",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1411,7 +1411,7 @@
       "recovery": []
     },
     "TC-DX-07": {
-      "case_hash": "934685b92b9df0b714be471b5f70679ff46012e1ab53f9bc25ab487e2274460e",
+      "case_hash": "18f1ea70afa69a7dae7842d4371cd7551e1840373d2269002337da783c2e0552",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1422,7 +1422,7 @@
       "recovery": []
     },
     "TC-DX-08": {
-      "case_hash": "bc336b050d2d154ffc41e6bccf689c9ee07501e0701d51e71cdf8ac7f661318f",
+      "case_hash": "87b213fbc3e3c4010a39989be442c3e1294f86bb77e1123ff383ad690fa5f7f1",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1433,7 +1433,7 @@
       "recovery": []
     },
     "TC-DX-09": {
-      "case_hash": "4bfe469a25d8ef9eeb0ae388a08fd6ab155516794c516f5a9687306cd64bfa86",
+      "case_hash": "7119d61ebae2cfc0fd2f954230437fd33b3738a4554416d524622453f7e52d90",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1444,7 +1444,7 @@
       "recovery": []
     },
     "TC-DX-10": {
-      "case_hash": "e76f6fdbb2b597ee6b0e489416a99b73312ce70ab572d760eaeb7442faebbb6b",
+      "case_hash": "72584042034ace5dce062459395d39bf6c7b99b2d9b661f04fecd26b098c076d",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1455,7 +1455,7 @@
       "recovery": []
     },
     "TC-NH-06": {
-      "case_hash": "ef284c65129f43b488441ed8065c0c5fb2b3a530c1004afe32bf178a42241fe1",
+      "case_hash": "f6653cfe920cbf5bde804a00868f4ed87b0f31a037b6bc21614f08345b6deec9",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1466,7 +1466,7 @@
       "recovery": []
     },
     "TC-NH-07": {
-      "case_hash": "3fd3d91ade6f91ac285172ff06c593cfc1c5c6e2cd0d1b5ee299b760e0894666",
+      "case_hash": "007f95be94d53ee47afa86107acab5b7bb5e9aef32f312abcce1b541c863d5ce",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1477,7 +1477,7 @@
       "recovery": []
     },
     "TC-TOP-01": {
-      "case_hash": "b9249ed68f5e03780aa05552bd041cc78bafac85dacacca9a900a277347a6765",
+      "case_hash": "8df91ade1a138d0e7e3737c3d44510f1e98b60df14e182976a3ebe1d4dd23f06",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1488,7 +1488,7 @@
       "recovery": []
     },
     "TC-TOP-02": {
-      "case_hash": "d705e37402740f393640859301e1b0ab2db0c80578eb40066b706c5ae6d3a2ac",
+      "case_hash": "bff1456c288575e58fafc90179b3526d95186f635c1a3b1dd0be83e6fd4b25d3",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1499,7 +1499,7 @@
       "recovery": []
     },
     "TC-TOP-03": {
-      "case_hash": "70f08202ce1cb7031ad697e42018f680a9d9f10648b058556cd4031a789ec024",
+      "case_hash": "58b93bdbb4e851ef8a70127b3bf404dff3a02dfbad6645d0c9604319813b2286",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1510,7 +1510,7 @@
       "recovery": []
     },
     "TC-TOP-04": {
-      "case_hash": "8254d09a4fa601c0ed46e7d9bfee7a966b7fac5e2e472ec18ce0b048c9a1f97e",
+      "case_hash": "6a86ba64523e3c4f3a8b9e0960bffa83958300badd66e8868d56faf9659c7575",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1521,7 +1521,7 @@
       "recovery": []
     },
     "TC-TOP-05": {
-      "case_hash": "ee884fac38743ec8f5fff3709b67548f87ec428350f41597a8807a42875f8449",
+      "case_hash": "5d71262579645dd61cedb51e40ad5ef32e723e277ced97ed41e81353a281fb36",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1532,7 +1532,7 @@
       "recovery": []
     },
     "TC-TOP-06": {
-      "case_hash": "e0028ce6a8c995eeb323dc1c59aaca285008049d6e64ae4ed058a13591fb9adf",
+      "case_hash": "201049cf39c198e1e8515e3b5a88edb20d464f29ae8f1d93fca8f5fa5254d177",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1543,7 +1543,7 @@
       "recovery": []
     },
     "TC-DI-05": {
-      "case_hash": "334b3b2e2d881b12c6527952925c629248004f55741097ed66892b894cc49dbd",
+      "case_hash": "fc52c298d49afc8d199dee7ff6ed88967e4a0435ad2cf8199014ae6b43938f54",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1554,7 +1554,7 @@
       "recovery": []
     },
     "TC-DI-06": {
-      "case_hash": "690b54db8bdab0d08881f63e5cd8fdd80062c5d12597fe5739b88ecd1635fa27",
+      "case_hash": "aea5aff160788a0e32616fc43b71d99fc4e21a18af74d62909e501e6221e24b8",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1565,7 +1565,7 @@
       "recovery": []
     },
     "TC-DI-07": {
-      "case_hash": "563922fe2673b2dbbbc9ea09b480b1a8d290a4d74c01c2e02d164c3e307e21aa",
+      "case_hash": "1c80c1e43983556cf14e1bfc306385b8bc0f8e25ae0a1eacde57545981ad08bc",
       "status": "implemented",
       "mode": "scripted automation",
       "reason": "Offline source adapter asserts each catalog boundary and blocks all port PUTs; live dispatch remains blocked because uppercase input is lowercased in the component while the case requires rejection and the current importer cannot preserve failing-item observations.",
@@ -1621,7 +1621,7 @@
       "procedure_review": "Reviewed the complete TC-DI-07 procedure and Device Inventory §6/§13. Two pre-existing editable ports are used; the adapter checks valid values, all specified invalid boundaries and the unchanged ssh case without saving. Source inspection found that SetServiceDialog lowercases input before validation, so uppercase SSH may enable Save contrary to the catalog expectation. Keep outside live dispatch until failure reporting and the intended behavior are reviewed."
     },
     "TC-DI-08": {
-      "case_hash": "e17a63840db243760cb0c24d19c4c82895efbe94001e64b2b42f700f8e48cdc5",
+      "case_hash": "1e5bf213f79d180fbd2beff05a99fd15101311c112d359e7215d0d4a7477ebae",
       "status": "implemented",
       "mode": "scripted automation",
       "reason": "Source adapter covers all catalog items using existing TCP/UDP fixtures, blocks port mutations, and closes both dialogs without saving; live fixture/card/preflight and explicit start remain required.",
@@ -1681,7 +1681,7 @@
       "procedure_review": "Reviewed the full TC-DI-08 procedure and Device Inventory §6/§13. The adapter uses one pre-existing TCP and UDP port, checks the known http mapping, generic TCP and skipped UDP messages, confirms the pin warning on both protocols, blocks port PUTs and cancels both dialogs. It does not save a pin or alter a port."
     },
     "TC-DI-09": {
-      "case_hash": "49155bba54febf0964114bdf4485fc7bc82b00214c38323eb6a59bfbfc03436f",
+      "case_hash": "d643e17af7cb55966e1fe28f3fe9133ac3e56dceb373e76a501f212a900f552c",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1692,7 +1692,7 @@
       "recovery": []
     },
     "TC-DI-11": {
-      "case_hash": "4e93182fd2c19d5a5e670e0d11e893a6c3101d82310225cf3ad66860939d0d09",
+      "case_hash": "86d729aa6eeca0aaf5f786e0b1b6463fd366d8c5f568fc2ec2a96939dd0842de",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1703,7 +1703,7 @@
       "recovery": []
     },
     "TC-DI-12": {
-      "case_hash": "73b69e85d20122aac568ced031e544072f43d8618c059fa9fd7866321e57a688",
+      "case_hash": "2f0235dba50580b0b3617c89ba5222ca8c140d42b964276f865591b510d92255",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1714,7 +1714,7 @@
       "recovery": []
     },
     "TC-DI-13": {
-      "case_hash": "cf578cb6a9b47bed1f09adf345bca663adb7e587ed63ddf29800ea03aa69f306",
+      "case_hash": "1e4d4b120b5909097c514fabbc6cb75ee13c8cfc8a3bd9553e4a85bf83d9dda4",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1725,7 +1725,7 @@
       "recovery": []
     },
     "TC-DASH-02": {
-      "case_hash": "573c99fd435e14d6743c3abee2a48138335485e3ea4c1d1760b2f7b2ddee35e8",
+      "case_hash": "15785d0cc1b3b4c718191437562abebf62fc2a7db188b79632c2a9deb8b04af7",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1736,7 +1736,7 @@
       "recovery": []
     },
     "TC-DI-14": {
-      "case_hash": "54624747cc2918a13421c400c1b867a657c93f0fe22a69e8315486da328b2122",
+      "case_hash": "d3018666978ac2f3b93775df5e5bce97afe0c03ac6d35ff18d6b969550cf0e13",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1747,7 +1747,7 @@
       "recovery": []
     },
     "TC-DI-15": {
-      "case_hash": "e2b9b2b3e60e501821dab47c0d29d78d450afcd94ee9001e756243fcd27f4dad",
+      "case_hash": "810d74e0a7e188a7ff2ad6a4a996173b412c3b9360a69ce30d6141d9ff05fc75",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1758,7 +1758,7 @@
       "recovery": []
     },
     "TC-DI-16": {
-      "case_hash": "4169cdccae70f6df5e422e5517e7cbbe9ee445f1d63f142c6c27fc33b5ba4dbb",
+      "case_hash": "e3af5a2e83d3828681b14d2646fb8d47c8ddd6c97941410d7aea19010c153c56",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1769,7 +1769,7 @@
       "recovery": []
     },
     "TC-DI-17": {
-      "case_hash": "928a472af62a355b744abf05b7d8ddc59021cb49dea36896f9800045449b9581",
+      "case_hash": "17c1f496efff45c656aaaae3053ad37c76e103f38ce444abafca3cb781801b50",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1780,7 +1780,7 @@
       "recovery": []
     },
     "TC-DI-18": {
-      "case_hash": "c7322035527ce11e5530b27de7be36d1e017cc2b90551effc99f271c00eca7c2",
+      "case_hash": "bdfda9c0a41d92479560226e48249ee4f7e5aecd7899d2bf4c3f7b92dd88e7f6",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1791,7 +1791,7 @@
       "recovery": []
     },
     "TC-DI-19": {
-      "case_hash": "593e846f619606e02a1126748d5dede2b50bc5a18420edbaf6f5e030a1307bd1",
+      "case_hash": "2c3203a7475cad8a8fd534756c74853fb96323854c2a28796386015190ec9f4f",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1802,7 +1802,7 @@
       "recovery": []
     },
     "TC-DSC-06": {
-      "case_hash": "2a1be9b6c2bbece80d420376cd01b78b34538c15cfacf11f084959ab49c408fd",
+      "case_hash": "c9b93fe11688912edf10fb649c69d7d8b4f51bd7ad755accfefed889e585f2d5",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1813,7 +1813,7 @@
       "recovery": []
     },
     "TC-DSC-07": {
-      "case_hash": "1cfc8565d90f92d9acb652625bbcb5061a39348d40fe95decf9ee919177484a8",
+      "case_hash": "9cc48f912188f2534bac096352d1002c4b3920f017039c4c4d374cdd71199bde",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1824,7 +1824,7 @@
       "recovery": []
     },
     "TC-DASH-03": {
-      "case_hash": "f5f7fad6d90dc4e48316f5216d0aa84643cc83846ed242fa3d1a0df6b221adcc",
+      "case_hash": "35f5b5a3bff87d0b9d84589e5aa90608ab45ac31768f25f715888151cb2f8123",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1835,7 +1835,7 @@
       "recovery": []
     },
     "TC-ACK-01": {
-      "case_hash": "6180ff0e5abe1b5cdc3c283729f6c9da7ea24e6d02f636ae68079d415c07f6cc",
+      "case_hash": "3afb85f25727d1627d6d6668b5d2feec0ee8049bcb26c49e82e3273be9dadc1e",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1846,7 +1846,7 @@
       "recovery": []
     },
     "TC-ACK-02": {
-      "case_hash": "af784ecee2b6d57c9d7ce3ef029afb12d71e9f9903acd0580a8c1316a5618fa8",
+      "case_hash": "91aa3ee3a8c3553e613f1dc9657a7506112b3c9bfa47910e5ae5cfd637360c0b",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1857,7 +1857,7 @@
       "recovery": []
     },
     "TC-ACK-03": {
-      "case_hash": "dd06349be585984ee3405363b068835f2b43647e6ebfa1b61f177ea257d5d484",
+      "case_hash": "4b8f8e502ee6dfb88e8cb00d21815e465aa52f5a044cc4e7ff5140ccda10a9eb",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1868,7 +1868,7 @@
       "recovery": []
     },
     "TC-ACK-04": {
-      "case_hash": "63d539405b646e754eb2337bf1793962754d2a317e5edf700aaa6b7e4d2d1215",
+      "case_hash": "838d9fd3f111601f4c30f592aaaf14a748ceb461a1a331b66b45e5e0a4e6b046",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1879,7 +1879,7 @@
       "recovery": []
     },
     "TC-ACK-05": {
-      "case_hash": "02c64251333338daf401e0a79594c177ebcbb217c27220d7cf997fa4eee1ca75",
+      "case_hash": "4fed2368140f6794e963a42f157bf63606be50334a35a35a7f89a7f21a7fe6de",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1890,7 +1890,7 @@
       "recovery": []
     },
     "TC-ACK-06": {
-      "case_hash": "a941025fa627d1e6b2096977735c875cb909294570f21f110d97eb978db54490",
+      "case_hash": "56e5d29904231ba50c9f4f0bdde89180a5a64ba87d2a53c3a69238919a2235d6",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1901,7 +1901,7 @@
       "recovery": []
     },
     "TC-ACK-07": {
-      "case_hash": "9020b4e38506f8e49e565f64a535f7d1cc99276fde05e6fe0e0c07cd1e4730ea",
+      "case_hash": "aaafafc3b90727f32a30cb22d72da01abb88ff310906e9981a32c856ac5d2842",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1912,7 +1912,7 @@
       "recovery": []
     },
     "TC-ACK-08": {
-      "case_hash": "d29dbb0acf98243cd6f9ddc91c39043179131faa944f1b7ef461c1bdd24ad03f",
+      "case_hash": "c1c5a5d5612e922261cce442f73950eb135484ad55747a13f1192ba39f6a20cb",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1923,7 +1923,7 @@
       "recovery": []
     },
     "TC-DASH-04": {
-      "case_hash": "7014d4b20a5edac0e1a3f40a99aea325b8f4683308d11d6f1a061d719cc36371",
+      "case_hash": "7a4c0587962c9e6409fdf8500185d1f2487a91ae53aca5bab0581a70d3a914dc",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1934,7 +1934,7 @@
       "recovery": []
     },
     "TC-HIS-02": {
-      "case_hash": "e99e1557a1c81bf2fce386c9ab64fbbdb455422930bf091c191d8f5c20750777",
+      "case_hash": "5784222606fb32782909799b689df2bb315777fe54e46ec8fb4c22d1a4893afa",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1945,7 +1945,7 @@
       "recovery": []
     },
     "TC-HIS-03": {
-      "case_hash": "75cb2791144b95f9edf6982d51247fdf8ec9afb084c9fadd160413fd61415a12",
+      "case_hash": "32a76982aa58b0d71c551dd5e771207bc15bb3c9c97e4e4cb8551f7e73c8202c",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -1956,7 +1956,7 @@
       "recovery": []
     },
     "TC-HIS-04": {
-      "case_hash": "12761c07c7ea5d5a24284e47d970e9cbe39acbbb83db21e2d5ef37c0c9282cfb",
+      "case_hash": "978a4e7f1dd93a3879d450ae4f2a81d700d708b9e28acf999a83b3437d01987f",
       "status": "implemented",
       "mode": "scripted automation",
       "reason": "Source adapter covers all expected items using read-only history API requests; E3 requires real history older than 25 hours and remains unprovable when no qualifying event exists. Reviewed cards, current baseline and explicit start are still required.",
@@ -2009,7 +2009,7 @@
       "procedure_review": "Reviewed the complete TC-HIS-04 case and Alerts/Notifications History §3.3, plus Backend_Modules_and_Routes history contracts. The adapter checks a valid complete day range, missing/reversed/malformed bounds, then compares a known real event older than 25 hours with the no-date/no-preset API response. If the fixture event is absent, E3 is not inferred from an empty response and the attempt remains incomplete."
     },
     "TC-HIS-05": {
-      "case_hash": "4dc855e186f4b15bc58a7782d9d34151ba02dce50397f0339acc8adabc77bff6",
+      "case_hash": "059a98286f07bc2df2d8735f8e4fba1f331255733ee157c469d48a8d854e398a",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2020,7 +2020,7 @@
       "recovery": []
     },
     "TC-HIS-06": {
-      "case_hash": "c064349b3884f701e80c5eda21744ec72f7e5fb93bd74dd2a54a5a06648d47f3",
+      "case_hash": "6b7ed966759237a5d75cd48f1e4f202c85a0295c29ec58acae6bccb29292946d",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2031,7 +2031,7 @@
       "recovery": []
     },
     "TC-HIS-07": {
-      "case_hash": "635636b39161387d19a7e0d541c4e878e9550bcf6f08c5c4708f830dd11f222a",
+      "case_hash": "6b1b7bed306b2dea4c03ec6360686798f5d9a0a0a7e0e81b70cc26bdd10b0f90",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2042,7 +2042,7 @@
       "recovery": []
     },
     "TC-HIS-08": {
-      "case_hash": "494e50aefc6d7815ef4ec17b30ced0065866ef2f085eb6d5fd382e95913c2bc2",
+      "case_hash": "6675d5299c62252f2599c0398f2af0f3adfa105275123e81051f6e850a94308c",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2053,7 +2053,7 @@
       "recovery": []
     },
     "TC-SHL-07": {
-      "case_hash": "ed0c02c254b31a864ff3170c4dd2d491aacb0dc8c7458254147c163d4cda6c3c",
+      "case_hash": "a80f963d34148ec33aed2096d2635f85f25f50654eccf57d221dcffc509b9804",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2064,7 +2064,7 @@
       "recovery": []
     },
     "TC-SHL-08": {
-      "case_hash": "cc18996017af7b86df5c9e2c8e7fdb0c4796ee452080b5b4538a35019f63cf2c",
+      "case_hash": "f6f11d96bf6f1c43b3c78dd24b782f4044de1c55441368450d7bcddcac51d7a8",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2075,7 +2075,7 @@
       "recovery": []
     },
     "TC-MNT-01": {
-      "case_hash": "fb791ee7d7b6c303f92509cadc587b18562afea6a114bb1101e65276356ba4f6",
+      "case_hash": "ed8d525cc1701b3724e48363c90bcb5a9bce4cf83140d41e18dc2601d7f811c7",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2086,7 +2086,7 @@
       "recovery": []
     },
     "TC-MNT-02": {
-      "case_hash": "b0a100a98aa35d1238aa839aa72fce7101e505fd9d08bb128390578ca5f6db98",
+      "case_hash": "f13ca76f350ea75e7cfed636791ee04a920d5618146b512e56441e6614dabae6",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2097,7 +2097,7 @@
       "recovery": []
     },
     "TC-MNT-03": {
-      "case_hash": "f9f4899892f41a1f581db7391e0d3afb8aa4cc1863e7bf6934f079aef41b461a",
+      "case_hash": "1f169eec0be295b7b02fe27c6e06933b2d815d8095ce52654e1a4fcacf27cd99",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2108,7 +2108,7 @@
       "recovery": []
     },
     "TC-MNT-04": {
-      "case_hash": "8bad7eed6b0511acd3fbd441edf57a870f22aa4cb5669992fd3e5f9602405691",
+      "case_hash": "9166244d1dfcf87f28651279a727b8e09c2ca0743c8999d81a39891d7a21cad0",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2119,7 +2119,7 @@
       "recovery": []
     },
     "TC-MNT-05": {
-      "case_hash": "af6e27b6441555d47dd204508505325f27f5c9e11b5fd87b9b18a21e79708a00",
+      "case_hash": "cd0db00d907e6c565306dbde6caec5a01ac1b80fdcfe6ff41132c160aa69d6af",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2130,7 +2130,7 @@
       "recovery": []
     },
     "TC-MNT-06": {
-      "case_hash": "9e5dc4a6e37f7e31f55a251a8b7862f1b69f0f5e38e685de25e64151c0326938",
+      "case_hash": "d317f37b8942d5e33a6d4ecc1a121ff512f458a914aee8bea0a8df53feb01c0e",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2141,7 +2141,7 @@
       "recovery": []
     },
     "TC-MNT-07": {
-      "case_hash": "be9d418b527f3030701942a947560b90ed1608f4e937928c4e0d9e859441cf68",
+      "case_hash": "332af1861837d268125aafffe58da92d50f563d540fb510c197077959a91dcae",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2152,7 +2152,7 @@
       "recovery": []
     },
     "TC-MNT-09": {
-      "case_hash": "c7e0ed681d8c1593c71e08c65258528838fbb717638505b65f118ac9668f1e6a",
+      "case_hash": "9a4a6f6edc007297e3a876b02c72af4a4cfcf5e76da92c18a6688612e7e77fd2",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2163,7 +2163,7 @@
       "recovery": []
     },
     "TC-MNT-10": {
-      "case_hash": "ead17927a1806ed15743c1aef6f08b1999a4b4de5adf4f68c47ad56360608c9d",
+      "case_hash": "1c2e4a0b0ddf8a34f2a09dd76b426034f962d7941889065398b3b783cbc35fc0",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2174,7 +2174,7 @@
       "recovery": []
     },
     "TC-NCPA-01": {
-      "case_hash": "092ecfcdeb41f1c6543e0319bd30583c397464df1d65d7f3844c080a64305466",
+      "case_hash": "4ff88d6e553e0456a2c0458895b16ca40cc06f160199b5e93e0bf1b68cd00563",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2185,7 +2185,7 @@
       "recovery": []
     },
     "TC-NCPA-02": {
-      "case_hash": "c8b0732d2b44a244105667ff99e3494ad259af78568ee5671bd2f2b6933b74d6",
+      "case_hash": "8088c54adabfdfb2c90fd1a185fddd453392dca782f7f1372d4c4b7aa065346c",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2196,7 +2196,7 @@
       "recovery": []
     },
     "TC-NCPA-03": {
-      "case_hash": "26b2096671298139b4871ba4c0facf58d5a40d5477ce5d9682ee2e6ad244c7d5",
+      "case_hash": "fcca9312328073f4a1a77a794bef77ce84a2ea67c0695fbabbe2937d88625768",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2207,7 +2207,7 @@
       "recovery": []
     },
     "TC-NCPA-04": {
-      "case_hash": "31be1f3f7aa811ff6d8f3d2fc4ea1f81e7a287dc7283584001c501be5efe7479",
+      "case_hash": "001a5c2cd0acef7277e5c59f298cbd0c42aa178235b006d07839741cfb04d9bf",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2218,7 +2218,7 @@
       "recovery": []
     },
     "TC-NCPA-05": {
-      "case_hash": "893de68fb5fe1e39c70e20e7169562101fb09aeeae8011cc3d86564f6c14113b",
+      "case_hash": "1bbe2ab0ad08f8a3f3582e7ae734a04fba2cbffd294a5ca76238a92799181cc0",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2229,7 +2229,7 @@
       "recovery": []
     },
     "TC-NCPA-06": {
-      "case_hash": "5600e6fe1dd9aca35e1c4bed259dd36aa138fab6dfe3813f26b5bd6e6eb09e58",
+      "case_hash": "f249d951e80eca636483befbdd9d6c39b6200ca8ba35bb7a2fd5687d788f3166",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2240,7 +2240,7 @@
       "recovery": []
     },
     "TC-NCPA-07": {
-      "case_hash": "06411a9c27cc6d971abc046307c86c2c605d5ce59fda47226c48ac7b79125a10",
+      "case_hash": "0193f8dfd850c7801f513068056479afd9435b217426a0b790838ad31453be13",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2251,7 +2251,7 @@
       "recovery": []
     },
     "TC-NCPA-09": {
-      "case_hash": "343361f93b94a2cb065468bb3258615ffedadda2dbf43941bdd5b90e68567c2d",
+      "case_hash": "48778a8870e077ca8f077015351a35ec7c9f2b4e09302143b560a33b6ca0590a",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2262,7 +2262,7 @@
       "recovery": []
     },
     "TC-NCPA-10": {
-      "case_hash": "c9bd8a3015469c3fa20feedfb724bd09be75b0b71bd2a0d3165464e75d7a7af0",
+      "case_hash": "70a3962c2cb6f6c6d99a1bb194f87f80c256a750fee391909f5f5171f96dad50",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2273,7 +2273,7 @@
       "recovery": []
     },
     "TC-NCPA-11": {
-      "case_hash": "d8b5b5c5aae140ef8b0ff39bb090797d9720f1cbc04c624e56964a9b68c3bb48",
+      "case_hash": "a9f8ea57887a8173550e9a47d8240f942968fcc1fe6714102aac2bda86152f21",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2284,7 +2284,7 @@
       "recovery": []
     },
     "TC-DI-10": {
-      "case_hash": "01b3efac1d9d6fd9eef7d76be4349fa0ddc20df25ae6ecd73eb17f3f16185454",
+      "case_hash": "3e3908145203794cb8ee0f6ca9b6f41d5fbd517f133324662bd4191b63ffd29b",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2295,7 +2295,7 @@
       "recovery": []
     },
     "TC-DASH-09": {
-      "case_hash": "ff89a27c579cde4828995907efcc1ec9b03131837513a6e974a8bb9820cc8d55",
+      "case_hash": "7be235d3f1fe7384e95f9d302cde638ad388372960c8da7917bedfb575adb5a3",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2306,7 +2306,7 @@
       "recovery": []
     },
     "TC-SS-05": {
-      "case_hash": "6fc7a3212811df0dd1b0324b5407e4dde3c417059b99c41cf83e12cc7b183d4c",
+      "case_hash": "05865567746ac175b9ee8a1a83b1d5aec92adb2567a69ca6006344a4e9f6d901",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2317,7 +2317,7 @@
       "recovery": []
     },
     "TC-REM-02": {
-      "case_hash": "3fccbdb249e70f7fb04da5f032b0dee667a80f0b1ed086b7f7f26dec2a55f911",
+      "case_hash": "1b5064d5580ee54b90309747b54d41bb63ee3ef93d02c414d5cc331899532093",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2328,7 +2328,7 @@
       "recovery": []
     },
     "TC-REM-01": {
-      "case_hash": "b9b09cff412f85e7eedf56fd75faa7b5a65af6492250885de0d851eae30cacd3",
+      "case_hash": "d3430c3c659b84f4884bc80f04faa08a6f999175f1128a4b508c2d51cf8d2511",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2339,7 +2339,7 @@
       "recovery": []
     },
     "TC-REM-04": {
-      "case_hash": "4c8096525cd9c27bcdda67d1146b4dd33c86e157b2f16db62a4b73a80825f31f",
+      "case_hash": "484a704ceb93627231f890a6d39de31a5b1d7d1df4581e26fd5bee243aa456c5",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2350,7 +2350,7 @@
       "recovery": []
     },
     "TC-REM-03": {
-      "case_hash": "39bfc2b74dca6631557ea868dc943456c06923f7ed41dc76a924b9b35613d95c",
+      "case_hash": "126e475bddd9b9591309cc4b921730dec6e36b57c01199944b0d1c006dd29b68",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2361,7 +2361,7 @@
       "recovery": []
     },
     "TC-REM-05": {
-      "case_hash": "69e46b8e71f20599c06c4b82b2448cbd909b112801826611dad7c1295e141fad",
+      "case_hash": "08eba8c31afccc269e379311f6164315a0ca9a59bbbd7609f0363bb35b606e8d",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2372,7 +2372,7 @@
       "recovery": []
     },
     "TC-REM-07": {
-      "case_hash": "b5580dd450867fe7aef5af94d694935bcc55f1c8aacee4f42f3dc5b05fb09272",
+      "case_hash": "5ccf426127f8298518f76974d847c989dc0911fad9891f296cdeb6dadf47bb56",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2383,7 +2383,7 @@
       "recovery": []
     },
     "TC-REM-09": {
-      "case_hash": "8df0c01c77e334a900a6c0653f0ce1e6f9e5d75a6feeab2f750358a77547addb",
+      "case_hash": "54a86297e4d6339cdc501920f35bb622da034d3ef7369ff3fd0a02448f3f06e9",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2394,7 +2394,7 @@
       "recovery": []
     },
     "TC-REM-06": {
-      "case_hash": "9e4892c378bb64fee2565f7b47388ef7902eac2a9c4a2019d1bf10235d1f4700",
+      "case_hash": "a2591982b05db8c46386fcd480d82306425aba3ff4614a629456add7dceee74f",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2405,7 +2405,7 @@
       "recovery": []
     },
     "TC-REM-08": {
-      "case_hash": "2339088dfebb7996eb5208957ccbea078fe76b43664613544bc3c441d93bb29a",
+      "case_hash": "ef46b471772a11ed048e4fae3d6301dd0deee88b2e17a3696ec10f1f7301a350",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2416,7 +2416,7 @@
       "recovery": []
     },
     "TC-REM-10": {
-      "case_hash": "345ab9243bd96f0acc4d7aa30de62d56d22f6a96e15aba515563b9c83fb168bd",
+      "case_hash": "732d3cf39a7b119711cf2464edd06231b4aefb8e23f8a6a3edc43293c23040f0",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2427,7 +2427,7 @@
       "recovery": []
     },
     "TC-RPT-01": {
-      "case_hash": "10624893fb01fdab46c6c1e35942324dd3216c7ec15fc22f5b9860e643ca4321",
+      "case_hash": "6f929efbd7572d7ce7d1a3f68ec3e8e9bf72dd763ef92d88ccec52bd6d07fd6e",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2438,7 +2438,7 @@
       "recovery": []
     },
     "TC-RPT-02": {
-      "case_hash": "d2220451f064f857d7abcc79f7b1461ef7dd8a79b57412a9341562199c5efac1",
+      "case_hash": "d574efbed285ff9d417dbe0607173db6d512c32c47c09da2004a0de4acd71e83",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2449,7 +2449,7 @@
       "recovery": []
     },
     "TC-RPT-03": {
-      "case_hash": "a989197444b400b6507e78fdad3046e5c31b33028a218e6d62437f9b757d1ba7",
+      "case_hash": "0bb60c1726f643f1784da0be7762cb0f01fbb80186ee263ab58a839a384e899f",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2460,7 +2460,7 @@
       "recovery": []
     },
     "TC-RPT-04": {
-      "case_hash": "edf6deef4b68c52b01263ad5ab8922f16158aa11de109ff3526e0468388a5963",
+      "case_hash": "59b28a6cbdb04f0b94ee0d048c5f189ce06aa9db29a30c7e634ae51ace772bc5",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2471,7 +2471,7 @@
       "recovery": []
     },
     "TC-RPT-05": {
-      "case_hash": "d39a479d4c0459a9b8dbd787dee8fa943faf6b072bf9ff1dbd9fe60a85a612d2",
+      "case_hash": "990977a4d80ec5b84084e404dc9f010c4bb3df7e7f37081f2eed6d36ec8a8543",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2482,7 +2482,7 @@
       "recovery": []
     },
     "TC-RPT-06": {
-      "case_hash": "91038c5198ba851341529748d5321d039e9b82cfc45ca3c0d9354f7e91b7ef53",
+      "case_hash": "43ee644ab04c9d8197fda6b35316d1aa0c14dfbf82b587a99397b94473cc628d",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2493,7 +2493,7 @@
       "recovery": []
     },
     "TC-LOG-01": {
-      "case_hash": "edb0f88a2afde6f633f10da15a4e6f1e0f3042c115b4559f62d1524617ede537",
+      "case_hash": "b9055ed6ff8c207405eef1bc955fe5f6fc8bbe68224e11a64c0b33fae77d357a",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2504,7 +2504,7 @@
       "recovery": []
     },
     "TC-LOG-02": {
-      "case_hash": "ed0d1c8d2ff90cbb1eef85f3a1dc33d8dc3961d980f252e70b286b8dae79d408",
+      "case_hash": "d176121ca14bbb81d34c234a8befa0fdb020de37aa332b1ed9d5ef10b7c583d6",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2515,7 +2515,7 @@
       "recovery": []
     },
     "TC-LOG-03": {
-      "case_hash": "490e90eaa4e89751ce612eadf9e260a38376efbaf5f326ce3da460021d9e5021",
+      "case_hash": "bf7d1bd5f0947602d64b77b8682fee7da9cf3d0488dd9c88bc93efcd3a6383f1",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2526,7 +2526,7 @@
       "recovery": []
     },
     "TC-LOG-04": {
-      "case_hash": "9ca0797bd1537c0f7048bd2a9c3b6bb474e1091e40e7c20f0341e0fa6f2c9904",
+      "case_hash": "ba8bf3d8df5c569f173ae388f7f388a26d145daf49fd1a8573daaa0bb2dcb0bb",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2537,7 +2537,7 @@
       "recovery": []
     },
     "TC-SHL-05": {
-      "case_hash": "dbe000f69d0a3e26737d26402e80a65b921f335526eb09bc3bd2d421d0f4d0a3",
+      "case_hash": "f333f42fdb73717ccc3ade5310b71b324bd9acd87e998a5a3539426c0bf1e0ba",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2548,7 +2548,7 @@
       "recovery": []
     },
     "TC-DASH-06": {
-      "case_hash": "7e5f568790c2b35ed089bec6446d7aff0a69afb31e4cc51d7a9ea65449025b2a",
+      "case_hash": "ba2ddb6b374b8846c1fda834e27845d7d5c3a43bc351cbcee8531357a9ed044a",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2559,7 +2559,7 @@
       "recovery": []
     },
     "TC-MNT-08": {
-      "case_hash": "931fd93b6f1c8129c1337345144ddbd790b22eb944922d9f077365c17716a0a0",
+      "case_hash": "625bf95733d5e4dc47b466e90d639cac4f351858eabdcdaf0dd856907a83ba49",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2570,7 +2570,7 @@
       "recovery": []
     },
     "TC-SET-08": {
-      "case_hash": "50285da3bf1e69dfcf00983dcbf36cec9ae664ccb283e82f49ef14f803ee4964",
+      "case_hash": "5c5f44a4617b01aa144a15e126cec402728300b8e99f9dfa465d9fc61b71e00f",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2581,7 +2581,7 @@
       "recovery": []
     },
     "TC-SET-09": {
-      "case_hash": "a30fe33047b510982e3bf46070ef7b442ebe47d3e032b02acf13a735a7bcde59",
+      "case_hash": "d6d8fc8abce49ccb696b9064cf7221512b9a7b50739a2810d053cb7ed565349e",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2592,7 +2592,7 @@
       "recovery": []
     },
     "TC-NFR-03": {
-      "case_hash": "5648f2df2684b3e0115019d60bf8a276370d2bfdef9c4601ba435fcf62d672d6",
+      "case_hash": "5affc49cf8513e8a5a4639b4a60890af0ed7451a34a5fe670e6bdb46b9c3301b",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2603,7 +2603,7 @@
       "recovery": []
     },
     "TC-NFR-04": {
-      "case_hash": "60486ffaba7e812e76b54a00008cd445cbc422335e0686b43a1c768ccbdc565c",
+      "case_hash": "43e4ebaaf6839667189a9fb1b98c37a183da8a2ef984ccf90deebe198f93af14",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2614,7 +2614,7 @@
       "recovery": []
     },
     "TC-NFR-05": {
-      "case_hash": "8e514b22ff2ec9b2873826833674509e5575fdb4d0ffbdf52000ff15f42af72c",
+      "case_hash": "469a63b57dd2334beac9ae6a84b6246484f61655c426f65070ec39dc0e3dd4a5",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2625,7 +2625,7 @@
       "recovery": []
     },
     "TC-NFR-06": {
-      "case_hash": "58afba147e6c9983692bdf6e7b07e78f9ded5b76aecea22a9a9156e8f709b5f4",
+      "case_hash": "58f7b634350d44b2b823bbd99e1175e96345c9251934cefa08fd6a879da1d640",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2636,7 +2636,7 @@
       "recovery": []
     },
     "TC-NFR-07": {
-      "case_hash": "46d8cbdc6677e8a72fdcf4b0a0757f3db054388cac51977579c6746132873a98",
+      "case_hash": "83efa9d5a1b67715dd3ee2282e1cc1d019655f9603564e094920e8ac0fc20106",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2647,7 +2647,7 @@
       "recovery": []
     },
     "TC-NFR-08": {
-      "case_hash": "95a3fcf0764cf9d2e5d7a4536db7772175c222362fb803bb041692c3b6bd7542",
+      "case_hash": "4b0068eef30793deaa34ead1d5521334bc932862c8faf830de8a3d8f58428c8b",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2658,7 +2658,7 @@
       "recovery": []
     },
     "TC-NFR-09": {
-      "case_hash": "931599e6da5a521cbe4e13e1a1ebfa3a3cf98860dcfd58ce4e06ff8edc922a70",
+      "case_hash": "6e1bbaa3f801a13dd47aee365aeab464afe8ab5886e6e9660bb25da33d7e001b",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2669,7 +2669,7 @@
       "recovery": []
     },
     "TC-NFR-10": {
-      "case_hash": "74b6b2d83f6dd29f1f7cbbf54e9830695d9891dd100f16c7c21c9a41066bc703",
+      "case_hash": "3c9de65ccd5582d82e537734f70f2f1c20571fab6983de867a995268d4f13748",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2680,7 +2680,7 @@
       "recovery": []
     },
     "TC-NFR-11": {
-      "case_hash": "6fb75d079224442ecabbda4819e8555d8e536c27b965aae76985f926f8a1052b",
+      "case_hash": "ea7f776c6a9f9cf7bcba7cd86b083d02aafc5e74a0fa6e421f347e856162cfba",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2691,7 +2691,7 @@
       "recovery": []
     },
     "TC-EDG-01": {
-      "case_hash": "73ee85326406d32cddd6927b402d402eda5ba45619a3d917e3a64b3fc98dff66",
+      "case_hash": "c95ed19baf0297b5ae988096db259be229bdfa5ebcf222831cb7bbad8dadc255",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2702,7 +2702,7 @@
       "recovery": []
     },
     "TC-EDG-02": {
-      "case_hash": "93403f820873de2f3b9d359db8659f1bffc332492d7c4ca3cf4dee702527ad4c",
+      "case_hash": "655c3b06311b29283a0c42ca9696de963c7c278bcaf301b2ef710566c0251bba",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2713,7 +2713,7 @@
       "recovery": []
     },
     "TC-EDG-03": {
-      "case_hash": "8b65a9f60e224a5d9c587bcdf6aa3d9f161a24d10cfb2b5a6ff082ce750d155b",
+      "case_hash": "2a451a3df39c649d650f80f862be88caae6dc4f2da749d30d0fe8337392cac38",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2724,7 +2724,7 @@
       "recovery": []
     },
     "TC-EDG-04": {
-      "case_hash": "42b511efc4982a3b44866cbd56c777e94ea990f783149610cecb002d60a94a7a",
+      "case_hash": "c357a874b1cfa0a866d21b11add27e3153388348fd5326ea3c1ae1e8e8fb5bf6",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2735,7 +2735,7 @@
       "recovery": []
     },
     "TC-EDG-05": {
-      "case_hash": "89e800543c271f9e3100f11824721a5f753c8e157181eb2d6de5ec17c1fcc0ee",
+      "case_hash": "c7e815fc2b30dd970d0851cc1dfcd9f94a1e36a18fdf3a04e1944e6353273266",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2746,7 +2746,7 @@
       "recovery": []
     },
     "TC-EDG-06": {
-      "case_hash": "d63e91fac6f3db9650ebbbfa2972881dd00770f5938decb0c78583f4a41a9633",
+      "case_hash": "052e0363bd26e565d8fd9f3b563fd0d2c80656313eb8c33fcdca4c5bc8c2d136",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2757,7 +2757,7 @@
       "recovery": []
     },
     "TC-EDG-07": {
-      "case_hash": "1b4a0d0eee358b9f5b665667262349ae5d459e6f98866cace5ee338d757b146d",
+      "case_hash": "0a17de3e7b49c980151ac37666bd02151cdacd9045bb26ecff56118bf6d135d1",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2768,7 +2768,7 @@
       "recovery": []
     },
     "TC-EDG-08": {
-      "case_hash": "01ed0b44ee9673d4380a92469d52dd9624de908d62044567eef6633b201800b0",
+      "case_hash": "b68f29b4c57c47a5324e26d810881434d7af010bb2be0d9c198ad65d4a047425",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2779,7 +2779,7 @@
       "recovery": []
     },
     "TC-EDG-09": {
-      "case_hash": "f78cadfb99e3af035ee8ae809276a2d2d150b0af9b572c1f2aeebc437438d2e4",
+      "case_hash": "26bdb89d4cee23286d2f633d9fd97978d6c63b5898e02bbd2fb34a209e42a5d0",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2790,7 +2790,7 @@
       "recovery": []
     },
     "TC-EDG-10": {
-      "case_hash": "1dd84c3813489431a1b9eee49491a825266332c364d1f1deaaa8b11d6b029529",
+      "case_hash": "b5ca8bb1de8855c87d922bc9caca2359b0de6ba9cbdee29960a5885555d03414",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2801,7 +2801,7 @@
       "recovery": []
     },
     "TC-EDG-11": {
-      "case_hash": "2dd46519e50f3744f5f1fd64d09503123151130e350af469c7c11e6de980ff5b",
+      "case_hash": "1c94d331b4b774c234203a409ae6c181db6866cf5a38d272052071c218bbd74b",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2812,7 +2812,7 @@
       "recovery": []
     },
     "TC-EDG-12": {
-      "case_hash": "761e00d63b64c1fc92e5ed29cfd41d51c04e3f059f1ad5b9ae85a9b52efca585",
+      "case_hash": "32f7ec844240d26835ce706cf9bfd172e342cc1adce59da501f590b15eae25ba",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2823,7 +2823,7 @@
       "recovery": []
     },
     "TC-EDG-13": {
-      "case_hash": "f5b610f59e0ef4d6abe3ea64cc4b70b025de01940e309ec91b008a24453f3be4",
+      "case_hash": "63f354e72468ef6916a754acbb52f804e0482cc55ed9bc8d27f3c61b6f875a7e",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2834,7 +2834,7 @@
       "recovery": []
     },
     "TC-EDG-14": {
-      "case_hash": "170b829b619a72e236f80fb74a1821c628ea71948cd956433273ae6bcccd19a2",
+      "case_hash": "c834ca275770227058ad8314164efc6ca4cf3bf806f4de52837ef98364674879",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2845,7 +2845,7 @@
       "recovery": []
     },
     "TC-EDG-15": {
-      "case_hash": "c8ea630e90e55a950cfdaf516056ec1f2d144a3d54f183ca87a890f57177c4fa",
+      "case_hash": "5931df2f258f93bce60b622dfa29552513349b1831ee1d988dbaa7bbeb6c9c6f",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2856,7 +2856,7 @@
       "recovery": []
     },
     "TC-EDG-16": {
-      "case_hash": "bdaabec9890d9e5022449056676f44f7d81b58e2b8bd36df7b571b86b59b33b5",
+      "case_hash": "003326d754d4e08332dd63fd91bf3d9ed76520a7b5652fc5cc648cc68a82db68",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2867,7 +2867,7 @@
       "recovery": []
     },
     "TC-EDG-17": {
-      "case_hash": "955b67f4813b3139a60b90f3503918fa5fcccfb9afbbf9fcf82faaba97c2fedd",
+      "case_hash": "a1d4690377bf9146451c38e450c09abf8617ce3bb7e21f0b6937fbd37a75efab",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2878,7 +2878,7 @@
       "recovery": []
     },
     "TC-EDG-18": {
-      "case_hash": "1b4dd7a70b74b43aed67fe2cee7a1be96433fc51cd4f46c2576bd16c926d730f",
+      "case_hash": "ee180ee47fa6b53d79d47e446108fc24093781d9bb4b952322410d3b3bf6560c",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2889,7 +2889,7 @@
       "recovery": []
     },
     "TC-SEQ-01": {
-      "case_hash": "b2997d1e1ff5224d5a57e6c3a0129cd10ad81e0da6646f68bd6c72e18e8d37f8",
+      "case_hash": "99c75e63515e0206e1663304ca78027b755afb348298b6fd29e4c029db9b5a77",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2900,7 +2900,7 @@
       "recovery": []
     },
     "TC-SEQ-02": {
-      "case_hash": "40096c8c5274bd6e286a12bf0c726be14dda21a2320fc9e589d4b236bb61aff6",
+      "case_hash": "576fc3a400dde938d5863f53b1a7577aa778faa056ad90b479d75c2fdf8b433e",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2911,7 +2911,7 @@
       "recovery": []
     },
     "TC-SEQ-03": {
-      "case_hash": "b4ae6f584ab713b8b4c7da802b975cb99f2621711f39cfc5d8ea9449ccf6018c",
+      "case_hash": "c50598f6bd647b7d056c1f59178807a0899d0544623ca55e97b912ce4e8bfddb",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2922,7 +2922,7 @@
       "recovery": []
     },
     "TC-SEQ-04": {
-      "case_hash": "efa2324812194d0726bccd57cd1c5da433a35c0bbb2f583de20542c456fc1c9e",
+      "case_hash": "99cbbbf87b88956f0ef35cedd2d95d2be4c899108da892d26b10efee5ce10d62",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2933,7 +2933,7 @@
       "recovery": []
     },
     "TC-SEQ-05": {
-      "case_hash": "5e4080a98b1bdedbb84d9355e68fdc6652191c3d91f4b2c6bb4af5d655ed0407",
+      "case_hash": "6422e03eedeca8acb58ed3e37c2d89fbd97199c5d6fc8ed660a59bc6c38a7f3b",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2944,7 +2944,7 @@
       "recovery": []
     },
     "TC-SEQ-06": {
-      "case_hash": "74726466b62ee185df808da5da6a2282edf89a22fc1260ad947d2d776866d910",
+      "case_hash": "6d42079dfa19f8bd683ad8b77f61323ac3727ab0ca6c820875d14b5de945800c",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2955,7 +2955,7 @@
       "recovery": []
     },
     "TC-SEQ-07": {
-      "case_hash": "df535be18af1305ee959b2c5ea89504086adc0474e99c6a4a852bab6d76a78a5",
+      "case_hash": "a0ced9d165cb5c322cc4f8631486ea26603edaddcfba4d1f3561da38b0fc214d",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2966,7 +2966,7 @@
       "recovery": []
     },
     "TC-SEQ-08": {
-      "case_hash": "91b4f9d7603ac88de780163cfb23c7a7dab37318f5308b5fcd7e830e9d7754c4",
+      "case_hash": "90ffaf5d745d2e9648f1783e99dacde3e6b74466f7f0a4d0ae5e149e6b479129",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2977,7 +2977,7 @@
       "recovery": []
     },
     "TC-SEQ-10": {
-      "case_hash": "352f7039a92c0d3439d3012518641d9d524e5782a1588ef063002fd93f27fe40",
+      "case_hash": "38107bc1caeefe750902ba54402377d229c3624e497796f80161b0b1952912bb",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2988,7 +2988,7 @@
       "recovery": []
     },
     "TC-SEQ-11": {
-      "case_hash": "3f0d08b621c179053f30ba13156a3b74f2c3bbeb06e93f0049f013b5f96c0b00",
+      "case_hash": "dc3c75ba29d0fe470456cac871f0c81fcfe46d4a5ea0110dffca3e265fdaac0b",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -2999,7 +2999,7 @@
       "recovery": []
     },
     "TC-SEQ-12": {
-      "case_hash": "a38c1252a898bd117ef37119972c344e18982f0a0b1f63386dc5c8b97aa67795",
+      "case_hash": "5ae56bb565a2d154f0111cc84643144a8eb537d0014ff0297e3507113fd7289c",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -3010,7 +3010,7 @@
       "recovery": []
     },
     "TC-SEQ-13": {
-      "case_hash": "7a74ac2f2b08fd980edce8f5d2d7c5667c723b84f944f76a62216d9019635616",
+      "case_hash": "f30254d406a717625b201ee965c0d669c39ebd872364a3ab7356306a1aff8377",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -3021,7 +3021,7 @@
       "recovery": []
     },
     "TC-SEQ-14": {
-      "case_hash": "08a0da506009774e4164273163c956281e90fbe025341e64b2b51c021c5294de",
+      "case_hash": "41417d85e9ccae5935385e4a9e3fe0930c5f7603e4e724f4d9525416d417d7f4",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -3032,7 +3032,7 @@
       "recovery": []
     },
     "TC-SEQ-15": {
-      "case_hash": "a38798d9fe8a9d24c25cd158e273e96750801af46d833e2c632facec59f9b57d",
+      "case_hash": "3a5501bd943dc89495816495fbdfed9d662d35dc380ff832f7ff08bbe21c8b38",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -3043,7 +3043,7 @@
       "recovery": []
     },
     "TC-SEQ-16": {
-      "case_hash": "c046ab1ffd6c935b71a9d42641a1f114015de68be076940a4193209ce66780cd",
+      "case_hash": "cc2bbc1c6a2726171f3d64c929d6bf49ca40c701cd96b6bc5413c0511403fc33",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -3054,7 +3054,7 @@
       "recovery": []
     },
     "TC-SEQ-18": {
-      "case_hash": "ca275e33473220213dfc6cfd09acf41e904e8d7849194c0dd9be1a4ed63268d0",
+      "case_hash": "1fc3f0167708f4598e747ee558f4977364227c8a3f638f97c28a1260699a3387",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -3065,7 +3065,7 @@
       "recovery": []
     },
     "TC-SEQ-19": {
-      "case_hash": "8acc33bd6de95e2f6f083a8df3252ce6e39a5bcccf0715f1883d9632fa00d974",
+      "case_hash": "a3c13379ccb1116dfe1f7718a0005bee6fd703ccedb3ddfbc5fcef82cefc11e4",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -3076,7 +3076,7 @@
       "recovery": []
     },
     "TC-SEQ-20": {
-      "case_hash": "eb130b3d609b6d062f336666a75324b1f3a6d3c9448e4e406fa87c9f49993718",
+      "case_hash": "9602c80deb6bbacfb47086e2c3b1cef40d1e95c7de8def6b693a53635fa52e69",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -3087,7 +3087,7 @@
       "recovery": []
     },
     "TC-SEQ-21": {
-      "case_hash": "53b4a7c41136adeba80ea5c8e4af064f566f145cbba6451c11e85740a2c53ae4",
+      "case_hash": "a9ee1aee7ed2932a05e9d8a80fd4fb06d66560a0d4f71525331c4f4c9cbf2567",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -3098,7 +3098,7 @@
       "recovery": []
     },
     "TC-SEQ-22": {
-      "case_hash": "d8253321f962cd63ba9e7e422ed43a9331e37b7d4b4c9ca521b4b77d5858e1fb",
+      "case_hash": "1a116a8536a20edc86b6b1a9e8a103312fb32576d861e60389cbd7e1ee6a1c90",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -3109,7 +3109,7 @@
       "recovery": []
     },
     "TC-SEQ-23": {
-      "case_hash": "c88c9f1f1151322b53fcb3fba164e21b477331c86ce7ff77d2ad84c498782d41",
+      "case_hash": "2b04411e5fd378a8e74c14845331c22da6268e2d098d2945d535c46703410ed3",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -3120,7 +3120,7 @@
       "recovery": []
     },
     "TC-SEQ-24": {
-      "case_hash": "ef1677f2c2436871a4ceb5b79edcdf39e7a1b26df71eea05af152f3d5e6bef92",
+      "case_hash": "61bd9bc7b63d6d4a319e3c11616fe9c592e52da76a09a746790d06c607a4c5ef",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -3131,7 +3131,7 @@
       "recovery": []
     },
     "TC-SEQ-09": {
-      "case_hash": "ed4a06c332eddbb081b1912a2bac6a1a2335902fe5186861302d905b2ba720dc",
+      "case_hash": "5f932ff6782775ef6b5b0e0033a1374358713d9e2a30c33f9eaa5d5166e22cd9",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -3142,7 +3142,7 @@
       "recovery": []
     },
     "TC-SEQ-17": {
-      "case_hash": "5357e290db73cf6b604d4fe3ac272c6c4e7f5726ff7e9334f4ae33f4ff0be5f6",
+      "case_hash": "bf489f1e31314b54f98fa42b099085e57bd0e838bc3186b7a227d4900d59a74a",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -3153,7 +3153,7 @@
       "recovery": []
     },
     "E2E-01": {
-      "case_hash": "1035b3a2a724eedd81978599d2f387f54c0e19ec9064da596aadebacc3427ac0",
+      "case_hash": "da83dee395420f040d6f17a1c4955875baba3e9baba9d946255576f93ffb22d7",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -3164,7 +3164,7 @@
       "recovery": []
     },
     "E2E-02": {
-      "case_hash": "50f9a27a1d39f31aa529e889807f5301fa3acbfdb77fd4fd3cbb2cc0f1f8b516",
+      "case_hash": "bf0184bf4d117029e99d802caf4c06bbfa4db45fbed023f67cb4dbb7696129b3",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -3175,7 +3175,7 @@
       "recovery": []
     },
     "E2E-03": {
-      "case_hash": "5c79e877d9b46989ffc416a7dce459d854b0b168089d7a0878dbc39d3b249ff5",
+      "case_hash": "4c21631d8e8ae170db0a0dddb84be7ddf09588a8d2a3579234203d5b35ba4947",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -3186,7 +3186,7 @@
       "recovery": []
     },
     "E2E-04": {
-      "case_hash": "0634cea5a15cff214ad89741a06a98dd42abcc88dbffde6988f7fbc593fd332f",
+      "case_hash": "797eb59bc6976553c7c20432022512f1a4d6363f5ceb48465d943abcdb2bff8d",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -3197,7 +3197,7 @@
       "recovery": []
     },
     "E2E-05": {
-      "case_hash": "a7010e3276d9339f20167f44ee4f7d46fe8c0e3b2e8168238a7b74bdef0088c7",
+      "case_hash": "705a96ac421ec2831047af40a3efca94f05823bd4a915f4ac8f35daabe2f1a4c",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -3208,7 +3208,7 @@
       "recovery": []
     },
     "E2E-06": {
-      "case_hash": "06bceaf2290d345f1e943bd62304920129d6ddd231f71c9d21baff1301cdd4f3",
+      "case_hash": "9f8711ca258a81336ab4ae515016947689e76afc84e24cc72a531824ad56c573",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -3219,7 +3219,7 @@
       "recovery": []
     },
     "E2E-07": {
-      "case_hash": "9d8cad4c9610c2e6f5f32d3648b168409307e8aecdcf9944a823f0164b479cf7",
+      "case_hash": "d65c00f9852a60bd9a81bca76e67a5832f78abd1441c2321fc5199a784bcfa9b",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -3230,7 +3230,7 @@
       "recovery": []
     },
     "E2E-08": {
-      "case_hash": "eb94e88a8f77a6a08f3f6142a84aa67176761920dcbcda0613cc7aaaff4a1a2d",
+      "case_hash": "0c7dac39fed62d5b1fb4b42b4a57221569e1ce1878377f9470afe753d24346c2",
       "status": "unmapped",
       "mode": "unassigned",
       "reason": "No source-reviewed current-case adapter; fixture, observations and recovery need assessment.",
@@ -3251,7 +3251,7 @@
     "reviewed_by": "Claude catalog result-only comparison, requested by the tester",
     "reviewed_at": "2026-10-19",
     "compared_catalog_revision": "44471f7cc5ee94348cff18015993dd023d53365d",
-    "decision": "Compared all 239 definitions against the base revision: titles, priorities, requirements, steps, expected items and dependencies are unchanged. Only the recorded Result fields, the Recorded run links and the Module 18 summary table changed, for TC-DSC-02 and TC-DSC-05 to TC-DSC-09 (tester-reported PASS, human manual). Refresh bindings for those verdicts; retain adapter claims and historical compatibility/cutoff decisions. This review adds no execution or historical acceptance. The same comparison covers TC-DX-07 (PASS) and TC-DX-06 (PARTIALLY PASS, human manual, report 2026-10-19-module-19-device-extras): only its Result field, Recorded run link and the Module 19 summary row changed.",
+    "decision": "Compared all 239 definitions against the base revision: titles, priorities, requirements, steps, expected items and dependencies are unchanged. Only the recorded Result fields, the Recorded run links and the Module 18 summary table changed, for TC-DSC-02 and TC-DSC-05 to TC-DSC-09 (tester-reported PASS, human manual). Refresh bindings for those verdicts; retain adapter claims and historical compatibility/cutoff decisions. This review adds no execution or historical acceptance. The same comparison covers TC-DX-07 (PASS) and TC-DX-06 (FAIL, issue #244, human manual, report 2026-10-19-module-19-device-extras): only its Result field, Recorded run link and the Module 19 summary row changed.",
     "rehash_note": "All 239 case_hash values change because each case hash includes the catalog-wide source_hash; only TC-DSC-01 to TC-DSC-09 differ in their own recorded fields (result fields, Recorded run links, module summary table)."
   }
 }

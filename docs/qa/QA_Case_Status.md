@@ -6,7 +6,7 @@ Historical catalog results are human manual results. Historical reports retain t
 E2E with no recorded result is pending/unrecorded, not proof it was never attempted.
 Accepted evidence and new execution totals must be reported separately.
 
-Source SHA-256: `98abc0dbd3092e7aad625f22ffd7fcc70ace82574d6b7e8e832ef10e19b11928`.
+Source SHA-256: `43b7f91906f49de4007d3bb64f36bf9aafd22eaf51e274a1117813ea82082eea`.
 Cases: 231 TC plus 8 E2E.
 Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 
@@ -96,7 +96,7 @@ Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 | TC-DX-03 | DX / 6 | PASS | Not run | needs-decision | No reviewed mapping |
 | TC-DX-04 | DX / 6 | PASS | Not run | needs-decision | No reviewed mapping |
 | TC-DX-05 | DX / 6 | PASS | Not run | needs-decision | No reviewed mapping |
-| TC-DX-06 | DX / 6 | PARTIALLY PASS | PARTIALLY PASS (messages accurate; SNMP section disappears after Save, Test and Reset until refresh) | partial | No reviewed mapping |
+| TC-DX-06 | DX / 6 | FAIL | FAIL (messages accurate; SNMP section disappears after Save, Test and Reset until refresh; [#244](https://github.com/esfen14/Pinpoint/issues/244)) | fail | No reviewed mapping |
 | TC-DX-07 | DX / 6 | PASS | PASS | pass | No reviewed mapping |
 | TC-DX-08 | DX / 6 | Not run | Not run | untested | No reviewed mapping |
 | TC-DX-09 | DX / 6 | Not run | Not run | untested | No reviewed mapping |
