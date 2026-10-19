@@ -1917,7 +1917,7 @@ The page has the **Devices** tab (a table with **Select**, **Device**, **IP Addr
 
 #### TC-NCPA-01 – Warning when check\_ncpa is off
 
-**Requirement:** REQ-NCPA-01 · **Technique:** EG · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-NCPA-01 · **Technique:** EG · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -1932,7 +1932,7 @@ The page has the **Devices** tab (a table with **Select**, **Device**, **IP Addr
 
 #### TC-NCPA-02 – Deploy wizard order
 
-**Requirement:** REQ-NCPA-02 · **Technique:** ST · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-NCPA-02 · **Technique:** ST · **Priority:** H · **Result:** PASS
 
 **Before you start:** a Linux VM with SSH, found by a scan, and `check_ncpa` enabled.
 
@@ -1950,7 +1950,7 @@ The page has the **Devices** tab (a table with **Select**, **Device**, **IP Addr
 
 #### TC-NCPA-03 – Wrong and right SSH password
 
-**Requirement:** REQ-NCPA-02 · **Technique:** EP · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-NCPA-02 · **Technique:** EP · **Priority:** H · **Result:** PASS
 
 **Steps**
 
@@ -1966,7 +1966,7 @@ The page has the **Devices** tab (a table with **Select**, **Device**, **IP Addr
 
 #### TC-NCPA-04 – Run progress and history
 
-**Requirement:** REQ-NCPA-03 · **Technique:** ST · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-NCPA-03 · **Technique:** ST · **Priority:** H · **Result:** PASS
 
 **Steps**
 
@@ -1982,7 +1982,7 @@ The page has the **Devices** tab (a table with **Select**, **Device**, **IP Addr
 
 #### TC-NCPA-05 – Who can use Clean up
 
-**Requirement:** REQ-NCPA-04 · **Technique:** DT · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-NCPA-04 · **Technique:** DT · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -1995,7 +1995,7 @@ The page has the **Devices** tab (a table with **Select**, **Device**, **IP Addr
 
 #### TC-NCPA-06 – Clean up
 
-**Requirement:** REQ-NCPA-04 · **Technique:** EP · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-NCPA-04 · **Technique:** EP · **Priority:** H · **Result:** PASS
 
 **Steps**
 
@@ -2011,7 +2011,7 @@ The page has the **Devices** tab (a table with **Select**, **Device**, **IP Addr
 
 #### TC-NCPA-07 – No credentials shown anywhere
 
-**Requirement:** REQ-NCPA-05 · **Technique:** EG · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-NCPA-05 · **Technique:** EG · **Priority:** H · **Result:** PASS
 
 **Steps**
 
@@ -2024,7 +2024,7 @@ The page has the **Devices** tab (a table with **Select**, **Device**, **IP Addr
 
 #### TC-NCPA-08 – NCPA Deployment needs permission
 
-**Requirement:** REQ-NCPA-06 · **Technique:** DT · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-NCPA-06 · **Technique:** DT · **Priority:** H · **Result:** PASS
 
 **Steps**
 
@@ -2037,7 +2037,7 @@ The page has the **Devices** tab (a table with **Select**, **Device**, **IP Addr
 
 #### TC-NCPA-09 – Remote restart settings (issue #182)
 
-**Requirement:** REQ-NCPA-07 · **Technique:** EP · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-NCPA-07 · **Technique:** EP · **Priority:** M · **Result:** PASS
 
 **Before you start:** a trusted device (host key verified).
 
@@ -2057,7 +2057,7 @@ The page has the **Devices** tab (a table with **Select**, **Device**, **IP Addr
 
 #### TC-NCPA-10 – Remote restart is blocked during a deployment
 
-**Requirement:** REQ-NCPA-07 · **Technique:** EG · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-NCPA-07 · **Technique:** EG · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -2072,7 +2072,7 @@ The page has the **Devices** tab (a table with **Select**, **Device**, **IP Addr
 
 #### TC-NCPA-11 – Clean up warns that remote restarts stop
 
-**Requirement:** REQ-NCPA-08 · **Technique:** EG · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-NCPA-08 · **Technique:** EG · **Priority:** M · **Result:** PASS
 
 **Steps**
 

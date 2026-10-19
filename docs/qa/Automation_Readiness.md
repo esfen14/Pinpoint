@@ -1,5 +1,18 @@
 # Current-case adapter preparation
 
+## 2026-10-19 Module 12 catalog review
+
+Compared with `2e838077`, the branch records Module 12 PASS verdicts and changes
+historical source references in Modules 22–23 and E2E. The Module 12 detailed
+results now match the PASS summaries already recorded by this branch. All 239
+cases retain their titles, priorities, requirements, steps, expected items,
+dependencies and safety classifications. The coverage register's catalog/case
+fingerprints were refreshed after this comparison; adapter source hashes,
+coverage claims and expected-item mappings are unchanged. The generated status
+view reflects the reconciled results. This review adds no live
+execution, acceptance or authorization. Existing queues and cards still require
+their normal freshness checks.
+
 ## 2026-10-19 Edit Account dependency review (#219)
 
 Codex reviewed the current written cases, assertions, fixtures and cleanup for
