@@ -92,6 +92,15 @@ normal configured timeout; immediate invalidation is not part of this command.
 
 ### `app/api/user/management.py`
 
+Edit Account (`PUT /api/user/accounts/<id>`) rejects a supplied password matching
+the edited account's current password with HTTP 400 and the message
+"You cannot reuse this account's current password. Choose a different password."
+The check uses the target account's stored password hash, including for self
+edits, under both password-policy modes. Rejection happens before any account
+fields, password hash or forced-change flag are saved. Omitting or leaving both
+password fields blank still keeps the current password. A different compliant
+password retains the existing temporary-password and forced-change behavior.
+
 | Method and path | Permission | Purpose |
 |---|---|---|
 | `GET /api/user/permissions/options` | `role.edit` | List permissions available for role editing |

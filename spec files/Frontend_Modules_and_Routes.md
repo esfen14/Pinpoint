@@ -69,6 +69,12 @@ password policy. Successful creation closes the dialog and refreshes the list;
 a rejected save retains the draft and displays the server message. Further
 accounts can be created without reloading the page.
 
+Manage Accounts → Edit Account displays the server's warning when a supplied
+password matches the edited account's current password. The dialog stays open
+with the draft intact so the administrator can enter and confirm a different
+password and retry Save Changes. Password reuse is checked on submission by the
+server; the browser does not receive the current password or its hash.
+
 When adding a page:
 
 1. Add the page component under `src/pages/`.

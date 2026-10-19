@@ -686,6 +686,12 @@ def account_info(id):
 @login_required
 @require_permission("account.edit")
 def edit_account(id):
+    """Update an account, rejecting password reuse before saving any fields.
+
+    JSON: first_name, last_name, email, role_id, status; optional password,
+    confirm_password and receive_email_alerts. Blank passwords keep the current
+    password; a supplied password must differ from this account's current one.
+    """
     try:
         err = validate_user_exists(id)
         if err is not None:
@@ -754,6 +760,12 @@ def edit_account(id):
         
         user_info = get_user_by_id(id)
         role_info = get_role_by_id(role)
+
+        if changing_password and user_info.check_password(password):
+            return error(
+                "You cannot reuse this account's current password. Choose a different password.",
+                400,
+            )
 
         normalized_status = convert_user_status(status)
         if is_super_admin(id):

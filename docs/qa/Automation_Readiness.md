@@ -1,5 +1,21 @@
 # Current-case adapter preparation
 
+## 2026-10-19 Edit Account dependency review (#219)
+
+Codex reviewed the current written cases, assertions, fixtures and cleanup for
+TC-ACC-09, TC-SS-04, TC-HIS-01, TC-PLG-07, TC-NCPA-08, TC-RPT-07, TC-LOG-05,
+TC-ROL-04, TC-ACC-08 and TC-ACC-10 against the Edit Account reuse guard. The
+permission cases exercise navigation and GET denials; TC-ACC-08 reads the alert
+column and Add User checkbox; TC-ACC-10 creates new inactive accounts and its
+cleanup edits omit passwords. None submits an existing password through Edit
+Account. Their assertions, prerequisites, observations and cleanup remain valid.
+The added account-page unit test covers the reuse error and corrected retry;
+existing Add User assertions are unchanged. Only these reviewed dependency
+fingerprints were refreshed in `automation-coverage.json`. Coverage status,
+expected-item mappings, catalog verdicts and execution permissions are unchanged.
+This is source review, not a live QA result; existing queues/cards still need
+normal freshness checks and separate live authorization.
+
 ## 2026-10-19 sidebar dependency review (#231)
 
 Codex reviewed the sidebar-only reorder against the written cases and assertions
