@@ -23,8 +23,8 @@ Requirement coverage:
 
 ## Plan
 
-1. [ ] Update PageAccess and LayoutSettings tests for sidebar/header/history wording; confirm failures.
-2. [ ] Update Sidebar.tsx and Header.tsx visible labels, applicable UI references in specifications and AGENTS.md; preserve internal names and Settings configuration summary.
+1. [x] Update PageAccess and LayoutSettings tests for sidebar/header/history wording; confirm failures.
+2. [x] Update Sidebar.tsx and Header.tsx visible labels, applicable UI references in specifications and AGENTS.md; preserve internal names and Settings configuration summary.
 3. [ ] Run focused tests, frontend/docs gates and all verification; inspect coverage freshness and final issue requirements.
 4. [ ] Remove progress file, open PR and wait for green CI.
 
@@ -33,13 +33,14 @@ Requirement coverage:
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 0 | Read issue, requirements and source; created plan | git status --short | clean before plan |
+| 1 | Added tests first; changed shell labels and matching docs; reviewed QA adapter/fingerprints | focused Vitest PageAccess/LayoutSettings/App/SystemStatusPage | 3 expected failures before change; 49 passed after |
 
 ## State for the next session
 
-- Last check run (exact command): git status --short
-- Result: clean before plan creation.
+- Last check run (exact command): TMPDIR=/private/tmp npm exec --prefix client -- vitest run src/test/PageAccess.test.tsx src/test/LayoutSettings.test.tsx src/test/App.test.tsx src/test/SystemStatusPage.test.tsx --root client
+- Result: 49 focused UI tests passed after 3 expected failures.
 - Hypothesis: two shell label constants implement this rename; Settings System Status is a separate configuration summary, not this page.
-- Next action: update existing sidebar/header tests and confirm they fail for the old label.
+- Next action: run frontend/docs and all verification, then finish the PR.
 
 ## Decisions and notes
 
