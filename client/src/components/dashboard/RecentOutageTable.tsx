@@ -1,9 +1,12 @@
 import { useSystemSettings } from '../../contexts/SystemSettingsContext'
 import { formatDateTime } from '../../utils/formatDateTime'
-import type { AlertRow } from '../../types/dashboard'
+import type { AckFilter, AlertRow } from '../../types/dashboard'
 
 type RecentOutageTableProps = {
+  /** Alerts already narrowed by `filter`; Acknowledge all acts on exactly these. */
   alerts: AlertRow[]
+  filter?: AckFilter
+  onFilterChange?: (filter: AckFilter) => void
   isLoading: boolean
   onAcknowledge: (alert: AlertRow) => void
   onAcknowledgeAll?: () => void
@@ -18,7 +21,7 @@ const stateStyles: Record<string, string> = {
   UNKNOWN: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
 }
 
-export function RecentOutageTable({ alerts, isLoading, onAcknowledge, onAcknowledgeAll, onUnacknowledge }: RecentOutageTableProps) {
+export function RecentOutageTable({ alerts, filter = 'all', onFilterChange, isLoading, onAcknowledge, onAcknowledgeAll, onUnacknowledge }: RecentOutageTableProps) {
   const { settings } = useSystemSettings()
   const unacknowledgedCount = alerts.filter((alert) => !alert.ack).length
 
@@ -27,6 +30,18 @@ export function RecentOutageTable({ alerts, isLoading, onAcknowledge, onAcknowle
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-[var(--text)]">Active Alerts</h2>
         <div className="flex items-center gap-2">
+        {onFilterChange && (
+          <select
+            aria-label="Acknowledgement filter"
+            value={filter}
+            onChange={(e) => onFilterChange(e.target.value as AckFilter)}
+            className="rounded-lg border border-[var(--border)] bg-[var(--card)] px-2 py-1.5 text-xs text-[var(--text)]"
+          >
+            <option value="all">Show all</option>
+            <option value="hide-acknowledged">Hide acknowledged</option>
+            <option value="only-acknowledged">Show only acknowledged</option>
+          </select>
+        )}
         {onAcknowledgeAll && unacknowledgedCount > 0 && (
           <button
             type="button"
@@ -53,7 +68,7 @@ export function RecentOutageTable({ alerts, isLoading, onAcknowledge, onAcknowle
             {isLoading ? (
               <tr><td colSpan={5} className="py-8 text-center text-[var(--text-muted)]">Loading…</td></tr>
             ) : alerts.length === 0 ? (
-              <tr><td colSpan={5} className="py-8 text-center text-[var(--text-muted)]">No active alerts</td></tr>
+              <tr><td colSpan={5} className="py-8 text-center text-[var(--text-muted)]">{filter === 'all' ? 'No active alerts' : 'No alerts match this filter'}</td></tr>
             ) : (
               alerts.map((alert) => (
                 <tr key={`${alert.hostname}-${alert.serviceName ?? ''}`} className="border-t border-[var(--border)]">

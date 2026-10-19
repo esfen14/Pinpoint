@@ -257,3 +257,11 @@ export function fromTrendsResponse(data: TrendsApiResponse): TrendsResponse {
     },
   }
 }
+
+export type AckFilter = 'all' | 'hide-acknowledged' | 'only-acknowledged'
+
+export function filterAlerts(alerts: AlertRow[], filter: AckFilter): AlertRow[] {
+  if (filter === 'hide-acknowledged') return alerts.filter((alert) => !alert.ack)
+  if (filter === 'only-acknowledged') return alerts.filter((alert) => alert.ack)
+  return alerts
+}

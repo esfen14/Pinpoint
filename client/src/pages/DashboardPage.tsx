@@ -23,7 +23,9 @@ import {
   fromAlertRecord,
   fromDashboardStatusResponse,
   fromDashboardSummaryResponse,
+  filterAlerts,
   fromTrendsResponse,
+  type AckFilter,
   type AlertRow,
   type DashboardStatus,
   type DashboardSummary,
@@ -54,6 +56,8 @@ export function DashboardPage() {
   const [syncNotice, setSyncNotice] = useState<string | null>(null)
   const [ackTarget, setAckTarget] = useState<AlertRow | null>(null)
   const [ackAllOpen, setAckAllOpen] = useState(false)
+  const [ackFilter, setAckFilter] = useState<AckFilter>('all')
+  const visibleAlerts = filterAlerts(alerts, ackFilter)
   const [notifications, setNotifications] = useState<DashboardNotification[] | null>(null)
 
   async function loadAll() {
@@ -146,7 +150,7 @@ export function DashboardPage() {
     try {
       const result = await apiPost<NagiosSyncResult>('/api/system/dashboard/alerts/acknowledge-all', {
         comment,
-        alerts: alerts
+        alerts: visibleAlerts
           .filter((alert) => !alert.ack)
           .map((alert) => ({ hostname: alert.hostname, service_name: alert.serviceName })),
       })
@@ -285,7 +289,9 @@ export function DashboardPage() {
           <ForecastList data={forecastData} isLoading={forecastLoading} error={forecastError} />
 
           <RecentOutageTable
-            alerts={alerts}
+            alerts={visibleAlerts}
+            filter={ackFilter}
+            onFilterChange={setAckFilter}
             isLoading={isLoading}
             onAcknowledge={(alert) => setAckTarget(alert)}
             onAcknowledgeAll={() => setAckAllOpen(true)}
@@ -315,7 +321,7 @@ export function DashboardPage() {
 
       {ackAllOpen && (
         <AcknowledgeModal
-          title={`Acknowledge ${alerts.filter((alert) => !alert.ack).length} active alerts`}
+          title={`Acknowledge ${visibleAlerts.filter((alert) => !alert.ack).length} active alerts`}
           onCancel={() => setAckAllOpen(false)}
           onConfirm={acknowledgeAllAlerts}
         />
