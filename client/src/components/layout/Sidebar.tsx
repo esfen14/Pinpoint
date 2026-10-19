@@ -38,16 +38,15 @@ const navItems = [
     label: 'Device Inventory',
     icon: FolderOpen,
   },
-
-{
-    to: '/topology',
-    label: 'Topology',
-    icon: Network,
-  },
   {
     to: '/system-status',
     label: 'System Status',
     icon: HeartPulse,
+  },
+  {
+    to: '/topology',
+    label: 'Topology',
+    icon: Network,
   },
 
   {

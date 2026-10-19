@@ -28,7 +28,8 @@ class CatalogTests(unittest.TestCase):
         self.assertEqual(c['TC-ACK-06']['status'], 'needs-decision')
         self.assertEqual(c['TC-EDG-01']['status'], 'pass')
         self.assertEqual(c['TC-EDG-01']['summary_result'], 'PASS')
-        self.assertEqual(c['TC-NFR-07']['status'], 'needs-decision')
+        self.assertEqual(c['TC-DX-01']['status'], 'needs-decision')
+        self.assertEqual(c['TC-NFR-07']['status'], 'fail')
         self.assertEqual(c['TC-ACC-06']['status'], 'fail')
 
     def test_e2e_explicit_result_and_missing_result(self):

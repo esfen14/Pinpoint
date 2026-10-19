@@ -20,6 +20,13 @@ cloned identities, IPv6, DHCP failover or NCPA deployment. The live outcome is
 recorded in the issue #187 test-run report rather than inferred from the
 runner's presence.
 
+## Navigation order (#231)
+
+The sidebar places Device Inventory → System Status → Topology consecutively.
+Existing labels, destinations and `system.network_health` filtering are preserved;
+rendered-sidebar regression checks cover order, links and denied visibility.
+Live appliance/browser verification is pending.
+
 ## Manual topology (#117)
 
 Manual multiple-parent relationships, graph validation and eligibility-aware Nagios

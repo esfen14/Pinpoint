@@ -9,6 +9,11 @@ routes. `AdminLayout` supplies the authenticated shell, and `Sidebar`, `Header`,
 `PageAccessGuard`, `SessionTimeoutWatcher`, and `MaintenanceBanner` implement
 cross-page behavior.
 
+For a user with access to all three, the sidebar places **Device Inventory**,
+**System Status**, then **Topology** consecutively. These entries retain
+`/device-inventory`, `/system-status` and `/topology`, respectively, and all
+require `system.network_health`; permission filtering hides them when absent.
+
 All API calls are same-origin and send the Flask session cookie. Shared JSON
 requests use `src/lib/api.ts`; Plugin Manager wrappers live in
 `src/lib/pluginApi.ts`.
