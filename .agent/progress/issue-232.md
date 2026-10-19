@@ -1,7 +1,7 @@
 # Issue #232: Rename System Service label to Network Service
 
 Branch: `issue-232-network-service-label`
-Status: blocked
+Status: in-progress
 
 ## Finish condition
 
@@ -20,7 +20,7 @@ Requirement coverage:
 
 ## Plan
 
-1. [ ] Confirm the screen/label with the user; issue explicitly says the screen was not supplied.
+1. [x] Confirm the screen/label with the user; issue explicitly says the screen was not supplied.
 2. [ ] Read target-owning specification and component, then write a failing label regression.
 3. [ ] Rename only the confirmed UI label/references and update its specification.
 4. [ ] Verify focused tests and relevant stage; attempt all gate, remove scaffold and open PR. User requested skipping the CI wait when moving from #233.
@@ -36,8 +36,10 @@ Requirement coverage:
 - Last check run (exact command): rg -n -i 'system[ _-]+services?' client/src server/app docs/manuals README.md
 - Result: no matches; no implementation changes made.
 - Hypothesis: reported wording may refer to Service Status Overview on /system-status, but the issue does not identify it.
-- Next action: wait for user to confirm whether /system-status Service Status Overview is the target, or identify another page.
+- Next action: add failing rendered heading regression, then change PageHeader title and matching specification.
 
 ## Decisions and notes
 
 The issue requires identifying the actual reported label before renaming. Asked the user via asynchronous question. Do not guess a different label or alter monitoring/routes/permissions. User requested leaving #233 CI running and proceeding here; PR #264 frontend/docs passed and backend remained running at handoff.
+
+User confirmed: Rename Service Status Overview to Network Service Overview. Target is SystemStatusPage PageHeader title, preserving Overview highlight and all behavior.
