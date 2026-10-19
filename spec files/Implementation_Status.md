@@ -515,3 +515,5 @@ unavailable rather than presenting a recorded PID as live proof. Age is checked
 independently of the browser refresh mode; fresh status clears the warning.
 Historical TC-DASH-06 FAIL is preserved; the separate issue retest report records
 fresh observations without replacing catalog evidence.
+
+[Separate #238 Docker retest](../docs/test-runs/2026-10-19-issue-238-nagios-stale-warning/REPORT.md) records refresh texts, actual stop/restart, both warnings and restoration.
