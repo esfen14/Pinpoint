@@ -26,6 +26,7 @@ import {
 import { errorMessage } from '../../lib/api'
 import { useCurrentUser } from '../../contexts/CurrentUserContext'
 import { PluginCustomChecksSection } from './PluginCustomChecksSection'
+import { ONGOING_MONITORING_NOTE, VALIDATE_NOTE, pluginUsage } from '../../lib/pluginUsage'
 import { PluginServicesSection } from './PluginServicesSection'
 import type {
   AttachResult,
@@ -44,27 +45,7 @@ type Props = {
   onChanged: () => void
 }
 
-// The plugins behind Nagios Core's own server checks (localhost.cfg). Pinpoint does
-// not manage those services, so these are explained rather than offered for enabling.
-const LOCAL_SERVER_PLUGINS = ['check_load', 'check_disk', 'check_swap', 'check_procs', 'check_users']
-
 type Notice = { tone: 'ok' | 'error'; text: string }
-
-// Why a plugin that discovery cannot drive has no Enable button, and what (if anything) to do instead.
-function notServiceDrivenNote(details: PluginDetails): string {
-  if (LOCAL_SERVER_PLUGINS.includes(details.name)) {
-    return 'Checks the Nagios server itself through Nagios Core. Not managed here.'
-  }
-  const custom = details.custom_checks
-  if (custom?.supported && custom.target === 'server') {
-    return 'This plugin checks the Nagios server itself. Add a server check to run it there.'
-  }
-  if (custom?.supported) {
-    return 'There is no port for discovery to attach this plugin to. Add a custom check to run it against a device.'
-  }
-  if (custom?.note) return custom.note
-  return 'This plugin does not check a service that discovery finds on a port, so there is nothing to attach it to.'
-}
 
 // Say what the reconciler did after an enable or disable, from the route's auto_apply.
 function describeAttach(action: 'enable' | 'disable', result: AttachResult | undefined): Notice | null {
@@ -228,6 +209,8 @@ export function PluginDetailsDrawer({ pluginId, onClose, onChanged }: Props) {
     runAction(async () => { await restoreDefaultCommand(pluginId, commandId) })
 
   const canEnable = details ? details.service_driven && !details.status.endsWith('Failed') && details.status !== 'Rollback' && details.status !== 'Active' && details.status !== 'Enabled' : false
+  const usage = details ? pluginUsage(details) : null
+  const canAddChecks = hasPermission('plugin.custom_check')
   const canDisable = details ? details.status === 'Enabled' || details.status === 'Active' : false
 
   const previewDialog = preview && (
@@ -355,11 +338,21 @@ export function PluginDetailsDrawer({ pluginId, onClose, onChanged }: Props) {
                   {details.monitoring_usage.devices} devices.
                 </p>
 
-                {!details.service_driven && (
-                  <p className="mt-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-[13px] text-gray-600 dark:border-white/10 dark:bg-white/5 dark:text-gray-300">
-                    <span className="font-semibold">Not service-driven.</span>{' '}
-                    {notServiceDrivenNote(details)}
-                  </p>
+                {usage && (
+                  <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-[13px] text-gray-600 dark:border-white/10 dark:bg-white/5 dark:text-gray-300">
+                    <p>
+                      <span className="font-semibold">{usage.label}.</span> {usage.summary}
+                    </p>
+                    <p className="mt-1">{usage.nextStep}</p>
+                    {(usage.kind === 'device' || usage.kind === 'server') && (
+                      <>
+                        <p className="mt-1">{ONGOING_MONITORING_NOTE}</p>
+                        {!canAddChecks && (
+                          <p className="mt-1">You need the custom check permission to add checks.</p>
+                        )}
+                      </>
+                    )}
+                  </div>
                 )}
 
                 {attachNotice && (
@@ -405,6 +398,8 @@ export function PluginDetailsDrawer({ pluginId, onClose, onChanged }: Props) {
                     <ShieldCheck className="h-4 w-4" /> Validate
                   </button>
                 </div>
+
+                <p className="mt-2 text-[13px] text-gray-500 dark:text-gray-400">{VALIDATE_NOTE}</p>
 
                 {validation && (
                   <div

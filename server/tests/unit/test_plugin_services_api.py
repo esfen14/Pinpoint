@@ -141,6 +141,20 @@ class TestServiceDriven:
         assert details["service_driven"] is False
         assert logged_in_client.get(f"/api/plugin/{ssh.PluginID}").get_json()["data"]["service_driven"] is True
 
+    def test_inventory_rows_carry_the_capability_metadata_the_usage_label_needs(self, logged_in_client, db_session):
+        for name in ("check_http", "check_ping", "check_file_age", "check_load", "check_dbi", "check_ntp"):
+            add_plugin(name)
+
+        items = {item["name"]: item for item in logged_in_client.get("/api/plugin").get_json()["data"]["items"]}
+
+        assert items["check_http"]["custom_checks"]["class"] == "service"
+        assert items["check_ping"]["custom_checks"]["target"] == "device"
+        assert items["check_file_age"]["custom_checks"]["target"] == "server"
+        assert items["check_load"]["custom_checks"]["class"] == "stock"
+        assert items["check_dbi"]["custom_checks"]["class"] == "credentials"
+        assert items["check_ntp"]["custom_checks"]["class"] == "replaced"
+        assert "replaced by check_ntp_time" in items["check_ntp"]["custom_checks"]["note"].lower()
+
     def test_inventory_rows_count_the_services_and_devices_behind_a_plugin(self, logged_in_client, db_session, admin_user, status, writer):
         new_device(status, "10.0.0.5", MAC_1, tcp={22: "ssh"})
         new_device(status, "10.0.0.6", MAC_2, tcp={22: "ssh"})

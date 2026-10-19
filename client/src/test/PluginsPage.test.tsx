@@ -43,7 +43,7 @@ describe('PluginsPage', () => {
       ...emptyList,
       items: [
         plugin({ id: 1, name: 'check_ssh', status: 'Active', monitoring_usage: { services: 12, devices: 5 } }),
-        plugin({ id: 2, name: 'check_ping', service_driven: false }),
+        plugin({ id: 2, name: 'check_ping', service_driven: false, custom_checks: { class: 'custom', supported: true, target: 'device', note: null, fields: [] } }),
         plugin({ id: 3, name: 'check_http', status: 'Enabled' }),
         plugin({ id: 4, name: 'check_snmp', status: 'Ready' }),
         plugin({ id: 5, name: 'check_dns', status: 'Active', monitoring_usage: { services: 1, devices: 1 } }),
@@ -97,7 +97,9 @@ describe('PluginsPage', () => {
     expect(screen.getByRole('columnheader', { name: 'Monitoring' })).toBeInTheDocument()
     expect(within(row('check_ssh')).getByText('12 services on 5 devices')).toBeInTheDocument()
     expect(within(row('check_dns')).getByText('1 service on 1 device')).toBeInTheDocument()
-    expect(within(row('check_ping')).getByText('Not service-driven')).toBeInTheDocument()
+    expect(within(row('check_ping')).getByText('No checks added yet')).toBeInTheDocument()
+    expect(within(row('check_ping')).getByText('Add device check')).toBeInTheDocument()
+    expect(within(row('check_http')).getByText('Automatic monitoring')).toBeInTheDocument()
     expect(within(row('check_http')).getByText('No matching services yet')).toBeInTheDocument()
     expect(within(row('check_snmp')).getByText('—')).toBeInTheDocument()
   })
@@ -142,7 +144,8 @@ describe('PluginsPage', () => {
 
 describe('monitoringLabel', () => {
   it.each([
-    [plugin({ service_driven: false }), 'Not service-driven'],
+    [plugin({ service_driven: false, custom_checks: { class: 'stock', supported: false, target: null, note: null, fields: [] } }), '—'],
+    [plugin({ service_driven: false, custom_checks: { class: 'server', supported: true, target: 'server', note: null, fields: [] } }), 'No checks added yet'],
     [plugin({ monitoring_usage: { services: 1, devices: 1 } }), '1 service on 1 device'],
     [plugin({ monitoring_usage: { services: 3, devices: 2 } }), '3 services on 2 devices'],
     [plugin({ status: 'Enabled' }), 'No matching services yet'],

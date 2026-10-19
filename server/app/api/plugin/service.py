@@ -140,7 +140,8 @@ def serialize_plugin_summary_row(plugin, usage=None):
     Shape used by the inventory list (one row per plugin). usage is
     {"services": n, "devices": m} for the applied services behind the plugin
     (zero when omitted). service_driven is false for plugins that check no
-    discovered port; those cannot be enabled or disabled.
+    discovered port; those cannot be enabled or disabled. custom_checks is the
+    capability metadata of describe_custom_support.
     """
     usage = usage or {}
     return {
@@ -155,6 +156,8 @@ def serialize_plugin_summary_row(plugin, usage=None):
         "current_version": plugin.Current_Version,
         "updated_at": plugin.Updated_At.isoformat(),
         "service_driven": is_service_driven(plugin.Name),
+        # The same capability metadata as the details, so the inventory can label how each plugin is used.
+        "custom_checks": describe_custom_support(plugin),
         "monitoring_usage": {
             "services": usage.get("services", 0),
             "devices": usage.get("devices", 0),
