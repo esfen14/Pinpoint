@@ -30,8 +30,8 @@ vi.mock('../components/plugin-manager/PluginDetailsDrawer', () => ({
 }))
 
 const summary = (overrides = {}) => ({
-  installed_plugins: 5, active_capabilities: 1, enabled_plugins: 1, custom_plugins: 0,
-  updates_available: 0, validation_issues: 0, ...overrides,
+  installed_plugins: 5, active_capabilities: 1, enabled_plugins: 1,
+  validation_issues: 0, ...overrides,
 })
 
 describe('PluginsPage', () => {
@@ -67,6 +67,25 @@ describe('PluginsPage', () => {
     ])
     expect(screen.queryByText(/currently running/i)).not.toBeInTheDocument()
     expect(screen.getByText('Plugin Inventory')).toBeInTheDocument()
+  })
+
+  it('shows only the three supported summary cards, including with legacy response fields', async () => {
+    api.getPluginSummary.mockResolvedValue(summary({
+      installed_plugins: 8, active_capabilities: 3, validation_issues: 2,
+      custom_plugins: 4, updates_available: 5,
+    }))
+    render(<PluginsPage />)
+
+    for (const [title, value] of [
+      ['Installed Plugins', '8'],
+      ['Active Capabilities', '3'],
+      ['Validation Issues', '2'],
+    ]) {
+      const label = await screen.findByText(title)
+      expect(await within(label.parentElement!.parentElement!).findByText(value)).toBeInTheDocument()
+    }
+    expect(screen.queryByText('Custom Plugins')).not.toBeInTheDocument()
+    expect(screen.queryByText('Updates Available')).not.toBeInTheDocument()
   })
 
   it('shows how much each plugin covers in a Monitoring column', async () => {

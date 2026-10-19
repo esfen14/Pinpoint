@@ -23,7 +23,9 @@ import {
   fromAlertRecord,
   fromDashboardStatusResponse,
   fromDashboardSummaryResponse,
+  filterAlerts,
   fromTrendsResponse,
+  type AckFilter,
   type AlertRow,
   type DashboardStatus,
   type DashboardSummary,
@@ -54,6 +56,8 @@ export function DashboardPage() {
   const [syncNotice, setSyncNotice] = useState<string | null>(null)
   const [ackTarget, setAckTarget] = useState<AlertRow | null>(null)
   const [ackAllOpen, setAckAllOpen] = useState(false)
+  const [ackFilter, setAckFilter] = useState<AckFilter>('all')
+  const visibleAlerts = filterAlerts(alerts, ackFilter)
   const [notifications, setNotifications] = useState<DashboardNotification[] | null>(null)
 
   async function loadAll() {
@@ -146,7 +150,7 @@ export function DashboardPage() {
     try {
       const result = await apiPost<NagiosSyncResult>('/api/system/dashboard/alerts/acknowledge-all', {
         comment,
-        alerts: alerts
+        alerts: visibleAlerts
           .filter((alert) => !alert.ack)
           .map((alert) => ({ hostname: alert.hostname, service_name: alert.serviceName })),
       })
@@ -245,8 +249,18 @@ export function DashboardPage() {
           <NagiosSyncNotice message={syncNotice} onDismiss={() => setSyncNotice(null)} />
 
           {loadError && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300">
-              {loadError}
+            <div
+              role="alert"
+              className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300"
+            >
+              <span>{loadError}</span>
+              <button
+                type="button"
+                onClick={() => { void loadAll() }}
+                className="rounded-lg border border-red-300 px-3 py-1 text-[13px] font-medium hover:bg-red-100 dark:border-red-900/60 dark:hover:bg-red-900/30"
+              >
+                Retry
+              </button>
             </div>
           )}
 
@@ -275,7 +289,9 @@ export function DashboardPage() {
           <ForecastList data={forecastData} isLoading={forecastLoading} error={forecastError} />
 
           <RecentOutageTable
-            alerts={alerts}
+            alerts={visibleAlerts}
+            filter={ackFilter}
+            onFilterChange={setAckFilter}
             isLoading={isLoading}
             onAcknowledge={(alert) => setAckTarget(alert)}
             onAcknowledgeAll={() => setAckAllOpen(true)}
@@ -305,7 +321,7 @@ export function DashboardPage() {
 
       {ackAllOpen && (
         <AcknowledgeModal
-          title={`Acknowledge ${alerts.filter((alert) => !alert.ack).length} active alerts`}
+          title={`Acknowledge ${visibleAlerts.filter((alert) => !alert.ack).length} active alerts`}
           onCancel={() => setAckAllOpen(false)}
           onConfirm={acknowledgeAllAlerts}
         />

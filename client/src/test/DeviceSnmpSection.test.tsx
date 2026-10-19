@@ -67,6 +67,21 @@ describe('states of the section', () => {
     expect(container).toBeEmptyDOMElement()
   })
 
+  it('stays shown after Save, Test and Reset even when the answer carries no in_use', async () => {
+    api.saveDevicePluginVariables.mockResolvedValue(saved({ in_use: null }))
+    api.resetDevicePluginVariables.mockResolvedValue(saved({ in_use: null }))
+    renderSection()
+    await screen.findByRole('button', { name: 'SNMP version' })
+    type('Community', 'lab')
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+    expect(await screen.findByText('SNMP settings saved.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'SNMP version' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Test' }))
+    expect(await screen.findByText(/SNMP OK - 12345/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'SNMP version' })).toBeInTheDocument()
+    api.getDevicePluginVariables.mockResolvedValue(saved())
+  })
+
   it('shows the defaults as "Default" and the form read-only without edit permission', async () => {
     permissions.granted = new Set(['system.hosts'])
     renderSection()

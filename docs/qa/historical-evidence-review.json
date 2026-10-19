@@ -1101,7 +1101,7 @@
       "reviewed_by": "Codex mapping review (partial; not full-case acceptance)",
       "reviewed_at": "2026-10-18",
       "impact_review": "The browser added an escalation, saved it, reloaded and confirmed persistence. Host/service generation and real Nagios validation also passed; current-target compatibility and every current UI assertion remain unreviewed. The report retains its stated executor; this does not change the human catalog result, count as a new AI execution, or establish current-build compatibility. The October 15 cutoff remains provisional; no historical credit is accepted. The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/settings/EscalationSettings.tsx, client/src/components/shared/DrawerShell.tsx, server/app/api/system/notifications.py, server/app/nagios/notifications.py, server/app/remediation_actions.py, server/app/remediation_escalation.py. Re-run this case on the target before using historical evidence to omit checks.",
-      "case_hash": "d6125a4eb023b1ef391293cde8dda34400d60f64b6a2534f101527a377068b80",
+      "case_hash": "15636d1997163aef1cfeee8162664c677761220dcbd4c64521280cac9ead292c",
       "report": "docs/test-runs/2026-10-15-issue-116-escalations/REPORT.md",
       "report_sha256": "8c71216428a0d5dfb39c3a795ffb90338323cb16022b73bc5ed2f69d2707f886",
       "tested_revision": "b4d2c1648592c2e8294eb0d44fccb868d1fa9adb",
@@ -1129,7 +1129,7 @@
       "reviewed_by": "Codex mapping review (partial; not full-case acceptance)",
       "reviewed_at": "2026-10-18",
       "impact_review": "API/browser validation and a real Nagios rejection with rollback were exercised. The exact catalog invalid-entry set and current-target compatibility are not fully established. The report retains its stated executor; this does not change the human catalog result, count as a new AI execution, or establish current-build compatibility. The October 15 cutoff remains provisional; no historical credit is accepted. The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/settings/EscalationSettings.tsx, client/src/components/shared/DrawerShell.tsx, server/app/api/system/notifications.py, server/app/nagios/notifications.py, server/app/remediation_actions.py, server/app/remediation_escalation.py. Re-run this case on the target before using historical evidence to omit checks.",
-      "case_hash": "862f9f8f8a18fa8ad25ec83222302dfc86030acb9ebd77c2fb7c5c972cfc1483",
+      "case_hash": "4c663ffea5e02350445f04b8fe28b05acc1dfd828be0e92c0fa7096e5068590f",
       "report": "docs/test-runs/2026-10-15-issue-116-escalations/REPORT.md",
       "report_sha256": "8c71216428a0d5dfb39c3a795ffb90338323cb16022b73bc5ed2f69d2707f886",
       "tested_revision": "b4d2c1648592c2e8294eb0d44fccb868d1fa9adb",
@@ -1157,7 +1157,7 @@
       "reviewed_by": "Codex mapping review (partial; not full-case acceptance)",
       "reviewed_at": "2026-10-18",
       "impact_review": "The browser confirmed deletion after reload/cancel, and API deletion removed generated escalation blocks and restored baseline. Current-target compatibility remains open. The report retains its stated executor; this does not change the human catalog result, count as a new AI execution, or establish current-build compatibility. The October 15 cutoff remains provisional; no historical credit is accepted. The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/settings/EscalationSettings.tsx, client/src/components/shared/DrawerShell.tsx, server/app/api/system/notifications.py, server/app/nagios/notifications.py, server/app/remediation_actions.py, server/app/remediation_escalation.py. Re-run this case on the target before using historical evidence to omit checks.",
-      "case_hash": "fc67b764fedeeedcae42a04a21e12c5491af74fbeb310cbf424e2a9c7a427f5b",
+      "case_hash": "3f3c1db9286e85401d639dfa1a62855c5f662583aa14836e5e4b9b23fbfdaaac",
       "report": "docs/test-runs/2026-10-15-issue-116-escalations/REPORT.md",
       "report_sha256": "8c71216428a0d5dfb39c3a795ffb90338323cb16022b73bc5ed2f69d2707f886",
       "tested_revision": "b4d2c1648592c2e8294eb0d44fccb868d1fa9adb",
@@ -1185,7 +1185,7 @@
       "reviewed_by": "Codex mapping review (partial; not full-case acceptance)",
       "reviewed_at": "2026-10-18",
       "impact_review": "The real browser showed both database sizes, free space, threshold guidance, and Nagios log refresh. It did not establish the low-space warning, unavailable/partial scan states, and exact current-target compatibility. The report retains its stated executor; the human catalog result is unchanged. This is not a new AI execution or accepted full-case credit; the October 15 cutoff remains provisional. The tested commit is present and is an ancestor of target 299ab3ba7203. Case-specific source review found these relevant post-run product changes: client/src/pages/DashboardPage.tsx, server/app/api/system/dashboard.py. Re-run this case on the target before omitting checks.",
-      "case_hash": "1fda4c5f236eb5c391d6c1d2517def5fa88f2a300df37b18b2daa764c2ffc9e9",
+      "case_hash": "1ae245c00b0794f198938715aff6397f1fbdec1ea19be833371c957d70e32742",
       "report": "docs/test-runs/2026-10-15-issue-124-storage-logs/REPORT.md",
       "report_sha256": "eaae0611c1ccae4991ebf0a04feb16d4446256ade38031dc3de1ecb2ca31dff8",
       "tested_revision": "5f0a7ef8",
@@ -1209,7 +1209,7 @@
       "reviewed_by": "Codex mapping review (partial; not full-case acceptance)",
       "reviewed_at": "2026-10-18",
       "impact_review": "The browser saw a custom notification and its comment in the bell. The unread-count, mark-all-read, clear, and reload assertions in the current case were not all established; current-target compatibility remains open. The report retains its stated executor; the human catalog result is unchanged. This is not a new AI execution or accepted full-case credit; the October 15 cutoff remains provisional. The tested commit is present and is an ancestor of target 299ab3ba7203. No product source path in the scoped SHL comparison changed afterward; this only removes one compatibility concern. The report remains partial, the October 15 cutoff is unapproved, and missing case expectations still require execution.",
-      "case_hash": "d2cfe5143c4aacb446927d05b3f4448683d44fb7a96e74cf417a40450e16b2f8",
+      "case_hash": "615bc182a815610213517d500032342e7ff11b5ead145019a73aca462fdcbbc8",
       "report": "docs/test-runs/2026-10-18-issue-153-failure-escalation/REPORT.md",
       "report_sha256": "6b544e3a2d7b4c6b849fdf106c6cdd99ecc4890e6388a2a6744dbf9e2dd64c4f",
       "tested_revision": "ad23308b",
@@ -1377,6 +1377,19 @@
       "TC-DI-18",
       "TC-DI-19"
     ]
+  },
+  "catalog_module_20_21_result_review": {
+    "reviewed_by": "Claude catalog result-only comparison, requested by the tester",
+    "reviewed_at": "2026-10-19",
+    "compared_catalog_revision": "4b6063d797bc5166887de60e05b6be8a3d2ed682",
+    "refreshed_cases": [
+      "TC-SHL-01",
+      "TC-SHL-02",
+      "TC-SHL-03",
+      "TC-SHL-05",
+      "TC-SHL-07"
+    ],
+    "decision": "Only the recorded Result lines of these cases changed (detail line Not run to PASS, plus a Recorded run link); titles, steps, expected items, prerequisites and requirements are unchanged. Refresh case bindings; retain each entry's classification, report excerpts, compatibility decisions and the provisional cutoff. This review adds no execution or historical acceptance."
   },
   "catalog_consolidation_review": {
     "reviewed_at": "2026-10-19",

@@ -38,6 +38,7 @@ from app.api.system.statistics import (
     NAGIOS_HOST,
     PING_PLUGINS,
     _plugin_key,
+    ncpa_resource_dimension,
 )
 from app.history_models import ServiceStatus
 from app.system_models import DiscoveryStatus, NetworkDiscoveryStatus
@@ -324,8 +325,9 @@ def _ncpa_trend(dimension: str, hours: int, buckets: int) -> list[dict]:
       disk   → metric contains "disk" and ("used_percent" or "percent")
       memory → metric contains "memory" and "percent"
 
-    We query all NCPA ServicePerfData rows in the window and filter by the
-    dimension pattern rather than an exact metric name, since NCPA paths vary.
+    Full-path history and real short agent labels share the resource classifier
+    used for current averages. Short labels require an identifiable service or
+    command metric path; swap, disk I/O and ambiguous checks are excluded.
     """
     from app.history_models import ServicePerfData, ServiceStatus
     from datetime import datetime, timezone, timedelta
@@ -335,13 +337,17 @@ def _ncpa_trend(dimension: str, hours: int, buckets: int) -> list[dict]:
     start = now - timedelta(hours=hours)
     bucket_size = timedelta(hours=hours) / buckets
 
-    # Fetch all NCPA service rows in the window.
-    ncpa_svc_ids = db.session.scalars(
-        sa.select(ServiceStatus.ServiceStatusID).where(
-            ServiceStatus.Timestamp >= start,
-            ServiceStatus.Service.ilike("%check_ncpa%"),
-        )
+    # Use the same command-first classification as the current-service section.
+    # Generated descriptions (ncpa-cpu-5693-tcp, etc.) need not name the plugin.
+    services = db.session.execute(
+        sa.select(
+            ServiceStatus.ServiceStatusID, ServiceStatus.Service, ServiceStatus.Check_Command,
+        ).where(ServiceStatus.Timestamp >= start, ServiceStatus.Timestamp <= now)
     ).all()
+    ncpa_svc_ids = [
+        service.ServiceStatusID for service in services
+        if _plugin_key(service.Service, service.Check_Command) == "check_ncpa"
+    ]
 
     if not ncpa_svc_ids:
         return [{"bucket_start": (start + bucket_size * i).isoformat(),
@@ -354,27 +360,18 @@ def _ncpa_trend(dimension: str, hours: int, buckets: int) -> list[dict]:
             ServicePerfData.Measured_Value,
             ServicePerfData.Unit,
             ServiceStatus.Timestamp,
+            ServiceStatus.Service,
+            ServiceStatus.Check_Command,
         )
         .join(ServiceStatus, ServicePerfData.ServiceStatusID == ServiceStatus.ServiceStatusID)
         .where(ServicePerfData.ServiceStatusID.in_(ncpa_svc_ids))
     ).all()
 
-    # Filter rows by dimension.
-    def _matches(metric: str) -> bool:
-        m = metric.lower()
-        if dimension == "cpu":
-            return "cpu" in m and "percent" in m
-        if dimension == "disk":
-            return "disk" in m and ("used_percent" in m or "percent" in m)
-        if dimension == "memory":
-            return "memory" in m and "percent" in m
-        return False
-
     bucket_vals: dict[int, list[float]] = defaultdict(list)
     unit_val = None
 
     for row in rows:
-        if not _matches(row.Metric):
+        if ncpa_resource_dimension(row.Service, row.Check_Command, row.Metric) != dimension:
             continue
         ts = row.Timestamp
         if ts.tzinfo is None:

@@ -114,6 +114,18 @@ class TestSaveReadReset:
         db.session.commit()
         assert logged_in_client.get(url(device)).get_json()["data"]["in_use"] is True
 
+    def test_save_and_reset_keep_reporting_in_use(self, logged_in_client, device):
+        from app.system_models import Open_UDP_Services, PortState
+        db.session.add(Open_UDP_Services(Port_Number=161, Service_Name="snmp", Plugin_Name="snmp",
+                                         Port_State=PortState.MONITORED, NetDiscoveryID=device.NetDiscoveryID))
+        db.session.commit()
+        assert put(logged_in_client, device, {"community": "lab"}).get_json()["data"]["in_use"] is True
+        assert logged_in_client.delete(url(device)).get_json()["data"]["in_use"] is True
+
+    def test_save_and_reset_report_in_use_false_without_an_snmp_port(self, logged_in_client, device):
+        assert put(logged_in_client, device, {"community": "lab"}).get_json()["data"]["in_use"] is False
+        assert logged_in_client.delete(url(device)).get_json()["data"]["in_use"] is False
+
     def test_save_then_read_back(self, logged_in_client, device, applied):
         resp = put(logged_in_client, device, {"protocol": "2c", "community": "lab"})
         assert resp.status_code == 200

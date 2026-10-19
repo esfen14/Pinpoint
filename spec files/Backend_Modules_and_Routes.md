@@ -87,10 +87,29 @@ normal configured timeout; immediate invalidation is not part of this command.
 
 | Method and path | Permission | Purpose |
 |---|---|---|
-| `POST /api/user/login` | Public | Validate credentials and establish a session |
+| `POST /api/user/login` | Public | Validate credentials and establish a session only when signed out; an existing authenticated session returns 409 before credential validation |
 | `POST /api/user/logout` | Login | End the current session |
 
+Login requires an explicit sign-out before signing in again, including the
+same account. An authenticated request receives the standard error envelope
+(`success: false`, HTTP 409), with message "You are already signed in. Sign out
+before logging in to another account." No submitted credentials are checked and
+no successful sign-in is audited. The existing identity and permissions remain
+unchanged. `POST /api/user/logout` ends that session; a subsequent accepted login
+establishes the submitted active account, and `/api/user/me` and protected routes
+use only that account's role permissions. Existing inactive-account and idle
+session expiry checks still run before login handling.
+
 ### `app/api/user/management.py`
+
+Edit Account (`PUT /api/user/accounts/<id>`) rejects a supplied password matching
+the edited account's current password with HTTP 400 and the message
+"You cannot reuse this account's current password. Choose a different password."
+The check uses the target account's stored password hash, including for self
+edits, under both password-policy modes. Rejection happens before any account
+fields, password hash or forced-change flag are saved. Omitting or leaving both
+password fields blank still keeps the current password. A different compliant
+password retains the existing temporary-password and forced-change behavior.
 
 | Method and path | Permission | Purpose |
 |---|---|---|
@@ -232,7 +251,7 @@ Detailed fields and behavior are normative in `Display_Requirements.md`.
 | Method and path | Permission | Purpose |
 |---|---|---|
 | `GET /api/system/network-health/summary` | `system.network_health` | Network Health header totals and last-scan information |
-| `GET /api/system/network-health/trends` | `system.network_health` | Bucketed ping and NCPA metric trends |
+| `GET /api/system/network-health/trends` | `system.network_health` | Bucketed ping and NCPA metric trends; historical NCPA CPU/disk/memory use the same command-first `_plugin_key(Service, Check_Command)` classification as current services, with service-name fallback only without a command. Includes generated NCPA names, excludes other plugins and timestamps outside the requested window; absent matching samples remain null buckets. Trends and current NCPA averages share `ncpa_resource_dimension`: full-path history plus quoted/unquoted agent `percent`, `percent_N` and `used_percent` labels, disambiguated by command metric path or generated service metric key; swap, disk I/O and unknown short-label identities are excluded |
 | `GET /api/system/network-health/plugins` | `system.network_health` | Service health grouped by plugin type |
 
 Valid trend windows are `hours=1`, `6`, `24`, or `168`.
@@ -412,8 +431,8 @@ encrypted with `secrets_store` as `<name>_enc` and never returned.
 | Method and path | Permission | Purpose |
 |---|---|---|
 | `GET /api/system/hosts/<id>/plugin-variables/<plugin>` | `system.hosts` | `plugin`, `variables` (plain values), `secrets_set` (`{name: bool}`), `editable` and `in_use` (snmp only: the device has an SNMP port monitored; `null` for other plugins). 404 for an unknown device or a plugin that is not a registry definition |
-| `PUT /api/system/hosts/<id>/plugin-variables/<plugin>` | `system.hosts.edit` | Body `{"variables": {...}, "clear_secrets": [...]}`; an empty body resets. The plain variables replace the stored ones; a secret that is not sent keeps its value, `clear_secrets` removes one. Unknown keys, invalid values and a v3 field the security level needs are 400 with `data.field` naming the variable; a retired or merged device is 400; a body over 8 KiB is 400; 422 when Nagios rejects the config (change rolled back). SNMP: `protocol` is 1, 2c or 3; v3 needs `security_level`, `v3_user` and, per level, `auth_protocol`/`auth_password` and `priv_protocol`/`priv_password` (passwords 8 to 64 printable characters); fields a level does not use, and every v3 field of a v1/v2c device, are dropped with their stored passwords |
-| `DELETE /api/system/hosts/<id>/plugin-variables/<plugin>` | `system.hosts.edit` | Reset the override: the device returns to the defaults. Same 404, 400 and 422 rules |
+| `PUT /api/system/hosts/<id>/plugin-variables/<plugin>` | `system.hosts.edit` | Returns the same shape as GET, including `in_use`. Body `{"variables": {...}, "clear_secrets": [...]}`; an empty body resets. The plain variables replace the stored ones; a secret that is not sent keeps its value, `clear_secrets` removes one. Unknown keys, invalid values and a v3 field the security level needs are 400 with `data.field` naming the variable; a retired or merged device is 400; a body over 8 KiB is 400; 422 when Nagios rejects the config (change rolled back). SNMP: `protocol` is 1, 2c or 3; v3 needs `security_level`, `v3_user` and, per level, `auth_protocol`/`auth_password` and `priv_protocol`/`priv_password` (passwords 8 to 64 printable characters); fields a level does not use, and every v3 field of a v1/v2c device, are dropped with their stored passwords |
+| `DELETE /api/system/hosts/<id>/plugin-variables/<plugin>` | `system.hosts.edit` | Reset the override: the device returns to the defaults. Same 404, 400 and 422 rules. Returns the same shape as GET, including `in_use`, so the drawer keeps its SNMP section |
 | `POST /api/system/hosts/<id>/plugin-variables/<plugin>/test` | `system.hosts.edit` | SNMP only (400 otherwise). Query the device once with `check_snmp` (uptime OID) using the settings in the body (or the saved ones when empty; a blank password uses the stored one). Saves and applies nothing. 200 with `ok`, `state` and `message`; an unreachable device is a failed result. v3 passphrases go to `check_snmp` on stdin as extra-options and are scrubbed from the message |
 
 ### `app/api/system/ncpa_deployment.py`
@@ -487,7 +506,7 @@ update/custom-plugin modules.
 | `POST /api/plugin/scan` | `plugin.scan` | Start plugin-directory scan |
 | `GET /api/plugin/scan/status` | `plugin.scan` | Read latest scan status |
 | `GET /api/plugin` | `plugin.view` | Paginated plugin inventory; optional `group` (Network Services, Device Availability, Network Protocols, Servers, Application, Other) filters to one inventory tab (catalog category, with per-plugin fixes in `PLUGIN_GROUP_OVERRIDES`), 400 otherwise |
-| `GET /api/plugin/summary` | `plugin.view` | Plugin-manager summary counts, including `enabled_plugins` (Enabled or Active; zero drives the "no plugins enabled" banner) |
+| `GET /api/plugin/summary` | `plugin.view` | Plugin-manager summary counts: `installed_plugins`, `active_capabilities` and `validation_issues` drive the three visible summary cards; `enabled_plugins` (Enabled or Active) drives the "no plugins enabled" banner when zero. `custom_plugins` and `updates_available` remain in the response for compatibility but are unused by the client |
 | `GET /api/plugin/history` | `plugin.view` | Plugin audit/history records |
 | `GET /api/plugin/<plugin_id>` | `plugin.view` | Plugin detail, including `description`, `category` and `documentation_url` (null for plugins outside the bundled catalog) |
 | `GET /api/plugin/<plugin_id>/commands` | `plugin.view` | Commands and active overrides |

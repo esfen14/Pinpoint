@@ -147,6 +147,14 @@ def apply_override(device, plugin, stored, description):
         return error("Unable to save the plugin settings.", 500)
 
 
+def serialize_with_in_use(device, plugin, stored):
+    """The settings of one plugin plus "in_use", so every response keeps the drawer's SNMP section shown."""
+    data = variables_module.serialize(stored, plugin)
+    # The drawer shows the SNMP form only for a device that has an SNMP port monitored.
+    data["in_use"] = device_snmp_port(device) is not None if plugin == "snmp" else None
+    return data
+
+
 def previous_override(device, plugin):
     """The stored override object of one plugin ({} when none)."""
     overrides = device.Plugin_Variables if isinstance(device.Plugin_Variables, dict) else {}
@@ -166,15 +174,13 @@ def get_device_plugin_variables(id, plugin):
     A device's override for one registry plugin: {"plugin", "variables" (plain values),
     "secrets_set" ({name: bool}, never a value), "editable" (the variables that may be set),
     "in_use" (snmp only: whether the device has an SNMP port monitored; null for other plugins)}.
+    PUT and DELETE return the same shape, so the drawer keeps its SNMP section after a save or reset.
     404 for an unknown device or plugin.
     """
     device, plugin, problem = editable_device(id, plugin)
     if problem is not None:
         return problem
-    data = variables_module.serialize(previous_override(device, plugin), plugin)
-    # The drawer shows the SNMP form only for a device that has an SNMP port monitored.
-    data["in_use"] = device_snmp_port(device) is not None if plugin == "snmp" else None
-    return success(data)
+    return success(serialize_with_in_use(device, plugin, previous_override(device, plugin)))
 
 
 @system_bp.put('/hosts/<int:id>/plugin-variables/<plugin>')
@@ -217,7 +223,7 @@ def update_device_plugin_variables(id, plugin):
     problem = apply_override(device, plugin, stored, change_description(plugin, device, {n.removesuffix("_enc") for n in names}))
     if problem is not None:
         return problem
-    return success(variables_module.serialize(stored, plugin), message="Plugin settings saved.")
+    return success(serialize_with_in_use(device, plugin, stored), message="Plugin settings saved.")
 
 
 @system_bp.delete('/hosts/<int:id>/plugin-variables/<plugin>')
@@ -234,7 +240,7 @@ def reset_device_plugin_variables(id, plugin):
     problem = apply_override(device, plugin, {}, f"Reset {plugin} settings of device {nagios_host_name(device)} to the defaults")
     if problem is not None:
         return problem
-    return success(variables_module.serialize({}, plugin), message="Plugin settings reset.")
+    return success(serialize_with_in_use(device, plugin, {}), message="Plugin settings reset.")
 
 
 # ==========================================================

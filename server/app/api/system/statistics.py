@@ -21,6 +21,8 @@ from __future__ import annotations
 from datetime import datetime, timezone, timedelta
 from typing import Optional
 
+import re
+
 import sqlalchemy as sa
 
 from app import db
@@ -142,6 +144,64 @@ def _plugin_key(service_name: str, check_command: Optional[str] = None) -> str:
     prefix = dash_prefix.split("_")[0]
     definition = find_plugin_by_name_or_alias(dash_prefix) or find_plugin_by_name_or_alias(prefix)
     return definition.check_plugin if definition else f"check_{prefix}"
+
+
+def ncpa_resource_dimension(service_name: str, check_command: Optional[str], metric: str) -> Optional[str]:
+    """Map an NCPA performance label to CPU, virtual memory or disk usage.
+
+    Full paths remain usable for older history. Short agent labels require an
+    identifiable command metric path or generated service metric key; a bare
+    percent label is otherwise ambiguous. Swap and disk I/O never count here.
+    """
+    if _plugin_key(service_name, check_command) != "check_ncpa":
+        return None
+
+    def path_dimension(path: str) -> Optional[str]:
+        """Identify a supported resource percentage path without guessing."""
+        path = path.lower().strip().strip("\"'")
+        if "percent" not in path:
+            return None
+        if path.startswith("cpu/"):
+            return "cpu"
+        if path.startswith("memory/virtual/"):
+            return "memory"
+        if path.startswith("disk/logical/"):
+            return "disk"
+        return None
+
+    label = metric.lower().strip().strip("\"'")
+    if "/" in label:
+        return path_dimension(label)
+
+    if re.fullmatch(r"percent(?:_\d+)?", label):
+        allowed = {"cpu", "memory"}
+    elif re.fullmatch(r"used_percent(?:_\d+)?", label):
+        allowed = {"disk"}
+    else:
+        return None
+
+    paths = [arg.strip().strip("\"'") for arg in (check_command or "").split("!")[1:]
+             if "/" in arg]
+    if paths:
+        dimensions = {path_dimension(path) for path in paths}
+        return next(iter(dimensions)) if len(dimensions) == 1 and dimensions <= allowed else None
+
+    name = service_name.lower()
+    if name.startswith("ncpa-"):
+        key = name[5:].rsplit("-", 2)[0]
+    elif name.startswith("ncpa_"):
+        key = name[5:].split("-", 1)[0]
+    else:
+        return None
+    if key in {"cpu", "cpu_usage"} and "cpu" in allowed:
+        return "cpu"
+    if key in {"memory", "memory_usage"} and "memory" in allowed:
+        return "memory"
+    if key.startswith(("disk_read", "disk_write", "disk_io", "disk_physical")):
+        return None
+    if (key == "disk" or key.startswith("disk_")) and "disk" in allowed:
+        return "disk"
+    return None
 
 
 def _display_name(plugin_key: str) -> str:
@@ -411,10 +471,12 @@ def ncpa_averages(
     if not ncpa_svcs:
         return None
 
-    ncpa_ids = [s.ServiceStatusID for s in ncpa_svcs]
+    ncpa_by_id = {s.ServiceStatusID: s for s in ncpa_svcs}
+    ncpa_ids = list(ncpa_by_id)
 
     rows = db.session.execute(
         sa.select(
+            ServicePerfData.ServiceStatusID,
             ServicePerfData.Metric,
             ServicePerfData.Measured_Value,
         ).where(
@@ -427,17 +489,14 @@ def ncpa_averages(
     mem_vals:  list[float] = []
 
     for row in rows:
-        metric = row.Metric.lower()
-        val    = row.Measured_Value
-        # cpu/percent
-        if "cpu" in metric and "percent" in metric:
-            cpu_vals.append(val)
-        # disk/logical/.../used_percent
-        elif "disk" in metric and ("used_percent" in metric or "percent" in metric):
-            disk_vals.append(val)
-        # memory/virtual/percent
-        elif "memory" in metric and "percent" in metric:
-            mem_vals.append(val)
+        service = ncpa_by_id[row.ServiceStatusID]
+        dimension = ncpa_resource_dimension(service.Service, service.Check_Command, row.Metric)
+        if dimension == "cpu":
+            cpu_vals.append(row.Measured_Value)
+        elif dimension == "disk":
+            disk_vals.append(row.Measured_Value)
+        elif dimension == "memory":
+            mem_vals.append(row.Measured_Value)
 
     def _safe_avg(vals: list[float]) -> Optional[float]:
         if len(vals) < 2:

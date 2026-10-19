@@ -298,6 +298,70 @@ describe('DashboardPage', () => {
     })
   })
 
+  describe('acknowledgement filter (REQ-ACK-05)', () => {
+    const OPEN_ALERT = { ...ALERT, hostname: 'open-host', service_name: 'open-svc' }
+    const ACKED_ALERT = {
+      ...ALERT,
+      hostname: 'acked-host',
+      service_name: 'acked-svc',
+      ack: { comment: 'On it', acknowledged_by: 'Admin User', acknowledged_at: '2026-09-26T09:00:00+00:00' },
+    }
+
+    beforeEach(() => {
+      responses['/api/system/dashboard/alerts'] = { alerts: [OPEN_ALERT, ACKED_ALERT] }
+    })
+
+    it('defaults to Show all with both alerts listed', async () => {
+      await renderLoaded()
+      expect(screen.getByRole('combobox', { name: /acknowledgement filter/i })).toHaveValue('all')
+      expect(screen.getByText('open-host / open-svc')).toBeInTheDocument()
+      expect(screen.getByText('acked-host / acked-svc')).toBeInTheDocument()
+    })
+
+    it('Hide acknowledged lists only unacknowledged alerts', async () => {
+      const user = userEvent.setup()
+      await renderLoaded()
+      await user.selectOptions(screen.getByRole('combobox', { name: /acknowledgement filter/i }), 'hide-acknowledged')
+      expect(screen.getByText('open-host / open-svc')).toBeInTheDocument()
+      expect(screen.queryByText('acked-host / acked-svc')).not.toBeInTheDocument()
+    })
+
+    it('Show only acknowledged lists only acknowledged alerts', async () => {
+      const user = userEvent.setup()
+      await renderLoaded()
+      await user.selectOptions(screen.getByRole('combobox', { name: /acknowledgement filter/i }), 'only-acknowledged')
+      expect(screen.queryByText('open-host / open-svc')).not.toBeInTheDocument()
+      expect(screen.getByText('acked-host / acked-svc')).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /Acknowledge all/ })).not.toBeInTheDocument()
+    })
+
+    it('says no alerts match when the filter hides every row', async () => {
+      const user = userEvent.setup()
+      responses['/api/system/dashboard/alerts'] = { alerts: [OPEN_ALERT] }
+      await renderLoaded()
+      await user.selectOptions(screen.getByRole('combobox', { name: /acknowledgement filter/i }), 'only-acknowledged')
+      expect(screen.getByText('No alerts match this filter')).toBeInTheDocument()
+      expect(screen.queryByText('No active alerts')).not.toBeInTheDocument()
+    })
+
+    it('Acknowledge All sends only the unacknowledged alerts that are visible', async () => {
+      const user = userEvent.setup()
+      await renderLoaded()
+      await user.selectOptions(screen.getByRole('combobox', { name: /acknowledgement filter/i }), 'hide-acknowledged')
+      await user.click(screen.getByRole('button', { name: 'Acknowledge all (1)' }))
+      await user.type(screen.getByPlaceholderText(/investigating/i), 'Bulk')
+      const dialog = screen.getByText('Acknowledge 1 active alerts').closest('div')!
+      await user.click(within(dialog).getByRole('button', { name: 'Acknowledge' }))
+
+      await waitFor(() => {
+        expect(apiPost).toHaveBeenCalledWith('/api/system/dashboard/alerts/acknowledge-all', {
+          comment: 'Bulk',
+          alerts: [{ hostname: 'open-host', service_name: 'open-svc' }],
+        })
+      })
+    })
+  })
+
   describe('removing an acknowledgement', () => {
     const ACKED = { ...ALERT, ack: { comment: 'On it', acknowledged_by: 'Admin User', acknowledged_at: '2026-09-26T09:00:00+00:00' } }
 
@@ -336,5 +400,18 @@ describe('DashboardPage', () => {
     responses['/api/system/dashboard/summary'] = new Error('Nagios unreachable')
     renderDashboard()
     expect(await screen.findByText('Nagios unreachable')).toBeInTheDocument()
+  })
+
+  it('offers Retry on the load error and reloads the data without a page reload', async () => {
+    responses['/api/system/dashboard/summary'] = new Error('Nagios unreachable')
+    renderDashboard()
+    expect(await screen.findByText('Nagios unreachable')).toBeInTheDocument()
+
+    // Service is back: Retry must refetch and clear the error.
+    responses['/api/system/dashboard/summary'] = summaryResponse()
+    await userEvent.click(screen.getByRole('button', { name: /^retry$/i }))
+
+    await waitFor(() => expect(screen.queryByText('Nagios unreachable')).not.toBeInTheDocument())
+    expect(screen.queryByRole('button', { name: /^retry$/i })).not.toBeInTheDocument()
   })
 })
