@@ -28,7 +28,7 @@ Requirement coverage:
 
 1. [x] Extend NcpaPluginNotice.test.tsx with enable/disable focus, visibility/route return, failed refresh, overlapping responses and cleanup regressions; confirm failures.
 2. [x] Refresh useNcpaPluginState on focus and visible-tab events; retain unknown-on-error and discard outdated/unmounted results.
-3. [ ] Update Frontend_Modules_and_Routes and Implementation_Status; run focused tests, frontend gate and all gate; review source bindings if affected.
+3. [x] Update Frontend_Modules_and_Routes and Implementation_Status; run focused tests, frontend gate and all gate; review source bindings if affected.
 4. [ ] Remove scaffold and open PR with verification/limits; leave CI running.
 
 ## Round log
@@ -50,4 +50,6 @@ No live lab mutation required by finish conditions. Tests use documented invento
 
 Round1: initial transition tests5failed beforefocusrefresh, then40focusedpassedtwice. Deeperinventory inspection confirms scanner preserves entry.name and serializer returns Plugin.Name; check_ncpa.py is valid per backend registry. Addedname/duplicate regressions:5failed before correction. Recognize only canonical base plus backend-supported py/pl/sh, case/whitespace normalization; any Enabled/Active match wins. This addresses the issue initial-enabled condition, not an unrelated behavior expansion. Next: focused rerun and gates/specs.
 
-Round 2: focused regression suite 46 passed; full frontend stage passed (1063 tests, build, lint). Documentation links and 239 coverage records validate. All-stage gate running.
+Round 2: focused regression suite 46 passed; full frontend stage passed (1063 tests, build, lint). Documentation links and 239 coverage records validate. All-stage gate attempted; QA supervisor environment failure recorded below.
+
+Round 3: scripts/verify.sh all attempted; docs preflight passed links, env, routes, catalog, evidence, coverage, transport contracts, then existing QA supervisor host-controller safety errors (8 errors/8 failures). Full frontend stage independently green. No live browser or backend suite claimed. Finish requirements reread from GitHub, unchanged, all covered by hook/page tests and frontend stage. Next: remove progress and open PR with explicit gate limitation; CI not awaited.
