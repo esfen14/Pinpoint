@@ -1240,7 +1240,7 @@
         "client/e2e/qa-modules-2-9.lab.spec.ts": "49f82ae6f6996d784082d575da9013a7a4827100fc797d5e47c73848977b43bc",
         "client/playwright.modules.qa.config.ts": "49dbe58e8e6547495ced6abe204a5ccd3854e917db47dea2f7c4acd846d6085c",
         "client/qa/module-selection.mjs": "5b648a29d597eb7ecdf3e7ea38f2a44560c5f7a2c1259e8041a503c3c4f4d99e",
-        "client/src/pages/DashboardPage.tsx": "b1572fa9d34d4cc8f4268bffdb67e1d066754166e48d9ff78fdd7c7a7577b2da",
+        "client/src/pages/DashboardPage.tsx": "1f16b3e8a9c1ce15d5382ac39cb7cfbb269c5dd2984f5e34c0f3eaa6ee425111",
         "client/src/components/shared/SummaryStatCard.tsx": "2da439e5d5684c62af52f3f84816d68085d6aa32663cdbaea6d256782fb11f66",
         "client/src/components/dashboard/NetworkPerformanceSection.tsx": "d67af2c66ca5bd710ab9c3aec62feb52b3d4b2e99b242533dea046658226525b",
         "client/src/components/dashboard/MetricCard.tsx": "a414ba058ac82dd32427f9cd02dc974c407a95c21703ac3ae230942afd9955d3",
@@ -1251,7 +1251,9 @@
         "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
         "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
         "server/app/api/system/dashboard.py": "d984eecb2f6ad5a86680ef211b842117b659ec158b0cc58390b9b8a332374d32",
-        "server/app/api/helper/database_access/permissions.py": "223c0628444524cdae232fb02c29ebbb18b5e4c2e0307990acbe597a40e2ecff"
+        "server/app/api/helper/database_access/permissions.py": "223c0628444524cdae232fb02c29ebbb18b5e4c2e0307990acbe597a40e2ecff",
+        "client/src/hooks/useNagiosStatus.ts": "066b2d49039edd38a71e85f88886ae85f3ea3cd3d39f125771a7539a3b00016c",
+        "client/src/components/dashboard/NagiosWarning.tsx": "f06bd5ccb2bcb3b59325272064dbcbaeed057c0b4aa7e38255f9d40f3bf966cf"
       },
       "prerequisites": [
         "No host has a ping check and no NCPA host/data exists; these lab facts must be independently reviewed before start. The adapter does not alter them.",
@@ -3364,5 +3366,17 @@
       ]
     },
     "decision": "Network Status replaces the sidebar/header page label at /system-status. Reviewed all eight Sidebar consumers: permissions, destinations and navigation order are unchanged. TC-SS-04 now asserts absence of the exact Network Status link and records that wording; its catalog title and expected-item marker remain unchanged. Other permission adapters and the dashboard-only adapter preserve their assertions, setup and cleanup. Source-only review; coverage statuses, historical verdicts and live execution permissions are unchanged."
+  },
+  "source_change_review_issue_238": {
+    "reviewed_by": "Codex source review for issue #238",
+    "reviewed_at": "2026-10-19",
+    "refreshed_sources": {
+      "TC-DASH-07": [
+        "client/src/pages/DashboardPage.tsx",
+        "client/src/hooks/useNagiosStatus.ts",
+        "client/src/components/dashboard/NagiosWarning.tsx"
+      ]
+    },
+    "decision": "Reviewed TC-DASH-07 Dashboard no-data adapter: it asserts Network Performance empty values and absent conditional resource heading; monitoring warnings and the independent freshness clock do not change those assertions, fixture, cleanup or expected-item markers. Added new warning/hook dependencies and refreshed DashboardPage source hash. No coverage status, catalog result or live authorization changes."
   }
 }

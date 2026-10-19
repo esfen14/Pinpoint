@@ -1,3 +1,5 @@
+import { useNagiosStatus } from '../hooks/useNagiosStatus'
+import { NagiosWarning } from '../components/dashboard/NagiosWarning'
 import { StorageUsageCard } from '../components/dashboard/StorageUsageCard'
 import { useEffect, useState } from 'react'
 import { AlertTriangle, Gauge, Server, Wifi } from 'lucide-react'
@@ -176,9 +178,10 @@ export function DashboardPage() {
     }
   }
 
-  const uptimeLabel = status?.nagios.running ? 'Online' : 'Offline'
-  const uptimeColor = status?.nagios.running ? 'bg-emerald-500' : 'bg-red-500'
-  const uptimeTextColor = status?.nagios.running ? 'text-emerald-600' : 'text-red-600'
+  const monitoring = useNagiosStatus(status)
+  const uptimeLabel = monitoring.stopped ? 'Offline' : monitoring.unavailable ? 'Monitoring unavailable' : 'Online'
+  const uptimeColor = !monitoring.unavailable ? 'bg-emerald-500' : 'bg-red-500'
+  const uptimeTextColor = !monitoring.unavailable ? 'text-emerald-600' : 'text-red-600'
 
   const downUnreachable = (summary?.hosts.down ?? 0) + (summary?.hosts.unreachable ?? 0)
 
@@ -189,6 +192,7 @@ export function DashboardPage() {
 
           {/* Sticky banner */}
           <div className="sticky top-0 z-10 bg-[var(--sticky-bg)] pb-3 pt-3">
+            {!statusLoading && monitoring.unavailable && <NagiosWarning stopped={monitoring.stopped} />}
             <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-[var(--dash-card-padding)] shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
