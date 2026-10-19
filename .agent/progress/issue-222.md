@@ -1,7 +1,7 @@
 # Issue #222: Prevent existing-session login confusion
 
 Branch: `issue-222-existing-session-login`
-Status: in-progress
+Status: blocked
 
 ## Finish condition
 
@@ -37,15 +37,18 @@ Requirement coverage:
 |---|---|---|---|
 | 2 | Implemented 409 rejection and LoginRoute; updated specifications | Focused pytest and Vitest | 11 backend and 23 frontend passed; frontend pre-fix 3 failed, 20 passed |
 | 1 | Added backend and frontend regressions | pytest tests/unit/test_auth.py -q | Expected red: 3 failed, 8 passed; API returns 200 instead of 409. Frontend dependency install pending |
+| 3 | Ran repository gates and full frontend unit suite; requested manual evidence | verify.sh all, backend, frontend; npm test | Full gate blocked by Windows catalog decoding; direct UTF-8 traceability passes. Frontend QA gate: 14 failed, 4 passed (Unix directory custody). Frontend unit suite: 1035 passed. Backend/build/lint pending |
 | Plan | Read issue and sources; chose explicit logout with 409 rejection | git status --short | Separate clean worktree; original NCPA changes preserved |
 
 ## State for the next session
 
-- Last check run (exact command): FLASK_DEBUG=1 python -m pytest tests/unit/test_auth.py -q
-- Result (first failing lines, or "green"): 3 failed, 8 passed; assert 200 == 409
+- Last check run (exact command): python -X utf8 -I scripts/check_traceability.py
+- Result (first failing lines, or "green"): green; normal verify.sh docs fails No TC/E2E definitions because isolated Python uses Windows default encoding
 - Hypothesis: Reject all login attempts while authenticated before credential validation; check /me before exposing login form.
-- Next action: Run repository verification gates and record platform limitations, then prepare draft PR pending manual evidence.
+- Next action: Collect running backend/build/lint results and Linux CI, then obtain manual acceptance evidence before marking PR ready.
 
 ## Decisions and notes
 
 Issue explicitly permits rejection or switching; choose rejection requiring explicit sign-out. Preserve existing session on 409. No live changes made. Original historical manual account pair and request evidence were not supplied; do not invent them. Manual acceptance remains required before ready for review.
+
+Manual acceptance blocker: the user confirmed the QA environment cannot be provided. No endpoint, second role/account or original sanitized request evidence is available. Credentials shared in chat were not used or persisted. A person must supply an endpoint and manual before/after evidence for both role directions, normal login and logout then another login.
