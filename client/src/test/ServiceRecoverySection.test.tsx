@@ -262,7 +262,7 @@ function table(autoRecovery?: ReadonlySet<string>) {
   )
 }
 
-describe('System Status service row', () => {
+describe('Network Status service row', () => {
   it('marks only the services that recover automatically, with a link to the Remediation page', () => {
     table(new Set([recoveryKey('web-01', 'ssh-22-tcp')]))
 

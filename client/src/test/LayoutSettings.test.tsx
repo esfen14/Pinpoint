@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Header } from '../components/layout/Header'
@@ -80,5 +80,28 @@ describe('MaintenanceBanner', () => {
     render(<MaintenanceBanner />)
 
     expect(screen.getByText(/maintenance mode is on/i)).toBeInTheDocument()
+  })
+})
+
+
+describe('Network Status navigation title', () => {
+  beforeEach(() => {
+    permissions = []
+    localStorage.clear()
+  })
+
+  it('shows Network Status in the header at the existing route', () => {
+    render(<MemoryRouter initialEntries={['/system-status']}><Header /></MemoryRouter>)
+    expect(screen.getByText('Network Status')).toBeInTheDocument()
+    expect(screen.queryByText('System Status')).not.toBeInTheDocument()
+    expect(screen.getByText('All Hosts')).toBeInTheDocument()
+  })
+
+  it('uses the new title for a previously visited existing route', () => {
+    localStorage.setItem('nds:history', JSON.stringify([{ path: '/system-status', visitedAt: Date.now() }]))
+    renderHeader()
+    fireEvent.click(screen.getByRole('button', { name: 'History' }))
+    expect(screen.getByRole('button', { name: /Network Status \/ All Hosts/ })).toBeInTheDocument()
+    expect(screen.queryByText(/System Status \/ All Hosts/)).not.toBeInTheDocument()
   })
 })

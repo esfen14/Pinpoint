@@ -68,9 +68,9 @@ test('TC-NCPA-08: NCPA Deployment needs permission', async ({ page }, info) => {
 });
 
 test('TC-SS-04: System Status needs permission', async ({ page }, info) => {
-  await deniedPage(page, '/system-status', 'System Status');
+  await deniedPage(page, '/system-status', 'Network Status');
   // qa-evidence:TC-SS-04:E1
-  await observe(info, 'E1', 'System Status absent from sidebar; direct address redirects to Settings.');
+  await observe(info, 'E1', 'Network Status absent from sidebar; direct address redirects to Settings.');
 });
 
 test('TC-HIS-01: History needs permission', async ({ page }, info) => {
