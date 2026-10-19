@@ -427,7 +427,16 @@ audit purposes.
 
 `app/forecast.py` estimates when a disk or memory metric reaches its warning or critical
 threshold. It reads `ServicePerfData` joined to `ServiceStatus` in `history.db` for the NCPA
-metrics `disk/<partition>/used_percent` and `memory/virtual/percent` over the last 72 hours,
+resource dimensions identified by the shared `ncpa_resource_dimension` rules over
+72 hours: logical-disk and virtual-memory full paths plus agent short labels
+`used_percent` / `percent` (including quoted and supported numbered labels) with
+canonical command/service identity. CPU, swap, disk I/O, other plugins and
+ambiguous short labels are excluded. The job registers this same pure classifier
+as a deterministic scalar function on its SQLite history connection; no schema
+migration, history rewrite or separate identity-rule copy is involved. Filtering
+happens both before the series cap and before hourly averaging, so invalid series
+cannot consume the cap or contaminate a valid series' samples or thresholds.
+Raw host/service/metric identities are retained as separate series. Samples are
 averaged per hour in SQL (so a series is at most 72 points), and fits a least-squares line.
 The nearest threshold the latest value has not reached gets a crossing time. No forecast is
 made when there are fewer than 12 hourly points, they span less than half the window, the

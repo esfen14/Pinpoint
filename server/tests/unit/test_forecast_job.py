@@ -200,7 +200,7 @@ class TestCost:
                 for hour in (range(71) if n % 2 == 0 else (0, 70)):
                     row = _make_service(
                         db_session, "same-host", f"disk-{n:03}",
-                        ts=now - timedelta(hours=71 - hour),
+                        ts=now - timedelta(hours=71 - hour), check_command="pinpoint_nd_ncpa",
                     )
                     _make_service_perf(db_session, row, DISK, 40 + .3 * hour, "%", warn=80, crit=95)
             db_session.session.commit()
@@ -280,3 +280,91 @@ class TestRotation:
         assert [(row.Service, row.Computed_At) for row in rows()] == before
         assert forecast.compute_forecasts() == 1
         assert rows()[0].Service == "disk-1"
+
+
+class TestNcpaResourceIdentity:
+
+    @pytest.fixture(autouse=True)
+    def stable_window(self, monkeypatch):
+        """Keep the first seeded hour inside the window instead of racing its boundary."""
+        now = datetime.now(timezone.utc)
+        class Clock(datetime):
+            @classmethod
+            def now(cls, tz=None):
+                return now if tz else now.replace(tzinfo=None)
+        monkeypatch.setattr(forecast, 'datetime', Clock)
+
+    @pytest.mark.parametrize('service,command,metric', [
+        ('ncpa-memory-5693-tcp', 'pinpoint_nd_ncpa', 'percent'),
+        ('ncpa-memory-5693-tcp', 'pinpoint_nd_ncpa', "'percent'"),
+        ('ncpa-disk_root-5693-tcp', 'pinpoint_nd_ncpa', 'used_percent'),
+        ('ncpa-disk_root-5693-tcp', 'pinpoint_nd_ncpa', '"used_percent"'),
+        ('ncpa-memory-5693-tcp', None, 'percent'),
+        ('ncpa-disk_root-5693-tcp', None, 'used_percent'),
+        ('custom-memory', 'check_ncpa!memory/virtual/percent', 'percent'),
+        ('custom-disk', 'check_ncpa!disk/logical/|/used_percent', 'used_percent'),
+        ('custom-memory', 'pinpoint_nd_ncpa', MEMORY),
+        ('custom-disk', 'pinpoint_nd_ncpa', DISK),
+    ])
+    def test_numeric_forecast_for_canonical_history(self, db_session, service, command, metric):
+        seed_series(db_session, 'real-label', service, metric, 40, .3)
+        db_session.session.execute(sa.update(ServiceStatus).values(Check_Command=command))
+        db_session.session.commit()
+        assert forecast.compute_forecasts() == 1
+        row, = rows()
+        assert (row.Service, row.Metric, row.Kind, row.Threshold) == (service, metric, 'warning', 80)
+        assert row.Sample_Count == 72
+        assert row.Current_Value == pytest.approx(61.3)
+        assert row.Slope_Per_Hour == pytest.approx(.3)
+        assert row.R_Squared == pytest.approx(1)
+        hours = (row.Crossing_At.replace(tzinfo=timezone.utc) - datetime.now(timezone.utc)).total_seconds()/3600
+        assert hours == pytest.approx((80-61.6)/.3, abs=.02)
+
+    @pytest.mark.parametrize('service,command,metric', [
+        ('ncpa-memory-5693-tcp', 'check_http', MEMORY),
+        ('ncpa-disk_root-5693-tcp', 'check_snmp', DISK),
+        ('ncpa-swap-5693-tcp', 'pinpoint_nd_ncpa', 'percent'),
+        ('ncpa-disk_read-5693-tcp', 'pinpoint_nd_ncpa', 'used_percent'),
+        ('ncpa-disk_io-5693-tcp', 'pinpoint_nd_ncpa', 'used_percent'),
+        ('unknown', 'pinpoint_nd_ncpa', 'percent'),
+        ('unknown', 'pinpoint_nd_ncpa', 'used_percent'),
+        ('custom', 'check_ncpa!memory/swap/percent', 'percent'),
+        ('custom', 'check_ncpa!disk/physical/read_percent', 'used_percent'),
+        ('custom', 'check_ncpa!memory/virtual/percent!disk/logical/|/used_percent', 'percent'),
+        ('ncpa-cpu-5693-tcp', 'pinpoint_nd_ncpa', 'percent'),
+    ])
+    def test_excluded_identity_stores_nothing(self, db_session, service, command, metric):
+        seed_series(db_session, 'excluded', service, metric, 40, .3)
+        db_session.session.execute(sa.update(ServiceStatus).values(Check_Command=command))
+        db_session.session.commit()
+        assert forecast.compute_forecasts() == 0
+        assert rows() == []
+
+    def test_invalid_series_do_not_consume_the_cap(self, db_session, monkeypatch):
+        seed_series(db_session, 'a-invalid', 'ncpa-disk-5693-tcp', DISK, 40, .3)
+        db_session.session.execute(sa.update(ServiceStatus).values(Check_Command='check_http'))
+        seed_series(db_session, 'z-valid', 'ncpa-memory-5693-tcp', 'percent', 40, .3)
+        monkeypatch.setattr(forecast, 'MAX_SERIES_PER_RUN', 1)
+        assert forecast.compute_forecasts() == 1
+        assert [r.Hostname for r in rows()] == ['z-valid']
+
+    def test_hourly_samples_exclude_other_plugin_snapshots_of_the_same_series(self, db_session):
+        service = 'ncpa-memory-5693-tcp'
+        seed_series(db_session, 'mixed', service, 'percent', 40, .3)
+        now = datetime.now(timezone.utc)
+        for i in range(72):
+            row = _make_service(db_session, 'mixed', service, ts=now-timedelta(hours=72-i), check_command='check_http')
+            _make_service_perf(db_session, row, 'percent', 999, '%', warn=1000, crit=2000)
+        db_session.session.commit()
+        assert forecast.compute_forecasts() == 1
+        row, = rows()
+        assert row.Sample_Count == 72
+        assert row.Current_Value == pytest.approx(61.3)
+        assert row.Threshold == 80
+
+    def test_short_new_history_is_insufficient_and_keeps_raw_metric_identity(self, db_session):
+        seed_series(db_session, 'new', 'ncpa-memory-5693-tcp', "'percent'", 40, .3, hours=5)
+        assert forecast.compute_forecasts() == 0
+        row, = rows()
+        assert (row.Kind, row.Metric, row.Sample_Count) == ('insufficient', "'percent'", 5)
+        assert row.Threshold is None and row.Crossing_At is None

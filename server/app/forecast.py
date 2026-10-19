@@ -18,6 +18,7 @@ from typing import Optional
 import sqlalchemy as sa
 
 from app import db
+from app.api.system.statistics import ncpa_resource_dimension
 from app.history_models import ServicePerfData, ServiceStatus
 from app.network_discovery.device_identity import unchecked_host_names
 from app.system_models import ResourceForecast
@@ -37,11 +38,23 @@ MAX_SERIES_PER_RUN = 500
 # Scheduler traversal state; a process restart begins at the first eligible series.
 # max_instances=1 prevents concurrent job runs from racing this cursor.
 last_series: Optional[tuple[str, str, str]] = None
-# Metrics forecast first: NCPA disk used percent and memory percent. Nothing else is read.
-METRIC_FILTER = sa.or_(
-    ServicePerfData.Metric.like("disk/%/used_percent"),
-    ServicePerfData.Metric == "memory/virtual/percent",
-)
+# Filter before the bounded series selection and before hourly aggregation.
+METRIC_FILTER = sa.func.pinpoint_ncpa_resource_dimension(
+    ServiceStatus.Service, ServiceStatus.Check_Command, ServicePerfData.Metric,
+).in_(("disk", "memory"))
+
+
+def register_resource_classifier() -> None:
+    """Expose the shared classifier on this job's SQLite history connection only.
+
+    SQL filtering preserves the series cap and fixed query count without fetching
+    unbounded candidate rows or maintaining a second copy of identity rules. The
+    deterministic scalar function changes no schema or stored history.
+    """
+    connection = db.session.connection(bind_arguments={"mapper": ServiceStatus})
+    connection.connection.dbapi_connection.create_function(
+        "pinpoint_ncpa_resource_dimension", 3, ncpa_resource_dimension, deterministic=True,
+    )
 
 
 def as_utc(value: datetime) -> datetime:
@@ -158,6 +171,7 @@ def compute_forecasts() -> int:
     now = datetime.now(timezone.utc)
     start = (now - timedelta(hours=WINDOW_HOURS)).replace(tzinfo=None)
     skipped = unchecked_host_names()
+    register_resource_classifier()
 
     series_columns = (ServiceStatus.Hostname, ServiceStatus.Service, ServicePerfData.Metric)
     ordering = list(series_columns)
