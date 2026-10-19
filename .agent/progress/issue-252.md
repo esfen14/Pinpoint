@@ -5,12 +5,12 @@ Status: in-progress
 
 ## Finish condition
 
-- [ ] Remove Custom Plugins and Updates Available cards from PluginsPage.tsx.
-- [ ] Use three columns and verify the summary row at mobile and desktop widths.
-- [ ] Remove unused Puzzle and RefreshCcw imports.
-- [ ] Drop custom_plugins and updates_available from client PluginSummary; document retained backend fields as unused.
-- [ ] Frontend regression checks all three remaining cards and absence of both removed cards.
-- [ ] Update frontend/backend specs and Implementation_Status Custom plugins row.
+- [x] Remove Custom Plugins and Updates Available cards from PluginsPage.tsx.
+- [x] Use three columns and verify the summary row at mobile and desktop widths.
+- [x] Remove unused Puzzle and RefreshCcw imports.
+- [x] Drop custom_plugins and updates_available from client PluginSummary; document retained backend fields as unused.
+- [x] Frontend regression checks all three remaining cards and absence of both removed cards.
+- [x] Update frontend/backend specs and Implementation_Status Custom plugins row.
 - [ ] scripts/verify.sh all passes (record platform limitations and Linux CI results).
 
 Requirement coverage:
@@ -35,14 +35,15 @@ Requirement coverage:
 |---|---|---|---|
 | 1 | Removed cards/imports/client fields; updated specs; isolated browser preview at 390/1000 px | PluginsPage.test.tsx red before fix, 15 green after; verify.sh frontend | green: 1027 tests, build, lint (existing warnings) |
 | resumed | Recovered interrupted work and removed temporary preview files | git diff --check | green |
+| 2 | Docs updated; full gate attempted; merged latest main without conflict | verify.sh all | existing macOS host-lock supervisor failure in docs; Linux CI required |
 | 0 | Read issue and affected specs/source; prepared plan | git status --short | green before plan |
 
 ## State for the next session
 
-- Last check run (exact command): TMPDIR=/Users/karell/Documents/Codex/2026-10-19/s/work/test-tmp scripts/verify.sh frontend
-- Result: green: 1027 tests, build and lint. Prior all gate was interrupted during docs.
-- Hypothesis: implementation satisfies requested behavior; full gate and Linux CI remain.
-- Next action: Run verify.sh all, checkpoint its result, then publish PR and inspect Linux CI.
+- Last check run (exact command): TMPDIR=/Users/karell/Documents/Codex/2026-10-19/s/work/test-tmp scripts/verify.sh all
+- Result: docs fails in unchanged test_qa_supervisor.py because canonical_root uses /tmp (symlink on macOS): ValueError: Host controller unavailable, already owned or unsafe. Frontend gate previously passed.
+- Hypothesis: supported Linux CI will validate all stages, as on issue #231. No backend implementation changed.
+- Next action: Publish PR and inspect all Linux CI jobs; report local platform limitation honestly.
 
 ## Decisions and notes
 
@@ -50,3 +51,5 @@ Requirement coverage:
 - Add Custom Plugin controls and PluginType/PluginStatus remain outside scope.
 - The existing macOS full gate has known unrelated canonical /tmp lock and GNU sed incompatibilities; report them honestly and rely on supported Linux CI for final validation.
 - Reuse this chat's isolated checkout; #231 changes remain on their own branch.
+
+- Merged latest origin/main before publishing; unrelated incoming resource-card and catalog changes are retained.
