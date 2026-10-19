@@ -217,6 +217,46 @@ class TestNetworkHealthTrends:
             assert len(points) == 6
             assert all(p["avg_value"] is None for p in points)
 
+    @pytest.mark.parametrize("service,command,metric,dimension", [
+        ("ncpa-cpu-5693-tcp", "pinpoint_nd_ncpa", "'percent'", "cpu"),
+        ("ncpa-cpu-5693-tcp", None, "percent_0", "cpu"),
+        ("ncpa-memory-5693-tcp", "pinpoint_nd_ncpa", "'percent'", "memory"),
+        ("ncpa-disk_root-5693-tcp", "pinpoint_nd_ncpa", "'used_percent'", "disk"),
+        ("CPU", "check_ncpa!cpu/percent", "percent", "cpu"),
+        ("RAM", "pinpoint_nd_ncpa!5693!USER250!memory/virtual/percent", "percent", "memory"),
+        ("Root", "check_ncpa!disk/logical/|/used_percent", "used_percent", "disk"),
+    ])
+    def test_ncpa_history_maps_real_short_labels(
+        self, logged_in_client, db_session, service, command, metric, dimension,
+    ):
+        sample = _make_service(db_session, "agent", service, ts=_ts(-60), check_command=command)
+        _make_service_perf(db_session, sample, metric, 23.5, "%")
+        db_session.session.commit()
+        response = logged_in_client.get("/api/system/network-health/trends?hours=1&buckets=6")
+        assert response.status_code == 200
+        data = response.get_json()["data"]["ncpa"]
+        assert [p["avg_value"] for p in data[dimension] if p["avg_value"] is not None] == [23.5]
+        for other in set(data) - {dimension}:
+            assert all(p["avg_value"] is None for p in data[other])
+
+    @pytest.mark.parametrize("service,command,metric", [
+        ("ncpa-swap-5693-tcp", "pinpoint_nd_ncpa", "percent"),
+        ("ncpa-swap-5693-tcp", "pinpoint_nd_ncpa", "memory/swap/percent"),
+        ("ncpa-disk_read-5693-tcp", "pinpoint_nd_ncpa", "read_bytes"),
+        ("ncpa-disk_write-5693-tcp", "pinpoint_nd_ncpa", "used_percent"),
+        ("ncpa-cpu-5693-tcp", "check_ncpa!memory/swap/percent", "percent"),
+        ("Unknown resource", "pinpoint_nd_ncpa", "percent"),
+    ])
+    def test_ncpa_history_does_not_invent_short_label_dimensions(
+        self, logged_in_client, db_session, service, command, metric,
+    ):
+        sample = _make_service(db_session, "agent", service, ts=_ts(-60), check_command=command)
+        _make_service_perf(db_session, sample, metric, 99.0, "%")
+        db_session.session.commit()
+        data = logged_in_client.get("/api/system/network-health/trends?hours=1&buckets=6").get_json()["data"]["ncpa"]
+        assert data is not None
+        assert all(p["avg_value"] is None for points in data.values() for p in points)
+
     def test_bandwidth_not_configured_without_interface_checks(self, logged_in_client, db_session):
         ncpa = _make_service(db_session, "h1", NCPA_CPU_SERVICE)
         _make_service_perf(db_session, ncpa, "cpu/percent", 12.0, "%")

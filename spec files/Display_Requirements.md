@@ -848,6 +848,15 @@ samples); non-NCPA checks with similar metric labels are excluded. Both Dashboar
 Average Resource Utilization and Network Health Average Resource consume these
 trends. A configured NCPA section with no matching samples keeps null buckets.
 
+Trends and latest NCPA averages share a resource-dimension classifier. Existing
+full-path labels remain supported. Real agent labels `percent` (including
+per-core `percent_N`) and `used_percent`, with optional quote delimiters, require
+an identifiable command metric path or generated NCPA service metric key. CPU
+and virtual memory use percent; logical disk usage uses used_percent. Unknown
+identities, swap and disk I/O do not contribute to these averages. Stored metric
+labels are not rewritten. Forecast selection remains a separate consumer with
+its own full-path filter; see the [forecast-label follow-up #259](https://github.com/esfen14/Pinpoint/issues/259).
+
 **Conditional metrics (if NCPA is deployed on at least one host):**
 
 | Metric | Display | Source |
