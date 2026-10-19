@@ -1,7 +1,7 @@
 # Issue #219: Reject current-password reuse in User Management
 
 Branch: `issue-219-password-reuse`
-Status: in-progress
+Status: blocked
 
 ## Finish condition
 
@@ -25,7 +25,7 @@ Status: in-progress
 
 1. [x] Add failing backend regressions in `server/tests/unit/test_password_change.py`; verify failure, then add the guard in `server/app/api/user/management.py`.
 2. [x] Add Edit Account error/retry coverage in `client/src/test/ManageAccountsPage.test.tsx`, verify distinct-password login/forced-change behavior, and update owning backend/frontend specs and implementation status.
-3. [ ] Run focused tests and `scripts/verify.sh all`; record platform limitations and open a draft PR while manual finish conditions remain unverified.
+3. [x] Run focused tests and `scripts/verify.sh all`; record platform limitations and open a draft PR while manual finish conditions remain unverified.
 
 ## Round log
 
@@ -35,13 +35,14 @@ Status: in-progress
 | 1 | Four reuse tests failed with 200 instead of 400; added target hash guard and UI warning/retry coverage | Focused backend suite; ManageAccountsPage.test.tsx; build; lint | 126 backend and 31 UI tests passed; build passed; lint 0 errors/33 warnings |
 | 2 | Updated owning specs and reviewed QA dependency fingerprints (Automation_Readiness.md, automation-coverage.json) | verify.sh all; backend and frontend gates | Windows encoding required explicit -X utf8; docs then correctly rejected changed dependency hashes. Refreshed only after impact review. Frontend QA preflight failed private-mode/symlink checks on Windows; full Vitest 1031 passed/1 existing Add User timeout. Backend gate still running with unrelated failures. |
 | 3 | Completed source-binding review; repeated the single timed-out module once | verify.sh docs with -X utf8; ManageAccountsPage.test.tsx; qa_coverage.py check | Docs now reaches QA queue subprocess and fails Windows charmap decoding (child -I ignores UTF-8 environment). Account module 31 passed including existing Add User case. Source coverage validates. Build and lint passed. Full backend results pending; collecting first failure separately. |
+| 4 | Completed verification and opened draft PR #262 | verify.sh backend; first failure repeated in original checkout; committed source hash comparison | Backend: 4157 passed, 122 failed, 44 errors, 29 skipped in 1128.92s. Errors include unavailable os.mkfifo on Windows. First failure is test_automation.py::TestSecurityCheck::test_flags_broken_plugins_and_logs_summary, expected (1,2), got (2,2); it also fails in the original checkout without #219. Not every broad failure was individually classified. Committed reviewed hashes match. PR has no CI checks/runs reported. |
 
 ## State for the next session
 
-- Last check run (exact command): `.venv/Scripts/python.exe -m pytest tests/unit/test_password_change.py tests/unit/test_auth.py tests/unit/test_management.py tests/unit/test_password_requests.py tests/unit/test_validation.py -q --tb=short` from server/
-- Result: green; 126 passed. Account-page suite: 31 passed. Full gate results pending/below.
-- Hypothesis: Confirmed missing target hash guard; isolated behavior is corrected. Broader failures need platform/baseline classification.
-- Next action: Inspect backend gate completion/first failure and create a draft PR retaining this progress file for manual acceptance and Linux CI.
+- Last check run (exact command): `bash scripts/verify.sh backend` with server/.venv/Scripts prepended to PATH
+- Result: 4157 passed, 122 failed, 44 errors, 29 skipped. Focused account/auth suite remains green (126); UI module 31 passed on repeat. See round 4 for first failure and platform evidence.
+- Hypothesis: Password reuse correction is verified in isolation; full acceptance is blocked by unavailable Linux gate results and missing identified-build manual evidence.
+- Next action: Run `scripts/verify.sh all` on Linux for draft PR https://github.com/esfen14/Pinpoint/pull/262.
 
 ## Decisions and notes
 
@@ -51,3 +52,5 @@ Status: in-progress
 - Worktree is under `.worktrees/issue-219`; original dirty issue-234 checkout is preserved.
 - Expanded positive login test initially retained the administrator via the shared app-context fixture; explicitly logging out before target login fixes the test setup. No production login behavior changed.
 - Plan expanded to refresh QA source fingerprints because the docs gate binds the changed route/test files; source review is recorded without promoting coverage or live results.
+- Draft PR: https://github.com/esfen14/Pinpoint/pull/262. Keep this file until green gates and the issue's manual finish conditions are proven. GitHub currently reports no runs or checks for this branch; no CI configuration was changed.
+- Person needed: supply the identified-build manual reset/reuse result with administrator permissions and policy mode; preserve the original catalog FAIL. No live retest or account modification was performed by this agent.
