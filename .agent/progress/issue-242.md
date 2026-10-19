@@ -22,7 +22,7 @@ Requirement coverage:
 
 ## Plan
 
-1. [ ] Add failing regressions in server/tests/unit/test_network_health.py, fix selector in server/app/api/system/network_health.py and run focused/backend checks.
+1. [x] Add failing regressions in server/tests/unit/test_network_health.py, fix selector in server/app/api/system/network_health.py and run focused/backend checks.
 2. [ ] Update Display_Requirements.md and Backend_Modules_and_Routes.md/Implementation_Status.md; verify docs/full gates.
 3. [ ] Establish exclusive lab availability, deploy candidate, verify working NCPA history and both charts; record docs/test-runs/ report; publish PR and check CI.
 
@@ -30,17 +30,21 @@ Requirement coverage:
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| 1 | Classify bounded historical rows with _plugin_key; add numeric resource regressions | FLASK_DEBUG=1 .venv/bin/python -m pytest tests/unit/test_network_health.py -q | green: 57 passed; 16 regressions failed before fix |
 | 0 | Read issue, affected specs and source; inspected running Docker lab without changing it | docker ps | existing six-container lab; ownership must be confirmed |
 
 ## State for the next session
 
-- Last check run (exact command): git status --short
-- Result: green before this plan.
-- Hypothesis: use _plugin_key on historical service identities with bounded timestamps to match existing route classification.
-- Next action: Add CPU/disk/memory selector regressions and confirm failure before implementing.
+- Last check run (exact command): cd server && FLASK_DEBUG=1 .venv/bin/python -m pytest tests/unit/test_network_health.py -q
+- Result: green: 57 passed.
+- Hypothesis: canonical classification fixes both consumers; verify against real stored NCPA history next.
+- Next action: Inspect reserved Docker appliance revision and working agent history, then deploy and verify both charts.
 
 ## Decisions and notes
 
 - Issue explicitly authorizes live verification. Asked user whether existing Docker lab can be reserved exclusively; no live mutation before ownership confirmation.
 - No new dependency or migration; no deployment/resource helper changes.
 - Mac host full-gate /tmp and GNU sed limitations were observed on prior issues; retain truthful verification results and Linux CI.
+
+- User confirmed exclusive reservation of the existing Docker lab for issue #242.
+- Fallback regression uses supported ncpa/NCPA aliases; check_ncpa in a description alone is not a supported name fallback in the canonical classifier. Command check_ncpa is covered separately.

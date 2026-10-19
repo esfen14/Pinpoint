@@ -335,13 +335,17 @@ def _ncpa_trend(dimension: str, hours: int, buckets: int) -> list[dict]:
     start = now - timedelta(hours=hours)
     bucket_size = timedelta(hours=hours) / buckets
 
-    # Fetch all NCPA service rows in the window.
-    ncpa_svc_ids = db.session.scalars(
-        sa.select(ServiceStatus.ServiceStatusID).where(
-            ServiceStatus.Timestamp >= start,
-            ServiceStatus.Service.ilike("%check_ncpa%"),
-        )
+    # Use the same command-first classification as the current-service section.
+    # Generated descriptions (ncpa-cpu-5693-tcp, etc.) need not name the plugin.
+    services = db.session.execute(
+        sa.select(
+            ServiceStatus.ServiceStatusID, ServiceStatus.Service, ServiceStatus.Check_Command,
+        ).where(ServiceStatus.Timestamp >= start, ServiceStatus.Timestamp <= now)
     ).all()
+    ncpa_svc_ids = [
+        service.ServiceStatusID for service in services
+        if _plugin_key(service.Service, service.Check_Command) == "check_ncpa"
+    ]
 
     if not ncpa_svc_ids:
         return [{"bucket_start": (start + bucket_size * i).isoformat(),

@@ -150,6 +150,73 @@ class TestNetworkHealthTrends:
         for key in ("cpu", "disk", "memory"):
             assert key in ncpa_data
 
+    @pytest.mark.parametrize("service,command", [
+        ("ncpa-{dimension}-5693-tcp", "pinpoint_nd_ncpa"),
+        ("ncpa-{dimension}-5693-tcp", None),
+        ("NCPA-{dimension}-5693-tcp", None),
+        ("Resource {dimension}", "pinpoint_check_ncpa!private-arguments"),
+        ("Resource {dimension}", "check_ncpa"),
+    ])
+    @pytest.mark.parametrize("dimension,metric,value", [
+        ("cpu", "cpu/percent", 12.0),
+        ("disk", "disk/logical/root/used_percent", 34.0),
+        ("memory", "memory/virtual/percent", 56.0),
+    ])
+    def test_ncpa_history_values_follow_plugin_classification(
+        self, logged_in_client, db_session, service, command, dimension, metric, value,
+    ):
+        sample = _make_service(
+            db_session, "agent", service.format(dimension=dimension),
+            ts=_ts(-60), check_command=command,
+        )
+        _make_service_perf(db_session, sample, metric, value, "%")
+        db_session.session.commit()
+
+        response = logged_in_client.get("/api/system/network-health/trends?hours=1&buckets=6")
+        assert response.status_code == 200
+        points = response.get_json()["data"]["ncpa"][dimension]
+        assert len(points) == 6
+        assert [p["avg_value"] for p in points if p["avg_value"] is not None] == [value]
+        assert {p["unit"] for p in points if p["avg_value"] is not None} == {"%"}
+
+    def test_ncpa_history_excludes_other_plugins_and_out_of_window_samples(
+        self, logged_in_client, db_session,
+    ):
+        for dimension, metric, value in [
+            ("cpu", "cpu/percent", 12.0),
+            ("disk", "disk/logical/root/used_percent", 34.0),
+            ("memory", "memory/virtual/percent", 56.0),
+        ]:
+            for host, service, command, offset, reading in [
+                ("agent", f"ncpa-{dimension}-5693-tcp", "pinpoint_nd_ncpa", -60, value),
+                ("old-agent", f"check_ncpa-{dimension}", "check_ncpa", -7200, 99.0),
+                ("future-agent", f"check_ncpa-{dimension}", "check_ncpa", 3600, 99.0),
+                ("other-plugin", f"check_ncpa-{dimension}", "check_http", -60, 99.0),
+                ("other-generated", f"ncpa-{dimension}-5693-tcp", "check_http", -60, 99.0),
+            ]:
+                sample = _make_service(db_session, host, service, ts=_ts(offset), check_command=command)
+                _make_service_perf(db_session, sample, metric, reading, "%")
+        db_session.session.commit()
+
+        response = logged_in_client.get("/api/system/network-health/trends?hours=1&buckets=6")
+        assert response.status_code == 200
+        data = response.get_json()["data"]["ncpa"]
+        for dimension, value in [("cpu", 12.0), ("disk", 34.0), ("memory", 56.0)]:
+            assert [p["avg_value"] for p in data[dimension] if p["avg_value"] is not None] == [value]
+
+    def test_ncpa_history_keeps_empty_buckets_when_only_old_samples_exist(
+        self, logged_in_client, db_session,
+    ):
+        sample = _make_service(db_session, "agent", "ncpa-cpu-5693-tcp", ts=_ts(-7200),
+                               check_command="pinpoint_nd_ncpa")
+        _make_service_perf(db_session, sample, "cpu/percent", 12.0, "%")
+        db_session.session.commit()
+        response = logged_in_client.get("/api/system/network-health/trends?hours=1&buckets=6")
+        assert response.status_code == 200
+        for points in response.get_json()["data"]["ncpa"].values():
+            assert len(points) == 6
+            assert all(p["avg_value"] is None for p in points)
+
     def test_bandwidth_not_configured_without_interface_checks(self, logged_in_client, db_session):
         ncpa = _make_service(db_session, "h1", NCPA_CPU_SERVICE)
         _make_service_perf(db_session, ncpa, "cpu/percent", 12.0, "%")
