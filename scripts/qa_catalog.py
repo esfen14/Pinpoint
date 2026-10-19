@@ -123,7 +123,7 @@ def parse_catalog(text: str) -> dict:
         reqs = e2e_reqs.get(case_id, []) if e2e else expand_ids(body.split('\n',1)[0], True)
         if not reqs: raise ValueError(f'{case_id}: no requirements')
         a,b = verdict(summary),verdict(detail)
-        status = 'untested' if e2e else (b if a is None or a == b else 'needs-decision')
+        status = (b or 'untested') if e2e else (b if a is None or a == b else 'needs-decision')
         if case_id not in phases: raise ValueError(f'{case_id}: no run phase')
         phase, position = phases[case_id]
         # Conservatively isolate operations whose outcome can affect another case.

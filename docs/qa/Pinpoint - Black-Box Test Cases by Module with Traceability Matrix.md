@@ -2092,15 +2092,15 @@ The page has the **Devices** tab (a table with **Select**, **Device**, **IP Addr
 | TC | Case | Req | Tech | Pri | Result |
 | --- | --- | --- | --- | --- | --- |
 | TC-MNT-01 | Empty state | MNT-01 | EG | L | PASS |
-| TC-MNT-02 | Create a window | MNT-02 | EP | H | Not run |
-| TC-MNT-03 | The 30-day limit | MNT-02 | BVA | H | Not run |
-| TC-MNT-04 | Invalid time ranges | MNT-02 | BVA | M | Not run |
-| TC-MNT-05 | Repeat end limit | MNT-02 | BVA | M | Not run |
-| TC-MNT-06 | Reason length | MNT-02 | BVA | M | Not run |
-| TC-MNT-07 | Cancel a window | MNT-03 | ST | H | Not run |
-| TC-MNT-08 | Cancel while Nagios cannot be told | MNT-04 | EG | M | Not run |
-| TC-MNT-09 | Device choices and permission | MNT-05 | DT | H | Not run |
-| TC-MNT-10 | An active window silences alerts | MNT-06 | ST | H | Not run |
+| TC-MNT-02 | Create a window | MNT-02 | EP | H | PASS |
+| TC-MNT-03 | The 30-day limit | MNT-02 | BVA | H | PASS |
+| TC-MNT-04 | Invalid time ranges | MNT-02 | BVA | M | PASS |
+| TC-MNT-05 | Repeat end limit | MNT-02 | BVA | M | PASS |
+| TC-MNT-06 | Reason length | MNT-02 | BVA | M | PASS |
+| TC-MNT-07 | Cancel a window | MNT-03 | ST | H | PASS |
+| TC-MNT-08 | Cancel while Nagios cannot be told | MNT-04 | EG | M | PASS |
+| TC-MNT-09 | Device choices and permission | MNT-05 | DT | H | PASS |
+| TC-MNT-10 | An active window silences alerts | MNT-06 | ST | H | PASS |
 
 The page lists **Windows** with the columns **Devices**, **Next occurrence**, **Repeats**, **Status**, **Reason**, and **Actions**. **New window** opens a form with **Devices**, **Repeats**, **Starts**, **Ends**, **Stop repeating after (optional)**, and **Reason**.
 
@@ -2118,7 +2118,9 @@ The page lists **Windows** with the columns **Devices**, **Next occurrence**, **
 
 #### TC-MNT-02 – Create a window
 
-**Requirement:** REQ-MNT-02 · **Technique:** EP · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-MNT-02 · **Technique:** EP · **Priority:** H · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-18-module-13-maintenance/REPORT.md)
 
 **Steps**
 
@@ -2135,7 +2137,9 @@ The page lists **Windows** with the columns **Devices**, **Next occurrence**, **
 
 #### TC-MNT-03 – The 30-day limit
 
-**Requirement:** REQ-MNT-02 · **Technique:** BVA · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-MNT-02 · **Technique:** BVA · **Priority:** H · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-18-module-13-maintenance/REPORT.md)
 
 **Steps**
 
@@ -2150,7 +2154,9 @@ The page lists **Windows** with the columns **Devices**, **Next occurrence**, **
 
 #### TC-MNT-04 – Invalid time ranges
 
-**Requirement:** REQ-MNT-02 · **Technique:** BVA · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-MNT-02 · **Technique:** BVA · **Priority:** M · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-18-module-13-maintenance/REPORT.md)
 
 **Steps**
 
@@ -2166,7 +2172,9 @@ The page lists **Windows** with the columns **Devices**, **Next occurrence**, **
 
 #### TC-MNT-05 – Repeat end limit
 
-**Requirement:** REQ-MNT-02 · **Technique:** BVA · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-MNT-02 · **Technique:** BVA · **Priority:** M · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-18-module-13-maintenance/REPORT.md)
 
 **Steps**
 
@@ -2180,7 +2188,9 @@ The page lists **Windows** with the columns **Devices**, **Next occurrence**, **
 
 #### TC-MNT-06 – Reason length
 
-**Requirement:** REQ-MNT-02 · **Technique:** BVA · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-MNT-02 · **Technique:** BVA · **Priority:** M · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-18-module-13-maintenance/REPORT.md)
 
 **Steps**
 
@@ -2195,7 +2205,9 @@ The page lists **Windows** with the columns **Devices**, **Next occurrence**, **
 
 #### TC-MNT-07 – Cancel a window
 
-**Requirement:** REQ-MNT-03 · **Technique:** ST · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-MNT-03 · **Technique:** ST · **Priority:** H · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-18-module-13-maintenance/REPORT.md)
 
 **Steps**
 
@@ -2210,7 +2222,9 @@ The page lists **Windows** with the columns **Devices**, **Next occurrence**, **
 
 #### TC-MNT-08 – Cancel while Nagios cannot be told
 
-**Requirement:** REQ-MNT-04 · **Technique:** EG · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-MNT-04 · **Technique:** EG · **Priority:** M · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-18-module-13-maintenance/REPORT.md)
 
 **Steps**
 
@@ -2224,7 +2238,9 @@ The page lists **Windows** with the columns **Devices**, **Next occurrence**, **
 
 #### TC-MNT-09 – Device choices and permission
 
-**Requirement:** REQ-MNT-05 · **Technique:** DT · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-MNT-05 · **Technique:** DT · **Priority:** H · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-18-module-13-maintenance/REPORT.md)
 
 **Steps**
 
@@ -2238,7 +2254,9 @@ The page lists **Windows** with the columns **Devices**, **Next occurrence**, **
 
 #### TC-MNT-10 – An active window silences alerts
 
-**Requirement:** REQ-MNT-06 · **Technique:** ST · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-MNT-06 · **Technique:** ST · **Priority:** H · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-18-module-13-maintenance/REPORT.md)
 
 **Before you start:** the email settings work (TC-SET-07).
 
@@ -2260,15 +2278,15 @@ The page lists **Windows** with the columns **Devices**, **Next occurrence**, **
 | TC | Case | Req | Tech | Pri | Result |
 | --- | --- | --- | --- | --- | --- |
 | TC-REM-01 | Read-only view | REM-01 | DT | H | PASS |
-| TC-REM-02 | Add and edit an action | REM-02 | EP | H | Not run |
-| TC-REM-03 | Enable, disable, and delete | REM-03 | ST | M | Not run |
+| TC-REM-02 | Add and edit an action | REM-02 | EP | H | PASS |
+| TC-REM-03 | Enable, disable, and delete | REM-03 | ST | M | PASS |
 | TC-REM-04 | Changes need `remediation.manage` | REM-04 | DT | H | PARTIALLY PASS |
-| TC-REM-05 | Conflict and Nagios errors | REM-05 | EG | M | Not run |
-| TC-REM-06 | Run log | REM-06 | EP | M | Not run |
-| TC-REM-07 | The kill switch (issue #155) | REM-07 | ST | H | Not run |
-| TC-REM-08 | Health panel and stalled warning (issue #155) | REM-08 | EG | M | Not run |
-| TC-REM-09 | Acknowledged problems and "Run when acknowledged" (issue #155) | REM-09 | DT | M | Not run |
-| TC-REM-10 | Action parameters per type (issue #182) | REM-10 | EP | M | Not run |
+| TC-REM-05 | Conflict and Nagios errors | REM-05 | EG | M | PASS |
+| TC-REM-06 | Run log | REM-06 | EP | M | PASS |
+| TC-REM-07 | The kill switch (issue #155) | REM-07 | ST | H | PASS |
+| TC-REM-08 | Health panel and stalled warning (issue #155) | REM-08 | EG | M | PASS |
+| TC-REM-09 | Acknowledged problems and "Run when acknowledged" (issue #155) | REM-09 | DT | M | PASS |
+| TC-REM-10 | Action parameters per type (issue #182) | REM-10 | EP | M | PASS |
 
 Above the tabs a status panel shows **Automatic recovery** (the kill switch) and its health. The tabs are **Actions** (banner "Actions run automatically when a service reaches a hard failure.") and **Run log**.
 
@@ -2290,7 +2308,9 @@ Above the tabs a status panel shows **Automatic recovery** (the kill switch) and
 
 #### TC-REM-02 – Add and edit an action
 
-**Requirement:** REQ-REM-02 · **Technique:** EP · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-REM-02 · **Technique:** EP · **Priority:** H · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-14-remediation/REPORT.md)
 
 **Steps**
 
@@ -2307,7 +2327,9 @@ Above the tabs a status panel shows **Automatic recovery** (the kill switch) and
 
 #### TC-REM-03 – Enable, disable, and delete
 
-**Requirement:** REQ-REM-03 · **Technique:** ST · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-REM-03 · **Technique:** ST · **Priority:** M · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-14-remediation/REPORT.md)
 
 **Steps**
 
@@ -2338,7 +2360,9 @@ Above the tabs a status panel shows **Automatic recovery** (the kill switch) and
 
 #### TC-REM-05 – Conflict and Nagios errors
 
-**Requirement:** REQ-REM-05 · **Technique:** EG · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-REM-05 · **Technique:** EG · **Priority:** M · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-14-remediation/REPORT.md)
 
 **Steps**
 
@@ -2353,7 +2377,9 @@ Above the tabs a status panel shows **Automatic recovery** (the kill switch) and
 
 #### TC-REM-06 – Run log
 
-**Requirement:** REQ-REM-06 · **Technique:** EP · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-REM-06 · **Technique:** EP · **Priority:** M · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-14-remediation/REPORT.md)
 
 **Steps**
 
@@ -2369,7 +2395,9 @@ Above the tabs a status panel shows **Automatic recovery** (the kill switch) and
 
 #### TC-REM-07 – The kill switch (issue #155)
 
-**Requirement:** REQ-REM-07 · **Technique:** ST · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-REM-07 · **Technique:** ST · **Priority:** H · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-14-remediation/REPORT.md)
 
 **Before you start:** one enabled action covering a service you can break, and a user with `remediation.manage`.
 
@@ -2388,7 +2416,9 @@ Above the tabs a status panel shows **Automatic recovery** (the kill switch) and
 
 #### TC-REM-08 – Health panel and stalled warning (issue #155)
 
-**Requirement:** REQ-REM-08 · **Technique:** EG · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-REM-08 · **Technique:** EG · **Priority:** M · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-14-remediation/REPORT.md)
 
 **Steps**
 
@@ -2403,7 +2433,9 @@ Above the tabs a status panel shows **Automatic recovery** (the kill switch) and
 
 #### TC-REM-09 – Acknowledged problems and "Run when acknowledged" (issue #155)
 
-**Requirement:** REQ-REM-09 · **Technique:** DT · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-REM-09 · **Technique:** DT · **Priority:** M · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-14-remediation/REPORT.md)
 
 **Steps**
 
@@ -2418,7 +2450,9 @@ Above the tabs a status panel shows **Automatic recovery** (the kill switch) and
 
 #### TC-REM-10 – Action parameters per type (issue #182)
 
-**Requirement:** REQ-REM-10 · **Technique:** EP · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-REM-10 · **Technique:** EP · **Priority:** M · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-14-remediation/REPORT.md)
 
 **Steps**
 
@@ -2441,19 +2475,21 @@ Above the tabs a status panel shows **Automatic recovery** (the kill switch) and
 
 | TC | Case | Req | Tech | Pri | Result |
 | --- | --- | --- | --- | --- | --- |
-| TC-RPT-01 | Host Availability report | RPT-01 | EP | H | Not run |
+| TC-RPT-01 | Host Availability report | RPT-01 | EP | H | FAIL (initial main-lab run; temporary scratch retest PASS; post-merge confirmation not recorded) |
 | TC-RPT-02 | Network Services report | RPT-02 | EP | H | PASS |
 | TC-RPT-03 | CSV and Excel export | RPT-03 | EP | M | PASS |
 | TC-RPT-04 | PDF print view | RPT-03 | EP | L | PASS |
 | TC-RPT-05 | Exports are logged | RPT-04 | DT | M | PASS |
-| TC-RPT-06 | A period with no data | RPT-05 | EG | M | Not run |
+| TC-RPT-06 | A period with no data | RPT-05 | EG | M | PARTIALLY PASS (initial main-lab run; temporary scratch retest PASS; post-merge confirmation not recorded) |
 | TC-RPT-07 | Reports need permission | RPT-06 | DT | H | PASS |
 
 The tabs are **Host Availability**, **Network Services**, **Hosts by OS**, **Device Services**, **Alerts**, and **Notifications**. Choose a period (**Last 24 hours**, **Today**, **Last 7 days**, **Last 30 days**, **Last 90 days**, or **Custom range**) and press **Run Report**. The **Export** menu offers CSV, Excel, and PDF.
 
 #### TC-RPT-01 – Host Availability report
 
-**Requirement:** REQ-RPT-01 · **Technique:** EP · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-RPT-01 · **Technique:** EP · **Priority:** H · **Result:** FAIL (initial main-lab run; temporary scratch retest PASS; post-merge confirmation not recorded)
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-15-reports/REPORT.md) · **Retest:** [temporary scratch build report](../test-runs/2026-10-19-module-15-reports-retest/REPORT.md)
 
 **Steps**
 
@@ -2523,7 +2559,9 @@ The tabs are **Host Availability**, **Network Services**, **Hosts by OS**, **Dev
 
 #### TC-RPT-06 – A period with no data
 
-**Requirement:** REQ-RPT-05 · **Technique:** EG · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-RPT-05 · **Technique:** EG · **Priority:** M · **Result:** PARTIALLY PASS (initial main-lab run; temporary scratch retest PASS; post-merge confirmation not recorded)
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-15-reports/REPORT.md) · **Retest:** [temporary scratch build report](../test-runs/2026-10-19-module-15-reports-retest/REPORT.md)
 
 **Steps**
 
@@ -2555,7 +2593,7 @@ The tabs are **Host Availability**, **Network Services**, **Hosts by OS**, **Dev
 | TC-LOG-01 | The five audit logs | LOG-01 | EP | M | PASS |
 | TC-LOG-02 | An action is logged | LOG-01 | ST | H | PASS |
 | TC-LOG-03 | Nagios log shows at most 200 lines | LOG-02 | BVA | M | PASS |
-| TC-LOG-04 | Nagios log hides free text | LOG-03 | EG | H | Not run |
+| TC-LOG-04 | Nagios log hides free text | LOG-03 | EG | H | PASS |
 | TC-LOG-05 | System Logs need permission | LOG-04 | DT | H | PASS |
 
 The tabs are **Activity Log**, **Configuration Change**, **Network Discovery**, **NCPA Deployment**, **Export Log**, and **Nagios log**. The first five are the audit logs.
@@ -2607,17 +2645,21 @@ The tabs are **Activity Log**, **Configuration Change**, **Network Discovery**, 
 
 #### TC-LOG-04 – Nagios log hides free text
 
-**Requirement:** REQ-LOG-03 · **Technique:** EG · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-LOG-03 · **Technique:** EG · **Priority:** H · **Result:** PASS
+
+**Result confirmation:** Manual PASS confirmed by the lab owner in this conversation on 2026-10-19; recorded here without a new execution.
 
 **Steps**
 
-1. In the **Nagios log** find a line that contains plugin output or a command.
-2. On the appliance make the log file unreadable by the Pinpoint user (lab only) and reopen the tab. Restore it after.
+1. With the configured Nagios log readable, compare an actual host or service state record on the appliance with the same record in **System Logs → Nagios log**. Use a record whose raw line includes plugin output. Confirm that the page retains its state fields while hiding the plugin output. Also check a command or other free-text message: its contents must be hidden.
+2. In the disposable lab, record the configured log file's original owner and permissions, then temporarily make that file unreadable by the account running Pinpoint. Reopen the **Nagios log** tab or press **Refresh Nagios log** and check the unavailable message. This is a file-read failure check; Nagios itself does not need to be stopped.
+3. Restore the original owner and permissions. Refresh the tab and confirm the log is readable again.
 
 **Expected result**
 
-- Plugin output, commands, and other free text are hidden, while host and service state fields stay readable.
-- An unreadable file shows "Nagios log is unavailable. The server could not read the configured log file."
+- Host and service state fields stay readable; plugin output is replaced by `[output redacted]`. Commands and other free text are replaced by `[message redacted]`.
+- When Pinpoint cannot read the configured file, the page shows "Nagios log is unavailable. The server could not read the configured log file."
+- After access is restored, the log loads again.
 
 #### TC-LOG-05 – System Logs need permission
 
@@ -2642,7 +2684,7 @@ The tabs are **Activity Log**, **Configuration Change**, **Network Discovery**, 
 | TC-SET-02 | Data polling interval | SET-02 | BVA | M | PASS |
 | TC-SET-03 | Check interval and retry interval | SET-03 | BVA | H | PASS |
 | TC-SET-04 | Maximum check attempts | SET-03 | BVA | M | PASS |
-| TC-SET-05 | Flap thresholds | SET-04 | BVA | M | Not run |
+| TC-SET-05 | Flap thresholds | SET-04 | BVA | M | PASS |
 | TC-SET-06 | Notification policy | SET-05 | EP | H | PASS |
 | TC-SET-07 | Email (SMTP) settings | SET-06 | EP | H | PASS |
 | TC-SET-08 | A failed save restores the old values | SET-07 | ST | H | PASS |
@@ -2715,7 +2757,9 @@ Changes are saved with **Save Changes**. **Discard Changes** and **Reset to Defa
 
 #### TC-SET-05 – Flap thresholds
 
-**Requirement:** REQ-SET-04 · **Technique:** BVA · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-SET-04 · **Technique:** BVA · **Priority:** M · **Result:** PASS
+
+**Result confirmation:** Manual PASS confirmed by the lab owner in this conversation on 2026-10-19; recorded here without a new execution.
 
 **Steps**
 
@@ -3478,34 +3522,36 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 ### Module 22 – Edge cases and robustness
 
+**Historical result source:** PASS outcomes recorded in the [previous module catalog](../qa/Module_Blackbox_Test_Cases.md); detailed case results below are consolidated from its summary table.
+
 These cases try the unusual: odd text, repeated clicks, lost connections, two people at once, time changes, and large amounts of data. Run them in phase 13, after the normal cases pass, because they reuse the accounts, scans, and devices made earlier. For each case "no error page" means no blank screen, no stack trace, and no HTTP 500.
 
 **Summary of cases**
 
-| TC | Case | Req | Tech | Pri |
-| --- | --- | --- | --- | --- |
-| TC-EDG-01 | Very long text in names | EDG-01 | BVA | M |
-| TC-EDG-02 | Accents, emoji, and symbols in names | EDG-02 | EG | M |
-| TC-EDG-03 | Blank and space-only values | EDG-03 | EG | H |
-| TC-EDG-04 | Double click on Save | EDG-04 | EG | H |
-| TC-EDG-05 | Back button and page refresh | EDG-05 | EG | M |
-| TC-EDG-06 | Connection lost during a save | EDG-06 | EG | H |
-| TC-EDG-07 | Session ends with a dialog open | EDG-07 | EG | H |
-| TC-EDG-08 | Two administrators edit the same role | EDG-08 | EG | M |
-| TC-EDG-09 | Repeating an action many times | EDG-09 | ST | M |
-| TC-EDG-10 | Time zone change | EDG-10 | EP | M |
-| TC-EDG-11 | A maintenance window across midnight | EDG-11 | BVA | L |
-| TC-EDG-12 | Special characters in search boxes | EDG-12 | EG | M |
-| TC-EDG-13 | Password length boundaries | EDG-13 | BVA | H |
-| TC-EDG-14 | The same email in a different letter case | EDG-14 | EG | M |
-| TC-EDG-15 | Port number and range boundaries | EDG-15 | BVA | M |
-| TC-EDG-16 | Reload during a running scan | EDG-16 | ST | M |
-| TC-EDG-17 | Large amounts of data | EDG-17 | BVA | L |
-| TC-EDG-18 | Starting a second scan while one runs | EDG-18 | ST | M |
+| TC | Case | Req | Tech | Pri | Result |
+| --- | --- | --- | --- | --- | --- |
+| TC-EDG-01 | Very long text in names | EDG-01 | BVA | M | PASS |
+| TC-EDG-02 | Accents, emoji, and symbols in names | EDG-02 | EG | M | PASS |
+| TC-EDG-03 | Blank and space-only values | EDG-03 | EG | H | PASS |
+| TC-EDG-04 | Double click on Save | EDG-04 | EG | H | PASS |
+| TC-EDG-05 | Back button and page refresh | EDG-05 | EG | M | PASS |
+| TC-EDG-06 | Connection lost during a save | EDG-06 | EG | H | PASS |
+| TC-EDG-07 | Session ends with a dialog open | EDG-07 | EG | H | PASS |
+| TC-EDG-08 | Two administrators edit the same role | EDG-08 | EG | M | PASS |
+| TC-EDG-09 | Repeating an action many times | EDG-09 | ST | M | PASS |
+| TC-EDG-10 | Time zone change | EDG-10 | EP | M | PASS |
+| TC-EDG-11 | A maintenance window across midnight | EDG-11 | BVA | L | PASS |
+| TC-EDG-12 | Special characters in search boxes | EDG-12 | EG | M | PASS |
+| TC-EDG-13 | Password length boundaries | EDG-13 | BVA | H | PASS |
+| TC-EDG-14 | The same email in a different letter case | EDG-14 | EG | M | PASS |
+| TC-EDG-15 | Port number and range boundaries | EDG-15 | BVA | M | PASS |
+| TC-EDG-16 | Reload during a running scan | EDG-16 | ST | M | PASS |
+| TC-EDG-17 | Large amounts of data | EDG-17 | BVA | L | PASS |
+| TC-EDG-18 | Starting a second scan while one runs | EDG-18 | ST | M | PASS |
 
 #### TC-EDG-01 – Very long text in names
 
-**Requirement:** REQ-EDG-01 · **Technique:** BVA · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-EDG-01 · **Technique:** BVA · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -3522,7 +3568,7 @@ These cases try the unusual: odd text, repeated clicks, lost connections, two pe
 
 #### TC-EDG-02 – Accents, emoji, and symbols in names
 
-**Requirement:** REQ-EDG-02 · **Technique:** EG · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-EDG-02 · **Technique:** EG · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -3538,7 +3584,7 @@ These cases try the unusual: odd text, repeated clicks, lost connections, two pe
 
 #### TC-EDG-03 – Blank and space-only values
 
-**Requirement:** REQ-EDG-03 · **Technique:** EG · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-EDG-03 · **Technique:** EG · **Priority:** H · **Result:** PASS
 
 **Steps**
 
@@ -3554,7 +3600,7 @@ These cases try the unusual: odd text, repeated clicks, lost connections, two pe
 
 #### TC-EDG-04 – Double click on Save
 
-**Requirement:** REQ-EDG-04 · **Technique:** EG · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-EDG-04 · **Technique:** EG · **Priority:** H · **Result:** PASS
 
 **Steps**
 
@@ -3570,7 +3616,7 @@ These cases try the unusual: odd text, repeated clicks, lost connections, two pe
 
 #### TC-EDG-05 – Back button and page refresh
 
-**Requirement:** REQ-EDG-05 · **Technique:** EG · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-EDG-05 · **Technique:** EG · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -3586,7 +3632,7 @@ These cases try the unusual: odd text, repeated clicks, lost connections, two pe
 
 #### TC-EDG-06 – Connection lost during a save
 
-**Requirement:** REQ-EDG-06 · **Technique:** EG · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-EDG-06 · **Technique:** EG · **Priority:** H · **Result:** PASS
 
 **Steps**
 
@@ -3604,7 +3650,7 @@ These cases try the unusual: odd text, repeated clicks, lost connections, two pe
 
 #### TC-EDG-07 – Session ends with a dialog open
 
-**Requirement:** REQ-EDG-07 · **Technique:** EG · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-EDG-07 · **Technique:** EG · **Priority:** H · **Result:** PASS
 
 **Steps**
 
@@ -3620,7 +3666,7 @@ These cases try the unusual: odd text, repeated clicks, lost connections, two pe
 
 #### TC-EDG-08 – Two administrators edit the same role
 
-**Requirement:** REQ-EDG-08 · **Technique:** EG · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-EDG-08 · **Technique:** EG · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -3637,7 +3683,7 @@ These cases try the unusual: odd text, repeated clicks, lost connections, two pe
 
 #### TC-EDG-09 – Repeating an action many times
 
-**Requirement:** REQ-EDG-09 · **Technique:** ST · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-EDG-09 · **Technique:** ST · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -3652,7 +3698,7 @@ These cases try the unusual: odd text, repeated clicks, lost connections, two pe
 
 #### TC-EDG-10 – Time zone change
 
-**Requirement:** REQ-EDG-10 · **Technique:** EP · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-EDG-10 · **Technique:** EP · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -3668,7 +3714,7 @@ These cases try the unusual: odd text, repeated clicks, lost connections, two pe
 
 #### TC-EDG-11 – A maintenance window across midnight
 
-**Requirement:** REQ-EDG-11 · **Technique:** BVA · **Priority:** L · **Result:** Not run
+**Requirement:** REQ-EDG-11 · **Technique:** BVA · **Priority:** L · **Result:** PASS
 
 **Steps**
 
@@ -3683,7 +3729,7 @@ These cases try the unusual: odd text, repeated clicks, lost connections, two pe
 
 #### TC-EDG-12 – Special characters in search boxes
 
-**Requirement:** REQ-EDG-12 · **Technique:** EG · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-EDG-12 · **Technique:** EG · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -3697,7 +3743,7 @@ These cases try the unusual: odd text, repeated clicks, lost connections, two pe
 
 #### TC-EDG-13 – Password length boundaries
 
-**Requirement:** REQ-EDG-13 · **Technique:** BVA · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-EDG-13 · **Technique:** BVA · **Priority:** H · **Result:** PASS
 
 **Steps**
 
@@ -3714,7 +3760,7 @@ These cases try the unusual: odd text, repeated clicks, lost connections, two pe
 
 #### TC-EDG-14 – The same email in a different letter case
 
-**Requirement:** REQ-EDG-14 · **Technique:** EG · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-EDG-14 · **Technique:** EG · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -3729,7 +3775,7 @@ These cases try the unusual: odd text, repeated clicks, lost connections, two pe
 
 #### TC-EDG-15 – Port number and range boundaries
 
-**Requirement:** REQ-EDG-15 · **Technique:** BVA · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-EDG-15 · **Technique:** BVA · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -3744,7 +3790,7 @@ These cases try the unusual: odd text, repeated clicks, lost connections, two pe
 
 #### TC-EDG-16 – Reload during a running scan
 
-**Requirement:** REQ-EDG-16 · **Technique:** ST · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-EDG-16 · **Technique:** ST · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -3759,7 +3805,7 @@ These cases try the unusual: odd text, repeated clicks, lost connections, two pe
 
 #### TC-EDG-17 – Large amounts of data
 
-**Requirement:** REQ-EDG-17 · **Technique:** BVA · **Priority:** L · **Result:** Not run
+**Requirement:** REQ-EDG-17 · **Technique:** BVA · **Priority:** L · **Result:** PASS
 
 **Before you start:** a lab or a test database with at least 100 hosts, 500 services, and 5,000 History events.
 
@@ -3776,7 +3822,7 @@ These cases try the unusual: odd text, repeated clicks, lost connections, two pe
 
 #### TC-EDG-18 – Starting a second scan while one runs
 
-**Requirement:** REQ-EDG-18 · **Technique:** ST · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-EDG-18 · **Technique:** ST · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -3790,40 +3836,42 @@ These cases try the unusual: odd text, repeated clicks, lost connections, two pe
 
 ### Module 23 – Order of events
 
+**Historical result source:** PASS outcomes recorded in the [previous module catalog](../qa/Module_Blackbox_Test_Cases.md); detailed case results below are consolidated from its summary table.
+
 These cases test what happens when things occur in an unusual order: a fix before a confirmation, a change while another job runs, or a permission taken away while the user is working. Each case says which event comes first. Run them in phase 14, one at a time, and restore the lab after each one (services running, devices monitored, no window or pause left over).
 
 **Summary of cases**
 
-| TC | Case | Req | Tech | Pri |
-| --- | --- | --- | --- | --- |
-| TC-SEQ-01 | Acknowledge after the service has recovered | SEQ-01 | ST | M |
-| TC-SEQ-02 | Break, recover, and break again during the retries | SEQ-02 | ST | M |
-| TC-SEQ-03 | A maintenance window starts while an alert is active | SEQ-03 | ST | H |
-| TC-SEQ-04 | A window cancelled before it starts | SEQ-04 | ST | M |
-| TC-SEQ-05 | A window edited while it is running | SEQ-05 | ST | M |
-| TC-SEQ-06 | Pause during an alert, recover, then resume | SEQ-06 | ST | M |
-| TC-SEQ-07 | Pause a device during a scan | SEQ-07 | ST | M |
-| TC-SEQ-08 | Save discovery settings during a scan | SEQ-08 | ST | M |
-| TC-SEQ-09 | Enable a plugin before the first scan | SEQ-09 | ST | M |
-| TC-SEQ-10 | Disable and re-enable a plugin that is monitoring | SEQ-10 | ST | M |
-| TC-SEQ-11 | Stop monitoring a port, then rescan | SEQ-11 | ST | M |
-| TC-SEQ-12 | A role is deactivated while its user is signed in | SEQ-12 | ST | H |
-| TC-SEQ-13 | A permission is removed while the user is on the page | SEQ-13 | ST | H |
-| TC-SEQ-14 | A user is suspended while signed in | SEQ-14 | ST | H |
-| TC-SEQ-15 | A password is reset while the user is signed in | SEQ-15 | ST | H |
-| TC-SEQ-16 | The forced password change is interrupted | SEQ-16 | ST | M |
-| TC-SEQ-17 | First-run setup is interrupted | SEQ-17 | ST | H |
-| TC-SEQ-18 | Kill switch off, failure, then switch on | SEQ-18 | ST | H |
-| TC-SEQ-19 | Cooldown and hourly limit in sequence | SEQ-19 | ST | M |
-| TC-SEQ-20 | Maintenance Mode and downtime before a failure | SEQ-20 | ST | M |
-| TC-SEQ-21 | Disable `check_ncpa` after a deployment | SEQ-21 | ST | M |
-| TC-SEQ-22 | Clean up, then redeploy, then restart | SEQ-22 | ST | L |
-| TC-SEQ-23 | The same event order on every page | SEQ-23 | ST | M |
-| TC-SEQ-24 | Pinpoint restarts during a scan | SEQ-24 | ST | M |
+| TC | Case | Req | Tech | Pri | Result |
+| --- | --- | --- | --- | --- | --- |
+| TC-SEQ-01 | Acknowledge after the service has recovered | SEQ-01 | ST | M | PASS |
+| TC-SEQ-02 | Break, recover, and break again during the retries | SEQ-02 | ST | M | PASS |
+| TC-SEQ-03 | A maintenance window starts while an alert is active | SEQ-03 | ST | H | PASS |
+| TC-SEQ-04 | A window cancelled before it starts | SEQ-04 | ST | M | PASS |
+| TC-SEQ-05 | A window edited while it is running | SEQ-05 | ST | M | PASS |
+| TC-SEQ-06 | Pause during an alert, recover, then resume | SEQ-06 | ST | M | PASS |
+| TC-SEQ-07 | Pause a device during a scan | SEQ-07 | ST | M | PASS |
+| TC-SEQ-08 | Save discovery settings during a scan | SEQ-08 | ST | M | PASS |
+| TC-SEQ-09 | Enable a plugin before the first scan | SEQ-09 | ST | M | PASS |
+| TC-SEQ-10 | Disable and re-enable a plugin that is monitoring | SEQ-10 | ST | M | PASS |
+| TC-SEQ-11 | Stop monitoring a port, then rescan | SEQ-11 | ST | M | PASS |
+| TC-SEQ-12 | A role is deactivated while its user is signed in | SEQ-12 | ST | H | PASS |
+| TC-SEQ-13 | A permission is removed while the user is on the page | SEQ-13 | ST | H | PASS |
+| TC-SEQ-14 | A user is suspended while signed in | SEQ-14 | ST | H | PASS |
+| TC-SEQ-15 | A password is reset while the user is signed in | SEQ-15 | ST | H | PASS |
+| TC-SEQ-16 | The forced password change is interrupted | SEQ-16 | ST | M | PASS |
+| TC-SEQ-17 | First-run setup is interrupted | SEQ-17 | ST | H | PASS |
+| TC-SEQ-18 | Kill switch off, failure, then switch on | SEQ-18 | ST | H | PASS |
+| TC-SEQ-19 | Cooldown and hourly limit in sequence | SEQ-19 | ST | M | PASS |
+| TC-SEQ-20 | Maintenance Mode and downtime before a failure | SEQ-20 | ST | M | PASS |
+| TC-SEQ-21 | Disable `check_ncpa` after a deployment | SEQ-21 | ST | M | PASS |
+| TC-SEQ-22 | Clean up, then redeploy, then restart | SEQ-22 | ST | L | PASS |
+| TC-SEQ-23 | The same event order on every page | SEQ-23 | ST | M | PASS |
+| TC-SEQ-24 | Pinpoint restarts during a scan | SEQ-24 | ST | M | PASS |
 
 #### TC-SEQ-01 – Acknowledge after the service has recovered
 
-**Requirement:** REQ-SEQ-01 · **Technique:** ST · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-SEQ-01 · **Technique:** ST · **Priority:** M · **Result:** PASS
 
 **Before you start:** a monitored service on the web VM that you can stop and start.
 
@@ -3842,7 +3890,7 @@ These cases test what happens when things occur in an unusual order: a fix befor
 
 #### TC-SEQ-02 – Break, recover, and break again during the retries
 
-**Requirement:** REQ-SEQ-02 · **Technique:** ST · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-SEQ-02 · **Technique:** ST · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -3858,7 +3906,7 @@ These cases test what happens when things occur in an unusual order: a fix befor
 
 #### TC-SEQ-03 – A maintenance window starts while an alert is active
 
-**Requirement:** REQ-SEQ-03 · **Technique:** ST · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-SEQ-03 · **Technique:** ST · **Priority:** H · **Result:** PASS
 
 **Before you start:** working email (TC-SET-07).
 
@@ -3877,7 +3925,7 @@ These cases test what happens when things occur in an unusual order: a fix befor
 
 #### TC-SEQ-04 – A window cancelled before it starts
 
-**Requirement:** REQ-SEQ-04 · **Technique:** ST · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-SEQ-04 · **Technique:** ST · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -3892,7 +3940,7 @@ These cases test what happens when things occur in an unusual order: a fix befor
 
 #### TC-SEQ-05 – A window edited while it is running
 
-**Requirement:** REQ-SEQ-05 · **Technique:** ST · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-SEQ-05 · **Technique:** ST · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -3907,7 +3955,7 @@ These cases test what happens when things occur in an unusual order: a fix befor
 
 #### TC-SEQ-06 – Pause during an alert, recover, then resume
 
-**Requirement:** REQ-SEQ-06 · **Technique:** ST · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-SEQ-06 · **Technique:** ST · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -3923,7 +3971,7 @@ These cases test what happens when things occur in an unusual order: a fix befor
 
 #### TC-SEQ-07 – Pause a device during a scan
 
-**Requirement:** REQ-SEQ-07 · **Technique:** ST · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-SEQ-07 · **Technique:** ST · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -3938,7 +3986,7 @@ These cases test what happens when things occur in an unusual order: a fix befor
 
 #### TC-SEQ-08 – Save discovery settings during a scan
 
-**Requirement:** REQ-SEQ-08 · **Technique:** ST · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-SEQ-08 · **Technique:** ST · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -3953,7 +4001,7 @@ These cases test what happens when things occur in an unusual order: a fix befor
 
 #### TC-SEQ-09 – Enable a plugin before the first scan
 
-**Requirement:** REQ-SEQ-09 · **Technique:** ST · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-SEQ-09 · **Technique:** ST · **Priority:** M · **Result:** PASS
 
 **Before you start:** a fresh appliance where `check_http` is disabled and no scan has run.
 
@@ -3970,7 +4018,7 @@ These cases test what happens when things occur in an unusual order: a fix befor
 
 #### TC-SEQ-10 – Disable and re-enable a plugin that is monitoring
 
-**Requirement:** REQ-SEQ-10 · **Technique:** ST · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-SEQ-10 · **Technique:** ST · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -3985,7 +4033,7 @@ These cases test what happens when things occur in an unusual order: a fix befor
 
 #### TC-SEQ-11 – Stop monitoring a port, then rescan
 
-**Requirement:** REQ-SEQ-11 · **Technique:** ST · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-SEQ-11 · **Technique:** ST · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -4000,7 +4048,7 @@ These cases test what happens when things occur in an unusual order: a fix befor
 
 #### TC-SEQ-12 – A role is deactivated while its user is signed in
 
-**Requirement:** REQ-SEQ-12 · **Technique:** ST · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-SEQ-12 · **Technique:** ST · **Priority:** H · **Result:** PASS
 
 **Before you start:** the role `qa-view` and its user (TC-ROL-04).
 
@@ -4018,7 +4066,7 @@ These cases test what happens when things occur in an unusual order: a fix befor
 
 #### TC-SEQ-13 – A permission is removed while the user is on the page
 
-**Requirement:** REQ-SEQ-13 · **Technique:** ST · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-SEQ-13 · **Technique:** ST · **Priority:** H · **Result:** PASS
 
 **Before you start:** a role with `system.dashboard` and `system.history` and a user with it.
 
@@ -4035,7 +4083,7 @@ These cases test what happens when things occur in an unusual order: a fix befor
 
 #### TC-SEQ-14 – A user is suspended while signed in
 
-**Requirement:** REQ-SEQ-14 · **Technique:** ST · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-SEQ-14 · **Technique:** ST · **Priority:** H · **Result:** PASS
 
 **Steps**
 
@@ -4051,7 +4099,7 @@ These cases test what happens when things occur in an unusual order: a fix befor
 
 #### TC-SEQ-15 – A password is reset while the user is signed in
 
-**Requirement:** REQ-SEQ-15 · **Technique:** ST · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-SEQ-15 · **Technique:** ST · **Priority:** H · **Result:** PASS
 
 **Steps**
 
@@ -4067,7 +4115,7 @@ These cases test what happens when things occur in an unusual order: a fix befor
 
 #### TC-SEQ-16 – The forced password change is interrupted
 
-**Requirement:** REQ-SEQ-16 · **Technique:** ST · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-SEQ-16 · **Technique:** ST · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -4082,7 +4130,7 @@ These cases test what happens when things occur in an unusual order: a fix befor
 
 #### TC-SEQ-17 – First-run setup is interrupted
 
-**Requirement:** REQ-SEQ-17 · **Technique:** ST · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-SEQ-17 · **Technique:** ST · **Priority:** H · **Result:** PASS
 
 **Before you start:** a fresh install with the generated bootstrap login not yet set up.
 
@@ -4101,7 +4149,7 @@ These cases test what happens when things occur in an unusual order: a fix befor
 
 #### TC-SEQ-18 – Kill switch off, failure, then switch on
 
-**Requirement:** REQ-SEQ-18 · **Technique:** ST · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-SEQ-18 · **Technique:** ST · **Priority:** H · **Result:** PASS
 
 **Before you start:** one enabled "Record only" action covering a service you can break.
 
@@ -4120,7 +4168,7 @@ These cases test what happens when things occur in an unusual order: a fix befor
 
 #### TC-SEQ-19 – Cooldown and hourly limit in sequence
 
-**Requirement:** REQ-SEQ-19 · **Technique:** ST · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-SEQ-19 · **Technique:** ST · **Priority:** M · **Result:** PASS
 
 **Before you start:** a "Record only" action with **Cooldown (seconds)** 60 and **Max runs per hour** 2.
 
@@ -4140,7 +4188,7 @@ These cases test what happens when things occur in an unusual order: a fix befor
 
 #### TC-SEQ-20 – Maintenance Mode and downtime before a failure
 
-**Requirement:** REQ-SEQ-20 · **Technique:** ST · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-SEQ-20 · **Technique:** ST · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -4156,7 +4204,7 @@ These cases test what happens when things occur in an unusual order: a fix befor
 
 #### TC-SEQ-21 – Disable `check_ncpa` after a deployment
 
-**Requirement:** REQ-SEQ-21 · **Technique:** ST · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-SEQ-21 · **Technique:** ST · **Priority:** M · **Result:** PASS
 
 **Before you start:** a deployed NCPA device (TC-NCPA-04).
 
@@ -4172,7 +4220,7 @@ These cases test what happens when things occur in an unusual order: a fix befor
 
 #### TC-SEQ-22 – Clean up, then redeploy, then restart
 
-**Requirement:** REQ-SEQ-22 · **Technique:** ST · **Priority:** L · **Result:** Not run
+**Requirement:** REQ-SEQ-22 · **Technique:** ST · **Priority:** L · **Result:** PASS
 
 **Before you start:** a deployed device with a saved **Remote restart** list and a remote-restart action (TC-NCPA-09, TC-REM-10).
 
@@ -4190,7 +4238,7 @@ These cases test what happens when things occur in an unusual order: a fix befor
 
 #### TC-SEQ-23 – The same event order on every page
 
-**Requirement:** REQ-SEQ-23 · **Technique:** ST · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-SEQ-23 · **Technique:** ST · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -4204,7 +4252,7 @@ These cases test what happens when things occur in an unusual order: a fix befor
 
 #### TC-SEQ-24 – Pinpoint restarts during a scan
 
-**Requirement:** REQ-SEQ-24 · **Technique:** ST · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-SEQ-24 · **Technique:** ST · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -4222,9 +4270,11 @@ These cases test what happens when things occur in an unusual order: a fix befor
 
 These eight scenarios run the whole system as a user would, from the browser and the lab's real machines, across several modules in one flow. They check only what the screen, the email, and the API show. Run them in order on a lab with: a fresh appliance, one web server VM (HTTP on port 80, SSH on port 22), a second Linux VM with SSH, an SMTP test mailbox, a Staff user, and a dashboard-only user. Default intervals apply (Check 5 minutes, Retry 1 minute, Maximum attempts 3). Record each step as PASS, FAIL, or PARTIALLY PASS in the Test Execution Log.
 
+**Historical result source:** The prior catalog marks every step of E2E-01 through E2E-08 PASS ([source](../qa/Module_Blackbox_Test_Cases.md)). No attributable test-run reports for these E2E results were found in `docs/test-runs/`.
+
 ### E2E-01 – First login to a working Dashboard
 
-**Modules:** Authentication, Manage Accounts, Dashboard · **Priority:** H
+**Modules:** Authentication, Manage Accounts, Dashboard · **Priority:** H · **Result:** PASS (historical checklist)
 
 | Step | What to do | What you should see |
 | --- | --- | --- |
@@ -4235,7 +4285,7 @@ These eight scenarios run the whole system as a user would, from the browser and
 
 ### E2E-02 – Discover the network and start monitoring a service
 
-**Modules:** Settings, Device Inventory, Plugins, System Status, Dashboard · **Priority:** H
+**Modules:** Settings, Device Inventory, Plugins, System Status, Dashboard · **Priority:** H · **Result:** PASS (historical checklist)
 
 | Step | What to do | What you should see |
 | --- | --- | --- |
@@ -4249,7 +4299,7 @@ These eight scenarios run the whole system as a user would, from the browser and
 
 ### E2E-03 – Deploy an NCPA agent and see its metrics
 
-**Modules:** Plugins, NCPA Deployment, Network Health, Dashboard · **Priority:** H
+**Modules:** Plugins, NCPA Deployment, Network Health, Dashboard · **Priority:** H · **Result:** PASS (historical checklist)
 
 | Step | What to do | What you should see |
 | --- | --- | --- |
@@ -4262,7 +4312,7 @@ These eight scenarios run the whole system as a user would, from the browser and
 
 ### E2E-04 – Fault, alert, notification, acknowledgement, recovery, history
 
-**Modules:** Dashboard, System Status, Alert acknowledgement, Settings (Email), History · **Priority:** H
+**Modules:** Dashboard, System Status, Alert acknowledgement, Settings (Email), History · **Priority:** H · **Result:** PASS (historical checklist)
 
 | Step | What to do | What you should see |
 | --- | --- | --- |
@@ -4279,7 +4329,7 @@ Timings to write down: failure time \_\_\_\_ · Critical (hard) shown \_\_\_\_ �
 
 ### E2E-05 – A maintenance window silences alerts
 
-**Modules:** Maintenance, Dashboard, Settings (Email), History · **Priority:** H
+**Modules:** Maintenance, Dashboard, Settings (Email), History · **Priority:** H · **Result:** PASS (historical checklist)
 
 | Step | What to do | What you should see |
 | --- | --- | --- |
@@ -4292,7 +4342,7 @@ Timings to write down: failure time \_\_\_\_ · Critical (hard) shown \_\_\_\_ �
 
 ### E2E-06 – Pause a device and see it leave the counts
 
-**Modules:** Device Inventory, Dashboard, Network Health, Reports · **Priority:** M
+**Modules:** Device Inventory, Dashboard, Network Health, Reports · **Priority:** M · **Result:** PASS (historical checklist)
 
 | Step | What to do | What you should see |
 | --- | --- | --- |
@@ -4304,7 +4354,7 @@ Timings to write down: failure time \_\_\_\_ · Critical (hard) shown \_\_\_\_ �
 
 ### E2E-07 – A restricted user works only inside their role
 
-**Modules:** Manage Roles, Manage Accounts, Authentication, Alert acknowledgement, System Logs · **Priority:** H
+**Modules:** Manage Roles, Manage Accounts, Authentication, Alert acknowledgement, System Logs · **Priority:** H · **Result:** PASS (historical checklist)
 
 | Step | What to do | What you should see |
 | --- | --- | --- |
@@ -4318,7 +4368,7 @@ Timings to write down: failure time \_\_\_\_ · Critical (hard) shown \_\_\_\_ �
 
 ### E2E-08 – Report on the incident and check the export log
 
-**Modules:** Reports, System Status, System Logs · **Priority:** M
+**Modules:** Reports, System Status, System Logs · **Priority:** M · **Result:** PASS (historical checklist)
 
 | Step | What to do | What you should see |
 | --- | --- | --- |

@@ -1,5 +1,20 @@
 # Historical black-box evidence review
 
+## 2026-10-19 consolidated result binding review
+
+The catalog now consolidates run results for Modules 13–15, historical checklist
+results for Modules 22–23 and E2E, and manual PASS confirmations for TC-LOG-04
+and TC-SET-05. A comparison against `44471f7c` found unchanged titles, priorities,
+requirements, dependencies and safety classifications. TC-LOG-04 clarifies the
+redaction and unreadable-file checks and explicitly includes restoration; its
+older isolated report remains partial overlap with a target retest required.
+Other procedures and expected items are unchanged. Changed case hashes were
+refreshed with their previous bindings and review explanations retained in
+`historical-evidence-review.json`. Original source reports, classifications,
+compatibility decisions and the provisional cutoff remain unchanged; no new
+historical coverage or live execution is claimed.
+
+
 ## 2026-10-19 catalog result binding review
 
 PR #237 records newer Modules 1–11 outcomes. Comparing the catalog against

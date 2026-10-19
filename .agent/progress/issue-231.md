@@ -46,3 +46,5 @@ Requirement coverage:
 - Initial frontend gate rejected macOS noncanonical temporary paths; canonical task-local TMPDIR resolves it without code/test changes.
 
 - Docs gate caught Sidebar.tsx fingerprints in eight QA mappings. Reviewed affected written cases and assertions; only the dependency hash changes. This is necessary source-binding maintenance for the sidebar reorder, not new QA coverage or execution.
+
+- origin/main advanced with QA catalog consolidation (#241); merged it, preserving both sidebar-review and catalog-review sections in Automation_Readiness.md. QA source fingerprints and incoming catalog fingerprints are both retained.

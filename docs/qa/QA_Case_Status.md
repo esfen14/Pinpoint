@@ -2,11 +2,11 @@
 
 Generated from the module catalog; do not hand-edit.
 This is a source/result-conflict view, not a new execution or current-build certification.
-Historical catalog results are human manual results. Historical reports retain their original executors.
-E2E with no recorded result is pending/unrecorded, not proof it was never attempted.
+Catalog results include human manual confirmations and report-attributed outcomes. Historical reports retain their original executors.
+E2E without a detailed Result field is pending/unrecorded, not proof it was never attempted.
 Accepted evidence and new execution totals must be reported separately.
 
-Source SHA-256: `98abc0dbd3092e7aad625f22ffd7fcc70ace82574d6b7e8e832ef10e19b11928`.
+Source SHA-256: `61c352f34706d0e2f03966b45a6a9158130201ebeacbe4f138b1af78b3519758`.
 Cases: 231 TC plus 8 E2E.
 Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 
@@ -58,7 +58,7 @@ Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 | TC-SET-02 | SET / 4 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-110-polling-retest/REPORT.md) |
 | TC-SET-03 | SET / 4 | PASS | PASS | pass | No reviewed mapping |
 | TC-SET-04 | SET / 4 | PASS | PASS | pass | No reviewed mapping |
-| TC-SET-05 | SET / 4 | Not run | Not run | untested | No reviewed mapping |
+| TC-SET-05 | SET / 4 | PASS | PASS | pass | No reviewed mapping |
 | TC-SET-06 | SET / 4 | PASS | PASS | pass | No reviewed mapping |
 | TC-SHL-01 | SHL / 4 | PASS | Not run | needs-decision | retest required: [source report](../test-runs/2026-10-15-issue-116-escalations/REPORT.md) |
 | TC-SHL-02 | SHL / 4 | PASS | Not run | needs-decision | retest required: [source report](../test-runs/2026-10-15-issue-116-escalations/REPORT.md) |
@@ -146,14 +146,14 @@ Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 | TC-SHL-07 | SHL / 8 | PASS | Not run | needs-decision | partial historical coverage: [source report](../test-runs/2026-10-18-issue-153-failure-escalation/REPORT.md) |
 | TC-SHL-08 | SHL / 8 | PASS | Not run | needs-decision | No reviewed mapping |
 | TC-MNT-01 | MNT / 8 | PASS | PASS | pass | No reviewed mapping |
-| TC-MNT-02 | MNT / 8 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-15-issue-122-maintenance-windows/REPORT.md) |
-| TC-MNT-03 | MNT / 8 | Not run | Not run | untested | No reviewed mapping |
-| TC-MNT-04 | MNT / 8 | Not run | Not run | untested | No reviewed mapping |
-| TC-MNT-05 | MNT / 8 | Not run | Not run | untested | No reviewed mapping |
-| TC-MNT-06 | MNT / 8 | Not run | Not run | untested | No reviewed mapping |
-| TC-MNT-07 | MNT / 8 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-15-issue-122-maintenance-windows/REPORT.md) |
-| TC-MNT-09 | MNT / 8 | Not run | Not run | untested | No reviewed mapping |
-| TC-MNT-10 | MNT / 8 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-15-issue-122-maintenance-windows/REPORT.md) |
+| TC-MNT-02 | MNT / 8 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-122-maintenance-windows/REPORT.md) |
+| TC-MNT-03 | MNT / 8 | PASS | PASS | pass | No reviewed mapping |
+| TC-MNT-04 | MNT / 8 | PASS | PASS | pass | No reviewed mapping |
+| TC-MNT-05 | MNT / 8 | PASS | PASS | pass | No reviewed mapping |
+| TC-MNT-06 | MNT / 8 | PASS | PASS | pass | No reviewed mapping |
+| TC-MNT-07 | MNT / 8 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-122-maintenance-windows/REPORT.md) |
+| TC-MNT-09 | MNT / 8 | PASS | PASS | pass | No reviewed mapping |
+| TC-MNT-10 | MNT / 8 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-122-maintenance-windows/REPORT.md) |
 | TC-NCPA-01 | NCPA / 9 | Not run | Not run | untested | No reviewed mapping |
 | TC-NCPA-02 | NCPA / 9 | Not run | Not run | untested | No reviewed mapping |
 | TC-NCPA-03 | NCPA / 9 | Not run | Not run | untested | No reviewed mapping |
@@ -167,29 +167,29 @@ Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 | TC-DI-10 | DI / 9 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-129-finish-journeys/REPORT.md) |
 | TC-DASH-09 | DASH / 9 | PASS | PASS | pass | No reviewed mapping |
 | TC-SS-05 | SS / 9 | PASS | PASS | pass | No reviewed mapping |
-| TC-REM-02 | REM / 9 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-17-issue-182-playwright/REPORT.md) |
+| TC-REM-02 | REM / 9 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-17-issue-182-playwright/REPORT.md) |
 | TC-REM-01 | REM / 9 | PASS | PASS | pass | No reviewed mapping |
 | TC-REM-04 | REM / 9 | PARTIALLY PASS | PARTIALLY PASS - | partial | retest required: [source report](../test-runs/2026-10-17-issue-182-playwright/REPORT.md) |
-| TC-REM-03 | REM / 9 | Not run | Not run | untested | No reviewed mapping |
-| TC-REM-05 | REM / 9 | Not run | Not run | untested | No reviewed mapping |
-| TC-REM-07 | REM / 9 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-17-issue-155-remediation-safety/REPORT.md) |
-| TC-REM-09 | REM / 9 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-17-issue-155-remediation-safety/REPORT.md) |
-| TC-REM-06 | REM / 9 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-17-issue-155-remediation-safety/REPORT.md) |
-| TC-REM-08 | REM / 9 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-17-issue-155-remediation-safety/REPORT.md) |
-| TC-REM-10 | REM / 9 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-17-issue-182-playwright/REPORT.md) |
-| TC-RPT-01 | RPT / 10 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-17-issue-134-reports-documentation/REPORT.md) |
+| TC-REM-03 | REM / 9 | PASS | PASS | pass | No reviewed mapping |
+| TC-REM-05 | REM / 9 | PASS | PASS | pass | No reviewed mapping |
+| TC-REM-07 | REM / 9 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-17-issue-155-remediation-safety/REPORT.md) |
+| TC-REM-09 | REM / 9 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-17-issue-155-remediation-safety/REPORT.md) |
+| TC-REM-06 | REM / 9 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-17-issue-155-remediation-safety/REPORT.md) |
+| TC-REM-08 | REM / 9 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-17-issue-155-remediation-safety/REPORT.md) |
+| TC-REM-10 | REM / 9 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-17-issue-182-playwright/REPORT.md) |
+| TC-RPT-01 | RPT / 10 | FAIL (initial main-lab run; temporary scratch retest PASS; post-merge confirmation not recorded) | FAIL (initial main-lab run; temporary scratch retest PASS; post-merge confirmation not recorded) | fail | retest required: [source report](../test-runs/2026-10-17-issue-134-reports-documentation/REPORT.md) |
 | TC-RPT-02 | RPT / 10 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-17-issue-134-reports-documentation/REPORT.md) |
 | TC-RPT-03 | RPT / 10 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-17-issue-134-reports-documentation/REPORT.md) |
 | TC-RPT-04 | RPT / 10 | PASS | PASS | pass | No reviewed mapping |
 | TC-RPT-05 | RPT / 10 | PASS | PASS | pass | No reviewed mapping |
-| TC-RPT-06 | RPT / 10 | Not run | Not run | untested | No reviewed mapping |
+| TC-RPT-06 | RPT / 10 | PARTIALLY PASS (initial main-lab run; temporary scratch retest PASS; post-merge confirmation not recorded) | PARTIALLY PASS (initial main-lab run; temporary scratch retest PASS; post-merge confirmation not recorded) | partial | No reviewed mapping |
 | TC-LOG-01 | LOG / 10 | PASS | PASS | pass | partial historical coverage: [source report](../test-runs/2026-10-15-issue-124-storage-logs/REPORT.md) |
 | TC-LOG-02 | LOG / 10 | PASS | PASS | pass | No reviewed mapping |
 | TC-LOG-03 | LOG / 10 | PASS | PASS | pass | partial historical coverage: [source report](../test-runs/2026-10-15-issue-124-storage-logs/REPORT.md) |
-| TC-LOG-04 | LOG / 10 | Not run | Not run | untested | retest required: [source report](../test-runs/2026-10-15-issue-124-storage-logs/REPORT.md) |
+| TC-LOG-04 | LOG / 10 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-124-storage-logs/REPORT.md) |
 | TC-SHL-05 | SHL / 10 | PASS | Not run | needs-decision | retest required: [source report](../test-runs/2026-10-15-issue-124-storage-logs/REPORT.md) |
 | TC-DASH-06 | DASH / 11 | FAIL - While Nagios is down, there is no indication that Nagios is not running and not polling, this was confirmed when trying to modify a Nagios config but can't save. | FAIL | fail | No reviewed mapping |
-| TC-MNT-08 | MNT / 11 | Not run | Not run | untested | No reviewed mapping |
+| TC-MNT-08 | MNT / 11 | PASS | PASS | pass | No reviewed mapping |
 | TC-SET-08 | SET / 11 | PASS | PASS | pass | No reviewed mapping |
 | TC-SET-09 | SET / 11 | PASS | PASS | pass | No reviewed mapping |
 | TC-NFR-03 | NFR / 12 | PASS | Not run | needs-decision | No reviewed mapping |
@@ -201,53 +201,53 @@ Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 | TC-NFR-09 | NFR / 12 | Not run | Not run | untested | No reviewed mapping |
 | TC-NFR-10 | NFR / 12 | PASS | Not run | needs-decision | No reviewed mapping |
 | TC-NFR-11 | NFR / 12 | Not run | Not run | untested | No reviewed mapping |
-| TC-EDG-01 | EDG / 13 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-EDG-02 | EDG / 13 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-EDG-03 | EDG / 13 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-EDG-04 | EDG / 13 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-EDG-05 | EDG / 13 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-EDG-06 | EDG / 13 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-EDG-07 | EDG / 13 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-EDG-08 | EDG / 13 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-EDG-09 | EDG / 13 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-EDG-10 | EDG / 13 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-EDG-11 | EDG / 13 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-EDG-12 | EDG / 13 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-EDG-13 | EDG / 13 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-EDG-14 | EDG / 13 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-EDG-15 | EDG / 13 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-EDG-16 | EDG / 13 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-EDG-17 | EDG / 13 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-EDG-18 | EDG / 13 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-SEQ-01 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-SEQ-02 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-SEQ-03 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-SEQ-04 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | retest required: [source report](../test-runs/2026-10-15-issue-122-maintenance-windows/REPORT.md) |
-| TC-SEQ-05 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-SEQ-06 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-SEQ-07 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-SEQ-08 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-SEQ-10 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-SEQ-11 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-SEQ-12 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-SEQ-13 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-SEQ-14 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-SEQ-15 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-SEQ-16 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-SEQ-18 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | retest required: [source report](../test-runs/2026-10-17-issue-155-remediation-safety/REPORT.md) |
-| TC-SEQ-19 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | retest required: [source report](../test-runs/2026-10-16-issue-121-local-restart/REPORT.md) |
-| TC-SEQ-20 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | retest required: [source report](../test-runs/2026-10-17-issue-155-remediation-safety/REPORT.md) |
-| TC-SEQ-21 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-SEQ-22 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | retest required: [source report](../test-runs/2026-10-17-issue-182-remote-restart/REPORT.md) |
-| TC-SEQ-23 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-SEQ-24 | SEQ / 14 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-SEQ-09 | SEQ / 15 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| TC-SEQ-17 | SEQ / 15 | No Result column / no recorded verdict | Not run | untested | No reviewed mapping |
-| E2E-01 | E2E / 15 | No Result column / no recorded verdict | No Result column / no recorded verdict | untested | No reviewed mapping |
-| E2E-02 | E2E / 15 | No Result column / no recorded verdict | No Result column / no recorded verdict | untested | No reviewed mapping |
-| E2E-03 | E2E / 15 | No Result column / no recorded verdict | No Result column / no recorded verdict | untested | No reviewed mapping |
-| E2E-04 | E2E / 15 | No Result column / no recorded verdict | No Result column / no recorded verdict | untested | No reviewed mapping |
-| E2E-05 | E2E / 15 | No Result column / no recorded verdict | No Result column / no recorded verdict | untested | No reviewed mapping |
-| E2E-06 | E2E / 15 | No Result column / no recorded verdict | No Result column / no recorded verdict | untested | No reviewed mapping |
-| E2E-07 | E2E / 15 | No Result column / no recorded verdict | No Result column / no recorded verdict | untested | No reviewed mapping |
-| E2E-08 | E2E / 15 | No Result column / no recorded verdict | No Result column / no recorded verdict | untested | No reviewed mapping |
+| TC-EDG-01 | EDG / 13 | PASS | PASS | pass | No reviewed mapping |
+| TC-EDG-02 | EDG / 13 | PASS | PASS | pass | No reviewed mapping |
+| TC-EDG-03 | EDG / 13 | PASS | PASS | pass | No reviewed mapping |
+| TC-EDG-04 | EDG / 13 | PASS | PASS | pass | No reviewed mapping |
+| TC-EDG-05 | EDG / 13 | PASS | PASS | pass | No reviewed mapping |
+| TC-EDG-06 | EDG / 13 | PASS | PASS | pass | No reviewed mapping |
+| TC-EDG-07 | EDG / 13 | PASS | PASS | pass | No reviewed mapping |
+| TC-EDG-08 | EDG / 13 | PASS | PASS | pass | No reviewed mapping |
+| TC-EDG-09 | EDG / 13 | PASS | PASS | pass | No reviewed mapping |
+| TC-EDG-10 | EDG / 13 | PASS | PASS | pass | No reviewed mapping |
+| TC-EDG-11 | EDG / 13 | PASS | PASS | pass | No reviewed mapping |
+| TC-EDG-12 | EDG / 13 | PASS | PASS | pass | No reviewed mapping |
+| TC-EDG-13 | EDG / 13 | PASS | PASS | pass | No reviewed mapping |
+| TC-EDG-14 | EDG / 13 | PASS | PASS | pass | No reviewed mapping |
+| TC-EDG-15 | EDG / 13 | PASS | PASS | pass | No reviewed mapping |
+| TC-EDG-16 | EDG / 13 | PASS | PASS | pass | No reviewed mapping |
+| TC-EDG-17 | EDG / 13 | PASS | PASS | pass | No reviewed mapping |
+| TC-EDG-18 | EDG / 13 | PASS | PASS | pass | No reviewed mapping |
+| TC-SEQ-01 | SEQ / 14 | PASS | PASS | pass | No reviewed mapping |
+| TC-SEQ-02 | SEQ / 14 | PASS | PASS | pass | No reviewed mapping |
+| TC-SEQ-03 | SEQ / 14 | PASS | PASS | pass | No reviewed mapping |
+| TC-SEQ-04 | SEQ / 14 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-122-maintenance-windows/REPORT.md) |
+| TC-SEQ-05 | SEQ / 14 | PASS | PASS | pass | No reviewed mapping |
+| TC-SEQ-06 | SEQ / 14 | PASS | PASS | pass | No reviewed mapping |
+| TC-SEQ-07 | SEQ / 14 | PASS | PASS | pass | No reviewed mapping |
+| TC-SEQ-08 | SEQ / 14 | PASS | PASS | pass | No reviewed mapping |
+| TC-SEQ-10 | SEQ / 14 | PASS | PASS | pass | No reviewed mapping |
+| TC-SEQ-11 | SEQ / 14 | PASS | PASS | pass | No reviewed mapping |
+| TC-SEQ-12 | SEQ / 14 | PASS | PASS | pass | No reviewed mapping |
+| TC-SEQ-13 | SEQ / 14 | PASS | PASS | pass | No reviewed mapping |
+| TC-SEQ-14 | SEQ / 14 | PASS | PASS | pass | No reviewed mapping |
+| TC-SEQ-15 | SEQ / 14 | PASS | PASS | pass | No reviewed mapping |
+| TC-SEQ-16 | SEQ / 14 | PASS | PASS | pass | No reviewed mapping |
+| TC-SEQ-18 | SEQ / 14 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-17-issue-155-remediation-safety/REPORT.md) |
+| TC-SEQ-19 | SEQ / 14 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-16-issue-121-local-restart/REPORT.md) |
+| TC-SEQ-20 | SEQ / 14 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-17-issue-155-remediation-safety/REPORT.md) |
+| TC-SEQ-21 | SEQ / 14 | PASS | PASS | pass | No reviewed mapping |
+| TC-SEQ-22 | SEQ / 14 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-17-issue-182-remote-restart/REPORT.md) |
+| TC-SEQ-23 | SEQ / 14 | PASS | PASS | pass | No reviewed mapping |
+| TC-SEQ-24 | SEQ / 14 | PASS | PASS | pass | No reviewed mapping |
+| TC-SEQ-09 | SEQ / 15 | PASS | PASS | pass | No reviewed mapping |
+| TC-SEQ-17 | SEQ / 15 | PASS | PASS | pass | No reviewed mapping |
+| E2E-01 | E2E / 15 | No Result column / no recorded verdict | PASS (historical checklist) | pass | No reviewed mapping |
+| E2E-02 | E2E / 15 | No Result column / no recorded verdict | PASS (historical checklist) | pass | No reviewed mapping |
+| E2E-03 | E2E / 15 | No Result column / no recorded verdict | PASS (historical checklist) | pass | No reviewed mapping |
+| E2E-04 | E2E / 15 | No Result column / no recorded verdict | PASS (historical checklist) | pass | No reviewed mapping |
+| E2E-05 | E2E / 15 | No Result column / no recorded verdict | PASS (historical checklist) | pass | No reviewed mapping |
+| E2E-06 | E2E / 15 | No Result column / no recorded verdict | PASS (historical checklist) | pass | No reviewed mapping |
+| E2E-07 | E2E / 15 | No Result column / no recorded verdict | PASS (historical checklist) | pass | No reviewed mapping |
+| E2E-08 | E2E / 15 | No Result column / no recorded verdict | PASS (historical checklist) | pass | No reviewed mapping |
