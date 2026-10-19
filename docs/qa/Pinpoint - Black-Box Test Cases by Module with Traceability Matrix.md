@@ -1901,23 +1901,23 @@ The inventory has the tabs **All**, **Network Services**, **Device Availability*
 
 | TC | Case | Req | Tech | Pri | Result |
 | --- | --- | --- | --- | --- | --- |
-| TC-NCPA-01 | Warning when `check_ncpa` is off | NCPA-01 | EG | M | Not run |
-| TC-NCPA-02 | Deploy wizard order | NCPA-02 | ST | H | Not run |
-| TC-NCPA-03 | Wrong and right SSH password | NCPA-02 | EP | H | Not run |
-| TC-NCPA-04 | Run progress and history | NCPA-03 | ST | H | Not run |
-| TC-NCPA-05 | Who can use Clean up | NCPA-04 | DT | M | Not run |
-| TC-NCPA-06 | Clean up | NCPA-04 | EP | H | Not run |
-| TC-NCPA-07 | No credentials shown anywhere | NCPA-05 | EG | H | Not run |
-| TC-NCPA-08 | NCPA Deployment needs permission | NCPA-06 | DT | H | Not run |
-| TC-NCPA-09 | Remote restart settings (issue #182) | NCPA-07 | EP | M | Not run |
-| TC-NCPA-10 | Remote restart is blocked during a deployment | NCPA-07 | EG | M | Not run |
-| TC-NCPA-11 | Clean up warns that remote restarts stop | NCPA-08 | EG | M | Not run |
+| TC-NCPA-01 | Warning when `check_ncpa` is off | NCPA-01 | EG | M | PASS |
+| TC-NCPA-02 | Deploy wizard order | NCPA-02 | ST | H | PASS |
+| TC-NCPA-03 | Wrong and right SSH password | NCPA-02 | EP | H | PASS |
+| TC-NCPA-04 | Run progress and history | NCPA-03 | ST | H | PASS |
+| TC-NCPA-05 | Who can use Clean up | NCPA-04 | DT | M | PASS |
+| TC-NCPA-06 | Clean up | NCPA-04 | EP | H | PASS |
+| TC-NCPA-07 | No credentials shown anywhere | NCPA-05 | EG | H | PASS |
+| TC-NCPA-08 | NCPA Deployment needs permission | NCPA-06 | DT | H | PASS |
+| TC-NCPA-09 | Remote restart settings (issue #182) | NCPA-07 | EP | M | PASS |
+| TC-NCPA-10 | Remote restart is blocked during a deployment | NCPA-07 | EG | M | PASS |
+| TC-NCPA-11 | Clean up warns that remote restarts stop | NCPA-08 | EG | M | PASS |
 
 The page has the **Devices** tab (a table with **Select**, **Device**, **IP Address**, **Agent**, **Host Key**, **Last Result**, **Actions**) and a **Deployment History** tab. Buttons: **Deploy selected**, **Verify**, **Clean up**, **Remote restart**.
 
 #### TC-NCPA-01 – Warning when check\_ncpa is off
 
-**Requirement:** REQ-NCPA-01 · **Technique:** EG · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-NCPA-01 · **Technique:** EG · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -1932,7 +1932,7 @@ The page has the **Devices** tab (a table with **Select**, **Device**, **IP Addr
 
 #### TC-NCPA-02 – Deploy wizard order
 
-**Requirement:** REQ-NCPA-02 · **Technique:** ST · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-NCPA-02 · **Technique:** ST · **Priority:** H · **Result:** PASS
 
 **Before you start:** a Linux VM with SSH, found by a scan, and `check_ncpa` enabled.
 
@@ -1950,7 +1950,7 @@ The page has the **Devices** tab (a table with **Select**, **Device**, **IP Addr
 
 #### TC-NCPA-03 – Wrong and right SSH password
 
-**Requirement:** REQ-NCPA-02 · **Technique:** EP · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-NCPA-02 · **Technique:** EP · **Priority:** H · **Result:** PASS
 
 **Steps**
 
@@ -1966,7 +1966,7 @@ The page has the **Devices** tab (a table with **Select**, **Device**, **IP Addr
 
 #### TC-NCPA-04 – Run progress and history
 
-**Requirement:** REQ-NCPA-03 · **Technique:** ST · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-NCPA-03 · **Technique:** ST · **Priority:** H · **Result:** PASS
 
 **Steps**
 
@@ -1982,7 +1982,7 @@ The page has the **Devices** tab (a table with **Select**, **Device**, **IP Addr
 
 #### TC-NCPA-05 – Who can use Clean up
 
-**Requirement:** REQ-NCPA-04 · **Technique:** DT · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-NCPA-04 · **Technique:** DT · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -1995,7 +1995,7 @@ The page has the **Devices** tab (a table with **Select**, **Device**, **IP Addr
 
 #### TC-NCPA-06 – Clean up
 
-**Requirement:** REQ-NCPA-04 · **Technique:** EP · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-NCPA-04 · **Technique:** EP · **Priority:** H · **Result:** PASS
 
 **Steps**
 
@@ -2011,7 +2011,7 @@ The page has the **Devices** tab (a table with **Select**, **Device**, **IP Addr
 
 #### TC-NCPA-07 – No credentials shown anywhere
 
-**Requirement:** REQ-NCPA-05 · **Technique:** EG · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-NCPA-05 · **Technique:** EG · **Priority:** H · **Result:** PASS
 
 **Steps**
 
@@ -2024,7 +2024,7 @@ The page has the **Devices** tab (a table with **Select**, **Device**, **IP Addr
 
 #### TC-NCPA-08 – NCPA Deployment needs permission
 
-**Requirement:** REQ-NCPA-06 · **Technique:** DT · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-NCPA-06 · **Technique:** DT · **Priority:** H · **Result:** PASS
 
 **Steps**
 
@@ -2037,7 +2037,7 @@ The page has the **Devices** tab (a table with **Select**, **Device**, **IP Addr
 
 #### TC-NCPA-09 – Remote restart settings (issue #182)
 
-**Requirement:** REQ-NCPA-07 · **Technique:** EP · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-NCPA-07 · **Technique:** EP · **Priority:** M · **Result:** PASS
 
 **Before you start:** a trusted device (host key verified).
 
@@ -2057,7 +2057,7 @@ The page has the **Devices** tab (a table with **Select**, **Device**, **IP Addr
 
 #### TC-NCPA-10 – Remote restart is blocked during a deployment
 
-**Requirement:** REQ-NCPA-07 · **Technique:** EG · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-NCPA-07 · **Technique:** EG · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -2072,7 +2072,7 @@ The page has the **Devices** tab (a table with **Select**, **Device**, **IP Addr
 
 #### TC-NCPA-11 – Clean up warns that remote restarts stop
 
-**Requirement:** REQ-NCPA-08 · **Technique:** EG · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-NCPA-08 · **Technique:** EG · **Priority:** M · **Result:** PASS
 
 **Steps**
 
@@ -3568,7 +3568,7 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 ### Module 22 – Edge cases and robustness
 
-**Historical result source:** PASS outcomes recorded in the [previous module catalog](../qa/Module_Blackbox_Test_Cases.md); detailed case results below are consolidated from its summary table.
+**Historical result source:** PASS outcomes recorded in the previous module catalog (`Module_Blackbox_Test_Cases.md`, removed from the repo); detailed case results below are consolidated from its summary table.
 
 These cases try the unusual: odd text, repeated clicks, lost connections, two people at once, time changes, and large amounts of data. Run them in phase 13, after the normal cases pass, because they reuse the accounts, scans, and devices made earlier. For each case "no error page" means no blank screen, no stack trace, and no HTTP 500.
 
@@ -3882,7 +3882,7 @@ These cases try the unusual: odd text, repeated clicks, lost connections, two pe
 
 ### Module 23 – Order of events
 
-**Historical result source:** PASS outcomes recorded in the [previous module catalog](../qa/Module_Blackbox_Test_Cases.md); detailed case results below are consolidated from its summary table.
+**Historical result source:** PASS outcomes recorded in the previous module catalog (`Module_Blackbox_Test_Cases.md`, removed from the repo); detailed case results below are consolidated from its summary table.
 
 These cases test what happens when things occur in an unusual order: a fix before a confirmation, a change while another job runs, or a permission taken away while the user is working. Each case says which event comes first. Run them in phase 14, one at a time, and restore the lab after each one (services running, devices monitored, no window or pause left over).
 
@@ -4316,7 +4316,7 @@ These cases test what happens when things occur in an unusual order: a fix befor
 
 These eight scenarios run the whole system as a user would, from the browser and the lab's real machines, across several modules in one flow. They check only what the screen, the email, and the API show. Run them in order on a lab with: a fresh appliance, one web server VM (HTTP on port 80, SSH on port 22), a second Linux VM with SSH, an SMTP test mailbox, a Staff user, and a dashboard-only user. Default intervals apply (Check 5 minutes, Retry 1 minute, Maximum attempts 3). Record each step as PASS, FAIL, or PARTIALLY PASS in the Test Execution Log.
 
-**Historical result source:** The prior catalog marks every step of E2E-01 through E2E-08 PASS ([source](../qa/Module_Blackbox_Test_Cases.md)). No attributable test-run reports for these E2E results were found in `docs/test-runs/`.
+**Historical result source:** The prior catalog marks every step of E2E-01 through E2E-08 PASS (source: `Module_Blackbox_Test_Cases.md`, removed from the repo). No attributable test-run reports for these E2E results were found in `docs/test-runs/`.
 
 ### E2E-01 – First login to a working Dashboard
 

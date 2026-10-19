@@ -364,7 +364,7 @@
       "reviewed_by": "Codex mapping review (partial; not full-case acceptance)",
       "reviewed_at": "2026-10-18",
       "impact_review": "A real cleanup request after a deliberately failed installation returned per-step results, removed helper/key/sudoers artifacts and reset deployment state. The current dialog’s reopened blank credential fields and current-target compatibility were not established. The report retains its stated executor; this does not change the human catalog result, count as a new AI execution, or establish current-build compatibility. The October 15 cutoff remains provisional; no historical credit is accepted. The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/ncpa-deployment/CleanupDialog.tsx, client/src/components/ncpa-deployment/DeploymentRunDrawer.tsx, client/src/components/ncpa-deployment/NcpaDevicesTable.tsx, client/src/components/ncpa-deployment/RegisterAgentDialog.tsx, client/src/components/ncpa-deployment/RemoteRestartDialog.tsx, client/src/lib/ncpaDeploymentApi.ts, client/src/pages/NcpaDeploymentPage.tsx, server/app/api/system/ncpa_deployment.py, server/app/ncpa_deployment/ncpa_deployment.py, server/app/remote_restart.py. Re-run this case on the target before using historical evidence to omit checks.",
-      "case_hash": "54a2e019875fcafeb756f21c77f12b8739ebfd763fb66519152f6e2abc3e18ff",
+      "case_hash": "aaa038cf3c6939deaefc54ddc818e2a7cdc527058043a4a40c937c2c7e956856",
       "report": "docs/test-runs/2026-10-15-issue-129-finish-journeys/REPORT.md",
       "report_sha256": "74d4ffa605aeaac657a0ea52e0d36ba6d9b98f9030a1177740d9deacf6c85bf3",
       "tested_revision": "c9f8e263",
@@ -396,7 +396,7 @@
       "reviewed_by": "Codex mapping review (partial; not full-case acceptance)",
       "reviewed_at": "2026-10-18",
       "impact_review": "The cleanup browser flow removed bootstrap artifacts and cleared credential fields, which is a limited secret-exposure check. It did not establish that every drawer and API response excludes passwords, keys, and tokens or verify current-target compatibility. The report retains its stated executor; the human catalog result is unchanged. This is not a new AI execution or accepted full-case credit; the October 15 cutoff remains provisional. The tested commit is present and is an ancestor of target 299ab3ba7203. Since that run, relevant product paths changed: client/src/components/ncpa-deployment/NcpaDevicesTable.tsx, client/src/components/ncpa-deployment/RegisterAgentDialog.tsx, client/src/lib/ncpaDeploymentApi.ts, client/src/pages/NcpaDeploymentPage.tsx, server/app/api/system/ncpa_deployment.py. Re-run this case on the target before using historical evidence to omit checks.",
-      "case_hash": "27bb2523978d30dcc36650aed6349496556812798b9828fb8f2a32965f400d8d",
+      "case_hash": "fbbe35d7b68b28dfb453c866fb98d332b37608973d997fbac2932dbcd1be4874",
       "report": "docs/test-runs/2026-10-17-issue-182-playwright/REPORT.md",
       "report_sha256": "a4f7b988c607841e4461593907b466e8e6514d5990f5745c0f3c9b696c19659d",
       "tested_revision": "910d6f99",
@@ -423,7 +423,7 @@
       "reviewed_by": "Codex evidence inventory (not full-case acceptance)",
       "reviewed_at": "2026-10-18",
       "impact_review": "Remote settings persistence observed; twenty/21-service boundary and untrusted-device refusal are not all established by this report. Target review found later manual-agent registration work in this module, but no direct change to the remote-restart settings behavior in these cases; no full historical credit. The tested commit is present and is an ancestor of target 299ab3ba7203. The later NCPA changes add the separate manual-agent registration flow; the remote-restart settings/drawer/API behavior covered by this report has no direct changed code path. The report is still partial and does not establish all current expectations; fresh missing-check execution remains necessary.",
-      "case_hash": "7776c57b0cfdcc661e7aa974442599817f94147c75cb00d9ef6ce09b55991c6d",
+      "case_hash": "ab67aa90c5d481601280fb29a028bbc065a4094a127165553f07207fcad0e66a",
       "report": "docs/test-runs/2026-10-17-issue-182-playwright/REPORT.md",
       "report_sha256": "a4f7b988c607841e4461593907b466e8e6514d5990f5745c0f3c9b696c19659d",
       "tested_revision": "910d6f99",
@@ -444,7 +444,7 @@
       "reviewed_by": "Codex evidence inventory (not full-case acceptance)",
       "reviewed_at": "2026-10-18",
       "impact_review": "Real settings Retry was observed after a synthetic load error; opening settings while deployment is running was not established. Target review found later manual-agent registration work in this module, but no direct change to the remote-restart settings behavior in these cases; no full historical credit. The tested commit is present and is an ancestor of target 299ab3ba7203. The later NCPA changes add the separate manual-agent registration flow; the remote-restart settings/drawer/API behavior covered by this report has no direct changed code path. The report is still partial and does not establish all current expectations; fresh missing-check execution remains necessary.",
-      "case_hash": "9ba2f194cc4bfe0c3834c193f8b9f39e1e217680f7bc22430bb3d9f1e5a2a334",
+      "case_hash": "6d1205228cd35a2de978f57c702cca61315fe0054971b2e9a76b91f53253ae79",
       "report": "docs/test-runs/2026-10-17-issue-182-playwright/REPORT.md",
       "report_sha256": "a4f7b988c607841e4461593907b466e8e6514d5990f5745c0f3c9b696c19659d",
       "tested_revision": "910d6f99",
@@ -465,7 +465,7 @@
       "reviewed_by": "Codex evidence inventory (not full-case acceptance)",
       "reviewed_at": "2026-10-18",
       "impact_review": "Cleanup notice, credential clearing and retained list are described; exact remote-restart-enabled prerequisite and current-build dependencies require review. Target review found later manual-agent registration work in this module, but no direct change to the remote-restart settings behavior in these cases; no full historical credit. The tested commit is present and is an ancestor of target 299ab3ba7203. The later NCPA changes add the separate manual-agent registration flow; the remote-restart settings/drawer/API behavior covered by this report has no direct changed code path. The report is still partial and does not establish all current expectations; fresh missing-check execution remains necessary.",
-      "case_hash": "d695edcb9800662ce133bd2d9d03ce82964564354078fa9dea4cb4fe6dcfce9f",
+      "case_hash": "134e2080a332285dca04dd93ea84e314ee439ab8ece4471ff851ae86574bae2d",
       "report": "docs/test-runs/2026-10-17-issue-182-playwright/REPORT.md",
       "report_sha256": "a4f7b988c607841e4461593907b466e8e6514d5990f5745c0f3c9b696c19659d",
       "tested_revision": "910d6f99",
@@ -1420,5 +1420,17 @@
       "TC-SEQ-20",
       "TC-SEQ-22"
     ]
+  },
+  "module_12_result_binding_review": {
+    "reviewed_by": "Codex",
+    "reviewed_at": "2026-10-19",
+    "cases": [
+      "TC-NCPA-06",
+      "TC-NCPA-07",
+      "TC-NCPA-09",
+      "TC-NCPA-10",
+      "TC-NCPA-11"
+    ],
+    "decision": "Only detailed Result cells changed to match this branch’s recorded PASS summaries. Steps, expected items and prerequisites are unchanged. Refresh procedure fingerprints without changing report hashes, covered items, compatibility decisions, classifications or cutoff approval. No new historical credit or execution."
   }
 }
