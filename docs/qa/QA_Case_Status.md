@@ -6,7 +6,7 @@ Historical catalog results are human manual results. Historical reports retain t
 E2E with no recorded result is pending/unrecorded, not proof it was never attempted.
 Accepted evidence and new execution totals must be reported separately.
 
-Source SHA-256: `88eccc258964bc81a4bf0261cc9e43e6ff7d7c1fe0a88f96a3890702abd36948`.
+Source SHA-256: `87592b3bbb903a70df3be5954c0765a157a197572b6660a1ed2cafba8701fa19`.
 Cases: 231 TC plus 8 E2E.
 Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 
@@ -195,9 +195,9 @@ Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 | TC-NFR-03 | NFR / 12 | PASS | PASS | pass | No reviewed mapping |
 | TC-NFR-04 | NFR / 12 | PASS | PASS | pass | No reviewed mapping |
 | TC-NFR-05 | NFR / 12 | PASS | PASS | pass | No reviewed mapping |
-| TC-NFR-06 | NFR / 12 | PASS | PASS | pass | No reviewed mapping |
-| TC-NFR-07 | NFR / 12 | FAIL - returns to login, other result is, data is showing but plaintext only without UI | FAIL | fail | No reviewed mapping |
-| TC-NFR-08 | NFR / 12 | FAIL - returns to login, other result is, data is showing but plaintext only without UI | FAIL | fail | No reviewed mapping |
+| TC-NFR-06 | NFR / 12 | FAIL | FAIL (Overview shows its load error with no Retry button; [#245](https://github.com/esfen14/Pinpoint/issues/245)) | fail | No reviewed mapping |
+| TC-NFR-07 | NFR / 12 | FAIL - returns to login, other result is, data is showing but plaintext only without UI | FAIL (initial run; later tester-reported retest PASS, no timings recorded) | fail | No reviewed mapping |
+| TC-NFR-08 | NFR / 12 | FAIL - returns to login, other result is, data is showing but plaintext only without UI | FAIL (initial run; later tester-reported retest PASS, no timings recorded) | fail | No reviewed mapping |
 | TC-NFR-09 | NFR / 12 | PASS | PASS | pass | No reviewed mapping |
 | TC-NFR-10 | NFR / 12 | PASS | PASS | pass | No reviewed mapping |
 | TC-NFR-11 | NFR / 12 | PASS | PASS | pass | No reviewed mapping |

@@ -3341,7 +3341,7 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 | TC-NFR-03 | Script and SQL characters are plain text | NFR-02 | EG | H | PASS |
 | TC-NFR-04 | Light and dark mode | NFR-03 | EP | L | PASS |
 | TC-NFR-05 | Narrow width | NFR-03 | BVA | L | PASS |
-| TC-NFR-06 | Failure shows an error with Retry | NFR-04 | EG | H | PASS |
+| TC-NFR-06 | Failure shows an error with Retry | NFR-04 | EG | H | FAIL |
 | TC-NFR-07 | Start-up time | NFR-05 | BVA | M | FAIL - returns to login, other result is, data is showing but plaintext only without UI |
 | TC-NFR-08 | Availability for 10 hosts | NFR-06 | BVA | M | FAIL - returns to login, other result is, data is showing but plaintext only without UI |
 | TC-NFR-09 | Dashboard refresh time | NFR-07 | BVA | M | PASS |
@@ -3427,7 +3427,7 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-NFR-06 – Failure shows an error with Retry
 
-**Requirement:** REQ-NFR-04 · **Technique:** EG · **Priority:** H · **Result:** PASS
+**Requirement:** REQ-NFR-04 · **Technique:** EG · **Priority:** H · **Result:** FAIL (Overview shows its load error with no Retry button; [#245](https://github.com/esfen14/Pinpoint/issues/245))
 
 **Recorded run:** [report](../test-runs/2026-10-19-module-20-21-records/REPORT.md)
 
@@ -3443,7 +3443,7 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-NFR-07 – Start-up time
 
-**Requirement:** REQ-NFR-05 · **Technique:** BVA · **Priority:** M · **Result:** FAIL
+**Requirement:** REQ-NFR-05 · **Technique:** BVA · **Priority:** M · **Result:** FAIL (initial run; later tester-reported retest PASS, no timings recorded)
 
 **Recorded run:** [report](../test-runs/2026-10-19-module-20-21-records/REPORT.md)
 
@@ -3461,7 +3461,7 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-NFR-08 – Availability for 10 hosts
 
-**Requirement:** REQ-NFR-06 · **Technique:** BVA · **Priority:** M · **Result:** FAIL
+**Requirement:** REQ-NFR-06 · **Technique:** BVA · **Priority:** M · **Result:** FAIL (initial run; later tester-reported retest PASS, no timings recorded)
 
 **Recorded run:** [report](../test-runs/2026-10-19-module-20-21-records/REPORT.md)
 
