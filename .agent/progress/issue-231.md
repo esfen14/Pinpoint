@@ -19,21 +19,22 @@ Requirement coverage:
 ## Plan
 
 1. [x] Add regression coverage in client/src/test/PageAccess.test.tsx; reproduce the ordering failure; reorder client/src/components/layout/Sidebar.tsx; run frontend verification.
-2. [ ] Document the order in spec files/Frontend_Modules_and_Routes.md and completed gap in spec files/Implementation_Status.md; run docs and full verification; create PR and check CI.
+2. [ ] Review Sidebar dependency assertions and refresh docs/qa/automation-coverage.json with review in docs/qa/Automation_Readiness.md; document the order in spec files/Frontend_Modules_and_Routes.md and completed gap in spec files/Implementation_Status.md; run docs and full verification; create PR and check CI.
 
 ## Round log
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 1 | Added order/destination/permission regressions; reordered Sidebar.tsx | PageAccess.test.tsx: red before fix, 25 green after; TMPDIR=$PWD/../test-tmp scripts/verify.sh frontend | green: 1026 tests, build, lint (existing warnings) |
+| 2 | Updated navigation specs; reviewed eight unchanged permission adapters and refreshed Sidebar dependency hashes | TMPDIR=$PWD/../test-tmp scripts/verify.sh docs | coverage validates; unrelated supervisor tests reject macOS /tmp canonical lock path |
 | 0 | Read issue, required specs and sidebar/access sources; prepared isolated checkout | git status --short | green |
 
 ## State for the next session
 
-- Last check run (exact command): TMPDIR=/Users/karell/Documents/Codex/2026-10-19/s/work/test-tmp scripts/verify.sh frontend
-- Result: green; 1026 tests pass, build succeeds, lint has existing warnings only.
-- Hypothesis: acceptance criteria are met; documentation and full verification remain.
-- Next action: Document the navigation order in the owning frontend specification and completed gap in Implementation_Status.md; run docs and all gates.
+- Last check run (exact command): TMPDIR=/Users/karell/Documents/Codex/2026-10-19/s/work/test-tmp scripts/verify.sh docs
+- Result: fails in test_qa_supervisor.py: ValueError: Host controller unavailable, already owned or unsafe. qa_control.canonical_root uses /tmp, a symlink to /private/tmp on macOS, and claim rejects noncanonical paths. Coverage source validation passed.
+- Hypothesis: Linux CI will pass the unchanged supervisor checks; altering their host safety rules is outside this issue.
+- Next action: Finish the running verify.sh all attempt and standalone backend suite, then open a draft PR with the local platform limitation and inspect Linux CI.
 
 ## Decisions and notes
 
@@ -43,3 +44,5 @@ Requirement coverage:
 - No live tests or labs authorized or needed.
 
 - Initial frontend gate rejected macOS noncanonical temporary paths; canonical task-local TMPDIR resolves it without code/test changes.
+
+- Docs gate caught Sidebar.tsx fingerprints in eight QA mappings. Reviewed affected written cases and assertions; only the dependency hash changes. This is necessary source-binding maintenance for the sidebar reorder, not new QA coverage or execution.

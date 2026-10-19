@@ -1,5 +1,19 @@
 # Current-case adapter preparation
 
+## 2026-10-19 sidebar dependency review (#231)
+
+Codex reviewed the sidebar-only reorder against the written cases and assertions
+for TC-ACC-09, TC-ROL-04, TC-SS-04, TC-HIS-01, TC-PLG-07, TC-NCPA-08,
+TC-RPT-07 and TC-LOG-05. The seven permission adapters assert exact hidden
+links and redirects (plus API denial where required); TC-ROL-04 expects only
+Overview and Settings. All three reordered links remain gated by the same
+permission, and labels, routes, filtering, setup and cleanup are unchanged.
+Their Sidebar.tsx dependency fingerprints were refreshed after that review.
+Coverage statuses, case results and execution permissions are unchanged; changed
+source still requires new queue scope and current live prerequisites before use.
+The rendered-sidebar unit regressions verify the new order and denied visibility;
+no live QA case was executed for this change.
+
 ## 2026-10-19 result-only catalog refresh
 
 The Modules 1–11 verdict updates changed the catalog's exact hashes. A comparison
