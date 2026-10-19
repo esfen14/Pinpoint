@@ -26,8 +26,8 @@ Requirement coverage:
 
 ## Plan
 
-1. [ ] Extend NcpaPluginNotice.test.tsx with enable/disable focus, visibility/route return, failed refresh, overlapping responses and cleanup regressions; confirm failures.
-2. [ ] Refresh useNcpaPluginState on focus and visible-tab events; retain unknown-on-error and discard outdated/unmounted results.
+1. [x] Extend NcpaPluginNotice.test.tsx with enable/disable focus, visibility/route return, failed refresh, overlapping responses and cleanup regressions; confirm failures.
+2. [x] Refresh useNcpaPluginState on focus and visible-tab events; retain unknown-on-error and discard outdated/unmounted results.
 3. [ ] Update Frontend_Modules_and_Routes and Implementation_Status; run focused tests, frontend gate and all gate; review source bindings if affected.
 4. [ ] Remove scaffold and open PR with verification/limits; leave CI running.
 
@@ -47,3 +47,5 @@ Requirement coverage:
 ## Decisions and notes
 
 No live lab mutation required by finish conditions. Tests use documented inventory responses; no fresh live-browser reproduction claimed. Preserve exact plugin name/status mapping and unknown response behavior. Do not change plugin enable/reconciliation or deployment backend. User prefers no CI wait.
+
+Round1: initial transition tests5failed beforefocusrefresh, then40focusedpassedtwice. Deeperinventory inspection confirms scanner preserves entry.name and serializer returns Plugin.Name; check_ncpa.py is valid per backend registry. Addedname/duplicate regressions:5failed before correction. Recognize only canonical base plus backend-supported py/pl/sh, case/whitespace normalization; any Enabled/Active match wins. This addresses the issue initial-enabled condition, not an unrelated behavior expansion. Next: focused rerun and gates/specs.
