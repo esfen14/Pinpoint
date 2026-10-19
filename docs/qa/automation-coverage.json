@@ -3259,6 +3259,7 @@
     "reviewed_at": "2026-10-19",
     "compared_catalog_revision": "4b6063d797bc5166887de60e05b6be8a3d2ed682",
     "decision": "Compared the catalog against the base revision: titles, priorities, requirements, steps, expected items and dependencies are unchanged. Only recorded Result fields, Recorded run and Finding links changed: TC-SHL-01 to 10 and TC-NFR-01 to 05 and 10 detail lines aligned to their PASS summaries; TC-NFR-09 and 11 PASS; TC-NFR-06 FAIL (Overview has no Retry, issue #245); TC-NFR-07 keeps its FAIL verdict with a tester-reported retest PASS noted (issue #220); TC-NFR-08 keeps its FAIL verdict with a tester-reported retest PASS noted (issue #221); TC-DX-06 FAIL with issue #244. All results are tester-reported, human manual. Refresh bindings; retain adapter claims and historical compatibility/cutoff decisions. This adds no execution or historical acceptance."
+  },
   "source_change_review_issue_247": {
     "reviewed_by": "Claude source review of issue #247, requested by the tester",
     "reviewed_at": "2026-10-19",
