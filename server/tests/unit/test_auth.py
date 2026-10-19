@@ -31,9 +31,10 @@ class TestLogin:
             "/api/user/login",
             json={"email": "admin@example.com", "password": "AdminPass1!"},
         )
-        assert resp.status_code == 200
+        assert resp.status_code == 409
         data = resp.get_json()
-        assert "already" in data["message"].lower()
+        assert data["success"] is False
+        assert data["message"] == "You are already signed in. Sign out before logging in to another account."
 
     # ── wrong credentials ─────────────────────────────────────────────────────
 
@@ -109,3 +110,37 @@ class TestLogout:
         resp = client.post("/api/user/logout")
         # Flask-Login with login_view=None returns 401
         assert resp.status_code in (401, 302)
+
+
+@pytest.mark.parametrize("initial_admin", [True, False])
+def test_conflicting_login_preserves_identity_until_logout(
+    client, db_session, admin_user, regular_user, initial_admin
+):
+    """A rejected login retains A; explicit logout lets B get only B's grants."""
+    identities = [
+        ("admin@example.com", "AdminPass1!", True),
+        ("regular@example.com", "RegularPass1!", False),
+    ]
+    first, second = identities if initial_admin else identities[::-1]
+    assert client.post("/api/user/login", json={
+        "email": first[0], "password": first[1],
+    }).status_code == 200
+    before = client.get("/api/user/me").get_json()["data"]
+    assert before["email"] == first[0]
+    response = client.post("/api/user/login", json={
+        "email": second[0], "password": second[1],
+    })
+    assert response.status_code == 409
+    assert response.get_json()["success"] is False
+    assert "Sign out" in response.get_json()["message"]
+    assert client.get("/api/user/me").get_json()["data"] == before
+    assert client.get("/api/user/accounts").status_code == (200 if first[2] else 403)
+    assert client.post("/api/user/logout").status_code == 200
+    assert client.get("/api/user/me").status_code == 401
+    assert client.post("/api/user/login", json={
+        "email": second[0], "password": second[1],
+    }).status_code == 200
+    after = client.get("/api/user/me").get_json()["data"]
+    assert after["email"] == second[0]
+    assert ("account.view" in after["permissions"]) is second[2]
+    assert client.get("/api/user/accounts").status_code == (200 if second[2] else 403)

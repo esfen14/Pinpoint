@@ -1,6 +1,6 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Outlet } from 'react-router-dom'
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import App from '../App'
 
 vi.mock('../pages/wagpakielaman', () => ({ TopologyPage: () => <div>Topology Page</div> }))
@@ -43,6 +43,36 @@ function renderApp(initialEntry = '/') {
 }
 
 describe('App routing', () => {
+  beforeEach(() => {
+    vi.spyOn(global, 'fetch').mockResolvedValue(new Response('', { status: 401 }))
+  })
+  afterEach(() => vi.restoreAllMocks())
+
+  it('does not expose login while checking the existing session', () => {
+    vi.mocked(fetch).mockReturnValue(new Promise(() => {}))
+    renderApp('/login')
+    expect(screen.queryByRole('button', { name: /^log in$/i })).not.toBeInTheDocument()
+  })
+
+  it('redirects authenticated login navigation to an authorized page', async () => {
+    vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify({
+      data: { permissions: ['system.network_health'] },
+    })))
+    renderApp('/login')
+    expect(await screen.findByText('Network Health Page')).toBeInTheDocument()
+    expect(screen.queryByText('Log In to your Account')).not.toBeInTheDocument()
+    expect(fetch).toHaveBeenCalledWith('/api/user/me', expect.objectContaining({ credentials: 'include' }))
+  })
+
+  it('keeps the login form hidden on a session-check failure and allows retry', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(new Response('', { status: 503 }))
+    renderApp('/login')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Unable to check your session')
+    expect(screen.queryByText('Log In to your Account')).not.toBeInTheDocument()
+    screen.getByRole('button', { name: 'Try again' }).click()
+    expect(await screen.findByText('Log In to your Account')).toBeInTheDocument()
+  })
+
   it('renders without crashing', () => {
     renderApp('/')
   })
@@ -55,10 +85,10 @@ describe('App routing', () => {
     expect(document.body).toBeTruthy()
   })
 
-  it('renders login page at /login route', () => {
+  it('renders login page at /login route', async () => {
     renderApp('/login')
     // LoginPage renders "Log In to your Account" heading
-    expect(screen.getByText('Log In to your Account')).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByText('Log In to your Account')).toBeInTheDocument())
   })
 
   it('registers the System Status page at /system-status', () => {
@@ -82,9 +112,9 @@ describe('App routing', () => {
     expect(screen.queryByText('System Status Page')).not.toBeInTheDocument()
   })
 
-  it('renders wildcard * redirect to /login', () => {
+  it('renders wildcard * redirect to /login', async () => {
     renderApp('/this-does-not-exist')
     // After wildcard redirect to /login, LoginPage should be shown
-    expect(screen.getByText('Log In to your Account')).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByText('Log In to your Account')).toBeInTheDocument())
   })
 })

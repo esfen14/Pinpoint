@@ -35,14 +35,15 @@ Requirement coverage:
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| 1 | Added backend and frontend regressions | pytest tests/unit/test_auth.py -q | Expected red: 3 failed, 8 passed; API returns 200 instead of 409. Frontend dependency install pending |
 | Plan | Read issue and sources; chose explicit logout with 409 rejection | git status --short | Separate clean worktree; original NCPA changes preserved |
 
 ## State for the next session
 
-- Last check run (exact command): git status --short
-- Result (first failing lines, or "green"): green
+- Last check run (exact command): FLASK_DEBUG=1 python -m pytest tests/unit/test_auth.py -q
+- Result (first failing lines, or "green"): 3 failed, 8 passed; assert 200 == 409
 - Hypothesis: Reject all login attempts while authenticated before credential validation; check /me before exposing login form.
-- Next action: Add failing regression tests for conflicting identities and authenticated navigation.
+- Next action: Finish frontend dependency installation, run route regressions, then implement the session guard and 409 rejection.
 
 ## Decisions and notes
 
