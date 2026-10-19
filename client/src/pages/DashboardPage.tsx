@@ -249,8 +249,18 @@ export function DashboardPage() {
           <NagiosSyncNotice message={syncNotice} onDismiss={() => setSyncNotice(null)} />
 
           {loadError && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300">
-              {loadError}
+            <div
+              role="alert"
+              className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-300"
+            >
+              <span>{loadError}</span>
+              <button
+                type="button"
+                onClick={() => { void loadAll() }}
+                className="rounded-lg border border-red-300 px-3 py-1 text-[13px] font-medium hover:bg-red-100 dark:border-red-900/60 dark:hover:bg-red-900/30"
+              >
+                Retry
+              </button>
             </div>
           )}
 

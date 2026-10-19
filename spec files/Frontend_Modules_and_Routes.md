@@ -274,6 +274,11 @@ The card requires `system.dashboard` and preserves old status payload handling.
 Status loads independently so a failing or denied Network Health source does not
 hide appliance storage.
 
+Load errors (REQ-NFR-04): when the main dashboard data cannot be loaded,
+`DashboardPage` shows the error message with a Retry button that reloads all
+dashboard data without a page reload (it works with the Manual refresh rate).
+The Ports section shows its load error with Retry in the same way.
+
 `SystemLogsPage` retains its five paginated audit categories and adds **Nagios
 log**, a separate `components/system-logs/NagiosLogPanel.tsx` rather than a
 paginated audit record. It reads `/api/system/log/nagios?lines=200` through the
