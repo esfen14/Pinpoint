@@ -61,8 +61,12 @@ history-ingestion change was made. An existing mixed-row cost fixture now explic
 identifies its intended NCPA plugin rather than relying on metric text alone;
 its counts/query assertions are unchanged.
 
-Local full verification is reported in the PR. The all gate stops at existing
-macOS QA supervisor host-lock checks. Linux CI is left running per the user's
+Final focused forecast fit/job/route/migration rerun after merging current main:
+71 passed. Local backend gate: 4,379 passed, 26 skipped, four failures in
+`test_ssh_port.py::TestHelperListenerPortEdit`; macOS `/usr/bin/sed` rejects the
+GNU listener-edit syntax with “undefined label”. No listener-edit file changed.
+The all gate stops at existing macOS QA supervisor host-lock checks. All258
+relative documentation links resolve; coverage register validates239 records. Linux CI is left running per the user's
 preference. No installer/systemd, production deployment, independent hardware,
 scale benchmark, browser or72-hour real trend/threshold crossing is claimed.
 

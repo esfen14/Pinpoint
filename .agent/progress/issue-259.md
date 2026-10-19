@@ -1,14 +1,14 @@
 # Issue #259: NCPA forecast short labels
 
 Branch: `issue-259-ncpa-forecast-labels`
-Status: in-progress
+Status: ready-for-review
 
 ## Finish condition
 
-- [ ] Canonical NCPA virtual-memory/disk short labels and full paths eligible.
-- [ ] Swap, disk I/O, other plugins and ambiguous short identities excluded.
-- [ ] Counts, coverage, thresholds, cap/rotation, empty/insufficient and safety rules preserved.
-- [ ] Numeric regressions and suitable real-history verification with revision/report.
+- [x] Canonical NCPA virtual-memory/disk short labels and full paths eligible.
+- [x] Swap, disk I/O, other plugins and ambiguous short identities excluded.
+- [x] Counts, coverage, thresholds, cap/rotation, empty/insufficient and safety rules preserved.
+- [x] Numeric regressions and suitable real-history verification with revision/report.
 
 Requirement coverage:
 
@@ -24,7 +24,7 @@ Requirement coverage:
 1. [x] Add failing numeric label/exclusion/cap/aggregation regressions in test_forecast_job.py.
 2. [x] Reuse ncpa_resource_dimension in both SQL selection and hourly fetch, before cap/aggregation, through a connection-local SQLite scalar function; no DB migration or data rewrite. Verify focused forecast suites.
 3. [x] Collect actual memory/disk samples in reserved Docker lab, run candidate on isolated SQLite copies and restore fixture changes; document revision/result and history-duration limits.
-4. [ ] Update owning specs/report, run backend/docs/all gates; remove scaffold and open PR without waiting CI.
+4. [x] Update owning specs/report, run backend/docs/all gates; remove scaffold and open PR without waiting CI.
 
 ## Round log
 
@@ -48,3 +48,5 @@ Round1: 13 regressions failed before classifier reuse; forecast fit/job/route/mi
 Round2: official agent normal history memory3/disk2samples; baseline0rows vs candidate2insufficient rows on exact SQLite copy. Counts/labels/times preserved, no live positive crossing claimed. Original Nagios cfg hash restored, inactive fixture history/owned agent/protectedfiles removed; six originals running. Report/specs updated. Fullbackend stage session43879 running; allgate fails knownmacOShost-lock. Next: inspect fullbackend result and openPR withoutCIwait.
 
 Round3: merged main#238 frontend/docs only, retained both report/index entries; allforecast suites rerun71passed aftermerge. Docs258linksresolve, coverage239valid. Fullbackend stage passed70% with no failures sofar; pendingcompletion.
+
+Round4: fullbackend4379passed/26skipped/4existingGNUsedlistenerfailures, forecast71green; allgate knownmacOShost-lock. Reread unchangedissue/comments; allfeaturefinishconditionsproven. No sources changed afterliveprobe. Nextremove scaffold/openPRwithlimitations andnoCIwait.
