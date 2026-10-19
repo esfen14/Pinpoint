@@ -23,8 +23,8 @@ Requirement coverage:
 
 ## Plan
 
-1. [ ] Add failing UI regressions for stopped/stale Nagios warning, fresh recovery and refresh modes.
-2. [ ] Implement shared status-freshness interpretation and visible warnings; retain historical PID without presenting it as live proof.
+1. [x] Add failing UI regressions for stopped/stale Nagios warning, fresh recovery and refresh modes.
+2. [x] Implement shared status-freshness interpretation and visible warnings; retain historical PID without presenting it as live proof.
 3. [ ] Verify focused/full frontend and docs/all gates; update owning specifications and reviewed coverage bindings.
 4. [ ] Deploy candidate frontend against reserved Docker API, stop/restart Nagios, verify both refresh modes and warnings, restore lab and record separate sanitized report.
 5. [ ] Remove scaffold and open PR, leaving CI running per user preference.
@@ -45,3 +45,5 @@ Requirement coverage:
 ## Decisions and notes
 
 User explicitly reserves localhost:8000 Docker lab and authorizes stop/restart for this issue; restore it afterward. Do not run discovery or modify catalog verdicts. Stale polling alone cannot prove a stopped process; warnings must describe uncertainty honestly. Historical config-save symptom remains unisolated/outside scope.
+
+Round 1: three stopped/stale warning regressions failed before implementation; 40 focused tests now pass, including cached-snapshot aging and fresh recovery plus both refresh-mode texts. Implemented shared frontend freshness interpretation (3-minute bound, 15-second clock) without falsely asserting stale PID proves a stopped process. Next: live retest and specs/QA bindings.

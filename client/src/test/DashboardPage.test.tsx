@@ -18,9 +18,11 @@ vi.mock('../components/dashboard/ResourceUtilizationSection', () => ({
   ResourceUtilizationSection: () => <h2>Average Resource Utilization</h2>,
 }))
 
+let refreshRate = 0
+
 vi.mock('../contexts/SystemSettingsContext', () => ({
   useSystemSettings: () => ({
-    settings: { dashboardRefreshRate: 0, dateTimeFormat: 'YYYY-MM-DD', timeZone: 'UTC+08:00' },
+    settings: { dashboardRefreshRate: refreshRate, dateTimeFormat: 'YYYY-MM-DD', timeZone: 'UTC+08:00' },
   }),
 }))
 
@@ -53,7 +55,7 @@ function statusResponse(running = true) {
     nagios: {
       running,
       version: '4.5.0',
-      last_status_update: '2026-09-26T10:00:00+00:00',
+      last_status_update: new Date().toISOString(),
       active_host_checks: true,
       active_service_checks: true,
     },
@@ -124,6 +126,7 @@ function statCard(title: string) {
 
 describe('DashboardPage', () => {
   beforeEach(() => {
+    refreshRate = 0
     responses = {
       '/api/system/dashboard/status': statusResponse(),
       '/api/system/dashboard/summary': summaryResponse(),
@@ -209,6 +212,12 @@ describe('DashboardPage', () => {
     expect(within(card).getByText('Unavailable')).toBeInTheDocument()
   })
 
+  it('shows the saved one-minute refresh text', async () => {
+    refreshRate = 1
+    await renderLoaded()
+    expect(screen.getByText('Auto-refreshing every 1 min')).toBeInTheDocument()
+  })
+
   it('shows Online when Nagios is running', async () => {
     await renderLoaded()
     expect(screen.getByText('Online')).toBeInTheDocument()
@@ -240,6 +249,15 @@ describe('DashboardPage', () => {
 
     expect(within(statCard('Network Latency')).getByText('—')).toBeInTheDocument()
     expect(within(statCard('Network Latency')).getByText('No data')).toBeInTheDocument()
+  })
+
+  it('warns prominently when monitoring data stops updating', async () => {
+    const stale = statusResponse()
+    stale.nagios.last_status_update = new Date(Date.now() - 4 * 60_000).toISOString()
+    responses['/api/system/dashboard/status'] = stale
+    renderDashboard()
+    await waitFor(() => expect(screen.getByText('Monitoring unavailable')).toBeInTheDocument())
+    expect(screen.getAllByRole('alert').some((alert) => alert.textContent?.includes('Displayed data may be stale'))).toBe(true)
   })
 
   it('passes host up/down counts to the status overview', async () => {

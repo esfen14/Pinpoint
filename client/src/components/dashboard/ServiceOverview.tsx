@@ -1,4 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useNagiosStatus } from '../../hooks/useNagiosStatus'
+import { NagiosWarning } from './NagiosWarning'
+import { useState } from 'react'
 import type { DashboardStatus, DashboardSummary } from '../../types/dashboard'
 import type { PluginGroup } from '../../types/networkHealth'
 import type { ServiceRow } from '../../types/service'
@@ -132,11 +134,8 @@ export function ServiceOverview({ status, summary, problemServices, pluginGroups
   const { formatDateTime } = useDisplayTime()
   const hasRealData = (summary?.hosts.total ?? 0) > 0 || (summary?.services.total ?? 0) > 0
 
-  const [now, setNow] = useState(() => new Date())
-  useEffect(() => {
-    const id = window.setInterval(() => setNow(new Date()), 15_000)
-    return () => window.clearInterval(id)
-  }, [])
+  const monitoring = useNagiosStatus(status)
+  const { now } = monitoring
 
   const nagios = status?.nagios
   const lastUpdate = nagios?.lastStatusUpdate ? serverDate(nagios.lastStatusUpdate) : null
@@ -160,15 +159,16 @@ export function ServiceOverview({ status, summary, problemServices, pluginGroups
           <p className="text-sm text-[var(--text-muted)]">Loading…</p>
         ) : (
           <div className="space-y-1">
+            {monitoring.unavailable && <NagiosWarning stopped={monitoring.stopped} />}
             <SectionHeader label="Monitoring System" />
             <Row
               label={nagios?.version ? `Nagios ${nagios.version}` : 'Nagios'}
-              status={nagios?.running ? 'Running' : 'Not Running'}
-              tone={nagios?.running ? 'green' : 'red'}
+              status={monitoring.stopped ? 'Not Running' : monitoring.unavailable ? 'Status unavailable' : 'Running'}
+              tone={monitoring.unavailable ? 'red' : 'green'}
               description={
-                nagios?.running
+                !monitoring.unavailable
                   ? 'The Nagios Core monitoring engine that runs every check. It is running normally.'
-                  : 'The Nagios Core monitoring engine is not running, so no host or service states are being updated.'
+                  : 'Nagios is stopped or current status is unavailable. The switches below are last reported settings, not proof that checks are running.'
               }
             />
             <Row
