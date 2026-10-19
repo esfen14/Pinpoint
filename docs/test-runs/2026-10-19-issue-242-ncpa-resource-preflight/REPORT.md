@@ -12,6 +12,10 @@
 | Environment | Reserved existing Docker appliance and five targets; isolated internal `10.78.0.0/24`; temporary x86-64 Ubuntu 22.04 agent with official NCPA 3.5.0 DEB and official tagged v3.5.0 check_ncpa.py |
 | Evidence | Sanitized agent check observations below; downloaded public package/client under git-ignored `test-results/issue-242/`; local focused output `/tmp/pinpoint-242-green.log` |
 
+Continuation: the user authorized the label-mapping expansion; see the separate
+[completed live chart report](../2026-10-19-issue-242-resource-charts/REPORT.md).
+This preflight's original blocked outcome is preserved.
+
 ## Result
 
 **Overall: Blocked for live chart acceptance.** The selector fix passes 57 focused

@@ -80,8 +80,9 @@ checks are excluded even when their names or metrics resemble NCPA. A shared cla
 and current summaries, keeping swap, disk I/O and ambiguous identities out.
 Existing full-path history remains supported without rewriting stored labels.
 Forecasts still use their separate full-path filter and are tracked by the
-[forecast-label follow-up #259](https://github.com/esfen14/Pinpoint/issues/259). Numeric API/summary regressions pass;
-live verification of both resource charts remains required before sign-off.
+[forecast-label follow-up #259](https://github.com/esfen14/Pinpoint/issues/259). Numeric API/summary regressions and both real-agent Docker browser resource
+journeys pass; see the [live chart report](../docs/test-runs/2026-10-19-issue-242-resource-charts/REPORT.md).
+The user's appliance, installer deployment and scale remain unverified.
 
 ## Implemented backend areas
 

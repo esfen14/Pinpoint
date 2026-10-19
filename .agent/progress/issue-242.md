@@ -24,7 +24,7 @@ Requirement coverage:
 
 1. [x] Add failing regressions in server/tests/unit/test_network_health.py, fix selector in server/app/api/system/network_health.py and run focused/backend checks.
 2. [ ] Update Display_Requirements.md and Backend_Modules_and_Routes.md/Implementation_Status.md; verify docs/full gates.
-3. [ ] Add real-label regressions and shared mapping in statistics.py/network_health.py, covering swap/I/O and unknown-identity exclusions; assess forecast scope.
+3. [x] Add real-label regressions and shared mapping in statistics.py/network_health.py, covering swap/I/O and unknown-identity exclusions; assess forecast scope.
 4. [ ] Establish exclusive lab availability, deploy candidate, verify working NCPA history and both charts; record docs/test-runs/ report; publish PR and check CI.
 
 ## Round log
@@ -34,14 +34,15 @@ Requirement coverage:
 | 1 | Classify bounded historical rows with _plugin_key; add numeric resource regressions | FLASK_DEBUG=1 .venv/bin/python -m pytest tests/unit/test_network_health.py -q | green: 57 passed; 16 regressions failed before fix |
 | 2 | Updated specs; real agent preflight exposed short labels; filed #256 and cleaned fixtures | real NCPA 3.5.0 CPU/memory/disk checks; verify.sh all | checks OK with percent/used_percent labels; live charts blocked by #256; all gate stops on known macOS lock-path failure |
 | 3 | User-authorized #256 scope: shared short/full-label mapping in trends and summaries; forecast assessment filed #259 | tests/unit/test_network_health.py + tests/unit/test_statistics.py | 131 passed; 9 label regressions failed before mapping |
+| 4 | Deployed candidate delta, real Nagios/agent history and both browser charts; restored original lab and removed owned fixtures | live report; final focused suite; candidate Linux CI | both journeys pass, 15 samples/resource, 131 focused tests; candidate CI all green |
 | 0 | Read issue, affected specs and source; inspected running Docker lab without changing it | docker ps | existing six-container lab; ownership must be confirmed |
 
 ## State for the next session
 
-- Last check run (exact command): cd server && FLASK_DEBUG=1 .venv/bin/python -m pytest tests/unit/test_network_health.py tests/unit/test_statistics.py -q
-- Result: green: 131 passed. Added a further conservative disk-I/O key prefix exclusion after this run; rerun focused suite with candidate verification.
-- Hypothesis: real agent labels now map to the intended dimensions without changing historical storage; forecasts remain a documented separate follow-up #259.
-- Next action: Deploy candidate network_health.py/statistics.py to the reserved lab, wait for normal stored samples and verify both browser pages.
+- Last check run (exact command): gh pr checks 257 --repo esfen14/Pinpoint
+- Result: all three CI jobs green on ca3c4ea9; live report records both chart passes, deployed delta/file hashes and verified restoration.
+- Hypothesis: finish conditions satisfied; only final report/documentation checks and PR readiness remain.
+- Next action: Verify final docs and scope, remove progress scaffolding, mark PR ready and check final CI.
 
 ## Decisions and notes
 
