@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ServiceOverview } from '../components/dashboard/ServiceOverview'
 import type { DashboardStatus, DashboardSummary } from '../types/dashboard'
@@ -75,6 +75,29 @@ describe('ServiceOverview', () => {
     expect(screen.getByText(/How recently Pinpoint last read status/)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /SSH/ }))
     expect(screen.getByText(/All SSH checks across your hosts \(2 in total\)/)).toBeInTheDocument()
+  })
+
+  it('visibly warns about stopped Nagios without expanding a row', () => {
+    renderPanel({ status: status({ running: false }) })
+    const alert = screen.getByRole('alert')
+    expect(alert).toHaveTextContent('Displayed data may be stale')
+    expect(alert).toHaveTextContent('Host and service states will not change while Nagios is stopped')
+  })
+
+  it('does not present an old PID snapshot as a running engine', () => {
+    renderPanel({ status: status({ lastStatusUpdate: '2026-09-29T09:55:00+00:00' }) })
+    expect(badge('Nagios 4.5.9')).toHaveTextContent('Status unavailable')
+    expect(screen.getByRole('alert')).toHaveTextContent('not reporting')
+  })
+
+  it('ages a cached snapshot in Manual mode and clears the warning on a fresh snapshot', () => {
+    const view = renderPanel({ status: status({ lastStatusUpdate: '2026-09-29T09:57:15Z' }) })
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    act(() => { vi.advanceTimersByTime(15_000) })
+    expect(screen.getByRole('alert')).toHaveTextContent('not reporting')
+    view.rerender(<ServiceOverview status={status({ lastStatusUpdate: new Date().toISOString() })} summary={summary()} problemServices={[]} pluginGroups={GROUPS} isLoading={false} />)
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(badge('Nagios 4.5.9')).toHaveTextContent('Running')
   })
 
   it('shows the Nagios version and how fresh the data is', () => {
