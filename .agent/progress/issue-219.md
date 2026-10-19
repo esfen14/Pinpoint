@@ -6,11 +6,11 @@ Status: in-progress
 ## Finish condition
 
 - [ ] Record tested build, administrator permissions, policy mode and exact manual step (manual evidence pending).
-- [ ] Determine the failing flow and retain sanitized evidence: user reports Edit Account accepts the current password.
-- [ ] Administrator can set a different compliant temporary password through Edit Account.
-- [ ] Old password is refused, temporary password works, and protected routes require a password change.
+- [x] Determine the failing flow and retain sanitized evidence: four isolated cases returned 200 before the guard, 400 after it; user reports Edit Account accepts the current password.
+- [x] Administrator can set a different compliant temporary password through Edit Account (isolated API proof; live manual acceptance pending).
+- [x] Old password is refused, temporary password works, and protected routes require a password change (isolated API proof; live manual acceptance pending).
 - [ ] Preserve original manual FAIL and attach a separate new result; cover confirmed regression and run verification.
-- [ ] Reject reuse of the target account's current password with a visible warning and no saved changes (user clarification).
+- [x] Reject reuse of the target account's current password with a visible warning and no saved changes (four backend cases plus UI warning/retry regression).
 
 | Issue requirement | Finish-condition item | Proof (test or command) |
 |---|---|---|
@@ -34,13 +34,14 @@ Status: in-progress
 | 0 | Inspected issue and user clarification; isolated checkout from origin/main | Existing relevant suite in original checkout | 122 backend + 30 frontend passed; no Edit Account reuse coverage |
 | 1 | Four reuse tests failed with 200 instead of 400; added target hash guard and UI warning/retry coverage | Focused backend suite; ManageAccountsPage.test.tsx; build; lint | 126 backend and 31 UI tests passed; build passed; lint 0 errors/33 warnings |
 | 2 | Updated owning specs and reviewed QA dependency fingerprints (Automation_Readiness.md, automation-coverage.json) | verify.sh all; backend and frontend gates | Windows encoding required explicit -X utf8; docs then correctly rejected changed dependency hashes. Refreshed only after impact review. Frontend QA preflight failed private-mode/symlink checks on Windows; full Vitest 1031 passed/1 existing Add User timeout. Backend gate still running with unrelated failures. |
+| 3 | Completed source-binding review; repeated the single timed-out module once | verify.sh docs with -X utf8; ManageAccountsPage.test.tsx; qa_coverage.py check | Docs now reaches QA queue subprocess and fails Windows charmap decoding (child -I ignores UTF-8 environment). Account module 31 passed including existing Add User case. Source coverage validates. Build and lint passed. Full backend results pending; collecting first failure separately. |
 
 ## State for the next session
 
 - Last check run (exact command): `.venv/Scripts/python.exe -m pytest tests/unit/test_password_change.py tests/unit/test_auth.py tests/unit/test_management.py tests/unit/test_password_requests.py tests/unit/test_validation.py -q --tb=short` from server/
 - Result: green; 126 passed. Account-page suite: 31 passed. Full gate results pending/below.
 - Hypothesis: Confirmed missing target hash guard; isolated behavior is corrected. Broader failures need platform/baseline classification.
-- Next action: Run docs with explicit UTF-8 after dependency review and inspect completed backend/ frontend results; create draft PR with honest limitations.
+- Next action: Inspect backend gate completion/first failure and create a draft PR retaining this progress file for manual acceptance and Linux CI.
 
 ## Decisions and notes
 
