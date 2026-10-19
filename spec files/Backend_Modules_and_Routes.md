@@ -487,7 +487,7 @@ update/custom-plugin modules.
 | `POST /api/plugin/scan` | `plugin.scan` | Start plugin-directory scan |
 | `GET /api/plugin/scan/status` | `plugin.scan` | Read latest scan status |
 | `GET /api/plugin` | `plugin.view` | Paginated plugin inventory; optional `group` (Network Services, Device Availability, Network Protocols, Servers, Application, Other) filters to one inventory tab (catalog category, with per-plugin fixes in `PLUGIN_GROUP_OVERRIDES`), 400 otherwise |
-| `GET /api/plugin/summary` | `plugin.view` | Plugin-manager summary counts, including `enabled_plugins` (Enabled or Active; zero drives the "no plugins enabled" banner) |
+| `GET /api/plugin/summary` | `plugin.view` | Plugin-manager summary counts: `installed_plugins`, `active_capabilities` and `validation_issues` drive the three visible summary cards; `enabled_plugins` (Enabled or Active) drives the "no plugins enabled" banner when zero. `custom_plugins` and `updates_available` remain in the response for compatibility but are unused by the client |
 | `GET /api/plugin/history` | `plugin.view` | Plugin audit/history records |
 | `GET /api/plugin/<plugin_id>` | `plugin.view` | Plugin detail, including `description`, `category` and `documentation_url` (null for plugins outside the bundled catalog) |
 | `GET /api/plugin/<plugin_id>/commands` | `plugin.view` | Commands and active overrides |
