@@ -10,9 +10,11 @@ routes. `AdminLayout` supplies the authenticated shell, and `Sidebar`, `Header`,
 cross-page behavior.
 
 For a user with access to all three, the sidebar places **Device Inventory**,
-**System Status**, then **Topology** consecutively. These entries retain
+**Network Status**, then **Topology** consecutively. These entries retain
 `/device-inventory`, `/system-status` and `/topology`, respectively, and all
 require `system.network_health`; permission filtering hides them when absent.
+The Network Status name also appears in the shell header and Recently Visited
+entries. Its internal `SystemStatusPage` name and monitoring behavior are unchanged.
 
 All API calls are same-origin and send the Flask session cookie. Shared JSON
 requests use `src/lib/api.ts`; Plugin Manager wrappers live in
@@ -28,7 +30,7 @@ requests use `src/lib/api.ts`; Plugin Manager wrappers live in
 | `/device-inventory` | `DeviceInventoryPage` | `system.network_health` | Connected to the latest-host endpoints and acknowledgement API. The host table has an IP Address column (`—` for a host with no discovered device). The host drawer also shows a Ports section (see `Device_Inventory_Requirements.md`) for users with `system.hosts` when the host has a `device_id`; actions need `system.hosts.edit`. The host table has a Monitoring column and filter, and the drawer a Monitoring section with Pause / Resume (`Device_Inventory_Requirements.md` §12) |
 | `/history` | `HistoryPage` | `system.history` | Connected to the alert and notification history list and detail routes (`/api/system/history/...`); sidebar entry "History". Audited against `Alerts_Notifications_History_Requirements.md` in `docs/test-runs/2026-10-14-issue-133-history-audit/AUDIT.md`; supported sorting controls are present and cross-tab links now use Nagios `event_id` locators to expand the exact row beyond the default 24h range (#143); remaining history gaps are tracked in #142 and #144 |
 | `/topology` | `TopologyPage` | `system.network_health` | Real backend inventory and configured parent edges from `/api/system/topology`; automatic hierarchy including disconnected devices and shared children, read-only positions, device/relationship selection panels. Parent editing uses `system.hosts.edit` |
-| `/system-status` | `SystemStatusPage` | `system.network_health` | The **System Status** page (sidebar label “System Status”) has the content heading **Network Service Overview** (#232): a service-status table with OK / Warning / Unknown / Critical counts, search, state filter, sort, paging and acknowledgement, and, for users with `remediation.view`, a "Recovers automatically" mark linking to Remediation on each service that has an enabled restart action scoped to it. It is a supported page. Topology is a separate supported page. |
+| `/system-status` | `SystemStatusPage` | `system.network_health` | The **Network Status** page (sidebar label “Network Status”) has the content heading **Network Service Overview** (#232): a service-status table with OK / Warning / Unknown / Critical counts, search, state filter, sort, paging and acknowledgement, and, for users with `remediation.view`, a "Recovers automatically" mark linking to Remediation on each service that has an enabled restart action scoped to it. It is a supported page. Topology is a separate supported page. |
 | `/plugins` | `PluginsPage` | `plugin.view` | Connected to Plugin Manager inventory (category tabs All / Network Services / Device Availability / Network Protocols / Servers / Application / Other, filtered by the `group` query parameter so paging stays per tab; a Monitoring column and a banner while no plugin is enabled), plugin details with an enable confirmation that previews what will be monitored, the plugin's monitored services with live status and per-device stop/resume, scanning, and mutation APIs. There is no Currently Running tab (the tabs are categories only) and devices are never picked by hand |
 | `/ncpa-deployment` | `NcpaDeploymentPage` | `system.deploy.ncpa` | Warns, through `useNcpaPluginState`, when `check_ncpa` is not enabled in Plugin Manager (the agent's checks are monitored only while it is). Connected to the NCPA deployment routes: device list, deploy wizard (host-key trust, login checks, start), live run banner, Deployment History tab and run review drawer (`?tab=history&run=<id>`) |
 | `/maintenance` | `MaintenancePage` | `maintenance.manage` | **Maintenance** (sidebar). Lists maintenance windows (devices, next occurrence, repeats, status, reason) with create, edit and a two-step cancel, through `lib/maintenanceApi.ts` and `types/maintenance.ts`. Times are typed and shown in the Time Zone setting (`useDisplayTime`, `utils/maintenanceTime.ts`) and sent as UTC; the form checks what the server checks. A failed or retrying occurrence is shown with its reason, and a `nagios_synced: false` result is shown as a notice. A note explains that a window silences alerts and links to Settings → System, where the Maintenance Mode switch and the global banner say it only pauses PinPoint's jobs and link back here |
@@ -175,7 +177,7 @@ cadence alone. Save errors retain the draft and show the API message.
   success line, the server's error, and a countdown from the 429 `retry_after`
   (default 10 s) during which it is disabled.
 - `components/shared/NagiosSyncNotice.tsx` with `types/nagiosSync.ts`: every acknowledge
-  and unacknowledge call (Dashboard, Device Inventory, System Status, the drawer)
+  and unacknowledge call (Dashboard, Device Inventory, Network Status, the drawer)
   reads `nagios_synced` from the response and shows a dismissible notice when it
   is false; nothing is shown when it is true or absent.
 
@@ -225,7 +227,7 @@ No interface, power-state, utilization or traffic data is fabricated. Hosts with
 a discovery record remain visible but cannot edit parents. Refresh follows the
 shared Dashboard Refresh Rate (minutes, zero for Manual), plus an explicit Refresh
 button. The Topology route/sidebar/header and access guard remain separate from
-System Status. The page uses shared theme and timestamp preferences.
+Network Status. The page uses shared theme and timestamp preferences.
 
 ## Email settings
 

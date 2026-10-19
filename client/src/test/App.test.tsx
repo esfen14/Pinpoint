@@ -19,7 +19,7 @@ vi.mock('../pages/NetworkHealthPage', () => ({
   NetworkHealthPage: () => <div>Network Health Page</div>,
 }))
 vi.mock('../pages/SystemStatusPage', () => ({
-  SystemStatusPage: () => <div>System Status Page</div>,
+  SystemStatusPage: () => <div>Network Status Page</div>,
 }))
 vi.mock('../pages/MaintenancePage', () => ({
   MaintenancePage: () => <div>Maintenance Page</div>,
@@ -99,9 +99,9 @@ describe('App routing', () => {
     await waitFor(() => expect(screen.getByText('Log In to your Account')).toBeInTheDocument())
   })
 
-  it('registers the System Status page at /system-status', () => {
+  it('registers the Network Status page at /system-status', () => {
     renderApp('/system-status')
-    expect(screen.getByText('System Status Page')).toBeInTheDocument()
+    expect(screen.getByText('Network Status Page')).toBeInTheDocument()
   })
 
   it('registers the Maintenance page at /maintenance', () => {
@@ -114,10 +114,10 @@ describe('App routing', () => {
     expect(screen.getByText('Remediation Page')).toBeInTheDocument()
   })
 
-  it('registers topology separately from System Status', () => {
+  it('registers topology separately from Network Status', () => {
     renderApp('/topology')
     expect(screen.getByText('Topology Page')).toBeInTheDocument()
-    expect(screen.queryByText('System Status Page')).not.toBeInTheDocument()
+    expect(screen.queryByText('Network Status Page')).not.toBeInTheDocument()
   })
 
   it('renders wildcard * redirect to /login', async () => {

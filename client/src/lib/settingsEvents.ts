@@ -1,5 +1,5 @@
 // Settings cards that save through their own API (notification policy, escalations) tell the
-// System Status summary to refresh, so it never shows a value that was just changed.
+// Settings configuration summary to refresh, so it never shows a value that was just changed.
 const EVENT = 'pinpoint-settings-changed'
 
 export function notifySettingsChanged() {
