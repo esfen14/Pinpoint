@@ -251,11 +251,12 @@
         "client/src/components/layout/Sidebar.tsx": "a2d5f6f6ae753449615cec88f3d561aaf77277c518358657db78b8691bf75c10",
         "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
         "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
-        "server/app/api/user/login.py": "131d66fec10e1ee90bf98a7838e3ed827edc8d99e461b0ec3f36ab4c069c5e8b",
+        "server/app/api/user/login.py": "0d0f9d269758533d8463b3b3191d629d17e18960b8a0b8d012e0d7de4fac7dfc",
         "server/app/api/user/management.py": "2ad5a1f3a41c9784fb5688b1455279946f2da9ea63c1deaf13a6723d1adb0c4d",
         "server/app/api/commands/seed.py": "a1768b1aee8b898d8af3b7d4ae56ea392a15012d46315e1874c1b1aa519726f4",
         "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
-        "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a"
+        "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
+        "client/src/components/login/LoginRoute.tsx": "4f2efe6b6c952c75850e6796afa9ea1bb122595286fc9ed881e7c3ed31f32d02"
       },
       "prerequisites": [
         "Exclusive disposable lab with reviewed deployed SHA and supported no-network launcher.",
@@ -266,9 +267,9 @@
         "Use supported POST logout; verify GET /api/user/me returns 401; dispose browser context.",
         "No monitoring/configuration changes. Login/logout audit entries remain attributable; do not erase them. Halt on cleanup failure."
       ],
-      "reviewed_by": "Codex source review; not runtime acceptance",
-      "reviewed_at": "2026-10-18",
-      "procedure_review": "Source-reviewed full written procedure and each expected item against pageAccess/Sidebar/routes and real browser navigation assertions; no mocks or product changes. Existing initialized zero-permission Staff and supported logout/401 cleanup reused."
+      "reviewed_by": "Codex",
+      "reviewed_at": "2026-10-19",
+      "procedure_review": "Source-reviewed full written procedure and each expected item against pageAccess/Sidebar/routes and real browser navigation assertions; no mocks or product changes. Existing initialized zero-permission Staff and supported logout/401 cleanup reused. Issue #222 review: fresh browser contexts still sign in through the UI after the session check confirms 401; Staff lands on Settings, qa-view on Dashboard. Existing sidebar/page/API denial assertions and explicit logout plus unauthenticated /me cleanup remain applicable. Existing-session conflict is rejected, never silently accepted. No live run or new authorization."
     },
     "TC-ACC-10": {
       "case_hash": "dc7592c5f7eed34736018c3d38d5d4c6883b439d3e4a5f5271d7208d1d12ff6b",
@@ -394,7 +395,7 @@
         "client/e2e/qa-modules-2-9.lab.spec.ts": "49f82ae6f6996d784082d575da9013a7a4827100fc797d5e47c73848977b43bc",
         "client/playwright.modules.qa.config.ts": "49dbe58e8e6547495ced6abe204a5ccd3854e917db47dea2f7c4acd846d6085c",
         "client/qa/module-selection.mjs": "5b648a29d597eb7ecdf3e7ea38f2a44560c5f7a2c1259e8041a503c3c4f4d99e",
-        "client/src/App.tsx": "05b6afc326a4946b382f222a68276744aa6b365fbe1a40cee04b237240a27579",
+        "client/src/App.tsx": "f6508f60c71ec999a95f0bc6ace34f289022f6d14fd0c6128da5a2f174fd0443",
         "client/src/components/layout/Sidebar.tsx": "a2d5f6f6ae753449615cec88f3d561aaf77277c518358657db78b8691bf75c10",
         "client/src/components/layout/PageAccessGuard.tsx": "2d0765defe8f5dbc8c33ec735d0d7ba7a57332574b8c77b723cea41bc1ea9c5f",
         "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
@@ -406,7 +407,8 @@
         "server/app/api/system/log.py": "0217cd8e0b016a80bb77b01684d8e47a1af0a1ea445a73ddf20b35874be1e706",
         "server/app/api/system/report.py": "c5b98b9ce642255d71f95660d6bdd17f9044abf95cb12866e9daef6fda15a07d",
         "server/app/api/user/management.py": "2ad5a1f3a41c9784fb5688b1455279946f2da9ea63c1deaf13a6723d1adb0c4d",
-        "server/app/api/user/login.py": "131d66fec10e1ee90bf98a7838e3ed827edc8d99e461b0ec3f36ab4c069c5e8b"
+        "server/app/api/user/login.py": "0d0f9d269758533d8463b3b3191d629d17e18960b8a0b8d012e0d7de4fac7dfc",
+        "client/src/components/login/LoginRoute.tsx": "4f2efe6b6c952c75850e6796afa9ea1bb122595286fc9ed881e7c3ed31f32d02"
       },
       "prerequisites": [
         "An initialized qa-view user with system.dashboard and no permissions for the catalog protected pages/APIs.",
@@ -415,9 +417,9 @@
       "recovery": [
         "No account or role writes. POST logout, verify GET /api/user/me returns 401, and dispose the browser context. Preserve login/logout audit entries."
       ],
-      "reviewed_by": "Codex source review; not runtime acceptance",
-      "reviewed_at": "2026-10-18",
-      "procedure_review": "The full catalog route/API list and REQ-ROL-04 were reviewed against the frontend page-permission map, sidebar filtering and PageAccessGuard, plus Flask permission decorators for the three listed APIs. The adapter signs in through the real UI, reads actual hrefs, navigates each page address, and browser-navigates each API address. No mocked request or alternate API assertion replaces a step."
+      "reviewed_by": "Codex",
+      "reviewed_at": "2026-10-19",
+      "procedure_review": "The full catalog route/API list and REQ-ROL-04 were reviewed against the frontend page-permission map, sidebar filtering and PageAccessGuard, plus Flask permission decorators for the three listed APIs. The adapter signs in through the real UI, reads actual hrefs, navigates each page address, and browser-navigates each API address. No mocked request or alternate API assertion replaces a step. Issue #222 review: fresh browser contexts still sign in through the UI after the session check confirms 401; Staff lands on Settings, qa-view on Dashboard. Existing sidebar/page/API denial assertions and explicit logout plus unauthenticated /me cleanup remain applicable. Existing-session conflict is rejected, never silently accepted. No live run or new authorization."
     },
     "TC-ROL-05": {
       "case_hash": "2acd8a77d8f8976366a073d2a99b78654b2b928e18bf19b118f127cbd71903a1",
@@ -532,11 +534,12 @@
         "client/src/components/layout/Sidebar.tsx": "a2d5f6f6ae753449615cec88f3d561aaf77277c518358657db78b8691bf75c10",
         "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
         "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
-        "server/app/api/user/login.py": "131d66fec10e1ee90bf98a7838e3ed827edc8d99e461b0ec3f36ab4c069c5e8b",
+        "server/app/api/user/login.py": "0d0f9d269758533d8463b3b3191d629d17e18960b8a0b8d012e0d7de4fac7dfc",
         "server/app/api/user/management.py": "2ad5a1f3a41c9784fb5688b1455279946f2da9ea63c1deaf13a6723d1adb0c4d",
         "server/app/api/commands/seed.py": "a1768b1aee8b898d8af3b7d4ae56ea392a15012d46315e1874c1b1aa519726f4",
         "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
-        "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a"
+        "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
+        "client/src/components/login/LoginRoute.tsx": "4f2efe6b6c952c75850e6796afa9ea1bb122595286fc9ed881e7c3ed31f32d02"
       },
       "prerequisites": [
         "Exclusive disposable lab with reviewed deployed SHA and supported no-network launcher.",
@@ -547,9 +550,9 @@
         "Use supported POST logout; verify GET /api/user/me returns 401; dispose browser context.",
         "No monitoring/configuration changes. Login/logout audit entries remain attributable; do not erase them. Halt on cleanup failure."
       ],
-      "reviewed_by": "Codex source review; not runtime acceptance",
-      "reviewed_at": "2026-10-18",
-      "procedure_review": "UI sign-in as Staff; direct page navigation; hidden exact sidebar link and redirect asserted. API cases open the exact API address in the browser and assert 403. No mock or substituted UI step."
+      "reviewed_by": "Codex",
+      "reviewed_at": "2026-10-19",
+      "procedure_review": "UI sign-in as Staff; direct page navigation; hidden exact sidebar link and redirect asserted. API cases open the exact API address in the browser and assert 403. No mock or substituted UI step. Issue #222 review: fresh browser contexts still sign in through the UI after the session check confirms 401; Staff lands on Settings, qa-view on Dashboard. Existing sidebar/page/API denial assertions and explicit logout plus unauthenticated /me cleanup remain applicable. Existing-session conflict is rejected, never silently accepted. No live run or new authorization."
     },
     "TC-HIS-01": {
       "case_hash": "02167fdb7272522cb064a70f146d44eed0fec7f84ceced4803063e1ffc3c17b3",
@@ -576,11 +579,12 @@
         "client/src/components/layout/Sidebar.tsx": "a2d5f6f6ae753449615cec88f3d561aaf77277c518358657db78b8691bf75c10",
         "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
         "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
-        "server/app/api/user/login.py": "131d66fec10e1ee90bf98a7838e3ed827edc8d99e461b0ec3f36ab4c069c5e8b",
+        "server/app/api/user/login.py": "0d0f9d269758533d8463b3b3191d629d17e18960b8a0b8d012e0d7de4fac7dfc",
         "server/app/api/user/management.py": "2ad5a1f3a41c9784fb5688b1455279946f2da9ea63c1deaf13a6723d1adb0c4d",
         "server/app/api/commands/seed.py": "a1768b1aee8b898d8af3b7d4ae56ea392a15012d46315e1874c1b1aa519726f4",
         "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
-        "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a"
+        "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
+        "client/src/components/login/LoginRoute.tsx": "4f2efe6b6c952c75850e6796afa9ea1bb122595286fc9ed881e7c3ed31f32d02"
       },
       "prerequisites": [
         "Exclusive disposable lab with reviewed deployed SHA and supported no-network launcher.",
@@ -591,9 +595,9 @@
         "Use supported POST logout; verify GET /api/user/me returns 401; dispose browser context.",
         "No monitoring/configuration changes. Login/logout audit entries remain attributable; do not erase them. Halt on cleanup failure."
       ],
-      "reviewed_by": "Codex source review; not runtime acceptance",
-      "reviewed_at": "2026-10-18",
-      "procedure_review": "UI sign-in as Staff; direct page navigation; hidden exact sidebar link and redirect asserted. API cases open the exact API address in the browser and assert 403. No mock or substituted UI step."
+      "reviewed_by": "Codex",
+      "reviewed_at": "2026-10-19",
+      "procedure_review": "UI sign-in as Staff; direct page navigation; hidden exact sidebar link and redirect asserted. API cases open the exact API address in the browser and assert 403. No mock or substituted UI step. Issue #222 review: fresh browser contexts still sign in through the UI after the session check confirms 401; Staff lands on Settings, qa-view on Dashboard. Existing sidebar/page/API denial assertions and explicit logout plus unauthenticated /me cleanup remain applicable. Existing-session conflict is rejected, never silently accepted. No live run or new authorization."
     },
     "TC-PLG-07": {
       "case_hash": "7e3f224640ab781fe57d9834238a4013cb10c54cbb19d56aedd7ea515c641e6e",
@@ -620,11 +624,12 @@
         "client/src/components/layout/Sidebar.tsx": "a2d5f6f6ae753449615cec88f3d561aaf77277c518358657db78b8691bf75c10",
         "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
         "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
-        "server/app/api/user/login.py": "131d66fec10e1ee90bf98a7838e3ed827edc8d99e461b0ec3f36ab4c069c5e8b",
+        "server/app/api/user/login.py": "0d0f9d269758533d8463b3b3191d629d17e18960b8a0b8d012e0d7de4fac7dfc",
         "server/app/api/user/management.py": "2ad5a1f3a41c9784fb5688b1455279946f2da9ea63c1deaf13a6723d1adb0c4d",
         "server/app/api/commands/seed.py": "a1768b1aee8b898d8af3b7d4ae56ea392a15012d46315e1874c1b1aa519726f4",
         "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
-        "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a"
+        "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
+        "client/src/components/login/LoginRoute.tsx": "4f2efe6b6c952c75850e6796afa9ea1bb122595286fc9ed881e7c3ed31f32d02"
       },
       "prerequisites": [
         "Exclusive disposable lab with reviewed deployed SHA and supported no-network launcher.",
@@ -635,9 +640,9 @@
         "Use supported POST logout; verify GET /api/user/me returns 401; dispose browser context.",
         "No monitoring/configuration changes. Login/logout audit entries remain attributable; do not erase them. Halt on cleanup failure."
       ],
-      "reviewed_by": "Codex source review; not runtime acceptance",
-      "reviewed_at": "2026-10-18",
-      "procedure_review": "UI sign-in as Staff; direct page navigation; hidden exact sidebar link and redirect asserted. API cases open the exact API address in the browser and assert 403. No mock or substituted UI step."
+      "reviewed_by": "Codex",
+      "reviewed_at": "2026-10-19",
+      "procedure_review": "UI sign-in as Staff; direct page navigation; hidden exact sidebar link and redirect asserted. API cases open the exact API address in the browser and assert 403. No mock or substituted UI step. Issue #222 review: fresh browser contexts still sign in through the UI after the session check confirms 401; Staff lands on Settings, qa-view on Dashboard. Existing sidebar/page/API denial assertions and explicit logout plus unauthenticated /me cleanup remain applicable. Existing-session conflict is rejected, never silently accepted. No live run or new authorization."
     },
     "TC-NCPA-08": {
       "case_hash": "cc28f84b78382c9a9bb20f022614cc454bd90a83fb2fb59462c04e112733bd4c",
@@ -664,11 +669,12 @@
         "client/src/components/layout/Sidebar.tsx": "a2d5f6f6ae753449615cec88f3d561aaf77277c518358657db78b8691bf75c10",
         "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
         "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
-        "server/app/api/user/login.py": "131d66fec10e1ee90bf98a7838e3ed827edc8d99e461b0ec3f36ab4c069c5e8b",
+        "server/app/api/user/login.py": "0d0f9d269758533d8463b3b3191d629d17e18960b8a0b8d012e0d7de4fac7dfc",
         "server/app/api/user/management.py": "2ad5a1f3a41c9784fb5688b1455279946f2da9ea63c1deaf13a6723d1adb0c4d",
         "server/app/api/commands/seed.py": "a1768b1aee8b898d8af3b7d4ae56ea392a15012d46315e1874c1b1aa519726f4",
         "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
-        "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a"
+        "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
+        "client/src/components/login/LoginRoute.tsx": "4f2efe6b6c952c75850e6796afa9ea1bb122595286fc9ed881e7c3ed31f32d02"
       },
       "prerequisites": [
         "Exclusive disposable lab with reviewed deployed SHA and supported no-network launcher.",
@@ -679,9 +685,9 @@
         "Use supported POST logout; verify GET /api/user/me returns 401; dispose browser context.",
         "No monitoring/configuration changes. Login/logout audit entries remain attributable; do not erase them. Halt on cleanup failure."
       ],
-      "reviewed_by": "Codex source review; not runtime acceptance",
-      "reviewed_at": "2026-10-18",
-      "procedure_review": "Source-reviewed full written procedure and each expected item against pageAccess/Sidebar/routes and real browser navigation assertions; no mocks or product changes. Existing initialized zero-permission Staff and supported logout/401 cleanup reused."
+      "reviewed_by": "Codex",
+      "reviewed_at": "2026-10-19",
+      "procedure_review": "Source-reviewed full written procedure and each expected item against pageAccess/Sidebar/routes and real browser navigation assertions; no mocks or product changes. Existing initialized zero-permission Staff and supported logout/401 cleanup reused. Issue #222 review: fresh browser contexts still sign in through the UI after the session check confirms 401; Staff lands on Settings, qa-view on Dashboard. Existing sidebar/page/API denial assertions and explicit logout plus unauthenticated /me cleanup remain applicable. Existing-session conflict is rejected, never silently accepted. No live run or new authorization."
     },
     "TC-RPT-07": {
       "case_hash": "c388d67924988fe114702789aabda482422786890d9f9f3850b987b616df321e",
@@ -708,11 +714,12 @@
         "client/src/components/layout/Sidebar.tsx": "a2d5f6f6ae753449615cec88f3d561aaf77277c518358657db78b8691bf75c10",
         "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
         "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
-        "server/app/api/user/login.py": "131d66fec10e1ee90bf98a7838e3ed827edc8d99e461b0ec3f36ab4c069c5e8b",
+        "server/app/api/user/login.py": "0d0f9d269758533d8463b3b3191d629d17e18960b8a0b8d012e0d7de4fac7dfc",
         "server/app/api/user/management.py": "2ad5a1f3a41c9784fb5688b1455279946f2da9ea63c1deaf13a6723d1adb0c4d",
         "server/app/api/commands/seed.py": "a1768b1aee8b898d8af3b7d4ae56ea392a15012d46315e1874c1b1aa519726f4",
         "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
-        "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a"
+        "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
+        "client/src/components/login/LoginRoute.tsx": "4f2efe6b6c952c75850e6796afa9ea1bb122595286fc9ed881e7c3ed31f32d02"
       },
       "prerequisites": [
         "Exclusive disposable lab with reviewed deployed SHA and supported no-network launcher.",
@@ -723,9 +730,9 @@
         "Use supported POST logout; verify GET /api/user/me returns 401; dispose browser context.",
         "No monitoring/configuration changes. Login/logout audit entries remain attributable; do not erase them. Halt on cleanup failure."
       ],
-      "reviewed_by": "Codex source review; not runtime acceptance",
-      "reviewed_at": "2026-10-18",
-      "procedure_review": "UI sign-in as Staff; direct page navigation; hidden exact sidebar link and redirect asserted. API cases open the exact API address in the browser and assert 403. No mock or substituted UI step."
+      "reviewed_by": "Codex",
+      "reviewed_at": "2026-10-19",
+      "procedure_review": "UI sign-in as Staff; direct page navigation; hidden exact sidebar link and redirect asserted. API cases open the exact API address in the browser and assert 403. No mock or substituted UI step. Issue #222 review: fresh browser contexts still sign in through the UI after the session check confirms 401; Staff lands on Settings, qa-view on Dashboard. Existing sidebar/page/API denial assertions and explicit logout plus unauthenticated /me cleanup remain applicable. Existing-session conflict is rejected, never silently accepted. No live run or new authorization."
     },
     "TC-LOG-05": {
       "case_hash": "cba2aca988e0e895dd2915863a0f8e0bcbc273004770cec6136bc228f780a28e",
@@ -752,11 +759,12 @@
         "client/src/components/layout/Sidebar.tsx": "a2d5f6f6ae753449615cec88f3d561aaf77277c518358657db78b8691bf75c10",
         "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
         "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
-        "server/app/api/user/login.py": "131d66fec10e1ee90bf98a7838e3ed827edc8d99e461b0ec3f36ab4c069c5e8b",
+        "server/app/api/user/login.py": "0d0f9d269758533d8463b3b3191d629d17e18960b8a0b8d012e0d7de4fac7dfc",
         "server/app/api/user/management.py": "2ad5a1f3a41c9784fb5688b1455279946f2da9ea63c1deaf13a6723d1adb0c4d",
         "server/app/api/commands/seed.py": "a1768b1aee8b898d8af3b7d4ae56ea392a15012d46315e1874c1b1aa519726f4",
         "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
-        "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a"
+        "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
+        "client/src/components/login/LoginRoute.tsx": "4f2efe6b6c952c75850e6796afa9ea1bb122595286fc9ed881e7c3ed31f32d02"
       },
       "prerequisites": [
         "Exclusive disposable lab with reviewed deployed SHA and supported no-network launcher.",
@@ -767,9 +775,9 @@
         "Use supported POST logout; verify GET /api/user/me returns 401; dispose browser context.",
         "No monitoring/configuration changes. Login/logout audit entries remain attributable; do not erase them. Halt on cleanup failure."
       ],
-      "reviewed_by": "Codex source review; not runtime acceptance",
-      "reviewed_at": "2026-10-18",
-      "procedure_review": "UI sign-in as Staff; direct page navigation; hidden exact sidebar link and redirect asserted. API cases open the exact API address in the browser and assert 403. No mock or substituted UI step."
+      "reviewed_by": "Codex",
+      "reviewed_at": "2026-10-19",
+      "procedure_review": "UI sign-in as Staff; direct page navigation; hidden exact sidebar link and redirect asserted. API cases open the exact API address in the browser and assert 403. No mock or substituted UI step. Issue #222 review: fresh browser contexts still sign in through the UI after the session check confirms 401; Staff lands on Settings, qa-view on Dashboard. Existing sidebar/page/API denial assertions and explicit logout plus unauthenticated /me cleanup remain applicable. Existing-session conflict is rejected, never silently accepted. No live run or new authorization."
     },
     "TC-SHL-06": {
       "case_hash": "b355427e38e42b5e10321376c93d45c4b83d050200f1ca44da675bdd690be176",
@@ -3282,5 +3290,21 @@
       ]
     },
     "decision": "All case titles, priorities, requirements, dependencies and safety classifications are unchanged. Procedures and expected items are unchanged except TC-LOG-04: clarified raw-log comparison, unreadable-file check without stopping Nagios, and explicit restoration check. Other edits consolidate recorded results and source attribution. Existing automation coverage and historical evidence acceptance are not expanded; no execution performed."
+  },
+  "existing_session_login_review": {
+    "issue": 222,
+    "reviewed_by": "Codex",
+    "reviewed_at": "2026-10-19",
+    "cases": [
+      "TC-ACC-09",
+      "TC-ROL-04",
+      "TC-SS-04",
+      "TC-HIS-01",
+      "TC-PLG-07",
+      "TC-NCPA-08",
+      "TC-RPT-07",
+      "TC-LOG-05"
+    ],
+    "review": "Issue #222 review: fresh browser contexts still sign in through the UI after the session check confirms 401; Staff lands on Settings, qa-view on Dashboard. Existing sidebar/page/API denial assertions and explicit logout plus unauthenticated /me cleanup remain applicable. Existing-session conflict is rejected, never silently accepted. No live run or new authorization."
   }
 }

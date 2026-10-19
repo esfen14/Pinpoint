@@ -1,5 +1,19 @@
 # Current-case adapter preparation
 
+## 2026-10-19 existing-session login dependency review (#222)
+
+Codex compared the written procedures, expected-item assertions and login/logout
+fixtures for TC-ACC-09, TC-ROL-04, TC-SS-04, TC-HIS-01, TC-PLG-07,
+TC-NCPA-08, TC-RPT-07 and TC-LOG-05 with the explicit sign-out contract.
+Fresh browser contexts still receive 401 from the login route's session check,
+then expose the same credential form. Staff's authorized landing remains Settings;
+qa-view's remains Dashboard. The sidebar, direct-page and API-denial assertions
+remain applicable, and cleanup still logs out and checks unauthenticated `/me`.
+The affected login/API/App fingerprints were refreshed and the new `LoginRoute`
+dependency was added to these mappings. Coverage statuses, expected-item mappings,
+historical verdicts and execution permissions are unchanged. New queue scope and
+fresh live prerequisites remain required; no live case was executed by this review.
+
 ## 2026-10-19 sidebar dependency review (#231)
 
 Codex reviewed the sidebar-only reorder against the written cases and assertions

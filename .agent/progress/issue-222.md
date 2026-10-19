@@ -28,7 +28,7 @@ Requirement coverage:
 
 1. [x] Add failing backend/session and frontend route/conflict tests in test_auth.py, App.test.tsx and LoginPage.test.tsx.
 2. [x] Reject authenticated login with 409 in server/app/api/user/login.py; add LoginRoute.tsx session check and wire App.tsx.
-3. [ ] Update backend/frontend specifications and Implementation_Status.md; run focused tests and repository gates.
+3. [ ] Update reviewed QA dependency fingerprints in automation-coverage.json and Automation_Readiness.md after source changes; update backend/frontend specifications and Implementation_Status.md; run focused tests and repository gates.
 4. [ ] Record manual appliance verification with differing roles if available; otherwise preserve the blocker in a draft PR.
 
 ## Round log
@@ -52,3 +52,5 @@ Requirement coverage:
 Issue explicitly permits rejection or switching; choose rejection requiring explicit sign-out. Preserve existing session on 409. No live changes made. Original historical manual account pair and request evidence were not supplied; do not invent them. Manual acceptance remains required before ready for review.
 
 Manual acceptance blocker: the user confirmed the QA environment cannot be provided. No endpoint, second role/account or original sanitized request evidence is available. Credentials shared in chat were not used or persisted. A person must supply an endpoint and manual before/after evidence for both role directions, normal login and logout then another login.
+
+Round 4 decision: CI docs exposed stale source bindings for login.py and App.tsx. Reviewed the eight affected permission cases, assertion/fixture/cleanup paths and added LoginRoute to their source dependencies. This metadata update is required for the login change; it does not change QA scope, coverage, historical results or authorization.
