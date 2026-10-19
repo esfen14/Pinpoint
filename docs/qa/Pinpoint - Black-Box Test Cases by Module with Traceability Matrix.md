@@ -2850,14 +2850,14 @@ Changes are saved with **Save Changes**. **Discard Changes** and **Reset to Defa
 | TC | Case | Req | Tech | Pri | Result |
 | --- | --- | --- | --- | --- | --- |
 | TC-DSC-01 | First scan finds every target | DSC-01 | EP | H | PASS |
-| TC-DSC-02 | Scan progress and final status | DSC-02 | ST | H | Not run |
+| TC-DSC-02 | Scan progress and final status | DSC-02 | ST | H | PASS |
 | TC-DSC-03 | Cancel a scan | DSC-03 | ST | M | PASS |
 | TC-DSC-04 | Rescan with no change | DSC-04 | EG | M | PASS |
-| TC-DSC-05 | Discovery settings apply to the next scan | DSC-05 | BVA | H | Not run |
-| TC-DSC-06 | Removing a network keeps device ownership | DSC-06 | ST | H | Not run |
-| TC-DSC-07 | A port that is no longer seen | DSC-07 | ST | M | Not run |
-| TC-DSC-08 | Scan needs the discovery permission | DSC-08 | DT | H | Not run |
-| TC-DSC-09 | Rescan starts at once | DSC-09 | EG | L | Not run |
+| TC-DSC-05 | Discovery settings apply to the next scan | DSC-05 | BVA | H | PASS |
+| TC-DSC-06 | Removing a network keeps device ownership | DSC-06 | ST | H | PASS |
+| TC-DSC-07 | A port that is no longer seen | DSC-07 | ST | M | PASS |
+| TC-DSC-08 | Scan needs the discovery permission | DSC-08 | DT | H | PASS |
+| TC-DSC-09 | Rescan starts at once | DSC-09 | EG | L | PASS |
 
 A scan starts from **Rescan Network** (on **Overview**, and on **Network Health** for users who may scan). Progress and a **Cancel** button show in the header bell. Discovery settings are in **Settings**, **Network Discovery** (**Networks & Ports**).
 
@@ -2882,7 +2882,9 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-DSC-02 – Scan progress and final status
 
-**Requirement:** REQ-DSC-02 · **Technique:** ST · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-DSC-02 · **Technique:** ST · **Priority:** H · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-18-discovery/REPORT.md)
 
 **Steps**
 
@@ -2926,7 +2928,9 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-DSC-05 – Discovery settings apply to the next scan
 
-**Requirement:** REQ-DSC-05 · **Technique:** BVA · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-DSC-05 · **Technique:** BVA · **Priority:** H · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-18-discovery/REPORT.md)
 
 **Before you start:** a host that serves HTTP on port 8080, and `settings.discovery`.
 
@@ -2946,7 +2950,9 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-DSC-06 – Removing a network keeps device ownership
 
-**Requirement:** REQ-DSC-06 · **Technique:** ST · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-DSC-06 · **Technique:** ST · **Priority:** H · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-18-discovery/REPORT.md)
 
 **Before you start:** two networks in the settings and devices found in both.
 
@@ -2963,7 +2969,9 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-DSC-07 – A port that is no longer seen
 
-**Requirement:** REQ-DSC-07 · **Technique:** ST · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-DSC-07 · **Technique:** ST · **Priority:** M · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-18-discovery/REPORT.md)
 
 **Steps**
 
@@ -2978,7 +2986,9 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-DSC-08 – Scan needs the discovery permission
 
-**Requirement:** REQ-DSC-08 · **Technique:** DT · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-DSC-08 · **Technique:** DT · **Priority:** H · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-18-discovery/REPORT.md)
 
 **Steps**
 
@@ -2995,7 +3005,9 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-DSC-09 – Rescan starts at once
 
-**Requirement:** REQ-DSC-09 · **Technique:** EG · **Priority:** L · **Result:** Not run (re-check: reworded)
+**Requirement:** REQ-DSC-09 · **Technique:** EG · **Priority:** L · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-18-discovery/REPORT.md)
 
 **Steps**
 
@@ -3019,8 +3031,8 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 | TC-DX-03 | Save and reset check options | DX-03 | ST | H | PASS |
 | TC-DX-04 | Check options are read-only without edit permission | DX-04 | DT | M | PASS |
 | TC-DX-05 | Fields depend on the service | DX-02 | EP | L | PASS |
-| TC-DX-06 | SNMP section | DX-05 | DT | H | Not run |
-| TC-DX-07 | Interfaces section | DX-06 | DT | M | Not run |
+| TC-DX-06 | SNMP section | DX-05 | DT | H | PARTIALLY PASS |
+| TC-DX-07 | Interfaces section | DX-06 | DT | M | PASS |
 | TC-DX-08 | Who sees the alert recipients | DX-07 | DT | M | Not run |
 | TC-DX-09 | Default recipients and ineligible users | DX-07 | EG | M | Not run |
 | TC-DX-10 | A failed apply keeps the old choice | DX-07 | EG | M | Not run |
@@ -3097,7 +3109,9 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-DX-06 – SNMP section
 
-**Requirement:** REQ-DX-05 · **Technique:** DT · **Priority:** H · **Result:** Not run
+**Requirement:** REQ-DX-05 · **Technique:** DT · **Priority:** H · **Result:** PARTIALLY PASS (messages accurate; SNMP section disappears after Save, Test and Reset until refresh)
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-19-device-extras/REPORT.md)
 
 **Before you start:** a device with SNMP monitored.
 
@@ -3117,7 +3131,9 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-DX-07 – Interfaces section
 
-**Requirement:** REQ-DX-06 · **Technique:** DT · **Priority:** M · **Result:** Not run
+**Requirement:** REQ-DX-06 · **Technique:** DT · **Priority:** M · **Result:** PASS
+
+**Recorded run:** [report](../test-runs/2026-10-19-module-19-device-extras/REPORT.md)
 
 **Steps**
 
