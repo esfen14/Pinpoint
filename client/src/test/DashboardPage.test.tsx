@@ -337,4 +337,17 @@ describe('DashboardPage', () => {
     renderDashboard()
     expect(await screen.findByText('Nagios unreachable')).toBeInTheDocument()
   })
+
+  it('offers Retry on the load error and reloads the data without a page reload', async () => {
+    responses['/api/system/dashboard/summary'] = new Error('Nagios unreachable')
+    renderDashboard()
+    expect(await screen.findByText('Nagios unreachable')).toBeInTheDocument()
+
+    // Service is back: Retry must refetch and clear the error.
+    responses['/api/system/dashboard/summary'] = summaryResponse()
+    await userEvent.click(screen.getByRole('button', { name: /^retry$/i }))
+
+    await waitFor(() => expect(screen.queryByText('Nagios unreachable')).not.toBeInTheDocument())
+    expect(screen.queryByRole('button', { name: /^retry$/i })).not.toBeInTheDocument()
+  })
 })
