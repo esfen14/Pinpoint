@@ -21,8 +21,8 @@ Requirement coverage:
 ## Plan
 
 1. [x] Confirm the screen/label with the user; issue explicitly says the screen was not supplied.
-2. [ ] Read target-owning specification and component, then write a failing label regression.
-3. [ ] Rename only the confirmed UI label/references and update its specification.
+2. [x] Read target-owning specification and component, then write a failing label regression.
+3. [x] Rename only the confirmed UI label/references and update its specification.
 4. [ ] Verify focused tests and relevant stage; attempt all gate, remove scaffold and open PR. User requested skipping the CI wait when moving from #233.
 
 ## Round log
@@ -36,10 +36,12 @@ Requirement coverage:
 - Last check run (exact command): rg -n -i 'system[ _-]+services?' client/src server/app docs/manuals README.md
 - Result: no matches; no implementation changes made.
 - Hypothesis: reported wording may refer to Service Status Overview on /system-status, but the issue does not identify it.
-- Next action: add failing rendered heading regression, then change PageHeader title and matching specification.
+- Next action: merge origin/main with the completed #233 terminology, then run frontend/all verification.
 
 ## Decisions and notes
 
 The issue requires identifying the actual reported label before renaming. Asked the user via asynchronous question. Do not guess a different label or alter monitoring/routes/permissions. User requested leaving #233 CI running and proceeding here; PR #264 frontend/docs passed and backend remained running at handoff.
 
 User confirmed: Rename Service Status Overview to Network Service Overview. Target is SystemStatusPage PageHeader title, preserving Overview highlight and all behavior.
+
+Round 1: rendered heading regression failed as expected before title change; 43 focused SystemStatusPage/App/PageAccess tests passed afterward. All 239 coverage records validate. Next: merge current main (#233), then run frontend and all gates.
