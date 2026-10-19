@@ -1,4 +1,4 @@
-import { Cpu, HardDrive, MemoryStick } from 'lucide-react'
+import { Cpu, HardDrive, MemoryStick, MoreHorizontal } from 'lucide-react'
 
 type ResourceUsageCardProps = {
   cpuPct: number | null
@@ -28,6 +28,14 @@ export function ResourceUsageCard({ cpuPct, memoryPct, diskPct, onClick }: Resou
     >
       <div className="mb-5 flex items-center justify-between">
         <h3 className="text-lg font-semibold text-[var(--text)]">Average Resource</h3>
+        <button
+          type="button"
+          onClick={(e) => e.stopPropagation()}
+          className="rounded-xl bg-[var(--card-alt)] p-2 text-[var(--text-muted)] hover:bg-[var(--hover)]"
+          aria-label="More options"
+        >
+          <MoreHorizontal className="h-4 w-4" />
+        </button>
       </div>
       <div className="grid flex-1 content-center gap-4 sm:grid-cols-3">
         {resources.map(({ label, value, icon: Icon }) => (
