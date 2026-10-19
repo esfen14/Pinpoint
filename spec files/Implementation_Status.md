@@ -232,7 +232,9 @@ The user's appliance, installer deployment and scale remain unverified.
 - Remediation page (`remediation.view`): actions with an enable switch, an add/edit form, and a run log with filters and a detail drawer (#120).
 - NCPA Deployment page: device list, deploy wizard with host-key verification
   and per-device login checks, live progress, header bell item, and Deployment
-  History with run review.
+  History with run review. Its plugin warning refreshes on mount/focus/visible-tab
+  return, recognizes supported check_ncpa script filenames and ignores stale
+  responses; inventory failures retain unknown state (#265).
 - Header notification feed/unread behavior, session timeout, maintenance banner,
   shared export UI, and network rescan workflow.
 
