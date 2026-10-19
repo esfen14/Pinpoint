@@ -244,11 +244,11 @@
         "config": "client/playwright.qa.config.ts"
       },
       "source_hashes": {
-        "client/e2e/qa-permissions.lab.spec.ts": "a6edb79e3d7edb4c040e149f927ad242cc34d4f6eb615af4f8a5bdcaeb8d6ddf",
+        "client/e2e/qa-permissions.lab.spec.ts": "669ad460e3b645debfde295238c95b9b84fcf37ab741a0c9b67ff348bde6623f",
         "client/playwright.qa.config.ts": "bd93c4be8518993af9dd734d48c498e065802db67d7934c6733313a7f47423e1",
         "client/qa/selection.mjs": "1aba1bb9749b4d1bf6b5fc1d4052ef16c6ce4b126ea8353cc4cd43b9733650b1",
         "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
-        "client/src/components/layout/Sidebar.tsx": "a2d5f6f6ae753449615cec88f3d561aaf77277c518358657db78b8691bf75c10",
+        "client/src/components/layout/Sidebar.tsx": "13118d2479e7a89c4096bc2614818d21e6ad036b7081a2da103b933139056c7e",
         "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
         "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
         "server/app/api/user/login.py": "0d0f9d269758533d8463b3b3191d629d17e18960b8a0b8d012e0d7de4fac7dfc",
@@ -396,7 +396,7 @@
         "client/playwright.modules.qa.config.ts": "49dbe58e8e6547495ced6abe204a5ccd3854e917db47dea2f7c4acd846d6085c",
         "client/qa/module-selection.mjs": "5b648a29d597eb7ecdf3e7ea38f2a44560c5f7a2c1259e8041a503c3c4f4d99e",
         "client/src/App.tsx": "f6508f60c71ec999a95f0bc6ace34f289022f6d14fd0c6128da5a2f174fd0443",
-        "client/src/components/layout/Sidebar.tsx": "a2d5f6f6ae753449615cec88f3d561aaf77277c518358657db78b8691bf75c10",
+        "client/src/components/layout/Sidebar.tsx": "13118d2479e7a89c4096bc2614818d21e6ad036b7081a2da103b933139056c7e",
         "client/src/components/layout/PageAccessGuard.tsx": "2d0765defe8f5dbc8c33ec735d0d7ba7a57332574b8c77b723cea41bc1ea9c5f",
         "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
         "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
@@ -527,11 +527,11 @@
         "config": "client/playwright.qa.config.ts"
       },
       "source_hashes": {
-        "client/e2e/qa-permissions.lab.spec.ts": "a6edb79e3d7edb4c040e149f927ad242cc34d4f6eb615af4f8a5bdcaeb8d6ddf",
+        "client/e2e/qa-permissions.lab.spec.ts": "669ad460e3b645debfde295238c95b9b84fcf37ab741a0c9b67ff348bde6623f",
         "client/playwright.qa.config.ts": "bd93c4be8518993af9dd734d48c498e065802db67d7934c6733313a7f47423e1",
         "client/qa/selection.mjs": "1aba1bb9749b4d1bf6b5fc1d4052ef16c6ce4b126ea8353cc4cd43b9733650b1",
         "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
-        "client/src/components/layout/Sidebar.tsx": "a2d5f6f6ae753449615cec88f3d561aaf77277c518358657db78b8691bf75c10",
+        "client/src/components/layout/Sidebar.tsx": "13118d2479e7a89c4096bc2614818d21e6ad036b7081a2da103b933139056c7e",
         "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
         "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
         "server/app/api/user/login.py": "0d0f9d269758533d8463b3b3191d629d17e18960b8a0b8d012e0d7de4fac7dfc",
@@ -572,11 +572,11 @@
         "config": "client/playwright.qa.config.ts"
       },
       "source_hashes": {
-        "client/e2e/qa-permissions.lab.spec.ts": "a6edb79e3d7edb4c040e149f927ad242cc34d4f6eb615af4f8a5bdcaeb8d6ddf",
+        "client/e2e/qa-permissions.lab.spec.ts": "669ad460e3b645debfde295238c95b9b84fcf37ab741a0c9b67ff348bde6623f",
         "client/playwright.qa.config.ts": "bd93c4be8518993af9dd734d48c498e065802db67d7934c6733313a7f47423e1",
         "client/qa/selection.mjs": "1aba1bb9749b4d1bf6b5fc1d4052ef16c6ce4b126ea8353cc4cd43b9733650b1",
         "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
-        "client/src/components/layout/Sidebar.tsx": "a2d5f6f6ae753449615cec88f3d561aaf77277c518358657db78b8691bf75c10",
+        "client/src/components/layout/Sidebar.tsx": "13118d2479e7a89c4096bc2614818d21e6ad036b7081a2da103b933139056c7e",
         "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
         "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
         "server/app/api/user/login.py": "0d0f9d269758533d8463b3b3191d629d17e18960b8a0b8d012e0d7de4fac7dfc",
@@ -617,11 +617,11 @@
         "config": "client/playwright.qa.config.ts"
       },
       "source_hashes": {
-        "client/e2e/qa-permissions.lab.spec.ts": "a6edb79e3d7edb4c040e149f927ad242cc34d4f6eb615af4f8a5bdcaeb8d6ddf",
+        "client/e2e/qa-permissions.lab.spec.ts": "669ad460e3b645debfde295238c95b9b84fcf37ab741a0c9b67ff348bde6623f",
         "client/playwright.qa.config.ts": "bd93c4be8518993af9dd734d48c498e065802db67d7934c6733313a7f47423e1",
         "client/qa/selection.mjs": "1aba1bb9749b4d1bf6b5fc1d4052ef16c6ce4b126ea8353cc4cd43b9733650b1",
         "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
-        "client/src/components/layout/Sidebar.tsx": "a2d5f6f6ae753449615cec88f3d561aaf77277c518358657db78b8691bf75c10",
+        "client/src/components/layout/Sidebar.tsx": "13118d2479e7a89c4096bc2614818d21e6ad036b7081a2da103b933139056c7e",
         "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
         "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
         "server/app/api/user/login.py": "0d0f9d269758533d8463b3b3191d629d17e18960b8a0b8d012e0d7de4fac7dfc",
@@ -662,11 +662,11 @@
         "config": "client/playwright.qa.config.ts"
       },
       "source_hashes": {
-        "client/e2e/qa-permissions.lab.spec.ts": "a6edb79e3d7edb4c040e149f927ad242cc34d4f6eb615af4f8a5bdcaeb8d6ddf",
+        "client/e2e/qa-permissions.lab.spec.ts": "669ad460e3b645debfde295238c95b9b84fcf37ab741a0c9b67ff348bde6623f",
         "client/playwright.qa.config.ts": "bd93c4be8518993af9dd734d48c498e065802db67d7934c6733313a7f47423e1",
         "client/qa/selection.mjs": "1aba1bb9749b4d1bf6b5fc1d4052ef16c6ce4b126ea8353cc4cd43b9733650b1",
         "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
-        "client/src/components/layout/Sidebar.tsx": "a2d5f6f6ae753449615cec88f3d561aaf77277c518358657db78b8691bf75c10",
+        "client/src/components/layout/Sidebar.tsx": "13118d2479e7a89c4096bc2614818d21e6ad036b7081a2da103b933139056c7e",
         "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
         "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
         "server/app/api/user/login.py": "0d0f9d269758533d8463b3b3191d629d17e18960b8a0b8d012e0d7de4fac7dfc",
@@ -707,11 +707,11 @@
         "config": "client/playwright.qa.config.ts"
       },
       "source_hashes": {
-        "client/e2e/qa-permissions.lab.spec.ts": "a6edb79e3d7edb4c040e149f927ad242cc34d4f6eb615af4f8a5bdcaeb8d6ddf",
+        "client/e2e/qa-permissions.lab.spec.ts": "669ad460e3b645debfde295238c95b9b84fcf37ab741a0c9b67ff348bde6623f",
         "client/playwright.qa.config.ts": "bd93c4be8518993af9dd734d48c498e065802db67d7934c6733313a7f47423e1",
         "client/qa/selection.mjs": "1aba1bb9749b4d1bf6b5fc1d4052ef16c6ce4b126ea8353cc4cd43b9733650b1",
         "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
-        "client/src/components/layout/Sidebar.tsx": "a2d5f6f6ae753449615cec88f3d561aaf77277c518358657db78b8691bf75c10",
+        "client/src/components/layout/Sidebar.tsx": "13118d2479e7a89c4096bc2614818d21e6ad036b7081a2da103b933139056c7e",
         "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
         "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
         "server/app/api/user/login.py": "0d0f9d269758533d8463b3b3191d629d17e18960b8a0b8d012e0d7de4fac7dfc",
@@ -752,11 +752,11 @@
         "config": "client/playwright.qa.config.ts"
       },
       "source_hashes": {
-        "client/e2e/qa-permissions.lab.spec.ts": "a6edb79e3d7edb4c040e149f927ad242cc34d4f6eb615af4f8a5bdcaeb8d6ddf",
+        "client/e2e/qa-permissions.lab.spec.ts": "669ad460e3b645debfde295238c95b9b84fcf37ab741a0c9b67ff348bde6623f",
         "client/playwright.qa.config.ts": "bd93c4be8518993af9dd734d48c498e065802db67d7934c6733313a7f47423e1",
         "client/qa/selection.mjs": "1aba1bb9749b4d1bf6b5fc1d4052ef16c6ce4b126ea8353cc4cd43b9733650b1",
         "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
-        "client/src/components/layout/Sidebar.tsx": "a2d5f6f6ae753449615cec88f3d561aaf77277c518358657db78b8691bf75c10",
+        "client/src/components/layout/Sidebar.tsx": "13118d2479e7a89c4096bc2614818d21e6ad036b7081a2da103b933139056c7e",
         "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
         "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
         "server/app/api/user/login.py": "0d0f9d269758533d8463b3b3191d629d17e18960b8a0b8d012e0d7de4fac7dfc",
@@ -1240,7 +1240,7 @@
         "client/e2e/qa-modules-2-9.lab.spec.ts": "49f82ae6f6996d784082d575da9013a7a4827100fc797d5e47c73848977b43bc",
         "client/playwright.modules.qa.config.ts": "49dbe58e8e6547495ced6abe204a5ccd3854e917db47dea2f7c4acd846d6085c",
         "client/qa/module-selection.mjs": "5b648a29d597eb7ecdf3e7ea38f2a44560c5f7a2c1259e8041a503c3c4f4d99e",
-        "client/src/pages/DashboardPage.tsx": "fd56f5991c7ded2f6bd204a70852900c52373bdac7a185aefefc0b4ec5e7a083",
+        "client/src/pages/DashboardPage.tsx": "1f16b3e8a9c1ce15d5382ac39cb7cfbb269c5dd2984f5e34c0f3eaa6ee425111",
         "client/src/components/shared/SummaryStatCard.tsx": "2da439e5d5684c62af52f3f84816d68085d6aa32663cdbaea6d256782fb11f66",
         "client/src/components/dashboard/NetworkPerformanceSection.tsx": "d67af2c66ca5bd710ab9c3aec62feb52b3d4b2e99b242533dea046658226525b",
         "client/src/components/dashboard/MetricCard.tsx": "a414ba058ac82dd32427f9cd02dc974c407a95c21703ac3ae230942afd9955d3",
@@ -1251,7 +1251,9 @@
         "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
         "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
         "server/app/api/system/dashboard.py": "d984eecb2f6ad5a86680ef211b842117b659ec158b0cc58390b9b8a332374d32",
-        "server/app/api/helper/database_access/permissions.py": "223c0628444524cdae232fb02c29ebbb18b5e4c2e0307990acbe597a40e2ecff"
+        "server/app/api/helper/database_access/permissions.py": "223c0628444524cdae232fb02c29ebbb18b5e4c2e0307990acbe597a40e2ecff",
+        "client/src/hooks/useNagiosStatus.ts": "066b2d49039edd38a71e85f88886ae85f3ea3cd3d39f125771a7539a3b00016c",
+        "client/src/components/dashboard/NagiosWarning.tsx": "f06bd5ccb2bcb3b59325272064dbcbaeed057c0b4aa7e38255f9d40f3bf966cf"
       },
       "prerequisites": [
         "No host has a ping check and no NCPA host/data exists; these lab facts must be independently reviewed before start. The adapter does not alter them.",
@@ -3288,6 +3290,16 @@
       ]
     },
     "decision": "Issue #245 added a Retry button inside the dashboard load-error alert in DashboardPage.tsx. The TC-DASH-07 adapter asserts the No data displays on the Network Performance cards and the absence of the Average Resource Utilization heading on a healthy read-only visit; the error alert is not rendered in that state and no summary, performance or resource markup changed. Assertions and expected-item markers are unchanged, so only the source hash is refreshed. This is a source review, not runtime acceptance, and adds no execution or historical acceptance."
+  },
+  "source_change_review_issue_239": {
+    "reviewed_by": "Claude source review of issue #239, requested by the tester",
+    "reviewed_at": "2026-10-19",
+    "refreshed_sources": {
+      "TC-DASH-07": [
+        "client/src/pages/DashboardPage.tsx"
+      ]
+    },
+    "decision": "Issue #239 added an acknowledgement filter (Show all, Hide acknowledged, Show only acknowledged) to the Active Alerts feed and made Acknowledge all use the filtered rows. The TC-DASH-07 adapter asserts the No data displays on the Network Performance cards and the absence of the Average Resource Utilization heading; the summary, performance and resource markup is unchanged, and the default filter (Show all) renders the same Active Alerts rows as before. Assertions and expected-item markers are unchanged, so only the source hash is refreshed. This is a source review, not runtime acceptance, and adds no execution or historical acceptance."
   },
   "catalog_consolidation_review": {
     "reviewed_at": "2026-10-19",

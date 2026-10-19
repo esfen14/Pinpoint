@@ -40,7 +40,7 @@ const navItems = [
   },
   {
     to: '/system-status',
-    label: 'System Status',
+    label: 'Network Status',
     icon: HeartPulse,
   },
   {

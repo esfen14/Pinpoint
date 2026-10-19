@@ -587,3 +587,26 @@ case action, each set still needs its exact fixture facts verified, a fresh
 preflight, a named lab allocation and its own explicit start. The first set
 cannot be treated as authorizing the second. Offline queue/docs checks are not
 product test results.
+
+
+## 2026-10-19 navigation terminology review (#233)
+
+The sidebar and shell header now call `/system-status` Network Status. Codex
+reviewed the eight Sidebar.tsx consumers (TC-ACC-09, TC-ROL-04, TC-SS-04,
+TC-HIS-01, TC-PLG-07, TC-NCPA-08, TC-RPT-07 and TC-LOG-05). TC-SS-04 now
+asserts the exact new hidden-link label and records that wording; its historical
+case title, route, redirect and expected-item marker are preserved. Other adapters
+still check their own hidden links or the same Overview/Settings-only list.
+Reviewed source fingerprints are refreshed. Coverage status, catalog results and
+live execution permissions are unchanged. This is source review and isolated UI
+testing, with no live QA execution.
+
+
+## Dashboard freshness dependency review (#238)
+
+TC-DASH-07 still asserts Network Performance no-data values and absence of the
+conditional resource heading. The new monitoring warning and freshness timer do
+not change those assertions, prerequisites or cleanup. DashboardPage's hash and
+its new hook/warning dependencies are recorded after source review. No coverage
+status, catalog verdict or live execution permission changes. TC-DASH-06 retest
+evidence remains a separate issue-specific report.

@@ -165,7 +165,7 @@ export function SystemStatusPage() {
       <div className="space-y-6 p-6">
 
         <PageHeader
-          title="Service Status"
+          title="Network Service"
           highlight="Overview"
           description="Live status of hosts and monitored services across your network."
         />

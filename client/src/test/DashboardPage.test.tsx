@@ -18,9 +18,11 @@ vi.mock('../components/dashboard/ResourceUtilizationSection', () => ({
   ResourceUtilizationSection: () => <h2>Average Resource Utilization</h2>,
 }))
 
+let refreshRate = 0
+
 vi.mock('../contexts/SystemSettingsContext', () => ({
   useSystemSettings: () => ({
-    settings: { dashboardRefreshRate: 0, dateTimeFormat: 'YYYY-MM-DD', timeZone: 'UTC+08:00' },
+    settings: { dashboardRefreshRate: refreshRate, dateTimeFormat: 'YYYY-MM-DD', timeZone: 'UTC+08:00' },
   }),
 }))
 
@@ -53,7 +55,7 @@ function statusResponse(running = true) {
     nagios: {
       running,
       version: '4.5.0',
-      last_status_update: '2026-09-26T10:00:00+00:00',
+      last_status_update: new Date().toISOString(),
       active_host_checks: true,
       active_service_checks: true,
     },
@@ -124,6 +126,7 @@ function statCard(title: string) {
 
 describe('DashboardPage', () => {
   beforeEach(() => {
+    refreshRate = 0
     responses = {
       '/api/system/dashboard/status': statusResponse(),
       '/api/system/dashboard/summary': summaryResponse(),
@@ -209,6 +212,12 @@ describe('DashboardPage', () => {
     expect(within(card).getByText('Unavailable')).toBeInTheDocument()
   })
 
+  it('shows the saved one-minute refresh text', async () => {
+    refreshRate = 1
+    await renderLoaded()
+    expect(screen.getByText('Auto-refreshing every 1 min')).toBeInTheDocument()
+  })
+
   it('shows Online when Nagios is running', async () => {
     await renderLoaded()
     expect(screen.getByText('Online')).toBeInTheDocument()
@@ -240,6 +249,15 @@ describe('DashboardPage', () => {
 
     expect(within(statCard('Network Latency')).getByText('—')).toBeInTheDocument()
     expect(within(statCard('Network Latency')).getByText('No data')).toBeInTheDocument()
+  })
+
+  it('warns prominently when monitoring data stops updating', async () => {
+    const stale = statusResponse()
+    stale.nagios.last_status_update = new Date(Date.now() - 4 * 60_000).toISOString()
+    responses['/api/system/dashboard/status'] = stale
+    renderDashboard()
+    await waitFor(() => expect(screen.getByText('Monitoring unavailable')).toBeInTheDocument())
+    expect(screen.getAllByRole('alert').some((alert) => alert.textContent?.includes('Displayed data may be stale'))).toBe(true)
   })
 
   it('passes host up/down counts to the status overview', async () => {
@@ -294,6 +312,70 @@ describe('DashboardPage', () => {
         hostname: 'switch-1',
         service_name: 'snmp-uptime-161',
         comment: 'Looking into it',
+      })
+    })
+  })
+
+  describe('acknowledgement filter (REQ-ACK-05)', () => {
+    const OPEN_ALERT = { ...ALERT, hostname: 'open-host', service_name: 'open-svc' }
+    const ACKED_ALERT = {
+      ...ALERT,
+      hostname: 'acked-host',
+      service_name: 'acked-svc',
+      ack: { comment: 'On it', acknowledged_by: 'Admin User', acknowledged_at: '2026-09-26T09:00:00+00:00' },
+    }
+
+    beforeEach(() => {
+      responses['/api/system/dashboard/alerts'] = { alerts: [OPEN_ALERT, ACKED_ALERT] }
+    })
+
+    it('defaults to Show all with both alerts listed', async () => {
+      await renderLoaded()
+      expect(screen.getByRole('combobox', { name: /acknowledgement filter/i })).toHaveValue('all')
+      expect(screen.getByText('open-host / open-svc')).toBeInTheDocument()
+      expect(screen.getByText('acked-host / acked-svc')).toBeInTheDocument()
+    })
+
+    it('Hide acknowledged lists only unacknowledged alerts', async () => {
+      const user = userEvent.setup()
+      await renderLoaded()
+      await user.selectOptions(screen.getByRole('combobox', { name: /acknowledgement filter/i }), 'hide-acknowledged')
+      expect(screen.getByText('open-host / open-svc')).toBeInTheDocument()
+      expect(screen.queryByText('acked-host / acked-svc')).not.toBeInTheDocument()
+    })
+
+    it('Show only acknowledged lists only acknowledged alerts', async () => {
+      const user = userEvent.setup()
+      await renderLoaded()
+      await user.selectOptions(screen.getByRole('combobox', { name: /acknowledgement filter/i }), 'only-acknowledged')
+      expect(screen.queryByText('open-host / open-svc')).not.toBeInTheDocument()
+      expect(screen.getByText('acked-host / acked-svc')).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /Acknowledge all/ })).not.toBeInTheDocument()
+    })
+
+    it('says no alerts match when the filter hides every row', async () => {
+      const user = userEvent.setup()
+      responses['/api/system/dashboard/alerts'] = { alerts: [OPEN_ALERT] }
+      await renderLoaded()
+      await user.selectOptions(screen.getByRole('combobox', { name: /acknowledgement filter/i }), 'only-acknowledged')
+      expect(screen.getByText('No alerts match this filter')).toBeInTheDocument()
+      expect(screen.queryByText('No active alerts')).not.toBeInTheDocument()
+    })
+
+    it('Acknowledge All sends only the unacknowledged alerts that are visible', async () => {
+      const user = userEvent.setup()
+      await renderLoaded()
+      await user.selectOptions(screen.getByRole('combobox', { name: /acknowledgement filter/i }), 'hide-acknowledged')
+      await user.click(screen.getByRole('button', { name: 'Acknowledge all (1)' }))
+      await user.type(screen.getByPlaceholderText(/investigating/i), 'Bulk')
+      const dialog = screen.getByText('Acknowledge 1 active alerts').closest('div')!
+      await user.click(within(dialog).getByRole('button', { name: 'Acknowledge' }))
+
+      await waitFor(() => {
+        expect(apiPost).toHaveBeenCalledWith('/api/system/dashboard/alerts/acknowledge-all', {
+          comment: 'Bulk',
+          alerts: [{ hostname: 'open-host', service_name: 'open-svc' }],
+        })
       })
     })
   })

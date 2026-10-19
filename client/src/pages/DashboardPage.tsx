@@ -1,3 +1,5 @@
+import { useNagiosStatus } from '../hooks/useNagiosStatus'
+import { NagiosWarning } from '../components/dashboard/NagiosWarning'
 import { StorageUsageCard } from '../components/dashboard/StorageUsageCard'
 import { useEffect, useState } from 'react'
 import { AlertTriangle, Gauge, Server, Wifi } from 'lucide-react'
@@ -23,7 +25,9 @@ import {
   fromAlertRecord,
   fromDashboardStatusResponse,
   fromDashboardSummaryResponse,
+  filterAlerts,
   fromTrendsResponse,
+  type AckFilter,
   type AlertRow,
   type DashboardStatus,
   type DashboardSummary,
@@ -54,6 +58,8 @@ export function DashboardPage() {
   const [syncNotice, setSyncNotice] = useState<string | null>(null)
   const [ackTarget, setAckTarget] = useState<AlertRow | null>(null)
   const [ackAllOpen, setAckAllOpen] = useState(false)
+  const [ackFilter, setAckFilter] = useState<AckFilter>('all')
+  const visibleAlerts = filterAlerts(alerts, ackFilter)
   const [notifications, setNotifications] = useState<DashboardNotification[] | null>(null)
 
   async function loadAll() {
@@ -146,7 +152,7 @@ export function DashboardPage() {
     try {
       const result = await apiPost<NagiosSyncResult>('/api/system/dashboard/alerts/acknowledge-all', {
         comment,
-        alerts: alerts
+        alerts: visibleAlerts
           .filter((alert) => !alert.ack)
           .map((alert) => ({ hostname: alert.hostname, service_name: alert.serviceName })),
       })
@@ -172,9 +178,10 @@ export function DashboardPage() {
     }
   }
 
-  const uptimeLabel = status?.nagios.running ? 'Online' : 'Offline'
-  const uptimeColor = status?.nagios.running ? 'bg-emerald-500' : 'bg-red-500'
-  const uptimeTextColor = status?.nagios.running ? 'text-emerald-600' : 'text-red-600'
+  const monitoring = useNagiosStatus(status)
+  const uptimeLabel = monitoring.stopped ? 'Offline' : monitoring.unavailable ? 'Monitoring unavailable' : 'Online'
+  const uptimeColor = !monitoring.unavailable ? 'bg-emerald-500' : 'bg-red-500'
+  const uptimeTextColor = !monitoring.unavailable ? 'text-emerald-600' : 'text-red-600'
 
   const downUnreachable = (summary?.hosts.down ?? 0) + (summary?.hosts.unreachable ?? 0)
 
@@ -185,6 +192,7 @@ export function DashboardPage() {
 
           {/* Sticky banner */}
           <div className="sticky top-0 z-10 bg-[var(--sticky-bg)] pb-3 pt-3">
+            {!statusLoading && monitoring.unavailable && <NagiosWarning stopped={monitoring.stopped} />}
             <div className="rounded-2xl bg-[var(--card)] border border-[var(--border)] p-[var(--dash-card-padding)] shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
@@ -285,7 +293,9 @@ export function DashboardPage() {
           <ForecastList data={forecastData} isLoading={forecastLoading} error={forecastError} />
 
           <RecentOutageTable
-            alerts={alerts}
+            alerts={visibleAlerts}
+            filter={ackFilter}
+            onFilterChange={setAckFilter}
             isLoading={isLoading}
             onAcknowledge={(alert) => setAckTarget(alert)}
             onAcknowledgeAll={() => setAckAllOpen(true)}
@@ -315,7 +325,7 @@ export function DashboardPage() {
 
       {ackAllOpen && (
         <AcknowledgeModal
-          title={`Acknowledge ${alerts.filter((alert) => !alert.ack).length} active alerts`}
+          title={`Acknowledge ${visibleAlerts.filter((alert) => !alert.ack).length} active alerts`}
           onCancel={() => setAckAllOpen(false)}
           onConfirm={acknowledgeAllAlerts}
         />

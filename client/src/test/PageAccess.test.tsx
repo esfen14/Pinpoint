@@ -47,7 +47,7 @@ describe('pageAccess', () => {
     expect(firstAccessiblePage(['maintenance.manage'])).toBe('/maintenance')
   })
 
-  it('gates both System Status and Topology on network health permission', () => {
+  it('gates both Network Status and Topology on network health permission', () => {
     expect(canAccessPage('/system-status', ['system.network_health'])).toBe(true)
     expect(canAccessPage('/system-status', [])).toBe(false)
     expect(PAGE_PERMISSIONS['/topology']).toBe('system.network_health')
@@ -84,7 +84,7 @@ describe('Sidebar', () => {
     expect(screen.queryByText('NCPA Deployment')).not.toBeInTheDocument()
   })
 
-  it('keeps Device Inventory, System Status and Topology adjacent with their existing destinations', () => {
+  it('keeps Device Inventory, Network Status and Topology adjacent with their existing destinations', () => {
     signIn(Object.values(PAGE_PERMISSIONS).filter((permission): permission is string => permission !== null))
     render(<MemoryRouter><Sidebar /></MemoryRouter>)
 
@@ -94,7 +94,7 @@ describe('Sidebar', () => {
       link.textContent, link.getAttribute('href'),
     ])).toEqual([
       ['Device Inventory', '/device-inventory'],
-      ['System Status', '/system-status'],
+      ['Network Status', '/system-status'],
       ['Topology', '/topology'],
     ])
   })
@@ -103,7 +103,7 @@ describe('Sidebar', () => {
     signIn(['system.dashboard', 'plugin.view'])
     render(<MemoryRouter><Sidebar /></MemoryRouter>)
 
-    for (const name of ['Device Inventory', 'System Status', 'Topology']) {
+    for (const name of ['Device Inventory', 'Network Status', 'Topology']) {
       expect(screen.queryByRole('link', { name })).not.toBeInTheDocument()
     }
   })
