@@ -69,6 +69,8 @@ function preview(overrides: Partial<EnablePreview> = {}): EnablePreview {
   }
 }
 
+const DEVICE: PluginDetails['custom_checks'] = { class: 'custom', supported: true, target: 'device', note: null, fields: [] }
+
 const attach = (overrides = {}) => ({
   success: true, changed: true, applied: 12, removed: 0, promoted: 12, message: 'applied', ...overrides,
 })
@@ -267,19 +269,20 @@ describe('PluginDetailsDrawer enable and disable', () => {
   })
 })
 
-describe('PluginDetailsDrawer not service-driven', () => {
+describe('PluginDetailsDrawer usage category', () => {
   beforeEach(() => {
     Object.values(api).forEach((fn) => fn.mockReset())
     api.getPluginCommands.mockResolvedValue([])
     api.getPluginDependencies.mockResolvedValue([])
   })
 
-  it('explains that there is nothing to attach and offers no Enable, Disable or services list', async () => {
-    api.getPluginDetails.mockResolvedValue(details({ name: 'check_ping', service_driven: false }))
+  it('labels a device plugin and offers no Enable, Disable or services list', async () => {
+    api.getPluginDetails.mockResolvedValue(details({ name: 'check_ping', service_driven: false, custom_checks: DEVICE }))
     renderDrawer()
 
-    expect(await screen.findByText('Not service-driven.')).toBeInTheDocument()
-    expect(screen.getByText(/does not check a service that discovery finds on a port/)).toBeInTheDocument()
+    expect(await screen.findByText('Add device check.')).toBeInTheDocument()
+    expect(screen.getByText(/Custom checks → Add check, choose a device, and enter the required arguments/)).toBeInTheDocument()
+    expect(screen.getByText(/Adding a check starts ongoing monitoring/)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^Enable$/ })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^Disable$/ })).not.toBeInTheDocument()
     expect(screen.queryByText(/Services section/)).not.toBeInTheDocument()
@@ -287,12 +290,14 @@ describe('PluginDetailsDrawer not service-driven', () => {
   })
 
   it.each(['check_load', 'check_disk', 'check_swap', 'check_procs', 'check_users'])(
-    'says %s is checked by Nagios Core itself',
+    'says %s is labelled Managed by Nagios',
     async (name) => {
       api.getPluginDetails.mockResolvedValue(details({ name, service_driven: false }))
       renderDrawer()
 
-      expect(await screen.findByText(/Checks the Nagios server itself through Nagios Core. Not managed here./)).toBeInTheDocument()
+      expect(await screen.findByText('Managed by Nagios.')).toBeInTheDocument()
+      expect(screen.getByText(/Plugin Manager does not configure them/)).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /^Enable$/ })).not.toBeInTheDocument()
     },
   )
 
@@ -303,7 +308,7 @@ describe('PluginDetailsDrawer not service-driven', () => {
     }))
     renderDrawer()
 
-    expect(await screen.findByText(/Add a custom check to run it against a device/)).toBeInTheDocument()
+    expect(await screen.findByText(/Custom checks → Add check, choose a device/)).toBeInTheDocument()
     expect(screen.getByText('custom checks of check_by_ssh')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^Enable$/ })).not.toBeInTheDocument()
   })
@@ -315,7 +320,9 @@ describe('PluginDetailsDrawer not service-driven', () => {
     }))
     renderDrawer()
 
-    expect(await screen.findByText(/checks the Nagios server itself\. Add a server check to run it there\./)).toBeInTheDocument()
+    expect(await screen.findByText('Add server check.')).toBeInTheDocument()
+    expect(screen.getByText(/Server checks → Add check/)).toBeInTheDocument()
+    expect(screen.getByText(/runs on the Nagios server as the Nagios user/)).toBeInTheDocument()
     expect(screen.getByText('custom checks of check_apt')).toBeInTheDocument()
   })
 
@@ -327,23 +334,26 @@ describe('PluginDetailsDrawer not service-driven', () => {
     }))
     renderDrawer()
 
-    await screen.findByText('Not service-driven.')
+    await screen.findByText('Add device check.')
+    expect(screen.getByText(/You need the custom check permission to add checks/)).toBeInTheDocument()
     expect(screen.queryByText('custom checks of check_by_ssh')).not.toBeInTheDocument()
     permissions.denied = new Set()
   })
 
   it.each([
-    ['check_apt', 'server', 'Runs on the Nagios server. Not available yet.'],
+    ['check_dbi', 'credentials', 'Its password cannot be passed to the plugin yet.'],
     ['check_cluster', 'unsupported', 'Aggregates other services. Not available yet.'],
-    ['check_radius', 'credentials', 'Needs a password, which custom checks cannot store yet.'],
+    ['check_ntp', 'replaced', 'Replaced by check_ntp_time, which discovery already uses for NTP ports.'],
   ] as const)('explains why %s takes no custom check', async (name, plugin_class, note) => {
     api.getPluginDetails.mockResolvedValue(details({
       name, service_driven: false, custom_checks: { class: plugin_class, supported: false, note, fields: [] },
     }))
     renderDrawer()
 
-    expect(await screen.findByText(note)).toBeInTheDocument()
+    expect(await screen.findByText('Not supported yet.')).toBeInTheDocument()
+    expect(screen.getByText(note)).toBeInTheDocument()
     expect(screen.queryByText(/custom checks of/)).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Enable$/ })).not.toBeInTheDocument()
   })
 
   it('still lets a plugin that was enabled before this rule be disabled', async () => {
@@ -355,10 +365,35 @@ describe('PluginDetailsDrawer not service-driven', () => {
   })
 
   it('does not ask for a preview', async () => {
-    api.getPluginDetails.mockResolvedValue(details({ name: 'check_ping', service_driven: false }))
+    api.getPluginDetails.mockResolvedValue(details({ name: 'check_ping', service_driven: false, custom_checks: DEVICE }))
     renderDrawer()
 
-    await screen.findByText('Not service-driven.')
+    await screen.findByText('Add device check.')
     await waitFor(() => expect(api.getEnablePreview).not.toHaveBeenCalled())
+  })
+})
+
+describe('PluginDetailsDrawer Validate and automatic monitoring', () => {
+  beforeEach(() => {
+    Object.values(api).forEach((fn) => fn.mockReset())
+    api.getPluginCommands.mockResolvedValue([])
+    api.getPluginDependencies.mockResolvedValue([])
+    api.getEnablePreview.mockResolvedValue(preview())
+  })
+
+  it('says Validate only checks the executable and does not test a real check', async () => {
+    api.getPluginDetails.mockResolvedValue(details())
+    renderDrawer()
+
+    expect(await screen.findByText(/executable, its permissions, and that it runs with --version/)).toBeInTheDocument()
+    expect(screen.getByText(/does not test connectivity, credentials, or an actual monitoring result/)).toBeInTheDocument()
+  })
+
+  it('labels a service-driven plugin Automatic monitoring and keeps Enable', async () => {
+    api.getPluginDetails.mockResolvedValue(details({ name: 'check_http' }))
+    renderDrawer()
+
+    expect(await screen.findByText('Automatic monitoring.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^Enable$/ })).toBeEnabled()
   })
 })

@@ -40,6 +40,8 @@ export type PluginListItem = {
   // False for plugins that check no discovered port (check_ping, check_load, ...).
   // They cannot be enabled; services attach only to ports discovery found.
   service_driven: boolean
+  // Capability metadata, the same as in the details (absent in older responses).
+  custom_checks?: PluginCustomSupport
   // Services applied for this plugin and the devices they run on.
   monitoring_usage: { services: number; devices: number }
 }
