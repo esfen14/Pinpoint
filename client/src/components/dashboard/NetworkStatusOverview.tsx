@@ -1,4 +1,3 @@
-import { MoreHorizontal } from 'lucide-react'
 import { Cell, Pie, PieChart, ResponsiveContainer } from 'recharts'
 
 type NetworkStatusOverviewProps = {
@@ -18,9 +17,6 @@ export function NetworkStatusOverview({ up, down, isLoading }: NetworkStatusOver
     <div className="flex h-full flex-col rounded-2xl bg-[var(--card)] border border-[var(--border)] p-6 shadow-sm">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-[var(--text)]">Network Status Overview</h2>
-        <button type="button" className="rounded-xl bg-[var(--card-alt)] p-2 text-[var(--text-muted)] hover:bg-[var(--hover)]" aria-label="More options">
-          <MoreHorizontal className="h-4 w-4" />
-        </button>
       </div>
       {isLoading ? (
         <div className="flex flex-1 items-center justify-center text-sm text-[var(--text-muted)]">Loading…</div>

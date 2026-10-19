@@ -1,4 +1,3 @@
-import { MoreHorizontal } from 'lucide-react'
 import { useSystemSettings } from '../../contexts/SystemSettingsContext'
 import { formatDateTime } from '../../utils/formatDateTime'
 import type { AlertRow } from '../../types/dashboard'
@@ -37,9 +36,6 @@ export function RecentOutageTable({ alerts, isLoading, onAcknowledge, onAcknowle
             Acknowledge all ({unacknowledgedCount})
           </button>
         )}
-        <button type="button" className="rounded-xl bg-[var(--card-alt)] p-2 text-[var(--text-muted)] hover:bg-[var(--hover)]" aria-label="More options">
-          <MoreHorizontal className="h-4 w-4" />
-        </button>
         </div>
       </div>
       <div className="overflow-x-auto">
