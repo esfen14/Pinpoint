@@ -1232,7 +1232,7 @@
         "client/e2e/qa-modules-2-9.lab.spec.ts": "49f82ae6f6996d784082d575da9013a7a4827100fc797d5e47c73848977b43bc",
         "client/playwright.modules.qa.config.ts": "49dbe58e8e6547495ced6abe204a5ccd3854e917db47dea2f7c4acd846d6085c",
         "client/qa/module-selection.mjs": "5b648a29d597eb7ecdf3e7ea38f2a44560c5f7a2c1259e8041a503c3c4f4d99e",
-        "client/src/pages/DashboardPage.tsx": "b8038c7177a2e498c4feb115a0665406969f290d8f9236ac2e67e154b8da8a40",
+        "client/src/pages/DashboardPage.tsx": "9c82a47f1a817f14718704b7587c45f39506b5698d46407049658a01ee35b478",
         "client/src/components/shared/SummaryStatCard.tsx": "2da439e5d5684c62af52f3f84816d68085d6aa32663cdbaea6d256782fb11f66",
         "client/src/components/dashboard/NetworkPerformanceSection.tsx": "d67af2c66ca5bd710ab9c3aec62feb52b3d4b2e99b242533dea046658226525b",
         "client/src/components/dashboard/MetricCard.tsx": "a414ba058ac82dd32427f9cd02dc974c407a95c21703ac3ae230942afd9955d3",
@@ -3270,6 +3270,16 @@
       ]
     },
     "decision": "Issue #247 removed the unused 'More options' button and its MoreHorizontal import from the Overview cards. The TC-DASH-07 adapter navigates to the Network Performance card with heading.locator('..').locator('..'), which is unchanged (the heading's parent is still the header row and its parent the card), and it only asserts 'No data' text and the absence of the Average Resource Utilization heading. The assertions and expected-item markers are unchanged, so only the source hashes are refreshed. This is a source review, not runtime acceptance, and adds no execution or historical acceptance."
+  },
+  "source_change_review_issue_239": {
+    "reviewed_by": "Claude source review of issue #239, requested by the tester",
+    "reviewed_at": "2026-10-19",
+    "refreshed_sources": {
+      "TC-DASH-07": [
+        "client/src/pages/DashboardPage.tsx"
+      ]
+    },
+    "decision": "Issue #239 added an acknowledgement filter (Show all, Hide acknowledged, Show only acknowledged) to the Active Alerts feed and made Acknowledge all use the filtered rows. The TC-DASH-07 adapter asserts the No data displays on the Network Performance cards and the absence of the Average Resource Utilization heading; the summary, performance and resource markup is unchanged, and the default filter (Show all) renders the same Active Alerts rows as before. Assertions and expected-item markers are unchanged, so only the source hash is refreshed. This is a source review, not runtime acceptance, and adds no execution or historical acceptance."
   },
   "catalog_consolidation_review": {
     "reviewed_at": "2026-10-19",
