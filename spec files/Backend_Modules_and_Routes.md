@@ -186,7 +186,12 @@ A window is Nagios scheduled downtime, not PinPoint's own Maintenance Mode (a `S
 |---|---|---|
 | `GET /api/system/forecast` | `system.dashboard` or `system.services` (either) | The stored resource forecasts, soonest estimated crossing first. Query: `hostname` (optional), `limit` (1-500, default 100; 400 otherwise). Returns `forecasts` (`hostname`, `service_name`, `metric`, `kind` `warning`/`critical`, `threshold`, `crossing_at`, `slope_per_hour`, `r_squared`, `sample_count`, `window_hours`, `current_value`, `unit`, `computed_at`; timestamps ISO 8601 with a UTC offset) and `insufficient` (`hostname`, `service_name`, `metric`, `sample_count`, `window_hours`: series not yet watched long enough) |
 
-A forecast is a display-only estimate (`app/forecast.py`); the route reads `RESOURCE_FORECAST` only and nothing here changes a Nagios state or config. No permission was added. Notifications for forecasts are not part of this route.
+A forecast is a display-only estimate (`app/forecast.py`); the route reads `RESOURCE_FORECAST` only and nothing here changes a Nagios state or config. No permission was added. Notifications for forecasts are not part of this route. Forecast selection shares
+`ncpa_resource_dimension` with charts/summaries for full and short virtual-memory
+and logical-disk labels; SQL applies canonical identity before the bounded series
+selection and hourly aggregation. Swap, disk I/O, CPU, unrelated plugins and
+ambiguous short identities do not produce forecasts or insufficient rows. Fit,
+threshold, coverage, cap/rotation and API response contracts are unchanged (#259).
 
 ### `app/api/system/escalations.py`
 
