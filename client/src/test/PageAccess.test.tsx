@@ -84,6 +84,30 @@ describe('Sidebar', () => {
     expect(screen.queryByText('NCPA Deployment')).not.toBeInTheDocument()
   })
 
+  it('keeps Device Inventory, System Status and Topology adjacent with their existing destinations', () => {
+    signIn(Object.values(PAGE_PERMISSIONS).filter((permission): permission is string => permission !== null))
+    render(<MemoryRouter><Sidebar /></MemoryRouter>)
+
+    const links = screen.getAllByRole('link')
+    const deviceIndex = links.indexOf(screen.getByRole('link', { name: 'Device Inventory' }))
+    expect(links.slice(deviceIndex, deviceIndex + 3).map((link) => [
+      link.textContent, link.getAttribute('href'),
+    ])).toEqual([
+      ['Device Inventory', '/device-inventory'],
+      ['System Status', '/system-status'],
+      ['Topology', '/topology'],
+    ])
+  })
+
+  it('hides all three network pages without network health permission', () => {
+    signIn(['system.dashboard', 'plugin.view'])
+    render(<MemoryRouter><Sidebar /></MemoryRouter>)
+
+    for (const name of ['Device Inventory', 'System Status', 'Topology']) {
+      expect(screen.queryByRole('link', { name })).not.toBeInTheDocument()
+    }
+  })
+
   it('shows Maintenance only with maintenance.manage', () => {
     signIn(['system.dashboard'])
     const { unmount } = render(<MemoryRouter><Sidebar /></MemoryRouter>)
