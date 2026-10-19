@@ -18,7 +18,7 @@ Requirement coverage:
 | Issue requirement | Finish-condition item | Proof (test or command) |
 |---|---|---|
 | Remove unsupported cards and imports | 1, 3, 5 | PluginsPage.test.tsx and source review |
-| Responsive three-card row | 2 | computed layout and screenshots at mobile/desktop summary widths |
+| Responsive three-card row | 2 | isolated rendered browser preview at mobile/desktop summary widths |
 | Client type and retained backend contract | 4 | TypeScript build; backend summary source and spec |
 | Documentation | 6 | docs gate and diff |
 | Full verification | 7 | verify.sh all and Linux CI |
@@ -26,21 +26,23 @@ Requirement coverage:
 
 ## Plan
 
-1. [ ] Add regression in client/src/test/PluginsPage.test.tsx, confirm failure, remove cards/imports and change grid in client/src/pages/PluginsPage.tsx; remove unused client summary fields in client/src/types/plugin.ts; run focused tests and visual row checks.
+1. [x] Add regression in client/src/test/PluginsPage.test.tsx, confirm failure, remove cards/imports and change grid in client/src/pages/PluginsPage.tsx; remove unused client summary fields in client/src/types/plugin.ts; run focused tests and visual row checks.
 2. [ ] Update spec files/Frontend_Modules_and_Routes.md, spec files/Backend_Modules_and_Routes.md and spec files/Implementation_Status.md; run frontend/docs/full verification; publish PR and inspect CI.
 
 ## Round log
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| 1 | Removed cards/imports/client fields; updated specs; isolated browser preview at 390/1000 px | PluginsPage.test.tsx red before fix, 15 green after; verify.sh frontend | green: 1027 tests, build, lint (existing warnings) |
+| resumed | Recovered interrupted work and removed temporary preview files | git diff --check | green |
 | 0 | Read issue and affected specs/source; prepared plan | git status --short | green before plan |
 
 ## State for the next session
 
-- Last check run (exact command): git status --short
-- Result: green before plan.
-- Hypothesis: remove the two cards and client fields; preserve backend response for compatibility and document it.
-- Next action: Add and run the remaining/removed summary card regression before implementation.
+- Last check run (exact command): TMPDIR=/Users/karell/Documents/Codex/2026-10-19/s/work/test-tmp scripts/verify.sh frontend
+- Result: green: 1027 tests, build and lint. Prior all gate was interrupted during docs.
+- Hypothesis: implementation satisfies requested behavior; full gate and Linux CI remain.
+- Next action: Run verify.sh all, checkpoint its result, then publish PR and inspect Linux CI.
 
 ## Decisions and notes
 

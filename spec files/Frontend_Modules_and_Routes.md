@@ -73,6 +73,17 @@ When adding a page:
 5. Add or update route/access tests.
 6. Update this specification and `Implementation_Status.md`.
 
+## Plugin Manager summary
+
+`PluginsPage` shows only **Installed Plugins** (`installed_plugins`), **Active
+Capabilities** (`active_capabilities`) and **Validation Issues** (`validation_issues`).
+The summary grid stacks one card per row below the medium breakpoint and uses
+three equal columns at desktop widths. `enabled_plugins` still controls the
+no-plugins-enabled banner. The client `PluginSummary` omits `custom_plugins` and
+`updates_available`; the backend retains those unused fields for compatibility.
+Custom Plugins and Updates Available summary cards are not shown because custom
+plugin uploads and a plugin update flow are outside the current release.
+
 ## Component ownership
 
 | Path | Responsibility |
