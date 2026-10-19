@@ -1901,17 +1901,17 @@ The inventory has the tabs **All**, **Network Services**, **Device Availability*
 
 | TC | Case | Req | Tech | Pri | Result |
 | --- | --- | --- | --- | --- | --- |
-| TC-NCPA-01 | Warning when `check_ncpa` is off | NCPA-01 | EG | M | Not run |
-| TC-NCPA-02 | Deploy wizard order | NCPA-02 | ST | H | Not run |
-| TC-NCPA-03 | Wrong and right SSH password | NCPA-02 | EP | H | Not run |
-| TC-NCPA-04 | Run progress and history | NCPA-03 | ST | H | Not run |
-| TC-NCPA-05 | Who can use Clean up | NCPA-04 | DT | M | Not run |
-| TC-NCPA-06 | Clean up | NCPA-04 | EP | H | Not run |
-| TC-NCPA-07 | No credentials shown anywhere | NCPA-05 | EG | H | Not run |
-| TC-NCPA-08 | NCPA Deployment needs permission | NCPA-06 | DT | H | Not run |
-| TC-NCPA-09 | Remote restart settings (issue #182) | NCPA-07 | EP | M | Not run |
-| TC-NCPA-10 | Remote restart is blocked during a deployment | NCPA-07 | EG | M | Not run |
-| TC-NCPA-11 | Clean up warns that remote restarts stop | NCPA-08 | EG | M | Not run |
+| TC-NCPA-01 | Warning when `check_ncpa` is off | NCPA-01 | EG | M | PASS |
+| TC-NCPA-02 | Deploy wizard order | NCPA-02 | ST | H | PASS |
+| TC-NCPA-03 | Wrong and right SSH password | NCPA-02 | EP | H | PASS |
+| TC-NCPA-04 | Run progress and history | NCPA-03 | ST | H | PASS |
+| TC-NCPA-05 | Who can use Clean up | NCPA-04 | DT | M | PASS |
+| TC-NCPA-06 | Clean up | NCPA-04 | EP | H | PASS |
+| TC-NCPA-07 | No credentials shown anywhere | NCPA-05 | EG | H | PASS |
+| TC-NCPA-08 | NCPA Deployment needs permission | NCPA-06 | DT | H | PASS |
+| TC-NCPA-09 | Remote restart settings (issue #182) | NCPA-07 | EP | M | PASS |
+| TC-NCPA-10 | Remote restart is blocked during a deployment | NCPA-07 | EG | M | PASS |
+| TC-NCPA-11 | Clean up warns that remote restarts stop | NCPA-08 | EG | M | PASS |
 
 The page has the **Devices** tab (a table with **Select**, **Device**, **IP Address**, **Agent**, **Host Key**, **Last Result**, **Actions**) and a **Deployment History** tab. Buttons: **Deploy selected**, **Verify**, **Clean up**, **Remote restart**.
 
