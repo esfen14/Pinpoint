@@ -22,7 +22,7 @@ requests use `src/lib/api.ts`; Plugin Manager wrappers live in
 
 | Browser path | Page | Required client permission | Current data source/status |
 |---|---|---|---|
-| `/login` | `LoginPage` | Public | Connected to `/api/user/login`. "Forgot Password?" opens a dialog that posts the email to `/api/user/forgot-password`; an administrator is notified and sets the password |
+| `/login` | `LoginRoute` | Public | Checks `/api/user/me` before rendering `LoginPage`: authenticated users are redirected to their first authorized page (Settings if no page grants); only 401 exposes the form. Loading hides the form; other failures show a retry. Switching accounts requires explicit sign-out. Connected to `/api/user/login`. "Forgot Password?" opens a dialog that posts the email to `/api/user/forgot-password`; an administrator is notified and sets the password |
 | `/dashboard` | `DashboardPage` | `system.dashboard` | Connected to dashboard, trends, service, and acknowledgement APIs. The Active Alerts feed has an acknowledgement filter (Show all, Hide acknowledged, Show only acknowledged; default Show all) applied to the loaded rows; Acknowledge all and its count use only the unacknowledged rows visible after the filter (`filterAlerts` in `types/dashboard.ts`) |
 | `/network-health` | `NetworkHealthPage` | `system.network_health` | Connected to summary and trends APIs; detailed host/service UI is supplied elsewhere |
 | `/device-inventory` | `DeviceInventoryPage` | `system.network_health` | Connected to the latest-host endpoints and acknowledgement API. The host table has an IP Address column (`—` for a host with no discovered device). The host drawer also shows a Ports section (see `Device_Inventory_Requirements.md`) for users with `system.hosts` when the host has a `device_id`; actions need `system.hosts.edit`. The host table has a Monitoring column and filter, and the drawer a Monitoring section with Pause / Resume (`Device_Inventory_Requirements.md` §12) |
@@ -41,6 +41,13 @@ requests use `src/lib/api.ts`; Plugin Manager wrappers live in
 | `/settings` | `SettingsPage` | Any logged-in user; tabs are separately gated | Connected to system settings and user preferences. Tabs: General Settings, Security, System, Network Discovery, Plugins and Email; the System tab includes the notification-policy card |
 | `/` | Redirect | — | Redirects to `/login` |
 | unmatched path | Redirect | — | Redirects to `/login` |
+
+`LoginPage` displays a rejected login's message and stays on the form. In
+particular, a 409 existing-session response never triggers successful-login
+navigation; sign out of the existing session before submitting another account.
+The API rejection also covers a session established in another tab after the
+initial route check. Normal signed-out login enters the authenticated layout,
+which reloads `/api/user/me` and applies that account's permissions and setup flags.
 
 ## Page access rules
 
@@ -68,6 +75,12 @@ wait for loading or check active roles. Matching passwords must meet the active
 password policy. Successful creation closes the dialog and refreshes the list;
 a rejected save retains the draft and displays the server message. Further
 accounts can be created without reloading the page.
+
+Manage Accounts → Edit Account displays the server's warning when a supplied
+password matches the edited account's current password. The dialog stays open
+with the draft intact so the administrator can enter and confirm a different
+password and retry Save Changes. Password reuse is checked on submission by the
+server; the browser does not receive the current password or its hash.
 
 When adding a page:
 

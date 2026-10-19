@@ -839,6 +839,24 @@ interfaces. No bandwidth metric is in the default NCPA metric table (interface
 names differ per host), so an administrator adds them in Settings → Plugins → NCPA Metrics: the "Show bandwidth on Network Health" helper takes the connection name (e.g. `eth0`) and adds the `bandwidth_in` / `bandwidth_out` rows.
 Until a check reports, the card shows "Not configured".
 
+Historical NCPA resource samples use the same command-first plugin classification
+as the current service inventory: `Check_Command` identifies the plugin when
+present, otherwise the supported service-name alias is used. Generated names such
+as `ncpa-cpu-5693-tcp` do not need to contain `check_ncpa`. CPU, memory and disk
+samples are restricted to the requested time window (including no future-dated
+samples); non-NCPA checks with similar metric labels are excluded. Both Dashboard
+Average Resource Utilization and Network Health Average Resource consume these
+trends. A configured NCPA section with no matching samples keeps null buckets.
+
+Trends and latest NCPA averages share a resource-dimension classifier. Existing
+full-path labels remain supported. Real agent labels `percent` (including
+per-core `percent_N`) and `used_percent`, with optional quote delimiters, require
+an identifiable command metric path or generated NCPA service metric key. CPU
+and virtual memory use percent; logical disk usage uses used_percent. Unknown
+identities, swap and disk I/O do not contribute to these averages. Stored metric
+labels are not rewritten. Forecast selection remains a separate consumer with
+its own full-path filter; see the [forecast-label follow-up #259](https://github.com/esfen14/Pinpoint/issues/259).
+
 **Conditional metrics (if NCPA is deployed on at least one host):**
 
 | Metric | Display | Source |

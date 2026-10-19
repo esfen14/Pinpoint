@@ -71,9 +71,28 @@ with temporary SQLite and a stubbed Nagios writer. The API has no one-account ca
 unconfirmed; password policy and mismatch checks intentionally still block Save.
 See [the investigation](../docs/plans/Issue_191_Account_Creation_Investigation.md).
 
+## NCPA resource trend selection (#242)
+
+Historical CPU, disk and memory samples now use the existing command-first plugin
+classifier, including generated `ncpa-*` descriptions and command-identified
+checks. The requested time window excludes old and future samples, and non-NCPA
+checks are excluded even when their names or metrics resemble NCPA. A shared classifier also maps real short `percent`/`used_percent` labels in trends
+and current summaries, keeping swap, disk I/O and ambiguous identities out.
+Existing full-path history remains supported without rewriting stored labels.
+Forecasts still use their separate full-path filter and are tracked by the
+[forecast-label follow-up #259](https://github.com/esfen14/Pinpoint/issues/259). Numeric API/summary regressions and both real-agent Docker browser resource
+journeys pass; see the [live chart report](../docs/test-runs/2026-10-19-issue-242-resource-charts/REPORT.md).
+The user's appliance, installer deployment and scale remain unverified.
+
 ## Implemented backend areas
 
-- Session login/logout and current-user identity.
+- Session login/logout and current-user identity. Existing-session login is
+  explicitly rejected with 409 and requires sign-out before another login (#222).
+  The login route checks the server session and redirects authenticated users to
+  an authorized page. Isolated regressions cover both Admin/Viewer directions,
+  retained identity after rejection and the new account's permissions after logout.
+  Original manual role/evidence details and new appliance manual acceptance remain
+  pending; these tests do not establish a live manual pass.
 - Account, role, permission-option, and per-user preference APIs, including the
   bootstrap administrator's first-run setup (`POST /api/user/complete-setup`)
   and server-access recovery (`flask recover-bootstrap-admin`). Recovery privately
@@ -191,7 +210,12 @@ See [the investigation](../docs/plans/Issue_191_Account_Creation_Investigation.m
 - Dashboard API integration and acknowledgement flow.
 - Network Health summary/trend integration.
 - Device Inventory backed by latest host-status APIs.
-- Account and role management.
+  - Account and role management. Edit Account rejects reuse of the edited user's
+    current password before saving any changes (#219), with a server warning
+    displayed in the dialog and a retry using a different password. Isolated
+    backend and UI regressions cover rejection, unchanged data and retry; the
+    original TC-ACC-06 manual FAIL remains unchanged pending a separate manual
+    retest on an identified build.
 - System Settings and per-user preferences. The separate Notification Policy singleton drives generated Nagios timeperiods, contact options and host/service notification settings; Settings → System exposes quiet hours and state/interval controls (`settings.system`). Defaults preserve pre-change `hosts.cfg`. Docker-lab Nagios validation and forced host/service notification dispatch inside/outside quiet hours are documented in `docs/test-runs/2026-10-13-issue-113-notification-policy/REPORT.md`; browser save/reload was exercised via the Docker lab; installer-built VM and inbox delivery are not verified there.
 - Notification escalations (#116): Settings → System and `settings.system` CRUD use the existing #79 groups, finite notification-count ranges and all/device scope. The shared writer emits host/service escalation blocks, suppresses empty groups and absent scoped hosts, and rolls back failed apply. Automated API, renderer, migration and interaction checks cover these paths. The [isolated Docker report](../docs/test-runs/2026-10-15-issue-116-escalations/REPORT.md) verifies real Nagios host/service validation, notification 1 reaching the normal recipient and notification 2 the escalation recipient on an unacknowledged HARD CRITICAL, opt-out/deactivation suppression, rejected-config rollback and browser CRUD. Local MIME capture proves notifier routing; external SMTP/inbox delivery and installer/VM deployment were not tested.
 - NCPA notification dependencies (#118): default-on `PINPOINT_NCPA_NOTIFICATION_DEPENDENCIES` generates a visible TCP listener service and notification-only `c,u` dependencies for each generated NCPA metric when `check_tcp` is enabled; off retains the old service list. There is no host-to-service dependency object because Nagios does not support one. [Docker lab evidence](../docs/test-runs/2026-10-17-issue-118/REPORT.md) verifies Nagios accepts three generated dependency objects, and a real host outage with three monitored services produces one host notification event, no service notification events, and critical states in Dashboard and Network Health APIs. A real NCPA agent/port-failure notification trial remains unverified.

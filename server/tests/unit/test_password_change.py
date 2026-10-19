@@ -1,3 +1,5 @@
+import pytest
+
 from app.system_models import User, UserStatus
 from tests.unit.test_management import _make_user
 
@@ -40,6 +42,43 @@ class TestSuspendWithoutPassword:
 
 
 class TestMustChangePasswordFlag:
+    @pytest.mark.parametrize("strong_policy", [True, False])
+    @pytest.mark.parametrize("self_edit", [False, True])
+    def test_edit_rejects_current_password_without_saving_changes(
+        self, logged_in_client, db_session, admin_role, admin_user, monkeypatch,
+        strong_policy, self_edit,
+    ):
+        monkeypatch.setattr(
+            "app.api.helper.validation.is_strong_password_policy_enabled",
+            lambda: strong_policy,
+        )
+        target = admin_user if self_edit else _make_user(
+            db_session, admin_role, "reuse@example.com",
+        )
+        target.set_password(NEW_PASSWORD)
+        db_session.session.commit()
+        original = (
+            target.First_Name, target.Email, target.Hashed_Password,
+            target.Must_Change_Password, target.Updated_At,
+        )
+
+        resp = _edit(
+            logged_in_client, target, first_name="Should not save",
+            email="changed@example.com", password=NEW_PASSWORD,
+            confirm_password=NEW_PASSWORD,
+        )
+
+        assert resp.status_code == 400
+        assert resp.get_json() == {
+            "success": False,
+            "message": "You cannot reuse this account's current password. Choose a different password.",
+        }
+        db_session.session.refresh(target)
+        assert (
+            target.First_Name, target.Email, target.Hashed_Password,
+            target.Must_Change_Password, target.Updated_At,
+        ) == original
+
     def test_new_account_must_change_password(self, logged_in_client, db_session, admin_role):
         from app.system_models import User
         resp = logged_in_client.post("/api/user/accounts", json={
@@ -63,13 +102,31 @@ class TestMustChangePasswordFlag:
         db_session.session.refresh(target)
         assert target.Must_Change_Password is False
 
-    def test_admin_password_reset_sets_flag(self, logged_in_client, db_session, admin_role):
+    def test_admin_password_reset_sets_flag(self, logged_in_client, db_session, admin_role, app):
         target = _make_user(db_session, admin_role, "t6@example.com")
         resp = _edit(logged_in_client, target, password=NEW_PASSWORD, confirm_password=NEW_PASSWORD)
         assert resp.status_code == 200
         db_session.session.refresh(target)
         assert target.check_password(NEW_PASSWORD)
         assert target.Must_Change_Password is True
+
+        assert logged_in_client.post("/api/user/logout").status_code == 200
+        target_client = app.test_client()
+        assert target_client.post("/api/user/login", json={
+            "email": target.Email, "password": "TestPass1!abc",
+        }).status_code == 401
+        login = target_client.post("/api/user/login", json={
+            "email": target.Email, "password": NEW_PASSWORD,
+        })
+        assert login.status_code == 200
+        assert login.get_json()["data"]["must_change_password"] is True
+        assert target_client.get("/api/user/roles").status_code == 403
+        assert target_client.post("/api/user/change-password", json={
+            "current_password": NEW_PASSWORD,
+            "new_password": "DifferentFinalPass1!",
+            "confirm_password": "DifferentFinalPass1!",
+        }).status_code == 200
+        assert target_client.get("/api/user/roles").status_code == 200
 
     def test_own_password_change_via_edit_does_not_set_flag(self, logged_in_client, db_session, admin_user):
         resp = _edit(logged_in_client, admin_user, password=NEW_PASSWORD, confirm_password=NEW_PASSWORD)

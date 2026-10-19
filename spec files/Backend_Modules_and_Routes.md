@@ -87,10 +87,29 @@ normal configured timeout; immediate invalidation is not part of this command.
 
 | Method and path | Permission | Purpose |
 |---|---|---|
-| `POST /api/user/login` | Public | Validate credentials and establish a session |
+| `POST /api/user/login` | Public | Validate credentials and establish a session only when signed out; an existing authenticated session returns 409 before credential validation |
 | `POST /api/user/logout` | Login | End the current session |
 
+Login requires an explicit sign-out before signing in again, including the
+same account. An authenticated request receives the standard error envelope
+(`success: false`, HTTP 409), with message "You are already signed in. Sign out
+before logging in to another account." No submitted credentials are checked and
+no successful sign-in is audited. The existing identity and permissions remain
+unchanged. `POST /api/user/logout` ends that session; a subsequent accepted login
+establishes the submitted active account, and `/api/user/me` and protected routes
+use only that account's role permissions. Existing inactive-account and idle
+session expiry checks still run before login handling.
+
 ### `app/api/user/management.py`
+
+Edit Account (`PUT /api/user/accounts/<id>`) rejects a supplied password matching
+the edited account's current password with HTTP 400 and the message
+"You cannot reuse this account's current password. Choose a different password."
+The check uses the target account's stored password hash, including for self
+edits, under both password-policy modes. Rejection happens before any account
+fields, password hash or forced-change flag are saved. Omitting or leaving both
+password fields blank still keeps the current password. A different compliant
+password retains the existing temporary-password and forced-change behavior.
 
 | Method and path | Permission | Purpose |
 |---|---|---|
@@ -232,7 +251,7 @@ Detailed fields and behavior are normative in `Display_Requirements.md`.
 | Method and path | Permission | Purpose |
 |---|---|---|
 | `GET /api/system/network-health/summary` | `system.network_health` | Network Health header totals and last-scan information |
-| `GET /api/system/network-health/trends` | `system.network_health` | Bucketed ping and NCPA metric trends |
+| `GET /api/system/network-health/trends` | `system.network_health` | Bucketed ping and NCPA metric trends; historical NCPA CPU/disk/memory use the same command-first `_plugin_key(Service, Check_Command)` classification as current services, with service-name fallback only without a command. Includes generated NCPA names, excludes other plugins and timestamps outside the requested window; absent matching samples remain null buckets. Trends and current NCPA averages share `ncpa_resource_dimension`: full-path history plus quoted/unquoted agent `percent`, `percent_N` and `used_percent` labels, disambiguated by command metric path or generated service metric key; swap, disk I/O and unknown short-label identities are excluded |
 | `GET /api/system/network-health/plugins` | `system.network_health` | Service health grouped by plugin type |
 
 Valid trend windows are `hours=1`, `6`, `24`, or `168`.
