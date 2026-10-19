@@ -1,5 +1,6 @@
 """Catalog migration regressions, using real procedures without touching a lab."""
 import importlib.util
+import re
 from pathlib import Path
 import unittest
 
@@ -25,11 +26,24 @@ class CatalogTests(unittest.TestCase):
         c = cat.load_catalog()
         self.assertEqual(c['TC-DSC-01']['status'], 'needs-decision')
         self.assertEqual(c['TC-ACK-06']['status'], 'needs-decision')
-        self.assertEqual(c['TC-EDG-01']['status'], 'untested')
-        self.assertIsNone(c['TC-EDG-01']['summary_result'])
+        self.assertEqual(c['TC-EDG-01']['status'], 'pass')
+        self.assertEqual(c['TC-EDG-01']['summary_result'], 'PASS')
         self.assertEqual(c['TC-DX-01']['status'], 'needs-decision')
         self.assertEqual(c['TC-NFR-07']['status'], 'fail')
         self.assertEqual(c['TC-ACC-06']['status'], 'fail')
+
+    def test_e2e_explicit_result_and_missing_result(self):
+        text = cat.PLAN.read_text()
+        for result, status in [('PASS', 'pass'), ('FAIL', 'fail'), ('PARTIALLY PASS', 'partial'), ('', 'untested')]:
+            with self.subTest(result=result):
+                start = text.index('### E2E-01 –')
+                end = text.index('### E2E-02 –', start)
+                body = text[start:end]
+                body = re.sub(r' · \*\*Result:\*\*[^\n]+', '', body)
+                if result:
+                    body = body.replace('**Priority:** H', '**Priority:** H · **Result:** ' + result, 1)
+                parsed = cat.parse_catalog(text[:start] + body + text[end:])
+                self.assertEqual(parsed['E2E-01']['status'], status)
 
     def test_unknown_prerequisite_is_not_silently_ignored(self):
         text=cat.PLAN.read_text().replace('| TC-AUTH-06 | TC-AUTH-05 |','| TC-AUTH-06 | TC-AUTH-99 |',1)

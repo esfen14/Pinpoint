@@ -181,7 +181,7 @@ Assertion markers and source hashes support review; they do not prove assertion 
 | TC-LOG-01 | LOG | unmapped / unassigned | None | E1, E2 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-LOG-02 | LOG | unmapped / unassigned | None | E1, E2 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-LOG-03 | LOG | unmapped / unassigned | None | E1, E2 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
-| TC-LOG-04 | LOG | unmapped / unassigned | None | E1, E2 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
+| TC-LOG-04 | LOG | unmapped / unassigned | None | E1, E2, E3 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-SHL-05 | SHL | unmapped / unassigned | None | E1, E2, E3 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-DASH-06 | DASH | unmapped / unassigned | None | E1, E2 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-MNT-08 | MNT | unmapped / unassigned | None | E1 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |

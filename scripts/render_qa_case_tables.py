@@ -22,8 +22,8 @@ def render(text:str,review:dict|None=None) -> str:
     cases=cat.parse_catalog(text);entries={e['case_id']:e for e in (review or {}).get('entries',[])}
     out=['# Derived black-box case status','','Generated from the module catalog; do not hand-edit.',
          'This is a source/result-conflict view, not a new execution or current-build certification.',
-         'Historical catalog results are human manual results. Historical reports retain their original executors.',
-         'E2E with no recorded result is pending/unrecorded, not proof it was never attempted.',
+         'Catalog results include human manual confirmations and report-attributed outcomes. Historical reports retain their original executors.',
+         'E2E without a detailed Result field is pending/unrecorded, not proof it was never attempted.',
          'Accepted evidence and new execution totals must be reported separately.','',
          f"Source SHA-256: `{cat.digest(text)}`.",
          f"Cases: {sum(k.startswith('TC-') for k in cases)} TC plus {sum(k.startswith('E2E-') for k in cases)} E2E.",
