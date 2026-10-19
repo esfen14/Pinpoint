@@ -62,7 +62,11 @@ mode, fresh recovery and saved refresh text. Full verification results are recor
 in the PR. An initial full frontend run had an unrelated BandwidthCard chart
 assertion failure; it was retained and the unchanged full suite rerun. That concurrent repeat produced additional timeouts
 across unrelated screens under local load; a standalone final frontend run was
-then started with the temporary browser server stopped. The first
+then started with the temporary browser server stopped. It still encountered
+three account-page failures (two explicit timeouts); a full two-worker run kept
+all assertions/timeouts unchanged and passed82 files /1049 tests. Build and lint
+results are recorded in the PR. The default frontend gate attempts therefore
+remain recorded as failures, not relabelled as successful runs. The first
 all-gate attempt also overlapped a warning-copy/fingerprint update and rejected
 that transient source mismatch; the stable final tree was verified again.
 

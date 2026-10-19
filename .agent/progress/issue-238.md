@@ -1,7 +1,7 @@
 # Issue #238: Dashboard stale Nagios warning
 
 Branch: `issue-238-nagios-stale-warning`
-Status: in-progress
+Status: ready-for-review
 
 ## Finish condition
 
@@ -25,9 +25,9 @@ Requirement coverage:
 
 1. [x] Add failing UI regressions for stopped/stale Nagios warning, fresh recovery and refresh modes.
 2. [x] Implement shared status-freshness interpretation and visible warnings; retain historical PID without presenting it as live proof.
-3. [ ] Verify focused/full frontend and docs/all gates; update owning specifications and reviewed coverage bindings.
+3. [x] Verify focused/full frontend and docs/all gates; update owning specifications and reviewed coverage bindings.
 4. [x] Deploy candidate frontend against reserved Docker API, stop/restart Nagios, verify both refresh modes and warnings, restore lab and record separate sanitized report.
-5. [ ] Remove scaffold and open PR, leaving CI running per user preference.
+5. [x] Remove scaffold and open PR, leaving CI running per user preference.
 
 ## Round log
 
@@ -51,3 +51,7 @@ Round 1: three stopped/stale warning regressions failed before implementation; 4
 Round 2: specifications and TC-DASH-07 source bindings reviewed. Candidate Vite on5238 against unchanged appliance API, baseline /src44471f7c. Nagios stopped10:25:19Z with600s automatic-restoration guard (session55185). Original refresh5; saved1 thenManual successfully. Await actual3-minute timestamp age; full tests running.
 
 Round 3: actual stopped/recovered browser/API retest passed; separate sanitized report added, original FAIL preserved. Nagios restarted10:29:44Z; normalpollnewPID53036/time10:31:39Z. Restoredrefresh5, loggedout, resetviewport, stoppedownedVite/removedguardfiles. Allgate final hits knownmacOS host-lock; concurrent fullfrontend saw unrelated timeoutfailures, standalone frontend run session78248 now running. Next: inspect standalone result, finish PR with CI left running.
+
+Round 4: defaultfrontend standalone1046passed/3accountfailures; fulltwo-worker run82files/1049passed with unchangedassertions/timeouts; build/lint running in session34309. Final docs links257allresolve andcoverage239valid. User prefers no CI wait. Next: inspect build/lint and open PR.
+
+Final local result: fullsuite1049passed with2workers; buildpassed;lint0errors/33existingwarnings. All gate remains knownmacOShost-lock failure. Report and links validate. No source change after live candidate. Remove scaffold and openPR; do notwaitCI peruser.
