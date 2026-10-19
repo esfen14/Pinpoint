@@ -6,7 +6,7 @@ Historical catalog results are human manual results. Historical reports retain t
 E2E with no recorded result is pending/unrecorded, not proof it was never attempted.
 Accepted evidence and new execution totals must be reported separately.
 
-Source SHA-256: `2ef796eb541796e43187acd965431e4a40554a9f8b770fbee40a2bab3f7ba10e`.
+Source SHA-256: `98abc0dbd3092e7aad625f22ffd7fcc70ace82574d6b7e8e832ef10e19b11928`.
 Cases: 231 TC plus 8 E2E.
 Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 
@@ -64,12 +64,12 @@ Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 | TC-SHL-02 | SHL / 4 | PASS | Not run | needs-decision | retest required: [source report](../test-runs/2026-10-15-issue-116-escalations/REPORT.md) |
 | TC-SHL-03 | SHL / 4 | PASS | Not run | needs-decision | retest required: [source report](../test-runs/2026-10-15-issue-116-escalations/REPORT.md) |
 | TC-DSC-01 | DSC / 5 | PASS | Not run | needs-decision | No reviewed mapping |
-| TC-DSC-02 | DSC / 5 | Not run | Not run | untested | No reviewed mapping |
+| TC-DSC-02 | DSC / 5 | PASS | PASS | pass | No reviewed mapping |
 | TC-DSC-03 | DSC / 5 | PASS | Not run | needs-decision | No reviewed mapping |
 | TC-DSC-04 | DSC / 5 | PASS | Not run | needs-decision | No reviewed mapping |
-| TC-DSC-05 | DSC / 5 | Not run | Not run | untested | No reviewed mapping |
-| TC-DSC-08 | DSC / 5 | Not run | Not run | untested | No reviewed mapping |
-| TC-DSC-09 | DSC / 5 | Not run | Not run (re-check: reworded) | untested | No reviewed mapping |
+| TC-DSC-05 | DSC / 5 | PASS | PASS | pass | No reviewed mapping |
+| TC-DSC-08 | DSC / 5 | PASS | PASS | pass | No reviewed mapping |
+| TC-DSC-09 | DSC / 5 | PASS | PASS | pass | No reviewed mapping |
 | TC-PLG-01 | PLG / 5 | PASS | PASS | pass | No reviewed mapping |
 | TC-PLG-02 | PLG / 5 | PASS | PASS | pass | No reviewed mapping |
 | TC-PLG-03 | PLG / 5 | PASS | PASS | pass | No reviewed mapping |
@@ -96,8 +96,8 @@ Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 | TC-DX-03 | DX / 6 | PASS | Not run | needs-decision | No reviewed mapping |
 | TC-DX-04 | DX / 6 | PASS | Not run | needs-decision | No reviewed mapping |
 | TC-DX-05 | DX / 6 | PASS | Not run | needs-decision | No reviewed mapping |
-| TC-DX-06 | DX / 6 | Not run | Not run | untested | No reviewed mapping |
-| TC-DX-07 | DX / 6 | Not run | Not run | untested | No reviewed mapping |
+| TC-DX-06 | DX / 6 | PARTIALLY PASS | PARTIALLY PASS (messages accurate; SNMP section disappears after Save, Test and Reset until refresh) | partial | No reviewed mapping |
+| TC-DX-07 | DX / 6 | PASS | PASS | pass | No reviewed mapping |
 | TC-DX-08 | DX / 6 | Not run | Not run | untested | No reviewed mapping |
 | TC-DX-09 | DX / 6 | Not run | Not run | untested | No reviewed mapping |
 | TC-DX-10 | DX / 6 | Not run | Not run | untested | No reviewed mapping |
@@ -124,8 +124,8 @@ Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 | TC-DI-17 | DI / 7 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-164-identity-review/REPORT.md); supporting: [source report](../test-runs/2026-10-15-issue-164-final-refresh/REPORT.md) |
 | TC-DI-18 | DI / 7 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-164-identity-review/REPORT.md); supporting: [source report](../test-runs/2026-10-15-issue-164-final-refresh/REPORT.md) |
 | TC-DI-19 | DI / 7 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-164-identity-review/REPORT.md); supporting: [source report](../test-runs/2026-10-15-issue-164-final-refresh/REPORT.md) |
-| TC-DSC-06 | DSC / 7 | Not run | Not run | untested | No reviewed mapping |
-| TC-DSC-07 | DSC / 7 | Not run | Not run | untested | No reviewed mapping |
+| TC-DSC-06 | DSC / 7 | PASS | PASS | pass | No reviewed mapping |
+| TC-DSC-07 | DSC / 7 | PASS | PASS | pass | No reviewed mapping |
 | TC-DASH-03 | DASH / 8 | PASS | PASS | pass | No reviewed mapping |
 | TC-ACK-01 | ACK / 8 | PASS | PASS | pass | No reviewed mapping |
 | TC-ACK-02 | ACK / 8 | PASS | PASS | pass | No reviewed mapping |
