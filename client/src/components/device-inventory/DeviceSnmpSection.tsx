@@ -77,8 +77,9 @@ export function DeviceSnmpSection({ deviceId, hostname }: Props) {
   const [notice, setNotice] = useState<string | null>(null)
   const [testResult, setTestResult] = useState<SnmpTestResult | null>(null)
 
+  // A save or reset answer that lacks in_use keeps what the section already knew, so the section stays shown.
   const load = useCallback((response: DeviceVariablesResponse) => {
-    setSaved(response)
+    setSaved((current) => (response.in_use == null && current ? { ...response, in_use: current.in_use } : response))
     setForm(formFromSaved(response))
     setRemoved({})
   }, [])
