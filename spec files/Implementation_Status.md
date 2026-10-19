@@ -23,6 +23,8 @@ runner's presence.
 ## Navigation order (#231)
 
 The sidebar places Device Inventory → Network Status → Topology consecutively.
+The `/system-status` page content heading is Network Service Overview (#232);
+its service behavior, route and permissions are unchanged.
 Existing labels, destinations and `system.network_health` filtering are preserved;
 rendered-sidebar regression checks cover order, links and denied visibility.
 Live appliance/browser verification is pending.

@@ -69,6 +69,13 @@ describe('SystemStatusPage flapping filter', () => {
     permissions.granted = new Set()
   })
 
+  it('shows the approved Network Service Overview heading', async () => {
+    render(<MemoryRouter><SystemStatusPage /></MemoryRouter>)
+    expect(screen.getByRole('heading', { level: 1, name: 'Network Service Overview' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Service Status Overview' })).not.toBeInTheDocument()
+    await screen.findByText('http-80-TCP')
+  })
+
   it('lists only flapping services from the server, then all again', async () => {
     const user = userEvent.setup()
     render(<MemoryRouter><SystemStatusPage /></MemoryRouter>)
