@@ -1,7 +1,7 @@
 // PLEASE WALANG GAGALAW NG KAHIT ANO
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AdminLayout } from './components/layout/AdminLayout'
-import { LoginPage } from './pages/LoginPage'
+import { LoginRoute } from './components/login/LoginRoute'
 import { DashboardPage } from './pages/DashboardPage'
 import { NetworkHealthPage } from './pages/NetworkHealthPage'
 import { DeviceInventoryPage } from './pages/DeviceInventoryPage'
@@ -24,7 +24,7 @@ export default function App() {
       
       <Route
         path="/login"
-        element={<LoginPage />}
+        element={<LoginRoute />}
       />
       <Route
         path="/"

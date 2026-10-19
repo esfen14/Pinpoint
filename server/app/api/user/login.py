@@ -1,3 +1,12 @@
+"""Session authentication and expiry enforcement.
+
+Routes
+------
+POST /api/user/login
+    Establish a signed-out session; reject an existing session with 409.
+POST /api/user/logout
+    End the authenticated session.
+"""
 import time
 
 from flask_login import login_user, logout_user, login_required, current_user
@@ -113,7 +122,9 @@ def enforce_password_change():
 @user_bp.post('/login')
 def login():
     """
-    This function is for logging in a user and validating credentials.
+    Validate credentials and establish a session only when signed out.
+    An existing authenticated session receives 409 before credential validation;
+    its identity and permissions remain unchanged until explicit logout.
 
     Expects:
     {
@@ -124,6 +135,12 @@ def login():
     Returns:
         Standardized JSON response
     """
+
+    if current_user.is_authenticated:
+        return error(
+            "You are already signed in. Sign out before logging in to another account.",
+            409,
+        )
 
     data = request.get_json()
 
@@ -163,9 +180,6 @@ def login():
     if user.Status.value != "Active":
         return error("Account inactive.", 403)
 
-    if current_user.is_authenticated:
-        return success(message="User already logged in.")
-
     login_user(user)
     session["last_activity"] = time.time()
     try:
@@ -187,6 +201,7 @@ def login():
 @user_bp.post('/logout')
 @login_required
 def logout():
+    """Audit sign-out and end the current authenticated session."""
     try:
         create_audit_log(current_user.UserID, f"Signed out ({current_user.Email})")
         db.session.commit()
