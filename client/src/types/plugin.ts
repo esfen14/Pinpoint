@@ -59,8 +59,6 @@ export type PluginSummary = {
   active_capabilities: number
   // Plugins that are Enabled or Active; zero means nothing is being monitored.
   enabled_plugins: number
-  custom_plugins: number
-  updates_available: number
   validation_issues: number
 }
 

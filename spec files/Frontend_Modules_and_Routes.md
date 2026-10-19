@@ -9,6 +9,11 @@ routes. `AdminLayout` supplies the authenticated shell, and `Sidebar`, `Header`,
 `PageAccessGuard`, `SessionTimeoutWatcher`, and `MaintenanceBanner` implement
 cross-page behavior.
 
+For a user with access to all three, the sidebar places **Device Inventory**,
+**System Status**, then **Topology** consecutively. These entries retain
+`/device-inventory`, `/system-status` and `/topology`, respectively, and all
+require `system.network_health`; permission filtering hides them when absent.
+
 All API calls are same-origin and send the Flask session cookie. Shared JSON
 requests use `src/lib/api.ts`; Plugin Manager wrappers live in
 `src/lib/pluginApi.ts`.
@@ -17,7 +22,7 @@ requests use `src/lib/api.ts`; Plugin Manager wrappers live in
 
 | Browser path | Page | Required client permission | Current data source/status |
 |---|---|---|---|
-| `/login` | `LoginPage` | Public | Connected to `/api/user/login`. "Forgot Password?" opens a dialog that posts the email to `/api/user/forgot-password`; an administrator is notified and sets the password |
+| `/login` | `LoginRoute` | Public | Checks `/api/user/me` before rendering `LoginPage`: authenticated users are redirected to their first authorized page (Settings if no page grants); only 401 exposes the form. Loading hides the form; other failures show a retry. Switching accounts requires explicit sign-out. Connected to `/api/user/login`. "Forgot Password?" opens a dialog that posts the email to `/api/user/forgot-password`; an administrator is notified and sets the password |
 | `/dashboard` | `DashboardPage` | `system.dashboard` | Connected to dashboard, trends, service, and acknowledgement APIs |
 | `/network-health` | `NetworkHealthPage` | `system.network_health` | Connected to summary and trends APIs; detailed host/service UI is supplied elsewhere |
 | `/device-inventory` | `DeviceInventoryPage` | `system.network_health` | Connected to the latest-host endpoints and acknowledgement API. The host table has an IP Address column (`—` for a host with no discovered device). The host drawer also shows a Ports section (see `Device_Inventory_Requirements.md`) for users with `system.hosts` when the host has a `device_id`; actions need `system.hosts.edit`. The host table has a Monitoring column and filter, and the drawer a Monitoring section with Pause / Resume (`Device_Inventory_Requirements.md` §12) |
@@ -36,6 +41,13 @@ requests use `src/lib/api.ts`; Plugin Manager wrappers live in
 | `/settings` | `SettingsPage` | Any logged-in user; tabs are separately gated | Connected to system settings and user preferences. Tabs: General Settings, Security, System, Network Discovery, Plugins and Email; the System tab includes the notification-policy card |
 | `/` | Redirect | — | Redirects to `/login` |
 | unmatched path | Redirect | — | Redirects to `/login` |
+
+`LoginPage` displays a rejected login's message and stays on the form. In
+particular, a 409 existing-session response never triggers successful-login
+navigation; sign out of the existing session before submitting another account.
+The API rejection also covers a session established in another tab after the
+initial route check. Normal signed-out login enters the authenticated layout,
+which reloads `/api/user/me` and applies that account's permissions and setup flags.
 
 ## Page access rules
 
@@ -64,6 +76,12 @@ password policy. Successful creation closes the dialog and refreshes the list;
 a rejected save retains the draft and displays the server message. Further
 accounts can be created without reloading the page.
 
+Manage Accounts → Edit Account displays the server's warning when a supplied
+password matches the edited account's current password. The dialog stays open
+with the draft intact so the administrator can enter and confirm a different
+password and retry Save Changes. Password reuse is checked on submission by the
+server; the browser does not receive the current password or its hash.
+
 When adding a page:
 
 1. Add the page component under `src/pages/`.
@@ -72,6 +90,17 @@ When adding a page:
 4. Add the permission mapping in `pageAccess.ts`.
 5. Add or update route/access tests.
 6. Update this specification and `Implementation_Status.md`.
+
+## Plugin Manager summary
+
+`PluginsPage` shows only **Installed Plugins** (`installed_plugins`), **Active
+Capabilities** (`active_capabilities`) and **Validation Issues** (`validation_issues`).
+The summary grid stacks one card per row below the medium breakpoint and uses
+three equal columns at desktop widths. `enabled_plugins` still controls the
+no-plugins-enabled banner. The client `PluginSummary` omits `custom_plugins` and
+`updates_available`; the backend retains those unused fields for compatibility.
+Custom Plugins and Updates Available summary cards are not shown because custom
+plugin uploads and a plugin update flow are outside the current release.
 
 ## Component ownership
 
@@ -257,6 +286,11 @@ threshold in help text, unavailable/partial labels, loading and error states.
 The card requires `system.dashboard` and preserves old status payload handling.
 Status loads independently so a failing or denied Network Health source does not
 hide appliance storage.
+
+Load errors (REQ-NFR-04): when the main dashboard data cannot be loaded,
+`DashboardPage` shows the error message with a Retry button that reloads all
+dashboard data without a page reload (it works with the Manual refresh rate).
+The Ports section shows its load error with Retry in the same way.
 
 `SystemLogsPage` retains its five paginated audit categories and adds **Nagios
 log**, a separate `components/system-logs/NagiosLogPanel.tsx` rather than a

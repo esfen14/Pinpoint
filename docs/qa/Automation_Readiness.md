@@ -1,5 +1,49 @@
 # Current-case adapter preparation
 
+## 2026-10-19 Edit Account dependency review (#219)
+
+Codex reviewed the current written cases, assertions, fixtures and cleanup for
+TC-ACC-09, TC-SS-04, TC-HIS-01, TC-PLG-07, TC-NCPA-08, TC-RPT-07, TC-LOG-05,
+TC-ROL-04, TC-ACC-08 and TC-ACC-10 against the Edit Account reuse guard. The
+permission cases exercise navigation and GET denials; TC-ACC-08 reads the alert
+column and Add User checkbox; TC-ACC-10 creates new inactive accounts and its
+cleanup edits omit passwords. None submits an existing password through Edit
+Account. Their assertions, prerequisites, observations and cleanup remain valid.
+The added account-page unit test covers the reuse error and corrected retry;
+existing Add User assertions are unchanged. Only these reviewed dependency
+fingerprints were refreshed in `automation-coverage.json`. Coverage status,
+expected-item mappings, catalog verdicts and execution permissions are unchanged.
+This is source review, not a live QA result; existing queues/cards still need
+normal freshness checks and separate live authorization.
+
+## 2026-10-19 existing-session login dependency review (#222)
+
+Codex compared the written procedures, expected-item assertions and login/logout
+fixtures for TC-ACC-09, TC-ROL-04, TC-SS-04, TC-HIS-01, TC-PLG-07,
+TC-NCPA-08, TC-RPT-07 and TC-LOG-05 with the explicit sign-out contract.
+Fresh browser contexts still receive 401 from the login route's session check,
+then expose the same credential form. Staff's authorized landing remains Settings;
+qa-view's remains Dashboard. The sidebar, direct-page and API-denial assertions
+remain applicable, and cleanup still logs out and checks unauthenticated `/me`.
+The affected login/API/App fingerprints were refreshed and the new `LoginRoute`
+dependency was added to these mappings. Coverage statuses, expected-item mappings,
+historical verdicts and execution permissions are unchanged. New queue scope and
+fresh live prerequisites remain required; no live case was executed by this review.
+
+## 2026-10-19 sidebar dependency review (#231)
+
+Codex reviewed the sidebar-only reorder against the written cases and assertions
+for TC-ACC-09, TC-ROL-04, TC-SS-04, TC-HIS-01, TC-PLG-07, TC-NCPA-08,
+TC-RPT-07 and TC-LOG-05. The seven permission adapters assert exact hidden
+links and redirects (plus API denial where required); TC-ROL-04 expects only
+Overview and Settings. All three reordered links remain gated by the same
+permission, and labels, routes, filtering, setup and cleanup are unchanged.
+Their Sidebar.tsx dependency fingerprints were refreshed after that review.
+Coverage statuses, case results and execution permissions are unchanged; changed
+source still requires new queue scope and current live prerequisites before use.
+The rendered-sidebar unit regressions verify the new order and denied visibility;
+no live QA case was executed for this change.
+
 ## 2026-10-19 consolidated catalog results
 
 Modules 13–15 now link their recorded runs; Modules 22–23 and E2E carry the

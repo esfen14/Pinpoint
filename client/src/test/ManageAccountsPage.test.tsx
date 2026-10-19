@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { ManageAccountsPage } from '../pages/ManageAccountsPage'
+import { ApiError } from '../lib/api'
 
 let strongPasswordPolicy = true
 vi.mock('../contexts/SystemSettingsContext', () => ({
@@ -229,6 +230,41 @@ describe('ManageAccountsPage', () => {
     accountsResponse = new Error('Unable to reach server')
     renderPage()
     expect(await screen.findByText('Unable to reach server')).toBeInTheDocument()
+  })
+
+  describe('Edit Account password reset', () => {
+    it('shows the reuse warning and lets the administrator retry with a different password', async () => {
+      const message = "You cannot reuse this account's current password. Choose a different password."
+      apiPut.mockRejectedValueOnce(new ApiError(message, 400)).mockResolvedValueOnce({})
+      const user = userEvent.setup()
+      await renderLoaded()
+      const row = screen.getByText('Chloe Baltazar').closest('tr') as HTMLElement
+      await user.click(within(row).getByTitle('Edit'))
+      const [password, confirmation] = document.querySelectorAll<HTMLInputElement>('input[type="password"]')
+      await user.type(password, 'ExistingPass123!')
+      await user.type(confirmation, 'ExistingPass123!')
+      await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+
+      expect(await screen.findByText(message)).toBeInTheDocument()
+      expect(screen.getByText('Edit Account')).toBeInTheDocument()
+      expect(apiPut).toHaveBeenNthCalledWith(1, '/api/user/accounts/2', expect.objectContaining({
+        password: 'ExistingPass123!', confirm_password: 'ExistingPass123!',
+      }))
+      expect(password).toHaveValue('ExistingPass123!')
+      expect(confirmation).toHaveValue('ExistingPass123!')
+
+      await user.clear(password)
+      await user.clear(confirmation)
+      await user.type(password, 'DifferentPass123!')
+      await user.type(confirmation, 'DifferentPass123!')
+      await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+
+      await waitFor(() => expect(screen.queryByText('Edit Account')).not.toBeInTheDocument())
+      expect(apiPut).toHaveBeenNthCalledWith(2, '/api/user/accounts/2', expect.objectContaining({
+        password: 'DifferentPass123!', confirm_password: 'DifferentPass123!',
+      }))
+      expect(screen.queryByText(message)).not.toBeInTheDocument()
+    })
   })
 
   describe('Password reset requests', () => {

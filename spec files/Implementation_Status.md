@@ -20,6 +20,13 @@ cloned identities, IPv6, DHCP failover or NCPA deployment. The live outcome is
 recorded in the issue #187 test-run report rather than inferred from the
 runner's presence.
 
+## Navigation order (#231)
+
+The sidebar places Device Inventory → System Status → Topology consecutively.
+Existing labels, destinations and `system.network_health` filtering are preserved;
+rendered-sidebar regression checks cover order, links and denied visibility.
+Live appliance/browser verification is pending.
+
 ## Manual topology (#117)
 
 Manual multiple-parent relationships, graph validation and eligibility-aware Nagios
@@ -64,9 +71,28 @@ with temporary SQLite and a stubbed Nagios writer. The API has no one-account ca
 unconfirmed; password policy and mismatch checks intentionally still block Save.
 See [the investigation](../docs/plans/Issue_191_Account_Creation_Investigation.md).
 
+## NCPA resource trend selection (#242)
+
+Historical CPU, disk and memory samples now use the existing command-first plugin
+classifier, including generated `ncpa-*` descriptions and command-identified
+checks. The requested time window excludes old and future samples, and non-NCPA
+checks are excluded even when their names or metrics resemble NCPA. A shared classifier also maps real short `percent`/`used_percent` labels in trends
+and current summaries, keeping swap, disk I/O and ambiguous identities out.
+Existing full-path history remains supported without rewriting stored labels.
+Forecasts still use their separate full-path filter and are tracked by the
+[forecast-label follow-up #259](https://github.com/esfen14/Pinpoint/issues/259). Numeric API/summary regressions and both real-agent Docker browser resource
+journeys pass; see the [live chart report](../docs/test-runs/2026-10-19-issue-242-resource-charts/REPORT.md).
+The user's appliance, installer deployment and scale remain unverified.
+
 ## Implemented backend areas
 
-- Session login/logout and current-user identity.
+- Session login/logout and current-user identity. Existing-session login is
+  explicitly rejected with 409 and requires sign-out before another login (#222).
+  The login route checks the server session and redirects authenticated users to
+  an authorized page. Isolated regressions cover both Admin/Viewer directions,
+  retained identity after rejection and the new account's permissions after logout.
+  Original manual role/evidence details and new appliance manual acceptance remain
+  pending; these tests do not establish a live manual pass.
 - Account, role, permission-option, and per-user preference APIs, including the
   bootstrap administrator's first-run setup (`POST /api/user/complete-setup`)
   and server-access recovery (`flask recover-bootstrap-admin`). Recovery privately
@@ -184,7 +210,12 @@ See [the investigation](../docs/plans/Issue_191_Account_Creation_Investigation.m
 - Dashboard API integration and acknowledgement flow.
 - Network Health summary/trend integration.
 - Device Inventory backed by latest host-status APIs.
-- Account and role management.
+  - Account and role management. Edit Account rejects reuse of the edited user's
+    current password before saving any changes (#219), with a server warning
+    displayed in the dialog and a retry using a different password. Isolated
+    backend and UI regressions cover rejection, unchanged data and retry; the
+    original TC-ACC-06 manual FAIL remains unchanged pending a separate manual
+    retest on an identified build.
 - System Settings and per-user preferences. The separate Notification Policy singleton drives generated Nagios timeperiods, contact options and host/service notification settings; Settings → System exposes quiet hours and state/interval controls (`settings.system`). Defaults preserve pre-change `hosts.cfg`. Docker-lab Nagios validation and forced host/service notification dispatch inside/outside quiet hours are documented in `docs/test-runs/2026-10-13-issue-113-notification-policy/REPORT.md`; browser save/reload was exercised via the Docker lab; installer-built VM and inbox delivery are not verified there.
 - Notification escalations (#116): Settings → System and `settings.system` CRUD use the existing #79 groups, finite notification-count ranges and all/device scope. The shared writer emits host/service escalation blocks, suppresses empty groups and absent scoped hosts, and rolls back failed apply. Automated API, renderer, migration and interaction checks cover these paths. The [isolated Docker report](../docs/test-runs/2026-10-15-issue-116-escalations/REPORT.md) verifies real Nagios host/service validation, notification 1 reaching the normal recipient and notification 2 the escalation recipient on an unacknowledged HARD CRITICAL, opt-out/deactivation suppression, rejected-config rollback and browser CRUD. Local MIME capture proves notifier routing; external SMTP/inbox delivery and installer/VM deployment were not tested.
 - NCPA notification dependencies (#118): default-on `PINPOINT_NCPA_NOTIFICATION_DEPENDENCIES` generates a visible TCP listener service and notification-only `c,u` dependencies for each generated NCPA metric when `check_tcp` is enabled; off retains the old service list. There is no host-to-service dependency object because Nagios does not support one. [Docker lab evidence](../docs/test-runs/2026-10-17-issue-118/REPORT.md) verifies Nagios accepts three generated dependency objects, and a real host outage with three monitored services produces one host notification event, no service notification events, and critical states in Dashboard and Network Health APIs. A real NCPA agent/port-failure notification trial remains unverified.
@@ -216,7 +247,7 @@ See [the investigation](../docs/plans/Issue_191_Account_Creation_Investigation.m
 | Device discovery inventory | Historical docs described `/system/hosts` and port endpoints, but those routes do not exist; current Device Inventory uses latest Nagios host status | Treat the current host-status API as implemented behavior unless a separate discovery inventory contract is approved |
 | Plugin lifecycle and discovery | Generation and promotion follow Plugin Manager; the reconciler attaches and detaches services on enable, disable, scan, port edit, merge/retire and NCPA events; the Plugin Manager page shows an enable preview, a Monitoring column, each plugin's monitored services with live status and stop/resume per device. The manual apply routes, `plugin-services.cfg` writing and the `plugin.configure` permission are removed | Not yet run against a live Nagios or checked in a browser: `server/tests/plans/PLUGIN_DRIVEN_MONITORING_LAB_TEST_PLAN.md` is the checklist. Held ports are shown and released from the device drawer's Ports section |
 | Plugin-driven monitoring acceptance run | The 2026-10-06 live run found defects D-1 to D-8; code and plan fixes are on `fix/plugin-monitoring-acceptance-defects` but not re-run on the lab. Live status chips, browser UI, NCPA and two journeys were not run | Follow `docs/plans/Plugin_Driven_Monitoring_Remediation.md` |
-| Custom plugins | `POST /api/plugin/custom` and its client call are commented out; the Add Custom Plugin button is greyed out | Restore both together when custom plugins enter scope |
+| Custom plugins | `POST /api/plugin/custom` and its client call remain commented out; the Add Custom Plugin control is outside #252's scope. Plugin Manager shows only Installed Plugins, Active Capabilities and Validation Issues, in a responsive three-card row. The unused Custom Plugins and Updates Available cards and client summary fields are removed; the backend retains those counts for compatibility | Custom plugin uploads and plugin updates remain outside the release; upload-control changes are a separate decision |
 | Plugins with no port | Enabling a plugin no longer applies it to every host: services are attached per discovered port, so a plugin that checks no port (`check_ping`, `check_load`, ...) attaches to nothing and cannot be enabled. Accepted: every host keeps the `check-host-alive` host check, and the response time and packet loss on the Dashboard come from it | None; confirm `check-host-alive` in the lab (plan G13) |
 | Custom checks | Plugins that probe a device but need arguments (`check_by_ssh`, `check_ups`, ...) take per-device custom checks from the plugin drawer (`plugin.custom_check`); seven more port-driven plugins (`check_pgsql`, `check_ldap`, `check_ldaps`, `check_rpc`, `check_ircd`, `check_time`, `check_ntp_peer`) are in the registry and enable like `check_ssh`. Not run against a live Nagios or opened in a browser | Lab run (`docs/plans/Custom_Checks_Plan.md` phase C4). Server-local plugins (`check_apt`, `check_uptime`, `check_file_age`, ... ) take **server checks** on the Nagios server's own host; the five stock local plugins stay with Nagios Core. Passwords for `check_radius`, `check_mysql_query`, `check_nt` and `check_disk_smb` are stored encrypted (generated through protected resource slots and secure NCPA/native adapters under #129; password-bearing SMB generation is explicitly refused because its child lacks secure credential input); `check_dbi` and `check_oracle` are not available; see the plan's section 2.4. The ping family (`check_ping`, `check_icmp`, `check_fping`, `check_dig`) takes custom checks like the rest |
 | Device Inventory beyond ports | The Ports section of the device drawer exists (state, reason, monitor, ignore, stop, leave suggested, resume, acknowledge, set service, remove pin). The host table shows a monitoring label (Monitored, Missing, Address unknown, Paused, Retired, Merged) with a filter that opens on Monitored, and the drawer pauses and resumes a device (`Include_Device_In_Scanning` now has a writer). A paused, retired or merged device is left out of the dashboard and Network Health counts and alerts. Identity review and merging now have an independent Needs Review table and linked device notice, comparison evidence, address history on demand, discovered-record lookup and confirmation (#164). Isolated interaction/backend regressions and [Docker real-Nagios/browser acceptance](../docs/test-runs/2026-10-15-issue-164-final-refresh/REPORT.md) pass, including the linked notice, both themes, keyboard focus, source outside Monitored and a saved merge with a configuration warning. Still API-only: `SERVICE_CHANGED` review resolution, retire and static/DHCP marking; standalone device confidence badges are not implemented | Follow-ups in `docs/plans/Device_Ports_UI_Plan.md` §10 and `docs/plans/DHCP_Device_Identity_Plan.md` §11 |

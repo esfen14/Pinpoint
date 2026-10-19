@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { AlertTriangle, Boxes, CheckCircle2, /* PackagePlus, */ Puzzle, RefreshCcw } from 'lucide-react'
+import { AlertTriangle, Boxes, CheckCircle2 } from 'lucide-react'
 import { PageHeader } from '../components/shared/PageHeader'
 import { SummaryStatCard } from '../components/shared/SummaryStatCard'
 import type { PluginGroup } from '../components/plugin-manager/pluginGroups'
@@ -169,7 +169,7 @@ export function PluginsPage() {
         </div>
       )}
 
-      <div className="grid md:grid-cols-5 gap-5">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
         <SummaryStatCard
           title="Installed Plugins"
           value={summary ? String(summary.installed_plugins) : '—'}
@@ -183,20 +183,6 @@ export function PluginsPage() {
           subtitle="plugins monitoring services"
           icon={CheckCircle2}
           gradient="linear-gradient(135deg,#22C55E,#16A34A)"
-        />
-        <SummaryStatCard
-          title="Custom Plugins"
-          value={summary ? String(summary.custom_plugins) : '—'}
-          subtitle="administrator added"
-          icon={Puzzle}
-          gradient="linear-gradient(135deg,#FF8A00,#FF5C00)"
-        />
-        <SummaryStatCard
-          title="Updates Available"
-          value={summary ? String(summary.updates_available) : '—'}
-          subtitle="newer version found"
-          icon={RefreshCcw}
-          gradient="linear-gradient(135deg,#3B82F6,#2563EB)"
         />
         <SummaryStatCard
           title="Validation Issues"

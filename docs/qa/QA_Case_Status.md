@@ -40,9 +40,9 @@ Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 | TC-ROL-06 | ROL / 2 | PASS | PASS | pass | No reviewed mapping |
 | TC-AUTH-10 | AUTH / 2 | PASS | PASS | pass | No reviewed mapping |
 | TC-AUTH-11 | AUTH / 2 | PASS | PASS | pass | No reviewed mapping |
-| TC-SHL-09 | SHL / 2 | PASS | Not run | needs-decision | No reviewed mapping |
-| TC-SHL-04 | SHL / 2 | PASS | Not run | needs-decision | No reviewed mapping |
-| TC-SHL-10 | SHL / 2 | PASS | Not run | needs-decision | No reviewed mapping |
+| TC-SHL-09 | SHL / 2 | PASS | PASS | pass | No reviewed mapping |
+| TC-SHL-04 | SHL / 2 | PASS | PASS | pass | No reviewed mapping |
+| TC-SHL-10 | SHL / 2 | PASS | PASS | pass | No reviewed mapping |
 | TC-DASH-08 | DASH / 3 | PASS | PASS | pass | No reviewed mapping |
 | TC-SS-04 | SS / 3 | PASS | PASS | pass | No reviewed mapping |
 | TC-HIS-01 | HIS / 3 | PASS | PASS | pass | No reviewed mapping |
@@ -50,9 +50,9 @@ Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 | TC-NCPA-08 | NCPA / 3 | PASS | Not run | needs-decision | No reviewed mapping |
 | TC-RPT-07 | RPT / 3 | PASS | PASS | pass | No reviewed mapping |
 | TC-LOG-05 | LOG / 3 | PASS | PASS | pass | No reviewed mapping |
-| TC-SHL-06 | SHL / 3 | PASS | Not run | needs-decision | No reviewed mapping |
-| TC-NFR-01 | NFR / 3 | PASS | Not run | needs-decision | No reviewed mapping |
-| TC-NFR-02 | NFR / 3 | PASS | Not run | needs-decision | No reviewed mapping |
+| TC-SHL-06 | SHL / 3 | PASS | PASS | pass | No reviewed mapping |
+| TC-NFR-01 | NFR / 3 | PASS | PASS | pass | No reviewed mapping |
+| TC-NFR-02 | NFR / 3 | PASS | PASS | pass | No reviewed mapping |
 | TC-SET-07 | SET / 4 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-115-inbox-confirmed/REPORT.md) |
 | TC-SET-01 | SET / 4 | PASS | PASS | pass | No reviewed mapping |
 | TC-SET-02 | SET / 4 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-110-polling-retest/REPORT.md) |
@@ -60,9 +60,9 @@ Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 | TC-SET-04 | SET / 4 | PASS | PASS | pass | No reviewed mapping |
 | TC-SET-05 | SET / 4 | PASS | PASS | pass | No reviewed mapping |
 | TC-SET-06 | SET / 4 | PASS | PASS | pass | No reviewed mapping |
-| TC-SHL-01 | SHL / 4 | PASS | Not run | needs-decision | retest required: [source report](../test-runs/2026-10-15-issue-116-escalations/REPORT.md) |
-| TC-SHL-02 | SHL / 4 | PASS | Not run | needs-decision | retest required: [source report](../test-runs/2026-10-15-issue-116-escalations/REPORT.md) |
-| TC-SHL-03 | SHL / 4 | PASS | Not run | needs-decision | retest required: [source report](../test-runs/2026-10-15-issue-116-escalations/REPORT.md) |
+| TC-SHL-01 | SHL / 4 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-116-escalations/REPORT.md) |
+| TC-SHL-02 | SHL / 4 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-116-escalations/REPORT.md) |
+| TC-SHL-03 | SHL / 4 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-116-escalations/REPORT.md) |
 | TC-DSC-01 | DSC / 5 | PASS | Not run | needs-decision | No reviewed mapping |
 | TC-DSC-02 | DSC / 5 | PASS | PASS | pass | No reviewed mapping |
 | TC-DSC-03 | DSC / 5 | PASS | Not run | needs-decision | No reviewed mapping |
@@ -96,7 +96,7 @@ Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 | TC-DX-03 | DX / 6 | PASS | Not run | needs-decision | No reviewed mapping |
 | TC-DX-04 | DX / 6 | PASS | Not run | needs-decision | No reviewed mapping |
 | TC-DX-05 | DX / 6 | PASS | Not run | needs-decision | No reviewed mapping |
-| TC-DX-06 | DX / 6 | PARTIALLY PASS | PARTIALLY PASS (messages accurate; SNMP section disappears after Save, Test and Reset until refresh) | partial | No reviewed mapping |
+| TC-DX-06 | DX / 6 | FAIL | FAIL (messages accurate; SNMP section disappears after Save, Test and Reset until refresh; [#244](https://github.com/esfen14/Pinpoint/issues/244)) | fail | No reviewed mapping |
 | TC-DX-07 | DX / 6 | PASS | PASS | pass | No reviewed mapping |
 | TC-DX-08 | DX / 6 | Not run | Not run | untested | No reviewed mapping |
 | TC-DX-09 | DX / 6 | Not run | Not run | untested | No reviewed mapping |
@@ -143,8 +143,8 @@ Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 | TC-HIS-06 | HIS / 8 | PASS | PASS | pass | No reviewed mapping |
 | TC-HIS-07 | HIS / 8 | PASS | PASS | pass | No reviewed mapping |
 | TC-HIS-08 | HIS / 8 | PASS | PASS | pass | No reviewed mapping |
-| TC-SHL-07 | SHL / 8 | PASS | Not run | needs-decision | partial historical coverage: [source report](../test-runs/2026-10-18-issue-153-failure-escalation/REPORT.md) |
-| TC-SHL-08 | SHL / 8 | PASS | Not run | needs-decision | No reviewed mapping |
+| TC-SHL-07 | SHL / 8 | PASS | PASS | pass | partial historical coverage: [source report](../test-runs/2026-10-18-issue-153-failure-escalation/REPORT.md) |
+| TC-SHL-08 | SHL / 8 | PASS | PASS | pass | No reviewed mapping |
 | TC-MNT-01 | MNT / 8 | PASS | PASS | pass | No reviewed mapping |
 | TC-MNT-02 | MNT / 8 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-122-maintenance-windows/REPORT.md) |
 | TC-MNT-03 | MNT / 8 | PASS | PASS | pass | No reviewed mapping |
@@ -187,20 +187,20 @@ Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 | TC-LOG-02 | LOG / 10 | PASS | PASS | pass | No reviewed mapping |
 | TC-LOG-03 | LOG / 10 | PASS | PASS | pass | partial historical coverage: [source report](../test-runs/2026-10-15-issue-124-storage-logs/REPORT.md) |
 | TC-LOG-04 | LOG / 10 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-124-storage-logs/REPORT.md) |
-| TC-SHL-05 | SHL / 10 | PASS | Not run | needs-decision | retest required: [source report](../test-runs/2026-10-15-issue-124-storage-logs/REPORT.md) |
+| TC-SHL-05 | SHL / 10 | PASS | PASS | pass | retest required: [source report](../test-runs/2026-10-15-issue-124-storage-logs/REPORT.md) |
 | TC-DASH-06 | DASH / 11 | FAIL - While Nagios is down, there is no indication that Nagios is not running and not polling, this was confirmed when trying to modify a Nagios config but can't save. | FAIL | fail | No reviewed mapping |
 | TC-MNT-08 | MNT / 11 | PASS | PASS | pass | No reviewed mapping |
 | TC-SET-08 | SET / 11 | PASS | PASS | pass | No reviewed mapping |
 | TC-SET-09 | SET / 11 | PASS | PASS | pass | No reviewed mapping |
-| TC-NFR-03 | NFR / 12 | PASS | Not run | needs-decision | No reviewed mapping |
-| TC-NFR-04 | NFR / 12 | PASS | Not run | needs-decision | No reviewed mapping |
-| TC-NFR-05 | NFR / 12 | PASS | Not run | needs-decision | No reviewed mapping |
-| TC-NFR-06 | NFR / 12 | Not run | Not run | untested | No reviewed mapping |
-| TC-NFR-07 | NFR / 12 | FAIL - returns to login, other result is, data is showing but plaintext only without UI | Not run | needs-decision | No reviewed mapping |
-| TC-NFR-08 | NFR / 12 | FAIL - returns to login, other result is, data is showing but plaintext only without UI | Not run | needs-decision | No reviewed mapping |
-| TC-NFR-09 | NFR / 12 | Not run | Not run | untested | No reviewed mapping |
-| TC-NFR-10 | NFR / 12 | PASS | Not run | needs-decision | No reviewed mapping |
-| TC-NFR-11 | NFR / 12 | Not run | Not run | untested | No reviewed mapping |
+| TC-NFR-03 | NFR / 12 | PASS | PASS | pass | No reviewed mapping |
+| TC-NFR-04 | NFR / 12 | PASS | PASS | pass | No reviewed mapping |
+| TC-NFR-05 | NFR / 12 | PASS | PASS | pass | No reviewed mapping |
+| TC-NFR-06 | NFR / 12 | FAIL | FAIL (Overview shows its load error with no Retry button; [#245](https://github.com/esfen14/Pinpoint/issues/245)) | fail | No reviewed mapping |
+| TC-NFR-07 | NFR / 12 | FAIL - returns to login, other result is, data is showing but plaintext only without UI | FAIL (initial run; later tester-reported retest PASS, no timings recorded) | fail | No reviewed mapping |
+| TC-NFR-08 | NFR / 12 | FAIL - returns to login, other result is, data is showing but plaintext only without UI | FAIL (initial run; later tester-reported retest PASS, no timings recorded) | fail | No reviewed mapping |
+| TC-NFR-09 | NFR / 12 | PASS | PASS | pass | No reviewed mapping |
+| TC-NFR-10 | NFR / 12 | PASS | PASS | pass | No reviewed mapping |
+| TC-NFR-11 | NFR / 12 | PASS | PASS | pass | No reviewed mapping |
 | TC-EDG-01 | EDG / 13 | PASS | PASS | pass | No reviewed mapping |
 | TC-EDG-02 | EDG / 13 | PASS | PASS | pass | No reviewed mapping |
 | TC-EDG-03 | EDG / 13 | PASS | PASS | pass | No reviewed mapping |

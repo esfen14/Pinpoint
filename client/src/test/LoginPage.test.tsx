@@ -211,3 +211,24 @@ describe('LoginPage', () => {
     expect(await screen.findByRole('status')).toHaveTextContent('administrator has been notified')
   })
 })
+
+
+it('shows the existing-session rejection without presenting a successful login', async () => {
+  const user = userEvent.setup()
+  mockNavigate.mockReset()
+  const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
+  vi.spyOn(global, 'fetch').mockResolvedValueOnce({
+    ok: false,
+    status: 409,
+    json: async () => ({ success: false, message: 'You are already signed in. Sign out before logging in to another account.' }),
+  } as Response)
+  renderLoginPage()
+  await user.type(screen.getByPlaceholderText('Enter your email'), 'other@example.com')
+  await user.type(document.querySelector('input[type="password"]')!, 'OtherPass1!')
+  await user.click(screen.getByRole('button', { name: /^log in$/i }))
+  await waitFor(() => expect(alertSpy).toHaveBeenCalledWith(
+    'You are already signed in. Sign out before logging in to another account.',
+  ))
+  expect(mockNavigate).not.toHaveBeenCalled()
+  vi.restoreAllMocks()
+})
