@@ -1,5 +1,20 @@
 # Current-case adapter preparation
 
+## 2026-10-19 consolidated catalog results
+
+Modules 13–15 now link their recorded runs; Modules 22–23 and E2E carry the
+historical results from the previous catalog. TC-LOG-04 and TC-SET-05 carry the
+lab owner's manual PASS confirmation. Compared with `44471f7c`, case titles,
+priorities, requirements, dependencies and safety classification are unchanged.
+TC-LOG-04 alone clarifies its procedure and explicitly checks restoration; its
+coverage remains unmapped. Other procedures and expected items are unchanged.
+The register fingerprints were refreshed with this comparison recorded in
+`catalog_consolidation_review`. Adapter source hashes, expected-item mappings,
+coverage decisions and execution permissions are preserved. Existing queues and
+cards remain subject to freshness checks. No automation was run or authorized
+by this consolidation.
+
+
 ## 2026-10-19 result-only catalog refresh
 
 The Modules 1–11 verdict updates changed the catalog's exact hashes. A comparison
