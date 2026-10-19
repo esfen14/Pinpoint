@@ -27,7 +27,8 @@ class CatalogTests(unittest.TestCase):
         self.assertEqual(c['TC-ACK-06']['status'], 'needs-decision')
         self.assertEqual(c['TC-EDG-01']['status'], 'untested')
         self.assertIsNone(c['TC-EDG-01']['summary_result'])
-        self.assertEqual(c['TC-NFR-07']['status'], 'needs-decision')
+        self.assertEqual(c['TC-DX-01']['status'], 'needs-decision')
+        self.assertEqual(c['TC-NFR-07']['status'], 'fail')
         self.assertEqual(c['TC-ACC-06']['status'], 'fail')
 
     def test_unknown_prerequisite_is_not_silently_ignored(self):
