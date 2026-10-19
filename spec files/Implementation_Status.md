@@ -73,7 +73,13 @@ See [the investigation](../docs/plans/Issue_191_Account_Creation_Investigation.m
 
 ## Implemented backend areas
 
-- Session login/logout and current-user identity.
+- Session login/logout and current-user identity. Existing-session login is
+  explicitly rejected with 409 and requires sign-out before another login (#222).
+  The login route checks the server session and redirects authenticated users to
+  an authorized page. Isolated regressions cover both Admin/Viewer directions,
+  retained identity after rejection and the new account's permissions after logout.
+  Original manual role/evidence details and new appliance manual acceptance remain
+  pending; these tests do not establish a live manual pass.
 - Account, role, permission-option, and per-user preference APIs, including the
   bootstrap administrator's first-run setup (`POST /api/user/complete-setup`)
   and server-access recovery (`flask recover-bootstrap-admin`). Recovery privately

@@ -87,8 +87,18 @@ normal configured timeout; immediate invalidation is not part of this command.
 
 | Method and path | Permission | Purpose |
 |---|---|---|
-| `POST /api/user/login` | Public | Validate credentials and establish a session |
+| `POST /api/user/login` | Public | Validate credentials and establish a session only when signed out; an existing authenticated session returns 409 before credential validation |
 | `POST /api/user/logout` | Login | End the current session |
+
+Login requires an explicit sign-out before signing in again, including the
+same account. An authenticated request receives the standard error envelope
+(`success: false`, HTTP 409), with message "You are already signed in. Sign out
+before logging in to another account." No submitted credentials are checked and
+no successful sign-in is audited. The existing identity and permissions remain
+unchanged. `POST /api/user/logout` ends that session; a subsequent accepted login
+establishes the submitted active account, and `/api/user/me` and protected routes
+use only that account's role permissions. Existing inactive-account and idle
+session expiry checks still run before login handling.
 
 ### `app/api/user/management.py`
 
