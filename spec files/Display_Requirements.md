@@ -90,7 +90,19 @@ glance before trusting anything else.
 **Behavior:**
 - This section always renders on the dashboard. It is never hidden.
 - If the Nagios process is not running, show a prominent warning that makes
-  clear all displayed data may be stale.
+  clear all displayed data may be stale. The top Dashboard warning is visible
+  at every viewport size; Service Overview repeats it without requiring a click.
+- A stored PID is historical evidence, not a live process probe. With no valid
+  status timestamp, a timestamp at least three minutes old, or one over a minute
+  in the future, show **Monitoring unavailable** / **Status unavailable** and
+  explain that Nagios is not reporting current status. Do not claim that stale
+  polling alone proves the process stopped. A reported `running=false` shows
+  Offline / Not Running. Both warnings state that host and service states will
+  not change while Nagios is stopped and displayed data may be stale.
+- Re-evaluate snapshot age every 15 seconds, including in Manual refresh mode.
+  Fresh data clears the warning. The refresh text remains `Auto-refreshing every
+  1 min` for the saved one-minute preference and `Auto-refresh: Manual` for Manual;
+  browser fetching, ingestion and engine checks remain independent schedules.
 - If a local resource check is not configured on the Nagios host (e.g.,
   `check_load` is absent), show a "plugin not configured" message in place of
   that metric's value rather than hiding the field. This signals to the user

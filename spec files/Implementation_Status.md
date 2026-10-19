@@ -505,3 +505,13 @@ failure/recovery. Large real inventories, installer upgrade and production HTTP
 authentication remain untested; CI and human review are tracked on PR #201.
 The initial [contract probe](../docs/test-runs/2026-10-17-issue-198-contract-probe/REPORT.md)
 is historical partial evidence, not final acceptance.
+
+
+## Dashboard stopped/stale Nagios indication (#238)
+
+Top-page and Service Overview alerts explain stale data and frozen host/service
+states when Nagios is stopped. Stale/missing timestamps show monitoring status
+unavailable rather than presenting a recorded PID as live proof. Age is checked
+independently of the browser refresh mode; fresh status clears the warning.
+Historical TC-DASH-06 FAIL is preserved; the separate issue retest report records
+fresh observations without replacing catalog evidence.

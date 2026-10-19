@@ -587,3 +587,13 @@ still check their own hidden links or the same Overview/Settings-only list.
 Reviewed source fingerprints are refreshed. Coverage status, catalog results and
 live execution permissions are unchanged. This is source review and isolated UI
 testing, with no live QA execution.
+
+
+## Dashboard freshness dependency review (#238)
+
+TC-DASH-07 still asserts Network Performance no-data values and absence of the
+conditional resource heading. The new monitoring warning and freshness timer do
+not change those assertions, prerequisites or cleanup. DashboardPage's hash and
+its new hook/warning dependencies are recorded after source review. No coverage
+status, catalog verdict or live execution permission changes. TC-DASH-06 retest
+evidence remains a separate issue-specific report.

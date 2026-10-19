@@ -478,3 +478,14 @@ environment markers alone cannot relax the guard. The synthetic worker imports
 no acceptance spec, logs into no application and is not a current-case result.
 The [coverage guide](../docs/qa/Automation_Readiness.md) records source completeness
 and remaining launcher/card/preflight work; these are not runtime acceptance results.
+
+
+## Dashboard monitoring freshness (#238)
+
+`hooks/useNagiosStatus` interprets the recorded Nagios status and rechecks age
+at 15-second intervals even with Manual browser refresh. `NagiosWarning` renders
+an always-visible top-page alert and the same warning inside desktop Service
+Overview. Three-minute-old, absent/invalid or excessively future timestamps make
+status unavailable; a cached PID never overrides this. Fresh status clears the
+warning. Last-reported check switches remain historical settings, not liveness
+proof. See Display requirements §1.1 for exact warning and refresh behavior.

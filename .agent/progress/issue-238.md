@@ -47,3 +47,5 @@ Requirement coverage:
 User explicitly reserves localhost:8000 Docker lab and authorizes stop/restart for this issue; restore it afterward. Do not run discovery or modify catalog verdicts. Stale polling alone cannot prove a stopped process; warnings must describe uncertainty honestly. Historical config-save symptom remains unisolated/outside scope.
 
 Round 1: three stopped/stale warning regressions failed before implementation; 40 focused tests now pass, including cached-snapshot aging and fresh recovery plus both refresh-mode texts. Implemented shared frontend freshness interpretation (3-minute bound, 15-second clock) without falsely asserting stale PID proves a stopped process. Next: live retest and specs/QA bindings.
+
+Round 2: specifications and TC-DASH-07 source bindings reviewed. Candidate Vite on5238 against unchanged appliance API, baseline /src44471f7c. Nagios stopped10:25:19Z with600s automatic-restoration guard (session55185). Original refresh5; saved1 thenManual successfully. Await actual3-minute timestamp age; full tests running.
