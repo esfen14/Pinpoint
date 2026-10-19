@@ -13,7 +13,7 @@ vi.mock('../contexts/SystemSettingsContext', () => ({ useSystemSettings: () => (
 // A period with no recorded host time must say so instead of looking like a measured result (#229).
 const period = { period: 'custom', start: '2026-09-01T00:00:00+00:00', end: '2026-09-30T23:59:59+00:00' }
 const available = { available: true, observed_at: '2026-10-18T16:00:00+00:00', notice: null }   // the API body's current_status (#228), ignored here
-const row = (overrides = {}) => ({ hostname: 'web-01', state: 'Up', uptimePct: null as number | null, totalSnapshots: 0,
+const row = (overrides = {}) => ({ hostname: 'web-01', state: 'Up', uptimePct: null as number | null, knownSeconds: 0,
   lastCheck: null, lastStateChange: null, ...overrides })
 const NOTICE = /No data in this period/
 
@@ -27,7 +27,7 @@ describe('host availability with no recorded time', () => {
   })
 
   it('does not say so when any host has recorded time, while loading, or for an empty list', () => {
-    const { rerender } = render(<HostAvailabilityReportTable hosts={[row(), row({ hostname: 'db-01', uptimePct: 80, totalSnapshots: 100 })]} isLoading={false} />)
+    const { rerender } = render(<HostAvailabilityReportTable hosts={[row(), row({ hostname: 'db-01', uptimePct: 80, knownSeconds: 100 })]} isLoading={false} />)
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
     rerender(<HostAvailabilityReportTable hosts={[row()]} isLoading />)
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
@@ -40,7 +40,7 @@ describe('host availability with no recorded time', () => {
 describe('reports page with no recorded time', () => {
   const body = (hosts: object[]) => ({ period, current_status: available,
     summary: { total: hosts.length, up: 0, down: 0, unreachable: 0, uptime_pct: null }, hosts })
-  const apiRow = (o = {}) => ({ hostname: 'web-01', state: 'Up', uptime_pct: null, total_snapshots: 0, last_check: null, last_state_change: null, ...o })
+  const apiRow = (o = {}) => ({ hostname: 'web-01', state: 'Up', uptime_pct: null, known_seconds: 0, last_check: null, last_state_change: null, ...o })
 
   it('shows the no-data message and not "Report generated successfully." when nothing was recorded', async () => {
     mocks.get.mockResolvedValue(body([apiRow(), apiRow({ hostname: 'db-01' })]))
@@ -53,7 +53,7 @@ describe('reports page with no recorded time', () => {
   })
 
   it('still says "Report generated successfully." when a host has recorded time', async () => {
-    mocks.get.mockResolvedValue(body([apiRow({ uptime_pct: 80, total_snapshots: 100 })]))
+    mocks.get.mockResolvedValue(body([apiRow({ uptime_pct: 80, known_seconds: 100 })]))
     render(<ReportsPage />)
     await waitFor(() => expect(screen.getByRole('button', { name: 'Run Report' })).toBeEnabled())
     fireEvent.click(screen.getByRole('button', { name: 'Run Report' }))

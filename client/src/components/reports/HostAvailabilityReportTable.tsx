@@ -76,7 +76,7 @@ export function HostAvailabilityReportTable({
     Hostname: h.hostname,
     State: h.state ?? '',
     'Uptime %': h.uptimePct ?? '',
-    'Total Snapshots': h.totalSnapshots,
+    'Known Time (seconds)': h.knownSeconds,
     'Last Check': h.lastCheck ?? '',
     'Last State Change': h.lastStateChange ?? '',
   }))
@@ -151,7 +151,7 @@ export function HostAvailabilityReportTable({
           {currentStatus.notice}
         </p>
       )}
-      {!isLoading && hosts.length > 0 && hosts.every((h) => h.totalSnapshots === 0) && <NoRecordedDataNotice />}
+      {!isLoading && hosts.length > 0 && hosts.every((h) => h.knownSeconds === 0) && <NoRecordedDataNotice />}
       <div className="overflow-x-auto">
         <table className="w-full min-w-275 text-left text-sm">
           <thead className="border-b border-gray-200 text-gray-500 dark:border-white/10 dark:text-gray-500">
@@ -159,7 +159,7 @@ export function HostAvailabilityReportTable({
               <th className="px-4 py-3">Hostname</th>
               <th className="px-4 py-3">State</th>
               <th className="px-4 py-3">Uptime %</th>
-              <th className="px-4 py-3">Snapshots</th>
+              <th className="px-4 py-3">Known Time (seconds)</th>
               <th className="px-4 py-3">Last Check</th>
               <th className="px-4 py-3">Last State Change</th>
             </tr>
@@ -180,7 +180,7 @@ export function HostAvailabilityReportTable({
                   <td className="px-4 py-3 text-gray-900 dark:text-white">{host.hostname}</td>
                   <td className="px-4 py-3"><StatusBadge state={host.state} /></td>
                   <td className="px-4 py-3 text-gray-900 dark:text-white">{host.uptimePct ?? '—'}</td>
-                  <td className="px-4 py-3 text-gray-900 dark:text-white">{host.totalSnapshots}</td>
+                  <td className="px-4 py-3 text-gray-900 dark:text-white">{host.knownSeconds}</td>
                   <td className="px-4 py-3 text-gray-900 dark:text-white">
                     {formatServerDateTime(host.lastCheck, settings.dateTimeFormat, settings.timeZone)}
                   </td>

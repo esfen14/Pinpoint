@@ -377,7 +377,7 @@ scheduled or recurring emailed reports are outside the supported scope.
 
 | View | API route (GET) | Displayed data |
 |---|---|---|
-| Host Availability | `/api/system/report/availability` | Hostname, state, uptime %, Snapshots (legacy label for known-state seconds), last check and last state change from the current-status read (a dash when unavailable, with the response's `current_status.notice` shown above the table); only monitored hosts are listed; summary cards show total hosts, Up, Down / Unreachable and overall uptime |
+| Host Availability | `/api/system/report/availability` | Hostname, state, uptime %, Known Time (seconds) (the `known_seconds` field: up + down + unreachable duration from Nagios), last check and last state change from the current-status read (a dash when unavailable, with the response's `current_status.notice` shown above the table); only monitored hosts are listed; summary cards show total hosts, Up, Down / Unreachable and overall uptime |
 | Network Services | `/api/system/report/network-services` | One row per service name: instance count, Current OK / Warning / Critical / Unknown / Pending / Unavailable counts, recorded-time availability %, recorded and missing seconds; summary cards show service and instance totals, OK, Warning / Critical and overall uptime |
 | Hosts by OS | `/api/system/report/hosts-by-os` | Flattened host rows with OS, hostname, state, uptime %, last check and last state change; no summary cards |
 | Device Services | `/api/system/report/device-services` | One row per host/service pair: hostname, service, current state, recorded-time availability %, recorded/missing seconds with no-data/engine-down/unaccounted components, observation time, current last check and state change; no summary cards |
@@ -434,16 +434,17 @@ time zone. No report period metadata or summary cards are included in exports.
 
 | View | Filename stem | Export columns |
 |---|---|---|
-| Host Availability | `host-availability-report` | Hostname, State, Uptime %, Total Snapshots, Last Check, Last State Change |
+| Host Availability | `host-availability-report` | Hostname, State, Uptime %, Known Time (seconds), Last Check, Last State Change |
 | Network Services | `network-services-report` | Service, Current status observed at, Total Instances, Current OK/Warning/Critical/Unknown/Pending/Unavailable, Availability during recorded time %, Recorded time (seconds), No recorded data (seconds), Nagios no data (seconds), Engine not running (seconds), Unaccounted time (seconds) |
 | Hosts by OS | `hosts-by-os-report` | OS, Hostname, State, Uptime %, Last Check, Last State Change |
 | Device Services | `device-services-report` | Hostname, Service, Current state, Availability during recorded time %, Recorded time (seconds), No recorded data (seconds), Nagios no data (seconds), Engine not running (seconds), Unaccounted time (seconds), Current status observed at, Current last check, Current last state change |
 | Alerts | `alerts-report` | Time, Hostname, Service, Previous State, New State, Output |
 | Notifications | `notifications-report` | Time, Hostname, Service, State, Contact, Message |
 
-Host Availability retains `Snapshots` on screen and `Total Snapshots` in exports, but its
-API `total_snapshots` value is known-state duration in seconds from Nagios,
-not a polling snapshot count. Export logging posts to `/api/system/exportlog`;
+Host Availability shows `Known Time (seconds)` on screen and in exports; the API
+`known_seconds` value is known-state duration from Nagios (up + down + unreachable),
+not a polling snapshot count, and no report view or export uses snapshot
+terminology. Hosts by OS shows no duration column. Export logging posts to `/api/system/exportlog`;
 a logging failure does not prevent the download.
 
 No-data wording (#229): a period with no events shows "No data in this period" on Alerts

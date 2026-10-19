@@ -405,7 +405,7 @@
         "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
         "server/app/api/helper/database_access/permissions.py": "223c0628444524cdae232fb02c29ebbb18b5e4c2e0307990acbe597a40e2ecff",
         "server/app/api/system/log.py": "0217cd8e0b016a80bb77b01684d8e47a1af0a1ea445a73ddf20b35874be1e706",
-        "server/app/api/system/report.py": "c5b98b9ce642255d71f95660d6bdd17f9044abf95cb12866e9daef6fda15a07d",
+        "server/app/api/system/report.py": "255dac41453d4bf2dd0b0650e0cc20b6e214cb5ede54bf40ab352ba9504033ea",
         "server/app/api/user/management.py": "f81baeaa04a614c784a7bd3f8da14679f70483e940ce4d38ee631e052902cdf7",
         "server/app/api/user/login.py": "0d0f9d269758533d8463b3b3191d629d17e18960b8a0b8d012e0d7de4fac7dfc",
         "client/src/components/login/LoginRoute.tsx": "4f2efe6b6c952c75850e6796afa9ea1bb122595286fc9ed881e7c3ed31f32d02"
