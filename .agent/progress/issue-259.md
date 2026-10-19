@@ -46,3 +46,5 @@ User reserves localhost8000 Docker lab for real sample collection and isolated-c
 Round1: 13 regressions failed before classifier reuse; forecast fit/job/route/migration suites now71passed. Existing generic test-cost snapshots now explicitly identify NCPA, preserving their intended mixed-row/count assertions. Official NCPA3.5.0 agent real memory30.1/disk0.8 checksOK; normal Nagios fixture loaded with zero validation errors, polling collection underway.
 
 Round2: official agent normal history memory3/disk2samples; baseline0rows vs candidate2insufficient rows on exact SQLite copy. Counts/labels/times preserved, no live positive crossing claimed. Original Nagios cfg hash restored, inactive fixture history/owned agent/protectedfiles removed; six originals running. Report/specs updated. Fullbackend stage session43879 running; allgate fails knownmacOShost-lock. Next: inspect fullbackend result and openPR withoutCIwait.
+
+Round3: merged main#238 frontend/docs only, retained both report/index entries; allforecast suites rerun71passed aftermerge. Docs258linksresolve, coverage239valid. Fullbackend stage passed70% with no failures sofar; pendingcompletion.

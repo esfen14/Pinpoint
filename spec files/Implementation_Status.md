@@ -86,6 +86,8 @@ virtual-memory and disk full/short labels (#259), preserving forecast safety rul
 journeys pass; see the [live chart report](../docs/test-runs/2026-10-19-issue-242-resource-charts/REPORT.md).
 The user's appliance, installer deployment and scale remain unverified.
 
+[Separate #259 real-history verification](../docs/test-runs/2026-10-19-issue-259-ncpa-forecast-labels/REPORT.md) confirms short-label selection and preserved insufficient state on an isolated history copy; numeric crossings use controlled regressions, not a long real fill.
+
 ## Implemented backend areas
 
 - Session login/logout and current-user identity. Existing-session login is
@@ -508,7 +510,6 @@ authentication remain untested; CI and human review are tracked on PR #201.
 The initial [contract probe](../docs/test-runs/2026-10-17-issue-198-contract-probe/REPORT.md)
 is historical partial evidence, not final acceptance.
 
-[Separate #259 real-history verification](../docs/test-runs/2026-10-19-issue-259-ncpa-forecast-labels/REPORT.md) confirms short-label selection and preserved insufficient state on an isolated history copy; numeric crossings use controlled regressions, not a long real fill.
 
 ## Dashboard stopped/stale Nagios indication (#238)
 
