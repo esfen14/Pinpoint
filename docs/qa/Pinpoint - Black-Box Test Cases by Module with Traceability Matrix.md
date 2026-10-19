@@ -3522,7 +3522,7 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 ### Module 22 – Edge cases and robustness
 
-**Historical result source:** PASS outcomes recorded in the [previous module catalog](../qa/Module_Blackbox_Test_Cases.md); detailed case results below are consolidated from its summary table.
+**Historical result source:** PASS outcomes recorded in the previous module catalog (`Module_Blackbox_Test_Cases.md`, removed from the repo); detailed case results below are consolidated from its summary table.
 
 These cases try the unusual: odd text, repeated clicks, lost connections, two people at once, time changes, and large amounts of data. Run them in phase 13, after the normal cases pass, because they reuse the accounts, scans, and devices made earlier. For each case "no error page" means no blank screen, no stack trace, and no HTTP 500.
 
@@ -3836,7 +3836,7 @@ These cases try the unusual: odd text, repeated clicks, lost connections, two pe
 
 ### Module 23 – Order of events
 
-**Historical result source:** PASS outcomes recorded in the [previous module catalog](../qa/Module_Blackbox_Test_Cases.md); detailed case results below are consolidated from its summary table.
+**Historical result source:** PASS outcomes recorded in the previous module catalog (`Module_Blackbox_Test_Cases.md`, removed from the repo); detailed case results below are consolidated from its summary table.
 
 These cases test what happens when things occur in an unusual order: a fix before a confirmation, a change while another job runs, or a permission taken away while the user is working. Each case says which event comes first. Run them in phase 14, one at a time, and restore the lab after each one (services running, devices monitored, no window or pause left over).
 
@@ -4270,7 +4270,7 @@ These cases test what happens when things occur in an unusual order: a fix befor
 
 These eight scenarios run the whole system as a user would, from the browser and the lab's real machines, across several modules in one flow. They check only what the screen, the email, and the API show. Run them in order on a lab with: a fresh appliance, one web server VM (HTTP on port 80, SSH on port 22), a second Linux VM with SSH, an SMTP test mailbox, a Staff user, and a dashboard-only user. Default intervals apply (Check 5 minutes, Retry 1 minute, Maximum attempts 3). Record each step as PASS, FAIL, or PARTIALLY PASS in the Test Execution Log.
 
-**Historical result source:** The prior catalog marks every step of E2E-01 through E2E-08 PASS ([source](../qa/Module_Blackbox_Test_Cases.md)). No attributable test-run reports for these E2E results were found in `docs/test-runs/`.
+**Historical result source:** The prior catalog marks every step of E2E-01 through E2E-08 PASS (source: `Module_Blackbox_Test_Cases.md`, removed from the repo). No attributable test-run reports for these E2E results were found in `docs/test-runs/`.
 
 ### E2E-01 – First login to a working Dashboard
 
