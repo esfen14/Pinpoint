@@ -71,6 +71,15 @@ with temporary SQLite and a stubbed Nagios writer. The API has no one-account ca
 unconfirmed; password policy and mismatch checks intentionally still block Save.
 See [the investigation](../docs/plans/Issue_191_Account_Creation_Investigation.md).
 
+## NCPA resource trend selection (#242)
+
+Historical CPU, disk and memory samples now use the existing command-first plugin
+classifier, including generated `ncpa-*` descriptions and command-identified
+checks. The requested time window excludes old and future samples, and non-NCPA
+checks are excluded even when their names or metrics resemble NCPA. Numeric API
+regressions and empty-window coverage pass; live verification of both resource
+charts remains required before sign-off.
+
 ## Implemented backend areas
 
 - Session login/logout and current-user identity.

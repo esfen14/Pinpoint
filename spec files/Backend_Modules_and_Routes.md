@@ -232,7 +232,7 @@ Detailed fields and behavior are normative in `Display_Requirements.md`.
 | Method and path | Permission | Purpose |
 |---|---|---|
 | `GET /api/system/network-health/summary` | `system.network_health` | Network Health header totals and last-scan information |
-| `GET /api/system/network-health/trends` | `system.network_health` | Bucketed ping and NCPA metric trends |
+| `GET /api/system/network-health/trends` | `system.network_health` | Bucketed ping and NCPA metric trends; historical NCPA CPU/disk/memory use the same command-first `_plugin_key(Service, Check_Command)` classification as current services, with service-name fallback only without a command. Includes generated NCPA names, excludes other plugins and timestamps outside the requested window; absent matching samples remain null buckets |
 | `GET /api/system/network-health/plugins` | `system.network_health` | Service health grouped by plugin type |
 
 Valid trend windows are `hours=1`, `6`, `24`, or `168`.
