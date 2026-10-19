@@ -4,11 +4,13 @@
 |---|---|
 | Date / zone | 2026-10-19, Asia/Manila (UTC+8) |
 | Executed candidate | `b4afa8a0176cbc2d78a53fe4dbba29eb3f18334c` (forecast implementation and regressions); subsequent changes are documentation only |
+| Control consumer source | `origin/main` revision `3dfe35fef7b31dc063b2c890cccae7dc5e69a88f`, original forecast.py SHA-256 `9b9bcbdb2f3dfae81e178f1ba7ac4c481e1eb7c71a3cd9ed6e1cef74f6592a58` |
+| Candidate forecast.py SHA-256 | `15238d9cc9a2dd6be248ddcceb13a1351142dd819c3f51fc3210fbcc98484eb5` |
 | Appliance baseline | Existing reserved Docker lab; mounted source revision `44471f7cc5ee94348cff18015993dd023d53365d`; no candidate application source deployed |
 | Executor / mode | Codex; scripted official agent/Nagios/polling checks and offline candidate forecast execution |
 | Plan | [#259](https://github.com/esfen14/Pinpoint/issues/259), canonical label consumer follow-up from #242/#256 |
-| Agent | Official NCPA3.5.0 amd64 DEB on owned Ubuntu22.04 container, emulated on ARM64; official v3.5.0 client through protected-token adapter |
-| Network | Reserved internal Docker lab10.78.0.0/24; fixture agent10.78.0.20, no published agent port |
+| Agent | Official NCPA 3.5.0 amd64 DEB on owned Ubuntu 22.04 container, emulated on ARM64; official v3.5.0 client through protected-token adapter |
+| Network | Reserved internal Docker lab 10.78.0.0/24; fixture agent 10.78.0.20, no published agent port |
 | Fixture | Unique `issue259-agent`; generated memory/disk descriptions; `pinpoint_nd_ncpa` command identity; notifications disabled; no discovery or production inventory edits |
 | Candidate execution | SQLite online-backup copy of real history; separate empty application database; scheduler off. No timestamp/value/label rewriting and no writes to the live forecast table |
 | Raw evidence | Private git-ignored `test-results/issue-259/` contains actual history copy, public baseline source and sanitized `result.json`; no raw database committed |
@@ -23,7 +25,7 @@ produced no forecast rows; the candidate selected both series and correctly stor
 `insufficient`, with one hourly sample each and no crossing date.
 
 This is not a live positive forecast or disk-fill prediction comparison: history
-spans minutes, not the required half of a72-hour window. Long, rising controlled
+spans minutes, not the required half of a 72-hour window. Long, rising controlled
 regressions prove numeric forecasts separately. Real history was not aged,
 synthesized or filled to manufacture a crossing.
 
@@ -37,9 +39,9 @@ synthesized or filled to manufacture a crossing.
 | Stored disk history | Pass | `ncpa-disk_root-5693-tcp`, same command, metric `'used_percent'`,2 samples,18:48:35–18:49:35 Manila,0.8% |
 | Baseline job on the copy | Confirmed defect |0 forecasts and0 stored rows: labels excluded before insufficient assessment |
 | Candidate job on same real history | Pass |0 forecasts and2 stored rows: both `insufficient`, raw metric strings retained, hourly Sample_Count1 each, Crossing_At null |
-| Numeric label regressions | Pass | Short, quoted and full-path memory/disk series yield warning80, latest61.3%, slope0.3 points/hour, R²1 and expected crossing within0.02h. Controlled72-hour data, not live measurements |
+| Numeric label regressions | Pass | Short, quoted and full-path memory/disk series yield warning 80, latest 61.3%, slope 0.3 points/hour, R² 1 and expected crossing within 0.02 h. Controlled 72-hour data, not live measurements |
 | Canonical exclusions and bounds | Pass | Other plugins, swap, disk I/O, CPU and ambiguous short identities excluded; invalid series cannot consume the cap; invalid snapshots of the same tuple cannot contaminate hourly values/thresholds |
-| Existing safety contracts | Pass | Forecast fit/job/route/migration target71 tests passed; fixed mixed-row statement count5, exact selected tuples, caps, rotation, commit-failure retry, sample/coverage and fit rejection rules retained |
+| Existing safety contracts | Pass | Forecast fit/job/route/migration target 71 tests passed; fixed mixed-row statement count 5, exact selected tuples, caps, rotation, commit-failure retry, sample/coverage and fit rejection rules retained |
 
 ## Attempts and limits
 
