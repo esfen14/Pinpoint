@@ -1,7 +1,7 @@
 # Issue #274: One isolated 15-device defense demo lab
 
 Branch: `issue-274-defense-demo`
-Status: in-progress
+Status: blocked
 
 ## Finish condition
 
@@ -59,13 +59,14 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | Installation inquiry | Owner supplied a Windows 10 ISO; confirmed bootable ISO metadata and NCPA Windows compatibility; queried unattended detection and current capacity without VM mutation | timeout 25s scripts/vmlab preflight | Failed: ownership ambiguous or metadata inaccessible; two same-user VBoxSVC processes observed. No installation started |
 | Installation follow-up | Terminated only the agent-owned hung VBoxManage query; serial ownership check and bounded ISO detection then succeeded; no controller/VM killed | timeout 25s scripts/vmlab preflight; timeout 30s VBoxManage unattended detect --iso=/home/paeng/Documents/00-School_Documents/Mine/SAM/ISOs/Win10_22H2_English_x64v1.iso | Ownership green; Windows10_64, x64/en-US, Home/Pro/Education variants; unattended installation supported. Asked owner which licensed edition to install |
 | Installation notes | Corrected current plan/status for available Windows installation media; retained historical report unchanged | scripts/verify.sh docs | green: verify: docs OK; edition choice still pending; no VM created or started |
+| Home preparation | Owner chose Windows 10 Home; created only exact-owned VM 5fb21051-8a4f-45b0-a7f0-de3cedceab83 with private unattended credentials and internal-only NIC, then attempted first boot | VBoxManage startvm 5fb21051-8a4f-45b0-a7f0-de3cedceab83 --type headless | Failed: VERR_SVM_IN_USE; kvm_amd loaded with enable_virt_at_load=Y. VM remains powered off. sudo -n fuser -v /dev/kvm requires an owner password, which was not requested or supplied |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh docs`
-- Result (first failing lines, or "green"): green: verify: docs OK. Serial host ownership preflight and bounded unattended detection also passed. Windows10_64, x64/en-US, image 1 Home, image 4 Education, image 6 Pro and other variants; unattended installation supported. No Windows VM created/started.
-- Hypothesis: Serial VBox calls avoid the transient duplicate-controller startup observed during concurrent reads. Current sample: 8291 MiB available; Windows-only installation may fit, but the combined lab budget remains pending. New presenter command-path implementation still requires the recorded workflow review.
-- Next action (one specific step, not "continue"): Perform step 7a's isolated Windows 10 Home preparation using private unattended credentials, a canonical host claim and fresh VM ownership/capacity checks.
+- Last check run (exact command): `timeout 25s VBoxManage showvminfo pinpoint-defense-win01 --machinereadable | rg '^(name|UUID|VMState|memory|cpus|nic[1-8]|intnet1|macaddress1)='`
+- Result (first failing lines, or "green"): green for prepared VM ownership/network/powered-off state. First boot failed with `AMD-V is being used by another hypervisor (VERR_SVM_IN_USE)`. kvm_amd/kvm loaded; enable_virt_at_load=Y. Noninteractive sudo unavailable, so host-module change needs the owner locally. No guest OS installation began.
+- Hypothesis: Loaded KVM owns AMD-V even with no observed QEMU/KVM guest process. Owner can temporarily release it with `sudo modprobe -r kvm_amd kvm` after closing KVM/QEMU VMs. Do not force removal, kill other guests, change boot settings or ask for passwords. Restore KVM with `sudo modprobe kvm_amd` only after the Windows VM is powered off when the installation finishes.
+- Next action (one specific step, not "continue"): Wait for the owner's confirmation that the temporary KVM unload succeeded, then resume the existing owned Windows VM under the canonical claim with fresh ownership/resource checks; do not recreate it or regenerate its credentials.
 
 ## Decisions and notes
 
@@ -83,3 +84,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 - Installation inquiry recovery succeeded without killing any VBoxSVC or VM or removing IPC/locks. VBox unattended supports password-file/stdin inputs; do not pass passwords or product keys on the CLI. Edition question is pending; no product key requested in chat. The initial media-unavailable blocker is superseded, and the transient ownership failure is resolved.
 - Owner subsequently clarified that no purchased license is available, then answered the edition question with Windows 10 Home. Prepare the selected edition for testing with activation pending; do not claim the issue's licensed-Windows gate passed or use activation bypasses. A local Windows Server 2022 evaluation ISO was also detected and offered as an alternative (Microsoft documents 180 days and online activation within 10 days), but the owner's latest edition selection is Home.
 - Plan order revised for the user's direct Windows installation request: perform isolated step 7a before the remaining shared-lab controller work. This creates no presenter controller or guest command-dispatch implementation; the earlier sensitive-code review remains pending for step 2. Existing VMs and appliance are not altered. Exact new VM name/UUID and private owner marker gate every setup action; all values and operations are fixed, argv is an argument list, passwords enter via private files, and unattended stdout remains private because it may include secrets.
+- Prepared Windows VM: `pinpoint-defense-win01`, UUID `5fb21051-8a4f-45b0-a7f0-de3cedceab83`, 3072 MiB, 2 CPUs, 40 GiB dynamic VDI, one Internal Network NIC (`pinpoint-defense`, MAC `02:77:01:00:00:02`), all seven other NICs disabled, no NAT/bridged adapter/port forwards. Windows IP is not configured yet because the guest has not booted.
+- Private owner record, generated login password, VM files, answer file and command output are under `/home/paeng/.local/share/pinpoint-defense/windows-home/`, private directories 0700/files 0600. Generated answer file has no product key. Keep it private: it contains the setup password. Do not print those files/logs or pass password/token values in argv.
+- Actual pre-start sample: 8273 MiB available RAM, 81789 MiB free disk; Windows-only 3072 MiB plus 3072 MiB reserve/512 MiB overhead gate passed. Disk gate budgets 40 GiB maximum growth + 20 GiB snapshot + 1 GiB logs + 10 GiB host reserve. All other VMs were powered off. Combined defense-lab resource acceptance remains unproven.
+- Current private one-time setup helper is `/tmp/issue274-install-home.py`. Its create path intentionally refuses existing state; a resumer must reuse/verify the existing state and start at the boot/verification phase, not rerun creation. Preserve state/VDI/credentials while the owner resolves host KVM. This is a host prerequisite, not an observed Pinpoint product defect.
