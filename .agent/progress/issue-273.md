@@ -1,7 +1,7 @@
 # Issue #273: System Refinement Add One-Time Single-Device Network Discovery Scan
 
 Branch: `issue-273-single-device-scan`
-Status: blocked
+Status: in-progress
 
 ## Finish condition
 
@@ -33,7 +33,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 ## Plan
 
-1. [ ] Add failing validation, permission and concurrency tests in `server/tests/unit/test_network_discovery.py`; implement optional target parsing/thread handoff in `server/app/api/system/network_discovery.py`.
+1. [x] Add failing validation, permission and concurrency tests in `server/tests/unit/test_network_discovery.py`; implement optional target parsing/thread handoff in `server/app/api/system/network_discovery.py`.
 2. [ ] Add failing scan-scope, empty-result and full/scheduled regression tests in `server/tests/unit/test_network_discovery.py`, `test_device_config.py` and identity tests as applicable; implement target flow in `server/app/network_discovery/network_discovery.py`, `create_host_cfg.py`, `device_identity.py` and any necessary port lifecycle code.
 3. [ ] Add failing UI interaction tests in `client/src/test/DiscoverySettings.test.tsx` and hook tests as applicable; implement `Scan device` in `client/src/components/settings/DiscoverySettings.tsx`, `client/src/hooks/useNetworkRescan.ts` and shared API/types as needed.
 4. [ ] Update `spec files/Backend_Modules_and_Routes.md`, `Frontend_Modules_and_Routes.md`, `Data_Model_and_Integrations.md`, `Implementation_Status.md` and user-facing help for the resulting contract; verify docs.
@@ -46,19 +46,20 @@ One row per loop round, newest last.
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 0 | Read issue, workflow, specs and source; wrote plan; no product code changed | `gh issue view 273 --json number,title,body,comments,state,labels,assignees` | Requirements covered; sensitive-module review checkpoint required |
+| 1 | Added strict optional IPv4 route validation and worker handoff after user approved sensitive changes | `.venv/bin/python -m pytest tests/unit/test_network_discovery.py -q`; `scripts/verify.sh backend` | 25 passed; backend gate reached 30% with no failure before I interrupted it to avoid blocking the next TDD round. Full gate remains required. |
 
 ## State for the next session
 
 Everything a fresh session needs to continue without redoing work.
 
-- Last check run (exact command): `gh issue view 273 --json number,title,body,comments,state,labels,assignees`
-- Result (first failing lines, or "green"): green; issue open and no comments; no implementation checks run
-- Hypothesis: an explicit target must be validated before nmap; the current reconciler scopes unseen lifecycle by network, which needs careful target-specific handling because a `/32` differs from an existing saved subnet.
-- Next action (one specific step, not "continue"): Obtain the required person review for sensitive discovery-module changes, then add failing route validation/permission/concurrency tests.
+- Last check run (exact command): `scripts/verify.sh backend`
+- Result (first failing lines, or "green"): interrupted at 30% (exit 130), no failure before interruption; focused route file: 25 passed
+- Hypothesis: the worker still needs a scoped target; existing network identity, unseen-device lifecycle, and interface refresh must be constrained for a focused scan.
+- Next action (one specific step, not "continue"): Add failing focused-scope and unreachable-target tests before changing the discovery worker.
 
 ## Decisions and notes
 
-- `Engineering_Standards.md` marks `app/network_discovery/` sensitive and requires an explicit injection and secret-exposure review; `.agent/workflows/work-issue.md` says to stop for a person before changing it. The user needs to review/authorize this checkpoint.
+- `Engineering_Standards.md` marks `app/network_discovery/` sensitive and requires an explicit injection and secret-exposure review; `.agent/workflows/work-issue.md` says to stop for a person before changing it. The user approved proceeding in chat on 2026-10-26.
 - Security review proposal: accept one strict IPv4 host (canonical dotted-decimal address or `/32` if contract chooses), reject ranges, unsafe/non-global classes and unexpected JSON; hand only the normalized numeric address to nmap; do not interpolate a shell or log request data that can carry secrets; keep existing Nagios validation, resource transaction and rollback. Inspect nmap3 invocation and scanned-result address matching during implementation.
 - Current source shows the stop route already uses `system.discover`, while `Backend_Modules_and_Routes.md` and `Implementation_Status.md` still describe a `network.discovery` mismatch. Update those inventories with the issue's owning spec change; this is a stale inventory entry, not a requested permission redesign.
 - No hostname resolution or bulk targets. No migration is planned.

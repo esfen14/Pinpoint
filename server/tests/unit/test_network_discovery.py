@@ -79,6 +79,31 @@ class TestDiscoverStart:
         data = resp.get_json()
         assert "message" in data
 
+    def test_focused_start_passes_only_normalized_ipv4_to_worker(self, logged_in_client, db_session):
+        import app.api.system.network_discovery as nd_module
+        nd_module.discovery_thread = None
+        with patch.object(nd_module.threading, "Thread") as worker_cls:
+            response = logged_in_client.post("/api/system/discover/start", json={"target": " 10.0.0.4 "})
+        assert response.status_code == 202
+        assert worker_cls.call_args.kwargs["args"][-1] == "10.0.0.4"
+
+    @pytest.mark.parametrize("target", [
+        "", "host.local", "10.0.0.0/24", "10.0.0.4/32", "127.0.0.1",
+        "224.0.0.1", "0.0.0.0", "240.0.0.1", "::1", "10.0.0.4 -sV",
+        ["10.0.0.4"], None,
+    ])
+    def test_invalid_focused_target_never_starts_worker(self, logged_in_client, db_session, target):
+        import app.api.system.network_discovery as nd_module
+        nd_module.discovery_thread = None
+        with patch.object(nd_module.threading, "Thread") as worker_cls:
+            response = logged_in_client.post("/api/system/discover/start", json={"target": target})
+        assert response.status_code == 400
+        worker_cls.assert_not_called()
+
+    def test_focused_start_requires_permission(self, limited_client, db_session):
+        response = limited_client.post("/api/system/discover/start", json={"target": "10.0.0.4"})
+        assert response.status_code == 403
+
     def test_simultaneous_starts_reserve_one_scan(self, app):
         """Two requests that both see an idle worker must not launch two scans."""
         import app.api.system.network_discovery as nd_module
