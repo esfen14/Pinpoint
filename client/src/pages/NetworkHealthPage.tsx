@@ -239,7 +239,7 @@ export function NetworkHealthPage() {
 
   const lastScanAt = summary?.lastScan.completedAt ?? null
   const isScanning = scanRunning || rescan.state === 'scanning'
-  const startScan = canRescan && !isScanning ? rescan.start : undefined
+  const startScan = canRescan && !isScanning ? () => { void rescan.start() } : undefined
   const lastScanText = isScanning
     ? 'Scanning…'
     : lastScanAt ? formatTimeAgo(lastScanAt, now) : summary ? 'No scan recorded' : '—'

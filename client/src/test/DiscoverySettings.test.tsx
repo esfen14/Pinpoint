@@ -5,6 +5,15 @@ import { ApiError } from '../lib/api'
 
 const getDiscoverySettings = vi.fn()
 const saveDiscoverySettings = vi.fn()
+const startScan = vi.fn()
+let canDiscover = true
+
+vi.mock('../hooks/useNetworkRescan', () => ({
+  useNetworkRescan: () => ({ state: 'idle', progress: 0, errorText: null, message: null, start: startScan }),
+}))
+vi.mock('../contexts/CurrentUserContext', () => ({
+  useCurrentUser: () => ({ hasPermission: (permission: string) => canDiscover && permission === 'system.discover' }),
+}))
 
 vi.mock('../lib/discoverySettingsApi', () => ({
   getDiscoverySettings: () => getDiscoverySettings(),
@@ -47,6 +56,8 @@ describe('DiscoverySettings', () => {
   beforeEach(() => {
     getDiscoverySettings.mockReset().mockResolvedValue(loaded())
     saveDiscoverySettings.mockReset()
+    startScan.mockReset()
+    canDiscover = true
   })
 
   it('shows the current networks, ports and expected services', async () => {
@@ -168,5 +179,31 @@ describe('DiscoverySettings', () => {
     expect(await screen.findByText(/scan is running/)).toBeInTheDocument()
     fireEvent.click(screen.getByLabelText('Remove 53'))
     expect(screen.getByRole('button', { name: /Save Changes/ })).toBeDisabled()
+  })
+
+  it('starts a one-time device scan without saving discovery settings', async () => {
+    render(<DiscoverySettings />)
+    fireEvent.change(await screen.findByLabelText('Device IPv4 address'), { target: { value: '10.0.0.4' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Scan device' }))
+    expect(startScan).toHaveBeenCalledWith('10.0.0.4')
+    expect(saveDiscoverySettings).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Rescan Network' }))
+    expect(startScan).toHaveBeenLastCalledWith()
+  })
+
+  it('rejects unsafe device targets before submitting', async () => {
+    render(<DiscoverySettings />)
+    fireEvent.change(await screen.findByLabelText('Device IPv4 address'), { target: { value: '10.0.0.0/24' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Scan device' }))
+    expect(screen.getByRole('alert')).toHaveTextContent(/one IPv4 address/)
+    expect(startScan).not.toHaveBeenCalled()
+  })
+
+  it('hides scan controls without system.discover', async () => {
+    canDiscover = false
+    render(<DiscoverySettings />)
+    await screen.findByText('Port → Service')
+    expect(screen.queryByRole('button', { name: 'Scan device' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Rescan Network' })).not.toBeInTheDocument()
   })
 })

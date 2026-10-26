@@ -35,7 +35,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 1. [x] Add failing validation, permission and concurrency tests in `server/tests/unit/test_network_discovery.py`; implement optional target parsing/thread handoff in `server/app/api/system/network_discovery.py`.
 2. [x] Add failing scan-scope, empty-result and full/scheduled regression tests in `server/tests/unit/test_network_discovery.py`, `test_device_config.py` and identity tests as applicable; implement target flow in `server/app/network_discovery/network_discovery.py`, `create_host_cfg.py`, `device_identity.py` and any necessary port lifecycle code.
-3. [ ] Add failing UI interaction tests in `client/src/test/DiscoverySettings.test.tsx` and hook tests as applicable; implement `Scan device` in `client/src/components/settings/DiscoverySettings.tsx`, `client/src/hooks/useNetworkRescan.ts` and shared API/types as needed.
+3. [x] Add failing UI interaction tests in `client/src/test/DiscoverySettings.test.tsx` and hook tests as applicable; implement `Scan device` in `client/src/components/settings/DiscoverySettings.tsx`, `client/src/hooks/useNetworkRescan.ts` and shared API/types as needed.
 4. [ ] Update `spec files/Backend_Modules_and_Routes.md`, `Frontend_Modules_and_Routes.md`, `Data_Model_and_Integrations.md`, `Implementation_Status.md` and user-facing help for the resulting contract; verify docs.
 5. [ ] Re-read issue and prove each finish item; run backend, frontend, docs and all gates; remove this progress file, push and open PR with verification and injection/secret review.
 
@@ -48,15 +48,16 @@ One row per loop round, newest last.
 | 0 | Read issue, workflow, specs and source; wrote plan; no product code changed | `gh issue view 273 --json number,title,body,comments,state,labels,assignees` | Requirements covered; sensitive-module review checkpoint required |
 | 1 | Added strict optional IPv4 route validation and worker handoff after user approved sensitive changes | `.venv/bin/python -m pytest tests/unit/test_network_discovery.py -q`; `scripts/verify.sh backend` | 25 passed; backend gate reached 30% with no failure before I interrupted it to avoid blocking the next TDD round. Full gate remains required. |
 | 2 | Scoped host/port probes, identity lifecycle, port promotion and interface refresh; empty focused scan ends before save/config | `.venv/bin/python -m pytest tests/unit/test_network_discovery.py tests/unit/test_device_identity.py tests/unit/test_device_config.py -q --tb=short` | 130 passed; backend stage gate deferred to finish verification |
+| 3 | Added permission-gated Scan device and full rescan controls, validation/help/status, shared hook body, and caller event wrappers | `scripts/verify.sh frontend` outside sandbox | Green: 84 files/1081 tests, build and lint (33 existing warnings). Sandbox run could not collect nested Playwright JSON; unchanged main failed the same way. |
 
 ## State for the next session
 
 Everything a fresh session needs to continue without redoing work.
 
-- Last check run (exact command): `.venv/bin/python -m pytest tests/unit/test_network_discovery.py tests/unit/test_device_identity.py tests/unit/test_device_config.py -q --tb=short`
-- Result (first failing lines, or "green"): green; 130 passed
-- Hypothesis: the backend focused path is sound in isolated tests; the Settings tab still needs a discover-permission-gated input and hook body.
-- Next action (one specific step, not "continue"): Add a failing Settings Scan device interaction test, then wire the shared hook and form.
+- Last check run (exact command): `scripts/verify.sh frontend`
+- Result (first failing lines, or "green"): green outside sandbox; 1081 tests passed, production build passed, lint had 0 errors/33 warnings
+- Hypothesis: source and UI contracts need documentation, then backend and all gates will reveal any broader regressions.
+- Next action (one specific step, not "continue"): Update the four named specifications and user help for the optional focused target contract.
 
 ## Decisions and notes
 
