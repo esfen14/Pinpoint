@@ -51,15 +51,16 @@ One row per loop round, newest last.
 | 3 | Added permission-gated Scan device and full rescan controls, validation/help/status, shared hook body, and caller event wrappers | `scripts/verify.sh frontend` outside sandbox | Green: 84 files/1081 tests, build and lint (33 existing warnings). Sandbox run could not collect nested Playwright JSON; unchanged main failed the same way. |
 | 4 | Updated backend, frontend, data and implementation-status specs; corrected stale stop permission inventory | `scripts/verify.sh docs` outside sandbox | Green; sandbox run hit temporary Unix-socket bind denial in unrelated QA fixtures |
 | 5 | Added focused stop/retry, UI feedback and interface tests; scoped plugin reconciliation after diff review and documented it; reread issue | `scripts/verify.sh all` outside sandbox | Green: docs, 4,419 backend passed/14 skipped, 84 frontend files/1,082 tests, build and lint (0 errors/33 warnings) |
+| 6 (resumed) | Added focused failure-then-retry coverage for rejected Nagios validation, successful retry, and unchanged saved networks | `.venv/bin/python -m pytest tests/unit/test_device_config.py -q --tb=short`; `scripts/verify.sh backend` outside sandbox | Green: 46 focused tests; backend gate 4,420 passed/14 skipped. The sandbox backend attempt was stopped after local-socket failures, which did not recur outside sandbox. |
 
 ## State for the next session
 
 Everything a fresh session needs to continue without redoing work.
 
-- Last check run (exact command): `scripts/verify.sh all`
-- Result (first failing lines, or "green"): green outside sandbox; 4,419 backend passed/14 skipped, 1,082 frontend passed, docs/build/lint passed
-- Hypothesis: all local work is proven; final pushed CI and required human PR review remain.
-- Next action (one specific step, not "continue"): Check final CI status on draft PR #275 after this checkpoint.
+- Last check run (exact command): `scripts/verify.sh backend`
+- Result (first failing lines, or "green"): green outside sandbox; 4,420 passed/14 skipped
+- Hypothesis: the previously missing retry-after-failure edge case is now proven by an isolated regression; final pushed CI and required human PR review remain.
+- Next action (one specific step, not "continue"): Check CI status on draft PR #275 after this checkpoint, then update issue #273's edge-case checkbox if green.
 
 ## Decisions and notes
 
@@ -69,3 +70,4 @@ Everything a fresh session needs to continue without redoing work.
 - No hostname resolution or bulk targets. No migration is planned.
 - Final diff review found that the existing post-scan plugin reconciler promoted suggested ports on every device. Step 2 was expanded to scope its promotion and AUTO rows to the focused device; ordinary full scans retain global reconciliation. The focused plugin regression failed first, then 159 related backend tests passed.
 - Five rounds were used in this session. Keep the progress file and draft PR until final CI and review approvals satisfy the issue's external merge condition. No live lab test was run under the workflow's live-test restriction.
+- A later session tested retry after a failed focused scan by rejecting mocked Nagios validation once and succeeding on retry. This is isolated evidence; the workflow still prohibits live lab testing without an issue instruction.
