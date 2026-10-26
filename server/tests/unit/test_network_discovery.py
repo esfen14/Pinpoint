@@ -104,6 +104,23 @@ class TestDiscoverStart:
         response = limited_client.post("/api/system/discover/start", json={"target": "10.0.0.4"})
         assert response.status_code == 403
 
+    def test_focused_stop_then_retry_uses_same_shared_worker_lock(self, logged_in_client, db_session):
+        import app.api.system.network_discovery as nd_module
+        nd_module.discovery_thread = None
+        nd_module.discovery_thread_stop_event.clear()
+        with patch.object(nd_module.threading, "Thread") as worker_cls:
+            first_worker = worker_cls.return_value
+            first_worker.is_alive.return_value = True
+            assert logged_in_client.post("/api/system/discover/start", json={"target": "10.0.0.4"}).status_code == 202
+            assert logged_in_client.post("/api/system/discover/start", json={"target": "10.0.0.5"}).status_code == 400
+            assert logged_in_client.post("/api/system/network-discovery/stop").status_code == 200
+            assert nd_module.discovery_thread_stop_event.is_set()
+            first_worker.is_alive.return_value = False
+            assert logged_in_client.post("/api/system/discover/start", json={"target": "10.0.0.4"}).status_code == 202
+            assert not nd_module.discovery_thread_stop_event.is_set()
+            assert worker_cls.call_count == 2
+        nd_module.discovery_thread = None
+
     def test_simultaneous_starts_reserve_one_scan(self, app):
         """Two requests that both see an idle worker must not launch two scans."""
         import app.api.system.network_discovery as nd_module
@@ -259,6 +276,8 @@ def test_focused_save_preserves_other_device_and_ports(db_session, admin_user):
     assert other.Device_State.name == "ACTIVE"
     assert other.Missed_Scans == other_misses
     assert other_port.Missed_Scans == other_port_misses
+    target_device = db.session.query(NetworkDiscovery).filter_by(IP_Address="10.0.0.4").one()
+    assert {port.Port_Number for port in db.session.query(Open_TCP_Services).filter_by(NetDiscoveryID=target_device.NetDiscoveryID)} == {22, 443}
 
 
 def test_focused_unreachable_target_skips_save_and_config(app, db_session, admin_user):

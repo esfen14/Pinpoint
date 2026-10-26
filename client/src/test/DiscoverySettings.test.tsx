@@ -7,9 +7,12 @@ const getDiscoverySettings = vi.fn()
 const saveDiscoverySettings = vi.fn()
 const startScan = vi.fn()
 let canDiscover = true
+let scanState = 'idle'
+let scanMessage: string | null = null
+let scanError: string | null = null
 
 vi.mock('../hooks/useNetworkRescan', () => ({
-  useNetworkRescan: () => ({ state: 'idle', progress: 0, errorText: null, message: null, start: startScan }),
+  useNetworkRescan: () => ({ state: scanState, progress: 40, errorText: scanError, message: scanMessage, start: startScan }),
 }))
 vi.mock('../contexts/CurrentUserContext', () => ({
   useCurrentUser: () => ({ hasPermission: (permission: string) => canDiscover && permission === 'system.discover' }),
@@ -58,6 +61,9 @@ describe('DiscoverySettings', () => {
     saveDiscoverySettings.mockReset()
     startScan.mockReset()
     canDiscover = true
+    scanState = 'idle'
+    scanMessage = null
+    scanError = null
   })
 
   it('shows the current networks, ports and expected services', async () => {
@@ -205,5 +211,20 @@ describe('DiscoverySettings', () => {
     await screen.findByText('Port → Service')
     expect(screen.queryByRole('button', { name: 'Scan device' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Rescan Network' })).not.toBeInTheDocument()
+  })
+
+  it('shows progress, completion and failure feedback', async () => {
+    scanState = 'scanning'
+    scanMessage = 'Discovering hosts.'
+    const { rerender } = render(<DiscoverySettings />)
+    expect(await screen.findByRole('status')).toHaveTextContent('Scanning… 40% Discovering hosts.')
+    scanState = 'success'
+    scanMessage = 'Host configuration unchanged; Nagios was not reloaded'
+    rerender(<DiscoverySettings />)
+    expect(screen.getByRole('status')).toHaveTextContent('Host configuration unchanged')
+    scanState = 'error'
+    scanError = 'No device was discovered at 10.0.0.4.'
+    rerender(<DiscoverySettings />)
+    expect(screen.getByRole('alert')).toHaveTextContent(scanError)
   })
 })

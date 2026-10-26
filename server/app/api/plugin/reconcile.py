@@ -59,14 +59,15 @@ from app.plugin_models import (
 # DESIRED STATE
 # ==========================================================
 
-def desired_services():
+def desired_services(device_ids=None):
     """
     Return the services that should be monitored now as a list of dicts with
     net_discovery_id, plugin (the Plugin Manager name, e.g. "check_ssh"), name
     (e.g. "ssh-22-tcp"), port, protocol and metric. Only ports that produce a
     Nagios service (Monitored or Missing) on scanned, non-retired devices are
     considered, and only when their plugin is Enabled or Active. Reads the
-    database; changes nothing.
+    database; changes nothing. device_ids limits the result to scanned devices
+    when a focused discovery run calls the reconciler.
     """
     enabled_plugins = enabled_plugin_names()
     if not enabled_plugins:
@@ -79,6 +80,8 @@ def desired_services():
         for host_data in hosts.values():
             device_id = host_data["data"].get("net_discovery_id")
             if device_id is None:
+                continue
+            if device_ids is not None and device_id not in device_ids:
                 continue
             for service in plan_host_services(host_data, facts, app_config, None, enabled_plugins):
                 desired.append({
@@ -148,11 +151,12 @@ def utcnow():
     return datetime.now(timezone.utc)
 
 
-def sync_rows(desired):
+def sync_rows(desired, device_ids=None):
     """
     Make the AUTO PluginConfiguration rows match desired. Returns
     (added, removed): the rows created (status Pending) and the number deleted.
-    MANUAL rows are never read or changed. Flushes; does not commit.
+    MANUAL rows are never read or changed. With device_ids, AUTO rows outside
+    that set are preserved. Flushes; does not commit.
     """
     plugins_by_name = {
         normalize_plugin_name(plugin.Name): plugin
@@ -163,6 +167,8 @@ def sync_rows(desired):
 
     wanted = {}
     for service in desired:
+        if device_ids is not None and service["net_discovery_id"] not in device_ids:
+            continue
         plugin = plugins_by_name.get(service["plugin"])
         if plugin is not None:
             wanted[(plugin.PluginID, service["net_discovery_id"], service["name"])] = service
@@ -171,6 +177,8 @@ def sync_rows(desired):
     for row in db.session.scalars(sa.select(PluginConfiguration).where(
         PluginConfiguration.Origin == PluginConfigurationOrigin.AUTO
     )).all():
+        if device_ids is not None and row.NetDiscoveryID not in device_ids:
+            continue
         existing[(row.PluginID, row.NetDiscoveryID, row.Nagios_Service_Name)] = row
 
     removed = 0
@@ -218,7 +226,7 @@ def set_plugin_states():
         plugin.Status = PluginStatus.ACTIVE if plugin.PluginID in backed else PluginStatus.ENABLED
 
 
-def reconcile_plugin_monitoring(user_id=None):
+def reconcile_plugin_monitoring(user_id=None, device_ids=None):
     """
     Bring monitoring in line with Plugin Manager. In order: promote identified
     ports whose plugin is now enabled; create or delete the AUTO configuration
@@ -227,15 +235,17 @@ def reconcile_plugin_monitoring(user_id=None):
     and set each plugin Active or Enabled. If Nagios rejects the new config
     nothing in the database changes, the failure is recorded in the history of
     the plugins that were being attached (when user_id is given), and the
-    result says why. Idempotent; commits.
+    result says why. A focused discovery passes device_ids so it promotes and
+    synchronizes only those devices; omitted means the usual whole inventory.
+    Idempotent; commits.
 
     Returns {"success": bool, "changed": a new host config went live,
     "applied": rows added, "removed": rows deleted, "promoted": ports promoted,
     "message": str}.
     """
     try:
-        promoted = promote_identified_ports()
-        added, removed = sync_rows(desired_services())
+        promoted = promote_identified_ports(device_ids)
+        added, removed = sync_rows(desired_services(device_ids), device_ids)
         status, message = regenerate_and_apply_config_status()
     except Exception:
         db.session.rollback()

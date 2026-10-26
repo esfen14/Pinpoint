@@ -398,8 +398,8 @@ def promote_identified_ports(device_ids=None):
     retired or merged. Enabling a plugin and finding a new device both lead
     here, so ports are attached without picking devices by hand. Ports flagged
     "not used as intended" wait for acknowledgement; IGNORED ports stay
-    ignored (see promotable_ports). Returns the number of ports promoted. Does
-    not commit.
+    ignored (see promotable_ports). device_ids limits a focused scan to its
+    observed devices. Returns the number of ports promoted. Does not commit.
     """
     promoted = 0
     for protocol, port in promotable_ports(enabled_plugin_names()):

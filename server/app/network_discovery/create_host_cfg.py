@@ -1588,15 +1588,19 @@ def _run_nagios_verify(main_cfg_path):
     except FileNotFoundError:
         return False, f"Nagios binary not found at {NAGIOS_BIN}."
 
-def _sync_running_plugins(app, user_id):
+def _sync_running_plugins(app, user_id, device_ids=None):
     """
     After a scan, attach the discovered ports of every enabled plugin and drop
     the ones that no longer apply (the plugin reconciler). Never raises: a
-    failure is logged and leaves the scan's own result alone.
+    failure is logged and leaves the scan's own result alone. device_ids limits
+    mutation to the scanned device for a focused run.
     """
     try:
         from app.api.plugin.reconcile import reconcile_plugin_monitoring
-        result = reconcile_plugin_monitoring(user_id)
+        if device_ids is None:
+            result = reconcile_plugin_monitoring(user_id)
+        else:
+            result = reconcile_plugin_monitoring(user_id, device_ids=device_ids)
         if not result["success"]:
             app.logger.warning("Plugin monitoring was not reconciled after discovery: %s", result["message"])
     except Exception:
@@ -2051,7 +2055,10 @@ def discover_network_create_hosts(app, user_id, stop_event, target=None):
                         "Host configuration unchanged; Nagios was not reloaded",
                         datetime.now(timezone.utc)
                     )
-                    _sync_running_plugins(app, user_id)
+                    if target is None:
+                        _sync_running_plugins(app, user_id)
+                    else:
+                        _sync_running_plugins(app, user_id, {device.NetDiscoveryID for device in saved_devices.values()})
                     return
 
                 if stop_event.is_set():
@@ -2083,7 +2090,10 @@ def discover_network_create_hosts(app, user_id, stop_event, target=None):
                             "New host.cfg successfully applied",
                             datetime.now(timezone.utc)
                             )
-                        _sync_running_plugins(app, user_id)
+                        if target is None:
+                            _sync_running_plugins(app, user_id)
+                        else:
+                            _sync_running_plugins(app, user_id, {device.NetDiscoveryID for device in saved_devices.values()})
                         print(apply_message)
                     else:
                         update_network_discovery_status(

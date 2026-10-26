@@ -791,6 +791,7 @@ def reconcile_scan(discovered_hosts, discovery_status_id, skip_ips=(), target=No
     Returns {(network, ip): device} for every observation that became or
     matched a device; secondary addresses of a multi-NIC device are not
     included. Updates device lifecycle for devices the scan did not see.
+    With target, unseen-device lifecycle changes are limited to that address.
     Does not commit.
     """
     observations = []

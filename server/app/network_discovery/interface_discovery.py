@@ -267,8 +267,9 @@ def refresh_interfaces_after_scan(device_ids=None):
     """
     Refresh the interface list of devices that already have one, or that expose SNMP, after a scan.
     Best effort and bounded: at most SCAN_DEVICE_LIMIT devices and SCAN_TIME_BUDGET_SECONDS in total;
-    a device that does not answer is logged (without its community) and skipped. Returns the number
-    of devices refreshed.
+    a device that does not answer is logged (without its community) and skipped.
+    device_ids limits a focused scan to devices actually saved in that run.
+    Returns the number of devices refreshed.
     """
     started = time.monotonic()
     refreshed = 0

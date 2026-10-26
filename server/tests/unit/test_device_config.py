@@ -315,7 +315,7 @@ class TestConfigWriteLock:
 class TestDiscoveryFlow:
     """discover_network_create_hosts() end to end, with nmap and Nagios mocked."""
 
-    def run_flow(self, app, admin_user, tmp_path, unchanged):
+    def run_flow(self, app, admin_user, tmp_path, unchanged, target=None):
         from app.system_models import NetworkDiscoveryStatus
         import sqlalchemy as sa
         from app import db
@@ -325,20 +325,30 @@ class TestDiscoveryFlow:
         scanned = scan("10.0.0.5", mac=MAC_1, hostname="fridge.lan", tcp={22: "ssh"})
 
         with patched_config(app, HOST_CONFIG_DIR=tmp_path / "gen", NAGIOS_HOST_CFG=live), \
-             patch.object(create_host_cfg, "discover_network", return_value=scanned), \
+             patch.object(create_host_cfg, "discover_network", return_value=scanned) as discover, \
              patch.object(create_host_cfg, "collect_identifiers", return_value=[]), \
              patch.object(create_host_cfg, "get_monitoring_server_ips", return_value=set()), \
              patch.object(create_host_cfg, "_sync_running_plugins") as reconcile, \
              patch.object(create_host_cfg, "config_unchanged", return_value=unchanged), \
              patch.object(create_host_cfg, "_validate_config", return_value=(True, "ok")) as validate, \
              patch.object(create_host_cfg, "_apply_new_host_cfg", return_value=(True, "applied")) as apply:
-            create_host_cfg.discover_network_create_hosts(app, admin_user.UserID, threading.Event())
+            create_host_cfg.discover_network_create_hosts(app, admin_user.UserID, threading.Event(), target)
 
         status = db.session.scalars(
             sa.select(NetworkDiscoveryStatus).order_by(NetworkDiscoveryStatus.DiscoveryStatusID.desc())
         ).first()
         self.reconcile = reconcile
+        self.discover = discover
         return status, validate, apply
+
+    def test_focused_scan_uses_same_validated_config_pipeline(self, app, db_session, admin_user, tmp_path):
+        status, validate, apply = self.run_flow(app, admin_user, tmp_path, unchanged=False, target="10.0.0.5")
+        assert status.Status.name == "SUCCESS"
+        assert status.Progress == 100
+        assert self.discover.call_args.args[-1] == "10.0.0.5"
+        validate.assert_called_once()
+        apply.assert_called_once()
+        self.reconcile.assert_called_once_with(app, admin_user.UserID, {all_devices()[0].NetDiscoveryID})
 
     def test_plugins_are_reconciled_after_a_scan_applies_a_config(self, app, db_session, admin_user, tmp_path):
         self.run_flow(app, admin_user, tmp_path, unchanged=False)

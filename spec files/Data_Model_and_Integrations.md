@@ -510,7 +510,9 @@ that run. The worker scans and probes only that address, uses its existing devic
 network or a containing saved network for identity reconciliation (otherwise a
 `/32`), and never writes the saved `DiscoverySettings.Networks` list. Only the
 target address may count as unseen; unscanned devices, ports, and SNMP interfaces
-stay unchanged. If nmap discovers no target host, the run records a failed
+stay unchanged. The post-scan plugin reconciler limits suggested-port promotion
+and automatic configuration rows to the scanned device; ordinary full scans
+still reconcile all devices. If nmap discovers no target host, the run records a failed
 status before inventory or Nagios configuration changes. Scheduled and ordinary
 full scans continue to use the saved networks. The existing shared config writer
 still validates and rolls back any changed Nagios configuration.
