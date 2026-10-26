@@ -54,18 +54,19 @@ Requirement coverage (every requirement the issue states, and the check that pro
 |---|---|---|---|
 | Plan | Read #274 and workflow; isolated checkout; full requirement coverage and ordered plan | gh issue view 274 --json title,body,comments,state,labels,url; scripts/vmlab preflight | Issue open with no comments; ownership preflight green for powered-off QA appliance |
 | 1 | Recorded actual read-only inventory, proposed transition/recovery/security boundaries, sanitized report, and pending status/spec links; no runtime behavior changed | scripts/verify.sh docs | green: verify: docs OK; diff whitespace check also green |
+| Installation inquiry | Owner supplied a Windows 10 ISO; confirmed bootable ISO metadata and NCPA Windows compatibility; queried unattended detection and current capacity without VM mutation | timeout 25s scripts/vmlab preflight | Failed: ownership ambiguous or metadata inaccessible; two same-user VBoxSVC processes observed. No installation started |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh docs`
-- Result (first failing lines, or "green"): green: `verify: docs OK`. Documentation and offline tooling gates passed; this is not live lab acceptance. Full/backend/frontend gates not run locally for this documentation-only draft.
-- Hypothesis: A new isolated network avoids the old segment's unrelated physically bridged VM; preflight must recheck capacity because observed 8705 MiB available is below the proposed 9216 MiB Linux-start threshold before overhead. Implementation still needs the workflow's person review.
-- Next action (one specific step, not "continue"): Obtain the person's review/approval of the command execution and secret exposure table in `docs/plans/Defense_Demo_Lab_Plan.md` before implementing the manifest/controller in step 2.
+- Last check run (exact command): `timeout 25s scripts/vmlab preflight`
+- Result (first failing lines, or "green"): `vmlab: preflight FAILED: ownership is ambiguous or metadata is inaccessible; inspect host VBoxSVC/VM processes and loopback socket ownership before any mutation.` Prior documentation gate was green. No Windows VM was created or started.
+- Hypothesis: Two concurrent read-only VBox queries launched duplicate idle same-user VBoxSVC control processes; fresh ownership proof is required. Do not kill controller processes or remove IPC/locks. Current sample: 8291 MiB available; installing Windows alone may fit, but the combined lab capacity gate is still pending. Implementation also needs the workflow's person review.
+- Next action (one specific step, not "continue"): Resolve the ambiguous VirtualBox controller context through the VM plan's read-only ownership/recovery procedure and obtain a successful host preflight before any Windows installation.
 
 ## Decisions and notes
 
 - All issue requirements are covered by FC1-FC8. No final requirement is waived. Temporary win-slot exercises Linux/device-count work only.
-- Owner confirmed on 2026-10-27 that a licensed Windows image is still unavailable. Step 7 and final Windows acceptance remain pending; issue explicitly permits finishing other stages first.
+- Initial owner statement that Windows media was unavailable was superseded later on 2026-10-27: the owner identified `/home/paeng/Documents/00-School_Documents/Mine/SAM/ISOs/Win10_22H2_English_x64v1.iso`. `file` reports a bootable ISO 9660 image labelled `CCCOMA_X64FRE_EN-US_DV9`; size 6140975104 bytes. Installation media is available; integrity, edition, license, installation and NCPA acceptance are not verified. Historical inventory report retains the statement as it was at that run's time.
 - Worktree is `/tmp/pinpoint-issue-274` because the initial sandbox allowed writes there; branch metadata is in the original repository. No changes to the user's main checkout.
 - Initial sandboxed VBox/netlink observations were unusable. After access changed, actual host preflight passed. Do not treat sandbox missing-vboxdrv output as host failure.
 - Existing unrelated Windows-named VMs are not authorized Windows images and must not be touched.
@@ -74,3 +75,4 @@ Requirement coverage (every requirement the issue states, and the check that pro
 - Step 1 wording clarified to distinguish the planned architecture probe from a performed one. No live acceptance was observed, so all eight finish-condition items remain unticked.
 - Actual inventory/preflight evidence is private at `/home/paeng/pinpoint-test-results/issue-274-inventory-20261027/inventory.json`; sanitized report is `docs/test-runs/2026-10-27-issue-274-defense-inventory/REPORT.md`. No VM, network, guest, discovery setting, listener or Documents shortcut was changed.
 - Re-read issue finish conditions on 2026-10-27: still open, no comments, all eight gates unchanged. No product defect observed in this read-only preparation.
+- Draft PR: https://github.com/esfen14/Pinpoint/pull/276. User asked whether the agent can install Windows; agent can automate VM setup/install/NCPA subject to successful ownership/capacity checks and any interactive Windows steps. The attempted unattended detection hung; only that agent-owned query process was terminated, not VBoxSVC or a VM process.
