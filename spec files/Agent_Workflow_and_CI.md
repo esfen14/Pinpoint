@@ -134,6 +134,12 @@ Where results go is defined in [`docs/test-runs/README.md`](../docs/test-runs/RE
 | Isolated DHCP acceptance | Docker with `CAP_NET_ADMIN` in a dedicated switch namespace | Opt-in `scripts/dhcp-lab` controls and `scripts/dhcp-accept`; see the [Local Lab manual](../docs/manuals/Local_Lab.md#isolated-dhcp-lab) and [acceptance plan](../server/tests/plans/DHCP_LAB_ACCEPTANCE.md). Real `dnsmasq` and `dhclient`, limited to approved `10.79.0.0/28`; never run in CI or on a physical/VPN subnet |
 | Real appliance and VM lab | Installer build, VirtualBox (this laptop) or libvirt (the retained lab) | `scripts/vmlab` with the `demo/` target VMs; plan in [`docs/plans/VM_Lab_Plan.md`](../docs/plans/VM_Lab_Plan.md). The snapshot holds Ubuntu + Nagios only, so it cannot go stale. The libvirt e2e harness in `server/tests/e2e/network_discovery/` is separate. Manual or scheduled, never on pull requests from forks |
 
+Issue #274's [defense demo plan](../docs/plans/Defense_Demo_Lab_Plan.md) is
+preparation for one appliance with container targets inside a dedicated VM and
+an owner-supplied Windows VM. Its proposed network/controller is not yet a
+supported test environment or an approved additional scan scope. The existing
+VM ownership and command-path review rules apply before implementation.
+
 The [DHCP lab design](../docs/plans/DHCP_Lab_Extension_Proposal.md) records the
 Docker feasibility decision and the separate lab's safety contract. The ordinary
 fast lab and VM demo continue to use static addresses.

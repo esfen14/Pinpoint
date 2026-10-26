@@ -5,6 +5,18 @@
 This file reports what is present in the repository. It is not a substitute for
 the normative behavior in the requirement specifications.
 
+## Defense demo preparation (#274)
+
+The [defense demo plan](../docs/plans/Defense_Demo_Lab_Plan.md) records the
+existing VM/snapshot inventory, proposed isolated target-host architecture,
+recovery procedure and command injection/secret-exposure review boundaries.
+The [read-only inventory report](../docs/test-runs/2026-10-27-issue-274-defense-inventory/REPORT.md)
+does not establish a delivered lab: the new controller, fifteen-device catalog,
+five-client DHCP/address-mode story and two rehearsals remain unimplemented and
+unverified. Command-path implementation awaits the work-issue person review;
+the owner confirmed the licensed Windows image is unavailable. Existing lab
+commands and approved scan ranges remain as documented below.
+
 ## Isolated DHCP acceptance lab (#187)
 
 The opt-in Docker lab in `lab/dhcp/` supplies real IPv4 DHCP on an isolated

@@ -1,7 +1,7 @@
 # Issue #274: One isolated 15-device defense demo lab
 
 Branch: `issue-274-defense-demo`
-Status: in-progress
+Status: blocked
 
 ## Finish condition
 
@@ -39,8 +39,8 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 ## Plan
 
-1. [ ] Record ownership, snapshots, routes, capacity, transition/recovery, architecture probe and injection/secret review in `docs/plans/Defense_Demo_Lab_Plan.md`; record observed inventory under `docs/test-runs/`.
-2. [ ] Test first, then add manifest and guarded preflight/controller in `demo/` with isolated tests; update `spec files/Agent_Workflow_and_CI.md` for the new explicitly bounded demo scope before any scan.
+1. [x] Record ownership, snapshots, routes, capacity, transition/recovery, planned architecture probe and injection/secret review boundaries in `docs/plans/Defense_Demo_Lab_Plan.md`; record observed inventory under `docs/test-runs/`. Preparation complete; person review and live proof are pending.
+2. [ ] After the required person review, test first, then add manifest and guarded preflight/controller in `demo/` with isolated tests; update `spec files/Agent_Workflow_and_CI.md` for the new explicitly bounded demo scope before any scan.
 3. [ ] Prove the two-MAC/DHCP/management/isolation spike with the real appliance and dedicated target-host; record exact settings and measurements in the plan/report; revise topology if needed.
 4. [ ] Build the real daemon catalog in `demo/defense/`; test/provision 14 Linux targets plus clearly labelled win-slot; verify product discovery, plugins and Nagios against the manifest.
 5. [ ] Test/implement portable allowlisted listener and host controls in `demo/`; migrate and adapt the three Documents files; verify shortcut and interruption/restore paths.
@@ -53,13 +53,14 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | Plan | Read #274 and workflow; isolated checkout; full requirement coverage and ordered plan | gh issue view 274 --json title,body,comments,state,labels,url; scripts/vmlab preflight | Issue open with no comments; ownership preflight green for powered-off QA appliance |
+| 1 | Recorded actual read-only inventory, proposed transition/recovery/security boundaries, sanitized report, and pending status/spec links; no runtime behavior changed | scripts/verify.sh docs | green: verify: docs OK; diff whitespace check also green |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/vmlab preflight`
-- Result (first failing lines, or "green"): green; appliance UUID 351eb491-f5e1-4854-a7e4-68309ad774ad powered off, exclusive controller/endpoints.
-- Hypothesis: Stage one can retain old powered-off disks as recovery while using a new target-host and isolated network. New command execution paths require the workflow's person review before implementation.
-- Next action (one specific step, not "continue"): Write the concrete transition/security-review plan and sanitized read-only inventory report, then checkpoint the required review gate.
+- Last check run (exact command): `scripts/verify.sh docs`
+- Result (first failing lines, or "green"): green: `verify: docs OK`. Documentation and offline tooling gates passed; this is not live lab acceptance. Full/backend/frontend gates not run locally for this documentation-only draft.
+- Hypothesis: A new isolated network avoids the old segment's unrelated physically bridged VM; preflight must recheck capacity because observed 8705 MiB available is below the proposed 9216 MiB Linux-start threshold before overhead. Implementation still needs the workflow's person review.
+- Next action (one specific step, not "continue"): Obtain the person's review/approval of the command execution and secret exposure table in `docs/plans/Defense_Demo_Lab_Plan.md` before implementing the manifest/controller in step 2.
 
 ## Decisions and notes
 
@@ -69,3 +70,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 - Initial sandboxed VBox/netlink observations were unusable. After access changed, actual host preflight passed. Do not treat sandbox missing-vboxdrv output as host failure.
 - Existing unrelated Windows-named VMs are not authorized Windows images and must not be touched.
 - `.agent/workflows/work-issue.md` section 4 explicitly stops at sensitive modules; Engineering Standards includes command execution paths. Prepare an explicit injection/secret-exposure review before changing the presenter controller or VM networking.
+- Required person decision: approve the proposed controller/guest-helper boundaries in the plan's security review table, so implementation can resume within the already requested issue scope. This gate is an explicit workflow requirement, not a new request for general lab permission.
+- Step 1 wording clarified to distinguish the planned architecture probe from a performed one. No live acceptance was observed, so all eight finish-condition items remain unticked.
+- Actual inventory/preflight evidence is private at `/home/paeng/pinpoint-test-results/issue-274-inventory-20261027/inventory.json`; sanitized report is `docs/test-runs/2026-10-27-issue-274-defense-inventory/REPORT.md`. No VM, network, guest, discovery setting, listener or Documents shortcut was changed.
+- Re-read issue finish conditions on 2026-10-27: still open, no comments, all eight gates unchanged. No product defect observed in this read-only preparation.
