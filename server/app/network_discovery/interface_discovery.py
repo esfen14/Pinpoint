@@ -263,7 +263,7 @@ def refresh_device_interfaces(device):
     return rows
 
 
-def refresh_interfaces_after_scan():
+def refresh_interfaces_after_scan(device_ids=None):
     """
     Refresh the interface list of devices that already have one, or that expose SNMP, after a scan.
     Best effort and bounded: at most SCAN_DEVICE_LIMIT devices and SCAN_TIME_BUDGET_SECONDS in total;
@@ -272,7 +272,7 @@ def refresh_interfaces_after_scan():
     """
     started = time.monotonic()
     refreshed = 0
-    devices = db.session.scalars(
+    query = (
         sa.select(NetworkDiscovery)
         .where(
             NetworkDiscovery.Include_Device_In_Scanning.is_(True),
@@ -286,7 +286,10 @@ def refresh_interfaces_after_scan():
         )
         .order_by(NetworkDiscovery.NetDiscoveryID)
         .limit(SCAN_DEVICE_LIMIT)
-    ).all()
+    )
+    if device_ids is not None:
+        query = query.where(NetworkDiscovery.NetDiscoveryID.in_(device_ids))
+    devices = db.session.scalars(query).all()
 
     for device in devices:
         if time.monotonic() - started > SCAN_TIME_BUDGET_SECONDS:

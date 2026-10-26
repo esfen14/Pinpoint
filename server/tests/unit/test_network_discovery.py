@@ -15,7 +15,7 @@ from app import db
 from app.network_discovery import network_discovery
 from app.network_discovery.create_host_cfg import _save_discovered_hosts
 from app.system_models import DiscoverySettings, NetworkDiscovery, Open_TCP_Services
-from tests.support.identity_helpers import NET, MAC_1
+from tests.support.identity_helpers import NET, MAC_1, MAC_2, make_status, scan, combine
 
 from app.system_models import (
     NetworkDiscoveryStatus,
@@ -224,6 +224,74 @@ class TestDiscoveryCancelled:
             .order_by(NetworkDiscoveryStatus.DiscoveryStatusID.desc())
         ).first()
         assert latest.Status == DiscoveryStatus.INTERRUPTED
+
+
+def test_focused_scan_probes_only_requested_host_and_keeps_saved_networks(db_session, admin_user):
+    status = make_status(db_session, admin_user)
+    db.session.add(DiscoverySettings(Id=1, Networks=[NET], TCP_Ports=[22], UDP_Ports=[161]))
+    db.session.commit()
+    with patch.object(network_discovery, "_discover_host", return_value={
+        "10.0.0.4": {"data": {"hostname": "one"}, "services": {}},
+        "10.0.0.5": {"data": {"hostname": "other"}, "services": {}},
+    }) as host_scan, patch.object(network_discovery, "_discover_host_tcp_port", return_value=({}, "Linux")) as tcp, \
+         patch.object(network_discovery, "_discover_host_udp_port", return_value=({}, {})) as udp:
+        found = network_discovery.discover_network(status, 40, Event(), target="10.0.0.4")
+    host_scan.assert_called_once_with("10.0.0.4")
+    tcp.assert_called_once_with("10.0.0.4")
+    udp.assert_called_once_with("10.0.0.4")
+    assert list(found[NET]) == ["10.0.0.4"]
+    assert db.session.get(DiscoverySettings, 1).Networks == [NET]
+
+
+def test_focused_save_preserves_other_device_and_ports(db_session, admin_user):
+    status = make_status(db_session, admin_user)
+    with patch("app.network_discovery.create_host_cfg.get_monitoring_server_ips", return_value=set()):
+        _save_discovered_hosts(combine(
+            scan("10.0.0.4", mac=MAC_1, tcp={22: "ssh"}),
+            scan("10.0.0.5", mac=MAC_2, tcp={80: "http"}),
+        ), status, 70)
+        other = db.session.query(NetworkDiscovery).filter_by(IP_Address="10.0.0.5").one()
+        other_id, other_misses = other.NetDiscoveryID, other.Missed_Scans
+        other_port = db.session.query(Open_TCP_Services).filter_by(NetDiscoveryID=other_id).one()
+        other_port_misses = other_port.Missed_Scans
+        _save_discovered_hosts(scan("10.0.0.4", mac=MAC_1, tcp={443: "https"}), status, 70,
+                               target="10.0.0.4")
+    assert other.Device_State.name == "ACTIVE"
+    assert other.Missed_Scans == other_misses
+    assert other_port.Missed_Scans == other_port_misses
+
+
+def test_focused_unreachable_target_skips_save_and_config(app, db_session, admin_user):
+    from app.network_discovery import create_host_cfg
+    with patch.object(create_host_cfg, "discover_network", return_value={NET: {}}), \
+         patch.object(create_host_cfg, "_save_discovered_hosts") as save, \
+         patch.object(create_host_cfg, "_create_host_cfg_file") as config:
+        create_host_cfg.discover_network_create_hosts(app, admin_user.UserID, Event(), "10.0.0.4")
+    save.assert_not_called()
+    config.assert_not_called()
+    status = db.session.query(NetworkDiscoveryStatus).order_by(NetworkDiscoveryStatus.DiscoveryStatusID.desc()).first()
+    assert status.Status == DiscoveryStatus.FAILED
+    assert "10.0.0.4" in status.Message
+
+
+def test_new_focused_device_outside_saved_network_keeps_later_full_scan_scope(db_session, admin_user):
+    status = make_status(db_session, admin_user)
+    db.session.add(DiscoverySettings(Id=1, Networks=[NET]))
+    db.session.commit()
+    host = {"data": {"hostname": "external", "mac_address": MAC_1, "os": "Linux"}, "services": {}}
+    with patch.object(network_discovery, "_discover_host", side_effect=lambda address: {"10.2.0.4": host} if address == "10.2.0.4" else {}), \
+         patch.object(network_discovery, "_discover_host_tcp_port", return_value=({}, "Linux")), \
+         patch.object(network_discovery, "_discover_host_udp_port", return_value=({}, {})), \
+         patch("app.network_discovery.create_host_cfg.get_monitoring_server_ips", return_value=set()):
+        focused = network_discovery.discover_network(status, 40, Event(), "10.2.0.4")
+        assert list(focused) == ["10.2.0.4/32"]
+        _save_discovered_hosts(focused, status, 70, target="10.2.0.4")
+        device = db.session.query(NetworkDiscovery).filter_by(IP_Address="10.2.0.4").one()
+        full = network_discovery.discover_network(status, 40, Event())
+        _save_discovered_hosts(full, status, 70)
+    assert device.Device_State.name == "ACTIVE"
+    assert device.Missed_Scans == 0
+    assert db.session.get(DiscoverySettings, 1).Networks == [NET]
 
 
 # ─── repeat scans with changed port settings ─────────────────────────────────
