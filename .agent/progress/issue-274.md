@@ -1,7 +1,7 @@
 # Issue #274: One isolated 15-device defense demo lab
 
 Branch: `issue-274-defense-demo`
-Status: blocked
+Status: in-progress
 
 ## Finish condition
 
@@ -46,6 +46,8 @@ Requirement coverage (every requirement the issue states, and the check that pro
 5. [ ] Test/implement portable allowlisted listener and host controls in `demo/`; migrate and adapt the three Documents files; verify shortcut and interruption/restore paths.
 6. [ ] Test/implement five-client DHCP and transactional address-mode controls in `demo/`; run real identity, history, collision, outage and rollback matrix; keep `lab/dhcp/` independent.
 7. [ ] With owner-supplied Windows, prepare NCPA privately, snapshot/register/probe metrics, replace win-slot and repeat all-15 validation; document Windows instructions in `demo/`.
+   - [ ] 7a (current user-requested preparation): Install Windows 10 Home image 1 in a new exact-owned `pinpoint-defense-win01` VM, 3072 MiB/2 CPUs/40 GiB dynamic disk, only `pinpoint-defense` Internal Network; no default gateway, NAT or bridge. Use unattended private password files and Guest Additions; verify guest OS and take a powered-off `windows-installed` snapshot. Record sanitized installation observations under `docs/test-runs/` and private ownership/evidence under `~/.local/share/pinpoint-defense/windows-home/`. Activation/license acceptance stays pending.
+   - [ ] 7b: Install/configure NCPA with private token and prove agent locally; later prove appliance-to-Windows manual registration, metric and all-fifteen acceptance on the completed network. A paid license or suitable evaluation must satisfy the final license requirement; Home testing installation alone cannot tick FC5.
 8. [ ] Rehearse twice, record sanitized `docs/test-runs/` evidence; update `demo/README.md`, lab manuals and owning specs/status; run relevant tooling/backend checks and `scripts/verify.sh all`; finish PR after all acceptance evidence exists.
 
 ## Round log
@@ -63,7 +65,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 - Last check run (exact command): `scripts/verify.sh docs`
 - Result (first failing lines, or "green"): green: verify: docs OK. Serial host ownership preflight and bounded unattended detection also passed. Windows10_64, x64/en-US, image 1 Home, image 4 Education, image 6 Pro and other variants; unattended installation supported. No Windows VM created/started.
 - Hypothesis: Serial VBox calls avoid the transient duplicate-controller startup observed during concurrent reads. Current sample: 8291 MiB available; Windows-only installation may fit, but the combined lab budget remains pending. New presenter command-path implementation still requires the recorded workflow review.
-- Next action (one specific step, not "continue"): Obtain the owner's Windows edition choice (Home, Pro or Education matching their license), then prepare that exact isolated Windows installation with fresh ownership/capacity checks and private password-file handling.
+- Next action (one specific step, not "continue"): Perform step 7a's isolated Windows 10 Home preparation using private unattended credentials, a canonical host claim and fresh VM ownership/capacity checks.
 
 ## Decisions and notes
 
@@ -79,3 +81,5 @@ Requirement coverage (every requirement the issue states, and the check that pro
 - Re-read issue finish conditions on 2026-10-27: still open, no comments, all eight gates unchanged. No product defect observed in this read-only preparation.
 - Draft PR: https://github.com/esfen14/Pinpoint/pull/276. User asked whether the agent can install Windows; agent can automate VM setup/install/NCPA subject to successful ownership/capacity checks and any interactive Windows steps. The attempted unattended detection hung; only that agent-owned query process was terminated, not VBoxSVC or a VM process.
 - Installation inquiry recovery succeeded without killing any VBoxSVC or VM or removing IPC/locks. VBox unattended supports password-file/stdin inputs; do not pass passwords or product keys on the CLI. Edition question is pending; no product key requested in chat. The initial media-unavailable blocker is superseded, and the transient ownership failure is resolved.
+- Owner subsequently clarified that no purchased license is available, then answered the edition question with Windows 10 Home. Prepare the selected edition for testing with activation pending; do not claim the issue's licensed-Windows gate passed or use activation bypasses. A local Windows Server 2022 evaluation ISO was also detected and offered as an alternative (Microsoft documents 180 days and online activation within 10 days), but the owner's latest edition selection is Home.
+- Plan order revised for the user's direct Windows installation request: perform isolated step 7a before the remaining shared-lab controller work. This creates no presenter controller or guest command-dispatch implementation; the earlier sensitive-code review remains pending for step 2. Existing VMs and appliance are not altered. Exact new VM name/UUID and private owner marker gate every setup action; all values and operations are fixed, argv is an argument list, passwords enter via private files, and unattended stdout remains private because it may include secrets.
