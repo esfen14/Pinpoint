@@ -61,6 +61,14 @@ The Settings page is generally available to logged-in users. Its Security,
 System, Network Discovery, Plugins and Email tabs require `settings.security`,
 `settings.system`, `settings.discovery`, `settings.plugins` and `settings.email`, respectively. General's `notifications` toggle only shows/hides the header bell; it does not stop email or change Nagios' `enable_notifications`. The System tab's `NotificationPolicySettings` card is visible only with `settings.system` and reads/writes `/api/system/notification-policy` through `lib/notificationPolicyApi.ts` and `types/notificationPolicy.ts`. Quiet-hour weekdays and 24-hour times are interpreted in Nagios server local time. The card validates time format, order, overlap, options and interval; 409 offers a reload and 400/422 display the server's message.
 
+Within the Network Discovery tab, `system.discover` separately gates the Run
+Network Discovery controls. Scan device sends one IPv4 `target` through
+`useNetworkRescan`; Rescan Network omits the target and uses the saved networks.
+The form explains that a one-time scan does not change saved or scheduled targets,
+rejects malformed addresses before submission, and shows progress, completion,
+stop and error feedback from the existing discovery status route. The server
+performs authoritative target validation.
+
 `AdminLayout` replaces the whole shell with a blocking window while the account
 is flagged: `FirstRunSetup` when `needsSetup` (bootstrap administrator: current
 password, new email, new password with confirmation; cannot be skipped, only
