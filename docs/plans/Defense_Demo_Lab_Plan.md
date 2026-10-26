@@ -91,6 +91,13 @@ Windows present there are fourteen Linux containers plus one Windows VM.
 Before Windows, a fifteenth Linux `win-slot` may use .3, explicitly labelled as
 a stand-in; it has no fake Windows/NCPA claim and cannot pass final acceptance.
 
+The owner subsequently identified local installation media named
+`Win10_22H2_English_x64v1.iso`. Read-only VirtualBox detection reports
+Windows10_64, x64/en-US and unattended installation support, including Home,
+Education and Pro images. The owner's licensed edition choice is pending;
+no Windows VM has been installed or verified. Installation media availability
+does not establish the final Windows acceptance result.
+
 Only dnsmasq in `dhcp01` allocates on the demo segment. Docker must assign no
 address on any client's demo interface. Keep management on separate guest-only
 Docker interfaces; prevent forwarding between management/NAT and the demo NIC.

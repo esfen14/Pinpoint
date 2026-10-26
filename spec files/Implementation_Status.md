@@ -13,8 +13,10 @@ recovery procedure and command injection/secret-exposure review boundaries.
 The [read-only inventory report](../docs/test-runs/2026-10-27-issue-274-defense-inventory/REPORT.md)
 does not establish a delivered lab: the new controller, fifteen-device catalog,
 five-client DHCP/address-mode story and two rehearsals remain unimplemented and
-unverified. Command-path implementation awaits the work-issue person review;
-the owner confirmed the licensed Windows image is unavailable. Existing lab
+unverified. Command-path implementation awaits the work-issue person review.
+The owner identified a local Windows 10 x64 ISO; VirtualBox detects unattended
+installation support. Licensed edition selection, installation and Windows NCPA
+acceptance remain pending. Existing lab
 commands and approved scan ranges remain as documented below.
 
 ## Isolated DHCP acceptance lab (#187)
