@@ -139,6 +139,10 @@ preparation for one appliance with container targets inside a dedicated VM and
 an owner-supplied Windows VM. Its proposed network/controller is not yet a
 supported test environment or an approved additional scan scope. The existing
 VM ownership and command-path review rules apply before implementation.
+Its separate [Windows preparation](../demo/WINDOWS_READY.md) now has an installed
+Windows 10 Home test guest and locally verified NCPA agent, powered off at an
+owned snapshot. Activation, appliance registration and complete defense-lab
+acceptance remain pending; this adds no general QA scan authorization.
 
 The [DHCP lab design](../docs/plans/DHCP_Lab_Extension_Proposal.md) records the
 Docker feasibility decision and the separate lab's safety contract. The ordinary

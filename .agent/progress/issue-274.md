@@ -1,7 +1,7 @@
 # Issue #274: One isolated 15-device defense demo lab
 
 Branch: `issue-274-defense-demo`
-Status: in-progress
+Status: blocked
 
 ## Finish condition
 
@@ -46,8 +46,10 @@ Requirement coverage (every requirement the issue states, and the check that pro
 5. [ ] Test/implement portable allowlisted listener and host controls in `demo/`; migrate and adapt the three Documents files; verify shortcut and interruption/restore paths.
 6. [ ] Test/implement five-client DHCP and transactional address-mode controls in `demo/`; run real identity, history, collision, outage and rollback matrix; keep `lab/dhcp/` independent.
 7. [ ] With owner-supplied Windows, prepare NCPA privately, snapshot/register/probe metrics, replace win-slot and repeat all-15 validation; document Windows instructions in `demo/`.
-   - [ ] 7a (current user-requested preparation): Install Windows 10 Home image 1 in a new exact-owned `pinpoint-defense-win01` VM, 3072 MiB/2 CPUs/40 GiB dynamic disk, only `pinpoint-defense` Internal Network; no default gateway, NAT or bridge. Use unattended private password files and Guest Additions; verify guest OS and take a powered-off `windows-installed` snapshot. Record sanitized installation observations under `docs/test-runs/` and private ownership/evidence under `~/.local/share/pinpoint-defense/windows-home/`. Activation/license acceptance stays pending.
-   - [ ] 7b: Install/configure NCPA with private token and prove agent locally; later prove appliance-to-Windows manual registration, metric and all-fifteen acceptance on the completed network. A paid license or suitable evaluation must satisfy the final license requirement; Home testing installation alone cannot tick FC5.
+   - [x] 7a (user-requested preparation): Installed Windows 10 Home image 1 in exact-owned `pinpoint-defense-win01`, 3072 MiB/2 CPUs/40 GiB dynamic disk, internal NIC only, `10.77.1.3/27`, no default gateway. Actual guest OS/Guest Additions verified; powered-off `windows-installed` snapshot retained. Sanitized report and `demo/WINDOWS_READY.md` written; private credentials/evidence outside Git. Activation/license acceptance stays pending.
+   - [ ] 7b: Local NCPA install/API/snapshot complete (below); still prove appliance-to-Windows manual registration, metric and all-fifteen acceptance on the completed network. A paid license or suitable evaluation must satisfy the final license requirement; Home testing installation alone cannot tick FC5.
+     - [x] NCPA 3.5.0 signed official installer, private 32-hex token/config, local CPU/memory/disk/process proof, firewall scoped to appliance, fresh-boot service before desktop sign-in, final powered-off `ncpa-ready` snapshot without setup media.
+     - [ ] Actual Pinpoint registration and Windows metric, licensed-Windows gate, full final device count and rehearsals.
 8. [ ] Rehearse twice, record sanitized `docs/test-runs/` evidence; update `demo/README.md`, lab manuals and owning specs/status; run relevant tooling/backend checks and `scripts/verify.sh all`; finish PR after all acceptance evidence exists.
 
 ## Round log
@@ -61,13 +63,14 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | Installation notes | Corrected current plan/status for available Windows installation media; retained historical report unchanged | scripts/verify.sh docs | green: verify: docs OK; edition choice still pending; no VM created or started |
 | Home preparation | Owner chose Windows 10 Home; created only exact-owned VM 5fb21051-8a4f-45b0-a7f0-de3cedceab83 with private unattended credentials and internal-only NIC, then attempted first boot | VBoxManage startvm 5fb21051-8a4f-45b0-a7f0-de3cedceab83 --type headless | Failed: VERR_SVM_IN_USE; kvm_amd loaded with enable_virt_at_load=Y. VM remains powered off. sudo -n fuser -v /dev/kvm requires an owner password, which was not requested or supplied |
 | Home resume | Owner confirmed temporary KVM unload; module inspection and ownership preflight passed; resumed the same private VM under the canonical claim | python3 /tmp/issue274-resume-home.py | Running: Windows installation started successfully; same UUID/MAC/disk/credentials, internal-only NIC |
+| Windows local preparation | Finished Home 19045, Guest Additions, isolated address/firewall, signed NCPA 3.5.0 and real local metrics/process probe; fresh-boot verified, temporary admin disabled, media removed, powered-off baseline retained | Actual guest CIM/API and snapshot metadata; scripts/verify.sh docs | green: local Windows/NCPA checks and verify: docs OK. No Pinpoint registration or licensed-Windows acceptance |
 
 ## State for the next session
 
-- Last check run (exact command): `python3 /tmp/issue274-resume-home.py`
-- Result (first failing lines, or "green"): Running installation successfully after owner KVM unload; private state status=installing. The resumer holds the canonical host claim and prints only bounded nonsecret progress. No other VM was started.
-- Hypothesis: KVM was the first-boot blocker; it is now absent. Monitor Windows Setup/Guest Additions, then verify guest OS and isolated addressing, shut down and snapshot. New controller implementation and final license/product acceptance remain pending.
-- Next action (one specific step, not "continue"): Monitor the running private resumer and its `install-latest.png` screenshot until Guest Additions permits actual guest OS verification; preserve existing identity and private credentials on failure.
+- Last check run (exact command): `scripts/verify.sh docs`
+- Result (first failing lines, or "green"): green: `verify: docs OK` for the Windows guide/report/status updates; local Windows/NCPA preparation verified and powered off. No live helper running. Full issue finish conditions remain incomplete. Full/backend/frontend local checks not run for this documentation-only change.
+- Hypothesis: The installed Windows test device is ready for future appliance integration, with activation still pending. Shared controller implementation remains behind the explicit person review. The owner was asked to restore KVM locally now that all VMs are off.
+- Next action (one specific step, not "continue"): Obtain the person's review/approval of the command execution and secret exposure table in `docs/plans/Defense_Demo_Lab_Plan.md` before implementing the manifest/controller in step 2; retain the completed Windows preparation.
 
 ## Decisions and notes
 
@@ -91,3 +94,9 @@ Requirement coverage (every requirement the issue states, and the check that pro
 - Current private one-time setup helper is `/tmp/issue274-install-home.py`. Its create path intentionally refuses existing state; a resumer must reuse/verify the existing state and start at the boot/verification phase, not rerun creation. Preserve state/VDI/credentials while the owner resolves host KVM. This is a host prerequisite, not an observed Pinpoint product defect.
 - Owner replied "done" to the local KVM-unload request. Fresh inspection found kvm/kvm_amd absent, ownership preflight passed, prepared VM was still powered off, and the resumer verified 7603 MiB available before start. Current VM start succeeded at 2026-10-27 07:11:56 Asia/Manila. The original failure remains recorded; no root password was received and no agent kernel-module mutation occurred.
 - Private resumer: `/tmp/issue274-resume-home.py`, importing the fixed boot/verification phase in `~/.local/share/pinpoint-defense/windows-home/resume-phase.py`. It validates state ownership/modes, exact UUID, VM owner marker, NIC boundary and RAM, then reuses the prepared disk/answer file. Do not run another VM/control command concurrently while its canonical claim is held.
+- Windows preparation finished on 2026-10-27: actual guest caption Microsoft Windows 10 Home, build 19045, WIN01. Local NCPA CPU/memory values, `disk/logical/C:|/used_percent` (45.2%) and processes `name=ncpa.exe` (OK, 3) observed. A fresh boot before desktop sign-in confirmed NCPA Automatic service Running. One early disk probe parsed the API wrapper incorrectly; the corrected real-node probe passed. This was a one-time helper diagnostic, not a product defect.
+- Guest tools required a normal Windows restart. Fixed PowerShell scripts needed normal UAC elevation for setup; a temporary built-in Administrator setup context was enabled using private file credentials and then disabled. Final observation confirms Administrator disabled; UAC remains enabled and automatic logon/password removed. No credential/token was put in a process argument. Token-auth API probes used POST bodies; agent log scan found zero token matches.
+- Final VM state powered off, setup DVD/auxiliary media detached, boot order disk only. Final `ncpa-ready` snapshot UUID `24eb5fdd-5f6c-4fdb-bfb8-a4b19e08523e`; intermediate `windows-installed` and `ncpa-pre-media-cleanup` retained. No restoration trial or product registration was run. All eight full finish-condition items remain unticked.
+- Private state/evidence/helper copies persist under `~/.local/share/pinpoint-defense/windows-home/`; report is `docs/test-runs/2026-10-27-issue-274-windows-home-install/REPORT.md`, guide is `demo/WINDOWS_READY.md`. No helper is still running. Never rerun the creation helper or reset/recreate this VM to resume the issue.
+- Final host sample: 9255 MiB available RAM, 1753 MiB swap used, 70348 MiB free disk; all VirtualBox VMs off. User-local `sudo modprobe kvm_amd` requested to restore the temporary host module change; confirmation pending. Combined all-target capacity/absence of sustained swap thrash still unproven.
+- Owner replied "done" to KVM restoration, but the subsequent read-only check still found kvm/kvm_amd absent from lsmod and `/sys/module/`. Asked whether the command reported an error and supplied the explicit `/usr/sbin/modprobe` path. Restoration is not yet observed; no agent root command or permanent module setting change was made. Windows is installed and all VMs remain off independently of that host follow-up.

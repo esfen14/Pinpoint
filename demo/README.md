@@ -8,6 +8,10 @@ VM and point it at the lab network (section 3).
 For the installed appliance and presenter walkthrough on this laptop, see
 [`DEMO_READY.md`](DEMO_READY.md).
 
+For issue #274's separately prepared Windows test device, see
+[`WINDOWS_READY.md`](WINDOWS_READY.md). Its local agent preparation is complete;
+the new fifteen-device defense controller and acceptance are still pending.
+
 Everything is run by hand with [`demo_lab.py`](demo_lab.py) (Python 3.10+,
 `VBoxManage` and `ssh`; no pip packages). Commands that create or delete things
 print a plan and change nothing until you add `--apply`.

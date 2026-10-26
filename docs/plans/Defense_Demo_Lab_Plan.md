@@ -6,6 +6,9 @@ Read-only inventory: [2026-10-27 report](../test-runs/2026-10-27-issue-274-defen
 This plan is not a delivered lab or a passed architecture spike. No new scan
 range is authorized by this document. Existing supported commands remain in the
 [VM lab plan](VM_Lab_Plan.md) and [demo manual](../../demo/README.md).
+The user-requested [Windows preparation](../../demo/WINDOWS_READY.md) is installed
+and locally agent-verified; the shared controller/target-host and product
+acceptance are still pending.
 
 ## Transition and recovery
 
@@ -92,11 +95,13 @@ Before Windows, a fifteenth Linux `win-slot` may use .3, explicitly labelled as
 a stand-in; it has no fake Windows/NCPA claim and cannot pass final acceptance.
 
 The owner subsequently identified local installation media named
-`Win10_22H2_English_x64v1.iso`. Read-only VirtualBox detection reports
-Windows10_64, x64/en-US and unattended installation support, including Home,
-Education and Pro images. The owner's licensed edition choice is pending;
-no Windows VM has been installed or verified. Installation media availability
-does not establish the final Windows acceptance result.
+`Win10_22H2_English_x64v1.iso`, stated no purchased license was available and
+selected Home for testing. A new exact-owned `pinpoint-defense-win01` is now
+installed with Home build 19045 and NCPA 3.5.0; its local API and powered-off
+baseline are recorded in the [Windows preparation report](../test-runs/2026-10-27-issue-274-windows-home-install/REPORT.md).
+Activation/licensed-Windows acceptance, actual appliance registration and the
+all-fifteen count remain pending. This preparation does not pass the architecture
+spike or authorize a new product scan scope.
 
 Only dnsmasq in `dhcp01` allocates on the demo segment. Docker must assign no
 address on any client's demo interface. Keep management on separate guest-only
