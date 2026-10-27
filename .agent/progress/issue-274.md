@@ -1,7 +1,7 @@
 # Issue #274: One isolated 15-device defense demo lab
 
 Branch: `issue-274-defense-demo`
-Status: in-progress
+Status: blocked
 
 ## Finish condition
 
@@ -162,3 +162,5 @@ Requirement coverage (every requirement the issue states, and the check that pro
 - Hardening round 3: current stock-only maintenance source bundle hash is `f37f4e117bc27308b55799b4771699811ae21636687b18af07b318ab1a0d669b`; apply script remains `e05d2e338a2198dd6b5f63f71e8e20b31f7ded693ad8586a556abd4addc89847`, under `/tmp/issue274-maintenance-sis6elkk/`. The new guest host-status is read-only/fixed safety flags and source readiness; verify-restart permits only the Docker unit and refuses all container objects first. New host maintenance API validates actual snapshot ancestry instead of guessing its child disk path. Preview passed and KVM is the only pending live start prerequisite. No secret-bearing payload is served; owner marker is matched by hash. Log: `/tmp/issue274-hardening-r3-prep-docs.log`.
 
 - Hardening round 3 live completion: after the owner released KVM, only the exact owned 2 GiB target VM was started from the stock ISO. The mounted installed root accepted the hash-verified public bundle; its private updater reported success while retaining original disk, identity and private settings. The loopback-only source server was stopped after transfer. A normal disk boot then passed strict pinned-host-key SSH, safe host status (both forwarding sysctls zero, unnumbered parent, restricted management, pinned image ready), fixed Docker restart proof with no containers present, and a separate graceful VM reboot with the same strict SSH/status proof. The target VM is powered off and its ISO detached; no target container, DHCP allocator/client, appliance scan or physical/VPN-facing network action was started. Step 2c is now substantially prepared but remains open pending the actual two-target isolation spike and its evidence. KVM must be restored locally before later VirtualBox work.
+
+- Resumed check: all VirtualBox VMs remain powered off, but `lsmod` has no `kvm` entry and `/dev/kvm` is absent. The next authorized action is the real two-target VirtualBox DHCP/isolation spike, which cannot start until the owner restores KVM locally with `sudo /usr/sbin/modprobe kvm_amd`. No VM, Docker container, DHCP allocator/client, appliance scan, physical/VPN-facing network action, or host-kernel change was made by the agent. Status is blocked only on this owner-local prerequisite; exact next action is to recheck `kvm_amd`/`kvm` and then run the guarded spike preflight.
