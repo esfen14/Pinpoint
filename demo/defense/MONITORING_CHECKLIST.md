@@ -1,9 +1,12 @@
 # Pinpoint monitoring demo checklist
 
-Status: **not yet verified on the connected appliance**. Connect the appliance
-and complete the Windows registration using [presenter setup](PRESENTER_SETUP.md)
-before claiming that the full demonstration works. The separate network
-connectivity test remains ping-only.
+Status: **partially verified on the connected appliance**. The owner reports
+Windows NCPA checks OK and observed web03 HTTP move from OK to CRITICAL and
+back to OK when its service was stopped and restored. The owner also reports all fifteen demo addresses visible and Windows
+memory 47.5944%, CPU 0.0853%, and disk 45.6%. Individual UI rows,
+alert-notification timing and full rehearsals still need evidence. See [presenter setup](PRESENTER_SETUP.md) and the
+[web test report](../../docs/test-runs/2026-10-27-issue-274-pinpoint-web-alert/REPORT.md).
+The separate network connectivity test remains ping-only.
 
 ## Prepare
 
@@ -29,7 +32,9 @@ connectivity test remains ping-only.
 
 1. With `web03` at `10.77.1.4`, confirm its HTTP check is healthy in Pinpoint.
 2. On the laptop, run `./demo/demo presenter break web03 http`. The HTTP and
-   HTTPS services both stop because they share nginx.
+   HTTPS services both stop because they share nginx. The host remains running,
+   so its `host_check/ping` can stay OK; inspect the HTTP service check on
+   port 80 for the failure.
 3. Observe the check and alert in Pinpoint. Record the time to a confirmed
    failure; checks and retries may delay the visible alert.
 4. Run `./demo/demo presenter fix web03 http`. Observe the check recover and

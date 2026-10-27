@@ -121,11 +121,13 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 | Appliance IP after reboot | Owner confirmed setting cloud-init network-disable and rebooting; shared an Average Resource screenshot. | Windows ping to appliance .1; owner confirmation and screenshot | Ping passes after reported reboot; guest config not independently inspected. Screenshot shows memory 47.7%, CPU 0%, disk 45.6%, but does not identify the contributing device. |
 
+| Pinpoint web failure and recovery | Owner reported web03 HTTP initially OK and Windows NCPA checks all OK; faulted and restored web03. | Presenter break/fix, systemd user restoration timer, owner-observed Pinpoint check | First attempt observed host ping (expected to remain up) and automatic restore. Second attempt: owner reported HTTP CRITICAL while stopped and OK after manual restoration; backup timer cancelled. Notification display and exact timing not observed. |
+
 ## State for the next session
 
-- Last check run: Windows ping to appliance `10.77.1.1` passed after the owner confirmed creating cloud-init network-disable and rebooting. Owner supplied a Pinpoint Average Resource screenshot showing memory 47.7%, CPU 0%, disk 45.6%; device attribution is unconfirmed. See `docs/test-runs/2026-10-27-issue-274-appliance-ip-persistence/REPORT.md`; `scripts/verify.sh docs` passed.
-- Current live state: Windows, 14 host-pilot containers and Pinpoint-Final run on `vboxnet1`. Owner reports Windows NCPA registration and cloud-init setting plus reboot. Owner confirmation and post-reboot ping support appliance reachability; guest configuration was not independently inspected. Screenshot shows an aggregate resource card, not proof of a Windows-specific metric. Host laptop reboot, full inventory and actual Pinpoint alert/recovery checks remain open.
-- Next action (one specific step, not "continue"): Determine whether the shared resource card is Windows-specific and obtain a Windows metric observation; then conduct the Pinpoint service failure/recovery demonstration with the owner observing the UI.
+- Last check run: owner reported web03 HTTP check OK, CRITICAL after `demo/demo presenter break web03 http`, and OK after `presenter fix web03 http`; local restore verified and the backup timer cancelled. Owner also reported Windows NCPA checks all OK, all fifteen demo addresses visible, and Windows memory 47.5944%, CPU 0.0853%, disk 45.6%. See `docs/test-runs/2026-10-27-issue-274-pinpoint-web-alert/REPORT.md`. `scripts/verify.sh docs` passed.
+- Current live state: Windows, 14 Linux host-pilot containers and Pinpoint-Final run on `vboxnet1`. The original demo service was restored after both fault attempts. The owner reported Windows NCPA checks OK with memory 47.5944%, CPU 0.0853%, disk 45.6%, all fifteen demo addresses visible, and web03 HTTP CRITICAL then OK; individual UI rows, notification display and exact timing were not independently observed. Docker daemon restart recovery and appliance post-reboot ping were observed; laptop reboot, DHCP address transitions, full rehearsals and remaining acceptance are open.
+- Next action (one specific step, not "continue"): Continue the remaining DHCP address transitions and full rehearsals, and retain owner-reported inventory and Windows metric as such; use only ping for connectivity checks.
 
 ## Decisions and notes
 

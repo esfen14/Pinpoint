@@ -55,6 +55,7 @@ table while you test, not afterward.
 
 | Run | Kind | Commit | Result | Report |
 |---|---|---|---|---|
+| [2026-10-27 issue-274 Pinpoint web alert](2026-10-27-issue-274-pinpoint-web-alert/REPORT.md) | Owner-observed web service fault and restoration | `47698bc5` | Partial: owner reported all demo addresses, Windows metric and HTTP CRITICAL then OK; notification timing pending | [REPORT.md](2026-10-27-issue-274-pinpoint-web-alert/REPORT.md) |
 | [2026-10-27 issue-274 appliance IP persistence](2026-10-27-issue-274-appliance-ip-persistence/REPORT.md) | Owner-confirmed guest reboot and ping | `da59d88b` | Partial: owner confirmed cloud-init setting and reboot; appliance answered ping; Windows-specific metric pending | [REPORT.md](2026-10-27-issue-274-appliance-ip-persistence/REPORT.md) |
 | [2026-10-27 issue-274 Windows registration follow-up](2026-10-27-issue-274-windows-registration-followup/REPORT.md) | Owner-reported Windows registration and ping | `d4f69043` | Partial: owner reports registration; appliance and web ping passed; actual metric and IP persistence not confirmed | [REPORT.md](2026-10-27-issue-274-windows-registration-followup/REPORT.md) |
 | [2026-10-27 issue-274 Docker daemon recovery](2026-10-27-issue-274-docker-daemon-recovery/REPORT.md) | Owner-triggered Docker restart and ping-only recovery | `4ce0dedf` | Partial: 14 targets and five leases restored; Windows pinged all targets; host reboot and appliance integration pending | [REPORT.md](2026-10-27-issue-274-docker-daemon-recovery/REPORT.md) |
