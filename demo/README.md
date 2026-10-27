@@ -11,6 +11,11 @@ For the installed appliance and presenter walkthrough on this laptop, see
 For issue #274's separately prepared Windows test device, see
 [`WINDOWS_READY.md`](WINDOWS_READY.md). Its local agent preparation is complete;
 the new fifteen-device defense controller and acceptance are still pending.
+The new entry point currently provides two read-only commands from the repository
+root: `demo/demo manifest` shows intended devices/listeners; `demo/demo preflight`
+checks preparation, ownership, subnet/VPN conflicts and startup resources.
+Neither starts containers or implies fifteen devices have been discovered.
+Add `--json` to either command for structured output.
 
 Everything is run by hand with [`demo_lab.py`](demo_lab.py) (Python 3.10+,
 `VBoxManage` and `ssh`; no pip packages). Commands that create or delete things

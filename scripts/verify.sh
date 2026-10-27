@@ -55,6 +55,8 @@ docs() {
   python3 -I "$root/scripts/test_vmlab_preflight.py"
   echo "==> docs: VM administrator setup compatibility and saved login validation"
   python3 -I "$root/scripts/test_vmlab_setup_admin.py"
+  echo "==> docs: isolated defense catalog, input and host preflight contracts (no live lab)"
+  python3 -I "$root/demo/defense/test_defense.py"
   echo "==> docs: agent progress files are well formed"
   python3 -I "$root/scripts/check_agent_progress.py"
   echo "==> docs: fix-found workflow contract"

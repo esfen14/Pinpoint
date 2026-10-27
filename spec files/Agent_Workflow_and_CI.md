@@ -139,6 +139,13 @@ preparation for one appliance with container targets inside a dedicated VM and
 an owner-supplied Windows VM. Its proposed network/controller is not yet a
 supported test environment or an approved additional scan scope. The existing
 VM ownership and command-path review rules apply before implementation.
+The versioned `demo/defense/manifest.json` lists the intended fifteen targets;
+`demo/demo manifest` reports expectations with no live verification claim.
+`demo/demo preflight` is read-only and checks host/Docker/configured VPN ranges,
+private VM pins, the VM/process/NAT boundary, available memory/disk planning
+and KVM availability. It refuses incomplete preparation. No lifecycle command
+or new scan authorization is delivered by these initial read-only commands.
+Offline defense input/ownership/resource contracts run in the docs gate.
 Its separate [Windows preparation](../demo/WINDOWS_READY.md) now has an installed
 Windows 10 Home test guest and locally verified NCPA agent, powered off at an
 owned snapshot. Activation, appliance registration and complete defense-lab

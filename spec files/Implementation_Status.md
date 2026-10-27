@@ -13,7 +13,12 @@ recovery procedure and command injection/secret-exposure review boundaries.
 The [read-only inventory report](../docs/test-runs/2026-10-27-issue-274-defense-inventory/REPORT.md)
 does not establish a delivered lab: the new controller, fifteen-device catalog,
 five-client DHCP/address-mode story and two rehearsals remain unimplemented and
-unverified. Command-path implementation awaits the work-issue person review.
+unverified. After the owner's continuation, the initial `demo/demo manifest`
+and read-only `preflight` commands validate the versioned fifteen-device catalog,
+reserved inputs, private state, subnet/VPN overlap, VM ownership/NAT sockets and
+resource planning. Negative contracts run offline in the docs gate. Lifecycle,
+guest networking and the architecture spike remain pending; no new product scan
+scope is authorized by this scaffolding.
 The owner selected Windows 10 Home for testing without a purchased license.
 A [prepared Windows device](../demo/WINDOWS_READY.md) now has build 19045 and
 NCPA 3.5.0, with observed local CPU/memory metrics, the Windows `C:|` disk node,
