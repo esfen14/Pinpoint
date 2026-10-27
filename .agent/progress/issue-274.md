@@ -1,7 +1,7 @@
 # Issue #274: One isolated 15-device defense demo lab
 
 Branch: `issue-274-defense-demo`
-Status: blocked
+Status: in-progress
 
 ## Finish condition
 
@@ -96,13 +96,14 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | Hardening round 2 | Test first: image/source fingerprint, manual parent policy, inherited immutable image labels, stopped-container and entrypoint/mount refusal, exact private Compose and closed node dispatch. Added limited two-container prepare/inspect/node/stop controls; source changes rebuild only with no containers and preserve persistent data | python3 -I demo/defense/test_spike.py; test_hardening.py; test_provision.py; scripts/verify.sh docs | 68 defense tests and docs gate green. No new live boot or DHCP; guarded stock-ISO maintenance code prepared for exact existing VM, not executed |
 
 | Hardening round 3 | Test first: added stock-only maintenance boot/disk preservation, owned snapshot ancestry, and a fixed no-container Docker restart probe. Actual preview rejected legitimate snapshot child until ancestry verification was implemented, then passed; no VM mutation. Prepared exact public maintenance source and code hashes | test_provision.py; test_spike.py; provision.py --maintenance-boot; scripts/verify.sh docs | 71 offline defense tests and docs gate green; preview 10138 MiB RAM / 64608 MiB free / 62208 MiB disk budget. Owner now replied done to KVM release; fresh module check still required before apply |
+| Resumed live refresh and ping-only retest | After owner freed disk, maintenance preview passed (60,930/57,911 MiB); applied current guest source through verified stock-ISO repair, safely reset/rebuilt the catalog, rebooted and verified forwarding/restart gates, restored 14 targets, baseline daemons and five DHCP leases. Windows and Linux peer-ping were the only stage-3 network checks | `provision.py --maintenance-boot`; strict pinned SSH; guest `reset-lab`, `lab-up`, baseline/DHCP controls; Windows PING.EXE and fixed peer-ping | Stage 2 setup passes (14 attached, five leases .20–.24). Ping gate still fails: Windows replied 1/15 (self only); Linux peer-ping 0/14 (13 no reply, dns01 helper refused). Demo preflight still lacks controller pins. Both demo VMs remain running; KVM is unloaded. See `docs/test-runs/2026-10-27-issue-274-ping-refresh/REPORT.md` |
 
 ## State for the next session
 
-- Last check run (exact command): `python3 -I scripts/check_agent_progress.py && git diff --check && VBoxManage list runningvms`
-- Result (first failing lines, or "green"): green: progress file valid, whitespace clean, no VirtualBox VMs running. The maintenance preview then refused at the existing disk reserve: 57,801 MiB free, 57,911 MiB required. No ISO or guest disk changed.
-- Current live state: both exact demo VMs (`pinpoint-defense-targets`, UUID `821464dc-e7ce-4067-8eec-5cb1c61d3632`; `pinpoint-defense-win01`, UUID `5fb21051-8a4f-45b0-a7f0-de3cedceab83`) are powered off cleanly. All fourteen Linux catalog containers, baseline services and five DHCP clients were previously running; the latest Windows-to-target ping result remains 0/14. No appliance scan has run. VirtualBox 7.2 docs indicate Internal Networking is a full Ethernet switch; `nicpromisc` is documented as bridged-only.
-- Next action (one specific step, not "continue"): After the owner frees at least 256 MiB on the host filesystem, rerun the guarded maintenance preview. Current preview needs 57,911 MiB and observed 57,801 MiB. If green, apply the source refresh, invoke `reset-lab` to preserve target identity/data volumes and DHCP lease files, then use ping only in both directions.
+- Last check run (exact command): `scripts/check_agent_progress.py && git diff --check && VBoxManage list runningvms`
+- Result (first failing lines, or "green"): green: progress/schema check passed; diff whitespace clean; `scripts/verify.sh docs` completed with `verify: docs OK`. VBox inventory last showed only the exact target-host and Windows VMs running.
+- Current live state: target-host `821464dc-e7ce-4067-8eec-5cb1c61d3632` and Windows `5fb21051-8a4f-45b0-a7f0-de3cedceab83` are running. The refreshed target image is current; fourteen Linux targets are attached, baseline services started and five DHCP leases are .20–.24. Latest corrected stage-3 pass used only ping: Windows 1/15 (self only); fixed Linux peer-ping 0/14 (13 no reply, `dns01` helper refused before ping). No appliance scan or service probe ran. The preflight command remains blocked because controller `lab.json` pins are absent; KVM is unloaded while VirtualBox is running. Windows is a Home test install with activation/license acceptance pending.
+- Next action (one specific step, not "continue"): Review and test an alternative bridge/veth L2 topology offline, because the refreshed macvlan path still fails the ping gate. Keep the current demo VMs available and repeat network acceptance with ping only after the topology changes; wire up guarded controller preparation before claiming the presenter preflight is ready.
 
 ## Decisions and notes
 

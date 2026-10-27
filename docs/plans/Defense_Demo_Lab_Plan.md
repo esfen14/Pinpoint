@@ -12,18 +12,21 @@ acceptance are still pending.
 
 ## Current live checkpoint (2026-10-27)
 
-The exact target-host passed its forwarding and ownership guard. All fourteen
-catalog Linux containers were attached with their pinned MACs; baseline
-daemons and five reserved DHCP clients were started through the fixed node
-controls. The initial two-target DHCP exchange also succeeded. For the
-requested third-stage connectivity check, Windows `ping` was the only network
-test run: Windows replied to its own `.3` address, while all fourteen Linux
-target addresses timed out. Changing the target VM's internal NIC from
-`allow-vms` to `allow-all` did not change the ping result, so the NIC was
-restored to `allow-vms`. No appliance scan, service probe, or product discovery
-was run. The container lifecycle is ready for another bounded ping-only attempt
-after the VirtualBox/macvlan reachability path is resolved; this does not pass
-the appliance or fifteen-device acceptance gate.
+The target-host passed its forwarding and ownership guard. After the guarded
+source refresh and reset, all fourteen catalog Linux containers were attached
+with their pinned MACs; baseline daemons were started and five reserved DHCP
+clients acquired `.20` through `.24`. The refreshed source passed host safety,
+Docker restart and VM reboot checks with forwarding disabled. In the corrected
+ping-only reachability pass, Windows replied to its own `.3` address but none of
+the fourteen Linux addresses replied. Linux peer-ping returned no reply for
+thirteen targets; `dns01` was refused by the fixed helper before it sent ping.
+An earlier malformed guest-control invocation was excluded; it passed the
+executable path as a ping destination. No ARP, port/service probe, scan, capture,
+or product discovery ran during stage 3. The result is recorded in the
+[ping-refresh report](../test-runs/2026-10-27-issue-274-ping-refresh/REPORT.md).
+This still does not pass appliance or fifteen-device acceptance. The next
+engineering step is an offline review of a bridge/veth alternative; repeat
+reachability only with ping after any topology change.
 
 ## Ping-only follow-up preparation
 
@@ -38,8 +41,8 @@ and [`VBoxManage` 7.2 reference](https://docs.oracle.com/en/virtualization/virtu
 Added an offline-tested, fixed `peer-ping` request that sends three ICMP
 requests from an addressed Linux container to the Windows address `10.77.1.3`.
 It has no caller-provided destination and reports only a boolean result. The
-currently running pinned guest image predates this request; refresh it through
-the guarded maintenance path before using it. The new `reset-lab` operation
+guarded maintenance path has since refreshed the running image from the current
+source. `reset-lab` was used to
 prevalidates the full catalog and persistent volumes, stops all validated
 containers before removing their objects, and never removes volumes. Preserve
 the fourteen target identity/data volumes and DHCP lease state during that
