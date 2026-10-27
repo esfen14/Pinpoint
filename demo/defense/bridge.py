@@ -4,6 +4,29 @@ import re
 from .catalog import load_catalog
 
 
+def validate_veth_peer(host, guest, owner, target):
+    """Compare independently observed host and container veth peer identities.
+
+    The caller must separately pin the container PID and process start time
+    around both observations; link indices alone do not provide that proof.
+    """
+    if not isinstance(owner, str) or not re.fullmatch(r'[a-f0-9]{48}', owner):
+        raise ValueError('Invalid owner')
+    if not isinstance(target, str):
+        raise ValueError('Invalid target')
+    device = load_catalog().target(target)
+    if device.kind != 'linux' or not isinstance(host, dict) or not isinstance(guest, dict):
+        raise ValueError('Invalid peer inventory')
+    indices = [host.get('ifindex'), host.get('link_index'), guest.get('ifindex'), guest.get('link_index')]
+    if any(type(index) is not int or index <= 0 for index in indices):
+        raise ValueError('Peer link index missing')
+    if (host.get('kind') != 'veth' or host.get('alias') != f'pinpoint-defense:{owner}:{target}'
+            or guest.get('kind') != 'veth' or guest.get('ifname') != 'eth0'
+            or guest.get('mac') != device.mac
+            or host['ifindex'] != guest['link_index'] or host['link_index'] != guest['ifindex']):
+        raise ValueError('Veth peer identity changed')
+
+
 def validate_bridge_inventory(links, owner, parent_mac, members, forwarding4, forwarding6):
     """Reject an unowned, numbered, incomplete or unexpectedly connected bridge.
 

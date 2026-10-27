@@ -5,7 +5,7 @@ import sys
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from defense.bridge import validate_bridge_inventory
+from defense.bridge import validate_bridge_inventory, validate_veth_peer
 
 OWNER = 'b' * 48
 PARENT = '02:77:01:fe:31:d7'
@@ -48,6 +48,19 @@ class BridgeInventoryTests(unittest.TestCase):
                                                    ({'dhcp01': 'pd-dhcp01;sh'}, 0, 0)]:
             with self.assertRaises(ValueError):
                 validate_bridge_inventory(inventory(), OWNER, PARENT, members, forwarding4, forwarding6)
+
+    def test_peer_must_match_both_link_indices_and_the_catalog_mac(self):
+        host = {'ifindex': 30, 'link_index': 7, 'kind': 'veth', 'alias': 'pinpoint-defense:' + OWNER + ':dhcp01'}
+        guest = {'ifname': 'eth0', 'ifindex': 7, 'link_index': 30, 'kind': 'veth', 'mac': '02:77:01:00:00:01'}
+        validate_veth_peer(host, guest, OWNER, 'dhcp01')
+        for host_change, guest_change in [
+            ({'link_index': 8}, {}), ({'ifindex': 31}, {}),
+            ({'alias': 'foreign'}, {}), ({'kind': 'ether'}, {}),
+            ({}, {'mac': '02:00:00:00:00:01'}), ({}, {'ifname': 'eth1'}),
+            ({}, {'kind': 'macvlan'}), ({'ifindex': True}, {}),
+        ]:
+            with self.assertRaises(ValueError):
+                validate_veth_peer(dict(host, **host_change), dict(guest, **guest_change), OWNER, 'dhcp01')
 
 
 if __name__ == '__main__':
