@@ -12,9 +12,11 @@ the same host-only segment. A persistent presenter checkout is available at
 The owner has already attached `Pinpoint-Final` adapter 2 to `vboxnet1`. Its
 MAC is `08:00:27:fa:10:0a`, and the guest interface is `enp0s8`. The owner
 observed `/etc/netplan/50-cloud-init.yaml` as the only netplan file and
-`sudo netplan get network.ethernets.enp0s8` returned the old address
-`10.77.0.1/28`. The owner reports the address reverted after a subsequent edit and restart;
-cloud-init regeneration versus an unapplied edit is still being checked.
+`sudo netplan get network.ethernets.enp0s8` initially returned the old address
+`10.77.0.1/28`. The owner subsequently changed it to `10.77.1.1/27`, disabled
+cloud-init network configuration, and rebooted the appliance. Windows could
+ping the appliance afterward. The instructions below describe that setup for
+reference; check the current configuration before changing it again.
 
 In the appliance console, back up and edit the existing file:
 
@@ -96,8 +98,9 @@ In Pinpoint, open **NCPA Deployment → Register an agent I installed**, select
 the discovered Windows device, and enter the NCPA token and port `5693`. The
 owner confirmed Windows appeared in this manual registration picker and later
 reported adding it to Pinpoint; it need not appear in the automatic deployment
-eligibility list. Registration status and an actual metric have not yet been
-independently verified. The appliance address answered ping after a VM start,
+eligibility list. The owner later reported Windows NCPA checks as OK, including
+memory, CPU, and disk values; these UI observations were not independently
+inspected. The appliance address answered ping after a VM start,
 and the owner confirmed the cloud-init setting and reboot.
 The picker requires an existing discovered device; if Windows is not listed,
 registration must wait until the appliance is connected and the approved

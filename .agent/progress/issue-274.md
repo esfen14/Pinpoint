@@ -63,13 +63,14 @@ Requirement coverage (every requirement the issue states, and the check that pro
    - [x] 7a (user-requested preparation): Installed Windows 10 Home image 1 in exact-owned `pinpoint-defense-win01`, 3072 MiB/2 CPUs/40 GiB dynamic disk, internal NIC only, `10.77.1.3/27`, no default gateway. Actual guest OS/Guest Additions verified; powered-off `windows-installed` snapshot retained. Sanitized report and `demo/WINDOWS_READY.md` written; private credentials/evidence outside Git. Activation/license acceptance stays pending.
    - [ ] 7b: Local NCPA install/API/snapshot complete (below); still prove appliance-to-Windows manual registration, metric and all-fifteen acceptance on the completed network. A paid license or suitable evaluation must satisfy the final license requirement; Home testing installation alone cannot tick FC5.
      - [x] NCPA 3.5.0 signed official installer, private 32-hex token/config, local CPU/memory/disk/process proof, firewall scoped to appliance, fresh-boot service before desktop sign-in, final powered-off `ncpa-ready` snapshot without setup media.
-     - [ ] Actual Pinpoint registration and Windows metric, licensed-Windows gate, full final device count and rehearsals.
+     - [ ] Complete Windows acceptance: the owner reported Pinpoint registration, Windows metrics and all fifteen addresses; licensed-Windows acceptance and full rehearsals remain pending.
 8. [ ] Rehearse twice, record sanitized `docs/test-runs/` evidence; update `demo/README.md`, lab manuals and owning specs/status; run relevant tooling/backend checks and `scripts/verify.sh all`; finish PR after all acceptance evidence exists.
 
 ## Round log
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| Resumed | Corrected stale appliance and NCPA observations in presenter setup; refreshed draft PR description | `python3 -I demo/defense/test_host_members.py`; `scripts/verify.sh docs` | Focused tests green (8); docs gate green. No live lab changes. |
 | Plan | Read #274 and workflow; isolated checkout; full requirement coverage and ordered plan | gh issue view 274 --json title,body,comments,state,labels,url; scripts/vmlab preflight | Issue open with no comments; ownership preflight green for powered-off QA appliance |
 | 1 | Recorded actual read-only inventory, proposed transition/recovery/security boundaries, sanitized report, and pending status/spec links; no runtime behavior changed | scripts/verify.sh docs | green: verify: docs OK; diff whitespace check also green |
 | Installation inquiry | Owner supplied a Windows 10 ISO; confirmed bootable ISO metadata and NCPA Windows compatibility; queried unattended detection and current capacity without VM mutation | timeout 25s scripts/vmlab preflight | Failed: ownership ambiguous or metadata inaccessible; two same-user VBoxSVC processes observed. No installation started |
@@ -140,6 +141,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 ## State for the next session
 
+- Resumed 2026-10-28: `scripts/verify.sh docs` passed; `python3 -I demo/defense/test_host_members.py` passed (8 tests). The presenter setup guide now reflects the owner's confirmed appliance reboot and reported Windows NCPA metrics. Draft PR #276 was updated to describe the host-Docker pilot and the remaining gates; GitHub docs, backend and frontend checks had passed for `6cc7f9de`. No live lab change was made. Continue the non-VirtualBox membership and interruption-aware DHCP work described below; it is not yet a presenter operation.
 - Last check run: `python3 -I demo/defense/test_host_members.py` (8 passed), and guarded fixed-argv collection observed thirteen registered VMs twice with the two intended host-only members matching. `scripts/verify.sh docs` passed. An initial suite was intentionally stopped to add unknown-adapter refusal; the final suite passed. Owner-reported inventory, Windows metrics and web03 HTTP CRITICAL-to-OK are in `docs/test-runs/2026-10-27-issue-274-pinpoint-web-alert/REPORT.md`.
 - Current live state: Windows, 14 Linux host-pilot containers and Pinpoint-Final run on `vboxnet1`, with web03 restored. DHCP planning, recovery-intent and VirtualBox membership collection remain separate from the presenter; no address was moved. Non-VirtualBox namespace checks, runtime recovery and rollback, host laptop reboot, address transitions, full rehearsals and complete issue acceptance remain open.
 - Next action (one specific step, not "continue"): Design and test non-VirtualBox attachment validation and interruption-aware DHCP execution/rollback that uses the checked journal and blocks conflicting presenter operations before exposing live address changes.
