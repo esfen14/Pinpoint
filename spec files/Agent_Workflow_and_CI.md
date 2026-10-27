@@ -145,7 +145,13 @@ The versioned `demo/defense/manifest.json` lists the intended fifteen targets;
 private VM pins, the VM/process/NAT boundary, available memory/disk planning
 and KVM availability. It refuses incomplete preparation. No lifecycle command
 or new scan authorization is delivered by these initial read-only commands.
-Offline defense input/ownership/resource contracts run in the docs gate.
+The [guest runtime preparation](../demo/defense/README.md) includes a generated
+fourteen-target network-none Compose artifact, an image definition, fixed real
+daemon controls and a root guest macvlan helper restricted to the two-target
+architecture spike. Exact image/identity/mount/capability checks precede
+attachment. This is offline preparation: provisioning, lifecycle, real protocol
+checks and the architecture spike are not delivered or verified yet.
+Offline defense input/ownership/resource/runtime contracts run in the docs gate.
 Its separate [Windows preparation](../demo/WINDOWS_READY.md) now has an installed
 Windows 10 Home test guest and locally verified NCPA agent, powered off at an
 owned snapshot. Activation, appliance registration and complete defense-lab

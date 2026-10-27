@@ -15,6 +15,21 @@ HOST_RESERVE_MIB = 3072
 START_OVERHEAD_MIB = 512
 
 
+def reject_virtualbox_dhcp(text: str) -> None:
+    """Refuse an enabled or ambiguous VirtualBox allocator on the demo segment."""
+    entries=[];current={}
+    for line in text.splitlines():
+        if line.startswith('NetworkName:'):
+            if current:entries.append(current)
+            current={'name':line.split(':',1)[1].strip()}
+        elif line.startswith('Enabled:'):
+            current['enabled']=line.split(':',1)[1].strip()
+    if current:entries.append(current)
+    for entry in entries:
+        if entry.get('name')=='pinpoint-defense' and entry.get('enabled')!='No':
+            raise ValueError('Another or ambiguous DHCP allocator is configured on the defense segment')
+
+
 def reject_overlaps(occupied: list[str]) -> None:
     """Reject even supernet/host routes; callers separately omit the default route."""
     try:

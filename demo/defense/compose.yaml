@@ -1,0 +1,881 @@
+{
+  "name": "pinpoint-defense274",
+  "services": {
+    "dhcp01": {
+      "image": "${PINPOINT_DEFENSE_IMAGE:?pinned image ID required}",
+      "container_name": "pinpoint-defense274-dhcp01",
+      "hostname": "dhcp01",
+      "network_mode": "none",
+      "restart": "no",
+      "command": [
+        "python3",
+        "/opt/pinpoint/defense/node.py",
+        "init",
+        "dhcp01"
+      ],
+      "labels": {
+        "org.pinpoint.defense.issue": "274",
+        "org.pinpoint.defense.owner": "${PINPOINT_DEFENSE_OWNER:?managed project owner required}",
+        "org.pinpoint.defense.target": "dhcp01"
+      },
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/identities/dhcp01",
+          "target": "/identity",
+          "read_only": false,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/data/dhcp01",
+          "target": "/data",
+          "read_only": false,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/context.json",
+          "target": "/etc/pinpoint-defense/context.json",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false
+          }
+        }
+      ],
+      "tmpfs": [
+        "/run:rw,nosuid,nodev,size=16m,mode=0755"
+      ],
+      "mem_limit": "64m",
+      "pids_limit": 96,
+      "cpus": 0.5,
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "1m",
+          "max-file": "2"
+        }
+      },
+      "cap_add": [
+        "NET_ADMIN"
+      ]
+    },
+    "web03": {
+      "image": "${PINPOINT_DEFENSE_IMAGE:?pinned image ID required}",
+      "container_name": "pinpoint-defense274-web03",
+      "hostname": "web03",
+      "network_mode": "none",
+      "restart": "no",
+      "command": [
+        "python3",
+        "/opt/pinpoint/defense/node.py",
+        "init",
+        "web03"
+      ],
+      "labels": {
+        "org.pinpoint.defense.issue": "274",
+        "org.pinpoint.defense.owner": "${PINPOINT_DEFENSE_OWNER:?managed project owner required}",
+        "org.pinpoint.defense.target": "web03"
+      },
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/identities/web03",
+          "target": "/identity",
+          "read_only": false,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/data/web03",
+          "target": "/data",
+          "read_only": false,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/context.json",
+          "target": "/etc/pinpoint-defense/context.json",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false
+          }
+        }
+      ],
+      "tmpfs": [
+        "/run:rw,nosuid,nodev,size=16m,mode=0755"
+      ],
+      "mem_limit": "64m",
+      "pids_limit": 96,
+      "cpus": 0.5,
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "1m",
+          "max-file": "2"
+        }
+      }
+    },
+    "api02": {
+      "image": "${PINPOINT_DEFENSE_IMAGE:?pinned image ID required}",
+      "container_name": "pinpoint-defense274-api02",
+      "hostname": "api02",
+      "network_mode": "none",
+      "restart": "no",
+      "command": [
+        "python3",
+        "/opt/pinpoint/defense/node.py",
+        "init",
+        "api02"
+      ],
+      "labels": {
+        "org.pinpoint.defense.issue": "274",
+        "org.pinpoint.defense.owner": "${PINPOINT_DEFENSE_OWNER:?managed project owner required}",
+        "org.pinpoint.defense.target": "api02"
+      },
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/identities/api02",
+          "target": "/identity",
+          "read_only": false,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/data/api02",
+          "target": "/data",
+          "read_only": false,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/context.json",
+          "target": "/etc/pinpoint-defense/context.json",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false
+          }
+        }
+      ],
+      "tmpfs": [
+        "/run:rw,nosuid,nodev,size=16m,mode=0755"
+      ],
+      "mem_limit": "64m",
+      "pids_limit": 96,
+      "cpus": 0.5,
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "1m",
+          "max-file": "2"
+        }
+      }
+    },
+    "ftp01": {
+      "image": "${PINPOINT_DEFENSE_IMAGE:?pinned image ID required}",
+      "container_name": "pinpoint-defense274-ftp01",
+      "hostname": "ftp01",
+      "network_mode": "none",
+      "restart": "no",
+      "command": [
+        "python3",
+        "/opt/pinpoint/defense/node.py",
+        "init",
+        "ftp01"
+      ],
+      "labels": {
+        "org.pinpoint.defense.issue": "274",
+        "org.pinpoint.defense.owner": "${PINPOINT_DEFENSE_OWNER:?managed project owner required}",
+        "org.pinpoint.defense.target": "ftp01"
+      },
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/identities/ftp01",
+          "target": "/identity",
+          "read_only": false,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/data/ftp01",
+          "target": "/data",
+          "read_only": false,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/context.json",
+          "target": "/etc/pinpoint-defense/context.json",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false
+          }
+        }
+      ],
+      "tmpfs": [
+        "/run:rw,nosuid,nodev,size=16m,mode=0755"
+      ],
+      "mem_limit": "64m",
+      "pids_limit": 96,
+      "cpus": 0.5,
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "1m",
+          "max-file": "2"
+        }
+      }
+    },
+    "mail01": {
+      "image": "${PINPOINT_DEFENSE_IMAGE:?pinned image ID required}",
+      "container_name": "pinpoint-defense274-mail01",
+      "hostname": "mail01",
+      "network_mode": "none",
+      "restart": "no",
+      "command": [
+        "python3",
+        "/opt/pinpoint/defense/node.py",
+        "init",
+        "mail01"
+      ],
+      "labels": {
+        "org.pinpoint.defense.issue": "274",
+        "org.pinpoint.defense.owner": "${PINPOINT_DEFENSE_OWNER:?managed project owner required}",
+        "org.pinpoint.defense.target": "mail01"
+      },
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/identities/mail01",
+          "target": "/identity",
+          "read_only": false,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/data/mail01",
+          "target": "/data",
+          "read_only": false,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/context.json",
+          "target": "/etc/pinpoint-defense/context.json",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false
+          }
+        }
+      ],
+      "tmpfs": [
+        "/run:rw,nosuid,nodev,size=16m,mode=0755"
+      ],
+      "mem_limit": "128m",
+      "pids_limit": 96,
+      "cpus": 0.5,
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "1m",
+          "max-file": "2"
+        }
+      }
+    },
+    "dns01": {
+      "image": "${PINPOINT_DEFENSE_IMAGE:?pinned image ID required}",
+      "container_name": "pinpoint-defense274-dns01",
+      "hostname": "dns01",
+      "network_mode": "none",
+      "restart": "no",
+      "command": [
+        "python3",
+        "/opt/pinpoint/defense/node.py",
+        "init",
+        "dns01"
+      ],
+      "labels": {
+        "org.pinpoint.defense.issue": "274",
+        "org.pinpoint.defense.owner": "${PINPOINT_DEFENSE_OWNER:?managed project owner required}",
+        "org.pinpoint.defense.target": "dns01"
+      },
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/identities/dns01",
+          "target": "/identity",
+          "read_only": false,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/data/dns01",
+          "target": "/data",
+          "read_only": false,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/context.json",
+          "target": "/etc/pinpoint-defense/context.json",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false
+          }
+        }
+      ],
+      "tmpfs": [
+        "/run:rw,nosuid,nodev,size=16m,mode=0755"
+      ],
+      "mem_limit": "64m",
+      "pids_limit": 96,
+      "cpus": 0.5,
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "1m",
+          "max-file": "2"
+        }
+      }
+    },
+    "db01": {
+      "image": "${PINPOINT_DEFENSE_IMAGE:?pinned image ID required}",
+      "container_name": "pinpoint-defense274-db01",
+      "hostname": "db01",
+      "network_mode": "none",
+      "restart": "no",
+      "command": [
+        "python3",
+        "/opt/pinpoint/defense/node.py",
+        "init",
+        "db01"
+      ],
+      "labels": {
+        "org.pinpoint.defense.issue": "274",
+        "org.pinpoint.defense.owner": "${PINPOINT_DEFENSE_OWNER:?managed project owner required}",
+        "org.pinpoint.defense.target": "db01"
+      },
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/identities/db01",
+          "target": "/identity",
+          "read_only": false,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/data/db01",
+          "target": "/data",
+          "read_only": false,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/context.json",
+          "target": "/etc/pinpoint-defense/context.json",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false
+          }
+        }
+      ],
+      "tmpfs": [
+        "/run:rw,nosuid,nodev,size=16m,mode=0755"
+      ],
+      "mem_limit": "192m",
+      "pids_limit": 96,
+      "cpus": 0.5,
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "1m",
+          "max-file": "2"
+        }
+      }
+    },
+    "snmp02": {
+      "image": "${PINPOINT_DEFENSE_IMAGE:?pinned image ID required}",
+      "container_name": "pinpoint-defense274-snmp02",
+      "hostname": "snmp02",
+      "network_mode": "none",
+      "restart": "no",
+      "command": [
+        "python3",
+        "/opt/pinpoint/defense/node.py",
+        "init",
+        "snmp02"
+      ],
+      "labels": {
+        "org.pinpoint.defense.issue": "274",
+        "org.pinpoint.defense.owner": "${PINPOINT_DEFENSE_OWNER:?managed project owner required}",
+        "org.pinpoint.defense.target": "snmp02"
+      },
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/identities/snmp02",
+          "target": "/identity",
+          "read_only": false,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/data/snmp02",
+          "target": "/data",
+          "read_only": false,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/context.json",
+          "target": "/etc/pinpoint-defense/context.json",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/private/snmp-community",
+          "target": "/run/secrets/snmp-community",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false
+          }
+        }
+      ],
+      "tmpfs": [
+        "/run:rw,nosuid,nodev,size=16m,mode=0755"
+      ],
+      "mem_limit": "64m",
+      "pids_limit": 96,
+      "cpus": 0.5,
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "1m",
+          "max-file": "2"
+        }
+      }
+    },
+    "ssh-alt02": {
+      "image": "${PINPOINT_DEFENSE_IMAGE:?pinned image ID required}",
+      "container_name": "pinpoint-defense274-ssh-alt02",
+      "hostname": "ssh-alt02",
+      "network_mode": "none",
+      "restart": "no",
+      "command": [
+        "python3",
+        "/opt/pinpoint/defense/node.py",
+        "init",
+        "ssh-alt02"
+      ],
+      "labels": {
+        "org.pinpoint.defense.issue": "274",
+        "org.pinpoint.defense.owner": "${PINPOINT_DEFENSE_OWNER:?managed project owner required}",
+        "org.pinpoint.defense.target": "ssh-alt02"
+      },
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/identities/ssh-alt02",
+          "target": "/identity",
+          "read_only": false,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/data/ssh-alt02",
+          "target": "/data",
+          "read_only": false,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/context.json",
+          "target": "/etc/pinpoint-defense/context.json",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false
+          }
+        }
+      ],
+      "tmpfs": [
+        "/run:rw,nosuid,nodev,size=16m,mode=0755"
+      ],
+      "mem_limit": "64m",
+      "pids_limit": 96,
+      "cpus": 0.5,
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "1m",
+          "max-file": "2"
+        }
+      }
+    },
+    "dynweb01": {
+      "image": "${PINPOINT_DEFENSE_IMAGE:?pinned image ID required}",
+      "container_name": "pinpoint-defense274-dynweb01",
+      "hostname": "dynweb01",
+      "network_mode": "none",
+      "restart": "no",
+      "command": [
+        "python3",
+        "/opt/pinpoint/defense/node.py",
+        "init",
+        "dynweb01"
+      ],
+      "labels": {
+        "org.pinpoint.defense.issue": "274",
+        "org.pinpoint.defense.owner": "${PINPOINT_DEFENSE_OWNER:?managed project owner required}",
+        "org.pinpoint.defense.target": "dynweb01"
+      },
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/identities/dynweb01",
+          "target": "/identity",
+          "read_only": false,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/data/dynweb01",
+          "target": "/data",
+          "read_only": false,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/context.json",
+          "target": "/etc/pinpoint-defense/context.json",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false
+          }
+        }
+      ],
+      "tmpfs": [
+        "/run:rw,nosuid,nodev,size=16m,mode=0755"
+      ],
+      "mem_limit": "64m",
+      "pids_limit": 96,
+      "cpus": 0.5,
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "1m",
+          "max-file": "2"
+        }
+      },
+      "cap_add": [
+        "NET_ADMIN"
+      ]
+    },
+    "dynapp01": {
+      "image": "${PINPOINT_DEFENSE_IMAGE:?pinned image ID required}",
+      "container_name": "pinpoint-defense274-dynapp01",
+      "hostname": "dynapp01",
+      "network_mode": "none",
+      "restart": "no",
+      "command": [
+        "python3",
+        "/opt/pinpoint/defense/node.py",
+        "init",
+        "dynapp01"
+      ],
+      "labels": {
+        "org.pinpoint.defense.issue": "274",
+        "org.pinpoint.defense.owner": "${PINPOINT_DEFENSE_OWNER:?managed project owner required}",
+        "org.pinpoint.defense.target": "dynapp01"
+      },
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/identities/dynapp01",
+          "target": "/identity",
+          "read_only": false,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/data/dynapp01",
+          "target": "/data",
+          "read_only": false,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/context.json",
+          "target": "/etc/pinpoint-defense/context.json",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false
+          }
+        }
+      ],
+      "tmpfs": [
+        "/run:rw,nosuid,nodev,size=16m,mode=0755"
+      ],
+      "mem_limit": "64m",
+      "pids_limit": 96,
+      "cpus": 0.5,
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "1m",
+          "max-file": "2"
+        }
+      },
+      "cap_add": [
+        "NET_ADMIN"
+      ]
+    },
+    "dynmail01": {
+      "image": "${PINPOINT_DEFENSE_IMAGE:?pinned image ID required}",
+      "container_name": "pinpoint-defense274-dynmail01",
+      "hostname": "dynmail01",
+      "network_mode": "none",
+      "restart": "no",
+      "command": [
+        "python3",
+        "/opt/pinpoint/defense/node.py",
+        "init",
+        "dynmail01"
+      ],
+      "labels": {
+        "org.pinpoint.defense.issue": "274",
+        "org.pinpoint.defense.owner": "${PINPOINT_DEFENSE_OWNER:?managed project owner required}",
+        "org.pinpoint.defense.target": "dynmail01"
+      },
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/identities/dynmail01",
+          "target": "/identity",
+          "read_only": false,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/data/dynmail01",
+          "target": "/data",
+          "read_only": false,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/context.json",
+          "target": "/etc/pinpoint-defense/context.json",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false
+          }
+        }
+      ],
+      "tmpfs": [
+        "/run:rw,nosuid,nodev,size=16m,mode=0755"
+      ],
+      "mem_limit": "64m",
+      "pids_limit": 96,
+      "cpus": 0.5,
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "1m",
+          "max-file": "2"
+        }
+      },
+      "cap_add": [
+        "NET_ADMIN"
+      ]
+    },
+    "dynsnmp01": {
+      "image": "${PINPOINT_DEFENSE_IMAGE:?pinned image ID required}",
+      "container_name": "pinpoint-defense274-dynsnmp01",
+      "hostname": "dynsnmp01",
+      "network_mode": "none",
+      "restart": "no",
+      "command": [
+        "python3",
+        "/opt/pinpoint/defense/node.py",
+        "init",
+        "dynsnmp01"
+      ],
+      "labels": {
+        "org.pinpoint.defense.issue": "274",
+        "org.pinpoint.defense.owner": "${PINPOINT_DEFENSE_OWNER:?managed project owner required}",
+        "org.pinpoint.defense.target": "dynsnmp01"
+      },
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/identities/dynsnmp01",
+          "target": "/identity",
+          "read_only": false,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/data/dynsnmp01",
+          "target": "/data",
+          "read_only": false,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/context.json",
+          "target": "/etc/pinpoint-defense/context.json",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/private/snmp-community",
+          "target": "/run/secrets/snmp-community",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false
+          }
+        }
+      ],
+      "tmpfs": [
+        "/run:rw,nosuid,nodev,size=16m,mode=0755"
+      ],
+      "mem_limit": "64m",
+      "pids_limit": 96,
+      "cpus": 0.5,
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "1m",
+          "max-file": "2"
+        }
+      },
+      "cap_add": [
+        "NET_ADMIN"
+      ]
+    },
+    "dynweb02": {
+      "image": "${PINPOINT_DEFENSE_IMAGE:?pinned image ID required}",
+      "container_name": "pinpoint-defense274-dynweb02",
+      "hostname": "dynweb02",
+      "network_mode": "none",
+      "restart": "no",
+      "command": [
+        "python3",
+        "/opt/pinpoint/defense/node.py",
+        "init",
+        "dynweb02"
+      ],
+      "labels": {
+        "org.pinpoint.defense.issue": "274",
+        "org.pinpoint.defense.owner": "${PINPOINT_DEFENSE_OWNER:?managed project owner required}",
+        "org.pinpoint.defense.target": "dynweb02"
+      },
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/identities/dynweb02",
+          "target": "/identity",
+          "read_only": false,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/data/dynweb02",
+          "target": "/data",
+          "read_only": false,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/var/lib/pinpoint-defense/context.json",
+          "target": "/etc/pinpoint-defense/context.json",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false
+          }
+        }
+      ],
+      "tmpfs": [
+        "/run:rw,nosuid,nodev,size=16m,mode=0755"
+      ],
+      "mem_limit": "64m",
+      "pids_limit": 96,
+      "cpus": 0.5,
+      "logging": {
+        "driver": "json-file",
+        "options": {
+          "max-size": "1m",
+          "max-file": "2"
+        }
+      },
+      "cap_add": [
+        "NET_ADMIN"
+      ]
+    }
+  }
+}

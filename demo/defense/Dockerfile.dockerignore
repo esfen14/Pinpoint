@@ -1,0 +1,5 @@
+*
+!demo/
+!demo/defense/
+!demo/defense/*.py
+!demo/defense/manifest.json

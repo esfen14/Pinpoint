@@ -1,0 +1,160 @@
+"""Offline contracts for guest-only Compose/node operations; no live daemons."""
+import copy
+from contextlib import redirect_stderr
+import io
+import json
+import os
+from pathlib import Path
+import sys
+import tempfile
+import unittest
+from unittest.mock import patch
+
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
+from defense.catalog import load_catalog
+from defense.compose import compose_document, compose_template
+from defense.node import validate_request, validate_network, identity, supervisor_config, program_specs, atomic, server_config, main as node_main
+from defense.preflight import reject_virtualbox_dhcp
+
+CATALOG = load_catalog()
+
+
+class ComposeTests(unittest.TestCase):
+    def test_all_fourteen_linux_devices_have_no_docker_numbered_interface(self):
+        doc=compose_document(CATALOG,'sha256:'+'a'*64,'b'*48)
+        self.assertEqual(set(doc['services']),{d.name for d in CATALOG.devices if d.kind=='linux'})
+        self.assertNotIn('networks',doc)
+        for target,service in doc['services'].items():
+            self.assertEqual(service['network_mode'],'none')
+            self.assertNotIn('ports',service)
+            self.assertNotIn('mac_address',service)
+            self.assertNotIn('ipv4_address',service)
+            self.assertNotIn('pid',service)
+            self.assertNotIn('privileged',service)
+            self.assertEqual(service['restart'],'no')
+            self.assertNotIn('SYS_ADMIN',service.get('cap_add',[]))
+            mounts={v['target']:v for v in service['volumes']}
+            self.assertEqual(mounts['/identity']['source'],f'/var/lib/pinpoint-defense/identities/{target}')
+            self.assertTrue(mounts['/etc/pinpoint-defense/context.json']['read_only'])
+            self.assertTrue(all(not v['bind']['create_host_path'] for v in service['volumes']))
+            self.assertEqual(service['labels']['org.pinpoint.defense.target'],target)
+
+    def test_only_dhcp_roles_get_network_administration_capability(self):
+        doc=compose_document(CATALOG,'sha256:'+'a'*64,'b'*48)
+        for name,service in doc['services'].items():
+            self.assertEqual('NET_ADMIN' in service.get('cap_add',[]), name=='dhcp01' or CATALOG.target(name).mode=='dhcp')
+
+    def test_fixed_spike_can_start_two_distinct_macs_without_full_catalog(self):
+        doc=compose_document(CATALOG,'sha256:'+'a'*64,'b'*48,spike=True)
+        self.assertEqual(set(doc['services']),{'dhcp01','dynweb01'})
+        self.assertNotEqual(CATALOG.target('dhcp01').mac,CATALOG.target('dynweb01').mac)
+
+    def test_template_is_generated_from_catalog_and_has_no_secret_values(self):
+        stored=json.loads(Path(__file__).with_name('compose.yaml').read_text())
+        self.assertEqual(stored,compose_template(CATALOG))
+        text=json.dumps(stored)
+        self.assertNotIn('community_string',text)
+        self.assertNotIn('PASSWORD',text)
+        with self.assertRaises(ValueError):compose_document(CATALOG,'untrusted:latest','b'*48)
+        with self.assertRaises(ValueError):compose_document(CATALOG,'sha256:'+'a'*64,'../foreign')
+
+
+class NodeTests(unittest.TestCase):
+    def test_invalid_commands_reject_before_subprocess_or_file_mutation(self):
+        bad=[('web03',{'operation':'shell','command':'id'}),
+             ('foreign',{'operation':'inspect'}),('win01',{'operation':'baseline'}),
+             ('web03',{'operation':'server-stop'}),
+             ('dynweb01',{'operation':'lease-acquire','expected_address':'192.168.1.1'}),
+             ('dynweb01',{'operation':'lease-acquire','expected_address':'10.77.1.15'}),
+             ('dynweb01',{'operation':'inspect','extra':'SENTINEL_SECRET'})]
+        with patch('subprocess.run') as run:
+            for target,data in bad:
+                with self.subTest(target=target,data=data),self.assertRaises(ValueError):validate_request(CATALOG,target,data)
+            run.assert_not_called()
+
+    def test_dhcp_commands_are_confined_to_server_and_five_clients(self):
+        reservations={d.name:d.address for d in CATALOG.devices if d.mode=='dhcp'}
+        validate_request(CATALOG,'dhcp01',{'operation':'server-config','reservations':reservations,'lease_seconds':600})
+        validate_request(CATALOG,'dynapp01',{'operation':'lease-acquire','expected_address':'10.77.1.25'})
+        with self.assertRaises(ValueError):validate_request(CATALOG,'web03',{'operation':'lease-release'})
+
+    def test_network_requires_exact_own_mac_one_address_and_no_default_route(self):
+        target=CATALOG.target('dynweb01')
+        links=[{'ifname':'lo','address':'00:00:00:00:00:00','addr_info':[{'family':'inet','local':'127.0.0.1'}]},
+               {'ifname':'eth0','address':target.mac,'addr_info':[{'family':'inet','local':'10.77.1.20','prefixlen':27}]}]
+        self.assertEqual(validate_network(CATALOG,target,links,[]),['10.77.1.20'])
+        for mutate, routes in [(lambda x:x[1].update(address='02:00:00:00:00:99'),[]),
+                               (lambda x:x[1]['addr_info'].append({'family':'inet','local':'10.77.1.21','prefixlen':27}),[]),
+                               (lambda x:None,[{'dst':'default','gateway':'10.0.2.2'}])]:
+            data=copy.deepcopy(links);mutate(data)
+            with self.assertRaises(ValueError):validate_network(CATALOG,target,data,routes)
+        links[1]['addr_info']=[]
+        validate_network(CATALOG,target,links,[],unaddressed=True)
+        with self.assertRaises(ValueError):validate_network(CATALOG,target,links,[])
+
+    def test_identity_is_persistent_and_private_and_foreign_identity_refuses(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);target=CATALOG.target('dynweb01')
+            def keygen(argv,**kwargs):
+                path=Path(argv[argv.index('-f')+1]);path.write_text('PRIVATE_SENTINEL');path.chmod(0o600)
+                Path(str(path)+'.pub').write_text('ssh-ed25519 PUBLIC_SENTINEL')
+            with patch('defense.node.command',side_effect=keygen) as run:
+                first=identity(root,target,'b'*48);second=identity(root,target,'b'*48)
+                self.assertEqual(first,second)
+                self.assertEqual(run.call_count,1)
+                self.assertNotIn('PRIVATE_SENTINEL',json.dumps(first))
+            (root/'ssh_host_ed25519_key').chmod(0o644)
+            with self.assertRaises(ValueError):identity(root,target,'b'*48)
+            with self.assertRaises(ValueError):identity(root,CATALOG.target('dynapp01'),'b'*48)
+
+    def test_public_daemon_config_remains_readable_under_private_umask(self):
+        with tempfile.TemporaryDirectory() as folder:
+            old=os.umask(0o077)
+            try:
+                path=Path(folder)/'postgresql.conf';atomic(path,'public settings\n',public=True)
+                self.assertEqual(path.stat().st_mode&0o777,0o644)
+            finally:os.umask(old)
+
+    def test_server_reservation_move_preserves_other_clients_real_lease_evidence(self):
+        reservations={d.name:d.address for d in CATALOG.devices if d.mode=='dhcp'}
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder)
+            atomic(root/'reservations.json',json.dumps({'reservations':reservations,'lease_seconds':600}))
+            first=CATALOG.target('dynweb01');second=CATALOG.target('dynapp01')
+            atomic(root/'dhcp.leases',f'123 {first.mac} 10.77.1.20 first *\n456 {second.mac} 10.77.1.21 second *\n')
+            moved=dict(reservations,dynweb01='10.77.1.25')
+            with patch('defense.node.DATA',root),patch('defense.node.supervisor') as control:
+                server_config(CATALOG,{'reservations':moved,'lease_seconds':600})
+                self.assertNotIn(first.mac,(root/'dhcp.leases').read_text())
+                self.assertIn(second.mac,(root/'dhcp.leases').read_text())
+                self.assertEqual(control.call_count,2)
+
+    def test_runtime_context_failure_precedes_identity_or_daemon_mutation(self):
+        with patch('defense.node.container_context',side_effect=ValueError('SENTINEL_PRIVATE_DETAIL')), \
+             patch('defense.node.identity') as mutate,patch('subprocess.run') as run,redirect_stderr(io.StringIO()) as error:
+            self.assertEqual(node_main(['init','web03']),1)
+            mutate.assert_not_called();run.assert_not_called()
+            self.assertNotIn('SENTINEL_PRIVATE_DETAIL',error.getvalue())
+
+    def test_every_protocol_uses_real_daemon_and_supervisor_keeps_groups_owned(self):
+        commands=set()
+        for device in CATALOG.devices:
+            if device.kind!='linux':continue
+            specs=program_specs(CATALOG,device)
+            for value in specs.values():commands.add(Path(value[0]).name)
+            cfg=supervisor_config(specs)
+            self.assertIn('autostart=false',cfg)
+            self.assertIn('stopasgroup=true',cfg)
+            self.assertIn('killasgroup=true',cfg)
+            self.assertNotIn('[inet_http_server]',cfg)
+        for daemon in ['sshd','nginx','vsftpd','postfix','dovecot','snmpd','dnsmasq','runuser']:
+            self.assertIn(daemon,commands)
+
+    def test_virtualbox_cannot_supply_second_dhcp_allocator(self):
+        reject_virtualbox_dhcp('NetworkName: HostInterfaceNetworking-vboxnet0\nEnabled: Yes\n')
+        reject_virtualbox_dhcp('NetworkName: pinpoint-defense\nEnabled: No\n')
+        with self.assertRaises(ValueError):reject_virtualbox_dhcp('NetworkName: pinpoint-defense\nEnabled: Yes\n')
+        with self.assertRaises(ValueError):reject_virtualbox_dhcp('NetworkName: pinpoint-defense\n')
+
+
+if __name__=='__main__':unittest.main()

@@ -18,6 +18,7 @@ from defense.catalog import load_catalog
 from defense.preflight import (VM_NAMES,FORWARDS,read_private_json,check_resources,
                                reject_overlaps,validate_vm,validate_runtime)
 from defense.preflight import validate_vm_macs
+from defense.preflight import reject_virtualbox_dhcp
 import qa_control
 import vmlab_preflight
 
@@ -150,6 +151,7 @@ def collect_preflight(catalog) -> dict:
     if not state:
         blockers.append('Controller is not prepared; no lifecycle operation is available yet')
     reject_overlaps(network_inventory(collector))
+    reject_virtualbox_dhcp(collector.vbox('list','dhcpservers'))
     names = collector.vbox('list','vms').splitlines()
     all_vms, records = [], {}
     for line in names:

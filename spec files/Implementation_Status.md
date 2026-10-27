@@ -16,7 +16,11 @@ five-client DHCP/address-mode story and two rehearsals remain unimplemented and
 unverified. After the owner's continuation, the initial `demo/demo manifest`
 and read-only `preflight` commands validate the versioned fifteen-device catalog,
 reserved inputs, private state, subnet/VPN overlap, VM ownership/NAT sockets and
-resource planning. Negative contracts run offline in the docs gate. Lifecycle,
+resource planning. Negative contracts run offline in the docs gate. The initial
+[guest runtime](../demo/defense/README.md) now defines fourteen network-none
+Linux services, persistent identities, real daemon configurations, fixed
+DHCP controls and a checked two-target macvlan attachment helper. The image and
+helpers have not been built or run in a guest. Provisioning, lifecycle, actual
 guest networking and the architecture spike remain pending; no new product scan
 scope is authorized by this scaffolding.
 The owner selected Windows 10 Home for testing without a purchased license.
