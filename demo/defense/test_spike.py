@@ -80,6 +80,14 @@ class SpikeTests(unittest.TestCase):
             with self.assertRaises(ValueError):guest.spike_up(CATALOG,CONTEXT,IMAGE,'enp0s8')
             run.assert_not_called()
 
+    def test_docker_restart_probe_refuses_any_container_before_service_mutation(self):
+        with patch.object(guest,'guest_context',return_value=(CONTEXT,IMAGE,'enp0s8')),patch.object(guest,'command',return_value=SimpleNamespace(stdout='container-id\n')) as run:
+            with self.assertRaises(ValueError):guest.verify_restart()
+            self.assertNotIn(['systemctl','restart','docker.service'],[c.args[0] for c in run.call_args_list])
+        with patch.object(guest,'guest_context',return_value=(CONTEXT,IMAGE,'enp0s8')),patch.object(guest,'command',return_value=SimpleNamespace(stdout='')) as run,patch.object(guest,'host_status',return_value={'safe':True}):
+            self.assertTrue(guest.verify_restart()['safe'])
+            self.assertIn(['systemctl','restart','docker.service'],[c.args[0] for c in run.call_args_list])
+
     def test_checked_node_dispatch_uses_container_id_and_json_stdin_only(self):
         result={'target':'dynweb01','network_safe':True,'addresses':['10.77.1.20'],'mac':CATALOG.target('dynweb01').mac,'client_id':CATALOG.target('dynweb01').client_id,'listeners':[],'services':[]}
         with patch.object(guest,'observe_container',return_value=fixture()),patch.object(guest,'trusted_image',return_value={}),patch.object(guest,'command',return_value=SimpleNamespace(stdout=json.dumps(result))) as run:

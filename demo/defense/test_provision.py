@@ -10,7 +10,7 @@ import tempfile
 from types import SimpleNamespace
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from defense.provision import install_commands, autoinstall_template, postinstall_template, ssh_arguments, creation_commands, prepare, validate_iso_detection, validate_media_resume, validate_install_boot, validate_installed_boot
+from defense.provision import install_commands, autoinstall_template, postinstall_template, ssh_arguments, creation_commands, prepare, validate_iso_detection, validate_media_resume, validate_install_boot, validate_installed_boot, maintenance_boot_plan, validate_disk_chain
 from defense import bootstrap, controller
 
 UUID='351eb491-f5e1-4854-a7e4-68309ad774ad'
@@ -148,6 +148,28 @@ class ProvisionTests(unittest.TestCase):
                     with self.assertRaises(ValueError):prepare(iso,apply=True)
                 run.assert_not_called()
                 self.assertFalse((root/'controller').exists())
+
+    def test_snapshot_disk_chain_must_reach_the_original_owned_disk(self):
+        root=Path('/private/defense');base=str(root/'vm/pinpoint-defense-targets/pinpoint-defense-targets.vdi');child=str(root/'vm/pinpoint-defense-targets/Snapshots/{child}.vdi')
+        chain=[{'UUID':'a'*8+'-aaaa-4aaa-aaaa-'+'a'*12,'Parent UUID':'b'*8+'-bbbb-4bbb-bbbb-'+'b'*12,'Location':child,'State':'created'}, {'UUID':'b'*8+'-bbbb-4bbb-bbbb-'+'b'*12,'Parent UUID':'base','Location':base,'State':'created'}]
+        self.assertEqual(validate_disk_chain(root,child,chain),child)
+        for changed in [dict(chain[0],Location='/foreign/disk.vdi'),dict(chain[0],**{'Parent UUID':'c'*8+'-cccc-4ccc-cccc-'+'c'*12}),dict(chain[0],State='locked read')]:
+            with self.assertRaises(ValueError):validate_disk_chain(root,child,[changed,chain[1]])
+        with self.assertRaises(ValueError):validate_disk_chain(root,child,chain[:1])
+
+    def test_maintenance_boot_uses_only_stock_iso_and_never_reinstalls_or_replaces_disk(self):
+        root=Path('/private/defense')
+        state={'phase':'installed-needs-forwarding-guard','uuid':UUID,'iso':'/media/ubuntu.iso'}
+        data={'VMState':'poweroff','memory':'2048','SATA-0-0':str(root/'vm/pinpoint-defense-targets/pinpoint-defense-targets.vdi'),'IDE-0-0':'emptydrive','IDE-1-0':'emptydrive'}
+        commands=maintenance_boot_plan(state,data,root)
+        self.assertEqual(commands[-1],['VBoxManage','startvm',UUID,'--type','headless'])
+        self.assertNotIn('unattended',json.dumps(commands))
+        self.assertNotIn('createmedium',json.dumps(commands))
+        self.assertNotIn('Unattended-',json.dumps(commands))
+        self.assertEqual(sum('/media/ubuntu.iso' in c for c in commands),1)
+        for altered in [dict(data,VMState='running'),dict(data,**{'SATA-0-0':'/foreign.vdi'}),dict(data,**{'IDE-1-0':'/private/Unattended.iso'})]:
+            with self.assertRaises(ValueError):maintenance_boot_plan(state,altered,root)
+        with self.assertRaises(ValueError):maintenance_boot_plan(dict(state,phase='installing'),data,root)
 
     def test_ssh_requires_injected_host_key_and_exact_loopback_endpoint(self):
         args=ssh_arguments(Path('/private/defense'))

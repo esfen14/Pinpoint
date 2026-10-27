@@ -383,6 +383,120 @@ def start_install(*,apply=False,installed=False):
         return dict(result,phase=state['phase'],applied=True)
 
 
+def validate_disk_chain(root,attached,chain):
+    """Require a bounded private differencing chain ending at the original owned VDI."""
+    vmroot=root/'vm/pinpoint-defense-targets'
+    base=str(vmroot/'pinpoint-defense-targets.vdi')
+    if not chain or len(chain)>8 or chain[0].get('Location')!=attached:raise ValueError('Invalid attached disk chain')
+    identifiers=[]
+    for i,record in enumerate(chain):
+        path=Path(record.get('Location',''));identifier=record.get('UUID','')
+        if not path.is_absolute() or '..' in path.parts or not path.is_relative_to(vmroot) or record.get('State')!='created' or not re.fullmatch(r'[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}',identifier):
+            raise ValueError('Disk ancestry escaped the private owned VM')
+        if i and chain[i-1].get('Parent UUID')!=identifier:raise ValueError('Disk parent identity mismatch')
+        identifiers.append(identifier)
+    if len(set(identifiers))!=len(identifiers) or chain[-1].get('Location')!=base or chain[-1].get('Parent UUID')!='base':
+        raise ValueError('Disk chain does not reach the original owned disk')
+    return attached
+
+
+def observed_owned_disk(collector,root,attached):
+    """Resolve snapshot media through VBox's ancestry, checking every private regular file."""
+    import os
+    import stat
+    chain=[];current=attached
+    for _ in range(8):
+        raw=collector.vbox('showmediuminfo','disk',current)
+        record={}
+        for key in ['UUID','Parent UUID','State','Location']:
+            values=re.findall(r'^'+re.escape(key)+r':\s*(.*)$',raw,re.M)
+            if len(values)!=1:raise ValueError('Disk ancestry metadata missing or duplicated')
+            record[key]=values[0].strip()
+        path=Path(record['Location']);info=path.lstat()
+        if path.resolve()!=path or not stat.S_ISREG(info.st_mode) or info.st_uid!=os.getuid() or info.st_nlink!=1 or info.st_mode&0o022:
+            raise ValueError('Unsafe owned disk path or permissions')
+        chain.append(record)
+        if record['Parent UUID']=='base':return validate_disk_chain(root,attached,chain)
+        if not re.fullmatch(r'[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}',record['Parent UUID']):
+            raise ValueError('Invalid parent disk UUID')
+        current=record['Parent UUID']
+    raise ValueError('Disk ancestry is too deep or cyclic')
+
+
+def maintenance_boot_plan(state,data,root):
+    """Boot stock media for an owned installed guest; no unattended or disk creation path."""
+    identifier=state.get('uuid','');iso=state.get('iso','')
+    install_commands(identifier,root,Path(iso))
+    if state.get('phase')!='installed-needs-forwarding-guard' or data.get('VMState')!='poweroff' or data.get('memory')!='2048':
+        raise ValueError('Maintenance requires the exact installed powered-off state')
+    if data.get('SATA-0-0')!=state.get('disk_path',str(root/'vm/pinpoint-defense-targets/pinpoint-defense-targets.vdi')):
+        raise ValueError('Installed maintenance disk changed')
+    for key,value in data.items():
+        if re.fullmatch(r'IDE-[0-9]+-[0-9]+',key) and value not in {'none','emptydrive'}:
+            raise ValueError('Detach private/setup media before live maintenance')
+    return [['VBoxManage','storageattach',identifier,'--storagectl','IDE','--port','0','--device','0','--type','dvddrive','--medium',iso],
+            ['VBoxManage','modifyvm',identifier,'--boot1','dvd','--boot2','disk','--boot3','none','--boot4','none'],
+            ['VBoxManage','startvm',identifier,'--type','headless']]
+
+
+def start_maintenance(*,apply=False):
+    """Preview or boot stock-ISO maintenance after exact host ownership and one-VM gates."""
+    import os
+    import shutil
+    import sys
+    repo=Path(__file__).resolve().parents[2]
+    sys.path.insert(0,str(repo/'scripts'));sys.path.insert(0,str(repo/'demo'))
+    import qa_control
+    import vmlab_preflight
+    from defense.controller import Collector,STATE_ROOT,WINDOWS_ROOT,OWNER_KEY,observed_info,vm_record,network_inventory,allocated_mib
+    from defense.catalog import load_catalog
+    from defense.preflight import read_private_json,validate_vm,validate_runtime,reject_overlaps,reject_virtualbox_dhcp,check_resources,validate_vm_macs
+    from defense.node import atomic
+    root=STATE_ROOT/'target-host'
+    with qa_control.claim():
+        state=read_private_json(root/'state.json');collector=Collector()
+        reject_overlaps(network_inventory(collector));reject_virtualbox_dhcp(collector.vbox('list','dhcpservers'))
+        records=[]
+        for line in collector.vbox('list','vms').splitlines():
+            match=re.search(r'\{([a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12})\}$',line)
+            if not match:raise ValueError('Incomplete VM inventory')
+            info=observed_info(collector,match[1]);record=vm_record(info,None);records.append(record)
+            if record['state']!='poweroff':raise ValueError('All VMs must be off for stock-ISO maintenance')
+            if match[1]!=state['uuid'] and any(n['network']=='pinpoint-defense' for n in record['nics']):
+                windows=read_private_json(WINDOWS_ROOT/'state.json')
+                owner=collector.vbox('getextradata',match[1],OWNER_KEY).strip()
+                record['owner']=owner[7:] if owner.startswith('Value: ') else None
+                validate_vm(record,'windows',windows['uuid'],windows['owner'],['02:77:01:00:00:02'])
+        validate_vm_macs(load_catalog(),records)
+        data=observed_info(collector,state['uuid']);owner=collector.vbox('getextradata',state['uuid'],OWNER_KEY).strip()
+        record=vm_record(data,owner[7:] if owner.startswith('Value: ') else None)
+        validate_vm(record,'target_host',state['uuid'],state['owner'],state['macs'])
+        managers,processes=vmlab_preflight.inventory()
+        validate_runtime(record,managers,[dict(p,pid=pid) for pid,p in processes.items()],vmlab_preflight.tcp_listeners([2260]),{})
+        if processes:raise ValueError('Unexpected VM processes prevent maintenance')
+        iso=Path(state['iso'])
+        if iso.is_symlink() or not iso.is_file():raise ValueError('Original stock ISO unavailable')
+        detect_ubuntu(iso)
+        state['disk_path']=observed_owned_disk(collector,root,data.get('SATA-0-0',''))
+        commands=maintenance_boot_plan(state,data,root)
+        available=int(re.search(r'^MemAvailable:\s+(\d+)',Path('/proc/meminfo').read_text(),re.M)[1])//1024
+        free=shutil.disk_usage(Path.home()).free//1048576
+        required=max(40960-allocated_mib(WINDOWS_ROOT),0)+max(16384-allocated_mib(root/'vm'),0)+8192+2048+1024+10240
+        check_resources(available,free,[2048],required)
+        result={'uuid':state['uuid'],'available_mib':available,'free_disk_mib':free,'required_disk_mib':required,
+                'kvm_release_required':Path('/sys/module/kvm').exists(),'applied':False,'stock_iso_only':True}
+        if not apply:return result
+        if result['kvm_release_required']:raise ValueError('KVM still holds hardware virtualization')
+        os.umask(0o077)
+        state['phase']='maintenance-starting';atomic(root/'state.json',json.dumps(state)+'\n')
+        for argv in commands:
+            with (root/'maintenance-start.log').open('ab') as output:
+                completed=subprocess.run(argv,stdin=subprocess.DEVNULL,stdout=output,stderr=output,timeout=45)
+            if completed.returncode:raise ValueError('Owned maintenance start failed; inspect private state')
+        state['phase']='maintenance-live-boot';atomic(root/'state.json',json.dumps(state)+'\n')
+        return dict(result,applied=True)
+
+
 def main(argv=None):
     """Prepare installer media only; starting and transitioning existing VMs is separate."""
     import argparse
@@ -393,11 +507,12 @@ def main(argv=None):
     parser.add_argument('--resume-media',action='store_true')
     parser.add_argument('--start-install',action='store_true')
     parser.add_argument('--boot-installed',action='store_true')
+    parser.add_argument('--maintenance-boot',action='store_true')
     args=parser.parse_args(argv)
     try:
-        if sum([args.resume_media,args.start_install,args.boot_installed])>1:raise ValueError('Choose one preparation action')
+        if sum([args.resume_media,args.start_install,args.boot_installed,args.maintenance_boot])>1:raise ValueError('Choose one preparation action')
         operation=resume_media if args.resume_media else prepare
-        result=start_install(apply=args.apply,installed=args.boot_installed) if args.start_install or args.boot_installed else operation(args.iso,apply=args.apply)
+        result=start_maintenance(apply=args.apply) if args.maintenance_boot else start_install(apply=args.apply,installed=args.boot_installed) if args.start_install or args.boot_installed else operation(args.iso,apply=args.apply)
         print(json.dumps(result,indent=2))
         return 0
     except (OSError,ValueError,TypeError,KeyError,subprocess.SubprocessError):

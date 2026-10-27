@@ -135,3 +135,12 @@ The demo NIC has a MAC-matched networkd configuration with manual activation,
 no DHCP/link-local/RA addresses or forwarding; the controller raises it only
 after safety gates. This follows the
 [networkd activation policy](https://www.freedesktop.org/software/systemd/man/250/systemd.network.html).
+
+`provision.py --maintenance-boot` previews a stock-ISO repair of the saved
+installed VM; `--apply` requires fresh host gates and KVM release. It verifies
+snapshot-disk ancestry back to the original private VDI, refuses attached setup
+media, and never invokes unattended installation or creates/replaces a disk.
+The private guest helper also has read-only `host-status` safety flags and a
+fixed `verify-restart` preparation probe; the latter refuses every container
+object before restarting only Docker and rechecking the boundary. Neither
+operation is a product scan or an authorization for target DHCP activation.

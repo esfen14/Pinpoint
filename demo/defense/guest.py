@@ -10,7 +10,7 @@ import sys
 import time
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from defense.bootstrap import dmi_uuid_matches, management_observation, image_source_hash
+from defense.bootstrap import dmi_uuid_matches, management_observation, image_source_hash, owned_context, forwarding_values, build_parent
 from defense.catalog import load_catalog
 from defense.compose import ROOT, PROJECT, compose_document
 from defense.node import command, validate_network, validate_request, atomic
@@ -162,6 +162,35 @@ def stop_target(catalog,context,image,target):
     return {'target':target,'running':False,'persistent_state_retained':True}
 
 
+def host_status():
+    """Read fixed safety/provenance flags without disclosing owner or credential values."""
+    context=owned_context()
+    first,second=forwarding_values()
+    parent,up=build_parent(context)
+    account_safe=True;image_ready=True
+    try:management_observation()
+    except ValueError:account_safe=False
+    try:
+        runtime=read_private_json(Path(ROOT)/'runtime.json')
+        trusted_image(runtime['image'])
+    except (ValueError,KeyError,OSError):image_ready=False
+    return {'safe':first==second==0 and account_safe and image_ready,
+            'forwarding4':first,'forwarding6':second,'parent':parent,'parent_up':up,
+            'parent_unnumbered':True,'management_restricted':account_safe,'image_ready':image_ready}
+
+
+def verify_restart():
+    """Test only the fixed Docker unit, before any target objects exist."""
+    guest_context()
+    if command(['docker','ps','-aq']).stdout.strip():
+        raise ValueError('Restart proof requires no container objects')
+    command(['systemctl','restart','docker.service'],timeout=60)
+    guest_context()
+    result=host_status()
+    if not result['safe']:raise ValueError('Docker restart did not preserve the guest boundary')
+    return result
+
+
 def observe_container(target: str) -> dict:
     """Read one exact fixed container without exposing Docker environment or output."""
     result=json.loads(command(['docker','inspect','--type','container',PROJECT+'-'+target]).stdout)
@@ -246,13 +275,13 @@ def guest_context():
 def main(argv=None):
     """Expose only fixed attach/inspect operations; creation belongs to provisioning."""
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('operation',choices=['attach','inspect','spike-up','node','stop'])
+    parser.add_argument('operation',choices=['attach','inspect','spike-up','node','stop','host-status','verify-restart'])
     parser.add_argument('target',nargs='?')
     args=parser.parse_args(argv)
     try:
         os.umask(0o077)
         catalog=load_catalog()
-        if args.operation=='spike-up':
+        if args.operation in {'spike-up','host-status','verify-restart'}:
             if args.target is not None:raise ValueError('Spike startup takes no target argument')
         else:validate_spike_target(catalog,args.target)
         request=None
@@ -260,6 +289,8 @@ def main(argv=None):
             payload=sys.stdin.read(8193)
             if len(payload)>8192:raise ValueError('Node request exceeds limit')
             request=validate_request(catalog,args.target,json.loads(payload))
+        if args.operation=='host-status':
+            print(json.dumps(host_status()));return 0
         context,image,parent=guest_context()
         fd=os.open(Path(ROOT)/'guest.lock',os.O_RDWR|os.O_CREAT|os.O_NOFOLLOW,0o600)
         try:
@@ -272,6 +303,7 @@ def main(argv=None):
             elif args.operation=='spike-up':result=spike_up(catalog,context,image,parent)
             elif args.operation=='node':result=node_request(catalog,context,image,args.target,request)
             elif args.operation=='stop':result=stop_target(catalog,context,image,args.target)
+            elif args.operation=='verify-restart':result=verify_restart()
             else:
                 observed=observe_container(args.target)
                 validate_container(catalog,context,image,args.target,observed,image_labels=trusted_image(image),allow_stopped=True)
