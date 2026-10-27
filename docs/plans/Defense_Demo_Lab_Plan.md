@@ -40,6 +40,22 @@ Tracking: [#274](https://github.com/esfen14/Pinpoint/issues/274).
 No new scan range is authorized by this document. Existing supported commands
 remain in the [VM lab plan](VM_Lab_Plan.md) and [demo manual](../../demo/README.md).
 
+## DHCP address-change continuation
+
+An offline planner validates the requested destination against the fixed DHCP
+pool, all five saved reservations and all five observed client addresses. It
+does not inspect ownership or perform a move. Before a presenter command can
+apply a plan, separately pin the owner-approved VirtualBox membership and all
+container identities, refuse unexpected participants and changed interfaces,
+record a private durable transaction before the first mutation, and implement
+bounded rollback plus explicit recovery after interruption. Update the
+presenter's startup and lease paths to use the verified saved reservations so a
+moved client is not silently reset to its catalog address. Tests must exercise
+collision refusal and each interrupted step before any live transition. These
+checks do not by themselves prove absence of all foreign network participants;
+no live mutation is authorized by the offline planner. Connectivity checks
+remain ping-only under the owner's direction.
+
 ## Previous internal-network checkpoint
 
 The earlier target-host topology had fourteen containers and five DHCP leases,

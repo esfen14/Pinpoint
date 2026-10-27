@@ -56,7 +56,11 @@ stops or starts the allocator with its saved reservations; existing leases may
 remain active while it is stopped. `dhcp-lease` releases or reacquires only the
 specified DHCP client's original reserved address. After a fault demonstration,
 start the DHCP server and reacquire any released leases. These commands do not
-implement changing reservations or DHCP-to-static transitions.
+implement changing reservations or DHCP-to-static transitions. An offline-only
+`dhcp_move.py` planner validates a candidate against all five current
+reservations and observations; it performs no live mutation and is not yet
+wired to the presenter. Foreign-device checks, durable recovery and rollback
+are required before any address transition can run.
 
 ## Earlier target-host design and historical results
 

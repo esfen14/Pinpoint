@@ -52,6 +52,9 @@ Requirement coverage (every requirement the issue states, and the check that pro
 4. [ ] Build the real daemon catalog in `demo/defense/`; test/provision 14 Linux targets plus clearly labelled win-slot; verify product discovery, plugins and Nagios against the manifest.
 5. [ ] Test/implement portable allowlisted listener and host controls in `demo/`; migrate and adapt the three Documents files; verify shortcut and interruption/restore paths.
 6. [ ] Test/implement five-client DHCP and transactional address-mode controls in `demo/`; run real identity, history, collision, outage and rollback matrix; keep `lab/dhcp/` independent.
+   - [x] 6a: Offline DHCP move preflight planner checks all five reservations and observations, pool membership and collisions; it does not change live state or prove foreign-device absence.
+   - [ ] 6b: Implement durable recovery, verified host/VM membership, execution and rollback before exposing a DHCP move; adapt lifecycle controls to changed reservations.
+   - [ ] 6c: Implement DHCP/static transactions and run the permitted live matrix with recovery and identity proof.
 7. [ ] With owner-supplied Windows, prepare NCPA privately, snapshot/register/probe metrics, replace win-slot and repeat all-15 validation; document Windows instructions in `demo/`.
    - [x] 7a (user-requested preparation): Installed Windows 10 Home image 1 in exact-owned `pinpoint-defense-win01`, 3072 MiB/2 CPUs/40 GiB dynamic disk, internal NIC only, `10.77.1.3/27`, no default gateway. Actual guest OS/Guest Additions verified; powered-off `windows-installed` snapshot retained. Sanitized report and `demo/WINDOWS_READY.md` written; private credentials/evidence outside Git. Activation/license acceptance stays pending.
    - [ ] 7b: Local NCPA install/API/snapshot complete (below); still prove appliance-to-Windows manual registration, metric and all-fifteen acceptance on the completed network. A paid license or suitable evaluation must satisfy the final license requirement; Home testing installation alone cannot tick FC5.
@@ -123,11 +126,13 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 | Pinpoint web failure and recovery | Owner reported web03 HTTP initially OK and Windows NCPA checks all OK; faulted and restored web03. | Presenter break/fix, systemd user restoration timer, owner-observed Pinpoint check | First attempt observed host ping (expected to remain up) and automatic restore. Second attempt: owner reported HTTP CRITICAL while stopped and OK after manual restoration; backup timer cancelled. Notification display and exact timing not observed. |
 
+| DHCP move planner | Added an offline-only planning function for all-five-client reservation and address validation. | `python3 -I demo/defense/test_dhcp_move.py` | Three focused tests pass; no live mutation, presenter integration, foreign-device proof or rollback exists. |
+
 ## State for the next session
 
-- Last check run: owner reported web03 HTTP check OK, CRITICAL after `demo/demo presenter break web03 http`, and OK after `presenter fix web03 http`; local restore verified and the backup timer cancelled. Owner also reported Windows NCPA checks all OK, all fifteen demo addresses visible, and Windows memory 47.5944%, CPU 0.0853%, disk 45.6%. See `docs/test-runs/2026-10-27-issue-274-pinpoint-web-alert/REPORT.md`. `scripts/verify.sh docs` passed.
-- Current live state: Windows, 14 Linux host-pilot containers and Pinpoint-Final run on `vboxnet1`. The original demo service was restored after both fault attempts. The owner reported Windows NCPA checks OK with memory 47.5944%, CPU 0.0853%, disk 45.6%, all fifteen demo addresses visible, and web03 HTTP CRITICAL then OK; individual UI rows, notification display and exact timing were not independently observed. Docker daemon restart recovery and appliance post-reboot ping were observed; laptop reboot, DHCP address transitions, full rehearsals and remaining acceptance are open.
-- Next action (one specific step, not "continue"): Continue the remaining DHCP address transitions and full rehearsals, and retain owner-reported inventory and Windows metric as such; use only ping for connectivity checks.
+- Last check run: `python3 -I demo/defense/test_dhcp_move.py` (3 passed). The owner reported all fifteen demo addresses, Windows memory 47.5944%, CPU 0.0853%, disk 45.6%, and web03 HTTP CRITICAL then OK; see `docs/test-runs/2026-10-27-issue-274-pinpoint-web-alert/REPORT.md`. `scripts/verify.sh docs` passed.
+- Current live state: Windows, 14 host-pilot containers and Pinpoint-Final run on `vboxnet1`, with web03 restored. The new DHCP move planner is offline only; no device address changed. Owner-reported inventory and metric are not independently observed. Laptop reboot, address transitions, full rehearsals and complete issue acceptance remain open.
+- Next action (one specific step, not "continue"): Implement and test durable recovery intent, exact host/VM network membership checks and rollback for DHCP moves before allowing any live address change; then adapt presenter lifecycle to saved reservations.
 
 ## Decisions and notes
 
