@@ -73,3 +73,8 @@ python3 -I demo/defense/test_guest.py
 python3 -I demo/defense/test_provision.py
 scripts/verify.sh docs
 ```
+
+A preparation stopped in `created` may resume only media generation with
+`--resume-media` (preview) and `--resume-media --apply`. This checks the saved
+UUID/owner/MACs, powered-off process/endpoint boundary, exact disk and empty DVD;
+it never recreates storage. `media-ready` means installation has not started.

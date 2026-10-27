@@ -10,7 +10,7 @@ import tempfile
 from types import SimpleNamespace
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from defense.provision import install_commands, autoinstall_template, postinstall_template, ssh_arguments, creation_commands, prepare, validate_iso_detection
+from defense.provision import install_commands, autoinstall_template, postinstall_template, ssh_arguments, creation_commands, prepare, validate_iso_detection, validate_media_resume
 from defense import bootstrap, controller
 
 UUID='351eb491-f5e1-4854-a7e4-68309ad774ad'
@@ -52,6 +52,15 @@ class ProvisionTests(unittest.TestCase):
         self.assertIn("python3 /root/pinpoint-defense-bootstrap.py <<'PINPOINT_PRIVATE_INPUT'",text)
         self.assertNotIn('set -x',text)
         self.assertIn(json.dumps(payload,separators=(',',':')),text)
+
+    def test_media_resume_refuses_wrong_phase_or_foreign_disk(self):
+        root=Path('/private/defense');disk=str(root/'vm/pinpoint-defense-targets/pinpoint-defense-targets.vdi')
+        state={'phase':'created','iso':'/media/ubuntu.iso'}
+        data={'SATA-0-0':disk,'IDE-1-0':'emptydrive'}
+        validate_media_resume(state,data,root,Path('/media/ubuntu.iso'))
+        with self.assertRaises(ValueError):validate_media_resume(dict(state,phase='installing'),data,root,Path('/media/ubuntu.iso'))
+        with self.assertRaises(ValueError):validate_media_resume(state,dict(data,**{'SATA-0-0':'/foreign/disk.vdi'}),root,Path('/media/ubuntu.iso'))
+        with self.assertRaises(ValueError):validate_media_resume(state,dict(data,**{'IDE-1-0':'/foreign/media.iso'}),root,Path('/media/ubuntu.iso'))
 
     def test_creation_preserves_old_vms_and_has_only_exact_loopback_management(self):
         commands=creation_commands(UUID,'b'*48,Path('/private/defense'),['02:77:01:ff:01:01','02:77:01:ff:01:02'])

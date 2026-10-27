@@ -159,7 +159,7 @@ def prepare(iso: Path, *, apply=False) -> dict:
     sys.path.insert(0,str(repo/'demo'))
     import qa_control
     import vmlab_preflight
-    from defense.controller import Collector,STATE_ROOT,WINDOWS_ROOT,network_inventory,allocated_mib,parse_info,vm_record,OWNER_KEY
+    from defense.controller import Collector,STATE_ROOT,WINDOWS_ROOT,network_inventory,allocated_mib,parse_info,vm_record,OWNER_KEY,observed_info
     from defense.catalog import load_catalog
     from defense.preflight import reject_overlaps,reject_virtualbox_dhcp,check_resources,validate_vm,validate_vm_macs
     from defense.node import atomic,private_directory
@@ -174,7 +174,7 @@ def prepare(iso: Path, *, apply=False) -> dict:
         for line in collector.vbox('list','vms').splitlines():
             match=re.search(r'\{([a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12})\}$',line)
             if not match:raise ValueError('VM inventory is incomplete')
-            record=vm_record(parse_info(collector.vbox('showvminfo',match[1],'--machinereadable')),None)
+            record=vm_record(observed_info(collector,match[1]),None)
             if record['name']=='pinpoint-defense-targets':raise ValueError('Target-host name already belongs to an existing VM')
             if record['state']!='poweroff':raise ValueError('All VMs must be off before fresh target-host preparation')
             if any(n['network']=='pinpoint-defense' for n in record['nics']) and record['name']!='pinpoint-defense-win01':
@@ -233,15 +233,71 @@ def prepare(iso: Path, *, apply=False) -> dict:
         atomic(root/'postinstall.sh',postinstall_template(payload))
         for argv in creation_commands(identifier,owner,root,macs):execute(argv)
         state['phase']='created';atomic(root/'state.json',json.dumps(state)+'\n')
-        data=parse_info(Collector().vbox('showvminfo',identifier,'--machinereadable'))
+        data=observed_info(Collector(),identifier)
         actual_owner=Collector().vbox('getextradata',identifier,OWNER_KEY).strip()
         validate_vm(vm_record(data,actual_owner[7:] if actual_owner.startswith('Value: ') else None),'target_host',identifier,owner,macs)
         for argv in install_commands(identifier,root,iso):execute(argv)
-        data=parse_info(Collector().vbox('showvminfo',identifier,'--machinereadable'))
+        data=observed_info(Collector(),identifier)
         actual_owner=Collector().vbox('getextradata',identifier,OWNER_KEY).strip()
         validate_vm(vm_record(data,actual_owner[7:] if actual_owner.startswith('Value: ') else None),'target_host',identifier,owner,macs)
         state['phase']='media-ready';atomic(root/'state.json',json.dumps(state)+'\n')
         return dict(summary,applied=True,uuid=identifier,phase='media-ready')
+
+
+def validate_media_resume(state: dict,data: dict,root: Path,iso: Path) -> None:
+    """Resume only a never-booted creation phase with its exact disk and empty DVD."""
+    disk=str(root/'vm/pinpoint-defense-targets/pinpoint-defense-targets.vdi')
+    if state.get('phase')!='created' or state.get('iso')!=str(iso):
+        raise ValueError('Media resumption requires the exact created phase and original ISO')
+    if data.get('SATA-0-0')!=disk or data.get('IDE-1-0')!='emptydrive':
+        raise ValueError('Prepared storage differs from the original owned layout')
+    for key,value in data.items():
+        if re.fullmatch(r'(?:SATA|IDE)-[0-9]+-[0-9]+',key) and value not in {disk,'emptydrive','none'}:
+            raise ValueError('Unexpected attached installation medium')
+
+
+def resume_media(iso: Path,*,apply=False) -> dict:
+    """Resume exact private creation state without recreating or starting any VM."""
+    import os
+    import sys
+    import stat
+    repo=Path(__file__).resolve().parents[2]
+    sys.path.insert(0,str(repo/'scripts'));sys.path.insert(0,str(repo/'demo'))
+    import qa_control
+    import vmlab_preflight
+    from defense.controller import Collector,STATE_ROOT,OWNER_KEY,observed_info,vm_record
+    from defense.preflight import read_private_json,validate_vm,validate_runtime
+    from defense.node import atomic
+    root=STATE_ROOT/'target-host'
+    with qa_control.claim():
+        state=read_private_json(root/'state.json')
+        collector=Collector();data=observed_info(collector,state['uuid'])
+        owner=collector.vbox('getextradata',state['uuid'],OWNER_KEY).strip()
+        record=vm_record(data,owner[7:] if owner.startswith('Value: ') else None)
+        validate_vm(record,'target_host',state['uuid'],state['owner'],state['macs'])
+        if record['state']!='poweroff':raise ValueError('Media preparation requires the owned VM powered off')
+        managers,processes=vmlab_preflight.inventory()
+        validate_runtime(record,managers,[dict(p,pid=pid) for pid,p in processes.items()],vmlab_preflight.tcp_listeners([2260]),{})
+        if processes:raise ValueError('Other VM processes prevent media resumption')
+        validate_media_resume(state,data,root,iso)
+        if iso.is_symlink() or not iso.is_file():raise ValueError('Original regular ISO is unavailable')
+        detect_ubuntu(iso)
+        result={'uuid':state['uuid'],'phase':state['phase'],'applied':False,'booted':False}
+        if not apply:return result
+        for name in ['login-password','autoinstall.yaml','postinstall.sh','host-key','management-key']:
+            info=(root/name).lstat()
+            if not stat.S_ISREG(info.st_mode) or info.st_uid!=os.getuid() or info.st_nlink!=1 or info.st_mode&0o077:
+                raise ValueError('Unsafe private installation input')
+        os.umask(0o077)
+        for argv in install_commands(state['uuid'],root,iso):
+            with (root/'prepare.log').open('ab') as output:
+                completed=subprocess.run(argv,stdin=subprocess.DEVNULL,stdout=output,stderr=output,timeout=120)
+            if completed.returncode:raise ValueError('Private media preparation failed')
+        data=observed_info(Collector(),state['uuid'])
+        owner=Collector().vbox('getextradata',state['uuid'],OWNER_KEY).strip()
+        validate_vm(vm_record(data,owner[7:] if owner.startswith('Value: ') else None),'target_host',state['uuid'],state['owner'],state['macs'])
+        state['phase']='media-ready';atomic(root/'state.json',json.dumps(state)+'\n')
+        return dict(result,phase='media-ready',applied=True)
 
 
 def main(argv=None):
@@ -251,9 +307,11 @@ def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--iso',type=Path,required=True)
     parser.add_argument('--apply',action='store_true')
+    parser.add_argument('--resume-media',action='store_true')
     args=parser.parse_args(argv)
     try:
-        print(json.dumps(prepare(args.iso,apply=args.apply),indent=2))
+        operation=resume_media if args.resume_media else prepare
+        print(json.dumps(operation(args.iso,apply=args.apply),indent=2))
         return 0
     except (OSError,ValueError,TypeError,KeyError,subprocess.SubprocessError):
         print('Target-host preparation refused or failed; inspect host gates and private state.',file=sys.stderr)

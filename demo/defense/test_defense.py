@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from defense.catalog import load_catalog, parse_catalog, listener_request, render_dnsmasq
 from defense.preflight import check_resources, reject_overlaps, validate_vm, validate_runtime, read_private_json
 from defense.preflight import validate_vm_macs
-from defense.controller import main
+from defense.controller import main, merge_nic_policies, vm_record
 
 
 class CatalogTests(unittest.TestCase):
@@ -189,6 +189,17 @@ class PreflightTests(unittest.TestCase):
             self.assertEqual(main(['preflight','--json']),1)
         self.assertNotIn('SENTINEL_PRIVATE_AUTH',output.getvalue())
         self.assertIn('unsafe/incomplete',output.getvalue())
+
+
+class VBoxMetadataTests(unittest.TestCase):
+    def test_machine_metadata_cannot_silently_default_promiscuous_policy(self):
+        data={'name':'fixture','UUID':'fixture','nic1':'nat','macaddress1':'027701fe0101','nic2':'intnet','macaddress2':'027701fe0102','intnet2':'pinpoint-defense'}
+        with self.assertRaises(ValueError):vm_record(data,None)
+        details='NIC 1: MAC: 027701FE0101, Attachment: NAT, Promisc Policy: deny, Bandwidth group: none\nNIC 2: MAC: 027701FE0102, Attachment: Internal Network, Promisc Policy: allow-vms, Bandwidth group: none\n'+''.join(f'NIC {i}: disabled\n' for i in range(3,9))
+        merged=merge_nic_policies(data,details)
+        self.assertEqual(vm_record(merged,None)['nics'][1]['promiscuous'],'allow-vms')
+        for bad in [details.replace('allow-vms','unknown'),details.replace('027701FE0102','027701FE9999'),details+'NIC 2: disabled\n',details.replace('NIC 1:','UNREADABLE 1:')]:
+            with self.assertRaises(ValueError):merge_nic_policies(data,bad)
 
 
 if __name__=='__main__':unittest.main()

@@ -40,7 +40,7 @@ class Collector:
         if remaining <= 0:
             raise ValueError('Host observation deadline exceeded')
         try:
-            result = subprocess.run(argv,capture_output=True,text=True,timeout=min(20,remaining))
+            result = subprocess.run(argv,capture_output=True,text=True,timeout=min(20,remaining),env=dict(os.environ,LC_ALL='C'))
             if result.returncode:
                 raise ValueError('Required host observation failed')
             return result.stdout
@@ -58,6 +58,30 @@ def parse_info(text: str) -> dict:
             for k,v in [line.split('=',1)]}
 
 
+def merge_nic_policies(data: dict,details: str) -> dict:
+    """Cross-check detailed NIC rows because VBox machine output omits this policy."""
+    result=dict(data)
+    for number in range(1,9):
+        rows=re.findall(r'^NIC '+str(number)+r':\s*(.*)$',details,re.M)
+        if len(rows)!=1:raise ValueError('Detailed NIC inventory missing or duplicated')
+        row=rows[0]
+        if data.get(f'nic{number}','none')=='none':
+            if row!='disabled':raise ValueError('NIC enabled state disagrees across observations')
+            continue
+        match=re.search(r'MAC: ([A-Fa-f0-9]{12}),',row)
+        policy=re.search(r'Promisc Policy: (deny|allow-vms|allow-all),',row)
+        if not match or match[1].lower()!=data.get(f'macaddress{number}','').lower() or not policy:
+            raise ValueError('Detailed NIC identity or policy unavailable')
+        result[f'nicpromisc{number}']=policy[1]
+    return result
+
+
+def observed_info(collector,identifier: str) -> dict:
+    """Read both bounded VBox views; no unobserved NIC policy receives a default."""
+    data=parse_info(collector.vbox('showvminfo',identifier,'--machinereadable'))
+    return merge_nic_policies(data,collector.vbox('showvminfo',identifier))
+
+
 def vm_record(data: dict, owner: str | None) -> dict:
     """Keep only nonsecret NIC/management identity fields needed by the gates."""
     nics = []
@@ -68,9 +92,11 @@ def vm_record(data: dict, owner: str | None) -> dict:
         raw = data.get(f'macaddress{i}','').lower()
         if not re.fullmatch(r'[a-f0-9]{12}',raw):
             raise ValueError('VM MAC inventory unavailable')
+        if data.get(f'nicpromisc{i}') not in {'deny','allow-vms','allow-all'}:
+            raise ValueError('VM promiscuous policy was not observed')
         nics.append({'slot':i,'type':kind,'network':data.get(f'intnet{i}','') if kind=='intnet' else '',
                      'mac':':'.join(raw[n:n+2] for n in range(0,12,2)),
-                     'promiscuous':data.get(f'nicpromisc{i}','deny')})
+                     'promiscuous':data[f'nicpromisc{i}']})
     forwards = []
     for key,value in data.items():
         if key.startswith('Forwarding('):
@@ -159,7 +185,7 @@ def collect_preflight(catalog) -> dict:
         if not match:
             raise ValueError('VirtualBox inventory is malformed')
         identifier = match[1]
-        data = parse_info(collector.vbox('showvminfo',identifier,'--machinereadable'))
+        data = observed_info(collector,identifier)
         role = next((r for r,n in VM_NAMES.items() if n==data.get('name')),None)
         owner = None
         if role:
@@ -193,7 +219,7 @@ def collect_preflight(catalog) -> dict:
             if record['state']=='running' and FORWARDS[role]:
                 forwards = vmlab_preflight.nat_forwards(collector.vbox('debugvm',record['uuid'],'info','nat0'))
             validate_runtime(record,managers,[dict(p,pid=pid) for pid,p in processes.items()],listeners,forwards)
-            after = vm_record(parse_info(collector.vbox('showvminfo',record['uuid'],'--machinereadable')),record['owner'])
+            after = vm_record(observed_info(collector,record['uuid']),record['owner'])
             if after != record:
                 raise ValueError('VM configuration changed during observation')
         except ValueError as error:
