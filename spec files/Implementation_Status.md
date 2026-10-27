@@ -16,8 +16,9 @@ Individual static and DHCP container restarts and service listener stop/restore
 were also tested. User-initiated Docker daemon restart and presenter recovery
 passed with Windows ping to all fourteen. Host reboot, original data migration,
 address transitions and appliance acceptance remain unverified. Offline DHCP
-move planning and private recovery-intent validation exist, but no presenter
-address-move or DHCP/static execution is delivered. See the [pilot report](../docs/test-runs/2026-10-27-issue-274-host-presenter/REPORT.md).
+move planning, private recovery-intent validation, and supplied VirtualBox
+membership validation exist, but no presenter address-move or DHCP/static
+execution is delivered. See the [pilot report](../docs/test-runs/2026-10-27-issue-274-host-presenter/REPORT.md).
 The following paragraphs describe earlier preparation and its historical state.
 
 The [defense demo plan](../docs/plans/Defense_Demo_Lab_Plan.md) records the

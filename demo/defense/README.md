@@ -60,8 +60,10 @@ implement changing reservations or DHCP-to-static transitions. An offline-only
 `dhcp_move.py` planner validates a candidate against all five current
 reservations and observations; it performs no live mutation and is not yet
 wired to the presenter. An offline `dhcp_journal.py` component can record private recovery intent
-and validates its phase and pinned container IDs, but is not connected to
-live execution. Foreign-device checks, actual recovery and rollback are still
+and validates its phase and pinned container IDs. The offline `host_members.py`
+validator checks supplied VirtualBox observations against two pinned VMs; it
+does not collect live observations or account for other network namespaces.
+Neither component is connected to live execution. Foreign-device checks, actual recovery and rollback are still
 required before any address transition can run.
 
 ## Earlier target-host design and historical results
