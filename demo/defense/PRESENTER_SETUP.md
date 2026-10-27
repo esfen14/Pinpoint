@@ -56,8 +56,9 @@ This disables **cloud-init network configuration for the whole guest**; the
 existing netplan files still configure both adapters, including NAT. Future
 cloud-init network updates will no longer apply automatically. Keep the backup
 outside `/etc/netplan` so netplan does not load it as another configuration.
-After saving your work, perform a normal guest reboot and verify with
-`ip -br -4 address` and the two pings above; persistence is not yet verified.
+The owner confirmed this setting and a normal guest reboot; Windows ping to
+`10.77.1.1` passed afterward. The guest file and interface were not
+independently inspected.
 Leave adapter 1 and its NAT forwarding rules unchanged. Do not select a
 physical or Wi-Fi adapter.
 
@@ -97,7 +98,7 @@ owner confirmed Windows appeared in this manual registration picker and later
 reported adding it to Pinpoint; it need not appear in the automatic deployment
 eligibility list. Registration status and an actual metric have not yet been
 independently verified. The appliance address answered ping after a VM start,
-but the cloud-init persistence setting remains unconfirmed.
+and the owner confirmed the cloud-init setting and reboot.
 The picker requires an existing discovered device; if Windows is not listed,
 registration must wait until the appliance is connected and the approved
 Pinpoint discovery step is completed. Registration itself contacts NCPA and is

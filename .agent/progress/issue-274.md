@@ -119,11 +119,13 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 | Windows registration follow-up | Owner reported adding Windows NCPA. Presenter status and Windows ping observed after VM restart. | Persistent presenter status; Windows ping to appliance .1 and web03 .4 | Owner-reported registration; direct status/metric and cloud-init persistence still need confirmation. Fourteen targets running and five leases present; both pings pass. |
 
+| Appliance IP after reboot | Owner confirmed setting cloud-init network-disable and rebooting; shared an Average Resource screenshot. | Windows ping to appliance .1; owner confirmation and screenshot | Ping passes after reported reboot; guest config not independently inspected. Screenshot shows memory 47.7%, CPU 0%, disk 45.6%, but does not identify the contributing device. |
+
 ## State for the next session
 
-- Last check run: persistent `demo/demo presenter status` showed 14 targets and five reserved leases; Windows ping to `10.77.1.1` and `10.77.1.4` passed. See `docs/test-runs/2026-10-27-issue-274-windows-registration-followup/REPORT.md`; `scripts/verify.sh docs` passed.
-- Current live state: Windows and 14 host-pilot containers run; Pinpoint-Final runs on `vboxnet1` and was started at 21:25 Asia/Manila. The owner reports Windows NCPA was added. Exact registration status and metric are not independently observed. The VM restarted and `.1` answers ping, but the owner has not confirmed cloud-init network-disable creation or whether `.1` persisted across that restart. The host laptop reboot and full Pinpoint monitoring/alert checks remain open.
-- Next action (one specific step, not "continue"): Obtain owner confirmation of Windows registration status/metric and whether the cloud-init setting was installed before reboot; then carry out the permitted appliance monitoring and service failure/recovery checks.
+- Last check run: Windows ping to appliance `10.77.1.1` passed after the owner confirmed creating cloud-init network-disable and rebooting. Owner supplied a Pinpoint Average Resource screenshot showing memory 47.7%, CPU 0%, disk 45.6%; device attribution is unconfirmed. See `docs/test-runs/2026-10-27-issue-274-appliance-ip-persistence/REPORT.md`; `scripts/verify.sh docs` passed.
+- Current live state: Windows, 14 host-pilot containers and Pinpoint-Final run on `vboxnet1`. Owner reports Windows NCPA registration and cloud-init setting plus reboot. Owner confirmation and post-reboot ping support appliance reachability; guest configuration was not independently inspected. Screenshot shows an aggregate resource card, not proof of a Windows-specific metric. Host laptop reboot, full inventory and actual Pinpoint alert/recovery checks remain open.
+- Next action (one specific step, not "continue"): Determine whether the shared resource card is Windows-specific and obtain a Windows metric observation; then conduct the Pinpoint service failure/recovery demonstration with the owner observing the UI.
 
 ## Decisions and notes
 
