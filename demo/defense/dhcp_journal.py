@@ -76,6 +76,42 @@ def read(root,catalog):
     return validate(catalog,read_private_json(Path(root)/NAME))
 
 
+def rollback_step(catalog,record,observed):
+    """Choose one offline rollback step from a freshly checked observation.
+
+    This function neither observes nor changes the lab. The future caller must
+    hold the lab claim, establish complete network membership, pin container and
+    process identities, and re-observe everything after each operation. The
+    returned verify step is not proof that rollback is complete.
+    """
+    validate(catalog,record)
+    if record['phase']!='rollback_requested':
+        raise ValueError('Rollback intent must be recorded first')
+    if not isinstance(observed,dict) or set(observed)!={'pins','reservations','addresses','server_running'}:
+        raise ValueError('Incomplete rollback observation')
+    if observed['pins']!=record['pins'] or observed['server_running'] is not True:
+        raise ValueError('Rollback identities or allocator changed')
+    plan=record['plan'];before=plan['before'];after=plan['after'];target=plan['target']
+    reservations=observed['reservations'];addresses=observed['addresses']
+    if not isinstance(reservations,dict) or reservations not in (before,after):
+        raise ValueError('Allocator reservations are ambiguous')
+    if not isinstance(addresses,dict) or set(addresses)!=set(before):
+        raise ValueError('Client address observation is incomplete')
+    for name,address in before.items():
+        if name!=target and addresses[name]!=[address]:
+            raise ValueError('Another client address changed')
+    current=addresses[target]
+    if current not in ([],[before[target]],[after[target]]):
+        raise ValueError('Target address is ambiguous')
+    if current and (current!=[before[target]] or reservations!=before):
+        return 'release'
+    if reservations!=before:
+        return 'restore_reservations'
+    if not current:
+        return 'acquire_original'
+    return 'verify_baseline'
+
+
 def advance(root,catalog,phase):
     """Record only a valid next phase, using atomic durable replacement."""
     record=read(root,catalog)

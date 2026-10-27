@@ -60,7 +60,10 @@ implement changing reservations or DHCP-to-static transitions. An offline-only
 `dhcp_move.py` planner validates a candidate against all five current
 reservations and observations; it performs no live mutation and is not yet
 wired to the presenter. An offline `dhcp_journal.py` component can record private recovery intent
-and validates its phase and pinned container IDs. The updated presenter refuses
+and validates its phase and pinned container IDs. An offline rollback decision
+function selects one step from supplied observations and refuses ambiguous
+client or allocator state; it does not collect observations, execute commands,
+or establish that recovery succeeded. The updated presenter refuses
 all modifying commands while any entry named `dhcp-move.json` exists in the
 private host-Docker directory; status remains available. The journal writer and
 presenter must both hold the same lab claim. This guard is not a recovery
