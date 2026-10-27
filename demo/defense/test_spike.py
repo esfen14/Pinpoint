@@ -7,7 +7,7 @@ import sys
 import tempfile
 from types import SimpleNamespace
 import unittest
-from unittest.mock import patch
+from unittest.mock import ANY,patch
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from defense import bootstrap,guest
@@ -109,16 +109,27 @@ class SpikeTests(unittest.TestCase):
             self.assertNotIn(['docker','rm','-f','foreign'], [c.args[0] for c in run.call_args_list])
             self.assertNotIn(['/usr/bin/python3','/opt/pinpoint-defense/bootstrap.py','build'], [c.args[0] for c in run.call_args_list])
 
+    def test_reset_spike_rebuilds_safely_when_no_container_objects_exist(self):
+        labels={'org.pinpoint.defense.issue':'274','org.pinpoint.defense.source':'c'*64}
+        def execute(argv,**kwargs):
+            if argv==['docker','image','inspect',IMAGE]:return SimpleNamespace(stdout=json.dumps([{'Config':{'Labels':labels}}]))
+            return SimpleNamespace(stdout='')
+        with patch.object(guest,'atomic'),patch.object(guest,'owned_context',return_value=CONTEXT),patch.object(guest,'management_observation'),patch.object(guest,'read_private_json',return_value={'image':IMAGE}),patch.object(guest,'command',side_effect=execute) as run:
+            result=guest.reset_spike()
+            self.assertEqual(result['containers_removed'],0)
+            self.assertIn(['/usr/bin/python3','/opt/pinpoint-defense/bootstrap.py','build'],[c.args[0] for c in run.call_args_list])
+            self.assertNotIn(['docker','rm','-f',ANY], [c.args[0] for c in run.call_args_list])
+
     def test_reset_status_exposes_only_a_fixed_failure_stage(self):
         with tempfile.TemporaryDirectory() as folder:
             root=Path(folder)
-            with patch.object(guest,'ROOT',root),patch.object(guest,'read_private_json',return_value={'version':1,'stage':'build','result':'failed'}):
-                self.assertEqual(guest.reset_status(),{'stage':'build','result':'failed'})
+            with patch.object(guest,'ROOT',root),patch.object(guest,'read_private_json',return_value={'version':1,'stage':'containers','result':'unexpected-multiple'}):
+                self.assertEqual(guest.reset_status(),{'stage':'containers','result':'unexpected-multiple'})
             with patch.object(guest,'ROOT',root),patch.object(guest,'read_private_json',return_value={'version':1,'stage':'/secret','result':'failed'}):
                 with self.assertRaises(ValueError):guest.reset_status()
 
     def test_checked_node_dispatch_uses_container_id_and_json_stdin_only(self):
-        result={'target':'dynweb01','network_safe':True,'network_reason':None,'addresses':['10.77.1.20'],'mac':CATALOG.target('dynweb01').mac,'client_id':CATALOG.target('dynweb01').client_id,'listeners':[],'services':[]}
+        result={'target':'dynweb01','network_safe':True,'network_reason':None,'interfaces':['eth0','lo'],'observed_mac':CATALOG.target('dynweb01').mac,'addresses':['10.77.1.20'],'mac':CATALOG.target('dynweb01').mac,'client_id':CATALOG.target('dynweb01').client_id,'listeners':[],'services':[]}
         with patch.object(guest,'observe_container',return_value=fixture()),patch.object(guest,'trusted_image',return_value={}),patch.object(guest,'command',return_value=SimpleNamespace(stdout=json.dumps(result))) as run:
             self.assertEqual(guest.node_request(CATALOG,CONTEXT,IMAGE,'dynweb01',{'operation':'inspect'}),result)
             args=run.call_args.args[0]
@@ -132,14 +143,17 @@ class SpikeTests(unittest.TestCase):
             result=__import__('defense.node',fromlist=['inspection']).inspection(CATALOG,device)
         self.assertFalse(result['network_safe'])
         self.assertEqual(result['network_reason'],'address')
+        self.assertEqual(result['interfaces'],['eth0','lo'])
+        self.assertEqual(result['observed_mac'],device.mac)
         self.assertNotIn('secret',json.dumps(result))
 
     def test_node_network_reason_never_exposes_link_data(self):
         node=__import__('defense.node',fromlist=['network_reason'])
         device=CATALOG.target('dynweb01')
         for links,routes,expected in [([{'ifname':'lo'}],[],'interfaces'),([{'ifname':'lo'},{'ifname':'eth0','address':'02:00:00:00:00:01','addr_info':[]}],[],'mac'),([{'ifname':'lo'},{'ifname':'eth0','address':device.mac,'addr_info':[]}],[{'dst':'default'}],'default-route')]:
-            with patch('defense.node.command',side_effect=[SimpleNamespace(stdout=json.dumps(links)),SimpleNamespace(stdout=json.dumps(routes))]):
+            with patch('defense.node.command',side_effect=[SimpleNamespace(stdout=json.dumps(links)),SimpleNamespace(stdout=json.dumps(routes))]) as run:
                 self.assertEqual(node.network_reason(CATALOG,device),expected)
+                self.assertEqual(run.call_args_list[0].args[0],['ip','-j','addr','show'])
 
     def test_node_protocol_refuses_shell_unknown_target_and_unowned_runtime_before_exec(self):
         with patch.object(guest,'observe_container') as observe,patch.object(guest,'command') as run:

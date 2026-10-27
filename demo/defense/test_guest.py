@@ -9,7 +9,7 @@ from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from defense.catalog import load_catalog
 from defense.compose import compose_document
-from defense.guest import validate_parent, validate_container, attach, validate_spike_target
+from defense.guest import validate_parent, validate_container, attach, validate_spike_target, validate_linux_target
 
 CATALOG=load_catalog()
 OWNER='b'*48
@@ -67,6 +67,13 @@ class GuestTests(unittest.TestCase):
         validate_spike_target(CATALOG,'dhcp01');validate_spike_target(CATALOG,'dynweb01')
         for target in ['web03','win01','../foreign']:
             with self.assertRaises(ValueError):validate_spike_target(CATALOG,target)
+
+    def test_full_lab_accepts_catalog_linux_targets_and_rejects_windows(self):
+        full=compose_document(CATALOG,IMAGE,OWNER,spike=False)
+        self.assertEqual(len(full['services']),14)
+        for target in full['services']:
+            validate_linux_target(CATALOG,target)
+        with self.assertRaises(ValueError):validate_linux_target(CATALOG,'win01')
 
     def test_foreign_container_is_rejected_before_link_mutation(self):
         observed=fixture();observed['Image']='sha256:'+'d'*64

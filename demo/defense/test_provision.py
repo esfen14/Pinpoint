@@ -159,16 +159,17 @@ class ProvisionTests(unittest.TestCase):
 
     def test_maintenance_boot_uses_only_stock_iso_and_never_reinstalls_or_replaces_disk(self):
         root=Path('/private/defense')
-        state={'phase':'installed-needs-forwarding-guard','uuid':UUID,'iso':'/media/ubuntu.iso'}
         data={'VMState':'poweroff','memory':'2048','SATA-0-0':str(root/'vm/pinpoint-defense-targets/pinpoint-defense-targets.vdi'),'IDE-0-0':'emptydrive','IDE-1-0':'emptydrive'}
-        commands=maintenance_boot_plan(state,data,root)
-        self.assertEqual(commands[-1],['VBoxManage','startvm',UUID,'--type','headless'])
-        self.assertNotIn('unattended',json.dumps(commands))
-        self.assertNotIn('createmedium',json.dumps(commands))
-        self.assertNotIn('Unattended-',json.dumps(commands))
-        self.assertEqual(sum('/media/ubuntu.iso' in c for c in commands),1)
-        for altered in [dict(data,VMState='running'),dict(data,**{'SATA-0-0':'/foreign.vdi'}),dict(data,**{'IDE-1-0':'/private/Unattended.iso'})]:
-            with self.assertRaises(ValueError):maintenance_boot_plan(state,altered,root)
+        for phase in ['installed-needs-forwarding-guard','maintenance-live-boot','hardened-boot-unverified']:
+            state={'phase':phase,'uuid':UUID,'iso':'/media/ubuntu.iso'}
+            commands=maintenance_boot_plan(state,data,root)
+            self.assertEqual(commands[-1],['VBoxManage','startvm',UUID,'--type','headless'])
+            self.assertNotIn('unattended',json.dumps(commands))
+            self.assertNotIn('createmedium',json.dumps(commands))
+            self.assertNotIn('Unattended-',json.dumps(commands))
+            self.assertEqual(sum('/media/ubuntu.iso' in c for c in commands),1)
+            for altered in [dict(data,VMState='running'),dict(data,**{'SATA-0-0':'/foreign.vdi'}),dict(data,**{'IDE-1-0':'/private/Unattended.iso'})]:
+                with self.assertRaises(ValueError):maintenance_boot_plan(state,altered,root)
         with self.assertRaises(ValueError):maintenance_boot_plan(dict(state,phase='installing'),data,root)
 
     def test_hardened_boot_requires_the_maintained_snapshot_and_no_attached_media(self):

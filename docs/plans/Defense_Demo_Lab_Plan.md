@@ -1,6 +1,6 @@
 # One defense demo lab (#274)
 
-Status: **implementation authorized by the owner's continuation; isolation spike pending**.
+Status: **implementation authorized; isolated container lifecycle passes, but ping reachability is not established**.
 Tracking: [#274](https://github.com/esfen14/Pinpoint/issues/274).
 Read-only inventory: [2026-10-27 report](../test-runs/2026-10-27-issue-274-defense-inventory/REPORT.md).
 This plan is not a delivered lab or a passed architecture spike. No new scan
@@ -9,6 +9,21 @@ range is authorized by this document. Existing supported commands remain in the
 The user-requested [Windows preparation](../../demo/WINDOWS_READY.md) is installed
 and locally agent-verified; the shared controller/target-host and product
 acceptance are still pending.
+
+## Current live checkpoint (2026-10-27)
+
+The exact target-host passed its forwarding and ownership guard. All fourteen
+catalog Linux containers were attached with their pinned MACs; baseline
+daemons and five reserved DHCP clients were started through the fixed node
+controls. The initial two-target DHCP exchange also succeeded. For the
+requested third-stage connectivity check, Windows `ping` was the only network
+test run: Windows replied to its own `.3` address, while all fourteen Linux
+target addresses timed out. Changing the target VM's internal NIC from
+`allow-vms` to `allow-all` did not change the ping result, so the NIC was
+restored to `allow-vms`. No appliance scan, service probe, or product discovery
+was run. The container lifecycle is ready for another bounded ping-only attempt
+after the VirtualBox/macvlan reachability path is resolved; this does not pass
+the appliance or fifteen-device acceptance gate.
 
 ## Transition and recovery
 

@@ -1,7 +1,7 @@
 # Issue #274: One isolated 15-device defense demo lab
 
 Branch: `issue-274-defense-demo`
-Status: blocked
+Status: in-progress
 
 ## Finish condition
 
@@ -79,6 +79,10 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 | Linux session 5 | Test first: added installer/disk-boot, UUID-byte-order, offline-systemd, noninteractive-package and host-key preservation regressions. Installed exact VM, recovered setup without replacing disk, built image, restored original SSH key after strict refusal, verified pinned SSH and unnumbered NIC. Reboot exposed Docker IPv4 forwarding; attachment remains refused. Shut down and snapshot; owner restored KVM | 49 offline defense tests; actual VM/SSH/guest observations and stock-ISO recovery; scripts/verify.sh docs | docs gate green; pinned SSH/build preparation observed. IPv4 forwarding 1 after reboot and remaining lxd group block activation. All VMs off, media detached, installed-needs-forwarding-guard snapshot retained; no targets/DHCP/scans. Fifth round reached; stop loop per workflow |
 
+| Live spike correction and completion | Resumed from the saved spike state. Fixed the interface JSON query that omitted MACs, safely rebuilt the pinned image, attached the exact two isolated targets, and started only the DHCP server/client needed for the internal reservation and lease exchange. Both devices reported their catalog MACs; dynweb01 acquired 10.77.1.20. The appliance was not involved and no scan was run. | `test_spike.py`, `test_guest.py`, `test_provision.py`, `test_runtime.py`; actual target helper results, private DHCP reservation/lease record and node inspection | Two-device internal DHCP exchange passed. No appliance-discovery or product acceptance claimed. |
+| Full Linux catalog and stage 2 | Added guarded `lab-up` for fourteen catalog Linux containers, resource checks, exact-set validation and attachment checks. Applied the source through the pinned stock-ISO maintenance path; started all fourteen targets, baseline daemons and five reserved DHCP clients. The two-target DHCP exchange also passed. | `test_guest.py` (6), `test_spike.py` (16), `test_provision.py` (18), `test_runtime.py` (13), `scripts/verify.sh docs`; strict SSH host-status; actual fixed guest operations | Offline checks and guarded Linux lifecycle passed. Containers retain their pinned catalog MACs and separate volumes; no appliance discovery or service probe was used. |
+| Stage 3 ping-only reachability | Used Windows `ping` for all fifteen catalog addresses. Windows replied only to itself; all fourteen Linux targets timed out. A trial target-NIC `allow-all` setting did not improve results and was restored to `allow-vms`. | Windows guest-control execution of `C:\\Windows\\System32\\PING.EXE` against catalog addresses; repeat after the NIC trial | Ping-only gate failed: 1/15 replies (Windows self-address), 0/14 Linux target replies. No non-ping network test ran in this stage. Needs offline/topology correction before another ping-only attempt. |
+
 | Resumed hardening session | Read full saved progress/specifications and unchanged issue; clean worktree pulled; repeated last docs gate | scripts/verify.sh docs; gh issue view 274 --json title,body,comments,state | green: docs OK, 49 offline defense tests; issue open/no comments. Fresh available RAM 9585 MiB, disk 64626 MiB; KVM loaded. Continue authorized offline hardening before any live boot |
 
 | Hardening round 1 | Test first: reproduced missing forwarding/account guards; added Docker no-auto-forwarding settings, every-start reset/verification, post-cloud-init ready service, signal-safe build-only forwarding while exact demo parent is down, fixed UID/group/sudo validation and attachment privilege gate | python3 -I demo/defense/test_hardening.py; test_provision.py; test_guest.py; scripts/verify.sh docs | 59 defense tests and docs gate green. Offline only; installed VM is still off/unpatched, KVM loaded. No forwarding restart/reboot acceptance claimed |
@@ -89,10 +93,10 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh docs`
-- Result (first failing lines, or "green"): green: `verify: docs OK`, including 71 offline defense tests. Actual maintenance preview passed; no new live boot. Owner replied done to KVM release, not yet re-observed.
-- Hypothesis: The same installed disk can be updated safely through stock-ISO maintenance. Its current differencing disk now has a bounded validated chain back to the original private VDI; no disk replacement or reinstallation is needed.
-- Next action (one specific step, not "continue"): Recheck modules/ownership and run the tested maintenance boot with --apply; apply the prepared source to the mounted installed root, then disk boot and verify Docker restart/reboot before target activation.
+- Last check run (exact command): `python3 -I demo/defense/test_guest.py && python3 -I demo/defense/test_spike.py && python3 -I demo/defense/test_provision.py && python3 -I demo/defense/test_runtime.py && git diff --check`
+- Result (first failing lines, or "green"): green: 6 + 16 + 18 + 13 tests passed; whitespace check clean. Live `lab-up` started/attached fourteen targets, fixed node controls activated baseline daemons and five DHCP leases. Ping-only stage got 1/15 replies (Windows self), with all Linux target addresses timing out.
+- Hypothesis: The Linux container lifecycle and addressing are set, but VirtualBox/macvlan traffic between a VM and container MACs is not passing; the attempted `allow-all` policy did not change this. The planned NIC policy has been restored.
+- Next action (one specific step, not "continue"): Resolve the VirtualBox/macvlan L2 path from source/configuration evidence without running another non-ping network test, then rerun the connectivity stage with ping only.
 
 ## Decisions and notes
 

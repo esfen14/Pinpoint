@@ -1,7 +1,11 @@
 # Defense target runtime (issue #274, preparation)
 
-This directory is an unfinished guest runtime for the dedicated VirtualBox
-Linux target host. The first image build completed in the target-host VM; containers and appliance integration remain untested.
+This directory is the in-progress guest runtime for the dedicated VirtualBox
+Linux target host. The two-target DHCP exchange and all fourteen Linux
+containers, baseline services, and five DHCP leases have been prepared. The
+ping-only reachability pass from the Windows VM received a reply only from
+Windows itself; all fourteen Linux target pings timed out. Appliance discovery
+and product integration remain pending.
 The existing `lab/compose.yaml` is a separate five-target Docker lab.
 
 `compose.yaml` is a generated review artifact containing fourteen Linux targets.
@@ -29,9 +33,14 @@ passed in daemon arguments or committed here.
 `guest.py` checks the VirtualBox UUID, private root-owned context, unnumbered
 parent MAC, disabled forwarding, exact container ownership, pinned image,
 command, capabilities and bind mounts before attaching an explicit macvlan.
-It exposes only `dhcp01` and `dynweb01` for the two-MAC/DHCP architecture spike.
-It refuses a conflicting link rather than deleting it. An interrupted attachment
-requires inspection; automatic cleanup/recovery is not delivered yet.
+`spike-up` is limited to `dhcp01` and `dynweb01`; that pair has exchanged a real
+DHCP offer/lease on the isolated guest network. `lab-up` starts and attaches all
+fourteen Linux targets after memory/disk checks; fixed node operations start
+the catalog daemons and five reserved DHCP clients separately. Both paths refuse
+conflicting links rather than deleting them. An interrupted attachment requires
+inspection; automatic cleanup/recovery is not delivered yet. Windows pinged its
+own address, but no Linux target replied. A trial `allow-all` setting on the
+target VM NIC did not improve ping and was reverted to `allow-vms`.
 
 The host-facing `demo/demo` still exposes only read-only `manifest` and
 `preflight`. `provision.py` separately previews or prepares a fresh Ubuntu Server 24.04 VM
@@ -118,13 +127,18 @@ failures leave the NIC down. This is not yet applied/retested on the installed
 VM. Docker configuration behavior follows the
 [daemon reference](https://github.com/docker/cli/blob/master/docs/reference/dockerd.md).
 
-The private guest helper now has `spike-up`, `inspect TARGET`, `node TARGET`
-(JSON stdin), and `stop TARGET`, limited to dhcp01/dynweb01. Spike startup checks
-every existing container and the exact private Compose document, then creates
-only network-none containers and attaches their macvlans. It starts no protocol
-daemon or DHCP automatically on fresh containers. Explicit fixed node operations
-follow only after the host's isolation/capture gates. These guest operations are
-not yet wired to the presenter CLI or live-verified.
+The private guest helper has `spike-up`, `lab-up`, `inspect TARGET`,
+`node TARGET` (JSON stdin), and `stop TARGET`. Spike startup checks every
+existing container and the exact private Compose document, then creates only
+network-none containers and attaches their macvlans. `lab-up` extends that
+guarded lifecycle to the fourteen catalog Linux devices after guest resource
+checks. The live run started the catalog daemons and acquired five reserved
+DHCP leases. The ping-only Windows-to-target pass reached only Windows itself;
+all Linux target addresses timed out. The target VM NIC retains the planned
+`allow-vms` policy after a trial `allow-all` setting made no difference. The
+two-target DHCP exchange is live-verified; appliance discovery and product
+connectivity remain pending. Guest operations are not yet wired to the
+presenter CLI.
 
 Every boot checks the runtime source fingerprint and pinned image/source label;
 changed code rebuilds only when no containers exist, preserving identity/data

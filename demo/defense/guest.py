@@ -8,6 +8,7 @@ import re
 import stat
 import sys
 import time
+import shutil
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from defense.bootstrap import dmi_uuid_matches, management_observation, image_source_hash, owned_context, forwarding_values, build_parent
@@ -24,6 +25,12 @@ def validate_spike_target(catalog,target: str) -> None:
         raise ValueError('Only the two-target architecture spike is enabled')
 
 
+def validate_linux_target(catalog,target: str) -> None:
+    """Allow only catalog Linux services after the two-target proof is complete."""
+    device=catalog.target(target)
+    if device.kind!='linux':raise ValueError('Operation requires a catalog Linux target')
+
+
 def validate_parent(context: dict, links: list[dict], forwarding: int, forwarding6: int) -> str:
     """Require an unnumbered isolated parent and no guest packet forwarding."""
     if forwarding!=0 or forwarding6!=0:
@@ -38,10 +45,10 @@ def validate_parent(context: dict, links: list[dict], forwarding: int, forwardin
     return name
 
 
-def validate_container(catalog,context: dict,image: str,target: str,observed: dict,*,image_labels=None,allow_stopped=False) -> int:
+def validate_container(catalog,context: dict,image: str,target: str,observed: dict,*,image_labels=None,allow_stopped=False,spike=True) -> int:
     """Pin runtime identity, image, command, capabilities and every bind before nsenter."""
-    validate_spike_target(catalog,target)
-    expected=compose_document(catalog,image,context['owner'],spike=True)['services'][target]
+    (validate_spike_target if spike else validate_linux_target)(catalog,target)
+    expected=compose_document(catalog,image,context['owner'],spike=spike)['services'][target]
     config=observed.get('Config',{});host=observed.get('HostConfig',{})
     state=observed.get('State',{})
     if observed.get('Name')!='/'+expected['container_name'] or observed.get('Image')!=image or not re.fullmatch(r'[a-f0-9]{64}',observed.get('Id','')):
@@ -102,17 +109,17 @@ def validate_spike_document(catalog,context,image,document):
         raise ValueError('Private spike Compose differs from its validated catalog')
 
 
-def node_request(catalog,context,image,target,request):
+def node_request(catalog,context,image,target,request,*,spike=True):
     """Send only the closed node protocol on stdin after checking its owned runtime."""
-    validate_spike_target(catalog,target);validate_request(catalog,target,request)
+    (validate_spike_target if spike else validate_linux_target)(catalog,target);validate_request(catalog,target,request)
     observed=observe_container(target)
     # Reject foreign image/owner/mounts before any further Docker exec.
     expected_labels=trusted_image(image) if observed.get('Image')==image else None
-    validate_container(catalog,context,image,target,observed,image_labels=expected_labels)
+    validate_container(catalog,context,image,target,observed,image_labels=expected_labels,spike=spike)
     response=command(['docker','exec','-i',observed['Id'],'python3','/opt/pinpoint/defense/node.py','control',target],
                      input_text=json.dumps(request),timeout=60)
     result=json.loads(response.stdout)
-    if result.get('target')!=target or set(result)!={'target','network_safe','network_reason','addresses','mac','client_id','listeners','services'}:
+    if result.get('target')!=target or set(result)!={'target','network_safe','network_reason','interfaces','observed_mac','addresses','mac','client_id','listeners','services'}:
         raise ValueError('Unexpected node result')
     return result
 
@@ -151,15 +158,58 @@ def spike_up(catalog,context,image,parent):
     return {'targets':results,'note':'Daemon/DHCP start requires explicit checked node operations.'}
 
 
+def lab_up(catalog,context,image,parent):
+    """Start the complete owned Linux catalog without starting any new daemon or DHCP client."""
+    host=host_status()
+    if not host['safe'] or not host['parent_up']:
+        raise ValueError('Guest boundary is not ready for the Linux catalog')
+    document=compose_document(catalog,image,context['owner'],spike=False)
+    devices=[d for d in catalog.devices if d.kind=='linux']
+    if len(devices)!=14:raise ValueError('The full Linux catalog must contain exactly fourteen targets')
+    limit_mib=sum(int(document['services'][d.name]['mem_limit'][:-1]) for d in devices)
+    available_mib=int(re.search(r'^MemAvailable:\s+(\d+)',Path('/proc/meminfo').read_text(),re.M)[1])//1024
+    free_disk_mib=shutil.disk_usage(ROOT).free//1048576
+    if available_mib<limit_mib+256 or free_disk_mib<2048:
+        raise ValueError('Target guest lacks the checked Linux catalog resource budget')
+    path=Path(ROOT)/'lab-compose.json'
+    if path.exists():
+        if read_private_json(path)!=document:raise ValueError('Private full-catalog Compose differs from the catalog')
+    else:atomic(path,json.dumps(document,sort_keys=True,separators=(',',':'))+'\n')
+    labels=trusted_image(image)
+    expected={PROJECT+'-'+d.name:d.name for d in devices}
+    names=command(['docker','ps','-a','--format','{{.Names}}']).stdout.splitlines()
+    if len(names)!=len(set(names)) or any(name not in expected for name in names):
+        raise ValueError('Foreign or ambiguous containers prevent catalog startup')
+    for name in names:
+        validate_container(catalog,context,image,expected[name],observe_container(expected[name]),
+                           image_labels=labels,allow_stopped=True,spike=False)
+    command(['docker','compose','-f',str(path),'up','-d','--no-build','--no-recreate',
+             *[d.name for d in devices]],timeout=180)
+    names=command(['docker','ps','-a','--format','{{.Names}}']).stdout.splitlines()
+    if len(names)!=len(expected) or set(names)!=set(expected):
+        raise ValueError('Compose did not produce exactly the fourteen owned Linux targets')
+    if guest_context()!=(context,image,parent):raise ValueError('Guest boundary changed during catalog startup')
+    results=[]
+    for device in devices:
+        validate_container(catalog,context,image,device.name,observe_container(device.name),
+                           image_labels=labels,spike=False)
+        attach(catalog,context,image,device.name,parent,spike=False)
+        result=node_request(catalog,context,image,device.name,{'operation':'inspect'},spike=False)
+        if not result['network_safe']:raise ValueError('Attached Linux target failed its network boundary')
+        results.append(result)
+    return {'targets':results,'container_count':len(results),'new_protocol_services_started':False,
+            'additional_dhcp_clients_started':False,'resource_budget_mib':limit_mib}
+
+
 def stop_target(catalog,context,image,target):
     """Stop the selected exact-owned container without deleting persistent identity/data."""
-    validate_spike_target(catalog,target)
+    validate_linux_target(catalog,target)
     observed=observe_container(target)
-    validate_container(catalog,context,image,target,observed,image_labels=trusted_image(image),allow_stopped=True)
+    validate_container(catalog,context,image,target,observed,image_labels=trusted_image(image),allow_stopped=True,spike=False)
     if observed['State']['Running']:
         command(['docker','stop','--time','15',observed['Id']],timeout=30)
     after=observe_container(target)
-    validate_container(catalog,context,image,target,after,image_labels=trusted_image(image),allow_stopped=True)
+    validate_container(catalog,context,image,target,after,image_labels=trusted_image(image),allow_stopped=True,spike=False)
     if after['State']['Running']:raise ValueError('Owned container did not stop')
     return {'target':target,'running':False,'persistent_state_retained':True}
 
@@ -198,12 +248,14 @@ def reset_spike():
     status=Path(ROOT)/'spike-reset.json'
     def mark(stage,result):
         atomic(status,json.dumps({'version':1,'stage':stage,'result':result})+'\n')
-    mark('validate','running')
+    mark('context','running')
     context=owned_context();management_observation()
+    mark('runtime','running')
     runtime=read_private_json(Path(ROOT)/'runtime.json')
     image=runtime.get('image') if set(runtime)=={'image'} else ''
     if not re.fullmatch(r'sha256:[a-f0-9]{64}',image):
         raise ValueError('Invalid pinned runtime image')
+    mark('image','running')
     image_observed=json.loads(command(['docker','image','inspect',image]).stdout)
     if len(image_observed)!=1:
         raise ValueError('Spike reset image is ambiguous')
@@ -211,9 +263,20 @@ def reset_spike():
     if image_labels.get('org.pinpoint.defense.issue')!='274' or not re.fullmatch(r'[a-f0-9]{64}',image_labels.get('org.pinpoint.defense.source','')):
         raise ValueError('Spike reset image provenance is invalid')
     expected={PROJECT+'-dhcp01':'dhcp01',PROJECT+'-dynweb01':'dynweb01'}
+    mark('containers','running')
     names=command(['docker','ps','-a','--format','{{.Names}}']).stdout.splitlines()
-    if len(names)!=len(set(names)) or set(names)!=set(expected):
+    if not names:
+        mark('build','running')
+        command(['/usr/bin/python3','/opt/pinpoint-defense/bootstrap.py','build'],timeout=600)
+        mark('build','complete')
+        return {'containers_removed':0,'persistent_state_retained':True,'image_rebuilt':True}
+    if len(names)!=len(set(names)) or len(names)!=len(expected):
+        mark('containers','unexpected-single' if len(names)==1 else 'unexpected-multiple')
         raise ValueError('Spike reset requires exactly the owned two-container state')
+    if set(names)!=set(expected):
+        mark('containers','unexpected-name')
+        raise ValueError('Spike reset requires exactly the owned two-container state')
+    mark('container-validation','running')
     identifiers=[]
     for name in sorted(names):
         target=expected[name];observed=observe_container(target)
@@ -233,7 +296,7 @@ def reset_spike():
 def reset_status():
     """Return the fixed reset stage without exposing guest logs or runtime identifiers."""
     record=read_private_json(Path(ROOT)/'spike-reset.json')
-    if set(record)!={'version','stage','result'} or record['version']!=1 or record['stage'] not in {'validate','remove','build'} or record['result'] not in {'running','complete','failed'}:
+    if set(record)!={'version','stage','result'} or record['version']!=1 or record['stage'] not in {'context','runtime','image','containers','container-validation','remove','build'} or record['result'] not in {'running','complete','failed','unexpected-single','unexpected-multiple','unexpected-name'}:
         raise ValueError('Invalid private reset status')
     return {'stage':record['stage'],'result':record['result']}
 
@@ -245,24 +308,25 @@ def observe_container(target: str) -> dict:
     return result[0]
 
 
-def namespace(catalog,context,image,target):
+def namespace(catalog,context,image,target,*,spike=True):
     """Recheck container ownership and return its PID and process-start identity."""
     observed=observe_container(target)
-    pid=validate_container(catalog,context,image,target,observed,image_labels=trusted_image(image))
+    pid=validate_container(catalog,context,image,target,observed,image_labels=trusted_image(image),spike=spike)
     info=Path(f'/proc/{pid}/stat').read_text().rsplit(')',1)[1].split()
     return pid,info[19],observed['Id']
 
 
-def attach(catalog,context,image,target,parent):
+def attach(catalog,context,image,target,parent,*,spike=True):
     """Attach one macvlan; never use the physical host Docker or assign a DHCP address."""
     # This first validation also protects callers that have not run main().
     observed=observe_container(target)
-    validate_container(catalog,context,image,target,observed,image_labels=trusted_image(image) if observed.get('Image')==image else None)
-    pid,started,container_id=namespace(catalog,context,image,target)
+    (validate_spike_target if spike else validate_linux_target)(catalog,target)
+    validate_container(catalog,context,image,target,observed,image_labels=trusted_image(image) if observed.get('Image')==image else None,spike=spike)
+    pid,started,container_id=namespace(catalog,context,image,target,spike=spike)
     device=catalog.target(target)
     def execute(argv):
         """Revalidate the process namespace before each fixed operation."""
-        if namespace(catalog,context,image,target)!=(pid,started,container_id):
+        if namespace(catalog,context,image,target,spike=spike)!=(pid,started,container_id):
             raise ValueError('Container namespace changed during attachment')
         return command(argv)
     prefix=['nsenter','--target',str(pid),'--net','--']
@@ -308,13 +372,14 @@ def guest_context():
     management_observation()
     runtime=read_private_json(Path(ROOT)/'runtime.json')
     if set(runtime)!={'image'}:raise ValueError('Invalid pinned image state')
-    compose_document(load_catalog(),runtime['image'],context['owner'],spike=True)
+    catalog=load_catalog();compose_document(catalog,runtime['image'],context['owner'],spike=False)
     trusted_image(runtime['image'])
     links=json.loads(command(['ip','-j','-d','addr','show']).stdout)
     parent=validate_parent(context,links,int(Path('/proc/sys/net/ipv4/ip_forward').read_text()),
                            int(Path('/proc/sys/net/ipv6/conf/all/forwarding').read_text()))
     running=command(['docker','ps','--format','{{.Names}}']).stdout.splitlines()
-    if any(v not in {PROJECT+'-dhcp01',PROJECT+'-dynweb01'} for v in running):
+    allowed={PROJECT+'-'+d.name for d in catalog.devices if d.kind=='linux'}
+    if any(v not in allowed for v in running):
         raise ValueError('Unexpected running containers on the dedicated guest')
     return context,runtime['image'],parent
 
@@ -322,15 +387,16 @@ def guest_context():
 def main(argv=None):
     """Expose only fixed attach/inspect operations; creation belongs to provisioning."""
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('operation',choices=['attach','inspect','spike-up','node','stop','host-status','verify-restart','reset-spike','reset-status'])
+    parser.add_argument('operation',choices=['attach','inspect','spike-up','lab-up','node','stop','host-status','verify-restart','reset-spike','reset-status'])
     parser.add_argument('target',nargs='?')
     args=parser.parse_args(argv)
     try:
         os.umask(0o077)
         catalog=load_catalog()
-        if args.operation in {'spike-up','host-status','verify-restart','reset-spike','reset-status'}:
+        if args.operation in {'spike-up','lab-up','host-status','verify-restart','reset-spike','reset-status'}:
             if args.target is not None:raise ValueError('Spike startup takes no target argument')
-        else:validate_spike_target(catalog,args.target)
+        elif args.operation=='stop':validate_linux_target(catalog,args.target)
+        else:validate_linux_target(catalog,args.target)
         request=None
         if args.operation=='node':
             payload=sys.stdin.read(8193)
@@ -349,14 +415,15 @@ def main(argv=None):
             if args.operation=='reset-spike':result=reset_spike()
             else:
                 context,image,parent=guest_context()
-                if args.operation=='attach':result=attach(catalog,context,image,args.target,parent)
+                if args.operation=='attach':result=attach(catalog,context,image,args.target,parent,spike=False)
                 elif args.operation=='spike-up':result=spike_up(catalog,context,image,parent)
-                elif args.operation=='node':result=node_request(catalog,context,image,args.target,request)
+                elif args.operation=='lab-up':result=lab_up(catalog,context,image,parent)
+                elif args.operation=='node':result=node_request(catalog,context,image,args.target,request,spike=False)
                 elif args.operation=='stop':result=stop_target(catalog,context,image,args.target)
                 elif args.operation=='verify-restart':result=verify_restart()
                 else:
                     observed=observe_container(args.target)
-                    validate_container(catalog,context,image,args.target,observed,image_labels=trusted_image(image),allow_stopped=True)
+                    validate_container(catalog,context,image,args.target,observed,image_labels=trusted_image(image),allow_stopped=True,spike=False)
                     result={'target':args.target,'running':True,'owned':True,'image_pinned':True}
             print(json.dumps(result))
         finally:os.close(fd)

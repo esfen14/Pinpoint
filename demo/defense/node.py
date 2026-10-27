@@ -271,14 +271,14 @@ def supervisor(action: str, program: str | None = None, *, check=True):
 
 def network(catalog,device,*,unaddressed=False):
     """Collect current namespace interfaces; no fabricated leases or injected observations."""
-    links=json.loads(command(['ip','-j','-4','addr','show']).stdout)
+    links=json.loads(command(['ip','-j','addr','show']).stdout)
     routes=json.loads(command(['ip','-j','-4','route','show','default']).stdout)
     return validate_network(catalog,device,links,routes,unaddressed=unaddressed)
 
 
 def network_reason(catalog,device) -> str | None:
     """Return one fixed diagnostic category for the inspected namespace boundary."""
-    links=json.loads(command(['ip','-j','-4','addr','show']).stdout)
+    links=json.loads(command(['ip','-j','addr','show']).stdout)
     routes=json.loads(command(['ip','-j','-4','route','show','default']).stdout)
     if not isinstance(links,list) or {value.get('ifname') for value in links}!={'lo','eth0'}:
         return 'interfaces'
@@ -313,11 +313,16 @@ def inspection(catalog,device) -> dict:
     reason=network_reason(catalog,device)
     safe=reason is None
     addresses=network(catalog,device,unaddressed=True) if safe else []
+    links=json.loads(command(['ip','-j','addr','show']).stdout)
+    interfaces=sorted(value.get('ifname','') for value in links if isinstance(value.get('ifname'),str))
+    ethernet=[value for value in links if value.get('ifname')=='eth0']
+    observed_mac=ethernet[0].get('address','').lower() if len(ethernet)==1 else None
     states=[]
     for line in supervisor('status',check=False).stdout.splitlines():
         fields=line.split()
         if len(fields)>=2:states.append({'program':fields[0],'state':fields[1]})
-    return {'target':device.name,'network_safe':safe,'network_reason':reason,'addresses':addresses,'mac':device.mac,
+    return {'target':device.name,'network_safe':safe,'network_reason':reason,'interfaces':interfaces,
+            'observed_mac':observed_mac,'addresses':addresses,'mac':device.mac,
             'client_id':device.client_id,'listeners':listening_ports(),'services':states}
 
 

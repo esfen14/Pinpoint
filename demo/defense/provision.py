@@ -446,7 +446,7 @@ def maintenance_boot_plan(state,data,root):
     """Boot stock media for an owned installed guest; no unattended or disk creation path."""
     identifier=state.get('uuid','');iso=state.get('iso','')
     install_commands(identifier,root,Path(iso))
-    if state.get('phase')!='installed-needs-forwarding-guard' or data.get('VMState')!='poweroff' or data.get('memory')!='2048':
+    if state.get('phase') not in {'installed-needs-forwarding-guard','maintenance-live-boot','hardened-boot-unverified'} or data.get('VMState')!='poweroff' or data.get('memory')!='2048':
         raise ValueError('Maintenance requires the exact installed powered-off state')
     if data.get('SATA-0-0')!=state.get('disk_path',str(root/'vm/pinpoint-defense-targets/pinpoint-defense-targets.vdi')):
         raise ValueError('Installed maintenance disk changed')
