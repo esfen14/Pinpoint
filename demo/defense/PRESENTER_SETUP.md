@@ -13,7 +13,8 @@ The owner has already attached `Pinpoint-Final` adapter 2 to `vboxnet1`. Its
 MAC is `08:00:27:fa:10:0a`, and the guest interface is `enp0s8`. The owner
 observed `/etc/netplan/50-cloud-init.yaml` as the only netplan file and
 `sudo netplan get network.ethernets.enp0s8` returned the old address
-`10.77.0.1/28`. The earlier temporary IP setting was lost on restart.
+`10.77.0.1/28`. The owner reports the address reverted after a subsequent edit and restart;
+cloud-init regeneration versus an unapplied edit is still being checked.
 
 In the appliance console, back up and edit the existing file:
 
