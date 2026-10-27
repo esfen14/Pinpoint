@@ -50,6 +50,40 @@ refresh. Afterward,
 stage 3 uses only Windows `ping` and this fixed Linux `ping`; do not add ARP,
 port probes, scans, or packet capture.
 
+## Proposed bridge/veth review
+
+The next candidate keeps the VirtualBox internal segment, Windows NIC and
+catalog MACs; it replaces each guest macvlan with a veth pair. Its host end and
+the exact unnumbered internal NIC would join one unnumbered guest bridge. The
+other end would reside in the verified container namespace with that target's
+catalog MAC. The NAT management NIC and Docker bridges must never join it.
+The [Linux bridge documentation](https://docs.kernel.org/networking/bridge.html)
+describes Ethernet forwarding between bridge ports: IP forwarding set to zero
+alone does not prevent that forwarding. The fixed ownership and complete
+membership checks are therefore necessary, and a bridge must never be accepted
+just because its name matches.
+
+The first offline guard validates a normalized complete link inventory: the
+bridge and veth host ports carry the private owner alias; exactly one pinned
+parent and the expected catalog ports belong to the bridge; all are unnumbered;
+both IP forwarding values are zero; and foreign or duplicate ports are refused.
+This check does not collect live metadata or create links. Before it can guard
+live changes, the controller must independently verify each veth peer and the
+container process namespace, actual bridge netfilter behavior, precise parent
+and bridge MACs, interruption cleanup, and that image builds cannot bridge the
+demo NIC to management. Linux documents that bridge traffic can encounter
+netfilter rules separately from ordinary IP forwarding; see the
+[bridge netfilter section](https://docs.kernel.org/networking/bridge.html#netfilter).
+
+No change to the currently running topology is implied by the offline guard.
+For a future migration, validate every existing container and its identity/data
+mounts first, retain leases, and use a recorded transaction with a deterministic
+rollback. An interruption must leave the demo parent disconnected until owned
+bridge membership is reverified. Never remove or adopt a link solely by name.
+After any authorized migration, the user-directed reachability test remains
+ping only. A ping pass would still leave product discovery, service checks,
+physical-network isolation acceptance and presenter lifecycle pending.
+
 ## Transition and recovery
 
 Use a new VirtualBox Internal Network named `pinpoint-defense`, with candidate
