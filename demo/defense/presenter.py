@@ -101,17 +101,49 @@ def enroll(catalog):
 def service(catalog,pins,target,name,action):
     program=service_program(catalog,target,name)
     if action not in {'start','stop'}:raise ValueError('Invalid service action')
+    check_host_network(pins)
     device=catalog.target(target);pin=pins[target]
     before=node(device,pin,'inspect')
     if not before.get('network_safe') or before.get('addresses')!=[device.address]:raise ValueError('Unsafe target network')
     states={v['program']:v['state'] for v in before['services']}
     if program not in states:raise ValueError('Owned service is unavailable')
+    if program=='smtp':
+        return smtp_service(device,pin,before,action)
     desired='RUNNING' if action=='start' else 'STOPPED'
     if states[program]!=desired:
         inspect(device,pin)
         run(['docker','exec',pin['id'],'/usr/bin/supervisorctl','-c','/run/supervisord.conf',action,program])
     after=node(device,pin,'inspect')
     if {v['program']:v['state'] for v in after['services']}.get(program)!=desired:raise ValueError('Service did not reach requested state')
+    expected={(item.protocol,item.port) for item in device.listeners if PROGRAMS.get(item.service)==program}
+    observed={(item.get('protocol'),item.get('port')) for item in after.get('listeners',[])}
+    if action=='start' and not expected.issubset(observed) or action=='stop' and expected & observed:
+        raise ValueError('Service listener did not reach requested state')
+    return after
+
+
+def smtp_service(device,pin,before,action):
+    """Control Supervisor and the Postfix master, which can outlive its wrapper."""
+    def state(value):return {v['program']:v['state'] for v in value['services']}.get('smtp')
+    def listening(value):return {'protocol':'tcp','port':25} in value.get('listeners',[])
+    def supervisor(verb):
+        inspect(device,pin)
+        run(['docker','exec',pin['id'],'/usr/bin/supervisorctl','-c','/run/supervisord.conf',verb,'smtp'])
+    def stop_master():
+        inspect(device,pin)
+        run(['docker','exec',pin['id'],'/usr/sbin/postfix','-c','/run/postfix','stop'])
+    if action=='stop':
+        if state(before) in {'RUNNING','STARTING'}:supervisor('stop')
+        current=node(device,pin,'inspect')
+        if listening(current):stop_master()
+        after=node(device,pin,'inspect')
+        if listening(after) or state(after) in {'RUNNING','STARTING'}:raise ValueError('SMTP did not stop')
+    else:
+        if state(before)!='RUNNING':
+            if listening(before):stop_master()
+            supervisor('start')
+        after=node(device,pin,'inspect')
+        if state(after)!='RUNNING' or not listening(after):raise ValueError('SMTP did not start')
     return after
 
 
@@ -119,6 +151,14 @@ def lifecycle_order(catalog,action):
     if action not in {'up','down'}:raise ValueError('Unsupported lifecycle action')
     devices=[d for d in catalog.devices if d.kind=='linux']
     return devices if action=='up' else list(reversed(devices))
+
+
+def target_order(catalog,action,target=None):
+    devices=lifecycle_order(catalog,action)
+    if target is None:return devices
+    device=catalog.target(target)
+    if device.kind!='linux':raise ValueError('Host control requires a Linux pilot target')
+    return [device]
 
 
 def check_host_network(pins):
@@ -161,9 +201,13 @@ def attach_dynamic(device,pin,obj):
     if json.loads(output)!={'target':device.name,'attached':True,'address_assigned':False}:raise ValueError('Dynamic attachment failed')
 
 
-def lifecycle(catalog,pins,action):
+def lifecycle(catalog,pins,action,target=None):
+    order=target_order(catalog,action,target)
     check_host_network(pins)
-    order=lifecycle_order(catalog,action)
+    if target is not None and action=='up' and order[0].mode=='dhcp':
+        server=node(catalog.target('dhcp01'),pins['dhcp01'],'inspect')
+        if not server.get('network_safe') or {v['program']:v['state'] for v in server['services']}.get('dhcp')!='RUNNING':
+            raise ValueError('DHCP allocator is not running')
     for d in order:inspect(d,pins[d.name])
     for d in order:
         pin=pins[d.name];obj=inspect(d,pin)
@@ -202,9 +246,52 @@ def node_request(device,pin,request):
     return result
 
 
+def dhcp_server(catalog,pins,action):
+    """Stop or resume the sole saved allocator without changing reservations."""
+    if action not in {'start','stop'}:raise ValueError('Invalid DHCP server action')
+    check_host_network(pins)
+    device=catalog.target('dhcp01');pin=pins[device.name]
+    before=node(device,pin,'inspect')
+    if not before.get('network_safe') or before.get('addresses')!=[device.address]:raise ValueError('Unsafe DHCP server network')
+    states={v['program']:v['state'] for v in before['services']}
+    if 'dhcp' not in states:raise ValueError('DHCP server unavailable')
+    desired='RUNNING' if action=='start' else 'STOPPED'
+    if states['dhcp']!=desired:node_request(device,pin,{'operation':'server-'+action})
+    after=node(device,pin,'inspect')
+    if {v['program']:v['state'] for v in after['services']}.get('dhcp')!=desired:raise ValueError('DHCP server state not reached')
+    return after
+
+
+def dhcp_lease(catalog,pins,target,action):
+    """Release or reacquire only the selected client's reserved address."""
+    device=catalog.target(target)
+    if device.kind!='linux' or device.mode!='dhcp' or action not in {'release','acquire'}:
+        raise ValueError('A catalog DHCP client and fixed lease action are required')
+    check_host_network(pins)
+    pin=pins[target];before=node(device,pin,'inspect')
+    if not before.get('network_safe') or before.get('addresses') not in ([],[device.address]):
+        raise ValueError('DHCP client state is unsafe')
+    if action=='acquire':
+        server=node(catalog.target('dhcp01'),pins['dhcp01'],'inspect')
+        if not server.get('network_safe') or {v['program']:v['state'] for v in server['services']}.get('dhcp')!='RUNNING':
+            raise ValueError('DHCP allocator is not running')
+        request={'operation':'lease-acquire','expected_address':device.address}
+    else:request={'operation':'lease-release'}
+    if action=='release' or (action=='acquire' and not before['addresses']):
+        node_request(device,pin,request)
+    after=node(device,pin,'inspect')
+    if not after.get('network_safe') or after.get('addresses')!=([device.address] if action=='acquire' else []):
+        raise ValueError('DHCP lease state not reached')
+    return after
+
+
 def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__);sub=parser.add_subparsers(dest='command',required=True)
     sub.add_parser('enroll');sub.add_parser('status');sub.add_parser('up');sub.add_parser('down')
+    for action in ('host-stop','host-start'):
+        p=sub.add_parser(action);p.add_argument('target')
+    server=sub.add_parser('dhcp-server');server.add_argument('action',choices=('start','stop'))
+    lease=sub.add_parser('dhcp-lease');lease.add_argument('action',choices=('release','acquire'));lease.add_argument('target')
     for action in ('break','fix'):
         p=sub.add_parser(action);p.add_argument('target');p.add_argument('service')
     args=parser.parse_args(argv)
@@ -215,6 +302,14 @@ def main(argv=None):
             if args.command=='enroll':print('Pinned 14 existing laptop pilot containers.');return 0
             if args.command in {'up','down'}:
                 lifecycle(catalog,pins,args.command)
+            elif args.command in {'host-stop','host-start'}:
+                lifecycle(catalog,pins,'down' if args.command=='host-stop' else 'up',args.target)
+            elif args.command=='dhcp-server':
+                dhcp_server(catalog,pins,args.action)
+                print('DHCP server','started' if args.action=='start' else 'stopped')
+            elif args.command=='dhcp-lease':
+                result=dhcp_lease(catalog,pins,args.target,args.action)
+                print(args.target,','.join(result['addresses']) or 'lease released')
             elif args.command=='status':
                 for d in catalog.devices:
                     if d.kind!='linux':continue

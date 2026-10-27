@@ -27,8 +27,10 @@ interfaces for the DHCP clients on the virtual adapter. The live pilot used a
 short-lived privileged helper with a read-only root filesystem and no Docker
 socket; this is not yet a complete supported host controller. Presenter commands now stop and start the existing pinned pilot containers,
 restore the DHCP attachments, show local service status, and stop or start
-allowlisted preset services. One live down/up cycle and Windows-to-all-target
-ping passed. Host reboot, Docker daemon restart, original identity/data
+allowlisted preset services, individual target stop/start, DHCP allocator
+stop/start, and reserved lease release/reacquisition. Live tests passed for
+these controls, a full down/up cycle, individual static/DHCP Docker restarts,
+and Windows ping to the targets. Host reboot, Docker daemon restart, original identity/data
 migration, broader fault controls and appliance acceptance remain pending. Per the owner's
 direction, use ping only for connectivity tests.
 

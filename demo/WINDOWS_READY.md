@@ -1,7 +1,7 @@
 # Prepared Windows test device (#274)
 
 `pinpoint-defense-win01` has Windows 10 Home build 19045 and NCPA 3.5.0 installed.
-It is powered off with a `ncpa-ready` snapshot. This is preparation for the
+It has a powered-off `ncpa-ready` snapshot; the VM is currently running for the laptop pilot. This is preparation for the
 [defense lab plan](../docs/plans/Defense_Demo_Lab_Plan.md), not the completed
 fifteen-device demo. [Observed installation and API results](../docs/test-runs/2026-10-27-issue-274-windows-home-install/REPORT.md).
 
@@ -10,11 +10,13 @@ fifteen-device demo. [Observed installation and API results](../docs/test-runs/2
 | VM UUID | `5fb21051-8a4f-45b0-a7f0-de3cedceab83` |
 | Windows computer name | `WIN01` |
 | Resources | 3 GiB RAM, 2 CPUs, 40 GiB dynamic disk |
-| Network | Internal Network `pinpoint-defense` only; no NAT or physical bridge |
+| Network | Host-only Adapter `vboxnet1`; no NAT or physical bridge |
 | Address / MAC | `10.77.1.3/27`, `02:77:01:00:00:02`; no default route |
 | NCPA | Automatic Windows service `ncpa`, TCP 5693; firewall permits `10.77.1.1` only |
 | Final snapshot | `ncpa-ready`, UUID `24eb5fdd-5f6c-4fdb-bfb8-a4b19e08523e` |
 | Activation | Pending; owner selected Home for testing without a purchased license |
+
+For current appliance setup and registration steps, see [presenter setup](defense/PRESENTER_SETUP.md).
 
 ## Access and private state
 

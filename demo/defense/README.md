@@ -1,8 +1,23 @@
 # Defense target runtime (issue #274, preparation)
 
+For appliance connection and credential locations, see [presenter setup](PRESENTER_SETUP.md).
+The [monitoring checklist](MONITORING_CHECKLIST.md) describes the remaining live demo checks.
+
 ## Current laptop Docker pilot: presenter controls
 
-From the issue worktree root, use the existing, privately pinned pilot containers:
+A persistent checkout is available at
+`~/.local/share/pinpoint-defense/host-presenter-checkout`; unlike the development
+worktree under `/tmp`, it can remain available after a reboot. From that checkout
+(or the current issue worktree), use the existing, privately pinned pilot
+containers:
+
+```bash
+cd "$HOME/.local/share/pinpoint-defense/host-presenter-checkout"
+```
+
+The persistent checkout is a detached copy of a recorded checkpoint and is not
+a self-updating branch. Update it only to an inspected newer checkpoint while
+its working tree is clean.
 
 ```bash
 ./demo/demo presenter status
@@ -10,6 +25,12 @@ From the issue worktree root, use the existing, privately pinned pilot container
 ./demo/demo presenter fix web03 http
 ./demo/demo presenter down
 ./demo/demo presenter up
+./demo/demo presenter host-stop dynweb02
+./demo/demo presenter host-start dynweb02
+./demo/demo presenter dhcp-server stop
+./demo/demo presenter dhcp-server start
+./demo/demo presenter dhcp-lease release dynweb02
+./demo/demo presenter dhcp-lease acquire dynweb02
 ```
 
 `status` reports locally observed service states and addresses. `break` and
@@ -28,7 +49,13 @@ Host reboot, Docker daemon restart, full Pinpoint monitoring, other fault
 scenarios and migration have not been verified. Keep the Docker network and
 VirtualBox `vboxnet1` in place; up refuses when the expected network is missing.
 The `up` command restores baseline services, including services intentionally
-stopped by `break`.
+stopped by `break`. `host-stop` and `host-start` act on one Linux catalog device;
+starting a DHCP client requires the DHCP server to be running. `dhcp-server`
+stops or starts the allocator with its saved reservations; existing leases may
+remain active while it is stopped. `dhcp-lease` releases or reacquires only the
+specified DHCP client's original reserved address. After a fault demonstration,
+start the DHCP server and reacquire any released leases. These commands do not
+implement changing reservations or DHCP-to-static transitions.
 
 ## Earlier target-host design and historical results
 

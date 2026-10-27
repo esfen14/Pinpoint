@@ -9,10 +9,12 @@ the normative behavior in the requirement specifications.
 
 The owner subsequently chose laptop Docker with an isolated VirtualBox host-only
 network. The current presenter pilot supports `demo/demo presenter status`,
-`up`, `down`, and allowlisted service `break`/`fix`. A live stop/start and
+`up`, `down`, individual host controls, DHCP server and reserved-lease controls,
+and allowlisted service `break`/`fix`. A live stop/start and
 Windows ping to all fourteen Linux targets passed; DHCP leases reacquired.
-Host reboot, Docker daemon restart, original data migration and appliance
-acceptance remain unverified. See the [pilot report](../docs/test-runs/2026-10-27-issue-274-host-presenter/REPORT.md).
+Individual static and DHCP container restarts and service listener stop/restore
+were also tested. Host reboot, Docker daemon restart, original data migration,
+address transitions and appliance acceptance remain unverified. See the [pilot report](../docs/test-runs/2026-10-27-issue-274-host-presenter/REPORT.md).
 The following paragraphs describe earlier preparation and its historical state.
 
 The [defense demo plan](../docs/plans/Defense_Demo_Lab_Plan.md) records the
