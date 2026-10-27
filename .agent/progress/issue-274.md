@@ -1,7 +1,7 @@
 # Issue #274: One isolated 15-device defense demo lab
 
 Branch: `issue-274-defense-demo`
-Status: in-progress
+Status: blocked
 
 ## Finish condition
 
@@ -87,6 +87,8 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 | Catalog image refresh recovery | Added `reset-lab`: validates the catalog image, all target identities/data and exact existing containers; stops every validated container before removing container objects; preserves bind mounts and lease files; rebuilds the pinned image. Partial removal is retryable. No live VM/container/network activity. | `test_spike.py` (19), `test_runtime.py` (15), `scripts/verify.sh docs`, `git diff --check` | Focused tests and docs gate green. The installed image predates this operation; apply the code through the guarded offline maintenance path before invoking it. |
 
+| Maintenance window and preflight | Shut down the exact Windows and target-host VMs cleanly. Maintenance preview refused its existing resource reserve; no ISO was attached and no guest disk was changed. | `VBoxManage list runningvms`; direct `start_maintenance()` preview | Blocked: 57,801 MiB free versus 57,911 MiB required. Keep the VMs powered off. Resume after at least 256 MiB has been freed on the host filesystem, then rerun the preview before maintenance. |
+
 | Resumed hardening session | Read full saved progress/specifications and unchanged issue; clean worktree pulled; repeated last docs gate | scripts/verify.sh docs; gh issue view 274 --json title,body,comments,state | green: docs OK, 49 offline defense tests; issue open/no comments. Fresh available RAM 9585 MiB, disk 64626 MiB; KVM loaded. Continue authorized offline hardening before any live boot |
 
 | Hardening round 1 | Test first: reproduced missing forwarding/account guards; added Docker no-auto-forwarding settings, every-start reset/verification, post-cloud-init ready service, signal-safe build-only forwarding while exact demo parent is down, fixed UID/group/sudo validation and attachment privilege gate | python3 -I demo/defense/test_hardening.py; test_provision.py; test_guest.py; scripts/verify.sh docs | 59 defense tests and docs gate green. Offline only; installed VM is still off/unpatched, KVM loaded. No forwarding restart/reboot acceptance claimed |
@@ -97,10 +99,10 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 ## State for the next session
 
-- Last check run (exact command): `python3 -I demo/defense/test_spike.py && python3 -I demo/defense/test_runtime.py && scripts/verify.sh docs && git diff --check`
-- Result (first failing lines, or "green"): green: 19 + 15 focused tests passed; full docs gate passed. `reset-lab` prevalidates exact current containers and all persistent identities/data, stops every container before any removal, removes no volumes, keeps retry safety if interrupted, then rebuilds the pinned image. `peer-ping` remains fixed to `10.77.1.3` and is bounded to three pings.
-- Current live state: target-host and Windows 10 VMs are running. All fourteen Linux catalog containers, baseline services and five DHCP clients were previously started and Windows-to-target ping failed 0/14. No appliance scan has run. VirtualBox 7.2 docs indicate Internal Networking is a full Ethernet switch; `nicpromisc` is documented as bridged-only, so toggling it on the Internal Network did not resolve/localize the issue.
-- Next action (one specific step, not "continue"): Finish the docs gate, checkpoint, then refresh the exact target-host source through the guarded maintenance path; invoke `reset-lab` to rebuild while retaining identity/data volumes and lease files, then test only ping in both directions.
+- Last check run (exact command): `python3 -I scripts/check_agent_progress.py && git diff --check && VBoxManage list runningvms`
+- Result (first failing lines, or "green"): green: progress file valid, whitespace clean, no VirtualBox VMs running. The maintenance preview then refused at the existing disk reserve: 57,801 MiB free, 57,911 MiB required. No ISO or guest disk changed.
+- Current live state: both exact demo VMs (`pinpoint-defense-targets`, UUID `821464dc-e7ce-4067-8eec-5cb1c61d3632`; `pinpoint-defense-win01`, UUID `5fb21051-8a4f-45b0-a7f0-de3cedceab83`) are powered off cleanly. All fourteen Linux catalog containers, baseline services and five DHCP clients were previously running; the latest Windows-to-target ping result remains 0/14. No appliance scan has run. VirtualBox 7.2 docs indicate Internal Networking is a full Ethernet switch; `nicpromisc` is documented as bridged-only.
+- Next action (one specific step, not "continue"): After the owner frees at least 256 MiB on the host filesystem, rerun the guarded maintenance preview. Current preview needs 57,911 MiB and observed 57,801 MiB. If green, apply the source refresh, invoke `reset-lab` to preserve target identity/data volumes and DHCP lease files, then use ping only in both directions.
 
 ## Decisions and notes
 
@@ -117,6 +119,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 - Draft PR: https://github.com/esfen14/Pinpoint/pull/276. User asked whether the agent can install Windows; agent can automate VM setup/install/NCPA subject to successful ownership/capacity checks and any interactive Windows steps. The attempted unattended detection hung; only that agent-owned query process was terminated, not VBoxSVC or a VM process.
 - Installation inquiry recovery succeeded without killing any VBoxSVC or VM or removing IPC/locks. VBox unattended supports password-file/stdin inputs; do not pass passwords or product keys on the CLI. Edition question is pending; no product key requested in chat. The initial media-unavailable blocker is superseded, and the transient ownership failure is resolved.
 - Owner subsequently clarified that no purchased license is available, then answered the edition question with Windows 10 Home. Prepare the selected edition for testing with activation pending; do not claim the issue's licensed-Windows gate passed or use activation bypasses. A local Windows Server 2022 evaluation ISO was also detected and offered as an alternative (Microsoft documents 180 days and online activation within 10 days), but the owner's latest edition selection is Home.
+- Current maintenance blocker: the exact offline-maintenance preflight refused at 57,801 MiB available versus the existing 57,911 MiB disk reserve. The agent shut down both exact demo VMs but made no ISO/disk/config changes. Do not delete unrelated files or lower the resource gate; owner needs to free at least 256 MiB before retrying the preview.
 - Plan order revised for the user's direct Windows installation request: perform isolated step 7a before the remaining shared-lab controller work. This creates no presenter controller or guest command-dispatch implementation; the earlier sensitive-code review remains pending for step 2. Existing VMs and appliance are not altered. Exact new VM name/UUID and private owner marker gate every setup action; all values and operations are fixed, argv is an argument list, passwords enter via private files, and unattended stdout remains private because it may include secrets.
 - Prepared Windows VM: `pinpoint-defense-win01`, UUID `5fb21051-8a4f-45b0-a7f0-de3cedceab83`, 3072 MiB, 2 CPUs, 40 GiB dynamic VDI, one Internal Network NIC (`pinpoint-defense`, MAC `02:77:01:00:00:02`), all seven other NICs disabled, no NAT/bridged adapter/port forwards. Windows IP is not configured yet because the guest has not booted.
 - Private owner record, generated login password, VM files, answer file and command output are under `/home/paeng/.local/share/pinpoint-defense/windows-home/`, private directories 0700/files 0600. Generated answer file has no product key. Keep it private: it contains the setup password. Do not print those files/logs or pass password/token values in argv.
