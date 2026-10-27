@@ -14,7 +14,7 @@ from contextlib import contextmanager
 ROOT=Path('/var/lib/pinpoint-defense')
 SOURCE=Path('/opt/pinpoint-defense')
 RUNTIME_FILES=('__init__.py','catalog.py','compose.py','manifest.json','preflight.py',
-               'node.py','guest.py','Dockerfile','Dockerfile.dockerignore','bootstrap.py')
+               'node.py','guest.py','bridge.py','Dockerfile','Dockerfile.dockerignore','bootstrap.py')
 
 
 def parent_network(context):
@@ -277,7 +277,7 @@ def validate_payload(payload):
     for name in ['public_host_key','authorized_key']:
         if not re.fullmatch(r'ssh-ed25519 [A-Za-z0-9+/=]+(?: [a-zA-Z0-9_-]+)?\n?',payload[name]):
             raise ValueError('Invalid injected public key')
-    allowed={'__init__.py','catalog.py','compose.py','manifest.json','preflight.py','node.py','guest.py','Dockerfile','Dockerfile.dockerignore','bootstrap.py'}
+    allowed=set(RUNTIME_FILES)
     if set(payload['files'])!=allowed or any(not isinstance(v,str) or len(v)>1048576 for v in payload['files'].values()):
         raise ValueError('Invalid fixed runtime source bundle')
     if ROOT.exists() or SOURCE.exists():raise ValueError('Refusing to overwrite an existing guest preparation')

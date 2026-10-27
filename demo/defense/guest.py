@@ -16,6 +16,7 @@ from defense.catalog import load_catalog
 from defense.compose import ROOT, PROJECT, compose_document
 from defense.node import command, validate_network, validate_request, atomic
 from defense.preflight import read_private_json
+from defense.bridge import observe_checked_bridge
 
 
 def validate_spike_target(catalog,target: str) -> None:
@@ -233,6 +234,24 @@ def host_status():
     return {'safe':first==second==0 and account_safe and image_ready,
             'forwarding4':first,'forwarding6':second,'parent':parent,'parent_up':up,
             'parent_unnumbered':True,'management_restricted':account_safe,'image_ready':image_ready}
+
+
+def bridge_status(catalog):
+    """Verify the complete owned bridge through the fixed, locked guest helper."""
+    context=owned_context()
+    management_observation()
+    runtime=read_private_json(Path(ROOT)/'runtime.json')
+    if set(runtime)!={'image'}:raise ValueError('Invalid pinned image state')
+    image=runtime['image']
+    trusted_image(image)
+    devices=[device for device in catalog.devices if device.kind=='linux']
+    if len(devices)!=14:raise ValueError('The complete Linux catalog is required')
+    members={device.name:'pd-'+device.name for device in devices}
+    forwarding4,forwarding6=forwarding_values()
+    observe_checked_bridge(context['owner'],context['parent_mac'],members,forwarding4,forwarding6,
+                           lambda target:namespace(catalog,context,image,target,spike=False),command)
+    if forwarding_values()!=(0,0):raise ValueError('Guest forwarding changed during observation')
+    return {'bridge_membership_verified':True,'container_count':len(members)}
 
 
 def verify_restart():
@@ -475,13 +494,13 @@ def guest_context():
 def main(argv=None):
     """Expose only fixed attach/inspect operations; creation belongs to provisioning."""
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('operation',choices=['attach','inspect','spike-up','lab-up','node','stop','host-status','verify-restart','reset-spike','reset-lab','reset-status'])
+    parser.add_argument('operation',choices=['attach','inspect','spike-up','lab-up','node','stop','host-status','bridge-status','verify-restart','reset-spike','reset-lab','reset-status'])
     parser.add_argument('target',nargs='?')
     args=parser.parse_args(argv)
     try:
         os.umask(0o077)
         catalog=load_catalog()
-        if args.operation in {'spike-up','lab-up','host-status','verify-restart','reset-spike','reset-lab','reset-status'}:
+        if args.operation in {'spike-up','lab-up','host-status','bridge-status','verify-restart','reset-spike','reset-lab','reset-status'}:
             if args.target is not None:raise ValueError('Spike startup takes no target argument')
         elif args.operation=='stop':validate_linux_target(catalog,args.target)
         else:validate_linux_target(catalog,args.target)
@@ -500,7 +519,8 @@ def main(argv=None):
             if not stat.S_ISREG(info.st_mode) or info.st_uid!=0 or info.st_nlink!=1 or info.st_mode&0o077:
                 raise ValueError('Unsafe guest control lock')
             fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB)
-            if args.operation=='reset-lab':result=reset_lab()
+            if args.operation=='bridge-status':result=bridge_status(catalog)
+            elif args.operation=='reset-lab':result=reset_lab()
             elif args.operation=='reset-spike':result=reset_spike()
             else:
                 context,image,parent=guest_context()

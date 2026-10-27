@@ -67,9 +67,11 @@ The first offline guard validates a normalized complete link inventory: the
 bridge and veth host ports carry the private owner alias; exactly one pinned
 parent and the expected catalog ports belong to the bridge; all are unnumbered;
 both IP forwarding values are zero; and foreign or duplicate ports are refused.
-This check does not collect live metadata or create links. Before it can guard
-live changes, the controller must independently verify each veth peer and the
-container process namespace, actual bridge netfilter behavior, precise parent
+The fixed guest `bridge-status` operation now wires these checks to bounded
+host and namespace observations while holding the guest control lock and
+revalidating container process identity. It is prepared in source but has not
+been applied to the installed VM or observed on a live bridge. Before it can
+guard live changes, the controller must verify actual bridge netfilter behavior, precise parent
 and bridge MACs, interruption cleanup, and that image builds cannot bridge the
 demo NIC to management. Linux documents that bridge traffic can encounter
 netfilter rules separately from ordinary IP forwarding; see the
@@ -83,6 +85,15 @@ bridge membership is reverified. Never remove or adopt a link solely by name.
 After any authorized migration, the user-directed reachability test remains
 ping only. A ping pass would still leave product discovery, service checks,
 physical-network isolation acceptance and presenter lifecycle pending.
+
+An additional bounded trial set both running demo adapters to `allow-all` at
+the same time, after verifying their saved UUIDs, owners, MACs and process
+ownership. Windows ping to `web03` and `web03` peer-ping to Windows both got no
+reply. The Windows adapter was restored to `deny` and the target-host adapter
+to `allow-vms`; both restoration commands succeeded. This rules out that
+particular adapter-policy change as a complete remedy, but does not establish
+the root cause or prove that a bridge will work. Only ping was used for the
+connectivity trial.
 
 ## Transition and recovery
 

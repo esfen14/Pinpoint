@@ -226,7 +226,7 @@ def prepare(iso: Path, *, apply=False) -> dict:
             execute(['ssh-keygen','-q','-t','ed25519','-N','','-C','pinpoint-defense','-f',str(root/name)])
         atomic(root/'login-password',secrets.token_urlsafe(32)+'\n')
         files={name:(Path(__file__).parent/name).read_text() for name in
-               ['__init__.py','catalog.py','compose.py','manifest.json','preflight.py','node.py','guest.py','Dockerfile','Dockerfile.dockerignore','bootstrap.py']}
+               ['__init__.py','catalog.py','compose.py','manifest.json','preflight.py','node.py','guest.py','bridge.py','Dockerfile','Dockerfile.dockerignore','bootstrap.py']}
         public=(root/'host-key.pub').read_text()
         payload={'context':{'version':1,'owner':owner,'vm_uuid':identifier,'parent_mac':macs[1]},
                  'private_host_key':(root/'host-key').read_text(),'public_host_key':public,

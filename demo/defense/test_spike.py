@@ -20,6 +20,22 @@ CATALOG=load_catalog()
 
 
 class SpikeTests(unittest.TestCase):
+    def test_bridge_status_uses_pinned_catalog_and_rechecks_forwarding(self):
+        with patch.object(guest,'owned_context',return_value=CONTEXT), patch.object(guest,'management_observation'), \
+             patch.object(guest,'read_private_json',return_value={'image': IMAGE}), patch.object(guest,'trusted_image'), \
+             patch.object(guest,'forwarding_values',side_effect=[(0,0),(0,0)]), \
+             patch.object(guest,'observe_checked_bridge',return_value=[]) as observe:
+            result=guest.bridge_status(CATALOG)
+        self.assertEqual(result, {'bridge_membership_verified':True,'container_count':14})
+        members=observe.call_args.args[2]
+        self.assertEqual(len(members),14)
+        self.assertEqual(members['dhcp01'],'pd-dhcp01')
+        with patch.object(guest,'owned_context',return_value=CONTEXT), patch.object(guest,'management_observation'), \
+             patch.object(guest,'read_private_json',return_value={'image': IMAGE}), patch.object(guest,'trusted_image'), \
+             patch.object(guest,'forwarding_values',side_effect=[(0,0),(1,0)]), \
+             patch.object(guest,'observe_checked_bridge',return_value=[]):
+            with self.assertRaises(ValueError):guest.bridge_status(CATALOG)
+
     def test_manual_parent_has_only_pinned_mac_no_dhcp_or_addresses(self):
         text=bootstrap.parent_network(CONTEXT)
         self.assertIn('MACAddress='+CONTEXT['parent_mac'],text)
