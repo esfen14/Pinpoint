@@ -93,9 +93,11 @@ its Windows firewall rule permits the appliance address `10.77.1.1`.
 
 In Pinpoint, open **NCPA Deployment → Register an agent I installed**, select
 the discovered Windows device, and enter the NCPA token and port `5693`. The
-owner confirmed Windows is listed in this manual registration picker; it need
-not appear in the automatic deployment eligibility list. Registration still
-requires the appliance address to be configured persistently.
+owner confirmed Windows appeared in this manual registration picker and later
+reported adding it to Pinpoint; it need not appear in the automatic deployment
+eligibility list. Registration status and an actual metric have not yet been
+independently verified. The appliance address answered ping after a VM start,
+but the cloud-init persistence setting remains unconfirmed.
 The picker requires an existing discovered device; if Windows is not listed,
 registration must wait until the appliance is connected and the approved
 Pinpoint discovery step is completed. Registration itself contacts NCPA and is

@@ -55,6 +55,7 @@ table while you test, not afterward.
 
 | Run | Kind | Commit | Result | Report |
 |---|---|---|---|---|
+| [2026-10-27 issue-274 Windows registration follow-up](2026-10-27-issue-274-windows-registration-followup/REPORT.md) | Owner-reported Windows registration and ping | `d4f69043` | Partial: owner reports registration; appliance and web ping passed; actual metric and IP persistence not confirmed | [REPORT.md](2026-10-27-issue-274-windows-registration-followup/REPORT.md) |
 | [2026-10-27 issue-274 Docker daemon recovery](2026-10-27-issue-274-docker-daemon-recovery/REPORT.md) | Owner-triggered Docker restart and ping-only recovery | `4ce0dedf` | Partial: 14 targets and five leases restored; Windows pinged all targets; host reboot and appliance integration pending | [REPORT.md](2026-10-27-issue-274-docker-daemon-recovery/REPORT.md) |
 | [2026-10-27 issue-274 presenter recovery](2026-10-27-issue-274-presenter-recovery/REPORT.md) | DHCP and individual container recovery pilot | presenter checkpoint plus candidate | Partial: DHCP controls and individual Docker restarts passed; daemon and host reboot pending | [REPORT.md](2026-10-27-issue-274-presenter-recovery/REPORT.md) |
 | [2026-10-27 issue-274 host presenter](2026-10-27-issue-274-host-presenter/REPORT.md) | Laptop Docker pilot presenter and ping | `6cd788d3` plus candidate | Partial: 14-device stop/start and ping, one service fault/recovery; reboot and appliance pending | [REPORT.md](2026-10-27-issue-274-host-presenter/REPORT.md) |
