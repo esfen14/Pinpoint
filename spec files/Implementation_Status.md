@@ -13,7 +13,8 @@ network. The current presenter pilot supports `demo/demo presenter status`,
 and allowlisted service `break`/`fix`. A live stop/start and
 Windows ping to all fourteen Linux targets passed; DHCP leases reacquired.
 Individual static and DHCP container restarts and service listener stop/restore
-were also tested. Host reboot, Docker daemon restart, original data migration,
+were also tested. User-initiated Docker daemon restart and presenter recovery
+passed with Windows ping to all fourteen. Host reboot, original data migration,
 address transitions and appliance acceptance remain unverified. See the [pilot report](../docs/test-runs/2026-10-27-issue-274-host-presenter/REPORT.md).
 The following paragraphs describe earlier preparation and its historical state.
 

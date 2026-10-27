@@ -55,6 +55,7 @@ table while you test, not afterward.
 
 | Run | Kind | Commit | Result | Report |
 |---|---|---|---|---|
+| [2026-10-27 issue-274 Docker daemon recovery](2026-10-27-issue-274-docker-daemon-recovery/REPORT.md) | Owner-triggered Docker restart and ping-only recovery | `4ce0dedf` | Partial: 14 targets and five leases restored; Windows pinged all targets; host reboot and appliance integration pending | [REPORT.md](2026-10-27-issue-274-docker-daemon-recovery/REPORT.md) |
 | [2026-10-27 issue-274 presenter recovery](2026-10-27-issue-274-presenter-recovery/REPORT.md) | DHCP and individual container recovery pilot | presenter checkpoint plus candidate | Partial: DHCP controls and individual Docker restarts passed; daemon and host reboot pending | [REPORT.md](2026-10-27-issue-274-presenter-recovery/REPORT.md) |
 | [2026-10-27 issue-274 host presenter](2026-10-27-issue-274-host-presenter/REPORT.md) | Laptop Docker pilot presenter and ping | `6cd788d3` plus candidate | Partial: 14-device stop/start and ping, one service fault/recovery; reboot and appliance pending | [REPORT.md](2026-10-27-issue-274-host-presenter/REPORT.md) |
 | [2026-10-27 issue-274 ping refresh](2026-10-27-issue-274-ping-refresh/REPORT.md) | Refreshed target-host source/image, restored Linux catalog/DHCP and ran ping-only reachability in both directions | `e0cb5047` | Partial setup, failed reachability: five leases observed; Windows ping 1/15 (self only), Linux peer-ping 0/14 | [REPORT.md](2026-10-27-issue-274-ping-refresh/REPORT.md) |

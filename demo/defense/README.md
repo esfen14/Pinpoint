@@ -45,8 +45,9 @@ this laptop. The controls refuse changed container identities or the wrong
 host-only network. They do not create missing containers or migrate old VM data.
 
 A live down/up cycle and ping from Windows to all fourteen passed on 2026-10-27.
-Host reboot, Docker daemon restart, full Pinpoint monitoring, other fault
-scenarios and migration have not been verified. Keep the Docker network and
+A user-initiated Docker daemon restart and presenter recovery also passed;
+Windows pinged all fourteen targets afterward. Host reboot, full Pinpoint
+monitoring, other fault scenarios and migration have not been verified. Keep the Docker network and
 VirtualBox `vboxnet1` in place; up refuses when the expected network is missing.
 The `up` command restores baseline services, including services intentionally
 stopped by `break`. `host-stop` and `host-start` act on one Linux catalog device;

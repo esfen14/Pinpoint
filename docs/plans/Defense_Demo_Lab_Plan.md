@@ -29,9 +29,10 @@ socket; this is not yet a complete supported host controller. Presenter commands
 restore the DHCP attachments, show local service status, and stop or start
 allowlisted preset services, individual target stop/start, DHCP allocator
 stop/start, and reserved lease release/reacquisition. Live tests passed for
-these controls, a full down/up cycle, individual static/DHCP Docker restarts,
-and Windows ping to the targets. Host reboot, Docker daemon restart, original identity/data
-migration, broader fault controls and appliance acceptance remain pending. Per the owner's
+these controls, a full down/up cycle, individual static/DHCP container restarts,
+and a user-initiated Docker daemon restart followed by Windows ping to all
+fourteen targets. Host reboot, original identity/data migration, broader fault
+controls and appliance acceptance remain pending. Per the owner's
 direction, use ping only for connectivity tests.
 
 Status: **host Docker pilot reachable from Windows; supported lifecycle and appliance acceptance remain pending**.
