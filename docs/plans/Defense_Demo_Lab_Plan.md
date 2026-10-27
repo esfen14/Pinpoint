@@ -25,6 +25,25 @@ was run. The container lifecycle is ready for another bounded ping-only attempt
 after the VirtualBox/macvlan reachability path is resolved; this does not pass
 the appliance or fifteen-device acceptance gate.
 
+## Ping-only follow-up preparation
+
+The Windows-to-target result has not changed. Source review confirmed that
+VirtualBox Internal Networking is implemented as an Ethernet switch with
+broadcast/multicast and promiscuous-mode support, while the `nicpromisc` policy
+is documented for bridged adapters. Therefore the prior `allow-all` trial on
+this Internal Network does not identify the failure. See the [VirtualBox 7.2
+networking guide](https://docs.oracle.com/en/virtualization/virtualbox/7.2/user/networkingdetails.html)
+and [`VBoxManage` 7.2 reference](https://docs.oracle.com/en/virtualization/virtualbox/7.2/user/vboxmanage.html).
+
+Added an offline-tested, fixed `peer-ping` request that sends three ICMP
+requests from an addressed Linux container to the Windows address `10.77.1.3`.
+It has no caller-provided destination and reports only a boolean result. The
+currently running pinned guest image predates this request; refresh it through
+the guarded maintenance path before using it. Preserve the fourteen target
+identity/data volumes and DHCP lease state during that refresh. Afterward,
+stage 3 uses only Windows `ping` and this fixed Linux `ping`; do not add ARP,
+port probes, scans, or packet capture.
+
 ## Transition and recovery
 
 Use a new VirtualBox Internal Network named `pinpoint-defense`, with candidate

@@ -103,7 +103,7 @@ def validate_request(catalog, target: str, data: dict) -> dict:
     if device.kind!='linux' or not isinstance(data,dict):
         raise ValueError('Invalid Linux node request')
     operation=data.get('operation')
-    shapes={'inspect':{'operation'},'baseline':{'operation'},
+    shapes={'inspect':{'operation'},'baseline':{'operation'},'peer-ping':{'operation'},
             'server-config':{'operation','reservations','lease_seconds'},
             'server-stop':{'operation'},'server-start':{'operation'},
             'lease-acquire':{'operation','expected_address'},'lease-release':{'operation'}}
@@ -350,7 +350,11 @@ def handle(catalog,device,request) -> dict:
     operation=request['operation']
     if operation=='inspect':return inspection(catalog,device)
     addresses=network(catalog,device,unaddressed=True)
-    if operation=='baseline':
+    if operation=='peer-ping':
+        if not addresses:raise ValueError('Peer ping requires an addressed target')
+        result=command(['/bin/ping','-n','-I','eth0','-c','3','-W','2','10.77.1.3'],timeout=8,check=False)
+        return {'target':device.name,'peer':'win01','reachable':result.returncode==0}
+    elif operation=='baseline':
         for program in program_specs(catalog,device):
             if program=='lease' or program=='dhcp' and not (DATA/'reservations.json').exists():continue
             status=supervisor('status',program,check=False).stdout.split()

@@ -119,6 +119,10 @@ def node_request(catalog,context,image,target,request,*,spike=True):
     response=command(['docker','exec','-i',observed['Id'],'python3','/opt/pinpoint/defense/node.py','control',target],
                      input_text=json.dumps(request),timeout=60)
     result=json.loads(response.stdout)
+    if request.get('operation')=='peer-ping':
+        if result.get('target')!=target or result.get('peer')!='win01' or type(result.get('reachable')) is not bool or set(result)!={'target','peer','reachable'}:
+            raise ValueError('Unexpected peer-ping result')
+        return result
     if result.get('target')!=target or set(result)!={'target','network_safe','network_reason','interfaces','observed_mac','addresses','mac','client_id','listeners','services'}:
         raise ValueError('Unexpected node result')
     return result

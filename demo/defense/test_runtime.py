@@ -78,6 +78,21 @@ class NodeTests(unittest.TestCase):
         validate_request(CATALOG,'dynapp01',{'operation':'lease-acquire','expected_address':'10.77.1.25'})
         with self.assertRaises(ValueError):validate_request(CATALOG,'web03',{'operation':'lease-release'})
 
+    def test_peer_ping_is_fixed_and_cannot_accept_a_user_supplied_destination(self):
+        self.assertEqual(validate_request(CATALOG,'web03',{'operation':'peer-ping'}),{'operation':'peer-ping'})
+        with self.assertRaises(ValueError):validate_request(CATALOG,'win01',{'operation':'peer-ping'})
+        with self.assertRaises(ValueError):validate_request(CATALOG,'web03',{'operation':'peer-ping','destination':'192.0.2.1'})
+
+    def test_peer_ping_runs_only_bounded_icmp_to_the_fixed_windows_address(self):
+        from defense.node import handle
+        device=CATALOG.target('web03')
+        with patch('defense.node.network',return_value=['10.77.1.4']),patch('defense.node.command',return_value=type('Result',(),{'returncode':0})()) as run:
+            self.assertEqual(handle(CATALOG,device,{'operation':'peer-ping'}),{'target':'web03','peer':'win01','reachable':True})
+            run.assert_called_once_with(['/bin/ping','-n','-I','eth0','-c','3','-W','2','10.77.1.3'],timeout=8,check=False)
+        with patch('defense.node.network',return_value=[]),patch('defense.node.command') as run:
+            with self.assertRaises(ValueError):handle(CATALOG,device,{'operation':'peer-ping'})
+            run.assert_not_called()
+
     def test_network_requires_exact_own_mac_one_address_and_no_default_route(self):
         target=CATALOG.target('dynweb01')
         links=[{'ifname':'lo','address':'00:00:00:00:00:00','addr_info':[{'family':'inet','local':'127.0.0.1'}]},

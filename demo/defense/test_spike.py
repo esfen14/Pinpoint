@@ -136,6 +136,15 @@ class SpikeTests(unittest.TestCase):
             self.assertEqual(args[:4],['docker','exec','-i','c'*64])
             self.assertEqual(json.loads(run.call_args.kwargs['input_text']),{'operation':'inspect'})
 
+    def test_peer_ping_dispatch_accepts_only_fixed_boolean_result(self):
+        result={'target':'dynweb01','peer':'win01','reachable':False}
+        with patch.object(guest,'observe_container',return_value=fixture()),patch.object(guest,'trusted_image',return_value={}),patch.object(guest,'command',return_value=SimpleNamespace(stdout=json.dumps(result))) as run:
+            self.assertEqual(guest.node_request(CATALOG,CONTEXT,IMAGE,'dynweb01',{'operation':'peer-ping'}),result)
+            self.assertEqual(json.loads(run.call_args.kwargs['input_text']),{'operation':'peer-ping'})
+        for invalid in [dict(result,reachable=1),dict(result,peer='foreign'),dict(result,detail='leak')]:
+            with patch.object(guest,'observe_container',return_value=fixture()),patch.object(guest,'trusted_image',return_value={}),patch.object(guest,'command',return_value=SimpleNamespace(stdout=json.dumps(invalid))):
+                with self.assertRaises(ValueError):guest.node_request(CATALOG,CONTEXT,IMAGE,'dynweb01',{'operation':'peer-ping'})
+
     def test_node_inspection_reason_is_fixed_and_not_a_raw_namespace_error(self):
         device=CATALOG.target('dynweb01')
         links=[{'ifname':'lo'},{'ifname':'eth0','address':device.mac,'addr_info':[]}]

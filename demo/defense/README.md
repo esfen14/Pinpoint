@@ -137,8 +137,11 @@ DHCP leases. The ping-only Windows-to-target pass reached only Windows itself;
 all Linux target addresses timed out. The target VM NIC retains the planned
 `allow-vms` policy after a trial `allow-all` setting made no difference. The
 two-target DHCP exchange is live-verified; appliance discovery and product
-connectivity remain pending. Guest operations are not yet wired to the
-presenter CLI.
+connectivity remain pending. A fixed `peer-ping` operation now sends three
+bounded ICMP requests from an addressed Linux target to Windows at
+`10.77.1.3`; it takes no caller-supplied destination and reports only the
+reachability result. This is for the next ping-only reachability pass. Guest
+operations are not yet wired to the presenter CLI.
 
 Every boot checks the runtime source fingerprint and pinned image/source label;
 changed code rebuilds only when no containers exist, preserving identity/data
