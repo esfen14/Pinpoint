@@ -122,6 +122,8 @@ class NodeTests(unittest.TestCase):
             atomic(root/'reservations.json',json.dumps({'reservations':reservations,'lease_seconds':600}))
             first=CATALOG.target('dynweb01');second=CATALOG.target('dynapp01')
             atomic(root/'dhcp.leases',f'123 {first.mac} 10.77.1.20 first *\n456 {second.mac} 10.77.1.21 second *\n')
+            # dnsmasq can create readable lease evidence inside the private data dir.
+            (root/'dhcp.leases').chmod(0o644)
             moved=dict(reservations,dynweb01='10.77.1.25')
             with patch('defense.node.DATA',root),patch('defense.node.supervisor') as control:
                 server_config(CATALOG,{'reservations':moved,'lease_seconds':600})

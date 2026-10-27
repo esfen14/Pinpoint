@@ -34,8 +34,34 @@ It refuses a conflicting link rather than deleting it. An interrupted attachment
 requires inspection; automatic cleanup/recovery is not delivered yet.
 
 The host-facing `demo/demo` still exposes only read-only `manifest` and
-`preflight`. VM provisioning, pinned SSH bootstrap, Compose lifecycle and an
-end-to-end spike runner remain pending. These files neither authorize a product
+`preflight`. `provision.py` separately previews or prepares a fresh Ubuntu Server 24.04 VM
+and private unattended media. It injects a generated ed25519 SSH host key before
+the first managed connection. It never boots, clones or deletes a VM. An existing
+preparation requires inspection and explicit resumption of its saved UUID; it is
+never recreated. The build runs as a one-use guest systemd service after a real
+boot, leaves all containers stopped, then disables forwarding. Installer execution,
+pinned SSH verification, Compose lifecycle and an end-to-end spike runner remain
+pending.
+
+Preview only (no VM or file creation):
+
+```bash
+python3 -I demo/defense/provision.py --iso /absolute/path/to/ubuntu-server.iso
+```
+
+The issue owner authorized preparing the new VM. `--apply` creates only the new
+VM and private installation media, after repeating ownership, route, port and
+resource gates. Passwords and private keys enter through private files/stdin,
+never command arguments. Setup artifacts contain credentials and must remain
+outside Git in the private controller store. Installation completion must include
+media cleanup. The management account has no Docker group or unrestricted sudo;
+only the fixed guest helper is permitted through sudo.
+
+VirtualBox may report `NS_ERROR_NOT_IMPLEMENTED` while identifying supported
+Ubuntu media. The detector accepts only the exact diagnostic plus a complete
+supported Ubuntu Server 24.04 report, consistent with
+[upstream detection/preparation behavior](https://github.com/VirtualBox/virtualbox/blob/main/src/VBox/Main/src-server/UnattendedImpl.cpp).
+Other errors remain fatal. These files neither authorize a product
 scan nor establish live protocol, memory or isolation acceptance.
 
 Offline checks (no Docker/VM changes):
@@ -44,5 +70,6 @@ Offline checks (no Docker/VM changes):
 python3 -I demo/defense/test_defense.py
 python3 -I demo/defense/test_runtime.py
 python3 -I demo/defense/test_guest.py
+python3 -I demo/defense/test_provision.py
 scripts/verify.sh docs
 ```

@@ -20,7 +20,9 @@ resource planning. Negative contracts run offline in the docs gate. The initial
 [guest runtime](../demo/defense/README.md) now defines fourteen network-none
 Linux services, persistent identities, real daemon configurations, fixed
 DHCP controls and a checked two-target macvlan attachment helper. The image and
-helpers have not been built or run in a guest. Provisioning, lifecycle, actual
+helpers have not been built or run in a guest. Fresh-VM installer preparation
+now includes private unattended inputs and a pre-injected SSH host key, with a
+separate first-boot image build. Installation, trusted SSH, lifecycle, actual
 guest networking and the architecture spike remain pending; no new product scan
 scope is authorized by this scaffolding.
 The owner selected Windows 10 Home for testing without a purchased license.

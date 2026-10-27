@@ -149,8 +149,11 @@ The [guest runtime preparation](../demo/defense/README.md) includes a generated
 fourteen-target network-none Compose artifact, an image definition, fixed real
 daemon controls and a root guest macvlan helper restricted to the two-target
 architecture spike. Exact image/identity/mount/capability checks precede
-attachment. This is offline preparation: provisioning, lifecycle, real protocol
-checks and the architecture spike are not delivered or verified yet.
+attachment. A separate preview-first installer prepares a fresh Ubuntu target-host
+and private media with a pinned SSH host key; it does not boot the VM. A one-use
+guest boot service builds the image before any target starts. Actual installation,
+SSH verification, lifecycle, real protocol checks and the architecture spike
+remain unverified.
 Offline defense input/ownership/resource/runtime contracts run in the docs gate.
 Its separate [Windows preparation](../demo/WINDOWS_READY.md) now has an installed
 Windows 10 Home test guest and locally verified NCPA agent, powered off at an

@@ -317,7 +317,7 @@ def server_config(catalog,request) -> None:
         for line in leases.read_text().splitlines():
             fields=line.split()
             if len(fields)<2 or fields[1].lower() not in changed:lines.append(line)
-        atomic(leases,'\n'.join(lines)+'\n')
+        atomic(leases,'\n'.join(lines)+'\n',public=True)
     atomic(DATA/'dhcp.conf',desired)
     atomic(saved,json.dumps({'reservations':request['reservations'],'lease_seconds':request['lease_seconds']})+'\n')
     supervisor('start','dhcp')
