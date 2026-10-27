@@ -36,11 +36,30 @@ ping -c 2 10.77.1.4
 ```
 
 `enp0s8` should display `10.77.1.1/27`; the pings are to Windows and the web
-container. A normal guest reboot should then be used to verify the address
-persists; cloud-init may regenerate its file, so do not assume persistence until
-that check passes. Keep the backup outside `/etc/netplan` so netplan does not
-load it as another configuration. Leave adapter 1 and its NAT forwarding rules
-unchanged. Do not select a physical or Wi-Fi adapter.
+container. The owner confirmed the file header warns cloud-init can overwrite
+it, and Windows successfully pinged the appliance at `.1` after the address
+change. To keep cloud-init from regenerating networking on future boots, first
+check whether the disable file already exists:
+
+```bash
+sudo ls -l /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg
+```
+
+If it does not exist, create it with exactly this content:
+
+```bash
+printf 'network: {config: disabled}\n' | sudo tee /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg >/dev/null
+```
+
+If it already exists, inspect its content and do not overwrite it blindly.
+This disables **cloud-init network configuration for the whole guest**; the
+existing netplan files still configure both adapters, including NAT. Future
+cloud-init network updates will no longer apply automatically. Keep the backup
+outside `/etc/netplan` so netplan does not load it as another configuration.
+After saving your work, perform a normal guest reboot and verify with
+`ip -br -4 address` and the two pings above; persistence is not yet verified.
+Leave adapter 1 and its NAT forwarding rules unchanged. Do not select a
+physical or Wi-Fi adapter.
 
 Open `http://127.0.0.1:18080` on the laptop to use `Pinpoint-Final` and sign
 in with that VM's existing application credentials. Its console login and
