@@ -117,3 +117,21 @@ the exact unnumbered demo NIC is down; normal cancellation resets forwarding and
 failures leave the NIC down. This is not yet applied/retested on the installed
 VM. Docker configuration behavior follows the
 [daemon reference](https://github.com/docker/cli/blob/master/docs/reference/dockerd.md).
+
+The private guest helper now has `spike-up`, `inspect TARGET`, `node TARGET`
+(JSON stdin), and `stop TARGET`, limited to dhcp01/dynweb01. Spike startup checks
+every existing container and the exact private Compose document, then creates
+only network-none containers and attaches their macvlans. It starts no protocol
+daemon or DHCP automatically on fresh containers. Explicit fixed node operations
+follow only after the host's isolation/capture gates. These guest operations are
+not yet wired to the presenter CLI or live-verified.
+
+Every boot checks the runtime source fingerprint and pinned image/source label;
+changed code rebuilds only when no containers exist, preserving identity/data
+and SNMP settings. A stale prepared marker cannot authorize execution. Container
+validation permits only metadata inherited from that exact image, required
+project/target ownership and Compose metadata; entrypoint/device overrides fail.
+The demo NIC has a MAC-matched networkd configuration with manual activation,
+no DHCP/link-local/RA addresses or forwarding; the controller raises it only
+after safety gates. This follows the
+[networkd activation policy](https://www.freedesktop.org/software/systemd/man/250/systemd.network.html).

@@ -158,7 +158,11 @@ reproducible setup, lifecycle, real protocol checks and the architecture spike
 remain pending; this is not a supported live environment. The next offline
 hardening adds no-auto-forwarding Docker settings, an every-start reset guard,
 post-cloud-init account cleanup and a build-only gateway while the demo NIC is
-down. Apply/retest these on the saved VM before starting any target.
+down. Apply/retest these on the saved VM before starting any target. The private guest
+helper can prepare only the two-target spike, dispatch fixed node JSON and stop
+one checked container. Runtime/image fingerprints and MAC-matched manual parent
+activation prevent stale builds or networkd link activation from bypassing the
+guards. No live spike or additional scan scope is established by these APIs.
 Offline defense input/ownership/resource/runtime contracts run in the docs gate.
 Its separate [Windows preparation](../demo/WINDOWS_READY.md) now has an installed
 Windows 10 Home test guest and locally verified NCPA agent, powered off at an

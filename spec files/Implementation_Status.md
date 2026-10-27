@@ -27,7 +27,11 @@ IPv4 forwarding on reboot; attachment refuses it. Durable forwarding and remaini
 management-group cleanup block live target activation. Offline regression-tested
 Docker-start/boot guards, post-cloud-init account hardening and build-only
 forwarding with the demo parent down now exist; their VM application and restart
-proof remain pending. Fresh-VM installer preparation
+proof remain pending. The offline two-target helper now validates image/source
+provenance, inherited image metadata and the exact private Compose document
+before creation/attachment, with fixed node JSON and selected-target stop
+operations. A manual parent-link policy and changed-source image rebuild are
+implemented; these controls still need live maintenance and spike verification. Fresh-VM installer preparation
 now includes private unattended inputs and a pre-injected SSH host key, with a
 separate first-boot image build. Reproducible first-boot setup, lifecycle, actual
 guest networking and the architecture spike remain pending; no new product scan

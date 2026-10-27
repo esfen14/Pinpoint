@@ -8,10 +8,48 @@ import sys
 import uuid
 import stat
 import signal
+import hashlib
 from contextlib import contextmanager
 
 ROOT=Path('/var/lib/pinpoint-defense')
 SOURCE=Path('/opt/pinpoint-defense')
+RUNTIME_FILES=('__init__.py','catalog.py','compose.py','manifest.json','preflight.py',
+               'node.py','guest.py','Dockerfile','Dockerfile.dockerignore','bootstrap.py')
+
+
+def parent_network(context):
+    """Let the controller own only the pinned demo NIC's unnumbered link state."""
+    mac=context.get('parent_mac','')
+    if not re.fullmatch(r'(?:[a-f0-9]{2}:){5}[a-f0-9]{2}',mac):raise ValueError('Invalid parent MAC')
+    return ('[Match]\nMACAddress='+mac+'\n[Link]\nActivationPolicy=manual\nRequiredForOnline=no\n'
+            '[Network]\nDHCP=no\nLinkLocalAddressing=no\nIPv6AcceptRA=no\nIPForward=no\n')
+
+
+def build_unit():
+    """Check source/image provenance at each boot instead of trusting a stale marker."""
+    return ('[Unit]\nDescription=Prepare the owned defense target image\n'
+            'Wants=network-online.target\nAfter=network-online.target docker.service pinpoint-defense-ready.service\n'
+            'Requires=docker.service pinpoint-defense-ready.service\n'
+            '[Service]\nType=oneshot\nUMask=0077\nTimeoutStartSec=45min\n'
+            'ExecStart=/usr/bin/python3 /opt/pinpoint-defense/bootstrap.py build\n'
+            '[Install]\nWantedBy=multi-user.target\n')
+
+
+def image_source_hash(directory=None):
+    """Hash the fixed bounded regular runtime sources, refusing substituted links."""
+    directory=directory or SOURCE/'demo'/'defense'
+    digest=hashlib.sha256()
+    for name in RUNTIME_FILES:
+        path=directory/name
+        try:fd=os.open(path,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK)
+        except OSError:raise ValueError('Unsafe or missing image source') from None
+        with os.fdopen(fd,'rb') as source:
+            info=os.fstat(source.fileno())
+            if not stat.S_ISREG(info.st_mode) or info.st_uid!=os.getuid() or info.st_nlink!=1 or info.st_mode&0o022 or info.st_size>1048576:
+                raise ValueError('Unsafe image source')
+            data=source.read(1048577)
+        digest.update(name.encode()+b'\0'+str(len(data)).encode()+b'\0'+data)
+    return digest.hexdigest()
 
 
 def docker_settings():
@@ -198,7 +236,7 @@ def configure_ssh_preservation(directory=Path('/etc/cloud/cloud.cfg.d')):
     write(directory/'99-defense-pinned-ssh.cfg','ssh_deletekeys: false\nssh_genkeytypes: []\n')
 
 
-def configure_hardening(root=Path('/')):
+def configure_hardening(root=Path('/'),*,context=None):
     """Install fixed fresh-guest forwarding and post-cloud-init guards, never generic hooks."""
     docker=root/'etc/docker';dropin=root/'etc/systemd/system/docker.service.d'
     for directory in [docker,dropin]:
@@ -207,6 +245,14 @@ def configure_hardening(root=Path('/')):
         info=directory.lstat()
         if not stat.S_ISDIR(info.st_mode) or info.st_uid!=os.getuid() or info.st_mode&0o022:
             raise ValueError('Unsafe hardening directory ownership')
+    if context is None:context=owned_context()
+    network=root/'etc/systemd/network'
+    if network.is_symlink():raise ValueError('Unsafe network config directory')
+    network.mkdir(parents=True,exist_ok=True,mode=0o755)
+    info=network.lstat()
+    if not stat.S_ISDIR(info.st_mode) or info.st_uid!=os.getuid() or info.st_mode&0o022:
+        raise ValueError('Unsafe network configuration ownership')
+    write(network/'05-pinpoint-defense.network',parent_network(context),0o644)
     write(docker/'daemon.json',json.dumps(docker_settings())+'\n',0o644)
     write(dropin/'90-pinpoint-defense.conf',docker_guard_dropin(),0o644)
     write(root/'etc/systemd/system/pinpoint-defense-ready.service',ready_unit(),0o644)
@@ -273,14 +319,8 @@ def main():
         run(['apt-get','update'])
         run(['apt-get','install','-y','--no-install-recommends','docker.io','docker-compose-v2','iproute2','procps'])
         write(SOURCE/'bootstrap.py',Path(__file__).read_text())
-        configure_hardening()
-        write(Path('/etc/systemd/system/pinpoint-defense-build.service'),
-              '[Unit]\nDescription=Prepare the owned defense target image\n'
-              'Wants=network-online.target\nAfter=network-online.target docker.service pinpoint-defense-ready.service\n'
-              'Requires=docker.service pinpoint-defense-ready.service\nConditionPathExists=!/var/lib/pinpoint-defense/prepared.json\n'
-              '[Service]\nType=oneshot\nUMask=0077\nTimeoutStartSec=45min\n'
-              'ExecStart=/usr/bin/python3 /opt/pinpoint-defense/bootstrap.py build\n'
-              '[Install]\nWantedBy=multi-user.target\n',0o644)
+        configure_hardening(context=payload['context'])
+        write(Path('/etc/systemd/system/pinpoint-defense-build.service'),build_unit(),0o644)
         configure_unit('enable','pinpoint-defense-build.service')
         # Docker enables forwarding during setup. No demo containers exist yet.
         write(Path('/etc/sysctl.d/90-pinpoint-defense.conf'),'net.ipv4.ip_forward=0\nnet.ipv6.conf.all.forwarding=0\nnet.ipv6.conf.all.disable_ipv6=1\nnet.ipv6.conf.default.disable_ipv6=1\n',0o644)
@@ -305,28 +345,45 @@ def build_image():
     if not dmi_uuid_matches(context['vm_uuid'],Path('/sys/class/dmi/id/product_uuid').read_text().strip()):
         raise ValueError('Image build guest UUID mismatch')
     ready()
-    if (ROOT/'prepared.json').exists():return
+    digest=image_source_hash()
+    from defense.node import atomic,private_directory
+    old_runtime=read_private_json(ROOT/'runtime.json') if (ROOT/'runtime.json').exists() else {}
+    source_pin=read_private_json(ROOT/'image-source.json') if (ROOT/'image-source.json').exists() else {}
+    if (ROOT/'prepared.json').exists() and source_pin=={'sha256':digest}:
+        from defense.guest import validate_image
+        observed=json.loads(subprocess.run(['docker','image','inspect',old_runtime['image']],capture_output=True,text=True,check=True,timeout=15).stdout)
+        if len(observed)!=1:raise ValueError('Ambiguous pinned image')
+        validate_image(old_runtime['image'],digest,observed[0])
+        return
     if subprocess.run(['docker','ps','-aq'],capture_output=True,text=True,check=True,timeout=15).stdout.strip():
         raise ValueError('Fresh build refuses an existing container')
     with build_network():
-        run(['docker','build','--iidfile',str(ROOT/'image-id'),'-f',str(SOURCE/'demo'/'defense'/'Dockerfile'),str(SOURCE)])
+        run(['docker','build','--label','org.pinpoint.defense.source='+digest,'--iidfile',str(ROOT/'image-id'),'-f',str(SOURCE/'demo'/'defense'/'Dockerfile'),str(SOURCE)])
     image=(ROOT/'image-id').read_text().strip()
     if not re.fullmatch(r'sha256:[a-f0-9]{64}',image):raise ValueError('Build did not produce a pinned image')
-    write(ROOT/'runtime.json',json.dumps({'image':image})+'\n')
+    atomic(ROOT/'runtime.json',json.dumps({'image':image})+'\n')
+    atomic(ROOT/'image-source.json',json.dumps({'sha256':digest})+'\n')
     sys.path.insert(0,str(SOURCE/'demo'))
     from defense.catalog import load_catalog
     from defense.compose import compose_document
     catalog=load_catalog()
-    for parent in ['identities','data','private']:(ROOT/parent).mkdir(mode=0o700)
+    for parent in ['identities','data','private']:
+        (ROOT/parent).mkdir(mode=0o700,exist_ok=True);private_directory(ROOT/parent)
     for device in catalog.devices:
         if device.kind=='linux':
-            (ROOT/'identities'/device.name).mkdir(mode=0o700)
-            (ROOT/'data'/device.name).mkdir(mode=0o700)
+            (ROOT/'identities'/device.name).mkdir(mode=0o700,exist_ok=True)
+            private_directory(ROOT/'identities'/device.name)
+            (ROOT/'data'/device.name).mkdir(mode=0o700,exist_ok=True)
+            info=(ROOT/'data'/device.name).lstat()
+            if not stat.S_ISDIR(info.st_mode) or info.st_uid!=0 or info.st_mode&0o022:raise ValueError('Unsafe existing target data')
     import secrets
-    write(ROOT/'private'/'snmp-community',secrets.token_hex(16)+'\n')
-    write(ROOT/'spike-compose.json',json.dumps(compose_document(catalog,image,context['owner'],spike=True)))
+    secret=ROOT/'private'/'snmp-community'
+    if not secret.exists():write(secret,secrets.token_hex(16)+'\n')
+    info=secret.lstat()
+    if not stat.S_ISREG(info.st_mode) or info.st_uid!=0 or info.st_nlink!=1 or info.st_mode&0o077:raise ValueError('Unsafe private SNMP state')
+    atomic(ROOT/'spike-compose.json',json.dumps(compose_document(catalog,image,context['owner'],spike=True)))
     run(['sysctl','--system'])
-    write(ROOT/'prepared.json',json.dumps({'version':1,'prepared':True,'containers_started':False})+'\n')
+    atomic(ROOT/'prepared.json',json.dumps({'version':1,'prepared':True,'containers_started':False})+'\n')
 
 
 if __name__=='__main__':
