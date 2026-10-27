@@ -5,21 +5,44 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+import uuid
 
 ROOT=Path('/var/lib/pinpoint-defense')
 SOURCE=Path('/opt/pinpoint-defense')
 
 
+def dmi_uuid_matches(expected,observed) -> bool:
+    """Compare the pinned UUID using only the two documented SMBIOS byte orders."""
+    if not isinstance(expected,str) or not isinstance(observed,str):return False
+    pattern=r'[a-fA-F0-9]{8}(?:-[a-fA-F0-9]{4}){3}-[a-fA-F0-9]{12}'
+    if not re.fullmatch(pattern,expected) or not re.fullmatch(pattern,observed):return False
+    identifier=uuid.UUID(expected)
+    return observed.lower() in {str(identifier),str(uuid.UUID(bytes=identifier.bytes_le))}
+
+
 def run(argv):
     """Run fixed setup commands with output kept in the private installation log."""
     with Path('/var/log/pinpoint-defense-bootstrap.log').open('ab') as output:
-        subprocess.run(argv,stdin=subprocess.DEVNULL,stdout=output,stderr=output,check=True,timeout=1800)
+        subprocess.run(argv,stdin=subprocess.DEVNULL,stdout=output,stderr=output,check=True,timeout=1800,
+                       env=dict(os.environ,DEBIAN_FRONTEND='noninteractive',NEEDRESTART_MODE='a'))
+
+
+def configure_unit(action,unit):
+    """Configure only fixed units offline; the installer has no running target systemd."""
+    if action not in {'enable','disable'} or unit not in {'ssh.socket','ssh.service','pinpoint-defense-build.service'}:
+        raise ValueError('Unsupported offline service configuration')
+    run(['env','SYSTEMD_OFFLINE=1','systemctl',action,unit])
 
 
 def write(path,text,mode=0o600):
     """Create a fresh fixed destination without following existing symlinks."""
     fd=os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,mode)
     with os.fdopen(fd,'w') as output:output.write(text)
+
+
+def configure_ssh_preservation(directory=Path('/etc/cloud/cloud.cfg.d')):
+    """Preserve only our injected host key rather than cloud-init rotating it at first boot."""
+    write(directory/'99-defense-pinned-ssh.cfg','ssh_deletekeys: false\nssh_genkeytypes: []\n')
 
 
 def validate_payload(payload):
@@ -31,7 +54,7 @@ def validate_payload(payload):
     context=payload['context']
     if set(context)!={'version','owner','vm_uuid','parent_mac'} or context['version']!=1 or not re.fullmatch(r'[a-f0-9]{48}',context['owner']):
         raise ValueError('Invalid bootstrap ownership')
-    if Path('/sys/class/dmi/id/product_uuid').read_text().strip().lower()!=context['vm_uuid']:
+    if not dmi_uuid_matches(context['vm_uuid'],Path('/sys/class/dmi/id/product_uuid').read_text().strip()):
         raise ValueError('Bootstrap VM UUID mismatch')
     if not re.fullmatch(r'(?:[a-f0-9]{2}:){5}[a-f0-9]{2}',context['parent_mac']):
         raise ValueError('Invalid bootstrap parent identity')
@@ -40,7 +63,7 @@ def validate_payload(payload):
     for name in ['public_host_key','authorized_key']:
         if not re.fullmatch(r'ssh-ed25519 [A-Za-z0-9+/=]+(?: [a-zA-Z0-9_-]+)?\n?',payload[name]):
             raise ValueError('Invalid injected public key')
-    allowed={'__init__.py','catalog.py','compose.py','manifest.json','preflight.py','node.py','guest.py','Dockerfile','Dockerfile.dockerignore'}
+    allowed={'__init__.py','catalog.py','compose.py','manifest.json','preflight.py','node.py','guest.py','Dockerfile','Dockerfile.dockerignore','bootstrap.py'}
     if set(payload['files'])!=allowed or any(not isinstance(v,str) or len(v)>1048576 for v in payload['files'].values()):
         raise ValueError('Invalid fixed runtime source bundle')
     if ROOT.exists() or SOURCE.exists():raise ValueError('Refusing to overwrite an existing guest preparation')
@@ -58,8 +81,7 @@ def main():
         source=SOURCE/'demo'/'defense';source.mkdir(parents=True,mode=0o700)
         for name,value in payload['files'].items():write(source/name,value)
         # Configure only the management sshd. The demo parent remains unnumbered.
-        run(['systemctl','disable','--now','ssh.socket'])
-        run(['systemctl','stop','ssh.service'])
+        configure_unit('disable','ssh.socket')
         key=Path('/etc/ssh/ssh_host_ed25519_key')
         for path in [key,Path(str(key)+'.pub')]:
             if path.is_symlink():raise ValueError('Unsafe installer host key')
@@ -72,6 +94,7 @@ def main():
         account=pwd.getpwnam('defense')
         os.chown(sshdir,account.pw_uid,account.pw_gid)
         os.chown(sshdir/'authorized_keys',account.pw_uid,account.pw_gid)
+        configure_ssh_preservation()
         config=Path('/etc/ssh/sshd_config.d/00-defense.conf')
         write(config,'ListenAddress 10.0.2.15\nHostKey /etc/ssh/ssh_host_ed25519_key\nPasswordAuthentication no\nKbdInteractiveAuthentication no\nPermitRootLogin no\nAllowUsers defense\n',0o644)
         # No general sudo or Docker group access for the management account.
@@ -89,12 +112,12 @@ def main():
               '[Service]\nType=oneshot\nUMask=0077\nTimeoutStartSec=45min\n'
               'ExecStart=/usr/bin/python3 /opt/pinpoint-defense/bootstrap.py build\n'
               '[Install]\nWantedBy=multi-user.target\n',0o644)
-        run(['systemctl','enable','pinpoint-defense-build.service'])
+        configure_unit('enable','pinpoint-defense-build.service')
         # Docker enables forwarding during setup. No demo containers exist yet.
         write(Path('/etc/sysctl.d/90-pinpoint-defense.conf'),'net.ipv4.ip_forward=0\nnet.ipv6.conf.all.forwarding=0\nnet.ipv6.conf.all.disable_ipv6=1\nnet.ipv6.conf.default.disable_ipv6=1\n',0o644)
         run(['sysctl','--system'])
         run(['/usr/sbin/sshd','-t'])
-        run(['systemctl','enable','ssh.service'])
+        configure_unit('enable','ssh.service')
         write(ROOT/'installed.json',json.dumps({'version':1,'installed':True,'image_built':False})+'\n')
         return 0
     except Exception:
@@ -110,7 +133,7 @@ def build_image():
     if os.geteuid()!=0 or Path('/.dockerenv').exists() or Path('/sys/class/dmi/id/product_name').read_text().strip()!='VirtualBox':
         raise ValueError('Image build requires the dedicated guest')
     context=read_private_json(ROOT/'context.json')
-    if Path('/sys/class/dmi/id/product_uuid').read_text().strip().lower()!=context['vm_uuid']:
+    if not dmi_uuid_matches(context['vm_uuid'],Path('/sys/class/dmi/id/product_uuid').read_text().strip()):
         raise ValueError('Image build guest UUID mismatch')
     if (ROOT/'prepared.json').exists():return
     if subprocess.run(['docker','ps','-aq'],capture_output=True,text=True,check=True,timeout=15).stdout.strip():

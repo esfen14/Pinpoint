@@ -19,10 +19,14 @@ reserved inputs, private state, subnet/VPN overlap, VM ownership/NAT sockets and
 resource planning. Negative contracts run offline in the docs gate. The initial
 [guest runtime](../demo/defense/README.md) now defines fourteen network-none
 Linux services, persistent identities, real daemon configurations, fixed
-DHCP controls and a checked two-target macvlan attachment helper. The image and
-helpers have not been built or run in a guest. Fresh-VM installer preparation
+DHCP controls and a checked two-target macvlan attachment helper. The initial
+image build completed inside a fresh Ubuntu target host, but container daemon
+execution remains untested. The [installation report](../docs/test-runs/2026-10-27-issue-274-linux-target-host-install/REPORT.md)
+records console recovery and verified original pinned SSH. Docker re-enables
+IPv4 forwarding on reboot; attachment refuses it. Durable forwarding and remaining
+management-group cleanup block live target activation. Fresh-VM installer preparation
 now includes private unattended inputs and a pre-injected SSH host key, with a
-separate first-boot image build. Installation, trusted SSH, lifecycle, actual
+separate first-boot image build. Reproducible first-boot setup, lifecycle, actual
 guest networking and the architecture spike remain pending; no new product scan
 scope is authorized by this scaffolding.
 The owner selected Windows 10 Home for testing without a purchased license.

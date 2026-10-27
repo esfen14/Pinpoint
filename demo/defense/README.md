@@ -1,7 +1,7 @@
 # Defense target runtime (issue #274, preparation)
 
 This directory is an unfinished guest runtime for the dedicated VirtualBox
-Linux target host. It has not been built or exercised against the appliance.
+Linux target host. The first image build completed in the target-host VM; containers and appliance integration remain untested.
 The existing `lab/compose.yaml` is a separate five-target Docker lab.
 
 `compose.yaml` is a generated review artifact containing fourteen Linux targets.
@@ -78,3 +78,33 @@ A preparation stopped in `created` may resume only media generation with
 `--resume-media` (preview) and `--resume-media --apply`. This checks the saved
 UUID/owner/MACs, powered-off process/endpoint boundary, exact disk and empty DVD;
 it never recreates storage. `media-ready` means installation has not started.
+
+`--start-install` previews the first boot; `--start-install --apply` boots only
+the saved `media-ready` VM after rechecking the exact disk/media/NIC/owner,
+processes, isolated segment, KVM release and one-VM resource budget. Other VMs
+must be powered off. A start failure becomes `start-needs-inspection`; retries
+never recreate the VM or silently reset installation state. Ubuntu powers off
+at installation completion; disk-only boot and private-media cleanup still need
+to precede normal use. This boot gate is separate from the stricter full-lab
+startup capacity gate.
+
+Guest UUID checks account for the two SMBIOS UUID byte orders controlled by
+VirtualBox's documented
+[`--system-uuid-le` setting](https://docs.oracle.com/en/virtualization/virtualbox/7.2/user/vboxmanage.html).
+They accept only the pinned VM UUID or its exact field-byte conversion; malformed
+or foreign UUIDs still fail. Service enable/disable operations in the installer
+use `SYSTEMD_OFFLINE=1`; starting the image build belongs to the installed OS.
+
+`--boot-installed` (preview) / `--boot-installed --apply` performs only the first
+disk-only verification boot after the saved installation phase and a confirmed
+powered-off VM. It detaches the private DVD and repeats the one-VM capacity,
+ownership and endpoint gates. A successful start is labelled
+`installed-boot-unverified` until actual pinned SSH and guest observations pass.
+
+The first actual installation required console recovery for UUID byte order,
+offline systemd, an interactive package notice and cloud-init key rotation.
+Original pinned SSH is now verified. Docker re-enables IPv4 forwarding on later
+boots; the helper refuses attachment, and durable forwarding plus remaining
+`lxd` group cleanup must precede target activation. See the
+[installation report](../../docs/test-runs/2026-10-27-issue-274-linux-target-host-install/REPORT.md).
+No fully repeatable installation or live target workflow is claimed yet.

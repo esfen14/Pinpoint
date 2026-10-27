@@ -10,13 +10,47 @@ import tempfile
 from types import SimpleNamespace
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from defense.provision import install_commands, autoinstall_template, postinstall_template, ssh_arguments, creation_commands, prepare, validate_iso_detection, validate_media_resume
+from defense.provision import install_commands, autoinstall_template, postinstall_template, ssh_arguments, creation_commands, prepare, validate_iso_detection, validate_media_resume, validate_install_boot, validate_installed_boot
 from defense import bootstrap, controller
 
 UUID='351eb491-f5e1-4854-a7e4-68309ad774ad'
 
 
 class ProvisionTests(unittest.TestCase):
+    def test_dmi_uuid_accepts_documented_byte_order_only_and_rejects_foreign_identity(self):
+        from defense.bootstrap import dmi_uuid_matches
+        expected='821464dc-e7ce-4067-8eec-5cb1c61d3632'
+        self.assertTrue(dmi_uuid_matches(expected,expected))
+        self.assertTrue(dmi_uuid_matches(expected,'dc641482-cee7-6740-8eec-5cb1c61d3632'))
+        for observed in ['dc641482-cee7-6740-8eec-5cb1c61d3633','invalid','',None]:
+            self.assertFalse(dmi_uuid_matches(expected,observed))
+
+    def test_installer_service_configuration_never_contacts_a_running_systemd_bus(self):
+        with patch('defense.bootstrap.run') as run:
+            bootstrap.configure_unit('disable','ssh.socket')
+            self.assertEqual(run.call_args.args[0],['env','SYSTEMD_OFFLINE=1','systemctl','disable','ssh.socket'])
+            run.reset_mock()
+            for action,unit in [('stop','ssh.service'),('start','docker.service'),('enable','foreign.service')]:
+                with self.assertRaises(ValueError):bootstrap.configure_unit(action,unit)
+            run.assert_not_called()
+
+    def test_setup_package_commands_cannot_wait_for_debconf_or_restart_dialogs(self):
+        with patch.object(Path,'open',return_value=io.BytesIO()),patch('subprocess.run') as run:
+            bootstrap.run(['apt-get','install','-y','docker.io'])
+            environment=run.call_args.kwargs.get('env',{})
+            self.assertEqual(environment.get('DEBIAN_FRONTEND'),'noninteractive')
+            self.assertEqual(environment.get('NEEDRESTART_MODE'),'a')
+
+    def test_cloud_init_preserves_the_injected_host_key_and_refuses_existing_config(self):
+        with tempfile.TemporaryDirectory() as folder:
+            directory=Path(folder)
+            bootstrap.configure_ssh_preservation(directory)
+            path=directory/'99-defense-pinned-ssh.cfg'
+            self.assertIn('ssh_deletekeys: false',path.read_text())
+            self.assertIn('ssh_genkeytypes: []',path.read_text())
+            self.assertEqual(path.stat().st_mode&0o777,0o600)
+            with self.assertRaises(FileExistsError):bootstrap.configure_ssh_preservation(directory)
+
     def test_password_and_private_host_key_use_files_never_command_arguments(self):
         root=Path('/private/defense')
         commands=install_commands(UUID,root,Path('/media/ubuntu.iso'))
@@ -61,6 +95,24 @@ class ProvisionTests(unittest.TestCase):
         with self.assertRaises(ValueError):validate_media_resume(dict(state,phase='installing'),data,root,Path('/media/ubuntu.iso'))
         with self.assertRaises(ValueError):validate_media_resume(state,dict(data,**{'SATA-0-0':'/foreign/disk.vdi'}),root,Path('/media/ubuntu.iso'))
         with self.assertRaises(ValueError):validate_media_resume(state,dict(data,**{'IDE-1-0':'/foreign/media.iso'}),root,Path('/media/ubuntu.iso'))
+
+    def test_install_boot_requires_exact_ready_media_and_virtualization_and_resources(self):
+        root=Path('/private/defense');iso=Path('/media/ubuntu.iso')
+        state={'phase':'media-ready','iso':str(iso)}
+        data={'SATA-0-0':str(root/'vm/pinpoint-defense-targets/pinpoint-defense-targets.vdi'),'IDE-1-0':str(root/'media/Unattended-aux-iso.viso'),'VMState':'poweroff','memory':'2048'}
+        validate_install_boot(state,data,root,False,6000,70000,68000)
+        for alteration,kvm,memory,disk in [(dict(data,VMState='running'),False,6000,70000),(dict(data,**{'IDE-1-0':'/foreign.iso'}),False,6000,70000),(data,True,6000,70000),(data,False,5000,70000),(data,False,6000,10000)]:
+            with self.assertRaises(ValueError):validate_install_boot(state,alteration,root,kvm,memory,disk,68000)
+        with self.assertRaises(ValueError):validate_install_boot(dict(state,phase='installing'),data,root,False,6000,70000,68000)
+
+    def test_installed_boot_requires_prior_installation_and_same_storage_pins(self):
+        root=Path('/private/defense')
+        state={'phase':'installing'}
+        data={'SATA-0-0':str(root/'vm/pinpoint-defense-targets/pinpoint-defense-targets.vdi'),'IDE-1-0':str(root/'media/Unattended-aux-iso.viso'),'VMState':'poweroff','memory':'2048'}
+        validate_installed_boot(state,data,root,False,6000,70000,68000)
+        validate_installed_boot(state,dict(data,**{'IDE-1-0':'emptydrive'}),root,False,6000,70000,68000)
+        with self.assertRaises(ValueError):validate_installed_boot(dict(state,phase='media-ready'),data,root,False,6000,70000,68000)
+        with self.assertRaises(ValueError):validate_installed_boot(state,dict(data,VMState='running'),root,False,6000,70000,68000)
 
     def test_creation_preserves_old_vms_and_has_only_exact_loopback_management(self):
         commands=creation_commands(UUID,'b'*48,Path('/private/defense'),['02:77:01:ff:01:01','02:77:01:ff:01:02'])

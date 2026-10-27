@@ -93,6 +93,9 @@ autoinstall:
     username: defense
     realname: Pinpoint Defense
     password: '@@VBOX_INSERT_USER_PASSWORD_SHACRYPT512@@'
+  user-data:
+    ssh_deletekeys: false
+    ssh_genkeytypes: []
   late-commands:
     - cp /cdrom/vboxpostinstall.sh /target/root/vboxpostinstall.sh
     - chmod 700 /target/root/vboxpostinstall.sh
@@ -223,7 +226,7 @@ def prepare(iso: Path, *, apply=False) -> dict:
             execute(['ssh-keygen','-q','-t','ed25519','-N','','-C','pinpoint-defense','-f',str(root/name)])
         atomic(root/'login-password',secrets.token_urlsafe(32)+'\n')
         files={name:(Path(__file__).parent/name).read_text() for name in
-               ['__init__.py','catalog.py','compose.py','manifest.json','preflight.py','node.py','guest.py','Dockerfile','Dockerfile.dockerignore']}
+               ['__init__.py','catalog.py','compose.py','manifest.json','preflight.py','node.py','guest.py','Dockerfile','Dockerfile.dockerignore','bootstrap.py']}
         public=(root/'host-key.pub').read_text()
         payload={'context':{'version':1,'owner':owner,'vm_uuid':identifier,'parent_mac':macs[1]},
                  'private_host_key':(root/'host-key').read_text(),'public_host_key':public,
@@ -300,6 +303,86 @@ def resume_media(iso: Path,*,apply=False) -> dict:
         return dict(result,phase='media-ready',applied=True)
 
 
+def validate_install_boot(state,data,root,kvm_loaded,available,free_disk,required_disk,*,allow_ejected=False):
+    """Require exact unbooted installer storage plus the one-VM capacity gate."""
+    from defense.preflight import check_resources
+    disk=str(root/'vm/pinpoint-defense-targets/pinpoint-defense-targets.vdi')
+    media=str(root/'media/Unattended-aux-iso.viso')
+    if state.get('phase')!='media-ready' or data.get('VMState')!='poweroff' or data.get('memory')!='2048':
+        raise ValueError('Installer boot requires the exact powered-off media-ready VM')
+    allowed_media={media,'emptydrive'} if allow_ejected else {media}
+    if data.get('SATA-0-0')!=disk or data.get('IDE-1-0') not in allowed_media:
+        raise ValueError('Installer disk/media pins changed')
+    for key,value in data.items():
+        if re.fullmatch(r'(?:SATA|IDE)-[0-9]+-[0-9]+',key) and value not in {disk,media,'none','emptydrive'}:
+            raise ValueError('Unexpected installation storage')
+    if kvm_loaded:raise ValueError('KVM still holds hardware virtualization')
+    check_resources(available,free_disk,[2048],required_disk)
+
+
+def validate_installed_boot(state,data,root,kvm_loaded,available,free_disk,required_disk):
+    """Require the prior installation phase before the first disk-only verification boot."""
+    if state.get('phase')!='installing':
+        raise ValueError('Disk-only verification requires a prior installer run')
+    validate_install_boot(dict(state,phase='media-ready'),data,root,kvm_loaded,available,free_disk,required_disk,allow_ejected=True)
+
+
+def start_install(*,apply=False,installed=False):
+    """Boot the saved target-host for installation or its first disk-only verification."""
+    import os
+    import shutil
+    import sys
+    repo=Path(__file__).resolve().parents[2]
+    sys.path.insert(0,str(repo/'scripts'));sys.path.insert(0,str(repo/'demo'))
+    import qa_control
+    import vmlab_preflight
+    from defense.controller import Collector,STATE_ROOT,WINDOWS_ROOT,OWNER_KEY,observed_info,vm_record,network_inventory,allocated_mib
+    from defense.preflight import read_private_json,validate_vm,validate_runtime,reject_overlaps,reject_virtualbox_dhcp
+    from defense.node import atomic
+    root=STATE_ROOT/'target-host'
+    with qa_control.claim():
+        state=read_private_json(root/'state.json');collector=Collector()
+        reject_overlaps(network_inventory(collector));reject_virtualbox_dhcp(collector.vbox('list','dhcpservers'))
+        for line in collector.vbox('list','vms').splitlines():
+            match=re.search(r'\{([a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12})\}$',line)
+            if not match:raise ValueError('Incomplete VM inventory')
+            info=observed_info(collector,match[1])
+            if info.get('VMState')!='poweroff':raise ValueError('Other VMs must remain off during installation')
+            if match[1]!=state['uuid'] and info.get('name')!='pinpoint-defense-win01' and any(info.get(f'intnet{i}')=='pinpoint-defense' and info.get(f'nic{i}')=='intnet' for i in range(1,9)):
+                raise ValueError('Foreign VM on the defense segment')
+        data=observed_info(collector,state['uuid'])
+        owner=collector.vbox('getextradata',state['uuid'],OWNER_KEY).strip()
+        record=vm_record(data,owner[7:] if owner.startswith('Value: ') else None)
+        validate_vm(record,'target_host',state['uuid'],state['owner'],state['macs'])
+        managers,processes=vmlab_preflight.inventory()
+        validate_runtime(record,managers,[dict(p,pid=pid) for pid,p in processes.items()],vmlab_preflight.tcp_listeners([2260]),{})
+        if processes:raise ValueError('Other running VM processes prevent installation boot')
+        memory=re.search(r'^MemAvailable:\s+(\d+)',Path('/proc/meminfo').read_text(),re.M)
+        if not memory:raise ValueError('Missing host memory inventory')
+        required=max(40960-allocated_mib(WINDOWS_ROOT),0)+max(16384-allocated_mib(root/'vm'),0)+8192+2048+1024+10240
+        available=int(memory[1])//1024;free=shutil.disk_usage(Path.home()).free//1048576
+        gate=validate_installed_boot if installed else validate_install_boot
+        gate(state,data,root,Path('/sys/module/kvm').exists(),available,free,required)
+        result={'uuid':state['uuid'],'phase':state['phase'],'available_mib':available,'free_disk_mib':free,'applied':False}
+        if not apply:return result
+        os.umask(0o077)
+        state['phase']='starting-installed' if installed else 'starting-install';atomic(root/'state.json',json.dumps(state)+'\n')
+        try:
+            commands=[]
+            if installed:
+                commands.append(['VBoxManage','storageattach',state['uuid'],'--storagectl','IDE','--port','1','--device','0','--type','dvddrive','--medium','emptydrive'])
+            commands.extend([['VBoxManage','modifyvm',state['uuid'],'--boot1','disk','--boot2','none' if installed else 'dvd','--boot3','none','--boot4','none'],['VBoxManage','startvm',state['uuid'],'--type','headless']])
+            for argv in commands:
+                with (root/'install-start.log').open('ab') as output:
+                    completed=subprocess.run(argv,stdin=subprocess.DEVNULL,stdout=output,stderr=output,timeout=45)
+                if completed.returncode:raise ValueError('Owned installer start failed')
+        except Exception:
+            state['phase']='start-needs-inspection';atomic(root/'state.json',json.dumps(state)+'\n')
+            raise
+        state['phase']='installed-boot-unverified' if installed else 'installing';atomic(root/'state.json',json.dumps(state)+'\n')
+        return dict(result,phase=state['phase'],applied=True)
+
+
 def main(argv=None):
     """Prepare installer media only; starting and transitioning existing VMs is separate."""
     import argparse
@@ -308,10 +391,14 @@ def main(argv=None):
     parser.add_argument('--iso',type=Path,required=True)
     parser.add_argument('--apply',action='store_true')
     parser.add_argument('--resume-media',action='store_true')
+    parser.add_argument('--start-install',action='store_true')
+    parser.add_argument('--boot-installed',action='store_true')
     args=parser.parse_args(argv)
     try:
+        if sum([args.resume_media,args.start_install,args.boot_installed])>1:raise ValueError('Choose one preparation action')
         operation=resume_media if args.resume_media else prepare
-        print(json.dumps(operation(args.iso,apply=args.apply),indent=2))
+        result=start_install(apply=args.apply,installed=args.boot_installed) if args.start_install or args.boot_installed else operation(args.iso,apply=args.apply)
+        print(json.dumps(result,indent=2))
         return 0
     except (OSError,ValueError,TypeError,KeyError,subprocess.SubprocessError):
         print('Target-host preparation refused or failed; inspect host gates and private state.',file=sys.stderr)

@@ -14,6 +14,7 @@ import time
 import uuid
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
+from defense.bootstrap import dmi_uuid_matches
 from defense.catalog import load_catalog, render_dnsmasq
 from defense.preflight import read_private_json
 
@@ -181,7 +182,7 @@ def container_context() -> dict:
         raise ValueError('Invalid guest context')
     if not re.fullmatch(r'[a-f0-9]{48}',context.get('owner','')):
         raise ValueError('Invalid guest project owner')
-    if Path('/sys/class/dmi/id/product_uuid').read_text().strip().lower()!=context['vm_uuid']:
+    if not dmi_uuid_matches(context['vm_uuid'],Path('/sys/class/dmi/id/product_uuid').read_text().strip()):
         raise ValueError('Container is running on a foreign guest')
     return context
 

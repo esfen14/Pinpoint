@@ -9,6 +9,7 @@ import stat
 import sys
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
+from defense.bootstrap import dmi_uuid_matches
 from defense.catalog import load_catalog
 from defense.compose import ROOT, PROJECT, compose_document
 from defense.node import command, validate_network
@@ -129,7 +130,7 @@ def guest_context():
     context=read_private_json(Path(ROOT)/'context.json')
     if set(context)!={'version','owner','vm_uuid','parent_mac'} or context['version']!=1 or not re.fullmatch(r'[a-f0-9]{48}',context.get('owner','')) or not re.fullmatch(r'(?:[a-f0-9]{2}:){5}[a-f0-9]{2}',context.get('parent_mac','')):
         raise ValueError('Invalid private guest context')
-    if Path('/sys/class/dmi/id/product_uuid').read_text().strip().lower()!=context['vm_uuid']:
+    if not dmi_uuid_matches(context['vm_uuid'],Path('/sys/class/dmi/id/product_uuid').read_text().strip()):
         raise ValueError('Guest VM UUID changed')
     runtime=read_private_json(Path(ROOT)/'runtime.json')
     if set(runtime)!={'image'}:raise ValueError('Invalid pinned image state')

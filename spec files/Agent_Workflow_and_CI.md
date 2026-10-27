@@ -151,9 +151,11 @@ daemon controls and a root guest macvlan helper restricted to the two-target
 architecture spike. Exact image/identity/mount/capability checks precede
 attachment. A separate preview-first installer prepares a fresh Ubuntu target-host
 and private media with a pinned SSH host key; it does not boot the VM. A one-use
-guest boot service builds the image before any target starts. Actual installation,
-SSH verification, lifecycle, real protocol checks and the architecture spike
-remain unverified.
+guest boot service builds the image before any target starts. The first installation required console recovery; original pinned SSH and image
+preparation are observed. Docker re-enables IPv4 forwarding after reboot, so the
+guest helper refuses attachment. Durable forwarding, management-group cleanup,
+reproducible setup, lifecycle, real protocol checks and the architecture spike
+remain pending; this is not a supported live environment.
 Offline defense input/ownership/resource/runtime contracts run in the docs gate.
 Its separate [Windows preparation](../demo/WINDOWS_READY.md) now has an installed
 Windows 10 Home test guest and locally verified NCPA agent, powered off at an
