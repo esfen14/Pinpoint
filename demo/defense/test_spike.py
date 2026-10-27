@@ -98,16 +98,24 @@ class SpikeTests(unittest.TestCase):
             if argv==['docker','image','inspect',IMAGE]:
                 return SimpleNamespace(stdout=json.dumps([{'Config':{'Labels':labels}}]))
             return SimpleNamespace(stdout='')
-        with patch.object(guest,'owned_context',return_value=CONTEXT),patch.object(guest,'management_observation'),patch.object(guest,'read_private_json',return_value={'image':IMAGE}),patch.object(guest,'observe_container',side_effect=[dhcp,web]),patch.object(guest,'command',side_effect=execute) as run:
+        with patch.object(guest,'atomic'),patch.object(guest,'owned_context',return_value=CONTEXT),patch.object(guest,'management_observation'),patch.object(guest,'read_private_json',return_value={'image':IMAGE}),patch.object(guest,'observe_container',side_effect=[dhcp,web]),patch.object(guest,'command',side_effect=execute) as run:
             self.assertTrue(guest.reset_spike()['image_rebuilt'])
             self.assertIn(['docker','rm','-f','c'*64], [c.args[0] for c in run.call_args_list])
             self.assertIn(['/usr/bin/python3','/opt/pinpoint-defense/bootstrap.py','build'], [c.args[0] for c in run.call_args_list])
 
     def test_reset_spike_refuses_foreign_container_without_removal_or_build(self):
-        with patch.object(guest,'owned_context',return_value=CONTEXT),patch.object(guest,'management_observation'),patch.object(guest,'read_private_json',return_value={'image':IMAGE}),patch.object(guest,'command',return_value=SimpleNamespace(stdout='foreign\n')) as run:
+        with patch.object(guest,'atomic'),patch.object(guest,'owned_context',return_value=CONTEXT),patch.object(guest,'management_observation'),patch.object(guest,'read_private_json',return_value={'image':IMAGE}),patch.object(guest,'command',return_value=SimpleNamespace(stdout='foreign\n')) as run:
             with self.assertRaises(ValueError):guest.reset_spike()
             self.assertNotIn(['docker','rm','-f','foreign'], [c.args[0] for c in run.call_args_list])
             self.assertNotIn(['/usr/bin/python3','/opt/pinpoint-defense/bootstrap.py','build'], [c.args[0] for c in run.call_args_list])
+
+    def test_reset_status_exposes_only_a_fixed_failure_stage(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder)
+            with patch.object(guest,'ROOT',root),patch.object(guest,'read_private_json',return_value={'version':1,'stage':'build','result':'failed'}):
+                self.assertEqual(guest.reset_status(),{'stage':'build','result':'failed'})
+            with patch.object(guest,'ROOT',root),patch.object(guest,'read_private_json',return_value={'version':1,'stage':'/secret','result':'failed'}):
+                with self.assertRaises(ValueError):guest.reset_status()
 
     def test_checked_node_dispatch_uses_container_id_and_json_stdin_only(self):
         result={'target':'dynweb01','network_safe':True,'network_reason':None,'addresses':['10.77.1.20'],'mac':CATALOG.target('dynweb01').mac,'client_id':CATALOG.target('dynweb01').client_id,'listeners':[],'services':[]}

@@ -195,6 +195,10 @@ def verify_restart():
 
 def reset_spike():
     """Remove only the two exact owned spike containers, retain volumes, then rebuild the pinned image."""
+    status=Path(ROOT)/'spike-reset.json'
+    def mark(stage,result):
+        atomic(status,json.dumps({'version':1,'stage':stage,'result':result})+'\n')
+    mark('validate','running')
     context=owned_context();management_observation()
     runtime=read_private_json(Path(ROOT)/'runtime.json')
     image=runtime.get('image') if set(runtime)=={'image'} else ''
@@ -215,12 +219,23 @@ def reset_spike():
         target=expected[name];observed=observe_container(target)
         validate_container(load_catalog(),context,image,target,observed,image_labels=image_labels,allow_stopped=True)
         identifiers.append(observed['Id'])
+    mark('remove','running')
     for identifier in identifiers:
         command(['docker','rm','-f',identifier],timeout=60)
     if command(['docker','ps','-aq']).stdout.strip():
         raise ValueError('Spike reset left container objects behind')
+    mark('build','running')
     command(['/usr/bin/python3','/opt/pinpoint-defense/bootstrap.py','build'],timeout=600)
+    mark('build','complete')
     return {'containers_removed':2,'persistent_state_retained':True,'image_rebuilt':True}
+
+
+def reset_status():
+    """Return the fixed reset stage without exposing guest logs or runtime identifiers."""
+    record=read_private_json(Path(ROOT)/'spike-reset.json')
+    if set(record)!={'version','stage','result'} or record['version']!=1 or record['stage'] not in {'validate','remove','build'} or record['result'] not in {'running','complete','failed'}:
+        raise ValueError('Invalid private reset status')
+    return {'stage':record['stage'],'result':record['result']}
 
 
 def observe_container(target: str) -> dict:
@@ -307,13 +322,13 @@ def guest_context():
 def main(argv=None):
     """Expose only fixed attach/inspect operations; creation belongs to provisioning."""
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('operation',choices=['attach','inspect','spike-up','node','stop','host-status','verify-restart','reset-spike'])
+    parser.add_argument('operation',choices=['attach','inspect','spike-up','node','stop','host-status','verify-restart','reset-spike','reset-status'])
     parser.add_argument('target',nargs='?')
     args=parser.parse_args(argv)
     try:
         os.umask(0o077)
         catalog=load_catalog()
-        if args.operation in {'spike-up','host-status','verify-restart','reset-spike'}:
+        if args.operation in {'spike-up','host-status','verify-restart','reset-spike','reset-status'}:
             if args.target is not None:raise ValueError('Spike startup takes no target argument')
         else:validate_spike_target(catalog,args.target)
         request=None
@@ -323,6 +338,8 @@ def main(argv=None):
             request=validate_request(catalog,args.target,json.loads(payload))
         if args.operation=='host-status':
             print(json.dumps(host_status()));return 0
+        if args.operation=='reset-status':
+            print(json.dumps(reset_status()));return 0
         fd=os.open(Path(ROOT)/'guest.lock',os.O_RDWR|os.O_CREAT|os.O_NOFOLLOW,0o600)
         try:
             info=os.fstat(fd)
