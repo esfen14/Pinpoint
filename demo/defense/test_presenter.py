@@ -1,11 +1,13 @@
 """Offline tests for fixed presenter service and Docker identity boundaries."""
 from pathlib import Path
 import sys
+import tempfile
 import unittest
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from defense.presenter import service_program, validate_container, lifecycle_order, service, remove_default_route, dhcp_server, dhcp_lease, target_order
 from defense.catalog import load_catalog
+from defense import presenter
 
 class PresenterTests(unittest.TestCase):
     def setUp(self):
@@ -109,4 +111,40 @@ class PresenterTests(unittest.TestCase):
             with self.assertRaises(ValueError):validate_container(obj,self.target,self.root,Path('/private/context/context.json'),{'id':'a'*64,'image':'sha256:'+'b'*64})
         obj=dict(self.obj,Mounts=self.obj['Mounts'][:-1])
         with self.assertRaises(ValueError):validate_container(obj,self.target,self.root,Path('/private/context/context.json'),{'id':'a'*64,'image':'sha256:'+'b'*64})
+    def test_pending_dhcp_intent_blocks_mutation_before_loading_pins(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            with patch.object(presenter,'ROOT',root), patch.object(presenter,'read_pins') as pins, patch.object(presenter,'lifecycle') as lifecycle:
+                (root/'dhcp-move.json').write_text('incomplete')
+                self.assertEqual(presenter.main(['up']),1)
+                pins.assert_not_called();lifecycle.assert_not_called()
+                (root/'dhcp-move.json').unlink()
+                with patch.object(presenter,'check_host_network'):
+                    self.assertEqual(presenter.main(['up']),0)
+                lifecycle.assert_called_once()
+    def test_pending_intent_symlink_and_untrusted_directory_are_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            (root/'dhcp-move.json').symlink_to(root/'missing')
+            with patch.object(presenter,'ROOT',root), patch.object(presenter,'read_pins') as pins:
+                self.assertEqual(presenter.main(['down']),1)
+                pins.assert_not_called()
+                (root/'dhcp-move.json').unlink();root.chmod(0o755)
+                self.assertEqual(presenter.main(['down']),1)
+                pins.assert_not_called()
+                root.chmod(0o700)
+    def test_pending_intent_blocks_all_presenter_mutations_but_allows_status(self):
+        commands=[['enroll'],['up'],['down'],['host-stop','dynweb01'],['host-start','dynweb01'],
+                  ['dhcp-server','stop'],['dhcp-server','start'],['dhcp-lease','release','dynweb01'],
+                  ['dhcp-lease','acquire','dynweb01'],['break','web03','http'],['fix','web03','http']]
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);(root/'dhcp-move.json').mkdir()
+            with patch.object(presenter,'ROOT',root), patch.object(presenter,'read_pins') as pins, patch.object(presenter,'enroll') as enroll:
+                for command in commands:
+                    with self.subTest(command=command):self.assertEqual(presenter.main(command),1)
+                pins.assert_not_called();enroll.assert_not_called()
+            pins={d.name:{} for d in self.catalog.devices if d.kind=='linux'}
+            with patch.object(presenter,'ROOT',root), patch.object(presenter,'read_pins',return_value=pins), patch.object(presenter,'inspect',return_value={'State':{'Running':False}}) as inspect:
+                self.assertEqual(presenter.main(['status']),0)
+                self.assertEqual(inspect.call_count,14)
 if __name__=='__main__':unittest.main()

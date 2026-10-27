@@ -11,6 +11,7 @@ import time
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
 from defense.catalog import load_catalog
+from defense import dhcp_journal
 import qa_control
 
 ROOT=Path.home()/'.local/share/pinpoint-defense/host-docker'
@@ -18,6 +19,23 @@ PILOT=ROOT/'pilot-catalog'
 CONTEXT=ROOT/'context/context.json'
 PINS=ROOT/'presenter-pins.json'
 PROGRAMS={'ssh':'ssh','http':'web','https':'web','ftp':'ftp','smtp':'smtp','imap':'imap','dns':'dns','snmp':'snmp','pgsql':'pgsql'}
+
+
+def require_no_dhcp_intent(root):
+    """Refuse mutations while any DHCP recovery intent occupies its fixed name.
+
+    Caller must hold the canonical claim, as must the future journal writer.
+    Any entry, including malformed data or a dangling symlink, blocks changes.
+    """
+    fd=dhcp_journal.directory(root)
+    try:
+        try:
+            os.stat(dhcp_journal.NAME,dir_fd=fd,follow_symlinks=False)
+        except FileNotFoundError:
+            return
+        raise ValueError('DHCP recovery intent requires inspection')
+    finally:
+        os.close(fd)
 
 
 def service_program(catalog,target,service):
@@ -298,6 +316,8 @@ def main(argv=None):
     try:
         catalog=load_catalog()
         with qa_control.claim():
+            if args.command!='status':
+                require_no_dhcp_intent(ROOT)
             pins=enroll(catalog) if args.command=='enroll' else read_pins()
             if args.command=='enroll':print('Pinned 14 existing laptop pilot containers.');return 0
             if args.command in {'up','down'}:

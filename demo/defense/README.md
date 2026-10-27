@@ -60,7 +60,11 @@ implement changing reservations or DHCP-to-static transitions. An offline-only
 `dhcp_move.py` planner validates a candidate against all five current
 reservations and observations; it performs no live mutation and is not yet
 wired to the presenter. An offline `dhcp_journal.py` component can record private recovery intent
-and validates its phase and pinned container IDs. The offline `host_members.py`
+and validates its phase and pinned container IDs. The updated presenter refuses
+all modifying commands while any entry named `dhcp-move.json` exists in the
+private host-Docker directory; status remains available. The journal writer and
+presenter must both hold the same lab claim. This guard is not a recovery
+command, and older presenter checkouts do not have it. The offline `host_members.py`
 validator checks VirtualBox observations against two pinned VMs. Its fixed
 read-only collector rechecks the VM list and adapter details, but does not
 account for other network namespaces. Neither component is connected to live
