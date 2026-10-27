@@ -56,7 +56,8 @@ Requirement coverage (every requirement the issue states, and the check that pro
    - [ ] 6b: Implement durable recovery, verified host/VM membership, execution and rollback before exposing a DHCP move; adapt lifecycle controls to changed reservations.
      - [x] Offline recovery-intent journal: private durable creation, validated plan/container pins, closed phase transitions and safe terminal cleanup; no live operations.
      - [x] Offline VirtualBox membership validator: refuse missing, duplicate, foreign, mismatched or non-running pinned VM observations. It does not collect live inventory or attest non-VirtualBox namespaces.
-     - [ ] Wire a checked journal to actual execution, collect and validate complete network membership, re-observe state for recovery, implement rollback and block incompatible commands while intent exists.
+     - [x] Fixed-argv, bounded VirtualBox inventory collector rechecks membership and adapter metadata; real read-only inventory matched the two intended VM pins.
+     - [ ] Check non-VirtualBox network attachments, wire a checked journal to actual execution, re-observe state for recovery, implement rollback and block incompatible commands while intent exists.
    - [ ] 6c: Implement DHCP/static transactions and run the permitted live matrix with recovery and identity proof.
 7. [ ] With owner-supplied Windows, prepare NCPA privately, snapshot/register/probe metrics, replace win-slot and repeat all-15 validation; document Windows instructions in `demo/`.
    - [x] 7a (user-requested preparation): Installed Windows 10 Home image 1 in exact-owned `pinpoint-defense-win01`, 3072 MiB/2 CPUs/40 GiB dynamic disk, internal NIC only, `10.77.1.3/27`, no default gateway. Actual guest OS/Guest Additions verified; powered-off `windows-installed` snapshot retained. Sanitized report and `demo/WINDOWS_READY.md` written; private credentials/evidence outside Git. Activation/license acceptance stays pending.
@@ -135,11 +136,13 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 | DHCP VM membership validator | Added offline validation of a complete supplied VirtualBox inventory against two private VM identity pins. | `python3 -I demo/defense/test_host_members.py` | Three tests pass; missing, foreign, wrong-identity, duplicate and non-running members refused. A one-off read-only VirtualBox inventory matched the two intended live VM pins; a reusable collector and non-VirtualBox namespace checks remain absent. |
 
+| DHCP VM inventory collector | Added fixed-argument read-only VirtualBox collection with size/count/time limits, duplicate and malformed refusal, and repeated inventory/configuration checks. | `python3 -I demo/defense/test_host_members.py`; guarded actual VBox inventory | Eight tests pass; 13 registered VMs observed twice and intended two host-only members match. No non-VirtualBox namespace proof or live address control. |
+
 ## State for the next session
 
-- Last check run: `python3 -I demo/defense/test_host_members.py` (3 passed), `scripts/verify.sh docs` (green), and a one-off read-only `VBoxManage` inventory validated against the two intended VM pins (pass). The owner reported all fifteen demo addresses, Windows metrics and web03 HTTP CRITICAL then OK; see `docs/test-runs/2026-10-27-issue-274-pinpoint-web-alert/REPORT.md`.
-- Current live state: Windows, 14 Linux host-pilot containers and Pinpoint-Final run on `vboxnet1`, with web03 restored. The DHCP planner, recovery-intent journal and VM membership validator are offline only; no address was moved. Owner-reported inventory and metrics are not independently observed. Host laptop reboot, address transitions, full rehearsals and complete issue acceptance remain open.
-- Next action (one specific step, not "continue"): Implement a complete bounded live inventory collector and non-VirtualBox attachment checks, then wire verified journal, interruption-aware DHCP execution and rollback before exposing a live move.
+- Last check run: `python3 -I demo/defense/test_host_members.py` (8 passed), and guarded fixed-argv collection observed thirteen registered VMs twice with the two intended host-only members matching. `scripts/verify.sh docs` passed. An initial suite was intentionally stopped to add unknown-adapter refusal; the final suite passed. Owner-reported inventory, Windows metrics and web03 HTTP CRITICAL-to-OK are in `docs/test-runs/2026-10-27-issue-274-pinpoint-web-alert/REPORT.md`.
+- Current live state: Windows, 14 Linux host-pilot containers and Pinpoint-Final run on `vboxnet1`, with web03 restored. DHCP planning, recovery-intent and VirtualBox membership collection remain separate from the presenter; no address was moved. Non-VirtualBox namespace checks, runtime recovery and rollback, host laptop reboot, address transitions, full rehearsals and complete issue acceptance remain open.
+- Next action (one specific step, not "continue"): Design and test non-VirtualBox attachment validation and interruption-aware DHCP execution/rollback that uses the checked journal and blocks conflicting presenter operations before exposing live address changes.
 
 ## Decisions and notes
 
