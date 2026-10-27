@@ -10,7 +10,7 @@ import tempfile
 from types import SimpleNamespace
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from defense.provision import install_commands, autoinstall_template, postinstall_template, ssh_arguments, creation_commands, prepare, validate_iso_detection, validate_media_resume, validate_install_boot, validate_installed_boot, maintenance_boot_plan, validate_disk_chain
+from defense.provision import install_commands, autoinstall_template, postinstall_template, ssh_arguments, creation_commands, prepare, validate_iso_detection, validate_media_resume, validate_install_boot, validate_installed_boot, validate_hardened_boot, maintenance_boot_plan, validate_disk_chain
 from defense import bootstrap, controller
 
 UUID='351eb491-f5e1-4854-a7e4-68309ad774ad'
@@ -170,6 +170,15 @@ class ProvisionTests(unittest.TestCase):
         for altered in [dict(data,VMState='running'),dict(data,**{'SATA-0-0':'/foreign.vdi'}),dict(data,**{'IDE-1-0':'/private/Unattended.iso'})]:
             with self.assertRaises(ValueError):maintenance_boot_plan(state,altered,root)
         with self.assertRaises(ValueError):maintenance_boot_plan(dict(state,phase='installing'),data,root)
+
+    def test_hardened_boot_requires_the_maintained_snapshot_and_no_attached_media(self):
+        root=Path('/private/defense');disk=str(root/'vm/pinpoint-defense-targets/Snapshots/{child}.vdi')
+        state={'phase':'maintenance-live-boot','disk_path':disk}
+        data={'VMState':'poweroff','memory':'2048','SATA-0-0':disk,'IDE-0-0':'none','IDE-0-1':'none','IDE-1-0':'emptydrive'}
+        validate_hardened_boot(state,data,root,False,6000,70000,68000)
+        for altered,kvm,memory,disk_free in [(dict(data,VMState='running'),False,6000,70000),(dict(data,**{'SATA-0-0':'/foreign.vdi'}),False,6000,70000),(dict(data,**{'IDE-0-0':'/media/ubuntu.iso'}),False,6000,70000),(data,True,6000,70000),(data,False,5000,70000),(data,False,6000,10000)]:
+            with self.assertRaises(ValueError):validate_hardened_boot(state,altered,root,kvm,memory,disk_free,68000)
+        with self.assertRaises(ValueError):validate_hardened_boot(dict(state,phase='installed-needs-forwarding-guard'),data,root,False,6000,70000,68000)
 
     def test_ssh_requires_injected_host_key_and_exact_loopback_endpoint(self):
         args=ssh_arguments(Path('/private/defense'))

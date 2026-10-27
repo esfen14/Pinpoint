@@ -327,7 +327,26 @@ def validate_installed_boot(state,data,root,kvm_loaded,available,free_disk,requi
     validate_install_boot(dict(state,phase='media-ready'),data,root,kvm_loaded,available,free_disk,required_disk,allow_ejected=True)
 
 
-def start_install(*,apply=False,installed=False):
+def validate_hardened_boot(state,data,root,kvm_loaded,available,free_disk,required_disk):
+    """Require the exact maintained snapshot, no guest media, and the one-VM resource gate."""
+    from defense.preflight import check_resources
+    disk=state.get('disk_path','')
+    vmroot=root/'vm/pinpoint-defense-targets'
+    path=Path(disk)
+    if state.get('phase')!='maintenance-live-boot' or data.get('VMState')!='poweroff' or data.get('memory')!='2048':
+        raise ValueError('Hardened boot requires the exact maintained powered-off VM')
+    if not path.is_absolute() or '..' in path.parts or not path.is_relative_to(vmroot) or data.get('SATA-0-0')!=disk:
+        raise ValueError('Maintained snapshot disk changed')
+    for key,value in data.items():
+        if re.fullmatch(r'IDE-[0-9]+-[0-9]+',key) and value not in {'none','emptydrive'}:
+            raise ValueError('Guest media must remain detached for hardened boot')
+        if re.fullmatch(r'SATA-[0-9]+-[0-9]+',key) and key!='SATA-0-0' and value!='none':
+            raise ValueError('Unexpected hardened-boot storage')
+    if kvm_loaded:raise ValueError('KVM still holds hardware virtualization')
+    check_resources(available,free_disk,[2048],required_disk)
+
+
+def start_install(*,apply=False,installed=False,hardened=False):
     """Boot the saved target-host for installation or its first disk-only verification."""
     import os
     import shutil
@@ -361,12 +380,12 @@ def start_install(*,apply=False,installed=False):
         if not memory:raise ValueError('Missing host memory inventory')
         required=max(40960-allocated_mib(WINDOWS_ROOT),0)+max(16384-allocated_mib(root/'vm'),0)+8192+2048+1024+10240
         available=int(memory[1])//1024;free=shutil.disk_usage(Path.home()).free//1048576
-        gate=validate_installed_boot if installed else validate_install_boot
+        gate=validate_hardened_boot if hardened else validate_installed_boot if installed else validate_install_boot
         gate(state,data,root,Path('/sys/module/kvm').exists(),available,free,required)
         result={'uuid':state['uuid'],'phase':state['phase'],'available_mib':available,'free_disk_mib':free,'applied':False}
         if not apply:return result
         os.umask(0o077)
-        state['phase']='starting-installed' if installed else 'starting-install';atomic(root/'state.json',json.dumps(state)+'\n')
+        state['phase']='starting-hardened' if hardened else 'starting-installed' if installed else 'starting-install';atomic(root/'state.json',json.dumps(state)+'\n')
         try:
             commands=[]
             if installed:
@@ -379,7 +398,7 @@ def start_install(*,apply=False,installed=False):
         except Exception:
             state['phase']='start-needs-inspection';atomic(root/'state.json',json.dumps(state)+'\n')
             raise
-        state['phase']='installed-boot-unverified' if installed else 'installing';atomic(root/'state.json',json.dumps(state)+'\n')
+        state['phase']='hardened-boot-unverified' if hardened else 'installed-boot-unverified' if installed else 'installing';atomic(root/'state.json',json.dumps(state)+'\n')
         return dict(result,phase=state['phase'],applied=True)
 
 
@@ -507,12 +526,13 @@ def main(argv=None):
     parser.add_argument('--resume-media',action='store_true')
     parser.add_argument('--start-install',action='store_true')
     parser.add_argument('--boot-installed',action='store_true')
+    parser.add_argument('--boot-hardened',action='store_true')
     parser.add_argument('--maintenance-boot',action='store_true')
     args=parser.parse_args(argv)
     try:
-        if sum([args.resume_media,args.start_install,args.boot_installed,args.maintenance_boot])>1:raise ValueError('Choose one preparation action')
+        if sum([args.resume_media,args.start_install,args.boot_installed,args.boot_hardened,args.maintenance_boot])>1:raise ValueError('Choose one preparation action')
         operation=resume_media if args.resume_media else prepare
-        result=start_maintenance(apply=args.apply) if args.maintenance_boot else start_install(apply=args.apply,installed=args.boot_installed) if args.start_install or args.boot_installed else operation(args.iso,apply=args.apply)
+        result=start_maintenance(apply=args.apply) if args.maintenance_boot else start_install(apply=args.apply,hardened=args.boot_hardened,installed=args.boot_installed) if args.start_install or args.boot_installed or args.boot_hardened else operation(args.iso,apply=args.apply)
         print(json.dumps(result,indent=2))
         return 0
     except (OSError,ValueError,TypeError,KeyError,subprocess.SubprocessError):

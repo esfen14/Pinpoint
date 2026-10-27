@@ -88,13 +88,50 @@ class SpikeTests(unittest.TestCase):
             self.assertTrue(guest.verify_restart()['safe'])
             self.assertIn(['systemctl','restart','docker.service'],[c.args[0] for c in run.call_args_list])
 
+    def test_reset_spike_removes_only_exact_owned_containers_then_rebuilds(self):
+        dhcp=fixture('dhcp01');web=fixture('dynweb01')
+        labels={'org.pinpoint.defense.issue':'274','org.pinpoint.defense.source':'c'*64}
+        dhcp['Config']['Labels'].update(labels);web['Config']['Labels'].update(labels)
+        def execute(argv,**kwargs):
+            if argv==['docker','ps','-a','--format','{{.Names}}']:
+                return SimpleNamespace(stdout='pinpoint-defense274-dhcp01\npinpoint-defense274-dynweb01\n')
+            if argv==['docker','image','inspect',IMAGE]:
+                return SimpleNamespace(stdout=json.dumps([{'Config':{'Labels':labels}}]))
+            return SimpleNamespace(stdout='')
+        with patch.object(guest,'owned_context',return_value=CONTEXT),patch.object(guest,'management_observation'),patch.object(guest,'read_private_json',return_value={'image':IMAGE}),patch.object(guest,'observe_container',side_effect=[dhcp,web]),patch.object(guest,'command',side_effect=execute) as run:
+            self.assertTrue(guest.reset_spike()['image_rebuilt'])
+            self.assertIn(['docker','rm','-f','c'*64], [c.args[0] for c in run.call_args_list])
+            self.assertIn(['/usr/bin/python3','/opt/pinpoint-defense/bootstrap.py','build'], [c.args[0] for c in run.call_args_list])
+
+    def test_reset_spike_refuses_foreign_container_without_removal_or_build(self):
+        with patch.object(guest,'owned_context',return_value=CONTEXT),patch.object(guest,'management_observation'),patch.object(guest,'read_private_json',return_value={'image':IMAGE}),patch.object(guest,'command',return_value=SimpleNamespace(stdout='foreign\n')) as run:
+            with self.assertRaises(ValueError):guest.reset_spike()
+            self.assertNotIn(['docker','rm','-f','foreign'], [c.args[0] for c in run.call_args_list])
+            self.assertNotIn(['/usr/bin/python3','/opt/pinpoint-defense/bootstrap.py','build'], [c.args[0] for c in run.call_args_list])
+
     def test_checked_node_dispatch_uses_container_id_and_json_stdin_only(self):
-        result={'target':'dynweb01','network_safe':True,'addresses':['10.77.1.20'],'mac':CATALOG.target('dynweb01').mac,'client_id':CATALOG.target('dynweb01').client_id,'listeners':[],'services':[]}
+        result={'target':'dynweb01','network_safe':True,'network_reason':None,'addresses':['10.77.1.20'],'mac':CATALOG.target('dynweb01').mac,'client_id':CATALOG.target('dynweb01').client_id,'listeners':[],'services':[]}
         with patch.object(guest,'observe_container',return_value=fixture()),patch.object(guest,'trusted_image',return_value={}),patch.object(guest,'command',return_value=SimpleNamespace(stdout=json.dumps(result))) as run:
             self.assertEqual(guest.node_request(CATALOG,CONTEXT,IMAGE,'dynweb01',{'operation':'inspect'}),result)
             args=run.call_args.args[0]
             self.assertEqual(args[:4],['docker','exec','-i','c'*64])
             self.assertEqual(json.loads(run.call_args.kwargs['input_text']),{'operation':'inspect'})
+
+    def test_node_inspection_reason_is_fixed_and_not_a_raw_namespace_error(self):
+        device=CATALOG.target('dynweb01')
+        links=[{'ifname':'lo'},{'ifname':'eth0','address':device.mac,'addr_info':[]}]
+        with patch('defense.node.command',return_value=SimpleNamespace(stdout=json.dumps(links))),patch('defense.node.network_reason',return_value='address'),patch('defense.node.supervisor',return_value=SimpleNamespace(stdout='')):
+            result=__import__('defense.node',fromlist=['inspection']).inspection(CATALOG,device)
+        self.assertFalse(result['network_safe'])
+        self.assertEqual(result['network_reason'],'address')
+        self.assertNotIn('secret',json.dumps(result))
+
+    def test_node_network_reason_never_exposes_link_data(self):
+        node=__import__('defense.node',fromlist=['network_reason'])
+        device=CATALOG.target('dynweb01')
+        for links,routes,expected in [([{'ifname':'lo'}],[],'interfaces'),([{'ifname':'lo'},{'ifname':'eth0','address':'02:00:00:00:00:01','addr_info':[]}],[],'mac'),([{'ifname':'lo'},{'ifname':'eth0','address':device.mac,'addr_info':[]}],[{'dst':'default'}],'default-route')]:
+            with patch('defense.node.command',side_effect=[SimpleNamespace(stdout=json.dumps(links)),SimpleNamespace(stdout=json.dumps(routes))]):
+                self.assertEqual(node.network_reason(CATALOG,device),expected)
 
     def test_node_protocol_refuses_shell_unknown_target_and_unowned_runtime_before_exec(self):
         with patch.object(guest,'observe_container') as observe,patch.object(guest,'command') as run:

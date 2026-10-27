@@ -276,6 +276,22 @@ def network(catalog,device,*,unaddressed=False):
     return validate_network(catalog,device,links,routes,unaddressed=unaddressed)
 
 
+def network_reason(catalog,device) -> str | None:
+    """Return one fixed diagnostic category for the inspected namespace boundary."""
+    links=json.loads(command(['ip','-j','-4','addr','show']).stdout)
+    routes=json.loads(command(['ip','-j','-4','route','show','default']).stdout)
+    if not isinstance(links,list) or {value.get('ifname') for value in links}!={'lo','eth0'}:
+        return 'interfaces'
+    eth=[value for value in links if value.get('ifname')=='eth0']
+    if len(eth)!=1 or eth[0].get('address','').lower()!=device.mac:
+        return 'mac'
+    if routes:
+        return 'default-route'
+    try:validate_network(catalog,device,links,routes,unaddressed=True)
+    except ValueError:return 'address'
+    return None
+
+
 def listening_ports() -> list[dict]:
     """Read kernel socket tables without returning daemon arguments or credentials."""
     values=set()
@@ -294,14 +310,14 @@ def listening_ports() -> list[dict]:
 
 def inspection(catalog,device) -> dict:
     """Report actual sockets and service state; plugin expectations stay separate."""
-    safe=True
-    try:addresses=network(catalog,device,unaddressed=True)
-    except ValueError:addresses=[];safe=False
+    reason=network_reason(catalog,device)
+    safe=reason is None
+    addresses=network(catalog,device,unaddressed=True) if safe else []
     states=[]
     for line in supervisor('status',check=False).stdout.splitlines():
         fields=line.split()
         if len(fields)>=2:states.append({'program':fields[0],'state':fields[1]})
-    return {'target':device.name,'network_safe':safe,'addresses':addresses,'mac':device.mac,
+    return {'target':device.name,'network_safe':safe,'network_reason':reason,'addresses':addresses,'mac':device.mac,
             'client_id':device.client_id,'listeners':listening_ports(),'services':states}
 
 

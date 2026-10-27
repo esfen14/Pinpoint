@@ -54,7 +54,9 @@ def validate_container(catalog,context: dict,image: str,target: str,observed: di
         raise ValueError('Container Compose project/service changed')
     if host.get('NetworkMode')!='none' or host.get('Privileged') is not False or host.get('PidMode') or host.get('PortBindings'):
         raise ValueError('Container escaped the isolated namespace boundary')
-    if sorted(host.get('CapAdd') or [])!=sorted(expected.get('cap_add',[])) or host.get('CapDrop') or host.get('RestartPolicy',{}).get('Name')!='no':
+    expected_caps=sorted('CAP_'+value.removeprefix('CAP_') for value in expected.get('cap_add',[]))
+    actual_caps=sorted('CAP_'+str(value).upper().removeprefix('CAP_') for value in (host.get('CapAdd') or []))
+    if actual_caps!=expected_caps or host.get('CapDrop') or host.get('RestartPolicy',{}).get('Name')!='no':
         raise ValueError('Unexpected container capabilities/restart policy')
     if host.get('Devices') or host.get('DeviceRequests') or host.get('SecurityOpt'):
         raise ValueError('Unexpected container devices/security configuration')
@@ -110,7 +112,7 @@ def node_request(catalog,context,image,target,request):
     response=command(['docker','exec','-i',observed['Id'],'python3','/opt/pinpoint/defense/node.py','control',target],
                      input_text=json.dumps(request),timeout=60)
     result=json.loads(response.stdout)
-    if result.get('target')!=target or set(result)!={'target','network_safe','addresses','mac','client_id','listeners','services'}:
+    if result.get('target')!=target or set(result)!={'target','network_safe','network_reason','addresses','mac','client_id','listeners','services'}:
         raise ValueError('Unexpected node result')
     return result
 
@@ -189,6 +191,36 @@ def verify_restart():
     result=host_status()
     if not result['safe']:raise ValueError('Docker restart did not preserve the guest boundary')
     return result
+
+
+def reset_spike():
+    """Remove only the two exact owned spike containers, retain volumes, then rebuild the pinned image."""
+    context=owned_context();management_observation()
+    runtime=read_private_json(Path(ROOT)/'runtime.json')
+    image=runtime.get('image') if set(runtime)=={'image'} else ''
+    if not re.fullmatch(r'sha256:[a-f0-9]{64}',image):
+        raise ValueError('Invalid pinned runtime image')
+    image_observed=json.loads(command(['docker','image','inspect',image]).stdout)
+    if len(image_observed)!=1:
+        raise ValueError('Spike reset image is ambiguous')
+    image_labels=(image_observed[0].get('Config',{}).get('Labels') or {})
+    if image_labels.get('org.pinpoint.defense.issue')!='274' or not re.fullmatch(r'[a-f0-9]{64}',image_labels.get('org.pinpoint.defense.source','')):
+        raise ValueError('Spike reset image provenance is invalid')
+    expected={PROJECT+'-dhcp01':'dhcp01',PROJECT+'-dynweb01':'dynweb01'}
+    names=command(['docker','ps','-a','--format','{{.Names}}']).stdout.splitlines()
+    if len(names)!=len(set(names)) or set(names)!=set(expected):
+        raise ValueError('Spike reset requires exactly the owned two-container state')
+    identifiers=[]
+    for name in sorted(names):
+        target=expected[name];observed=observe_container(target)
+        validate_container(load_catalog(),context,image,target,observed,image_labels=image_labels,allow_stopped=True)
+        identifiers.append(observed['Id'])
+    for identifier in identifiers:
+        command(['docker','rm','-f',identifier],timeout=60)
+    if command(['docker','ps','-aq']).stdout.strip():
+        raise ValueError('Spike reset left container objects behind')
+    command(['/usr/bin/python3','/opt/pinpoint-defense/bootstrap.py','build'],timeout=600)
+    return {'containers_removed':2,'persistent_state_retained':True,'image_rebuilt':True}
 
 
 def observe_container(target: str) -> dict:
@@ -275,13 +307,13 @@ def guest_context():
 def main(argv=None):
     """Expose only fixed attach/inspect operations; creation belongs to provisioning."""
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('operation',choices=['attach','inspect','spike-up','node','stop','host-status','verify-restart'])
+    parser.add_argument('operation',choices=['attach','inspect','spike-up','node','stop','host-status','verify-restart','reset-spike'])
     parser.add_argument('target',nargs='?')
     args=parser.parse_args(argv)
     try:
         os.umask(0o077)
         catalog=load_catalog()
-        if args.operation in {'spike-up','host-status','verify-restart'}:
+        if args.operation in {'spike-up','host-status','verify-restart','reset-spike'}:
             if args.target is not None:raise ValueError('Spike startup takes no target argument')
         else:validate_spike_target(catalog,args.target)
         request=None
@@ -291,23 +323,24 @@ def main(argv=None):
             request=validate_request(catalog,args.target,json.loads(payload))
         if args.operation=='host-status':
             print(json.dumps(host_status()));return 0
-        context,image,parent=guest_context()
         fd=os.open(Path(ROOT)/'guest.lock',os.O_RDWR|os.O_CREAT|os.O_NOFOLLOW,0o600)
         try:
             info=os.fstat(fd)
             if not stat.S_ISREG(info.st_mode) or info.st_uid!=0 or info.st_nlink!=1 or info.st_mode&0o077:
                 raise ValueError('Unsafe guest control lock')
             fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB)
-            context,image,parent=guest_context()
-            if args.operation=='attach':result=attach(catalog,context,image,args.target,parent)
-            elif args.operation=='spike-up':result=spike_up(catalog,context,image,parent)
-            elif args.operation=='node':result=node_request(catalog,context,image,args.target,request)
-            elif args.operation=='stop':result=stop_target(catalog,context,image,args.target)
-            elif args.operation=='verify-restart':result=verify_restart()
+            if args.operation=='reset-spike':result=reset_spike()
             else:
-                observed=observe_container(args.target)
-                validate_container(catalog,context,image,args.target,observed,image_labels=trusted_image(image),allow_stopped=True)
-                result={'target':args.target,'running':True,'owned':True,'image_pinned':True}
+                context,image,parent=guest_context()
+                if args.operation=='attach':result=attach(catalog,context,image,args.target,parent)
+                elif args.operation=='spike-up':result=spike_up(catalog,context,image,parent)
+                elif args.operation=='node':result=node_request(catalog,context,image,args.target,request)
+                elif args.operation=='stop':result=stop_target(catalog,context,image,args.target)
+                elif args.operation=='verify-restart':result=verify_restart()
+                else:
+                    observed=observe_container(args.target)
+                    validate_container(catalog,context,image,args.target,observed,image_labels=trusted_image(image),allow_stopped=True)
+                    result={'target':args.target,'running':True,'owned':True,'image_pinned':True}
             print(json.dumps(result))
         finally:os.close(fd)
         return 0

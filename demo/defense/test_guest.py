@@ -44,6 +44,8 @@ class GuestTests(unittest.TestCase):
 
     def test_foreign_runtime_or_mount_capability_image_rejects(self):
         self.assertEqual(validate_container(CATALOG,CONTEXT,IMAGE,'dynweb01',fixture()),1234)
+        observed=fixture('dhcp01');observed['HostConfig']['CapAdd']=['CAP_NET_ADMIN']
+        self.assertEqual(validate_container(CATALOG,CONTEXT,IMAGE,'dhcp01',observed),1234)
         for mutate in [lambda x:x.update(Image='untrusted:latest'),
                        lambda x:x['Config']['Labels'].update({'org.pinpoint.defense.owner':'foreign'}),
                        lambda x:x['HostConfig'].update(Privileged=True),
