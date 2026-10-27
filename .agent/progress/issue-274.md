@@ -111,11 +111,13 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 | Host Docker pilot | Moved Windows to the isolated host-only adapter, ran fourteen fresh catalog containers on laptop Docker and attached five unnumbered DHCP interfaces with a fixed helper. | DHCP lease acquisition and ping in both directions for all fourteen; focused runtime and attachment tests; docs gate | All five intended addresses acquired; all fourteen passed ping both directions. Fresh pilot data only; persistent host controller and appliance acceptance remain pending. Docs gate result recorded below. |
 
+| Laptop presenter | Added pinned pilot status, down/up and preset service break/fix; exposed under `demo/demo presenter`. | Focused tests; live status; web03 HTTP stop/start with restoration; 14-container down/up and Windows ping to all targets; isolated DHCP client restart recovery | Service restored; all 14 restarted, five leases reacquired and Windows pinged all 14. Host reboot, daemon restart, full fault catalog and appliance acceptance remain unverified. |
+
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh docs` — green (`verify: docs OK`); log `/tmp/issue274-host-pilot-docs.log`.
-- Current live state: Windows `5fb21051-8a4f-45b0-a7f0-de3cedceab83` runs on host-only `vboxnet1`; 14 temporary laptop Docker containers are running and five obtained reserved DHCP addresses. Ping passed Windows to all 14 and all 14 back to Windows. The original Linux target-host VM `821464dc-e7ce-4067-8eec-5cb1c61d3632` remains running on the old internal network with original identities and data retained. KVM is unloaded. These provisional containers do not survive a restart as a complete lab; do not claim appliance acceptance.
-- Next action (one specific step, not "continue"): Implement and test a fixed ownership-checked laptop Docker controller with restart and rollback behavior for the new host-only topology, while preserving the original guest data. Use ping only for connectivity tests.
+- Last check run (exact command): `python3 -I demo/defense/test_presenter.py` (5 tests green); `./demo/demo presenter status` and `up`; live down/up with Windows ping to all 14 passed. `scripts/verify.sh docs` green (`verify: docs OK`); report `docs/test-runs/2026-10-27-issue-274-host-presenter/REPORT.md`.
+- Current live state: Windows runs on host-only `vboxnet1`; all 14 laptop pilot containers run with five reserved DHCP leases. Pilot presenter pins are private in the host-docker state directory. The original target-host VM remains on the old internal network with original identities/data retained. The presenter controls existing pinned pilot containers only; host reboot and Docker daemon restart are untested, and KVM remains unloaded while VirtualBox runs.
+- Next action (one specific step, not "continue"): Verify and harden host reboot and Docker daemon recovery for the pinned laptop pilot, retaining original data and using only ping for connectivity checks.
 
 ## Decisions and notes
 

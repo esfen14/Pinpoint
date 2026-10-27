@@ -25,9 +25,11 @@ pin, private owner and adapter MAC; the old VirtualBox-only context is still
 validated separately. A fixed attachment helper creates unnumbered macvlan
 interfaces for the DHCP clients on the virtual adapter. The live pilot used a
 short-lived privileged helper with a read-only root filesystem and no Docker
-socket; this is not yet a complete supported host controller. A persistent
-lifecycle, recovery, original identity/data migration, restart behavior and
-appliance acceptance remain to be implemented and verified. Per the owner's
+socket; this is not yet a complete supported host controller. Presenter commands now stop and start the existing pinned pilot containers,
+restore the DHCP attachments, show local service status, and stop or start
+allowlisted preset services. One live down/up cycle and Windows-to-all-target
+ping passed. Host reboot, Docker daemon restart, original identity/data
+migration, broader fault controls and appliance acceptance remain pending. Per the owner's
 direction, use ping only for connectivity tests.
 
 Status: **host Docker pilot reachable from Windows; supported lifecycle and appliance acceptance remain pending**.

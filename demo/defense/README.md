@@ -1,5 +1,37 @@
 # Defense target runtime (issue #274, preparation)
 
+## Current laptop Docker pilot: presenter controls
+
+From the issue worktree root, use the existing, privately pinned pilot containers:
+
+```bash
+./demo/demo presenter status
+./demo/demo presenter break web03 http
+./demo/demo presenter fix web03 http
+./demo/demo presenter down
+./demo/demo presenter up
+```
+
+`status` reports locally observed service states and addresses. `break` and
+`fix` accept catalog Linux targets and their preset services. Web03 HTTP and
+HTTPS share nginx and stop or start together. DHCP is excluded from these
+service-fault commands. `down` stops only the fourteen pinned Linux containers;
+`up` starts those existing containers, restores baseline services, reconnects
+the five unnumbered DHCP interfaces and reacquires their reserved addresses.
+Neither command starts or stops Windows or the Pinpoint appliance. The initial
+`enroll` operation pins the current pilot containers once; it has already run on
+this laptop. The controls refuse changed container identities or the wrong
+host-only network. They do not create missing containers or migrate old VM data.
+
+A live down/up cycle and ping from Windows to all fourteen passed on 2026-10-27.
+Host reboot, Docker daemon restart, full Pinpoint monitoring, other fault
+scenarios and migration have not been verified. Keep the Docker network and
+VirtualBox `vboxnet1` in place; up refuses when the expected network is missing.
+The `up` command restores baseline services, including services intentionally
+stopped by `break`.
+
+## Earlier target-host design and historical results
+
 This directory is the in-progress guest runtime for the dedicated VirtualBox
 Linux target host. The two-target DHCP exchange and all fourteen Linux
 containers, baseline services, and five DHCP leases have been prepared. The
