@@ -5,7 +5,7 @@ import sys
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from defense.bridge import normalize_link_inventory, validate_bridge_inventory, validate_veth_peer
+from defense.bridge import collect_bridge_inventory, normalize_link_inventory, validate_bridge_inventory, validate_veth_peer
 
 OWNER = 'b' * 48
 PARENT = '02:77:01:fe:31:d7'
@@ -24,6 +24,36 @@ def inventory():
 
 
 class BridgeInventoryTests(unittest.TestCase):
+    def test_collection_pins_process_before_and_after_both_link_observations(self):
+        raw_host = [
+            {'ifname': 'pdbr0', 'ifindex': 4, 'address': '02:77:01:fe:00:ff', 'addr_info': [], 'ifalias': 'pinpoint-defense:' + OWNER + ':bridge', 'linkinfo': {'info_kind': 'bridge'}},
+            {'ifname': 'enp0s8', 'ifindex': 5, 'address': PARENT, 'addr_info': [], 'master': 'pdbr0'},
+            {'ifname': 'pd-dhcp01', 'ifindex': 30, 'link_index': 7, 'address': '02:77:01:fe:00:01', 'addr_info': [], 'master': 'pdbr0', 'ifalias': 'pinpoint-defense:' + OWNER + ':dhcp01', 'linkinfo': {'info_kind': 'veth'}},
+        ]
+        raw_guest = [{'ifname': 'lo', 'ifindex': 1}, {'ifname': 'eth0', 'ifindex': 7, 'link_index': 30, 'address': '02:77:01:00:00:01', 'linkinfo': {'info_kind': 'veth'}}]
+        events = []
+        def identity(target):
+            events.append('identity')
+            return (1234, 8765, 'c' * 64)
+        def observe(pid):
+            events.append('guest')
+            return raw_guest
+        def host():
+            events.append('host')
+            return raw_host
+        collect_bridge_inventory(OWNER, PARENT, {'dhcp01': 'pd-dhcp01'}, 0, 0, identity, host, observe)
+        self.assertEqual(events, ['identity', 'host', 'identity', 'guest', 'identity', 'host', 'identity'])
+
+        attempts = iter([(1234, 8765, 'c' * 64), (1234, 9999, 'c' * 64)])
+        with self.assertRaises(ValueError):
+            collect_bridge_inventory(OWNER, PARENT, {'dhcp01': 'pd-dhcp01'}, 0, 0, lambda target: next(attempts), lambda: raw_host, lambda pid: raw_guest)
+
+        changed_host = copy.deepcopy(raw_host)
+        changed_host.append({'ifname': 'enp0s3', 'ifindex': 9, 'address': '02:00:00:00:00:01', 'addr_info': [], 'master': 'pdbr0'})
+        observations = iter([raw_host, changed_host])
+        with self.assertRaises(ValueError):
+            collect_bridge_inventory(OWNER, PARENT, {'dhcp01': 'pd-dhcp01'}, 0, 0, lambda target: (1234, 8765, 'c' * 64), lambda: next(observations), lambda pid: raw_guest)
+
     def test_normalization_rejects_missing_address_inventory_and_unknown_types(self):
         raw = [{'ifname': 'pdbr0', 'ifindex': 3, 'address': '02:77:01:fe:00:ff',
                 'addr_info': [], 'linkinfo': {'info_kind': 'bridge'}, 'ifalias': 'owned'},

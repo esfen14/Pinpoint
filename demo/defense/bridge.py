@@ -4,6 +4,58 @@ import re
 from .catalog import load_catalog
 
 
+def collect_bridge_inventory(owner, parent_mac, members, forwarding4, forwarding6,
+                             identity, observe_host, observe_guest):
+    """Cross-check a complete bridge snapshot and veth peers around pinned PIDs.
+
+    The caller supplies bounded observers and must independently validate the
+    container/image ownership, forwarding values and guest network namespace.
+    This function never invokes commands or changes links.
+    """
+    if not isinstance(members, dict) or not members:
+        raise ValueError('At least one pinned target is required')
+    pinned = {}
+    for target in members:
+        value = identity(target)
+        if (not isinstance(value, tuple) or len(value) != 3 or type(value[0]) is not int or value[0] <= 1
+                or not str(value[1]).isdigit() or int(value[1]) <= 0
+                or not isinstance(value[2], str) or not re.fullmatch(r'[a-f0-9]{64}', value[2])):
+            raise ValueError('Invalid container process identity')
+        pinned[target] = value
+
+    def check_identities():
+        for target, value in pinned.items():
+            if identity(target) != value:
+                raise ValueError('Container identity changed during observation')
+
+    first = observe_host()
+    normalized = normalize_link_inventory(first)
+    validate_bridge_inventory(normalized, owner, parent_mac, members, forwarding4, forwarding6)
+    check_identities()
+    for target, name in members.items():
+        host = next((item for item in first if item.get('ifname') == name), None)
+        guest_links = observe_guest(pinned[target][0])
+        if not isinstance(guest_links, list) or any(not isinstance(item, dict) for item in guest_links):
+            raise ValueError('Incomplete guest inventory')
+        if len(guest_links) != 2 or {item.get('ifname') for item in guest_links} != {'lo', 'eth0'}:
+            raise ValueError('Guest namespace interface boundary changed')
+        peer = next(item for item in guest_links if item.get('ifname') == 'eth0')
+        if not isinstance(host, dict):
+            raise ValueError('Host peer missing')
+        host_view = {'ifindex': host.get('ifindex'), 'link_index': host.get('link_index'),
+                     'kind': host.get('linkinfo', {}).get('info_kind'), 'alias': host.get('ifalias')}
+        guest_view = {'ifindex': peer.get('ifindex'), 'link_index': peer.get('link_index'),
+                      'kind': peer.get('linkinfo', {}).get('info_kind'),
+                      'ifname': peer.get('ifname'), 'mac': peer.get('address')}
+        validate_veth_peer(host_view, guest_view, owner, target)
+        check_identities()
+    last = observe_host()
+    if last != first:
+        raise ValueError('Host link inventory changed during observation')
+    check_identities()
+    return normalized
+
+
 def normalize_link_inventory(links):
     """Normalize one complete `ip -j -d addr show` result; never infer omissions."""
     if not isinstance(links, list):
