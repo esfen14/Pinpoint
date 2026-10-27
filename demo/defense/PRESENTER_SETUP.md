@@ -9,24 +9,37 @@ the same host-only segment. A persistent presenter checkout is available at
 
 ## 1. Connect the appliance
 
-The owner has already attached `Pinpoint-Final` adapter 2 to `vboxnet1`. Its MAC
-is `08:00:27:fa:10:0a`. The expected guest address is `10.77.1.1/27`, with no
-DHCP, gateway or DNS on that interface. A Windows ping to this address did not
-receive a reply on 2026-10-27; the actual guest address and any guest firewall
-have not yet been checked. In the appliance console, run:
+The owner has already attached `Pinpoint-Final` adapter 2 to `vboxnet1`. Its
+MAC is `08:00:27:fa:10:0a`, and the guest interface is `enp0s8`. The owner
+observed `/etc/netplan/50-cloud-init.yaml` as the only netplan file and
+`sudo netplan get network.ethernets.enp0s8` returned the old address
+`10.77.0.1/28`. The earlier temporary IP setting was lost on restart.
+
+In the appliance console, back up and edit the existing file:
 
 ```bash
-ip -br link
-ip -br -4 address
+sudo cp -n -p /etc/netplan/50-cloud-init.yaml /root/50-cloud-init.before-defense.yaml
+sudo nano /etc/netplan/50-cloud-init.yaml
 ```
 
-Match the adapter using its MAC. If it is not configured as `10.77.1.1/27`,
-inspect the VM's existing network configuration and report the output before
-changing it; `Pinpoint-Final` is the owner's VM and its current configuration
-and recovery snapshot have not been inventoried. Once configured, check from
-inside the appliance using `ping -c 2 10.77.1.3` for Windows and
-`ping -c 2 10.77.1.4` for the web container. Leave NAT adapter 1 and its
-forwarding rules unchanged. Do not select a physical or Wi-Fi adapter.
+Under `enp0s8`, replace `10.77.0.1/28` with `10.77.1.1/27`. Preserve all other
+entries, especially `enp0s3` (NAT); do not add DHCP, a gateway, or DNS for
+`enp0s8`. Save and exit. Use the appliance console for the following command,
+then accept the netplan prompt to retain the change:
+
+```bash
+sudo netplan try
+ip -br -4 address
+ping -c 2 10.77.1.3
+ping -c 2 10.77.1.4
+```
+
+`enp0s8` should display `10.77.1.1/27`; the pings are to Windows and the web
+container. A normal guest reboot should then be used to verify the address
+persists; cloud-init may regenerate its file, so do not assume persistence until
+that check passes. Keep the backup outside `/etc/netplan` so netplan does not
+load it as another configuration. Leave adapter 1 and its NAT forwarding rules
+unchanged. Do not select a physical or Wi-Fi adapter.
 
 Open `http://127.0.0.1:18080` on the laptop to use `Pinpoint-Final` and sign
 in with that VM's existing application credentials. Its console login and
@@ -59,7 +72,10 @@ Git, or a recording. Windows is at `10.77.1.3`; NCPA listens on TCP `5693` and
 its Windows firewall rule permits the appliance address `10.77.1.1`.
 
 In Pinpoint, open **NCPA Deployment → Register an agent I installed**, select
-the discovered Windows device, and enter the NCPA token and port `5693`.
+the discovered Windows device, and enter the NCPA token and port `5693`. The
+owner confirmed Windows is listed in this manual registration picker; it need
+not appear in the automatic deployment eligibility list. Registration still
+requires the appliance address to be configured persistently.
 The picker requires an existing discovered device; if Windows is not listed,
 registration must wait until the appliance is connected and the approved
 Pinpoint discovery step is completed. Registration itself contacts NCPA and is
