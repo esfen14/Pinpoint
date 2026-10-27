@@ -4,6 +4,41 @@ import re
 from .catalog import load_catalog
 
 
+def normalize_link_inventory(links):
+    """Normalize one complete `ip -j -d addr show` result; never infer omissions."""
+    if not isinstance(links, list):
+        raise ValueError('Invalid link inventory')
+    result = []
+    for link in links:
+        if not isinstance(link, dict):
+            raise ValueError('Invalid link record')
+        name, index, mac = link.get('ifname'), link.get('ifindex'), link.get('address')
+        addresses, master = link.get('addr_info'), link.get('master')
+        info = link.get('linkinfo', {})
+        if (not isinstance(name, str) or not re.fullmatch(r'[a-zA-Z0-9_.-]{1,15}', name)
+                or type(index) is not int or index <= 0 or not isinstance(mac, str)
+                or not isinstance(addresses, list) or not isinstance(info, dict)
+                or master is not None and not isinstance(master, str)):
+            raise ValueError('Incomplete link record')
+        kind = info.get('info_kind', 'ether')
+        if kind not in {'ether', 'bridge', 'veth', 'macvlan'}:
+            raise ValueError('Unsupported link kind')
+        normalized_addresses = []
+        for address in addresses:
+            if not isinstance(address, dict) or not isinstance(address.get('local'), str) or type(address.get('prefixlen')) is not int:
+                raise ValueError('Incomplete link address')
+            normalized_addresses.append(f"{address['local']}/{address['prefixlen']}")
+        alias = link.get('ifalias', '')
+        if not isinstance(alias, str):
+            raise ValueError('Invalid link alias')
+        result.append({'name': name, 'kind': kind, 'mac': mac.lower(), 'master': master,
+                       'alias': alias, 'addresses': normalized_addresses})
+    names = [link['name'] for link in result]
+    if len(names) != len(set(names)):
+        raise ValueError('Duplicate link names')
+    return result
+
+
 def validate_veth_peer(host, guest, owner, target):
     """Compare independently observed host and container veth peer identities.
 

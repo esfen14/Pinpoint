@@ -5,7 +5,7 @@ import sys
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from defense.bridge import validate_bridge_inventory, validate_veth_peer
+from defense.bridge import normalize_link_inventory, validate_bridge_inventory, validate_veth_peer
 
 OWNER = 'b' * 48
 PARENT = '02:77:01:fe:31:d7'
@@ -24,6 +24,25 @@ def inventory():
 
 
 class BridgeInventoryTests(unittest.TestCase):
+    def test_normalization_rejects_missing_address_inventory_and_unknown_types(self):
+        raw = [{'ifname': 'pdbr0', 'ifindex': 3, 'address': '02:77:01:fe:00:ff',
+                'addr_info': [], 'linkinfo': {'info_kind': 'bridge'}, 'ifalias': 'owned'},
+               {'ifname': 'enp0s8', 'ifindex': 4, 'address': PARENT,
+                'addr_info': [], 'master': 'pdbr0'}]
+        normalized = normalize_link_inventory(raw)
+        self.assertEqual(normalized[0]['kind'], 'bridge')
+        self.assertEqual(normalized[1]['kind'], 'ether')
+        self.assertEqual(normalized[1]['master'], 'pdbr0')
+        for mutation in [lambda links: links[0].pop('addr_info'),
+                         lambda links: links[0].update(addr_info=[{'family': 'inet'}]),
+                         lambda links: links[1].update(master=7),
+                         lambda links: links[0].update(linkinfo={'info_kind': 'unknown'}),
+                         lambda links: links.append(copy.deepcopy(links[1]))]:
+            changed = copy.deepcopy(raw)
+            mutation(changed)
+            with self.assertRaises(ValueError):
+                normalize_link_inventory(changed)
+
     def test_accepts_exact_unnumbered_owned_bridge_and_members(self):
         validate_bridge_inventory(inventory(), OWNER, PARENT, {'dhcp01': 'pd-dhcp01'}, 0, 0)
 
