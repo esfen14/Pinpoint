@@ -54,6 +54,8 @@ Requirement coverage (every requirement the issue states, and the check that pro
 6. [ ] Test/implement five-client DHCP and transactional address-mode controls in `demo/`; run real identity, history, collision, outage and rollback matrix; keep `lab/dhcp/` independent.
    - [x] 6a: Offline DHCP move preflight planner checks all five reservations and observations, pool membership and collisions; it does not change live state or prove foreign-device absence.
    - [ ] 6b: Implement durable recovery, verified host/VM membership, execution and rollback before exposing a DHCP move; adapt lifecycle controls to changed reservations.
+     - [x] Offline recovery-intent journal: private durable creation, validated plan/container pins, closed phase transitions and safe terminal cleanup; no live operations.
+     - [ ] Wire a checked journal to actual execution, validate complete network membership, re-observe state for recovery, implement rollback and block incompatible commands while intent exists.
    - [ ] 6c: Implement DHCP/static transactions and run the permitted live matrix with recovery and identity proof.
 7. [ ] With owner-supplied Windows, prepare NCPA privately, snapshot/register/probe metrics, replace win-slot and repeat all-15 validation; document Windows instructions in `demo/`.
    - [x] 7a (user-requested preparation): Installed Windows 10 Home image 1 in exact-owned `pinpoint-defense-win01`, 3072 MiB/2 CPUs/40 GiB dynamic disk, internal NIC only, `10.77.1.3/27`, no default gateway. Actual guest OS/Guest Additions verified; powered-off `windows-installed` snapshot retained. Sanitized report and `demo/WINDOWS_READY.md` written; private credentials/evidence outside Git. Activation/license acceptance stays pending.
@@ -128,11 +130,13 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 | DHCP move planner | Added an offline-only planning function for all-five-client reservation and address validation. | `python3 -I demo/defense/test_dhcp_move.py` | Three focused tests pass; no live mutation, presenter integration, foreign-device proof or rollback exists. |
 
+| DHCP recovery intent | Added an offline durable, private intent journal with exact plan and container identities and closed recovery phases. | `python3 -I demo/defense/test_dhcp_journal.py`; `python3 -I demo/defense/test_dhcp_move.py` | Five journal and three planner tests pass. No live address mutation, recovery executor, membership proof or presenter integration exists. |
+
 ## State for the next session
 
-- Last check run: `python3 -I demo/defense/test_dhcp_move.py` (3 passed). The owner reported all fifteen demo addresses, Windows memory 47.5944%, CPU 0.0853%, disk 45.6%, and web03 HTTP CRITICAL then OK; see `docs/test-runs/2026-10-27-issue-274-pinpoint-web-alert/REPORT.md`. `scripts/verify.sh docs` passed.
-- Current live state: Windows, 14 host-pilot containers and Pinpoint-Final run on `vboxnet1`, with web03 restored. The new DHCP move planner is offline only; no device address changed. Owner-reported inventory and metric are not independently observed. Laptop reboot, address transitions, full rehearsals and complete issue acceptance remain open.
-- Next action (one specific step, not "continue"): Implement and test durable recovery intent, exact host/VM network membership checks and rollback for DHCP moves before allowing any live address change; then adapt presenter lifecycle to saved reservations.
+- Last check run: `python3 -I demo/defense/test_dhcp_journal.py` (5 passed) and `python3 -I demo/defense/test_dhcp_move.py` (3 passed); `scripts/verify.sh docs` passed on retry. The first run failed `test_failure_verdict_is_retained_without_claiming_product_pass` because `Implementation_Status.md` was edited while its execution-rule hash was in use; the stable-file rerun passed. Owner-reported inventory, Windows metrics and web03 CRITICAL-to-OK test are recorded in `docs/test-runs/2026-10-27-issue-274-pinpoint-web-alert/REPORT.md`.
+- Current live state: Windows, 14 Linux host-pilot containers and Pinpoint-Final run on `vboxnet1`, with web03 restored. The DHCP planner and recovery-intent journal are offline only; no address was moved. The owner reported all fifteen demo addresses visible, Windows metrics, and web03 failure/recovery. Host laptop reboot, DHCP address transitions and full rehearsals remain open.
+- Next action (one specific step, not "continue"): Implement and test host/VM membership validation and an interruption-aware DHCP execution/rollback path that uses the private journal and refuses conflicting operations.
 
 ## Decisions and notes
 
