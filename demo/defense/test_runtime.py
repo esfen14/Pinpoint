@@ -60,6 +60,22 @@ class ComposeTests(unittest.TestCase):
 
 
 class NodeTests(unittest.TestCase):
+    def test_host_container_context_requires_explicit_mode_and_matching_host_identity(self):
+        from defense.node import container_context
+        host={'version':2,'mode':'host-only','owner':'b'*48,
+              'vm_uuid':'821464dc-e7ce-4067-8eec-5cb1c61d3632','parent_mac':'0a:00:27:00:00:01'}
+        def read(path,*args,**kwargs):
+            if str(path).endswith('/product_name'):return 'Physical laptop\n'
+            if str(path).endswith('/product_uuid'):return host['vm_uuid']+'\n'
+            raise AssertionError('Unexpected file read')
+        with patch('os.geteuid',return_value=0),patch('pathlib.Path.is_file',return_value=True), \
+             patch('pathlib.Path.read_text',read),patch('defense.node.read_private_json',return_value=host):
+            self.assertEqual(container_context(),host)
+        for changed in [dict(host,mode='bridge'),dict(host,version=1),dict(host,vm_uuid='foreign'),dict(host,parent_mac='bad')]:
+            with patch('os.geteuid',return_value=0),patch('pathlib.Path.is_file',return_value=True), \
+                 patch('pathlib.Path.read_text',read),patch('defense.node.read_private_json',return_value=changed):
+                with self.assertRaises(ValueError):container_context()
+
     def test_invalid_commands_reject_before_subprocess_or_file_mutation(self):
         bad=[('web03',{'operation':'shell','command':'id'}),
              ('foreign',{'operation':'inspect'}),('win01',{'operation':'baseline'}),

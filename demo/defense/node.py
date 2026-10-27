@@ -174,16 +174,22 @@ def supervisor_config(programs: dict[str,list[str]]) -> str:
 
 
 def container_context() -> dict:
-    """Refuse physical-host/foreign-container execution before filesystem changes."""
-    if os.geteuid()!=0 or not Path('/.dockerenv').is_file() or Path('/sys/class/dmi/id/product_name').read_text().strip()!='VirtualBox':
-        raise ValueError('Node controls require the dedicated VirtualBox guest container')
+    """Require a pinned VirtualBox guest or explicitly prepared host-only container."""
+    if os.geteuid()!=0 or not Path('/.dockerenv').is_file():
+        raise ValueError('Node controls require the owned container')
     context=read_private_json(CONTEXT)
-    if set(context)!={'version','owner','vm_uuid','parent_mac'} or context['version']!=1:
+    guest=set(context)=={'version','owner','vm_uuid','parent_mac'} and context['version']==1
+    host=set(context)=={'version','mode','owner','vm_uuid','parent_mac'} and context['version']==2 and context['mode']=='host-only'
+    if not (guest or host):
         raise ValueError('Invalid guest context')
+    if guest and Path('/sys/class/dmi/id/product_name').read_text().strip()!='VirtualBox':
+        raise ValueError('Guest context requires the dedicated VirtualBox VM')
     if not re.fullmatch(r'[a-f0-9]{48}',context.get('owner','')):
         raise ValueError('Invalid guest project owner')
+    if not isinstance(context.get('parent_mac'),str) or not re.fullmatch(r'(?:[a-f0-9]{2}:){5}[a-f0-9]{2}',context['parent_mac']):
+        raise ValueError('Invalid parent identity')
     if not dmi_uuid_matches(context['vm_uuid'],Path('/sys/class/dmi/id/product_uuid').read_text().strip()):
-        raise ValueError('Container is running on a foreign guest')
+        raise ValueError('Container is running on a foreign host')
     return context
 
 

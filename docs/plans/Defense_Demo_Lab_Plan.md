@@ -1,36 +1,50 @@
 # One defense demo lab (#274)
 
-Status: **implementation authorized; isolated container lifecycle passes, but ping reachability is not established**.
+## Owner-directed host Docker transition
+
+On 2026-10-27 the owner chose to run Linux target containers directly on the
+laptop and connect the VirtualBox VMs through an isolated host-only adapter.
+This supersedes the proposed target-host bridge/veth migration below. The
+existing target-host remains the source of the original device identities,
+service data and lease state until an explicit, verified migration is available.
+No physical adapter is to be attached to the demo network.
+
+A separate VirtualBox host-only adapter `vboxnet1` and an issue-owned temporary
+Docker macvlan pilot were created. The adapter uses a VirtualBox-allowed host
+address in `192.168.57.0/24`; the VM and pilot retain their `10.77.1.0/27`
+demo addresses on the same Ethernet segment. A separate existing enabled
+VirtualBox DHCP configuration belongs to `vboxnet0`; no VM was attached to it
+and it was left unchanged. Windows now uses `vboxnet1` at `10.77.1.3`.
+Fourteen temporary catalog containers are running on the laptop; the five DHCP
+clients acquired their reserved `.20` through `.24` addresses from `dhcp01`.
+Windows pinged all fourteen addresses successfully on 2026-10-27. These are
+fresh pilot identities and data; the original target-host data remains intact.
+
+The device runtime has an explicit host-only context with a host DMI identity
+pin, private owner and adapter MAC; the old VirtualBox-only context is still
+validated separately. A fixed attachment helper creates unnumbered macvlan
+interfaces for the DHCP clients on the virtual adapter. The live pilot used a
+short-lived privileged helper with a read-only root filesystem and no Docker
+socket; this is not yet a complete supported host controller. A persistent
+lifecycle, recovery, original identity/data migration, restart behavior and
+appliance acceptance remain to be implemented and verified. Per the owner's
+direction, use ping only for connectivity tests.
+
+Status: **host Docker pilot reachable from Windows; supported lifecycle and appliance acceptance remain pending**.
 Tracking: [#274](https://github.com/esfen14/Pinpoint/issues/274).
-Read-only inventory: [2026-10-27 report](../test-runs/2026-10-27-issue-274-defense-inventory/REPORT.md).
-This plan is not a delivered lab or a passed architecture spike. No new scan
-range is authorized by this document. Existing supported commands remain in the
-[VM lab plan](VM_Lab_Plan.md) and [demo manual](../../demo/README.md).
-The user-requested [Windows preparation](../../demo/WINDOWS_READY.md) is installed
-and locally agent-verified; the shared controller/target-host and product
-acceptance are still pending.
+No new scan range is authorized by this document. Existing supported commands
+remain in the [VM lab plan](VM_Lab_Plan.md) and [demo manual](../../demo/README.md).
 
-## Current live checkpoint (2026-10-27)
+## Previous internal-network checkpoint
 
-The target-host passed its forwarding and ownership guard. After the guarded
-source refresh and reset, all fourteen catalog Linux containers were attached
-with their pinned MACs; baseline daemons were started and five reserved DHCP
-clients acquired `.20` through `.24`. The refreshed source passed host safety,
-Docker restart and VM reboot checks with forwarding disabled. In the corrected
-ping-only reachability pass, Windows replied to its own `.3` address but none of
-the fourteen Linux addresses replied. Linux peer-ping returned no reply for
-thirteen targets; `dns01` was refused by the fixed helper before it sent ping.
-An earlier malformed guest-control invocation was excluded; it passed the
-executable path as a ping destination. No ARP, port/service probe, scan, capture,
-or product discovery ran during stage 3. The result is recorded in the
-[ping-refresh report](../test-runs/2026-10-27-issue-274-ping-refresh/REPORT.md).
-This still does not pass appliance or fifteen-device acceptance. The next
-engineering step is an offline review of a bridge/veth alternative; repeat
-reachability only with ping after any topology change.
+The earlier target-host topology had fourteen containers and five DHCP leases,
+but ping between Windows and the Linux targets failed. That result remains in
+the [ping-refresh report](../test-runs/2026-10-27-issue-274-ping-refresh/REPORT.md).
+The owner's subsequent choice of host Docker supersedes that topology.
 
-## Ping-only follow-up preparation
+## Earlier internal-network follow-up preparation
 
-The Windows-to-target result has not changed. Source review confirmed that
+At that checkpoint, the Windows-to-target result had not changed. Source review confirmed that
 VirtualBox Internal Networking is implemented as an Ethernet switch with
 broadcast/multicast and promiscuous-mode support, while the `nicpromisc` policy
 is documented for bridged adapters. Therefore the prior `allow-all` trial on
