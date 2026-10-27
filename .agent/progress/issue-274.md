@@ -1,7 +1,7 @@
 # Issue #274: One isolated 15-device defense demo lab
 
 Branch: `issue-274-defense-demo`
-Status: blocked
+Status: in-progress
 
 ## Finish condition
 
@@ -40,7 +40,10 @@ Requirement coverage (every requirement the issue states, and the check that pro
 ## Plan
 
 1. [x] Record ownership, snapshots, routes, capacity, transition/recovery, planned architecture probe and injection/secret review boundaries in `docs/plans/Defense_Demo_Lab_Plan.md`; record observed inventory under `docs/test-runs/`. Preparation complete; person review and live proof are pending.
-2. [ ] After the required person review, test first, then add manifest and guarded preflight/controller in `demo/` with isolated tests; update `spec files/Agent_Workflow_and_CI.md` for the new explicitly bounded demo scope before any scan.
+2. [ ] Implement the authorized manifest/controller within the recorded security boundaries, test first; new product scan scope still requires the actual isolation proof before use.
+   - [ ] 2a: `demo/defense/manifest.json`, `catalog.py`, `preflight.py`, `controller.py`, `demo/demo` and isolated `test_defense.py`: exact catalog, reserved inputs, host collision/ownership/resource gates and read-only manifest/preflight commands. Wire offline tooling checks into `scripts/verify.sh`; update owning workflow/status docs.
+   - [ ] 2b: `demo/defense/Dockerfile`, generated Compose configuration, `node.py` and guest networking/control helpers plus tests: real daemons, persistent identities, network-none containers and explicit macvlan attachment; initially expose only the two-MAC/DHCP spike path.
+   - [ ] 2c: `demo/defense/provision.py` and host controller tests: fresh Ubuntu target-host VM with an injected, pinned SSH host key, private credentials and fixed guest helper, preview-first preparation under the canonical claim. Preserve all existing VMs/disks; do not use the legacy unpinned SSH bootstrap.
 3. [ ] Prove the two-MAC/DHCP/management/isolation spike with the real appliance and dedicated target-host; record exact settings and measurements in the plan/report; revise topology if needed.
 4. [ ] Build the real daemon catalog in `demo/defense/`; test/provision 14 Linux targets plus clearly labelled win-slot; verify product discovery, plugins and Nagios against the manifest.
 5. [ ] Test/implement portable allowlisted listener and host controls in `demo/`; migrate and adapt the three Documents files; verify shortcut and interruption/restore paths.
@@ -65,13 +68,14 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | Home resume | Owner confirmed temporary KVM unload; module inspection and ownership preflight passed; resumed the same private VM under the canonical claim | python3 /tmp/issue274-resume-home.py | Running: Windows installation started successfully; same UUID/MAC/disk/credentials, internal-only NIC |
 | Windows local preparation | Finished Home 19045, Guest Additions, isolated address/firewall, signed NCPA 3.5.0 and real local metrics/process probe; fresh-boot verified, temporary admin disabled, media removed, powered-off baseline retained | Actual guest CIM/API and snapshot metadata; scripts/verify.sh docs | green: local Windows/NCPA checks and verify: docs OK. No Pinpoint registration or licensed-Windows acceptance |
 | Host restoration | Owner reported no modprobe errors; fresh observation confirms KVM restored without agent root actions | lsmod; /sys/module and /dev/kvm checks; VBoxManage list runningvms; scripts/vmlab preflight | green: kvm_amd/kvm loaded, /dev/kvm present, all VirtualBox VMs off, appliance ownership preflight passed |
+| Resumed 2026-10-27 | User directed continuation after the remaining Linux device/Compose/network/controller scope was explained; retain completed Windows preparation and implement within the existing security boundaries | git pull --ff-only; last saved ownership checks; gh issue view 274 --json title,body,comments,state | Clean/up to date, ownership check green, issue unchanged with no comments; current full-lab memory gate will need more headroom |
 
 ## State for the next session
 
 - Last check run (exact command): `timeout 20s VBoxManage list runningvms && timeout 25s scripts/vmlab preflight`
 - Result (first failing lines, or "green"): green: no running VMs; appliance powered-off/exclusive control preflight passed. kvm_amd/kvm and /dev/kvm are restored. Earlier documentation gate passed (`verify: docs OK`); local Windows/NCPA preparation remains verified and powered off. No live helper running. Full issue finish conditions remain incomplete; full/backend/frontend local checks not run for this documentation-only change.
-- Hypothesis: Windows/local NCPA preparation and temporary host-module restoration are complete. The installed test device is ready for future appliance integration, with activation still pending. Shared controller implementation remains behind the explicit person review.
-- Next action (one specific step, not "continue"): Obtain the person's review/approval of the command execution and secret exposure table in `docs/plans/Defense_Demo_Lab_Plan.md` before implementing the manifest/controller in step 2; retain the completed Windows preparation.
+- Hypothesis: The user's current continuation authorizes the remaining planned controller/network implementation described in the preceding scope explanation. Offline validation can progress while resource/KVM prerequisites are handled at the live boundary. Windows activation and final product acceptance remain pending.
+- Next action (one specific step, not "continue"): Write and run failing tests for step 2a's manifest/input/ownership/collision/resource contracts before adding the manifest and preflight implementation.
 
 ## Decisions and notes
 
@@ -102,3 +106,6 @@ Requirement coverage (every requirement the issue states, and the check that pro
 - Final host sample: 9255 MiB available RAM, 1753 MiB swap used, 70348 MiB free disk; all VirtualBox VMs off. Owner-local KVM restoration is now observed and complete. Combined all-target capacity/absence of sustained swap thrash still unproven.
 - Owner replied "done" to KVM restoration, but the subsequent read-only check still found kvm/kvm_amd absent from lsmod and `/sys/module/`. Asked whether the command reported an error and supplied the explicit `/usr/sbin/modprobe` path. Restoration is not yet observed; no agent root command or permanent module setting change was made. Windows is installed and all VMs remain off independently of that host follow-up.
 - The owner subsequently reported no errors. Fresh read-only observation confirms `kvm_amd` and `kvm` loaded and `/sys/module/kvm`, `/sys/module/kvm_amd`, `/dev/kvm` present. The earlier absence observation is superseded. All VirtualBox VMs remain off and ownership preflight passes; host restoration is no longer a blocker. No further owner action is needed for this restoration.
+- Current user directive: "continue", immediately after the remaining target-host, Compose, DHCP, controller and integration work was explained. Record this as authorization to perform that planned implementation within the documented boundaries, superseding the earlier pending-continuation gate. This does not assert that the user performed a line-by-line technical security review; the agent must still review injection/secret handling explicitly and retain the required negative tests. The live safety/resource gates remain mandatory.
+- Step 2 is split into concrete testable substeps before code. Prefer a fresh Ubuntu ISO install with a generated/injected pinned host SSH key over cloning the old base with an unverified inherited SSH host key. Both Ubuntu 22.04.5 and 24.04.5 stock ISOs exist locally. This preserves the old resources and avoids the legacy controller's unpinned SSH bootstrap.
+- Fresh host sample on resume: 8940 MiB available RAM and 70338 MiB free disk, all VMs off. That is below the full 4+2+3 GiB VM allocation plus 3 GiB host reserve; no full-lab start is authorized by this sample. Continue offline work and report the exact resource shortfall when the live stage is ready.

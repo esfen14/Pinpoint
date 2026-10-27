@@ -1,6 +1,6 @@
 # One defense demo lab (#274)
 
-Status: **proposed; controller security review required before implementation**.
+Status: **implementation authorized by the owner's continuation; isolation spike pending**.
 Tracking: [#274](https://github.com/esfen14/Pinpoint/issues/274).
 Read-only inventory: [2026-10-27 report](../test-runs/2026-10-27-issue-274-defense-inventory/REPORT.md).
 This plan is not a delivered lab or a passed architecture spike. No new scan
@@ -22,8 +22,11 @@ profiles too, then repeat collision checks at every start.
 Reuse the exact QA appliance UUID `351eb491-f5e1-4854-a7e4-68309ad774ad` if its
 current installed state and recovery can be verified. Give its isolated NIC
 `10.77.1.1/27`. Retain its NAT loopback SSH/web forwards. Build one separately
-owned `pinpoint-defense-targets` Ubuntu VM from the demo base, with a new disk,
-new MACs, a unique machine ID and separate private management credentials.
+owned `pinpoint-defense-targets` Ubuntu VM from the local stock Ubuntu ISO, with
+a new disk, new MACs, a unique machine ID and separate private management
+credentials. Inject a generated host SSH key through private unattended files
+and pin its public key before the first management connection. Preserve the old
+base; its legacy unpinned SSH bootstrap is not the new management trust path.
 Budget 2048 MiB for this VM and retain 4096 MiB for the appliance. Proposed
 target-host NAT SSH forward: `127.0.0.1:2260` to guest 22, subject to an unused
 port check. The target-host's second NIC joins only `pinpoint-defense` and has
@@ -116,9 +119,12 @@ The work-issue workflow section 4 says: "the change touches a sensitive module
 (see `spec files/Engineering_Standards.md`)" under "Needs a person". Engineering
 Standards includes "command execution paths" and requires an explicit injection
 and secret-exposure review. The new presenter controller falls within that rule.
-This section is the proposed review scope; implementation and live mutations
-are pending that review. Approval must be recorded in the issue progress before
-resuming controller changes.
+This section defines the review boundaries. The owner subsequently directed
+continuation after the remaining Linux/controller/network scope was explained;
+that authorization is recorded in the issue progress. Implement within these
+boundaries and explicitly review injection/secret exposure with the negative
+tests below. Resource, ownership and actual isolation gates still precede any
+live mutation or product scan.
 
 | Boundary | Proposed enforcement | Required negative/recovery test |
 |---|---|---|
