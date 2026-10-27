@@ -108,3 +108,12 @@ boots; the helper refuses attachment, and durable forwarding plus remaining
 `lxd` group cleanup must precede target activation. See the
 [installation report](../../docs/test-runs/2026-10-27-issue-274-linux-target-host-install/REPORT.md).
 No fully repeatable installation or live target workflow is claimed yet.
+
+Offline hardening now defines a Docker `ip-forward: false` configuration and an
+every-start guard that resets/verifies both forwarding families. A separate
+ready service repeats group/sudo cleanup after cloud-init, and attachment checks
+effective management privileges. Image builds temporarily allow NAT only while
+the exact unnumbered demo NIC is down; normal cancellation resets forwarding and
+failures leave the NIC down. This is not yet applied/retested on the installed
+VM. Docker configuration behavior follows the
+[daemon reference](https://github.com/docker/cli/blob/master/docs/reference/dockerd.md).

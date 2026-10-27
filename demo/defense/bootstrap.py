@@ -6,9 +6,162 @@ import re
 import subprocess
 import sys
 import uuid
+import stat
+import signal
+from contextlib import contextmanager
 
 ROOT=Path('/var/lib/pinpoint-defense')
 SOURCE=Path('/opt/pinpoint-defense')
+
+
+def docker_settings():
+    """Keep Docker from enabling host forwarding at daemon/network startup."""
+    return {'ip-forward':False}
+
+
+def docker_guard_dropin():
+    """Reset and verify forwarding on every daemon start, including later reboots."""
+    return '[Service]\nExecStartPost=/usr/bin/python3 /opt/pinpoint-defense/bootstrap.py guard\n'
+
+
+def ready_unit():
+    """Repeat account hardening after cloud-init and before target/image activation."""
+    return ('[Unit]\nDescription=Verify owned defense guest boundaries\n'
+            'Wants=cloud-final.service\nRequires=docker.service\n'
+            'After=cloud-final.service docker.service\nBefore=pinpoint-defense-build.service\n'
+            '[Service]\nType=oneshot\nRemainAfterExit=yes\nUMask=0077\n'
+            'ExecStart=/usr/bin/python3 /opt/pinpoint-defense/bootstrap.py ready\n'
+            '[Install]\nWantedBy=multi-user.target\n')
+
+
+def owned_context():
+    """Prove the dedicated root VirtualBox guest before any restrictive mutation."""
+    sys.path.insert(0,str(SOURCE/'demo'))
+    from defense.preflight import read_private_json
+    if os.geteuid()!=0 or Path('/.dockerenv').exists() or Path('/sys/class/dmi/id/product_name').read_text().strip()!='VirtualBox':
+        raise ValueError('Operation requires the owned guest')
+    context=read_private_json(ROOT/'context.json')
+    if set(context)!={'version','owner','vm_uuid','parent_mac'} or context['version']!=1 or not re.fullmatch(r'[a-f0-9]{48}',context.get('owner','')) or not re.fullmatch(r'(?:[a-f0-9]{2}:){5}[a-f0-9]{2}',context.get('parent_mac','')):
+        raise ValueError('Invalid guest ownership state')
+    if not dmi_uuid_matches(context['vm_uuid'],Path('/sys/class/dmi/id/product_uuid').read_text().strip()):
+        raise ValueError('Guest UUID mismatch')
+    return context
+
+
+def forwarding_values():
+    """Read real IPv4 and IPv6 forwarding values, without assuming sysctl succeeded."""
+    return (int(Path('/proc/sys/net/ipv4/ip_forward').read_text()),
+            int(Path('/proc/sys/net/ipv6/conf/all/forwarding').read_text()))
+
+
+def guard_forwarding():
+    """Refuse foreign execution, disable both forwarding families and verify it."""
+    owned_context()
+    run(['sysctl','-w','net.ipv4.ip_forward=0','net.ipv6.conf.all.forwarding=0'])
+    if forwarding_values()!=(0,0):raise ValueError('Forwarding remains enabled')
+
+
+def build_parent(context):
+    """Find the exact plain unnumbered demo NIC before disconnecting it for a build."""
+    result=subprocess.run(['ip','-j','-d','addr','show'],capture_output=True,text=True,check=True,timeout=15)
+    links=json.loads(result.stdout)
+    matches=[v for v in links if v.get('address','').lower()==context['parent_mac']]
+    if len(matches)!=1:raise ValueError('Demo parent is missing or duplicated')
+    parent=matches[0];name=parent.get('ifname','')
+    if not re.fullmatch(r'[a-zA-Z0-9_]{1,15}',name) or parent.get('addr_info') or parent.get('master') or parent.get('linkinfo'):
+        raise ValueError('Demo parent must be plain and unnumbered')
+    return name,'UP' in parent.get('flags',[])
+
+
+@contextmanager
+def build_network():
+    """Allow build NAT only with demo NIC down; failure leaves that NIC down."""
+    context=owned_context();parent,was_up=build_parent(context)
+    def interrupted(signum,frame):
+        """Make normal service cancellation unwind the forwarding cleanup."""
+        raise SystemExit(128+signum)
+    old={sig:signal.signal(sig,interrupted) for sig in [signal.SIGTERM,signal.SIGINT]}
+    success=False
+    try:
+        run(['ip','link','set','dev',parent,'down'])
+        # Re-observe the exact disconnected NIC before opening a build-only gateway.
+        actual,is_up=build_parent(context)
+        if actual!=parent or is_up:raise ValueError('Build parent changed or remains up')
+        run(['sysctl','-w','net.ipv4.ip_forward=1'])
+        yield
+        success=True
+    finally:
+        try:
+            run(['sysctl','-w','net.ipv4.ip_forward=0','net.ipv6.conf.all.forwarding=0'])
+            if forwarding_values()!=(0,0):raise ValueError('Build cleanup failed')
+            if success and was_up:run(['ip','link','set','dev',parent,'up'])
+        finally:
+            for sig,handler in old.items():signal.signal(sig,handler)
+
+
+def harden_management(root=Path('/')):
+    """Remove supplementary groups and only the generated user's cloud-init sudo rule."""
+    management_uid()
+    cloud=root/'etc/sudoers.d/90-cloud-init-users'
+    fd=None
+    if cloud.exists() or cloud.is_symlink():
+        try:fd=os.open(cloud,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK)
+        except OSError:raise ValueError('Unsafe cloud-init sudo file') from None
+        try:
+            info=os.fstat(fd)
+            if not stat.S_ISREG(info.st_mode) or info.st_uid!=os.getuid() or info.st_nlink!=1 or info.st_mode&0o022 or info.st_size>65536:
+                raise ValueError('Unsafe cloud-init sudo file')
+            text=os.read(fd,65537).decode()
+            clean='\n'.join(line for line in text.splitlines() if not re.match(r'^\s*defense\s+ALL\s*=',line))+'\n'
+            if text!=clean:
+                parent=cloud.parent.lstat()
+                if not stat.S_ISDIR(parent.st_mode) or parent.st_uid!=os.getuid() or parent.st_mode&0o022:
+                    raise ValueError('Unsafe sudo configuration directory')
+                temporary=cloud.with_name('.defense-'+uuid.uuid4().hex)
+                try:
+                    output=os.open(temporary,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+                    with os.fdopen(output,'w') as stream:
+                        stream.write(clean);stream.flush();os.fchmod(stream.fileno(),0o440);os.fsync(stream.fileno())
+                    if (cloud.lstat().st_dev,cloud.lstat().st_ino)!=(info.st_dev,info.st_ino):
+                        raise ValueError('Sudo file changed during hardening')
+                    temporary.replace(cloud)
+                finally:
+                    if temporary.exists():temporary.unlink()
+        finally:os.close(fd)
+    run(['usermod','--groups','','defense'])
+
+
+def validate_management(groups,sudo):
+    """Require just the primary group and the single fixed sudo helper grant."""
+    grants=[re.sub(r'\s+',' ',line.strip()) for line in sudo.splitlines() if line.strip().startswith('(')]
+    if set(groups)!={'defense'} or grants!=['(root) NOPASSWD: /usr/local/sbin/pinpoint-defense-guest']:
+        raise ValueError('Management privileges exceed the fixed helper')
+
+
+def management_uid():
+    """Require the fresh install's fixed unprivileged account, never UID zero."""
+    try:
+        result=subprocess.run(['id','-u','defense'],capture_output=True,text=True,check=True,timeout=15)
+        if result.stdout.strip()!='1000':raise ValueError('Management UID changed')
+        return 1000
+    except (OSError,subprocess.SubprocessError):
+        raise ValueError('Management account unavailable') from None
+
+
+def management_observation():
+    """Verify effective grants rather than treating file changes as privilege proof."""
+    management_uid()
+    try:
+        groups=subprocess.run(['id','-nG','defense'],capture_output=True,text=True,check=True,timeout=15)
+        sudo=subprocess.run(['sudo','-n','-l','-U','defense'],capture_output=True,text=True,check=True,timeout=15,env=dict(os.environ,LC_ALL='C'))
+        validate_management(groups.stdout.split(),sudo.stdout)
+    except (OSError,subprocess.SubprocessError):
+        raise ValueError('Management privilege observation unavailable') from None
+
+
+def ready():
+    """Reapply least privilege after cloud-init; no targets start on a failed gate."""
+    guard_forwarding();harden_management();management_observation()
 
 
 def dmi_uuid_matches(expected,observed) -> bool:
@@ -29,7 +182,7 @@ def run(argv):
 
 def configure_unit(action,unit):
     """Configure only fixed units offline; the installer has no running target systemd."""
-    if action not in {'enable','disable'} or unit not in {'ssh.socket','ssh.service','pinpoint-defense-build.service'}:
+    if action not in {'enable','disable'} or unit not in {'ssh.socket','ssh.service','pinpoint-defense-build.service','pinpoint-defense-ready.service'}:
         raise ValueError('Unsupported offline service configuration')
     run(['env','SYSTEMD_OFFLINE=1','systemctl',action,unit])
 
@@ -43,6 +196,21 @@ def write(path,text,mode=0o600):
 def configure_ssh_preservation(directory=Path('/etc/cloud/cloud.cfg.d')):
     """Preserve only our injected host key rather than cloud-init rotating it at first boot."""
     write(directory/'99-defense-pinned-ssh.cfg','ssh_deletekeys: false\nssh_genkeytypes: []\n')
+
+
+def configure_hardening(root=Path('/')):
+    """Install fixed fresh-guest forwarding and post-cloud-init guards, never generic hooks."""
+    docker=root/'etc/docker';dropin=root/'etc/systemd/system/docker.service.d'
+    for directory in [docker,dropin]:
+        if directory.is_symlink():raise ValueError('Unsafe hardening config directory')
+        directory.mkdir(mode=0o755,parents=True,exist_ok=True)
+        info=directory.lstat()
+        if not stat.S_ISDIR(info.st_mode) or info.st_uid!=os.getuid() or info.st_mode&0o022:
+            raise ValueError('Unsafe hardening directory ownership')
+    write(docker/'daemon.json',json.dumps(docker_settings())+'\n',0o644)
+    write(dropin/'90-pinpoint-defense.conf',docker_guard_dropin(),0o644)
+    write(root/'etc/systemd/system/pinpoint-defense-ready.service',ready_unit(),0o644)
+    configure_unit('enable','pinpoint-defense-ready.service')
 
 
 def validate_payload(payload):
@@ -98,17 +266,18 @@ def main():
         config=Path('/etc/ssh/sshd_config.d/00-defense.conf')
         write(config,'ListenAddress 10.0.2.15\nHostKey /etc/ssh/ssh_host_ed25519_key\nPasswordAuthentication no\nKbdInteractiveAuthentication no\nPermitRootLogin no\nAllowUsers defense\n',0o644)
         # No general sudo or Docker group access for the management account.
-        run(['gpasswd','-d','defense','sudo'])
+        harden_management()
         write(Path('/etc/sudoers.d/90-pinpoint-defense'),'defense ALL=(root) NOPASSWD: /usr/local/sbin/pinpoint-defense-guest\n',0o440)
         write(Path('/usr/local/sbin/pinpoint-defense-guest'),'#!/bin/sh\nexec /usr/bin/python3 /opt/pinpoint-defense/demo/defense/guest.py "$@"\n',0o755)
         run(['/usr/sbin/visudo','-cf','/etc/sudoers.d/90-pinpoint-defense'])
         run(['apt-get','update'])
         run(['apt-get','install','-y','--no-install-recommends','docker.io','docker-compose-v2','iproute2','procps'])
         write(SOURCE/'bootstrap.py',Path(__file__).read_text())
+        configure_hardening()
         write(Path('/etc/systemd/system/pinpoint-defense-build.service'),
               '[Unit]\nDescription=Prepare the owned defense target image\n'
-              'Wants=network-online.target\nAfter=network-online.target docker.service\n'
-              'Requires=docker.service\nConditionPathExists=!/var/lib/pinpoint-defense/prepared.json\n'
+              'Wants=network-online.target\nAfter=network-online.target docker.service pinpoint-defense-ready.service\n'
+              'Requires=docker.service pinpoint-defense-ready.service\nConditionPathExists=!/var/lib/pinpoint-defense/prepared.json\n'
               '[Service]\nType=oneshot\nUMask=0077\nTimeoutStartSec=45min\n'
               'ExecStart=/usr/bin/python3 /opt/pinpoint-defense/bootstrap.py build\n'
               '[Install]\nWantedBy=multi-user.target\n',0o644)
@@ -135,10 +304,12 @@ def build_image():
     context=read_private_json(ROOT/'context.json')
     if not dmi_uuid_matches(context['vm_uuid'],Path('/sys/class/dmi/id/product_uuid').read_text().strip()):
         raise ValueError('Image build guest UUID mismatch')
+    ready()
     if (ROOT/'prepared.json').exists():return
     if subprocess.run(['docker','ps','-aq'],capture_output=True,text=True,check=True,timeout=15).stdout.strip():
         raise ValueError('Fresh build refuses an existing container')
-    run(['docker','build','--iidfile',str(ROOT/'image-id'),'-f',str(SOURCE/'demo'/'defense'/'Dockerfile'),str(SOURCE)])
+    with build_network():
+        run(['docker','build','--iidfile',str(ROOT/'image-id'),'-f',str(SOURCE/'demo'/'defense'/'Dockerfile'),str(SOURCE)])
     image=(ROOT/'image-id').read_text().strip()
     if not re.fullmatch(r'sha256:[a-f0-9]{64}',image):raise ValueError('Build did not produce a pinned image')
     write(ROOT/'runtime.json',json.dumps({'image':image})+'\n')
@@ -159,7 +330,13 @@ def build_image():
 
 
 if __name__=='__main__':
-    if sys.argv[1:]==['build']:
+    if sys.argv[1:] in [['guard'],['ready']]:
+        try:
+            (guard_forwarding if sys.argv[1]=='guard' else ready)()
+        except Exception:
+            print('Owned guest hardening refused or failed; inspect private setup log.',file=sys.stderr)
+            raise SystemExit(1)
+    elif sys.argv[1:]==['build']:
         try:build_image()
         except Exception:
             print('Owned image build failed; inspect the private guest log.',file=sys.stderr)

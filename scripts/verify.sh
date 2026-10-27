@@ -60,6 +60,7 @@ docs() {
   python3 -I "$root/demo/defense/test_runtime.py"
   python3 -I "$root/demo/defense/test_guest.py"
   python3 -I "$root/demo/defense/test_provision.py"
+  python3 -I "$root/demo/defense/test_hardening.py"
   echo "==> docs: agent progress files are well formed"
   python3 -I "$root/scripts/check_agent_progress.py"
   echo "==> docs: fix-found workflow contract"

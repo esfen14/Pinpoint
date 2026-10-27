@@ -155,7 +155,10 @@ guest boot service builds the image before any target starts. The first installa
 preparation are observed. Docker re-enables IPv4 forwarding after reboot, so the
 guest helper refuses attachment. Durable forwarding, management-group cleanup,
 reproducible setup, lifecycle, real protocol checks and the architecture spike
-remain pending; this is not a supported live environment.
+remain pending; this is not a supported live environment. The next offline
+hardening adds no-auto-forwarding Docker settings, an every-start reset guard,
+post-cloud-init account cleanup and a build-only gateway while the demo NIC is
+down. Apply/retest these on the saved VM before starting any target.
 Offline defense input/ownership/resource/runtime contracts run in the docs gate.
 Its separate [Windows preparation](../demo/WINDOWS_READY.md) now has an installed
 Windows 10 Home test guest and locally verified NCPA agent, powered off at an

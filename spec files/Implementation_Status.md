@@ -24,7 +24,10 @@ image build completed inside a fresh Ubuntu target host, but container daemon
 execution remains untested. The [installation report](../docs/test-runs/2026-10-27-issue-274-linux-target-host-install/REPORT.md)
 records console recovery and verified original pinned SSH. Docker re-enables
 IPv4 forwarding on reboot; attachment refuses it. Durable forwarding and remaining
-management-group cleanup block live target activation. Fresh-VM installer preparation
+management-group cleanup block live target activation. Offline regression-tested
+Docker-start/boot guards, post-cloud-init account hardening and build-only
+forwarding with the demo parent down now exist; their VM application and restart
+proof remain pending. Fresh-VM installer preparation
 now includes private unattended inputs and a pre-injected SSH host key, with a
 separate first-boot image build. Reproducible first-boot setup, lifecycle, actual
 guest networking and the architecture spike remain pending; no new product scan
