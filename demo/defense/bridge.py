@@ -1,7 +1,32 @@
 """Offline validation for a proposed isolated bridge; no live lifecycle yet."""
+import json
 import re
 
 from .catalog import load_catalog
+
+
+def observe_checked_bridge(owner, parent_mac, members, forwarding4, forwarding6, identity, command):
+    """Observe only fixed host/container link commands with process identity checks.
+
+    The injected identity function must validate the exact image, container,
+    process and namespace before returning its PID, start time and container ID.
+    The caller must hold the guest control lock and supply checked forwarding
+    observations. This operation does not change any network configuration.
+    """
+    def observe(argv):
+        try:
+            output = command(argv).stdout
+            if not isinstance(output, str) or len(output) > 1048576:
+                raise ValueError('Link output unavailable or too large')
+            return json.loads(output)
+        except (AttributeError, TypeError, json.JSONDecodeError):
+            raise ValueError('Malformed link observation') from None
+
+    return collect_bridge_inventory(
+        owner, parent_mac, members, forwarding4, forwarding6, identity,
+        lambda: observe(['ip', '-j', '-d', 'addr', 'show']),
+        lambda pid: observe(['nsenter', '--target', str(pid), '--net', '--',
+                             'ip', '-j', '-d', 'addr', 'show']))
 
 
 def collect_bridge_inventory(owner, parent_mac, members, forwarding4, forwarding6,

@@ -1,11 +1,14 @@
 """Offline checks for the proposed defense bridge inventory; no network mutation."""
 import copy
+import json
 from pathlib import Path
 import sys
+from types import SimpleNamespace
 import unittest
+from unittest.mock import Mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from defense.bridge import collect_bridge_inventory, normalize_link_inventory, validate_bridge_inventory, validate_veth_peer
+from defense.bridge import collect_bridge_inventory, normalize_link_inventory, observe_checked_bridge, validate_bridge_inventory, validate_veth_peer
 
 OWNER = 'b' * 48
 PARENT = '02:77:01:fe:31:d7'
@@ -24,6 +27,25 @@ def inventory():
 
 
 class BridgeInventoryTests(unittest.TestCase):
+    def test_checked_observer_uses_fixed_commands_and_revalidates_process(self):
+        host = [
+            {'ifname': 'pdbr0', 'ifindex': 4, 'address': '02:77:01:fe:00:ff', 'addr_info': [], 'ifalias': 'pinpoint-defense:' + OWNER + ':bridge', 'linkinfo': {'info_kind': 'bridge'}},
+            {'ifname': 'enp0s8', 'ifindex': 5, 'address': PARENT, 'addr_info': [], 'master': 'pdbr0'},
+            {'ifname': 'pd-dhcp01', 'ifindex': 30, 'link_index': 7, 'address': '02:77:01:fe:00:01', 'addr_info': [], 'master': 'pdbr0', 'ifalias': 'pinpoint-defense:' + OWNER + ':dhcp01', 'linkinfo': {'info_kind': 'veth'}},
+        ]
+        guest = [{'ifname': 'lo'}, {'ifname': 'eth0', 'ifindex': 7, 'link_index': 30, 'address': '02:77:01:00:00:01', 'linkinfo': {'info_kind': 'veth'}}]
+        def run(argv):
+            if argv == ['ip', '-j', '-d', 'addr', 'show']:
+                return SimpleNamespace(stdout=json.dumps(host))
+            if argv == ['nsenter', '--target', '1234', '--net', '--', 'ip', '-j', '-d', 'addr', 'show']:
+                return SimpleNamespace(stdout=json.dumps(guest))
+            raise AssertionError('Unexpected command')
+        identity = Mock(return_value=(1234, '8765', 'c' * 64))
+        observe_checked_bridge(OWNER, PARENT, {'dhcp01': 'pd-dhcp01'}, 0, 0, identity, run)
+        self.assertGreaterEqual(identity.call_count, 4)
+        with self.assertRaises(ValueError):
+            observe_checked_bridge(OWNER, PARENT, {'dhcp01': 'pd-dhcp01'}, 0, 0, identity, lambda argv: SimpleNamespace(stdout='not json'))
+
     def test_collection_pins_process_before_and_after_both_link_observations(self):
         raw_host = [
             {'ifname': 'pdbr0', 'ifindex': 4, 'address': '02:77:01:fe:00:ff', 'addr_info': [], 'ifalias': 'pinpoint-defense:' + OWNER + ':bridge', 'linkinfo': {'info_kind': 'bridge'}},
