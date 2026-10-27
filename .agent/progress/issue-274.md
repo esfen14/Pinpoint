@@ -85,6 +85,8 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 | Ping-only follow-up preparation | Reviewed VirtualBox 7.2 Internal Networking and `nicpromisc` behavior; implemented a closed, fixed three-request Linux-to-Windows ping operation and tests. No live network test or VM mutation. | `test_runtime.py`; `test_spike.py`; VirtualBox 7.2 official networking docs | 32 tests green. The live pinned image is stale and must be refreshed through the guarded path before the reverse ping. The existing 14 target containers, data and leases must be preserved. |
 
+| Catalog image refresh recovery | Added `reset-lab`: validates the catalog image, all target identities/data and exact existing containers; stops every validated container before removing container objects; preserves bind mounts and lease files; rebuilds the pinned image. Partial removal is retryable. No live VM/container/network activity. | `test_spike.py` (19), `test_runtime.py` (15), `scripts/verify.sh docs`, `git diff --check` | Focused tests and docs gate green. The installed image predates this operation; apply the code through the guarded offline maintenance path before invoking it. |
+
 | Resumed hardening session | Read full saved progress/specifications and unchanged issue; clean worktree pulled; repeated last docs gate | scripts/verify.sh docs; gh issue view 274 --json title,body,comments,state | green: docs OK, 49 offline defense tests; issue open/no comments. Fresh available RAM 9585 MiB, disk 64626 MiB; KVM loaded. Continue authorized offline hardening before any live boot |
 
 | Hardening round 1 | Test first: reproduced missing forwarding/account guards; added Docker no-auto-forwarding settings, every-start reset/verification, post-cloud-init ready service, signal-safe build-only forwarding while exact demo parent is down, fixed UID/group/sudo validation and attachment privilege gate | python3 -I demo/defense/test_hardening.py; test_provision.py; test_guest.py; scripts/verify.sh docs | 59 defense tests and docs gate green. Offline only; installed VM is still off/unpatched, KVM loaded. No forwarding restart/reboot acceptance claimed |
@@ -95,10 +97,10 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 ## State for the next session
 
-- Last check run (exact command): `python3 -I demo/defense/test_runtime.py && python3 -I demo/defense/test_spike.py && python3 -I demo/defense/test_guest.py && python3 -I demo/defense/test_provision.py && scripts/verify.sh docs && git diff --check`
-- Result (first failing lines, or "green"): green: 15 + 17 + 6 + 18 focused tests passed; `scripts/verify.sh docs` green across all documentation validators; whitespace check clean. New peer-ping operation is fixed to `10.77.1.3`, bounded to three pings, caller cannot select a destination, result has a fixed boolean schema.
+- Last check run (exact command): `python3 -I demo/defense/test_spike.py && python3 -I demo/defense/test_runtime.py && scripts/verify.sh docs && git diff --check`
+- Result (first failing lines, or "green"): green: 19 + 15 focused tests passed; full docs gate passed. `reset-lab` prevalidates exact current containers and all persistent identities/data, stops every container before any removal, removes no volumes, keeps retry safety if interrupted, then rebuilds the pinned image. `peer-ping` remains fixed to `10.77.1.3` and is bounded to three pings.
 - Current live state: target-host and Windows 10 VMs are running. All fourteen Linux catalog containers, baseline services and five DHCP clients were previously started and Windows-to-target ping failed 0/14. No appliance scan has run. VirtualBox 7.2 docs indicate Internal Networking is a full Ethernet switch; `nicpromisc` is documented as bridged-only, so toggling it on the Internal Network did not resolve/localize the issue.
-- Next action (one specific step, not "continue"): Safely refresh the exact target-host's pinned image with the new fixed ping operation while retaining all fourteen identity/data volumes and DHCP lease state, then test only ping in both directions.
+- Next action (one specific step, not "continue"): Finish the docs gate, checkpoint, then refresh the exact target-host source through the guarded maintenance path; invoke `reset-lab` to rebuild while retaining identity/data volumes and lease files, then test only ping in both directions.
 
 ## Decisions and notes
 

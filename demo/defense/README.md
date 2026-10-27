@@ -140,7 +140,10 @@ two-target DHCP exchange is live-verified; appliance discovery and product
 connectivity remain pending. A fixed `peer-ping` operation now sends three
 bounded ICMP requests from an addressed Linux target to Windows at
 `10.77.1.3`; it takes no caller-supplied destination and reports only the
-reachability result. This is for the next ping-only reachability pass. Guest
+reachability result. `reset-lab` validates the catalog containers, stops them
+before removing only the containers, retains all bind-mounted identities,
+device data and DHCP lease files, and rebuilds the pinned image. Use it to
+refresh the helper source before the next ping-only reachability pass. Guest
 operations are not yet wired to the presenter CLI.
 
 Every boot checks the runtime source fingerprint and pinned image/source label;

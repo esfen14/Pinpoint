@@ -1,5 +1,6 @@
 """Offline two-target lifecycle, image provenance and fixed node-dispatch contracts."""
 import copy
+import hashlib
 import io
 import json
 from pathlib import Path
@@ -119,6 +120,89 @@ class SpikeTests(unittest.TestCase):
             self.assertEqual(result['containers_removed'],0)
             self.assertIn(['/usr/bin/python3','/opt/pinpoint-defense/bootstrap.py','build'],[c.args[0] for c in run.call_args_list])
             self.assertNotIn(['docker','rm','-f',ANY], [c.args[0] for c in run.call_args_list])
+
+    def test_reset_lab_removes_only_validated_catalog_containers_and_preserves_state(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder)/'private';root.mkdir(mode=0o700)
+            context=dict(CONTEXT);(root/'context.json').write_text(json.dumps(context));(root/'context.json').chmod(0o600)
+            old_pin='c'*64
+            (root/'runtime.json').write_text(json.dumps({'image':IMAGE}));(root/'runtime.json').chmod(0o600)
+            (root/'image-source.json').write_text(json.dumps({'sha256':old_pin}));(root/'image-source.json').chmod(0o600)
+            document=compose_document(CATALOG,IMAGE,context['owner'],spike=False)
+            (root/'lab-compose.json').write_text(json.dumps(document));(root/'lab-compose.json').chmod(0o600)
+            for device in CATALOG.devices:
+                if device.kind!='linux':continue
+                identity=root/'identities'/device.name;identity.mkdir(parents=True,mode=0o700)
+                saved={'target':device.name,'owner':context['owner'],'mac':device.mac,'client_id':device.client_id,'machine_id':format(device.number,'032x')}
+                (identity/'identity.json').write_text(json.dumps(saved));(identity/'identity.json').chmod(0o600)
+                (identity/'machine-id').write_text(saved['machine_id']+'\n');(identity/'machine-id').chmod(0o600)
+                (identity/'ssh_host_ed25519_key').write_text('private');(identity/'ssh_host_ed25519_key').chmod(0o600)
+                (identity/'ssh_host_ed25519_key.pub').write_text('public');(identity/'ssh_host_ed25519_key.pub').chmod(0o644)
+                data=root/'data'/device.name;data.mkdir(parents=True,mode=0o700)
+                (data/'dhcp.leases').write_text('lease-state')
+            labels={'org.pinpoint.defense.issue':'274','org.pinpoint.defense.source':old_pin}
+            states={d.name:True for d in CATALOG.devices if d.kind=='linux'}
+            identifiers={name:hashlib.sha256(name.encode()).hexdigest() for name in states}
+            by_identifier={value:key for key,value in identifiers.items()}
+            def full_fixture(target):
+                service=compose_document(CATALOG,IMAGE,context['owner'],spike=False)['services'][target]
+                return {'Id':identifiers[target],'Name':'/'+service['container_name'],'Image':IMAGE,
+                        'Config':{'Labels':dict(labels,**service['labels']),'Cmd':service['command'],'Hostname':target},
+                        'State':{'Running':states[target],'Pid':321 if states[target] else 0},
+                        'HostConfig':{'NetworkMode':'none','Privileged':False,'PidMode':'','CapAdd':service.get('cap_add',[]),'CapDrop':[],
+                                      'PortBindings':{},'RestartPolicy':{'Name':'no'}},
+                        'Mounts':[{'Type':'bind','Source':v['source'],'Destination':v['target'],'RW':not v['read_only']} for v in service['volumes']],
+                        'NetworkSettings':{'Networks':{'none':{}}}}
+            def execute(argv,**kwargs):
+                if argv==['docker','ps','-a','--format','{{.Names}}']:
+                    return SimpleNamespace(stdout=''.join('pinpoint-defense274-'+name+'\n' for name in states))
+                if argv==['docker','image','inspect',IMAGE]:
+                    return SimpleNamespace(stdout=json.dumps([{'Id':IMAGE,'Config':{'Labels':labels}}]))
+                if argv[:3]==['docker','stop','--time']:
+                    target=by_identifier[argv[-1]];states[target]=False
+                if argv[:2]==['docker','rm']:
+                    target=by_identifier[argv[-1]];states.pop(target)
+                if argv==['docker','ps','-aq']:
+                    return SimpleNamespace(stdout=''.join('id\n' for _ in states))
+                if argv==['/usr/bin/python3','/opt/pinpoint-defense/bootstrap.py','build']:
+                    (root/'runtime.json').write_text(json.dumps({'image':'sha256:'+'d'*64}));(root/'runtime.json').chmod(0o600)
+                    (root/'image-source.json').write_text(json.dumps({'sha256':'e'*64}));(root/'image-source.json').chmod(0o600)
+                return SimpleNamespace(stdout='')
+            def observe(target):
+                return full_fixture(target)
+            with patch.object(guest,'ROOT',root),patch.object(guest,'owned_context',return_value=context),patch.object(guest,'management_observation'),patch.object(guest,'command',side_effect=execute) as run,patch.object(guest,'observe_container',side_effect=observe),patch.object(guest,'trusted_image',return_value=labels):
+                result=guest.reset_lab()
+            self.assertEqual(result,{'containers_removed':14,'persistent_state_retained':True,'leases_retained':True,'image_rebuilt':True})
+            self.assertFalse((root/'lab-compose.json').exists())
+            self.assertEqual((root/'data'/'dynweb01'/'dhcp.leases').read_text(),'lease-state')
+            self.assertEqual(run.call_count,1+1+14*2+1+1)
+            self.assertFalse(any(call.args[0][:2]==['docker','volume'] for call in run.call_args_list))
+            actions=[call.args[0][:2] for call in run.call_args_list]
+            stop_positions=[i for i,action in enumerate(actions) if action==['docker','stop']]
+            remove_positions=[i for i,action in enumerate(actions) if action==['docker','rm']]
+            self.assertEqual(len(stop_positions),14)
+            self.assertEqual(len(remove_positions),14)
+            self.assertLess(max(stop_positions),min(remove_positions))
+            self.assertEqual(run.call_args_list[-1].args[0],['/usr/bin/python3','/opt/pinpoint-defense/bootstrap.py','build'])
+
+    def test_reset_lab_refuses_foreign_name_before_any_container_mutation(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder)/'private';root.mkdir(mode=0o700)
+            (root/'runtime.json').write_text(json.dumps({'image':IMAGE}));(root/'runtime.json').chmod(0o600)
+            (root/'image-source.json').write_text(json.dumps({'sha256':'c'*64}));(root/'image-source.json').chmod(0o600)
+            for device in CATALOG.devices:
+                if device.kind!='linux':continue
+                identity=root/'identities'/device.name;identity.mkdir(parents=True,mode=0o700)
+                saved={'target':device.name,'owner':CONTEXT['owner'],'mac':device.mac,'client_id':device.client_id,'machine_id':format(device.number,'032x')}
+                (identity/'identity.json').write_text(json.dumps(saved));(identity/'identity.json').chmod(0o600)
+                (identity/'machine-id').write_text(saved['machine_id']);(identity/'machine-id').chmod(0o600)
+                for name,mode in [('ssh_host_ed25519_key',0o600),('ssh_host_ed25519_key.pub',0o644)]:
+                    path=identity/name;path.write_text('identity');path.chmod(mode)
+                (root/'data'/device.name).mkdir(parents=True,mode=0o700)
+            image={'Id':IMAGE,'Config':{'Labels':{'org.pinpoint.defense.issue':'274','org.pinpoint.defense.source':'c'*64}}}
+            with patch.object(guest,'ROOT',root),patch.object(guest,'owned_context',return_value=CONTEXT),patch.object(guest,'management_observation'),patch.object(guest,'command',side_effect=[SimpleNamespace(stdout=json.dumps([image])),SimpleNamespace(stdout='foreign\n')]) as run:
+                with self.assertRaises(ValueError):guest.reset_lab()
+                self.assertFalse(any(call.args[0][1:2] in (['stop'],['rm']) for call in run.call_args_list))
 
     def test_reset_status_exposes_only_a_fixed_failure_stage(self):
         with tempfile.TemporaryDirectory() as folder:

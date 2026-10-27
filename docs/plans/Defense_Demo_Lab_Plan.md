@@ -39,8 +39,11 @@ Added an offline-tested, fixed `peer-ping` request that sends three ICMP
 requests from an addressed Linux container to the Windows address `10.77.1.3`.
 It has no caller-provided destination and reports only a boolean result. The
 currently running pinned guest image predates this request; refresh it through
-the guarded maintenance path before using it. Preserve the fourteen target
-identity/data volumes and DHCP lease state during that refresh. Afterward,
+the guarded maintenance path before using it. The new `reset-lab` operation
+prevalidates the full catalog and persistent volumes, stops all validated
+containers before removing their objects, and never removes volumes. Preserve
+the fourteen target identity/data volumes and DHCP lease state during that
+refresh. Afterward,
 stage 3 uses only Windows `ping` and this fixed Linux `ping`; do not add ARP,
 port probes, scans, or packet capture.
 

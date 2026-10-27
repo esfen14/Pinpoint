@@ -297,6 +297,90 @@ def reset_spike():
     return {'containers_removed':2,'persistent_state_retained':True,'image_rebuilt':True}
 
 
+def reset_lab():
+    """Safely retire the exact Linux catalog containers before a pinned image refresh."""
+    context=owned_context();management_observation()
+    runtime=read_private_json(Path(ROOT)/'runtime.json')
+    pin=read_private_json(Path(ROOT)/'image-source.json')
+    image=runtime.get('image') if set(runtime)=={'image'} else ''
+    digest=pin.get('sha256') if set(pin)=={'sha256'} else ''
+    if not re.fullmatch(r'sha256:[a-f0-9]{64}',image) or not re.fullmatch(r'[a-f0-9]{64}',digest):
+        raise ValueError('Catalog reset provenance is invalid')
+    observed=json.loads(command(['docker','image','inspect',image]).stdout)
+    if len(observed)!=1:raise ValueError('Catalog reset image is ambiguous')
+    labels=validate_image(image,digest,observed[0])
+    catalog=load_catalog();devices=[d for d in catalog.devices if d.kind=='linux']
+    if len(devices)!=14:raise ValueError('Catalog reset requires fourteen Linux targets')
+
+    # Confirm every persistent identity/data directory before deleting a container.
+    for device in devices:
+        identity_root=Path(ROOT)/'identities'/device.name
+        info=identity_root.lstat()
+        if not stat.S_ISDIR(info.st_mode) or info.st_uid!=os.getuid() or info.st_mode&0o077:
+            raise ValueError('Catalog identity volume is unsafe')
+        saved=read_private_json(identity_root/'identity.json')
+        expected={'target':device.name,'owner':context['owner'],'mac':device.mac,'client_id':device.client_id}
+        if any(saved.get(key)!=value for key,value in expected.items()) or set(saved)!=(set(expected)|{'machine_id'}) or not re.fullmatch(r'[a-f0-9]{32}',saved.get('machine_id','')):
+            raise ValueError('Catalog identity volume changed')
+        machine=identity_root/'machine-id'
+        key=identity_root/'ssh_host_ed25519_key'
+        public=Path(str(key)+'.pub')
+        if machine.is_symlink() or not machine.is_file() or machine.read_text().strip()!=saved['machine_id']:
+            raise ValueError('Catalog machine identity changed')
+        for path,private in [(key,True),(public,False)]:
+            value=path.lstat()
+            if not stat.S_ISREG(value.st_mode) or value.st_uid!=os.getuid() or value.st_nlink!=1 or value.st_mode&(0o077 if private else 0o022):
+                raise ValueError('Catalog SSH identity is unsafe')
+        data=Path(ROOT)/'data'/device.name
+        value=data.lstat()
+        if not stat.S_ISDIR(value.st_mode) or value.st_uid!=os.getuid() or value.st_mode&0o022:
+            raise ValueError('Catalog data volume is unsafe')
+
+    compose=Path(ROOT)/'lab-compose.json'
+    if compose.exists() or compose.is_symlink():
+        old=read_private_json(compose)
+        images={service.get('image') for service in old.get('services',{}).values()} if isinstance(old,dict) and isinstance(old.get('services'),dict) else set()
+        prior=next(iter(images)) if len(images)==1 else ''
+        if not re.fullmatch(r'sha256:[a-f0-9]{64}',prior) or old!=compose_document(catalog,prior,context['owner'],spike=False):
+            raise ValueError('Catalog Compose state changed')
+    expected={PROJECT+'-'+d.name:d.name for d in devices}
+    names=command(['docker','ps','-a','--format','{{.Names}}']).stdout.splitlines()
+    if len(names)!=len(set(names)) or any(name not in expected for name in names):
+        raise ValueError('Foreign or ambiguous containers prevent catalog reset')
+    identifiers=[]
+    for name in sorted(names):
+        target=expected[name]
+        container=observe_container(target)
+        validate_container(catalog,context,image,target,container,image_labels=labels,allow_stopped=True,spike=False)
+        identifiers.append((target,container['Id']))
+
+    # Stop all validated objects first. Revalidate the entire set before any removal.
+    for target,identifier in identifiers:
+        if observe_container(target)['State']['Running']:
+            command(['docker','stop','--time','15',identifier],timeout=30)
+    for target,identifier in identifiers:
+        container=observe_container(target)
+        validate_container(catalog,context,image,target,container,image_labels=labels,allow_stopped=True,spike=False)
+        if container['State']['Running']:
+            raise ValueError('Catalog target did not stop cleanly')
+    for _,identifier in identifiers:
+        command(['docker','rm',identifier],timeout=60)
+    if command(['docker','ps','-aq']).stdout.strip():
+        raise ValueError('Catalog reset left container objects behind')
+    if compose.exists() or compose.is_symlink():
+        info=compose.lstat()
+        if not stat.S_ISREG(info.st_mode) or info.st_uid!=os.getuid() or info.st_nlink!=1 or info.st_mode&0o077:
+            raise ValueError('Catalog Compose state became unsafe')
+        compose.unlink()
+    command(['/usr/bin/python3','/opt/pinpoint-defense/bootstrap.py','build'],timeout=600)
+    refreshed=read_private_json(Path(ROOT)/'runtime.json')
+    if set(refreshed)!={'image'} or not re.fullmatch(r'sha256:[a-f0-9]{64}',refreshed['image']):
+        raise ValueError('Catalog reset did not leave a pinned image')
+    trusted_image(refreshed['image'])
+    return {'containers_removed':len(identifiers),'persistent_state_retained':True,
+            'leases_retained':True,'image_rebuilt':refreshed['image']!=image}
+
+
 def reset_status():
     """Return the fixed reset stage without exposing guest logs or runtime identifiers."""
     record=read_private_json(Path(ROOT)/'spike-reset.json')
@@ -391,13 +475,13 @@ def guest_context():
 def main(argv=None):
     """Expose only fixed attach/inspect operations; creation belongs to provisioning."""
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('operation',choices=['attach','inspect','spike-up','lab-up','node','stop','host-status','verify-restart','reset-spike','reset-status'])
+    parser.add_argument('operation',choices=['attach','inspect','spike-up','lab-up','node','stop','host-status','verify-restart','reset-spike','reset-lab','reset-status'])
     parser.add_argument('target',nargs='?')
     args=parser.parse_args(argv)
     try:
         os.umask(0o077)
         catalog=load_catalog()
-        if args.operation in {'spike-up','lab-up','host-status','verify-restart','reset-spike','reset-status'}:
+        if args.operation in {'spike-up','lab-up','host-status','verify-restart','reset-spike','reset-lab','reset-status'}:
             if args.target is not None:raise ValueError('Spike startup takes no target argument')
         elif args.operation=='stop':validate_linux_target(catalog,args.target)
         else:validate_linux_target(catalog,args.target)
@@ -416,7 +500,8 @@ def main(argv=None):
             if not stat.S_ISREG(info.st_mode) or info.st_uid!=0 or info.st_nlink!=1 or info.st_mode&0o077:
                 raise ValueError('Unsafe guest control lock')
             fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB)
-            if args.operation=='reset-spike':result=reset_spike()
+            if args.operation=='reset-lab':result=reset_lab()
+            elif args.operation=='reset-spike':result=reset_spike()
             else:
                 context,image,parent=guest_context()
                 if args.operation=='attach':result=attach(catalog,context,image,args.target,parent,spike=False)
