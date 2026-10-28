@@ -4,7 +4,7 @@
 
 ## Before the audience arrives
 
-1. Start the lab: `demo/demo presenter up` (starts all fourteen containers and the five DHCP leases), and make sure the appliance and Windows VMs are running. Check available memory first: at least 3 GiB must stay free.
+1. Start the lab: `demo/demo presenter up` (starts all fourteen containers and the five DHCP leases), and make sure the appliance and Windows VMs are running. Then run `demo/demo presenter preflight`: it must print `Preflight OK` (isolated owned network, only the two pinned VMs on `vboxnet1`, no subnet collision, at least 3 GiB RAM and 20 GiB disk free, no swap thrash). A measured down/up of all fourteen containers took 17 s and 70 s with at least 7.3 GiB RAM available throughout.
 2. In a second terminal run `Pinpoint-Demo-faults.sh wall` (`Ctrl+C` exits). Confirm every target shows its address and services running, and the five DHCP clients show `.20` to `.24`. Open <http://127.0.0.1:18080> in a signed-out/private window.
 3. **First-login check:** the prepared appliance has already completed bootstrap setup. To show the password-change screen, create a disposable account in **Manage Accounts** with **Require password change at first sign-in**, sign out, and use it. Do not restore an older snapshot during a live demo: it rolls back Pinpoint's database.
 4. Check **Settings → Network Discovery → Networks & Ports**. The range must be `10.77.1.0/27` and the ports must cover the demo (TCP 21, 22, 25, 80, 143, 443, 2223, 5432, 5693, 8080, 8081, 9090 and UDP 53, 161). Save only if missing. Leave `check_ncpa` for the on-stage enable step if you want to show it.

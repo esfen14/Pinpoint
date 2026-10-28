@@ -23,6 +23,11 @@ The presenter walkthrough, cue card and portable fault script were migrated from
 `~/Documents/Pinpoint-Demo/` into `demo/` (`Pinpoint-Demo-Script.md`,
 `Pinpoint-Defense-Cue-Card.md`, `Pinpoint-Demo-faults.sh`); the Documents files
 are now links to them. The walkthrough has not yet been rehearsed end to end.
+`demo/demo presenter preflight` is a read-only gate for the pilot: owned isolated
+network, only the two pinned VMs and no foreign link or Docker network on
+`vboxnet1`, no subnet collision, at least 3 GiB RAM and 20 GiB disk free, and no
+swap thrash (`enroll-vms` pins the VMs once). It does not read Pinpoint's
+configured scan range or capture physical-interface traffic.
 The following paragraphs describe earlier preparation and its historical state.
 
 The [defense demo plan](../docs/plans/Defense_Demo_Lab_Plan.md) records the

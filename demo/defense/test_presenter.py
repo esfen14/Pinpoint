@@ -225,4 +225,50 @@ class ParentAttachmentCheckTests(unittest.TestCase):
         with patch.object(presenter,'run',side_effect=self.observe()):presenter.check_parent_attachments()
         with patch.object(presenter,'run',side_effect=self.observe(True)):
             with self.assertRaises(ValueError):presenter.check_parent_attachments()
+class VmPinTests(unittest.TestCase):
+    UUIDS={'appliance':'11111111-1111-4111-8111-111111111111','windows':'22222222-2222-4222-8222-222222222222'}
+    def records(self,extra=None):
+        items=[{'uuid':self.UUIDS['appliance'],'state':'running','adapters':[{'slot':2,'type':'hostonly','network':'vboxnet1','mac':'08:00:27:fa:10:0a'}]},
+               {'uuid':self.UUIDS['windows'],'state':'running','adapters':[{'slot':1,'type':'hostonly','network':'vboxnet1','mac':'02:77:01:00:00:02'}]}]
+        return items+(extra or [])
+    def names(self,windows='pinpoint-defense-win01'):
+        return '"Pinpoint-Final" {%s}\n"%s" {%s}\n'%(self.UUIDS['appliance'],windows,self.UUIDS['windows'])
+    def test_pins_come_from_exactly_the_two_named_host_only_members(self):
+        pins=presenter.derive_vm_pins(self.records(),self.names())
+        self.assertEqual(pins,{'appliance':{'uuid':self.UUIDS['appliance'],'slot':2,'mac':'08:00:27:fa:10:0a'},
+                               'windows':{'uuid':self.UUIDS['windows'],'slot':1,'mac':'02:77:01:00:00:02'}})
+    def test_wrong_names_or_extra_members_are_not_pinned(self):
+        extra={'uuid':'33333333-3333-4333-8333-333333333333','state':'poweroff','adapters':[{'slot':1,'type':'hostonly','network':'vboxnet1','mac':'08:00:27:aa:bb:03'}]}
+        with self.assertRaises(ValueError):presenter.derive_vm_pins(self.records(),self.names('other-vm'))
+        with self.assertRaises(ValueError):presenter.derive_vm_pins(self.records([extra]),self.names())
+    def test_preflight_refuses_a_changed_vm_membership(self):
+        pins=presenter.derive_vm_pins(self.records(),self.names())
+        changed=self.records();changed[0]['state']='paused'
+        counters=iter([(8000,40000,(0,0)),(8000,40000,(0,0))])
+        with patch.object(presenter,'check_host_network'):
+            with self.assertRaises(ValueError):
+                presenter.preflight({},counters=lambda:next(counters),inventory=lambda:['10.77.1.0/27'],sleep=lambda s:None,vm_pins=pins,vm_records=lambda:changed)
+class PreflightTests(unittest.TestCase):
+    def run_preflight(self,available=8000,disk=40000,swap=(0,0),occupied=None,pins=None):
+        occupied=occupied if occupied is not None else ['192.168.57.0/24','10.77.1.0/27']
+        counters=iter([(available,disk,(100,200)),(available,disk,(100+swap[0],200+swap[1]))])
+        vms=VmPinTests();records=vms.records()
+        with patch.object(presenter,'check_host_network') as network:
+            result=presenter.preflight({},counters=lambda:next(counters),inventory=lambda:occupied,sleep=lambda seconds:None,
+                                       vm_pins=presenter.derive_vm_pins(records,vms.names()),vm_records=lambda:records)
+        return network,result
+    def test_healthy_host_reports_measurements(self):
+        network,result=self.run_preflight()
+        network.assert_called_once()
+        self.assertEqual(result,{'available_mib':8000,'free_disk_mib':40000,'swap_pages_per_second':0.0})
+    def test_collision_low_memory_low_disk_and_swap_thrash_are_refused(self):
+        for kwargs in ({'occupied':['10.77.1.0/27','10.0.0.0/8']},{'available':3000},{'disk':1000},{'swap':(400,400)}):
+            with self.subTest(kwargs=kwargs):
+                with self.assertRaises(ValueError):self.run_preflight(**kwargs)
+    def test_preflight_command_is_read_only_and_ignores_a_dhcp_intent(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);(root/'dhcp-move.json').write_text('pending')
+            with patch.object(presenter,'ROOT',root),patch.object(presenter,'read_pins',return_value={}),patch.object(presenter,'read_vm_pins',return_value={}),patch.object(presenter,'preflight',return_value={'available_mib':1,'free_disk_mib':2,'swap_pages_per_second':0.0}) as check:
+                self.assertEqual(presenter.main(['preflight']),0)
+                check.assert_called_once()
 if __name__=='__main__':unittest.main()

@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -13,7 +14,8 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
 from defense.catalog import load_catalog
 from defense import dhcp_control, dhcp_journal
 from defense.host_attach import observe_process
-from defense.host_members import validate_parent_attachments
+from defense.host_members import validate_parent_attachments, validate_vm_membership, collect_vm_inventory
+from defense.host_resources import swap_rate, check_host_resources, reject_foreign_overlaps
 import qa_control
 
 ROOT=Path.home()/'.local/share/pinpoint-defense/host-docker'
@@ -189,6 +191,87 @@ def target_order(catalog,action,target=None):
     device=catalog.target(target)
     if device.kind!='linux':raise ValueError('Host control requires a Linux pilot target')
     return [device]
+
+
+def read_host_counters():
+    """Return available RAM and free disk in MiB and the cumulative swap-in/out page counters."""
+    available=None
+    for line in Path('/proc/meminfo').read_text().splitlines():
+        if line.startswith('MemAvailable:'):
+            available=int(line.split()[1])//1024
+    counters={}
+    for line in Path('/proc/vmstat').read_text().splitlines():
+        name,_,value=line.partition(' ')
+        if name in ('pswpin','pswpout'):
+            counters[name]=int(value)
+    if available is None or set(counters)!={'pswpin','pswpout'}:
+        raise ValueError('Host resource counters unavailable')
+    free=shutil.disk_usage(ROOT).free//(1024*1024)
+    return available,free,(counters['pswpin'],counters['pswpout'])
+
+
+def observed_ranges():
+    """Host, Docker and VPN IPv4 ranges, using the fixed read-only inventory from the controller."""
+    from defense.controller import Collector, network_inventory
+    return network_inventory(Collector())
+
+
+VM_NAMES={'Pinpoint-Final':'appliance','pinpoint-defense-win01':'windows'}
+
+
+def observe_vbox(argv):
+    if argv[:1]!=['VBoxManage']:raise ValueError('Only fixed VirtualBox observations are allowed')
+    return run(argv,timeout=20)
+
+
+def derive_vm_pins(records,names_text):
+    """Pin the two named VMs from a complete inventory; any other host-only member refuses."""
+    uuids={}
+    for line in names_text.splitlines():
+        match=re.fullmatch(r'"(.*)" \{([a-f0-9-]{36})\}',line)
+        if match and match[1] in VM_NAMES:
+            if VM_NAMES[match[1]] in uuids:raise ValueError('Duplicate lab VM name')
+            uuids[VM_NAMES[match[1]]]=match[2]
+    if set(uuids)!={'appliance','windows'}:raise ValueError('Lab VMs not found by exact name')
+    pins={}
+    for record in records:
+        for adapter in record['adapters']:
+            if adapter['network']!='vboxnet1':continue
+            for role,uuid in uuids.items():
+                if record['uuid']==uuid:pins[role]={'uuid':uuid,'slot':adapter['slot'],'mac':adapter['mac']}
+    if set(pins)!={'appliance','windows'}:raise ValueError('Lab VMs are not on the host-only network')
+    validate_vm_membership(records,pins)
+    return pins
+
+
+VM_PINS=PINS.with_name('vm-pins.json')
+
+
+def enroll_vms():
+    if VM_PINS.exists() or VM_PINS.is_symlink():raise ValueError('VM pins already exist')
+    pins=derive_vm_pins(collect_vm_inventory(observe_vbox),run(['VBoxManage','list','vms'],timeout=20))
+    fd=os.open(VM_PINS,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+    with os.fdopen(fd,'w') as stream:json.dump(pins,stream);stream.write('\n')
+    return pins
+
+
+def read_vm_pins():
+    info=VM_PINS.lstat()
+    if not VM_PINS.is_file() or VM_PINS.is_symlink() or info.st_uid!=os.getuid() or info.st_mode&0o077 or info.st_nlink!=1:
+        raise ValueError('Unsafe VM pins')
+    return json.loads(VM_PINS.read_text())
+
+
+def preflight(pins,counters=read_host_counters,inventory=observed_ranges,sleep=time.sleep,interval=5,vm_pins=None,vm_records=None):
+    """Read-only gate: isolated owned network, no subnet collision, RAM/disk reserve, no swap thrash."""
+    check_host_network(pins)
+    if vm_pins is None:raise ValueError('VM pins are required')
+    validate_vm_membership((vm_records or (lambda:collect_vm_inventory(observe_vbox)))(),vm_pins)
+    reject_foreign_overlaps(inventory(),'10.77.1.0/27')
+    first=counters();sleep(interval);second=counters()
+    rate=swap_rate(first[2],second[2],interval)
+    check_host_resources(second[0],second[1],rate)
+    return {'available_mib':second[0],'free_disk_mib':second[1],'swap_pages_per_second':rate}
 
 
 def check_parent_attachments():
@@ -399,7 +482,7 @@ def dhcp_lease(catalog,pins,target,action):
 
 def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__);sub=parser.add_subparsers(dest='command',required=True)
-    sub.add_parser('enroll');sub.add_parser('status');sub.add_parser('up');sub.add_parser('down')
+    sub.add_parser('enroll');sub.add_parser('status');sub.add_parser('preflight');sub.add_parser('enroll-vms');sub.add_parser('up');sub.add_parser('down')
     for action in ('host-stop','host-start'):
         p=sub.add_parser(action);p.add_argument('target')
     server=sub.add_parser('dhcp-server');server.add_argument('action',choices=('start','stop'))
@@ -412,8 +495,10 @@ def main(argv=None):
     try:
         catalog=load_catalog()
         with qa_control.claim():
-            if args.command not in {'status','dhcp-recover'}:
+            if args.command not in {'status','dhcp-recover','preflight'}:
                 require_no_dhcp_intent(ROOT)
+            if args.command=='enroll-vms':
+                enroll_vms();print('Pinned the 2 lab VMs on vboxnet1.');return 0
             pins=enroll(catalog) if args.command=='enroll' else read_pins()
             if args.command=='enroll':print('Pinned 14 existing laptop pilot containers.');return 0
             if args.command in {'up','down'}:
@@ -432,6 +517,9 @@ def main(argv=None):
             elif args.command=='dhcp-recover':
                 dhcp_control.recover(ROOT,catalog,DockerDhcpLab(catalog,pins))
                 print('DHCP recovery completed')
+            elif args.command=='preflight':
+                result=preflight(pins,vm_pins=read_vm_pins())
+                print('Preflight OK: %d MiB RAM available, %d MiB disk free, swap %.1f pages/s'%(result['available_mib'],result['free_disk_mib'],result['swap_pages_per_second']))
             elif args.command=='status':
                 for d in catalog.devices:
                     if d.kind!='linux':continue
