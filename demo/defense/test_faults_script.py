@@ -32,7 +32,13 @@ class FaultScriptTests(unittest.TestCase):
                ('up','dynapp01','host'):['presenter','host-start','dynapp01'],
                ('status',):['presenter','status'],
                ('dhcp-move','dynweb01','10.77.1.25'):['presenter','dhcp-move','dynweb01','10.77.1.25'],
-               ('dhcp-recover',):['presenter','dhcp-recover']}
+               ('dhcp-recover',):['presenter','dhcp-recover'],
+               ('ports','list','web03'):['presenter','ports','list','web03'],
+               ('ports','open','web03','http','8088'):['presenter','ports','open','web03','http','8088'],
+               ('ports','open','api02','tcp','20080'):['presenter','ports','open','api02','tcp','20080'],
+               ('ports','close','web03','8088'):['presenter','ports','close','web03','8088'],
+               ('ports','restore','web03'):['presenter','ports','restore','web03'],
+               ('ports','restore','all'):['presenter','ports','restore','all']}
         for args,expected in cases.items():
             with self.subTest(args=args):
                 code,called=self.run_script(*args)
@@ -40,7 +46,8 @@ class FaultScriptTests(unittest.TestCase):
     def test_unknown_targets_services_and_extra_arguments_are_rejected(self):
         bad=[('down','web01','http'),('down','web03','rm'),('down','web03','http','x'),('down','web03'),('up','win01','host'),
              ('down','web03;id','http'),('dhcp-move','web03','10.77.1.25'),('dhcp-move','dynweb01','10.77.1.25;id'),
-             ('dhcp-move','dynweb01','8.8.8.8'),('frobnicate',),('status','x')]
+             ('dhcp-move','dynweb01','8.8.8.8'),('ports',),('ports','open','web03','ftp','8088'),('ports','open','web03','http','80x'),
+             ('ports','open','win01','http','8088'),('ports','open','web03','http','8088;id'),('ports','close','web03'),('ports','restore','all','x'),('ports','list','all'),('ports','kill','web03'),('frobnicate',),('status','x')]
         for args in bad:
             with self.subTest(args=args):
                 code,called=self.run_script(*args)

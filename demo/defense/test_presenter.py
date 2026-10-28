@@ -225,6 +225,70 @@ class ParentAttachmentCheckTests(unittest.TestCase):
         with patch.object(presenter,'run',side_effect=self.observe()):presenter.check_parent_attachments()
         with patch.object(presenter,'run',side_effect=self.observe(True)):
             with self.assertRaises(ValueError):presenter.check_parent_attachments()
+class PortControlTests(unittest.TestCase):
+    def setUp(self):
+        self.catalog=presenter.load_catalog();self.pins={d.name:{'id':'a'*64,'image':'sha256:'+'b'*64} for d in self.catalog.devices if d.kind=='linux'}
+        self.extras=[];self.commands=[]
+    def exec_helper(self,argv,**kwargs):
+        self.commands.append(argv)
+        if argv[:2]!=['docker','exec'] or argv[3:5]!=['python3','-c']:raise AssertionError(argv)
+        action=argv[6]
+        if action=='list':return ''.join('%d\n'%p for p in self.extras)
+        if action=='open':self.extras.append(int(argv[8]))
+        if action=='close':self.extras.remove(int(argv[7]))
+        return ''
+    def node(self,device,pin,operation):
+        listeners=[{'protocol':'tcp','port':p} for p in [80,443]+self.extras]
+        return {'network_safe':True,'addresses':[device.address],'listeners':listeners,'services':[]}
+    def patches(self):
+        return (patch.object(presenter,'check_host_network'),patch.object(presenter,'inspect'),patch.object(presenter,'node',side_effect=self.node),
+                patch.object(presenter,'run',side_effect=self.exec_helper))
+    def call(self,function,*args):
+        a,b,c,d=self.patches()
+        with a,b,c,d:return function(self.catalog,self.pins,*args)
+    def test_open_close_list_and_restore_extra_listeners(self):
+        self.call(presenter.port_open,'web03','http',8088)
+        self.call(presenter.port_open,'web03','tcp',8089)
+        self.assertEqual(self.call(presenter.port_list,'web03'),{'baseline':[80,443],'extra':[8088,8089]})
+        self.call(presenter.port_close,'web03',8088)
+        self.assertEqual(self.extras,[8089])
+        self.call(presenter.port_restore,'web03')
+        self.assertEqual(self.extras,[])
+    def test_wrong_target_reserved_baseline_and_colliding_ports_are_refused_before_any_exec(self):
+        for args in [('win01','http',8088),('foreign','http',8088),('web03','http',5693),('web03','http',2223),('web03','http',18080),
+                     ('web03','ftp',8088),('web03','http',80),('web03','http',443),('web03','tcp',22),('web03','http',True),('web03','http','8088')]:
+            with self.subTest(args=args),self.assertRaises(ValueError):self.call(presenter.port_open,*args)
+        self.assertEqual(self.commands,[])
+        self.call(presenter.port_open,'web03','http',8088)
+        with self.assertRaises(ValueError):self.call(presenter.port_open,'web03','http',8088)
+    def test_close_refuses_ports_that_are_not_extra_listeners(self):
+        for port in (80,5693,8088):
+            with self.subTest(port=port),self.assertRaises(ValueError):self.call(presenter.port_close,'web03',port)
+        self.assertFalse([c for c in self.commands if c[6]=='close'])
+    def test_failed_open_is_rolled_back_so_no_listener_is_left_behind(self):
+        original=self.node
+        def silent(device,pin,operation):
+            value=original(device,pin,operation)
+            value['listeners']=[l for l in value['listeners'] if l['port']!=8088]
+            return value
+        a,b,c,d=self.patches()
+        with a,b,patch.object(presenter,'node',side_effect=silent),d:
+            with self.assertRaises(ValueError):presenter.port_open(self.catalog,self.pins,'web03','http',8088)
+        self.assertEqual(self.extras,[])
+    def test_restore_all_visits_every_linux_target_and_ports_commands_are_dispatched(self):
+        with patch.object(presenter,'port_restore') as restore:
+            presenter.port_restore_all(self.catalog,self.pins)
+        self.assertEqual([c.args[2] for c in restore.call_args_list],[d.name for d in self.catalog.devices if d.kind=='linux'])
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            with patch.object(presenter,'ROOT',root),patch.object(presenter,'read_pins',return_value=self.pins),patch.object(presenter,'port_open') as opened:
+                self.assertEqual(presenter.main(['ports','open','web03','http','8088']),0)
+                opened.assert_called_once()
+            (root/'dhcp-move.json').write_text('pending')
+            with patch.object(presenter,'ROOT',root),patch.object(presenter,'read_pins',return_value=self.pins),patch.object(presenter,'port_open') as opened,patch.object(presenter,'port_list',return_value={'baseline':[],'extra':[]}) as listed:
+                self.assertEqual(presenter.main(['ports','open','web03','http','8088']),1)
+                opened.assert_not_called()
+                self.assertEqual(presenter.main(['ports','list','web03']),0)
 class VmPinTests(unittest.TestCase):
     UUIDS={'appliance':'11111111-1111-4111-8111-111111111111','windows':'22222222-2222-4222-8222-222222222222'}
     def records(self,extra=None):

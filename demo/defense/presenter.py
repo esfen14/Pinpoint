@@ -11,7 +11,7 @@ import time
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
-from defense.catalog import load_catalog
+from defense.catalog import load_catalog, listener_request
 from defense import dhcp_control, dhcp_journal
 from defense.host_attach import observe_process
 from defense.host_members import validate_parent_attachments, validate_vm_membership, collect_vm_inventory
@@ -177,6 +177,82 @@ def smtp_service(device,pin,before,action):
         after=node(device,pin,'inspect')
         if state(after)!='RUNNING' or not listening(after):raise ValueError('SMTP did not start')
     return after
+
+
+MAX_EXTRA_PORTS=4
+
+
+def helper_call(pin,*args):
+    """Run the fixed in-container port helper; arguments are validated by the callers."""
+    source=Path(__file__).with_name('extra_listener.py').read_text()
+    return run(['docker','exec',pin['id'],'python3','-c',source,*args],timeout=30)
+
+
+def port_target(catalog,pins,target):
+    device=catalog.target(target)
+    if device.kind!='linux':raise ValueError('Port controls require a Linux demo target')
+    check_host_network(pins)
+    pin=pins[target];inspect(device,pin)
+    return device,pin
+
+
+def extra_ports(pin):
+    ports=[]
+    for line in helper_call(pin,'list').split():
+        if not line.isdigit():raise ValueError('Unexpected helper output')
+        ports.append(int(line))
+    return sorted(ports)
+
+
+def observed_tcp(device,pin):
+    current=node(device,pin,'inspect')
+    expected=device.address if device.mode=='static' else None
+    if not current.get('network_safe') or expected is not None and current.get('addresses')!=[expected]:
+        raise ValueError('Unsafe target network')
+    return {item.get('port') for item in current.get('listeners',[]) if item.get('protocol')=='tcp'}
+
+
+def port_list(catalog,pins,target):
+    device,pin=port_target(catalog,pins,target)
+    return {'baseline':[item.port for item in device.listeners],'extra':extra_ports(pin)}
+
+
+def port_open(catalog,pins,target,service,port):
+    """Open one checked HTTP/TCP port that is not a baseline, reserved or already used port."""
+    if not isinstance(service,str) or type(port) is not int:raise ValueError('Invalid port request')
+    listener_request(catalog,target,service,port)
+    device,pin=port_target(catalog,pins,target)
+    if any(item.port==port for item in device.listeners):raise ValueError('Baseline ports use break and fix')
+    if port in observed_tcp(device,pin):raise ValueError('Port is already in use')
+    if len(extra_ports(pin))>=MAX_EXTRA_PORTS:raise ValueError('Too many extra ports on this target')
+    helper_call(pin,'open',service,str(port))
+    try:
+        if port not in observed_tcp(device,pin):raise ValueError('Listener did not start')
+    except BaseException:
+        try:helper_call(pin,'close',str(port))
+        except ValueError:pass
+        raise
+
+
+def port_close(catalog,pins,target,port):
+    if type(port) is not int:raise ValueError('Invalid port request')
+    device,pin=port_target(catalog,pins,target)
+    if port not in extra_ports(pin):raise ValueError('Only extra ports opened here can be closed')
+    helper_call(pin,'close',str(port))
+    if port in observed_tcp(device,pin):raise ValueError('Listener did not stop')
+
+
+def port_restore(catalog,pins,target):
+    device,pin=port_target(catalog,pins,target)
+    for port in extra_ports(pin):
+        helper_call(pin,'close',str(port))
+    if extra_ports(pin):raise ValueError('Extra ports remain')
+
+
+def port_restore_all(catalog,pins):
+    for device in catalog.devices:
+        if device.kind=='linux':
+            port_restore(catalog,pins,device.name)
 
 
 def lifecycle_order(catalog,action):
@@ -482,7 +558,8 @@ def dhcp_lease(catalog,pins,target,action):
 
 def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__);sub=parser.add_subparsers(dest='command',required=True)
-    sub.add_parser('enroll');sub.add_parser('status');sub.add_parser('preflight');sub.add_parser('enroll-vms');sub.add_parser('up');sub.add_parser('down')
+    sub.add_parser('enroll');sub.add_parser('status');sub.add_parser('preflight');sub.add_parser('enroll-vms')
+    ports=sub.add_parser('ports');ports.add_argument('ports_action',choices=('list','open','close','restore'));ports.add_argument('rest',nargs='+');sub.add_parser('up');sub.add_parser('down')
     for action in ('host-stop','host-start'):
         p=sub.add_parser(action);p.add_argument('target')
     server=sub.add_parser('dhcp-server');server.add_argument('action',choices=('start','stop'))
@@ -495,7 +572,7 @@ def main(argv=None):
     try:
         catalog=load_catalog()
         with qa_control.claim():
-            if args.command not in {'status','dhcp-recover','preflight'}:
+            if args.command not in {'status','dhcp-recover','preflight'} and not (args.command=='ports' and args.ports_action=='list'):
                 require_no_dhcp_intent(ROOT)
             if args.command=='enroll-vms':
                 enroll_vms();print('Pinned the 2 lab VMs on vboxnet1.');return 0
@@ -517,6 +594,23 @@ def main(argv=None):
             elif args.command=='dhcp-recover':
                 dhcp_control.recover(ROOT,catalog,DockerDhcpLab(catalog,pins))
                 print('DHCP recovery completed')
+            elif args.command=='ports':
+                action,rest=args.ports_action,args.rest
+                def number(value):
+                    if not value.isdigit():raise ValueError('Invalid port')
+                    return int(value)
+                if action=='list' and len(rest)==1:
+                    result=port_list(catalog,pins,rest[0])
+                    print(rest[0],'baseline',','.join(map(str,result['baseline'])) or '-','extra',','.join(map(str,result['extra'])) or '-')
+                elif action=='open' and len(rest)==3:
+                    port_open(catalog,pins,rest[0],rest[1],number(rest[2]));print(rest[0],'port',rest[2],'open')
+                elif action=='close' and len(rest)==2:
+                    port_close(catalog,pins,rest[0],number(rest[1]));print(rest[0],'port',rest[1],'closed')
+                elif action=='restore' and len(rest)==1:
+                    if rest[0]=='all':port_restore_all(catalog,pins)
+                    else:port_restore(catalog,pins,rest[0])
+                    print(rest[0],'extra ports restored')
+                else:raise ValueError('Invalid ports request')
             elif args.command=='preflight':
                 result=preflight(pins,vm_pins=read_vm_pins())
                 print('Preflight OK: %d MiB RAM available, %d MiB disk free, swap %.1f pages/s'%(result['available_mib'],result['free_disk_mib'],result['swap_pages_per_second']))

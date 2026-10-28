@@ -28,6 +28,9 @@ network, only the two pinned VMs and no foreign link or Docker network on
 `vboxnet1`, no subnet collision, at least 3 GiB RAM and 20 GiB disk free, and no
 swap thrash (`enroll-vms` pins the VMs once). It does not read Pinpoint's
 configured scan range or capture physical-interface traffic.
+`presenter ports list|open|close|restore` open checked extra HTTP/TCP ports
+(1024-65535, not reserved, baseline or in use, at most four per target) through a
+fixed in-container helper; restart or `ports restore all` returns the baseline.
 The following paragraphs describe earlier preparation and its historical state.
 
 The [defense demo plan](../docs/plans/Defense_Demo_Lab_Plan.md) records the
