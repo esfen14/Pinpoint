@@ -31,6 +31,8 @@ its working tree is clean.
 ./demo/demo presenter dhcp-server start
 ./demo/demo presenter dhcp-lease release dynweb02
 ./demo/demo presenter dhcp-lease acquire dynweb02
+./demo/demo presenter dhcp-move dynweb01 10.77.1.25
+./demo/demo presenter dhcp-move dynweb01 10.77.1.20
 ```
 
 `status` reports locally observed service states and addresses. `break` and
@@ -59,26 +61,32 @@ The `up` command restores baseline services, including services intentionally
 stopped by `break`. `host-stop` and `host-start` act on one Linux catalog device;
 starting a DHCP client requires the DHCP server to be running. `dhcp-server`
 stops or starts the allocator with its saved reservations; existing leases may
-remain active while it is stopped. `dhcp-lease` releases or reacquires only the
-specified DHCP client's original reserved address. After a fault demonstration,
+remain active while it is stopped. `dhcp-lease` releases or reacquires the
+specified DHCP client's currently saved reservation. After a fault demonstration,
 start the DHCP server and reacquire any released leases. These commands do not
-implement DHCP-to-static transitions. The issue branch now contains
-`presenter dhcp-move TARGET ADDRESS` and `presenter dhcp-recover` commands,
-with a journaled release, reconfiguration, acquisition and rollback. These
-commands are **not deployed or verified on the live pilot**: the running
-containers and persistent presenter checkout still use older code. They must
-not be used for a demo until the image, presenter, network membership checks
-and live rollback test are complete. The new image has been prepared locally
-as `pinpoint-defense-host274:dhcp-move-prepared`, without replacing the
-running pilot containers. An offline `dhcp_journal.py` component can record private recovery intent
+implement DHCP-to-static transitions. The current laptop pilot has
+`presenter dhcp-move TARGET ADDRESS` and `presenter dhcp-recover`, with a
+journaled release, reconfiguration, acquisition and rollback. The address must
+be an unused address in the DHCP pool. On 2026-10-28, `dynweb01` moved from
+`.20` to `.25` and back; a second move interrupted after the allocator change
+restored `.20` automatically. Windows ping confirmed the moved and restored
+addresses. Product history association and other interruption scenarios are
+not yet verified. If an incomplete move leaves a recovery intent, resolve the
+reported lab issue and run `presenter dhcp-recover`; other modifying presenter
+commands refuse to run while that intent remains.
+
+The updated DHCP containers use `pinpoint-defense-host274:dhcp-move-prepared`.
+The original six containers are retained stopped as `*-before-dhcp-upgrade`,
+with their old pins and a recovery tool in the private host-Docker directory.
+Do not remove those backups until the deployment has been fully accepted.
+An offline `dhcp_journal.py` component can record private recovery intent
 and validates its phase and pinned container IDs. An offline rollback decision
 function selects one step from supplied observations and refuses ambiguous
 client or allocator state; it does not collect observations, execute commands,
 or establish that recovery succeeded. The node source also provides a
 server-only read operation that compares the saved reservations with the
 generated DHCP configuration and samples Supervisor state twice. It does not
-prove what configuration a running daemon loaded; the pilot image has not yet
-been rebuilt with it. An offline collector can compare supplied client,
+by itself prove what configuration a running daemon loaded. An offline collector can compare supplied client,
 container identity and saved allocator observations twice. Its callbacks must
 independently establish real ownership; the node's reported client ID is a
 catalog value, not independent proof of the DHCP client's identity. The
