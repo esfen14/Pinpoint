@@ -96,7 +96,7 @@ class PresenterTests(unittest.TestCase):
             request.assert_not_called()
     def test_release_also_stops_an_unaddressed_lease_client(self):
         client={'network_safe':True,'addresses':[],'services':[{'program':'lease','state':'RUNNING'}]}
-        with patch('defense.presenter.check_host_network'), patch('defense.presenter.node',side_effect=[client,client]), patch('defense.presenter.node_request') as request:
+        with patch('defense.presenter.check_host_network'), patch('defense.presenter.reserved_address',return_value='10.77.1.20'), patch('defense.presenter.node',side_effect=[client,client]), patch('defense.presenter.node_request') as request:
             dhcp_lease(self.catalog,{'dynweb01':{'id':'a'*64}},'dynweb01','release')
             self.assertEqual(request.call_args.args[2],{'operation':'lease-release'})
     def test_host_fault_selects_one_known_linux_target(self):
@@ -136,7 +136,7 @@ class PresenterTests(unittest.TestCase):
     def test_pending_intent_blocks_all_presenter_mutations_but_allows_status(self):
         commands=[['enroll'],['up'],['down'],['host-stop','dynweb01'],['host-start','dynweb01'],
                   ['dhcp-server','stop'],['dhcp-server','start'],['dhcp-lease','release','dynweb01'],
-                  ['dhcp-lease','acquire','dynweb01'],['break','web03','http'],['fix','web03','http']]
+                  ['dhcp-lease','acquire','dynweb01'],['dhcp-move','dynweb01','10.77.1.25'],['break','web03','http'],['fix','web03','http']]
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory);(root/'dhcp-move.json').mkdir()
             with patch.object(presenter,'ROOT',root), patch.object(presenter,'read_pins') as pins, patch.object(presenter,'enroll') as enroll:
@@ -147,4 +147,63 @@ class PresenterTests(unittest.TestCase):
             with patch.object(presenter,'ROOT',root), patch.object(presenter,'read_pins',return_value=pins), patch.object(presenter,'inspect',return_value={'State':{'Running':False}}) as inspect:
                 self.assertEqual(presenter.main(['status']),0)
                 self.assertEqual(inspect.call_count,14)
+    def test_moved_dhcp_client_uses_the_saved_reservation(self):
+        device=self.catalog.target('dynweb01');pins={'dhcp01':{'id':'a'*64}}
+        with patch.object(presenter,'node',return_value={'target':'dhcp01','reservations':{'dynweb01':'10.77.1.25'},'supervisor_state':'RUNNING'}):
+            self.assertEqual(presenter.reserved_address(self.catalog,pins,device),'10.77.1.25')
+    def test_dhcp_docker_adapter_uses_pinned_processes_and_fixed_operations(self):
+        names=['dhcp01']+[d.name for d in self.catalog.devices if d.mode=='dhcp']
+        pins={name:{'id':format(i,'064x')} for i,name in enumerate(names,1)}
+        pids={name:100+i for i,name in enumerate(names)}
+        def inspect(device,pin):return {'State':{'Running':True,'Pid':pids[device.name]}}
+        reservations={d.name:d.address for d in self.catalog.devices if d.mode=='dhcp'}
+        def request(device,pin,value):
+            if value['operation']=='server-observe':return {'target':'dhcp01','reservations':reservations,'lease_seconds':600,'supervisor_state':'RUNNING'}
+            if device.name=='dhcp01':return {'target':'dhcp01','network_safe':True,'addresses':['10.77.1.2']}
+            return {'target':device.name,'network_safe':True,'observed_mac':device.mac,'client_id':device.client_id,'addresses':[device.address]}
+        stat='1 (container) '+' '.join(['0']*19+['123'])
+        with patch.object(presenter,'check_host_network'),patch.object(presenter,'inspect',side_effect=inspect),patch.object(presenter,'observe_process') as observe,patch('pathlib.Path.read_text',return_value=stat),patch.object(presenter,'node_request',side_effect=request) as node_request:
+            lab=presenter.DockerDhcpLab(self.catalog,pins)
+            state=lab.snapshot()
+            self.assertEqual(state['reservations'],reservations)
+            self.assertEqual(state['pins'],{name:pin['id'] for name,pin in pins.items()})
+            lab.release('dynweb01')
+            self.assertEqual(node_request.call_args.args[2],{'operation':'lease-release'})
+            pids['dynweb01']+=1
+            with self.assertRaises(ValueError):lab.release('dynweb01')
+            self.assertTrue(observe.called)
+    def test_move_and_recovery_dispatch_to_the_owned_adapter(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            with patch.object(presenter,'ROOT',root),patch.object(presenter,'read_pins',return_value={'owned':'pins'}),patch.object(presenter,'DockerDhcpLab') as lab,patch.object(presenter.dhcp_control,'move') as move:
+                self.assertEqual(presenter.main(['dhcp-move','dynweb01','10.77.1.25']),0)
+                move.assert_called_once_with(root,unittest.mock.ANY,lab.return_value,'dynweb01','10.77.1.25')
+            (root/'dhcp-move.json').write_text('pending')
+            with patch.object(presenter,'ROOT',root),patch.object(presenter,'read_pins',return_value={'owned':'pins'}),patch.object(presenter,'DockerDhcpLab') as lab,patch.object(presenter.dhcp_control,'recover') as recover:
+                self.assertEqual(presenter.main(['dhcp-recover']),0)
+                recover.assert_called_once_with(root,unittest.mock.ANY,lab.return_value)
+    def test_move_runs_through_docker_adapter_and_restores_on_failure(self):
+        from defense.test_dhcp_control import FakeLab
+        fake=FakeLab(self.catalog)
+        names=['dhcp01']+[d.name for d in self.catalog.devices if d.mode=='dhcp']
+        pins={name:{'id':fake.pins[name]} for name in names}
+        pids={name:100+i for i,name in enumerate(names)}
+        def inspect(device,pin):return {'State':{'Running':True,'Pid':pids[device.name]}}
+        def request(device,pin,value):
+            op=value['operation']
+            if op=='server-observe':return {'target':'dhcp01','reservations':dict(fake.reservations),'lease_seconds':600,'supervisor_state':'RUNNING'}
+            if op=='server-config':fake.configure(value['reservations'])
+            elif op=='lease-release':fake.release(device.name)
+            elif op=='lease-acquire':fake.acquire(device.name,value['expected_address'])
+            if device.name=='dhcp01':return {'target':'dhcp01','network_safe':True,'addresses':['10.77.1.2']}
+            return {'target':device.name,'network_safe':True,'observed_mac':device.mac,'client_id':device.client_id,'addresses':list(fake.addresses[device.name])}
+        stat='1 (container) '+' '.join(['0']*19+['123'])
+        with tempfile.TemporaryDirectory() as directory,patch.object(presenter,'ROOT',Path(directory)),patch.object(presenter,'check_host_network'),patch.object(presenter,'inspect',side_effect=inspect),patch.object(presenter,'observe_process'),patch('pathlib.Path.read_text',return_value=stat),patch.object(presenter,'node_request',side_effect=request):
+            lab=presenter.DockerDhcpLab(self.catalog,pins)
+            fake.fail='acquire'
+            with self.assertRaises(RuntimeError):presenter.dhcp_control.move(Path(directory),self.catalog,lab,'dynweb01','10.77.1.25')
+            self.assertEqual(fake.addresses['dynweb01'],['10.77.1.20'])
+            self.assertFalse((Path(directory)/'dhcp-move.json').exists())
+            presenter.dhcp_control.move(Path(directory),self.catalog,lab,'dynweb01','10.77.1.25')
+            self.assertEqual(fake.addresses['dynweb01'],['10.77.1.25'])
 if __name__=='__main__':unittest.main()

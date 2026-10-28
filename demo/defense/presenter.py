@@ -11,7 +11,8 @@ import time
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
 from defense.catalog import load_catalog
-from defense import dhcp_journal
+from defense import dhcp_control, dhcp_journal
+from defense.host_attach import observe_process
 import qa_control
 
 ROOT=Path.home()/'.local/share/pinpoint-defense/host-docker'
@@ -100,6 +101,16 @@ def node(device,pin,operation):
     return result
 
 
+def reserved_address(catalog,pins,device):
+    """Use the saved allocator reservation for a DHCP client's current address."""
+    if device.mode!='dhcp':return device.address
+    server=node(catalog.target('dhcp01'),pins['dhcp01'],'server-observe')
+    address=server.get('reservations',{}).get(device.name)
+    if address not in catalog.pool:
+        raise ValueError('DHCP reservation unavailable')
+    return address
+
+
 def enroll(catalog):
     if PINS.exists() or PINS.is_symlink():raise ValueError('Presenter pins already exist')
     pins={}
@@ -122,7 +133,7 @@ def service(catalog,pins,target,name,action):
     check_host_network(pins)
     device=catalog.target(target);pin=pins[target]
     before=node(device,pin,'inspect')
-    if not before.get('network_safe') or before.get('addresses')!=[device.address]:raise ValueError('Unsafe target network')
+    if not before.get('network_safe') or before.get('addresses')!=[reserved_address(catalog,pins,device)]:raise ValueError('Unsafe target network')
     states={v['program']:v['state'] for v in before['services']}
     if program not in states:raise ValueError('Owned service is unavailable')
     if program=='smtp':
@@ -250,9 +261,11 @@ def lifecycle(catalog,pins,action,target=None):
         if not current.get('network_safe'):raise ValueError('Target network is not ready')
         node(d,pin,'baseline')
         if d.mode=='dhcp':
-            node_request(d,pin,{'operation':'lease-acquire','expected_address':d.address})
+            expected=reserved_address(catalog,pins,d)
+            node_request(d,pin,{'operation':'lease-acquire','expected_address':expected})
+        else:expected=d.address
         current=node(d,pin,'inspect')
-        if current.get('addresses')!=[d.address]:raise ValueError('Target address changed')
+        if current.get('addresses')!=[expected]:raise ValueError('Target address changed')
         print(d.name,'ready',flush=True)
 
 
@@ -262,6 +275,68 @@ def node_request(device,pin,request):
     result=json.loads(run(['docker','exec','-i',pin['id'],'python3','/opt/pinpoint/defense/node.py','control',device.name],input_text=json.dumps(request),timeout=60))
     if result.get('target')!=device.name:raise ValueError('Target response changed')
     return result
+
+
+class DockerDhcpLab:
+    """Fixed Docker adapter for the five owned clients and their allocator."""
+    def __init__(self,catalog,pins):
+        self.catalog=catalog;self.pins=pins;self.processes={}
+        self.names=['dhcp01']+[d.name for d in catalog.devices if d.mode=='dhcp']
+        check_host_network(pins)
+        for name in self.names:
+            device=catalog.target(name);pin=pins[name];obj=inspect(device,pin)
+            pid=obj.get('State',{}).get('Pid')
+            if not obj.get('State',{}).get('Running') or type(pid) is not int or pid<=1:
+                raise ValueError('DHCP container is not running')
+            ticks=int((Path('/proc')/str(pid)/'stat').read_text().rsplit(')',1)[1].split()[19])
+            request={'target':name,'pid':pid,'start_ticks':ticks,'container_id':pin['id']}
+            observe_process(request);self.processes[name]=request
+    def check(self,name):
+        device=self.catalog.target(name);pin=self.pins[name];obj=inspect(device,pin)
+        request=self.processes[name]
+        if not obj.get('State',{}).get('Running') or obj['State'].get('Pid')!=request['pid']:
+            raise ValueError('DHCP container process changed')
+        observe_process(request)
+        return device,pin
+    def request(self,name,request):
+        check_host_network(self.pins)
+        device,pin=self.check(name)
+        result=node_request(device,pin,request)
+        self.check(name)
+        return result
+    def snapshot(self):
+        check_host_network(self.pins)
+        identities={}
+        for name in self.names:
+            self.check(name);identities[name]=self.pins[name]['id']
+        addresses={}
+        for name in self.names[1:]:
+            result=self.request(name,{'operation':'inspect'});device=self.catalog.target(name)
+            if result.get('network_safe') is not True or result.get('observed_mac')!=device.mac or result.get('client_id')!=device.client_id:
+                raise ValueError('DHCP client observation changed')
+            addresses[name]=result.get('addresses')
+        server=self.request('dhcp01',{'operation':'inspect'})
+        if server.get('network_safe') is not True or server.get('addresses')!=[self.catalog.target('dhcp01').address]:
+            raise ValueError('DHCP allocator network changed')
+        try:
+            saved=self.request('dhcp01',{'operation':'server-observe'})
+            reservations=saved['reservations'];duration=saved['lease_seconds']
+            running=saved['supervisor_state']=='RUNNING'
+        except (ValueError,KeyError):
+            # Only a valid durable intent permits a torn allocator configuration
+            # to be repaired. A new move cannot use an unobservable allocator.
+            record=dhcp_journal.read(ROOT,self.catalog)
+            if record['pins']!=identities:raise ValueError('Recovery identities changed')
+            reservations=None;duration=600;running=False
+        for name in self.names:self.check(name)
+        return {'pins':identities,'reservations':reservations,'addresses':addresses,
+                'lease_seconds':duration,'server_running':running}
+    def release(self,name):
+        self.request(name,{'operation':'lease-release'})
+    def configure(self,reservations):
+        self.request('dhcp01',{'operation':'server-config','reservations':reservations,'lease_seconds':600})
+    def acquire(self,name,address):
+        self.request(name,{'operation':'lease-acquire','expected_address':address})
 
 
 def dhcp_server(catalog,pins,action):
@@ -287,18 +362,19 @@ def dhcp_lease(catalog,pins,target,action):
         raise ValueError('A catalog DHCP client and fixed lease action are required')
     check_host_network(pins)
     pin=pins[target];before=node(device,pin,'inspect')
-    if not before.get('network_safe') or before.get('addresses') not in ([],[device.address]):
+    expected=reserved_address(catalog,pins,device)
+    if not before.get('network_safe') or before.get('addresses') not in ([],[expected]):
         raise ValueError('DHCP client state is unsafe')
     if action=='acquire':
         server=node(catalog.target('dhcp01'),pins['dhcp01'],'inspect')
         if not server.get('network_safe') or {v['program']:v['state'] for v in server['services']}.get('dhcp')!='RUNNING':
             raise ValueError('DHCP allocator is not running')
-        request={'operation':'lease-acquire','expected_address':device.address}
+        request={'operation':'lease-acquire','expected_address':expected}
     else:request={'operation':'lease-release'}
     if action=='release' or (action=='acquire' and not before['addresses']):
         node_request(device,pin,request)
     after=node(device,pin,'inspect')
-    if not after.get('network_safe') or after.get('addresses')!=([device.address] if action=='acquire' else []):
+    if not after.get('network_safe') or after.get('addresses')!=([expected] if action=='acquire' else []):
         raise ValueError('DHCP lease state not reached')
     return after
 
@@ -310,13 +386,15 @@ def main(argv=None):
         p=sub.add_parser(action);p.add_argument('target')
     server=sub.add_parser('dhcp-server');server.add_argument('action',choices=('start','stop'))
     lease=sub.add_parser('dhcp-lease');lease.add_argument('action',choices=('release','acquire'));lease.add_argument('target')
+    move=sub.add_parser('dhcp-move');move.add_argument('target');move.add_argument('address')
+    sub.add_parser('dhcp-recover')
     for action in ('break','fix'):
         p=sub.add_parser(action);p.add_argument('target');p.add_argument('service')
     args=parser.parse_args(argv)
     try:
         catalog=load_catalog()
         with qa_control.claim():
-            if args.command!='status':
+            if args.command not in {'status','dhcp-recover'}:
                 require_no_dhcp_intent(ROOT)
             pins=enroll(catalog) if args.command=='enroll' else read_pins()
             if args.command=='enroll':print('Pinned 14 existing laptop pilot containers.');return 0
@@ -330,6 +408,12 @@ def main(argv=None):
             elif args.command=='dhcp-lease':
                 result=dhcp_lease(catalog,pins,args.target,args.action)
                 print(args.target,','.join(result['addresses']) or 'lease released')
+            elif args.command=='dhcp-move':
+                dhcp_control.move(ROOT,catalog,DockerDhcpLab(catalog,pins),args.target,args.address)
+                print(args.target,'DHCP move completed')
+            elif args.command=='dhcp-recover':
+                dhcp_control.recover(ROOT,catalog,DockerDhcpLab(catalog,pins))
+                print('DHCP recovery completed')
             elif args.command=='status':
                 for d in catalog.devices:
                     if d.kind!='linux':continue
@@ -343,7 +427,10 @@ def main(argv=None):
                 result=service(catalog,pins,args.target,args.service,'stop' if args.command=='break' else 'start')
                 print(args.target,args.service,'stopped' if args.command=='break' else 'running')
         return 0
-    except (OSError,ValueError,KeyError,TypeError,json.JSONDecodeError):
+    except (OSError,ValueError,KeyError,TypeError,IndexError,json.JSONDecodeError):
+        if args.command in {'dhcp-move','dhcp-recover'} and ((ROOT/dhcp_journal.NAME).exists() or (ROOT/dhcp_journal.NAME).is_symlink()):
+            print('DHCP move incomplete; run presenter dhcp-recover after resolving the lab issue.',file=sys.stderr)
+            return 1
         print('Presenter control refused: pilot state or requested operation is unavailable.',file=sys.stderr);return 1
 
 if __name__=='__main__':raise SystemExit(main())

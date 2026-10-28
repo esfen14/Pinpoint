@@ -220,6 +220,16 @@ class NodeTests(unittest.TestCase):
             mutate.assert_not_called();run.assert_not_called()
             self.assertNotIn('SENTINEL_PRIVATE_DETAIL',error.getvalue())
 
+    def test_control_refuses_changed_persistent_dhcp_client_identifier(self):
+        target=CATALOG.target('dynweb01')
+        saved={'target':target.name,'owner':'b'*48,'mac':target.mac,'client_id':'foreign-client'}
+        with patch('defense.node.container_context',return_value={'owner':'b'*48}), \
+             patch('defense.node.read_private_json',return_value=saved), \
+             patch('sys.stdin',io.StringIO('{"operation":"inspect"}')), \
+             patch('defense.node.handle') as handle,redirect_stderr(io.StringIO()):
+            self.assertEqual(node_main(['control',target.name]),1)
+            handle.assert_not_called()
+
     def test_every_protocol_uses_real_daemon_and_supervisor_keeps_groups_owned(self):
         commands=set()
         for device in CATALOG.devices:

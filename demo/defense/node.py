@@ -464,7 +464,7 @@ def main(argv=None) -> int:
             prepare_services(catalog,device)
             os.execv('/usr/bin/supervisord',['supervisord','-n','-c','/run/supervisord.conf'])
         saved=read_private_json(IDENTITY/'identity.json')
-        if saved.get('target')!=device.name or saved.get('owner')!=context['owner'] or saved.get('mac')!=device.mac:
+        if saved.get('target')!=device.name or saved.get('owner')!=context['owner'] or saved.get('mac')!=device.mac or saved.get('client_id')!=device.client_id:
             raise ValueError('Persistent node identity mismatch')
         lock=os.open(DATA/'control.lock',os.O_RDWR|os.O_CREAT|os.O_NOFOLLOW,0o600)
         try:

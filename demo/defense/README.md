@@ -56,10 +56,15 @@ stops or starts the allocator with its saved reservations; existing leases may
 remain active while it is stopped. `dhcp-lease` releases or reacquires only the
 specified DHCP client's original reserved address. After a fault demonstration,
 start the DHCP server and reacquire any released leases. These commands do not
-implement changing reservations or DHCP-to-static transitions. An offline-only
-`dhcp_move.py` planner validates a candidate against all five current
-reservations and observations; it performs no live mutation and is not yet
-wired to the presenter. An offline `dhcp_journal.py` component can record private recovery intent
+implement DHCP-to-static transitions. The issue branch now contains
+`presenter dhcp-move TARGET ADDRESS` and `presenter dhcp-recover` commands,
+with a journaled release, reconfiguration, acquisition and rollback. These
+commands are **not deployed or verified on the live pilot**: the running
+containers and persistent presenter checkout still use older code. They must
+not be used for a demo until the image, presenter, network membership checks
+and live rollback test are complete. The new image has been prepared locally
+as `pinpoint-defense-host274:dhcp-move-prepared`, without replacing the
+running pilot containers. An offline `dhcp_journal.py` component can record private recovery intent
 and validates its phase and pinned container IDs. An offline rollback decision
 function selects one step from supplied observations and refuses ambiguous
 client or allocator state; it does not collect observations, execute commands,
@@ -79,9 +84,8 @@ presenter must both hold the same lab claim. This guard is not a recovery
 command, and older presenter checkouts do not have it. The offline `host_members.py`
 validator checks VirtualBox observations against two pinned VMs. Its fixed
 read-only collector rechecks the VM list and adapter details, but does not
-account for other network namespaces. Neither component is connected to live
-address-change execution. Foreign-device checks, actual recovery and rollback are still
-required before any address transition can run.
+account for other network namespaces. Foreign-device checks and a live move
+and rollback test remain required before the new commands are demo-ready.
 
 ## Earlier target-host design and historical results
 
