@@ -31,6 +31,10 @@ configured scan range or capture physical-interface traffic.
 `presenter ports list|open|close|restore` open checked extra HTTP/TCP ports
 (1024-65535, not reserved, baseline or in use, at most four per target) through a
 fixed in-container helper; restart or `ports restore all` returns the baseline.
+`presenter address-mode show|static|dhcp|recover` switches one DHCP client between
+its reserved lease and an unused static slot (`.15` to `.19`) with a private
+intent file, rollback on failure and idempotent recovery; the live matrix covered
+static and DHCP return, an allocator outage and a killed process.
 The following paragraphs describe earlier preparation and its historical state.
 
 The [defense demo plan](../docs/plans/Defense_Demo_Lab_Plan.md) records the

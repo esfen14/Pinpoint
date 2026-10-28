@@ -26,6 +26,7 @@
 | 10. Maintenance | In **Maintenance**, create a one-off window for `api02`, active during the test. Once active, run `down api02 http`. | The service can become Critical with a downtime indication while notifications are suppressed. Cancel the window, then run `up api02 http` and confirm recovery. **Settings → System → Maintenance Mode** is a different, global control. |
 | 11. Address change | Run `Pinpoint-Demo-faults.sh dhcp-move dynweb01 10.77.1.25`, then rescan. | The same device now shows `.25`; no second device appears. Pinpoint shows only the current address (history is tracked in #277). Move it back with `... dynweb01 10.77.1.20`. |
 | 11b. New port | Run `Pinpoint-Demo-faults.sh ports open web03 http 8088`, rescan, then `ports close web03 8088` and rescan again. | The port appears on `web03` as Monitored with its check. After the close, the check goes CRITICAL; it becomes Missing only after five scans and archives after the configured period (it does not disappear at once). `ports restore all` closes every extra port. |
+| 11c. Fixed address | Run `Pinpoint-Demo-faults.sh address-mode static dynweb01 10.77.1.15`, then wait for the next discovery (about five minutes in the rehearsal) and look at **Device Inventory**. Return with `address-mode dhcp dynweb01`. | The same device (`dynweb01`) moves to `.15` with no second device; DHCP return brings it back to `.20`. `address-mode show dynweb01` reports `dhcp` or `static` and the one address. |
 | 12. Host failure (optional) | Run `Pinpoint-Demo-faults.sh down dynapp01 host`; then `up dynapp01 host`. | The container stops and starts; Nagios host state follows its check timing. |
 | 13. Accounts & settings | Sign out before switching users. Tour **Manage Accounts**, **Manage Roles** and **Settings** tabs. | The new account's permissions change which tabs and actions are available. Email delivery needs separate SMTP setup. |
 
@@ -40,6 +41,10 @@ Pinpoint-Demo-faults.sh down dynapp01 host
 Pinpoint-Demo-faults.sh up dynapp01 host
 Pinpoint-Demo-faults.sh dhcp-move dynweb01 10.77.1.25
 Pinpoint-Demo-faults.sh dhcp-recover      # only after an interrupted move
+Pinpoint-Demo-faults.sh address-mode show dynweb01
+Pinpoint-Demo-faults.sh address-mode static dynweb01 10.77.1.15   # slots .15 to .19 only
+Pinpoint-Demo-faults.sh address-mode dhcp dynweb01
+Pinpoint-Demo-faults.sh address-mode recover                       # only after an interrupted change
 Pinpoint-Demo-faults.sh ports list web03
 Pinpoint-Demo-faults.sh ports open web03 http 8088     # also: tcp; ports 1024-65535 only
 Pinpoint-Demo-faults.sh ports close web03 8088
@@ -48,7 +53,7 @@ Pinpoint-Demo-faults.sh ports restore all             # end-of-demo cleanup
 
 Other prepared faults: `web03 https`, `api02 http`, `ftp01 ftp`, `mail01 smtp|imap`, `dns01 dns`, `db01 pgsql`, `snmp02 snmp`, and `ssh` on the targets that run it. `host` stops only the selected container. Unknown targets and services are rejected, and DHCP moves accept only the five DHCP clients and an address in `10.77.1.0/27`. Extra ports are HTTP or plain TCP only, between 1024 and 65535, never a management, NCPA or baseline port, at most four per target, and `close` works only on ports opened this way. A container restart also clears them. Stopping a monitored SSH service does not remove your way back in: the controls reach the containers through Docker.
 
-While a DHCP move is interrupted, every modifying command is refused until `dhcp-recover` completes. `status` still works.
+While a DHCP move or address-mode change is interrupted, every modifying command is refused until `dhcp-recover` or `address-mode recover` completes. A static address is not saved across a container restart: the client comes back on DHCP at its reserved address. Return a client to DHCP before `dhcp-move`, `up` or lease commands. `status` still works.
 
 ## Port Missing and archive: timing
 
@@ -59,4 +64,4 @@ Closing a listener does not make the row disappear. The sequence is: the check f
 - The wall measures the target immediately; Pinpoint waits for Nagios checks, retries and polling. A red wall row before a Pinpoint alert is expected. Do not keep rescanning while a scan is running.
 - For the simple failure demo, keep automatic recovery **off** or use **Record only**, or the fault may disappear before the audience sees it.
 - If the alert does not appear, confirm the service is monitored, its plugin is enabled, the wall says it is stopped, and the appliance can reach the target.
-- At the end run `up` for every fault you used, run `ports restore all`, move `dynweb01` back to `.20`, cancel any maintenance window, and disable or delete the demo remediation action. Check `status`: all fourteen targets running and five DHCP leases at `.20` to `.24`.
+- At the end run `up` for every fault you used, run `ports restore all`, return every DHCP client to DHCP on its own address (`dynweb01` is `.20`), cancel any maintenance window, and disable or delete the demo remediation action. Check `status`: all fourteen targets running and five DHCP leases at `.20` to `.24`.

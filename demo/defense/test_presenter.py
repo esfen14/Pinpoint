@@ -289,6 +289,64 @@ class PortControlTests(unittest.TestCase):
                 self.assertEqual(presenter.main(['ports','open','web03','http','8088']),1)
                 opened.assert_not_called()
                 self.assertEqual(presenter.main(['ports','list','web03']),0)
+class AddressModeCommandTests(unittest.TestCase):
+    def setUp(self):
+        self.catalog=presenter.load_catalog();self.pins={d.name:{'id':'a'*64,'image':'sha256:'+'b'*64} for d in self.catalog.devices if d.kind=='linux'}
+        self.addresses={d.name:[d.address] for d in self.catalog.devices if d.mode=='dhcp'}
+        self.commands=[];self.requests=[]
+    def fake_run(self,argv,**kwargs):
+        self.commands.append(argv)
+        if argv[:5]==['docker','exec','--privileged','a'*64,'ip']:
+            verb,address=argv[6],argv[7].split('/')[0]
+            if verb=='add':self.addresses['dynweb01']=[address]
+            if verb=='del':self.addresses['dynweb01']=[]
+        return ''
+    def node(self,device,pin,operation):
+        if device.name=='dhcp01':return {'network_safe':True,'addresses':['10.77.1.2'],'services':[{'program':'dhcp','state':'RUNNING'}]}
+        return {'network_safe':True,'addresses':list(self.addresses[device.name]),'services':[]}
+    def request(self,device,pin,value):
+        self.requests.append((device.name,value['operation']))
+        if value['operation']=='lease-release':self.addresses[device.name]=[]
+        if value['operation']=='lease-acquire':self.addresses[device.name]=[value['expected_address']]
+        return {}
+    def patches(self):
+        return (patch.object(presenter,'check_host_network'),patch.object(presenter,'inspect'),patch.object(presenter,'node',side_effect=self.node),
+                patch.object(presenter,'node_request',side_effect=self.request),patch.object(presenter,'run',side_effect=self.fake_run),
+                patch.object(presenter,'reserved_address',side_effect=lambda catalog,pins,device:device.address))
+    def test_static_then_dhcp_uses_fixed_ip_commands_and_the_node_lease_operations(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);root.chmod(0o700)
+            a,b,c,d,e,f=self.patches()
+            with patch.object(presenter,'ROOT',root),a,b,c,d,e,f:
+                presenter.address_mode_set(self.catalog,self.pins,'dynweb01','static','10.77.1.15')
+                self.assertEqual(self.addresses['dynweb01'],['10.77.1.15'])
+                self.assertEqual(presenter.address_mode_show(self.catalog,self.pins,'dynweb01'),{'mode':'static','address':'10.77.1.15'})
+                presenter.address_mode_set(self.catalog,self.pins,'dynweb01','dhcp',None)
+                self.assertEqual(self.addresses['dynweb01'],['10.77.1.20'])
+            ip_commands=[c for c in self.commands if c[:5]==['docker','exec','--privileged','a'*64,'ip']]
+            self.assertEqual(ip_commands,[['docker','exec','--privileged','a'*64,'ip','addr','add','10.77.1.15/27','dev','eth0'],
+                                          ['docker','exec','--privileged','a'*64,'ip','addr','del','10.77.1.15/27','dev','eth0']])
+    def test_address_already_held_by_another_client_is_refused(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);root.chmod(0o700);self.addresses['dynapp01']=['10.77.1.15']
+            a,b,c,d,e,f=self.patches()
+            with patch.object(presenter,'ROOT',root),a,b,c,d,e,f:
+                with self.assertRaises(ValueError):presenter.address_mode_set(self.catalog,self.pins,'dynweb01','static','10.77.1.15')
+            self.assertEqual(self.commands,[])
+    def test_commands_dispatch_and_an_address_intent_blocks_other_mutations_but_not_show_or_recover(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);root.chmod(0o700)
+            with patch.object(presenter,'ROOT',root),patch.object(presenter,'read_pins',return_value=self.pins),patch.object(presenter,'address_mode_set') as changed,patch.object(presenter,'address_mode_show',return_value={'mode':'dhcp','address':'10.77.1.20'}):
+                self.assertEqual(presenter.main(['address-mode','static','dynweb01','10.77.1.15']),0)
+                changed.assert_called_once_with(unittest.mock.ANY,self.pins,'dynweb01','static','10.77.1.15')
+                (root/'address-mode.json').write_text('pending')
+                self.assertEqual(presenter.main(['address-mode','dhcp','dynweb01']),1)
+                self.assertEqual(presenter.main(['dhcp-move','dynweb01','10.77.1.25']),1)
+                self.assertEqual(presenter.main(['dhcp-recover']),1)
+                self.assertEqual(presenter.main(['address-mode','show','dynweb01']),0)
+            with patch.object(presenter,'ROOT',root),patch.object(presenter,'read_pins',return_value=self.pins),patch.object(presenter,'address_mode_recover') as recover:
+                self.assertEqual(presenter.main(['address-mode','recover']),0)
+                recover.assert_called_once()
 class VmPinTests(unittest.TestCase):
     UUIDS={'appliance':'11111111-1111-4111-8111-111111111111','windows':'22222222-2222-4222-8222-222222222222'}
     def records(self,extra=None):

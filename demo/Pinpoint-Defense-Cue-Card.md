@@ -25,6 +25,8 @@ demo/Pinpoint-Demo-faults.sh down dynapp01 host      # optional whole-container 
 demo/Pinpoint-Demo-faults.sh up dynapp01 host        # start it again
 demo/Pinpoint-Demo-faults.sh dhcp-move dynweb01 10.77.1.25   # same device, new address
 demo/Pinpoint-Demo-faults.sh dhcp-move dynweb01 10.77.1.20   # move it back
+demo/Pinpoint-Demo-faults.sh address-mode static dynweb01 10.77.1.15   # fixed address (.15-.19)
+demo/Pinpoint-Demo-faults.sh address-mode dhcp dynweb01      # back to its DHCP address
 demo/Pinpoint-Demo-faults.sh ports open web03 http 8088      # extra port; rescan to see it
 demo/Pinpoint-Demo-faults.sh ports close web03 8088          # check goes CRITICAL
 demo/Pinpoint-Demo-faults.sh ports restore all               # end-of-demo cleanup
@@ -53,6 +55,6 @@ A port that disappears first fails its check (CRITICAL). It becomes **Missing** 
 
 - **Remediation:** use an enabled **Record only** action for the exact `web03` HTTP service, then cause a hard failure. The Run log proves the event was handled. Record only never restarts anything; restore with `up web03 http`.
 - **Maintenance:** schedule a one-off active window for `api02` before `down api02 http`. Show downtime and suppressed notifications; cancel, then restore. Global **Maintenance Mode** in Settings is a different control.
-- **Address change:** after `dhcp-move`, run a scan. The same device shows the new IP; Pinpoint does not yet show an address history (#277).
+- **Address change:** after `dhcp-move` or `address-mode static`, wait for the next discovery (about five minutes). The same device shows the new IP; Pinpoint does not yet show an address history (#277).
 - **If the alert is delayed:** show the red wall row now, then wait for Nagios hard state and Pinpoint polling.
 - **End clean:** restore every fault you used (`up ...`, `ports restore all`, move `dynweb01` back to `.20`), cancel the demo window, disable/delete the demo remediation action, and check `status`.

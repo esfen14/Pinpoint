@@ -11,6 +11,7 @@ usage() {
 Usage: Pinpoint-Demo-faults.sh status|wall|services TARGET
        Pinpoint-Demo-faults.sh down|up TARGET SERVICE|host
        Pinpoint-Demo-faults.sh dhcp-move DHCP_TARGET 10.77.1.N | dhcp-recover
+       Pinpoint-Demo-faults.sh address-mode show|dhcp DHCP_TARGET | static DHCP_TARGET 10.77.1.15-19 | recover
        Pinpoint-Demo-faults.sh ports list TARGET | open TARGET http|tcp PORT | close TARGET PORT | restore TARGET|all
 
 Static targets:  dhcp01 web03 api02 ftp01 mail01 dns01 db01 snmp02 ssh-alt02
@@ -28,6 +29,7 @@ Examples:
   Pinpoint-Demo-faults.sh dhcp-recover         # only after an interrupted move
   Pinpoint-Demo-faults.sh ports open web03 http 8088   # extra port; close it with: ports close web03 8088
   Pinpoint-Demo-faults.sh ports restore all    # close every extra port (end of demo)
+  Pinpoint-Demo-faults.sh address-mode static dynweb01 10.77.1.15   # same device, fixed address; return with: address-mode dhcp dynweb01
 
 Only use these controls with the disposable defense demo lab. Windows (win01) has
 no controls here.
@@ -42,6 +44,11 @@ valid_target() {
   case "$1" in
     dhcp01|web03|api02|ftp01|mail01|dns01|db01|snmp02|ssh-alt02|dynweb01|dynapp01|dynmail01|dynsnmp01|dynweb02) return 0 ;;
   esac
+  return 1
+}
+
+dhcp_client() {
+  case "$1" in dynweb01|dynapp01|dynmail01|dynsnmp01|dynweb02) return 0 ;; esac
   return 1
 }
 
@@ -88,7 +95,7 @@ case "$action" in
     ;;
   dhcp-move)
     [[ $# -eq 3 ]] || fail
-    case "$2" in dynweb01|dynapp01|dynmail01|dynsnmp01|dynweb02) ;; *) fail ;; esac
+    dhcp_client "$2" || fail
     [[ "$3" =~ ^10\.77\.1\.[0-9]{1,2}$ ]] || fail
     presenter dhcp-move "$2" "$3"
     ;;
@@ -116,6 +123,31 @@ case "$action" in
         [[ $# -eq 3 ]] || fail
         if [[ "$3" != all ]]; then valid_target "$3" || fail; fi
         presenter ports restore "$3"
+        ;;
+      *) fail ;;
+    esac
+    ;;
+  address-mode)
+    case "${2:-}" in
+      show)
+        [[ $# -eq 3 ]] || fail
+        dhcp_client "$3" || fail
+        presenter address-mode show "$3"
+        ;;
+      static)
+        [[ $# -eq 4 ]] || fail
+        dhcp_client "$3" || fail
+        [[ "$4" =~ ^10\.77\.1\.[0-9]{1,2}$ ]] || fail
+        presenter address-mode static "$3" "$4"
+        ;;
+      dhcp)
+        [[ $# -eq 3 ]] || fail
+        dhcp_client "$3" || fail
+        presenter address-mode dhcp "$3"
+        ;;
+      recover)
+        [[ $# -eq 2 ]] || fail
+        presenter address-mode recover
         ;;
       *) fail ;;
     esac

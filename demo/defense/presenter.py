@@ -1,5 +1,6 @@
 """Presenter controls for the existing issue-274 laptop Docker pilot."""
 import argparse
+import ipaddress
 import json
 import os
 from pathlib import Path
@@ -12,7 +13,7 @@ import time
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
 from defense.catalog import load_catalog, listener_request
-from defense import dhcp_control, dhcp_journal
+from defense import address_mode, dhcp_control, dhcp_journal
 from defense.host_attach import observe_process
 from defense.host_members import validate_parent_attachments, validate_vm_membership, collect_vm_inventory
 from defense.host_resources import swap_rate, check_host_resources, reject_foreign_overlaps
@@ -33,11 +34,12 @@ def require_no_dhcp_intent(root):
     """
     fd=dhcp_journal.directory(root)
     try:
-        try:
-            os.stat(dhcp_journal.NAME,dir_fd=fd,follow_symlinks=False)
-        except FileNotFoundError:
-            return
-        raise ValueError('DHCP recovery intent requires inspection')
+        for name in (dhcp_journal.NAME,address_mode.NAME):
+            try:
+                os.stat(name,dir_fd=fd,follow_symlinks=False)
+            except FileNotFoundError:
+                continue
+            raise ValueError('DHCP recovery intent requires inspection')
     finally:
         os.close(fd)
 
@@ -253,6 +255,59 @@ def port_restore_all(catalog,pins):
     for device in catalog.devices:
         if device.kind=='linux':
             port_restore(catalog,pins,device.name)
+
+
+class DockerAddressClient:
+    """Fixed Docker adapter for one DHCP client's single address."""
+    def __init__(self,catalog,pins,target):
+        self.catalog=catalog;self.pins=pins
+        self.device=address_mode.client(catalog,target);self.pin=pins[target]
+    def state(self):
+        check_host_network(self.pins);inspect(self.device,self.pin)
+        current=node(self.device,self.pin,'inspect')
+        if not current.get('network_safe'):raise ValueError('Unsafe client network')
+        server=node(self.catalog.target('dhcp01'),self.pins['dhcp01'],'inspect')
+        running={v['program']:v['state'] for v in server['services']}.get('dhcp')=='RUNNING'
+        return {'addresses':list(current['addresses']),'reserved':reserved_address(self.catalog,self.pins,self.device),'server_running':running}
+    def release(self):
+        inspect(self.device,self.pin)
+        node_request(self.device,self.pin,{'operation':'lease-release'})
+    def acquire(self,address):
+        inspect(self.device,self.pin)
+        node_request(self.device,self.pin,{'operation':'lease-acquire','expected_address':address})
+    def ip_address(self,verb,address):
+        inspect(self.device,self.pin)
+        valid=ipaddress.ip_address(address)
+        if valid not in self.catalog.network:raise ValueError('Address is outside the demo network')
+        run(['docker','exec','--privileged',self.pin['id'],'ip','addr',verb,'%s/%d'%(valid,self.catalog.network.prefixlen),'dev','eth0'])
+    def add_static(self,address):
+        self.ip_address('add',address)
+    def remove_static(self,address):
+        self.ip_address('del',address)
+
+
+def address_mode_show(catalog,pins,target):
+    return address_mode.show(catalog,DockerAddressClient(catalog,pins,target).state())
+
+
+def address_mode_set(catalog,pins,target,mode,address):
+    lab=DockerAddressClient(catalog,pins,target)
+    if mode=='static':
+        occupied=set()
+        for device in catalog.devices:
+            if device.mode=='dhcp' and device.name!=target:
+                occupied.update(DockerAddressClient(catalog,pins,device.name).state()['addresses'])
+        address_mode.to_static(ROOT,catalog,lab,target,address,occupied=occupied)
+    elif mode=='dhcp':
+        address_mode.to_dhcp(ROOT,catalog,lab,target)
+    else:
+        raise ValueError('Invalid address mode')
+
+
+def address_mode_recover(catalog,pins):
+    record=address_mode.read_intent(ROOT,catalog)
+    if record is not None:
+        address_mode.recover(ROOT,catalog,DockerAddressClient(catalog,pins,record['target']))
 
 
 def lifecycle_order(catalog,action):
@@ -559,6 +614,7 @@ def dhcp_lease(catalog,pins,target,action):
 def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__);sub=parser.add_subparsers(dest='command',required=True)
     sub.add_parser('enroll');sub.add_parser('status');sub.add_parser('preflight');sub.add_parser('enroll-vms')
+    mode=sub.add_parser('address-mode');mode.add_argument('mode_action',choices=('show','static','dhcp','recover'));mode.add_argument('mode_rest',nargs='*')
     ports=sub.add_parser('ports');ports.add_argument('ports_action',choices=('list','open','close','restore'));ports.add_argument('rest',nargs='+');sub.add_parser('up');sub.add_parser('down')
     for action in ('host-stop','host-start'):
         p=sub.add_parser(action);p.add_argument('target')
@@ -572,8 +628,13 @@ def main(argv=None):
     try:
         catalog=load_catalog()
         with qa_control.claim():
-            if args.command not in {'status','dhcp-recover','preflight'} and not (args.command=='ports' and args.ports_action=='list'):
+            exempt=args.command in {'status','dhcp-recover','preflight'} or (args.command=='ports' and args.ports_action=='list') or (args.command=='address-mode' and args.mode_action in {'show','recover'})
+            if not exempt:
                 require_no_dhcp_intent(ROOT)
+            if args.command=='dhcp-recover' and address_mode.intent_exists(ROOT):
+                raise ValueError('Address-mode recovery must finish first')
+            if args.command=='address-mode' and args.mode_action=='recover' and os.path.lexists(ROOT/dhcp_journal.NAME):
+                raise ValueError('DHCP recovery must finish first')
             if args.command=='enroll-vms':
                 enroll_vms();print('Pinned the 2 lab VMs on vboxnet1.');return 0
             pins=enroll(catalog) if args.command=='enroll' else read_pins()
@@ -594,6 +655,17 @@ def main(argv=None):
             elif args.command=='dhcp-recover':
                 dhcp_control.recover(ROOT,catalog,DockerDhcpLab(catalog,pins))
                 print('DHCP recovery completed')
+            elif args.command=='address-mode':
+                action,rest=args.mode_action,args.mode_rest
+                if action=='show' and len(rest)==1:
+                    result=address_mode_show(catalog,pins,rest[0]);print(rest[0],result['mode'],result['address'] or '-')
+                elif action=='static' and len(rest)==2:
+                    address_mode_set(catalog,pins,rest[0],'static',rest[1]);print(rest[0],'static',rest[1])
+                elif action=='dhcp' and len(rest)==1:
+                    address_mode_set(catalog,pins,rest[0],'dhcp',None);print(rest[0],'dhcp')
+                elif action=='recover' and not rest:
+                    address_mode_recover(catalog,pins);print('Address-mode recovery completed')
+                else:raise ValueError('Invalid address-mode request')
             elif args.command=='ports':
                 action,rest=args.ports_action,args.rest
                 def number(value):
@@ -630,6 +702,9 @@ def main(argv=None):
     except (OSError,ValueError,KeyError,TypeError,IndexError,json.JSONDecodeError):
         if args.command in {'dhcp-move','dhcp-recover'} and ((ROOT/dhcp_journal.NAME).exists() or (ROOT/dhcp_journal.NAME).is_symlink()):
             print('DHCP move incomplete; run presenter dhcp-recover after resolving the lab issue.',file=sys.stderr)
+            return 1
+        if args.command=='address-mode' and address_mode.intent_exists(ROOT):
+            print('Address change incomplete; run presenter address-mode recover after resolving the lab issue.',file=sys.stderr)
             return 1
         print('Presenter control refused: pilot state or requested operation is unavailable.',file=sys.stderr);return 1
 
