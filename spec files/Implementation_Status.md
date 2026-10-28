@@ -41,6 +41,12 @@ the [manifest and reset report](../docs/test-runs/2026-10-28-issue-274-manifest-
 records Pinpoint's view of all fifteen devices. `check_dns`, `check_ftp`,
 `check_smtp`, `check_snmp` and `check_tcp` were enabled for the demo; the appliance
 has no `check_pgsql`, so `db01` PostgreSQL is monitored by `check_tcp`.
+The delivered pilot against the issue's acceptance gates:
+
+- **Delivered and checked live:** isolated host-Docker lab on `vboxnet1` with fourteen Linux targets and the Windows VM; fifteen devices in one Pinpoint, each with a recorded MAC, IP, listeners and expected plugin (`presenter manifest`); five real DHCP leases; lease move and IP reuse; DHCP to static and back with rollback, outage refusal and interrupted-change recovery; service, host, DHCP-server and extra-port faults with undo; idempotent `reset`; migrated presenter files with the Documents shortcut; read-only `preflight`.
+- **Not met:** a licensed Windows VM (the owner has no license, so Windows 10 Home is used and the licensed-Windows gate is waived, not passed); two full rehearsals (one partial run, see the [rehearsal report](../docs/test-runs/2026-10-28-issue-274-rehearsal-1/REPORT.md), whose memory and swap gate failed); the issue's `demo windows status` and `reset --preview/--apply` commands, and a separate `dhcp leases` view (`status` and `reset` cover them without a preview); the issue's target-host VM architecture and `demo_lab.py` controller, which the owner replaced with laptop Docker and `presenter.py`.
+- **Open product findings:** [#277](https://github.com/esfen14/Pinpoint/issues/277) (no IP history) and [#278](https://github.com/esfen14/Pinpoint/issues/278) (default SNMP interface checks assume interface 3).
+
 The following paragraphs describe earlier preparation and its historical state.
 
 The [defense demo plan](../docs/plans/Defense_Demo_Lab_Plan.md) records the
