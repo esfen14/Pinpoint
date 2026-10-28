@@ -4,7 +4,7 @@ from pathlib import Path
 import sys
 import unittest
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from defense.host_members import validate_vm_membership, collect_vm_inventory
+from defense.host_members import validate_vm_membership, collect_vm_inventory, validate_parent_attachments
 
 class HostMembersTests(unittest.TestCase):
     def setUp(self):
@@ -80,4 +80,23 @@ class HostMembersTests(unittest.TestCase):
                         [dict(self.records[0],adapters='bad'),self.records[1]]]:
             with self.assertRaises(ValueError):validate_vm_membership(records,self.pins)
         with self.assertRaises(ValueError):validate_vm_membership(self.records,{'windows':self.pins['windows']})
+class ParentAttachmentTests(unittest.TestCase):
+    def setUp(self):
+        self.links=[{'ifname':'lo'},{'ifname':'eno1'},{'ifname':'vboxnet1','ifindex':7},{'ifname':'veth1','master':'br-x','link_index':2}]
+        self.networks=[{'Name':'pinpoint274-host-test','Driver':'macvlan','Options':{'parent':'vboxnet1'}},{'Name':'bridge','Driver':'bridge','Options':{}}]
+    def check(self,links=None,networks=None):
+        return validate_parent_attachments(links or self.links,networks or self.networks,'vboxnet1','pinpoint274-host-test')
+    def test_only_the_owned_macvlan_network_may_use_the_parent(self):
+        self.assertTrue(self.check())
+    def test_host_links_enslaved_to_or_stacked_on_the_parent_are_refused(self):
+        for extra in ({'ifname':'tap9','master':'vboxnet1'},{'ifname':'mv9','link':'vboxnet1'},{'ifname':'vlan9','link_index':7}):
+            with self.assertRaises(ValueError):self.check(links=self.links+[extra])
+    def test_foreign_docker_networks_on_the_parent_are_refused(self):
+        for extra in ({'Name':'other','Driver':'macvlan','Options':{'parent':'vboxnet1'}},{'Name':'sub','Driver':'macvlan','Options':{'parent':'vboxnet1.10'}},{'Name':'ipv','Driver':'ipvlan','Options':{'parent':'vboxnet1'}}):
+            with self.assertRaises(ValueError):self.check(networks=self.networks+[extra])
+    def test_missing_parent_or_malformed_observations_are_refused(self):
+        with self.assertRaises(ValueError):self.check(links=[l for l in self.links if l['ifname']!='vboxnet1'])
+        with self.assertRaises(ValueError):self.check(links='bad')
+        with self.assertRaises(ValueError):self.check(networks=self.networks+['bad'])
+        with self.assertRaises(ValueError):self.check(networks=[self.networks[1]])
 if __name__=='__main__':unittest.main()

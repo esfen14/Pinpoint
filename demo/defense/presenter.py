@@ -13,6 +13,7 @@ sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
 from defense.catalog import load_catalog
 from defense import dhcp_control, dhcp_journal
 from defense.host_attach import observe_process
+from defense.host_members import validate_parent_attachments
 import qa_control
 
 ROOT=Path.home()/'.local/share/pinpoint-defense/host-docker'
@@ -190,6 +191,16 @@ def target_order(catalog,action,target=None):
     return [device]
 
 
+def check_parent_attachments():
+    """Refuse host links or Docker networks, other than the owned one, that use vboxnet1."""
+    links=json.loads(run(['ip','-j','-d','link','show']))
+    names=run(['docker','network','ls','-q']).split()
+    networks=[]
+    if names:
+        networks=json.loads(run(['docker','network','inspect',*names]))
+    validate_parent_attachments(links,networks,'vboxnet1','pinpoint274-host-test')
+
+
 def check_host_network(pins):
     """Refuse to operate unless the fixed network is virtual, isolated and owned."""
     parent=Path('/sys/class/net/vboxnet1')
@@ -208,6 +219,7 @@ def check_host_network(pins):
         raise ValueError('Pilot network identity changed')
     if net.get('IPAM',{}).get('Config')!=[{'Subnet':'10.77.1.0/27','Gateway':'10.77.1.30'}]:raise ValueError('Pilot network addressing changed')
     if not set((net.get('Containers') or {}).keys()).issubset({pin['id'] for pin in pins.values()}):raise ValueError('Foreign container joined pilot network')
+    check_parent_attachments()
 
 
 def remove_default_route(pin):

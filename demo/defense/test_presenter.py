@@ -2,6 +2,7 @@
 from pathlib import Path
 import sys
 import tempfile
+import json
 import unittest
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
@@ -209,4 +210,19 @@ class PresenterTests(unittest.TestCase):
             self.assertEqual(baseline.call_args.args[2],'baseline')
             presenter.dhcp_control.move(Path(directory),self.catalog,lab,'dynweb01','10.77.1.25')
             self.assertEqual(fake.addresses['dynweb01'],['10.77.1.25'])
+class ParentAttachmentCheckTests(unittest.TestCase):
+    def observe(self,foreign=False):
+        links=[{'ifname':'vboxnet1','ifindex':7},{'ifname':'eno1','ifindex':2}]
+        networks={'a':{'Name':'pinpoint274-host-test','Driver':'macvlan','Options':{'parent':'vboxnet1'}},
+                  'b':{'Name':'x','Driver':'macvlan','Options':{'parent':'vboxnet1'}} if foreign else {'Name':'x','Driver':'bridge','Options':{}}}
+        def run(argv,**kwargs):
+            if argv[:2]==['ip','-j']:return json.dumps(links)
+            if argv[:3]==['docker','network','ls']:return 'a\nb\n'
+            if argv[:3]==['docker','network','inspect']:return json.dumps([networks[n] for n in argv[3:]])
+            raise AssertionError(argv)
+        return run
+    def test_owned_network_only_is_accepted_and_foreign_network_refused(self):
+        with patch.object(presenter,'run',side_effect=self.observe()):presenter.check_parent_attachments()
+        with patch.object(presenter,'run',side_effect=self.observe(True)):
+            with self.assertRaises(ValueError):presenter.check_parent_attachments()
 if __name__=='__main__':unittest.main()

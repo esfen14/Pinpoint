@@ -123,3 +123,48 @@ def collect_vm_inventory(observe):
     if repeated!=records or identifiers(call(['VBoxManage','list','vms']))!=first:
         raise ValueError('VM configuration changed during observation')
     return records
+
+
+def validate_parent_attachments(links,networks,parent,owned_network):
+    """Refuse host links or Docker networks, other than the owned one, that use the parent.
+
+    Validates supplied `ip -j -d link show` and `docker network inspect`
+    observations only. Macvlan children live in container namespaces, so this
+    does not enumerate them; it covers what the host namespace and Docker can
+    reveal about attachments outside VirtualBox.
+    """
+    if not isinstance(links,list) or not isinstance(networks,list):
+        raise ValueError('Incomplete host network observation')
+    parent_index=None
+    for link in links:
+        if not isinstance(link,dict) or not isinstance(link.get('ifname'),str):
+            raise ValueError('Malformed link observation')
+        if link['ifname']==parent:
+            parent_index=link.get('ifindex')
+    if type(parent_index) is not int:
+        raise ValueError('Host-only parent missing')
+    for link in links:
+        if link['ifname']==parent:
+            continue
+        if link.get('master')==parent or link.get('link')==parent or link.get('link_index')==parent_index:
+            raise ValueError('Foreign link uses the host-only parent')
+    owned=0
+    for network in networks:
+        if not isinstance(network,dict) or not isinstance(network.get('Name'),str):
+            raise ValueError('Malformed Docker network observation')
+        options=network.get('Options') or {}
+        if not isinstance(options,dict):
+            raise ValueError('Malformed Docker network observation')
+        uses_parent=False
+        for key,value in options.items():
+            if key=='parent' and isinstance(value,str) and (value==parent or value.startswith(parent+'.')):
+                uses_parent=True
+        if network['Name']==owned_network:
+            owned+=1
+            if not uses_parent:
+                raise ValueError('Owned network does not use the host-only parent')
+        elif uses_parent:
+            raise ValueError('Foreign Docker network uses the host-only parent')
+    if owned!=1:
+        raise ValueError('Owned network missing')
+    return True
