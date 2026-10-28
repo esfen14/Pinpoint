@@ -15,8 +15,11 @@ class FakeLab:
         self.reservations={d.name:d.address for d in catalog.devices if d.mode=='dhcp'}
         self.addresses={name:[address] for name,address in self.reservations.items()}
         self.pins={name:format(i,'064x') for i,name in enumerate(['dhcp01',*self.reservations],1)}
-        self.fail=None;self.config_calls=0;self.broken=False
+        self.fail=None;self.config_calls=0;self.broken=False;self.restarted=False;self.baseline_calls=0
+    def restore_baseline(self):
+        self.baseline_calls+=1;self.restarted=False
     def snapshot(self):
+        if self.restarted:raise ValueError('Allocator baseline missing after restart')
         return {'pins':dict(self.pins),'reservations':None if self.broken else dict(self.reservations),
                 'addresses':{name:list(addresses) for name,addresses in self.addresses.items()},
                 'lease_seconds':600,'server_running':not self.broken}
@@ -87,6 +90,14 @@ class MoveTests(unittest.TestCase):
         self.assertTrue((self.root/'dhcp-move.json').exists())
         self.lab.configure=original;self.lab.fail=None
         recover(self.root,self.catalog,self.lab)
+        self.assertEqual(self.lab.snapshot(),self.baseline)
+        self.assertFalse((self.root/'dhcp-move.json').exists())
+    def test_recovery_restores_allocator_baseline_after_container_restart(self):
+        self.lab.fail='crash'
+        with self.assertRaises(SimulatedCrash):move(self.root,self.catalog,self.lab,'dynweb01','10.77.1.25')
+        self.lab.restarted=True
+        recover(self.root,self.catalog,self.lab)
+        self.assertEqual(self.lab.baseline_calls,1)
         self.assertEqual(self.lab.snapshot(),self.baseline)
         self.assertFalse((self.root/'dhcp-move.json').exists())
     def test_process_termination_leaves_intent_for_later_recovery(self):

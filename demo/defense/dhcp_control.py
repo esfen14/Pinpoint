@@ -29,6 +29,8 @@ def recover(root,catalog,lab):
     if record['phase'] not in {'rollback_requested','restored'}:
         record=dhcp_journal.advance(root,catalog,'rollback_requested')
     original=record['plan']['before'];after=record['plan']['after'];target=record['plan']['target']
+    # A restarted allocator container comes back without its daemons or safe routes.
+    lab.restore_baseline()
     state=snapshot(lab,record)
     if not isinstance(state['addresses'],dict) or set(state['addresses'])!=set(original):
         raise ValueError('Incomplete client observations')

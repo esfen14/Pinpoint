@@ -198,12 +198,15 @@ class PresenterTests(unittest.TestCase):
             if device.name=='dhcp01':return {'target':'dhcp01','network_safe':True,'addresses':['10.77.1.2']}
             return {'target':device.name,'network_safe':True,'observed_mac':device.mac,'client_id':device.client_id,'addresses':list(fake.addresses[device.name])}
         stat='1 (container) '+' '.join(['0']*19+['123'])
-        with tempfile.TemporaryDirectory() as directory,patch.object(presenter,'ROOT',Path(directory)),patch.object(presenter,'check_host_network'),patch.object(presenter,'inspect',side_effect=inspect),patch.object(presenter,'observe_process'),patch('pathlib.Path.read_text',return_value=stat),patch.object(presenter,'node_request',side_effect=request):
+        with tempfile.TemporaryDirectory() as directory,patch.object(presenter,'ROOT',Path(directory)),patch.object(presenter,'check_host_network'),patch.object(presenter,'inspect',side_effect=inspect),patch.object(presenter,'observe_process'),patch('pathlib.Path.read_text',return_value=stat),patch.object(presenter,'node_request',side_effect=request),patch.object(presenter,'remove_default_route') as route,patch.object(presenter,'node') as baseline:
             lab=presenter.DockerDhcpLab(self.catalog,pins)
             fake.fail='acquire'
             with self.assertRaises(RuntimeError):presenter.dhcp_control.move(Path(directory),self.catalog,lab,'dynweb01','10.77.1.25')
             self.assertEqual(fake.addresses['dynweb01'],['10.77.1.20'])
             self.assertFalse((Path(directory)/'dhcp-move.json').exists())
+            lab.restore_baseline()
+            route.assert_called_with(pins['dhcp01'])
+            self.assertEqual(baseline.call_args.args[2],'baseline')
             presenter.dhcp_control.move(Path(directory),self.catalog,lab,'dynweb01','10.77.1.25')
             self.assertEqual(fake.addresses['dynweb01'],['10.77.1.25'])
 if __name__=='__main__':unittest.main()

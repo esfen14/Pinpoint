@@ -331,6 +331,12 @@ class DockerDhcpLab:
         for name in self.names:self.check(name)
         return {'pins':identities,'reservations':reservations,'addresses':addresses,
                 'lease_seconds':duration,'server_running':running}
+    def restore_baseline(self):
+        """Reapply the fixed allocator baseline that `up` applies after a container restart."""
+        device,pin=self.check('dhcp01')
+        remove_default_route(pin)
+        node(device,pin,'baseline')
+        self.check('dhcp01')
     def release(self,name):
         self.request(name,{'operation':'lease-release'})
     def configure(self,reservations):
