@@ -4,12 +4,14 @@ Callers must hold the canonical lab claim. A phase is a recovery hint only:
 actual container and allocator state must be re-observed before recovery.
 """
 import json
+import copy
 import os
 from pathlib import Path
 import re
 import stat
 
 from defense.dhcp_move import plan_move
+from defense.catalog import render_dnsmasq
 from defense.node import atomic
 from defense.preflight import read_private_json
 
@@ -110,6 +112,49 @@ def rollback_step(catalog,record,observed):
     if not current:
         return 'acquire_original'
     return 'verify_baseline'
+
+
+def collect_saved_observation(catalog,record,identity,client,server):
+    """Cross-check supplied fixed observers twice; never perform mutations.
+
+    The caller must hold the canonical claim and implement identity as a real
+    container/image/process check. Saved allocator settings and Supervisor
+    status do not attest the configuration loaded by the running daemon, and
+    this function does not prove the absence of foreign network attachments.
+    """
+    validate(catalog,record)
+    pins=record['pins']
+    def check(name):
+        if identity(name)!=pins[name]:raise ValueError('Observed container identity changed')
+    def sample():
+        for name in pins:check(name)
+        check('dhcp01')
+        data=server()
+        check('dhcp01')
+        if not isinstance(data,dict) or set(data)!={'target','reservations','lease_seconds','supervisor_state'} or data['target']!='dhcp01':
+            raise ValueError('Incomplete allocator observation')
+        if not isinstance(data['supervisor_state'],str) or data['supervisor_state'] not in {'RUNNING','STOPPED','STARTING','STOPPING','EXITED','FATAL','BACKOFF','UNKNOWN'}:
+            raise ValueError('Invalid allocator state')
+        render_dnsmasq(catalog,data['reservations'],data['lease_seconds'])
+        saved=copy.deepcopy(data)
+        addresses={}
+        for name in sorted(record['plan']['before']):
+            check(name)
+            result=client(name)
+            check(name)
+            device=catalog.target(name)
+            if not isinstance(result,dict) or result.get('target')!=name or result.get('network_safe') is not True or result.get('observed_mac')!=device.mac or result.get('client_id')!=device.client_id:
+                raise ValueError('Unsafe client observation')
+            current=result.get('addresses')
+            if not isinstance(current,list) or len(current)>1 or any(address not in catalog.pool for address in current):
+                raise ValueError('Unsafe client address')
+            addresses[name]=list(current)
+        for name in pins:check(name)
+        return {'reservations':saved['reservations'],'lease_seconds':saved['lease_seconds'],
+                'server_state':saved['supervisor_state'],'addresses':addresses}
+    first=sample()
+    if sample()!=first:raise ValueError('DHCP observation changed')
+    return first
 
 
 def advance(root,catalog,phase):

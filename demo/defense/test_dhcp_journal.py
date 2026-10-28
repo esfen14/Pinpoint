@@ -8,7 +8,7 @@ import unittest
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from defense.catalog import load_catalog
 from defense.dhcp_move import plan_move
-from defense.dhcp_journal import prepare, read, advance, clear, rollback_step
+from defense.dhcp_journal import prepare, read, advance, clear, rollback_step, collect_saved_observation
 
 class DhcpJournalTests(unittest.TestCase):
     def setUp(self):
@@ -78,4 +78,43 @@ class DhcpJournalTests(unittest.TestCase):
             with self.subTest(observed=observed),self.assertRaises(ValueError):rollback_step(self.catalog,record,observed)
         record['phase']='prepared'
         with self.assertRaises(ValueError):rollback_step(self.catalog,record,sample)
+    def test_collection_rechecks_each_pinned_client_and_saved_allocator(self):
+        prepare(self.root,self.catalog,self.plan,self.pins)
+        record=read(self.root,self.catalog)
+        def identity(name):return self.pins[name]
+        def client(name):
+            d=self.catalog.target(name)
+            return {'target':name,'network_safe':True,'observed_mac':d.mac,'client_id':d.client_id,'addresses':[self.before[name]]}
+        def server():return {'target':'dhcp01','reservations':self.before,'lease_seconds':600,'supervisor_state':'RUNNING'}
+        result=collect_saved_observation(self.catalog,record,identity,client,server)
+        self.assertEqual(result['addresses'],{name:[addr] for name,addr in self.before.items()})
+        self.assertEqual(result['server_state'],'RUNNING')
+        self.assertNotIn('server_running',result)
+    def test_collection_rejects_changed_pins_clients_and_allocator(self):
+        prepare(self.root,self.catalog,self.plan,self.pins)
+        record=read(self.root,self.catalog);calls={}
+        def identity(name):
+            calls[name]=calls.get(name,0)+1
+            return 'f'*64 if name=='dynweb01' and calls[name]>1 else self.pins[name]
+        def client(name):
+            d=self.catalog.target(name)
+            return {'target':name,'network_safe':True,'observed_mac':d.mac,'client_id':d.client_id,'addresses':[self.before[name]]}
+        def server():return {'target':'dhcp01','reservations':self.before,'lease_seconds':600,'supervisor_state':'RUNNING'}
+        with self.assertRaises(ValueError):collect_saved_observation(self.catalog,record,identity,client,server)
+        def wrong_client(name):
+            value=client(name)
+            if name=='dynweb01':value['observed_mac']='00:00:00:00:00:00'
+            return value
+        with self.assertRaises(ValueError):collect_saved_observation(self.catalog,record,lambda n:self.pins[n],wrong_client,server)
+        calls.clear()
+        def changing_server():
+            calls['server']=calls.get('server',0)+1
+            return dict(server(),reservations=self.before if calls['server']==1 else self.plan['after'])
+        with self.assertRaises(ValueError):collect_saved_observation(self.catalog,record,lambda n:self.pins[n],client,changing_server)
+        calls.clear()
+        def changing_client(name):
+            value=client(name);calls[name]=calls.get(name,0)+1
+            if name=='dynweb01' and calls[name]>1:value['addresses']=[self.plan['after'][name]]
+            return value
+        with self.assertRaises(ValueError):collect_saved_observation(self.catalog,record,lambda n:self.pins[n],changing_client,server)
 if __name__=='__main__':unittest.main()

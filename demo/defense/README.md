@@ -67,7 +67,12 @@ or establish that recovery succeeded. The node source also provides a
 server-only read operation that compares the saved reservations with the
 generated DHCP configuration and samples Supervisor state twice. It does not
 prove what configuration a running daemon loaded; the pilot image has not yet
-been rebuilt with it. The updated presenter refuses
+been rebuilt with it. An offline collector can compare supplied client,
+container identity and saved allocator observations twice. Its callbacks must
+independently establish real ownership; the node's reported client ID is a
+catalog value, not independent proof of the DHCP client's identity. The
+collector does not prove network membership or loaded allocator configuration.
+The updated presenter refuses
 all modifying commands while any entry named `dhcp-move.json` exists in the
 private host-Docker directory; status remains available. The journal writer and
 presenter must both hold the same lab claim. This guard is not a recovery
