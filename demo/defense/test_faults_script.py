@@ -42,7 +42,8 @@ class FaultScriptTests(unittest.TestCase):
                ('address-mode','show','dynweb01'):['presenter','address-mode','show','dynweb01'],
                ('address-mode','static','dynweb01','10.77.1.15'):['presenter','address-mode','static','dynweb01','10.77.1.15'],
                ('address-mode','dhcp','dynapp01'):['presenter','address-mode','dhcp','dynapp01'],
-               ('address-mode','recover'):['presenter','address-mode','recover']}
+               ('address-mode','recover'):['presenter','address-mode','recover'],
+               ('manifest',):['presenter','manifest'],('reset',):['presenter','reset'],('up-all',):['presenter','up'],('down-all',):['presenter','down']}
         for args,expected in cases.items():
             with self.subTest(args=args):
                 code,called=self.run_script(*args)
@@ -51,7 +52,7 @@ class FaultScriptTests(unittest.TestCase):
         bad=[('down','web01','http'),('down','web03','rm'),('down','web03','http','x'),('down','web03'),('up','win01','host'),
              ('down','web03;id','http'),('dhcp-move','web03','10.77.1.25'),('dhcp-move','dynweb01','10.77.1.25;id'),
              ('dhcp-move','dynweb01','8.8.8.8'),('ports',),('ports','open','web03','ftp','8088'),('ports','open','web03','http','80x'),
-             ('ports','open','win01','http','8088'),('ports','open','web03','http','8088;id'),('ports','close','web03'),('ports','restore','all','x'),('ports','list','all'),('ports','kill','web03'),('address-mode',),('address-mode','static','web03','10.77.1.15'),('address-mode','static','dynweb01','8.8.8.8'),
+             ('ports','open','win01','http','8088'),('ports','open','web03','http','8088;id'),('ports','close','web03'),('ports','restore','all','x'),('ports','list','all'),('ports','kill','web03'),('address-mode',),('manifest','x'),('reset','x'),('up-all','x'),('address-mode','static','web03','10.77.1.15'),('address-mode','static','dynweb01','8.8.8.8'),
              ('address-mode','static','dynweb01','10.77.1.15;id'),('address-mode','static','dynweb01'),('address-mode','dhcp','dynweb01','x'),('address-mode','recover','x'),('address-mode','show'),('address-mode','wipe','dynweb01'),('frobnicate',),('status','x')]
         for args in bad:
             with self.subTest(args=args):

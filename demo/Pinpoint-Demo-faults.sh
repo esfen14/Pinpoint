@@ -9,6 +9,7 @@ demo="$here/demo"
 usage() {
   cat <<'HELP'
 Usage: Pinpoint-Demo-faults.sh status|wall|services TARGET
+       Pinpoint-Demo-faults.sh up-all | down-all | reset | manifest
        Pinpoint-Demo-faults.sh down|up TARGET SERVICE|host
        Pinpoint-Demo-faults.sh dhcp-move DHCP_TARGET 10.77.1.N | dhcp-recover
        Pinpoint-Demo-faults.sh address-mode show|dhcp DHCP_TARGET | static DHCP_TARGET 10.77.1.15-19 | recover
@@ -22,6 +23,8 @@ SERVICE per target (host = stop/start the whole container):
   dynweb01 dynapp01 dynweb02: ssh http   dynmail01: ssh smtp   dynsnmp01: ssh snmp
 
 Examples:
+  Pinpoint-Demo-faults.sh reset                # back to the baseline: addresses, daemons, extra ports (about 90 s)
+  Pinpoint-Demo-faults.sh manifest             # observed MAC, IP, listeners and expected plugins as JSON
   Pinpoint-Demo-faults.sh down web03 http      # one monitored service fails
   Pinpoint-Demo-faults.sh up web03 http        # restore it
   Pinpoint-Demo-faults.sh down dynapp01 host   # stop one container
@@ -151,6 +154,18 @@ case "$action" in
         ;;
       *) fail ;;
     esac
+    ;;
+  manifest|reset)
+    [[ $# -eq 1 ]] || fail
+    presenter "$action"
+    ;;
+  up-all)
+    [[ $# -eq 1 ]] || fail
+    presenter up
+    ;;
+  down-all)
+    [[ $# -eq 1 ]] || fail
+    presenter down
     ;;
   dhcp-recover)
     [[ $# -eq 1 ]] || fail

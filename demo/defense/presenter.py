@@ -310,6 +310,107 @@ def address_mode_recover(catalog,pins):
         address_mode.recover(ROOT,catalog,DockerAddressClient(catalog,pins,record['target']))
 
 
+EPHEMERAL_PORT_START=32768
+# Real daemons that also open a second socket: dnsmasq answers DNS over TCP, snmpd opens SMUX, dhclient binds UDP 68.
+COMPANIONS={'dns01':{('tcp',53)},'snmp02':{('tcp',199)},'dynsnmp01':{('tcp',199)}}
+
+
+def observed_manifest(catalog,pins,vm_pins):
+    """Read-only record of what is actually running: MAC, IP, live listeners, expected plugins."""
+    check_host_network(pins)
+    devices=[];consistent=True
+    for device in catalog.devices:
+        entry={'number':device.number,'name':device.name,'kind':device.kind,'mode':device.mode}
+        if device.kind!='linux':
+            mac=vm_pins['windows']['mac']
+            entry.update(observed=False,mac=mac,mac_matches=mac==device.mac,ip=device.address,
+                         listeners=[{'service':l.service,'protocol':l.protocol,'port':l.port,'plugin':l.plugin,'live':None} for l in device.listeners],
+                         unexpected_listeners=[],companion_listeners=[],plugin_status='expected',
+                         note='Windows VM: IP and listener are not observable by the presenter; the MAC comes from the pinned VM and the rest from Pinpoint')
+            consistent=consistent and entry['mac_matches']
+            devices.append(entry);continue
+        pin=pins[device.name];inspect(device,pin)
+        current=node(device,pin,'inspect')
+        addresses=current.get('addresses') or []
+        ip=addresses[0] if len(addresses)==1 else None
+        observed={(item.get('protocol'),item.get('port')) for item in current.get('listeners',[])}
+        expected={(l.protocol,l.port) for l in device.listeners}
+        listeners=[]
+        for l in device.listeners:
+            listeners.append({'service':l.service,'protocol':l.protocol,'port':l.port,'plugin':l.plugin,'live':(l.protocol,l.port) in observed})
+        companions=set(COMPANIONS.get(device.name,()))
+        if device.mode=='dhcp':
+            companions.add(('udp',68))
+        unexpected=[];companion=[]
+        for protocol,port in sorted(observed-expected,key=lambda item:(item[0],item[1])):
+            if (protocol,port) in companions:
+                companion.append({'protocol':protocol,'port':port})
+            elif port<EPHEMERAL_PORT_START:
+                unexpected.append({'protocol':protocol,'port':port})
+        entry.update(observed=True,mac=current.get('observed_mac'),mac_matches=current.get('observed_mac')==device.mac,ip=ip,
+                     ip_matches=ip==reserved_address(catalog,pins,device),listeners=listeners,companion_listeners=companion,unexpected_listeners=unexpected,plugin_status='expected')
+        consistent=consistent and entry['mac_matches'] and entry['ip_matches'] and all(l['live'] for l in listeners) and not unexpected
+        devices.append(entry)
+    return {'network':str(catalog.network),'appliance_address':catalog.appliance_address,'devices':devices,
+            'vms':{'appliance_mac':vm_pins['appliance']['mac'],'windows_mac':vm_pins['windows']['mac']},'consistent':consistent}
+
+
+def dhcp_intent_present():
+    return os.path.lexists(ROOT/dhcp_journal.NAME)
+
+
+def running(device,pins):
+    try:
+        return bool(inspect(device,pins[device.name])['State']['Running'])
+    except ValueError:
+        return False
+
+
+def static_clients(catalog,pins):
+    names=[]
+    for device in catalog.devices:
+        if device.mode=='dhcp' and running(device,pins) and address_mode_show(catalog,pins,device.name)['mode']=='static':
+            names.append(device.name)
+    return names
+
+
+def misplaced_clients(catalog,pins):
+    moves=[]
+    for device in catalog.devices:
+        if device.mode=='dhcp' and reserved_address(catalog,pins,device)!=device.address:
+            moves.append((device.name,device.address))
+    return moves
+
+
+def verify_baseline(catalog,pins):
+    """Every Linux target runs, holds its catalog address, runs all daemons and has no extra ports."""
+    if dhcp_intent_present() or address_mode.intent_exists(ROOT):
+        raise ValueError('A recovery intent remains')
+    for device in catalog.devices:
+        if device.kind!='linux':continue
+        pin=pins[device.name]
+        if not inspect(device,pin)['State']['Running']:raise ValueError('Target is not running')
+        current=node(device,pin,'inspect')
+        if not current.get('network_safe') or current.get('addresses')!=[device.address]:raise ValueError('Target address is not the baseline')
+        if any(v['state']!='RUNNING' for v in current['services']):raise ValueError('A target daemon is not running')
+        if extra_ports(pin):raise ValueError('Extra ports remain')
+
+
+def reset(catalog,pins):
+    """Idempotently return the lab to its baseline, recovering interrupted changes first."""
+    check_host_network(pins)
+    if dhcp_intent_present():
+        dhcp_control.recover(ROOT,catalog,DockerDhcpLab(catalog,pins))
+    address_mode_recover(catalog,pins)
+    for name in static_clients(catalog,pins):
+        address_mode_set(catalog,pins,name,'dhcp',None)
+    lifecycle(catalog,pins,'up')
+    for name,address in misplaced_clients(catalog,pins):
+        dhcp_control.move(ROOT,catalog,DockerDhcpLab(catalog,pins),name,address)
+    port_restore_all(catalog,pins)
+    verify_baseline(catalog,pins)
+
+
 def lifecycle_order(catalog,action):
     if action not in {'up','down'}:raise ValueError('Unsupported lifecycle action')
     devices=[d for d in catalog.devices if d.kind=='linux']
@@ -613,7 +714,7 @@ def dhcp_lease(catalog,pins,target,action):
 
 def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__);sub=parser.add_subparsers(dest='command',required=True)
-    sub.add_parser('enroll');sub.add_parser('status');sub.add_parser('preflight');sub.add_parser('enroll-vms')
+    sub.add_parser('enroll');sub.add_parser('status');sub.add_parser('preflight');sub.add_parser('enroll-vms');sub.add_parser('manifest');sub.add_parser('reset')
     mode=sub.add_parser('address-mode');mode.add_argument('mode_action',choices=('show','static','dhcp','recover'));mode.add_argument('mode_rest',nargs='*')
     ports=sub.add_parser('ports');ports.add_argument('ports_action',choices=('list','open','close','restore'));ports.add_argument('rest',nargs='+');sub.add_parser('up');sub.add_parser('down')
     for action in ('host-stop','host-start'):
@@ -628,7 +729,7 @@ def main(argv=None):
     try:
         catalog=load_catalog()
         with qa_control.claim():
-            exempt=args.command in {'status','dhcp-recover','preflight'} or (args.command=='ports' and args.ports_action=='list') or (args.command=='address-mode' and args.mode_action in {'show','recover'})
+            exempt=args.command in {'status','dhcp-recover','preflight','manifest','reset'} or (args.command=='ports' and args.ports_action=='list') or (args.command=='address-mode' and args.mode_action in {'show','recover'})
             if not exempt:
                 require_no_dhcp_intent(ROOT)
             if args.command=='dhcp-recover' and address_mode.intent_exists(ROOT):
@@ -655,6 +756,12 @@ def main(argv=None):
             elif args.command=='dhcp-recover':
                 dhcp_control.recover(ROOT,catalog,DockerDhcpLab(catalog,pins))
                 print('DHCP recovery completed')
+            elif args.command=='manifest':
+                result=observed_manifest(catalog,pins,read_vm_pins())
+                print(json.dumps(result,indent=2))
+                if not result['consistent']:return 1
+            elif args.command=='reset':
+                reset(catalog,pins);print('Reset complete: baseline verified')
             elif args.command=='address-mode':
                 action,rest=args.mode_action,args.mode_rest
                 if action=='show' and len(rest)==1:

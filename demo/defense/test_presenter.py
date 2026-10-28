@@ -347,6 +347,79 @@ class AddressModeCommandTests(unittest.TestCase):
             with patch.object(presenter,'ROOT',root),patch.object(presenter,'read_pins',return_value=self.pins),patch.object(presenter,'address_mode_recover') as recover:
                 self.assertEqual(presenter.main(['address-mode','recover']),0)
                 recover.assert_called_once()
+class ManifestAndResetTests(unittest.TestCase):
+    def setUp(self):
+        self.catalog=presenter.load_catalog();self.pins={d.name:{'id':'a'*64,'image':'sha256:'+'b'*64} for d in self.catalog.devices if d.kind=='linux'}
+        self.vm_pins={'appliance':{'uuid':'1'*8+'-1111-4111-8111-'+'1'*12,'slot':2,'mac':'08:00:27:fa:10:0a'},
+                      'windows':{'uuid':'2'*8+'-2222-4222-8222-'+'2'*12,'slot':1,'mac':self.catalog.target('win01').mac}}
+    def node(self,device,pin,operation):
+        listeners=[{'protocol':l.protocol,'port':l.port} for l in device.listeners if l.service!='dhcp']
+        listeners+=[{'protocol':'tcp','port':39173}]
+        if device.name=='dhcp01':listeners.append({'protocol':'udp','port':67})
+        return {'network_safe':True,'observed_mac':device.mac,'addresses':[device.address],'listeners':listeners,'services':[]}
+    def test_observed_manifest_records_mac_ip_listeners_and_plugins_for_every_device(self):
+        with patch.object(presenter,'check_host_network'),patch.object(presenter,'inspect'),patch.object(presenter,'node',side_effect=self.node),patch.object(presenter,'reserved_address',side_effect=lambda c,p,d:d.address):
+            manifest=presenter.observed_manifest(self.catalog,self.pins,self.vm_pins)
+        self.assertEqual([d['name'] for d in manifest['devices']],[d.name for d in self.catalog.devices])
+        web=next(d for d in manifest['devices'] if d['name']=='web03')
+        self.assertEqual((web['observed'],web['mac'],web['ip']),(True,self.catalog.target('web03').mac,'10.77.1.4'))
+        self.assertEqual([(l['service'],l['port'],l['plugin'],l['live']) for l in web['listeners']],[('http',80,'check_http',True),('https',443,'check_http',True)])
+        self.assertEqual(web['unexpected_listeners'],[])
+        windows=next(d for d in manifest['devices'] if d['name']=='win01')
+        self.assertFalse(windows['observed']);self.assertEqual(windows['mac'],self.vm_pins['windows']['mac'])
+        self.assertIn('not observable',windows['note'])
+    def test_companion_listeners_of_real_daemons_are_recorded_not_flagged(self):
+        def node(device,pin,operation):
+            value=self.node(device,pin,operation)
+            if device.name=='dns01':value['listeners'].append({'protocol':'tcp','port':53})
+            if device.name=='snmp02':value['listeners'].append({'protocol':'tcp','port':199})
+            if device.mode=='dhcp':value['listeners'].append({'protocol':'udp','port':68})
+            return value
+        with patch.object(presenter,'check_host_network'),patch.object(presenter,'inspect'),patch.object(presenter,'node',side_effect=node),patch.object(presenter,'reserved_address',side_effect=lambda c,p,d:d.address):
+            manifest=presenter.observed_manifest(self.catalog,self.pins,self.vm_pins)
+        by={d['name']:d for d in manifest['devices']}
+        self.assertEqual(by['dns01']['companion_listeners'],[{'protocol':'tcp','port':53}]);self.assertEqual(by['dns01']['unexpected_listeners'],[])
+        self.assertEqual(by['dynweb01']['companion_listeners'],[{'protocol':'udp','port':68}])
+        self.assertTrue(manifest['consistent'])
+    def test_manifest_reports_missing_wrong_mac_and_unexpected_listeners(self):
+        def node(device,pin,operation):
+            value=self.node(device,pin,operation)
+            if device.name=='web03':value['listeners']=[l for l in value['listeners'] if l['port']!=443]+[{'protocol':'tcp','port':8088}]
+            if device.name=='api02':value['observed_mac']='02:00:00:00:00:99'
+            return value
+        with patch.object(presenter,'check_host_network'),patch.object(presenter,'inspect'),patch.object(presenter,'node',side_effect=node),patch.object(presenter,'reserved_address',side_effect=lambda c,p,d:d.address):
+            manifest=presenter.observed_manifest(self.catalog,self.pins,self.vm_pins)
+        web=next(d for d in manifest['devices'] if d['name']=='web03')
+        self.assertEqual([l['live'] for l in web['listeners']],[True,False]);self.assertEqual(web['unexpected_listeners'],[{'protocol':'tcp','port':8088}])
+        self.assertFalse(next(d for d in manifest['devices'] if d['name']=='api02')['mac_matches'])
+        self.assertFalse(manifest['consistent'])
+    def test_reset_runs_in_order_and_is_idempotent(self):
+        calls=[]
+        def record(name):return lambda *a,**k:calls.append(name)
+        with patch.object(presenter,'check_host_network'),patch.object(presenter,'address_mode_recover',side_effect=record('address-recover')),\
+             patch.object(presenter.dhcp_control,'recover',side_effect=record('dhcp-recover')),patch.object(presenter,'DockerDhcpLab'),\
+             patch.object(presenter,'dhcp_intent_present',return_value=False),patch.object(presenter,'static_clients',return_value=['dynweb01']),\
+             patch.object(presenter,'address_mode_set',side_effect=record('to-dhcp')),patch.object(presenter,'lifecycle',side_effect=record('up')),\
+             patch.object(presenter,'misplaced_clients',return_value=[('dynweb01','10.77.1.20')]),patch.object(presenter.dhcp_control,'move',side_effect=record('move-back')),\
+             patch.object(presenter,'port_restore_all',side_effect=record('ports-restore')),patch.object(presenter,'verify_baseline',side_effect=record('verify')):
+            presenter.reset(self.catalog,self.pins)
+        self.assertEqual(calls,['address-recover','to-dhcp','up','move-back','ports-restore','verify'])
+    def test_reset_refuses_when_the_baseline_check_fails_and_after_a_dhcp_intent_it_recovers_first(self):
+        calls=[]
+        with patch.object(presenter,'check_host_network'),patch.object(presenter,'address_mode_recover'),patch.object(presenter,'DockerDhcpLab'),\
+             patch.object(presenter.dhcp_control,'recover',side_effect=lambda *a:calls.append('dhcp-recover')),patch.object(presenter,'dhcp_intent_present',return_value=True),\
+             patch.object(presenter,'static_clients',return_value=[]),patch.object(presenter,'lifecycle'),patch.object(presenter,'misplaced_clients',return_value=[]),\
+             patch.object(presenter,'port_restore_all'),patch.object(presenter,'verify_baseline',side_effect=ValueError('Baseline not restored')):
+            with self.assertRaises(ValueError):presenter.reset(self.catalog,self.pins)
+        self.assertEqual(calls,['dhcp-recover'])
+    def test_commands_manifest_and_reset_are_dispatched_and_manifest_is_read_only(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);(root/'address-mode.json').write_text('pending')
+            with patch.object(presenter,'ROOT',root),patch.object(presenter,'read_pins',return_value=self.pins),patch.object(presenter,'read_vm_pins',return_value=self.vm_pins),patch.object(presenter,'observed_manifest',return_value={'devices':[],'consistent':True}) as made:
+                self.assertEqual(presenter.main(['manifest']),0);made.assert_called_once()
+            (root/'address-mode.json').unlink()
+            with patch.object(presenter,'ROOT',root),patch.object(presenter,'read_pins',return_value=self.pins),patch.object(presenter,'reset') as done:
+                self.assertEqual(presenter.main(['reset']),0);done.assert_called_once()
 class VmPinTests(unittest.TestCase):
     UUIDS={'appliance':'11111111-1111-4111-8111-111111111111','windows':'22222222-2222-4222-8222-222222222222'}
     def records(self,extra=None):

@@ -4,7 +4,7 @@
 
 ## Before the audience arrives
 
-1. Start the lab: `demo/demo presenter up` (starts all fourteen containers and the five DHCP leases), and make sure the appliance and Windows VMs are running. Then run `demo/demo presenter preflight`: it must print `Preflight OK` (isolated owned network, only the two pinned VMs on `vboxnet1`, no subnet collision, at least 3 GiB RAM and 20 GiB disk free, no swap thrash). A measured down/up of all fourteen containers took 17 s and 70 s with at least 7.3 GiB RAM available throughout.
+1. Start the lab: `Pinpoint-Demo-faults.sh up-all` (starts all fourteen containers and the five DHCP leases; `down-all` stops them). If a previous run left faults behind, `Pinpoint-Demo-faults.sh reset` returns the lab to its baseline (addresses, daemons, extra ports) in about 90 seconds, and make sure the appliance and Windows VMs are running. `Pinpoint-Demo-faults.sh manifest` prints the observed MAC, IP, live listeners and expected plugin of every device. Then run `demo/demo presenter preflight`: it must print `Preflight OK` (isolated owned network, only the two pinned VMs on `vboxnet1`, no subnet collision, at least 3 GiB RAM and 20 GiB disk free, no swap thrash). A measured down/up of all fourteen containers took 17 s and 70 s with at least 7.3 GiB RAM available throughout.
 2. In a second terminal run `Pinpoint-Demo-faults.sh wall` (`Ctrl+C` exits). Confirm every target shows its address and services running, and the five DHCP clients show `.20` to `.24`. Open <http://127.0.0.1:18080> in a signed-out/private window.
 3. **First-login check:** the prepared appliance has already completed bootstrap setup. To show the password-change screen, create a disposable account in **Manage Accounts** with **Require password change at first sign-in**, sign out, and use it. Do not restore an older snapshot during a live demo: it rolls back Pinpoint's database.
 4. Check **Settings → Network Discovery → Networks & Ports**. The range must be `10.77.1.0/27` and the ports must cover the demo (TCP 21, 22, 25, 80, 143, 443, 2223, 5432, 5693, 8080, 8081, 9090 and UDP 53, 161). Save only if missing. Leave `check_ncpa` for the on-stage enable step if you want to show it.
@@ -17,7 +17,7 @@
 | 1. First login | Sign in; if showing the password-change flow, use the disposable account from step 3 above. | Blocking password-change form, then the authenticated UI. |
 | 2. Discovery range | In **Settings → Network Discovery**, show `10.77.1.0/27` and the scan ports. Add it if missing. | The lab range is saved; no real LAN range is selected. |
 | 3. Scan | On **Dashboard**, click **Rescan Network**. Open **Device Inventory** and **Network Status**. | Fifteen devices: `.2` to `.11` (including Windows at `.3`) and the five DHCP clients `.20` to `.24`. If already discovered, say this is a rescan updating the inventory. |
-| 4. NCPA plugin | In **Plugin Manager**, find `check_ncpa` and **Enable** it. | Enabled/Active. |
+| 4. NCPA plugin | In **Plugin Manager**, find `check_ncpa` and **Enable** it. | Enabled/Active. Only the SSH, HTTP and NCPA checks are enabled in the rehearsal lab, so the FTP, DNS, SMTP, IMAP, PostgreSQL and SNMP ports show as discovered-only (Suggested) until their plugins are enabled. |
 | 5. Windows metrics | Show `win01` CPU, memory and disk checks from its registered NCPA agent. Register it with **Register an agent I installed** if it is not already (token private). | Windows metric checks are OK. |
 | 6. Discovered ports | Open `web03` or `api02` → **Ports**. Show the discovered service, the monitoring reason and **Set service…** where offered. | A port attaches only when its plugin is enabled. |
 | 7. One service fails | Run `Pinpoint-Demo-faults.sh down web03 http`. Keep the wall visible. | `web03` HTTP goes DOWN while its HTTPS and container stay UP. After Nagios retries, **Network Status** shows Critical and the Dashboard shows the alert. Acknowledge it if you want to show the workflow. |
@@ -34,6 +34,8 @@
 
 ```bash
 Pinpoint-Demo-faults.sh status
+Pinpoint-Demo-faults.sh reset                # baseline after any fault
+Pinpoint-Demo-faults.sh manifest
 Pinpoint-Demo-faults.sh services web03
 Pinpoint-Demo-faults.sh down web03 http
 Pinpoint-Demo-faults.sh up web03 http

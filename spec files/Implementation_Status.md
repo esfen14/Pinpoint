@@ -35,6 +35,11 @@ fixed in-container helper; restart or `ports restore all` returns the baseline.
 its reserved lease and an unused static slot (`.15` to `.19`) with a private
 intent file, rollback on failure and idempotent recovery; the live matrix covered
 static and DHCP return, an allocator outage and a killed process.
+`presenter manifest` reports the observed MAC, IP, live listeners and expected
+plugin of every device, and `presenter reset` returns the lab to its baseline;
+the [manifest and reset report](../docs/test-runs/2026-10-28-issue-274-manifest-and-reset/REPORT.md)
+records Pinpoint's view of all fifteen devices. Plugins for FTP, DNS, SMTP, IMAP,
+PostgreSQL and SNMP are discovered-only until enabled in Plugin Manager.
 The following paragraphs describe earlier preparation and its historical state.
 
 The [defense demo plan](../docs/plans/Defense_Demo_Lab_Plan.md) records the
