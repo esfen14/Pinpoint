@@ -22,8 +22,11 @@ image was not deployed.
 With both VMs running, host available memory fell to about 1.5 GiB, below the
 plan's 3 GiB reserve; an unrelated `llama` process was using about 11 GiB.
 Windows was shut down normally after the ping test. Pinpoint-Final stayed on,
-and host available memory rose to about 4.5 GiB. The simultaneous lab does not
-pass the resource gate in this host state.
+and host available memory rose to about 4.5 GiB. After the owner freed memory,
+available memory was about 15 GiB. Windows was started again and the subsequent
+sample showed about 12.9 GiB available. From Windows, a fresh ping to the DHCP
+client at `10.77.1.20` received two replies. The memory sample is a point-in-time
+observation, not a full rehearsal or proof that swap pressure will remain low.
 
 ## Routing mistake
 
