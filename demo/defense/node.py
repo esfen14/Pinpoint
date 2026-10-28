@@ -105,7 +105,7 @@ def validate_request(catalog, target: str, data: dict) -> dict:
     operation=data.get('operation')
     shapes={'inspect':{'operation'},'baseline':{'operation'},'peer-ping':{'operation'},
             'server-config':{'operation','reservations','lease_seconds'},
-            'server-stop':{'operation'},'server-start':{'operation'},
+            'server-stop':{'operation'},'server-start':{'operation'},'server-observe':{'operation'},
             'lease-acquire':{'operation','expected_address'},'lease-release':{'operation'}}
     if operation not in shapes or set(data)!=shapes[operation]:
         raise ValueError('Unsupported node operation or fields')
@@ -351,11 +351,60 @@ def server_config(catalog,request) -> None:
     supervisor('start','dhcp')
 
 
+def read_private_config(root):
+    """Read only the bounded, private allocator config without following links."""
+    private_directory(root)
+    info=root.lstat()
+    directory=os.open(root,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
+    try:
+        actual=os.fstat(directory)
+        if (info.st_dev,info.st_ino)!=(actual.st_dev,actual.st_ino):
+            raise ValueError('Allocator directory changed')
+        fd=os.open('dhcp.conf',os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK,dir_fd=directory)
+        try:
+            file_info=os.fstat(fd)
+            if not stat.S_ISREG(file_info.st_mode) or file_info.st_uid!=os.getuid() or file_info.st_nlink!=1 or file_info.st_mode&0o077 or file_info.st_size>65536:
+                raise ValueError('Unsafe allocator configuration')
+            with os.fdopen(fd,'rb') as stream:
+                fd=-1
+                return stream.read(65537)
+        finally:
+            if fd!=-1:os.close(fd)
+    finally:os.close(directory)
+
+
+def observe_server(catalog):
+    """Read consistent saved config and Supervisor state; not running-config proof."""
+    def sample():
+        saved=read_private_json(DATA/'reservations.json')
+        if set(saved)!={'reservations','lease_seconds'}:
+            raise ValueError('Invalid saved allocator settings')
+        expected=(render_dnsmasq(catalog,saved['reservations'],saved['lease_seconds'])+'user=root\ngroup=root\n').encode()
+        config=read_private_config(DATA)
+        if config!=expected:
+            raise ValueError('Saved allocator settings disagree')
+        result=supervisor('status','dhcp',check=False)
+        fields=result.stdout.split()
+        if len(fields)<2 or fields[0]!='dhcp' or fields[1] not in {'RUNNING','STOPPED','STARTING','STOPPING','EXITED','FATAL','BACKOFF','UNKNOWN'}:
+            raise ValueError('Allocator supervisor status unavailable')
+        if fields[1]=='RUNNING' and result.returncode!=0:
+            raise ValueError('Allocator supervisor status is inconsistent')
+        return {'target':'dhcp01','reservations':saved['reservations'],'lease_seconds':saved['lease_seconds'],'supervisor_state':fields[1]}
+    try:
+        first=sample()
+        if sample()!=first:raise ValueError('Allocator observation changed')
+        return first
+    except OSError:
+        raise ValueError('Allocator observation unavailable') from None
+
+
 def handle(catalog,device,request) -> dict:
     """Dispatch the minimal baseline/DHCP spike protocol inside an owned namespace."""
     operation=request['operation']
     if operation=='inspect':return inspection(catalog,device)
     addresses=network(catalog,device,unaddressed=True)
+    if operation=='server-observe':
+        return observe_server(catalog)
     if operation=='peer-ping':
         if not addresses:raise ValueError('Peer ping requires an addressed target')
         result=command(['/bin/ping','-n','-I','eth0','-c','3','-W','2','10.77.1.3'],timeout=8,check=False)

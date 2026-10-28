@@ -94,6 +94,57 @@ class NodeTests(unittest.TestCase):
         validate_request(CATALOG,'dynapp01',{'operation':'lease-acquire','expected_address':'10.77.1.25'})
         with self.assertRaises(ValueError):validate_request(CATALOG,'web03',{'operation':'lease-release'})
 
+    def test_allocator_observation_is_server_only_and_read_only(self):
+        self.assertEqual(validate_request(CATALOG,'dhcp01',{'operation':'server-observe'}),{'operation':'server-observe'})
+        for target,request in [('web03',{'operation':'server-observe'}),('dhcp01',{'operation':'server-observe','extra':'bad'})]:
+            with self.assertRaises(ValueError):validate_request(CATALOG,target,request)
+        from defense.node import handle
+        expected={'target':'dhcp01','reservations':{},'lease_seconds':600,'supervisor_state':'RUNNING'}
+        with patch('defense.node.network',return_value=['10.77.1.2']),patch('defense.node.observe_server',return_value=expected) as observe,patch('defense.node.server_config') as mutate:
+            self.assertEqual(handle(CATALOG,CATALOG.target('dhcp01'),{'operation':'server-observe'}),expected)
+            observe.assert_called_once();mutate.assert_not_called()
+
+    def test_allocator_observation_refuses_torn_or_unsafe_state(self):
+        from defense.node import observe_server
+        from defense.catalog import render_dnsmasq
+        reservations={d.name:d.address for d in CATALOG.devices if d.mode=='dhcp'}
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);saved=root/'reservations.json';config=root/'dhcp.conf'
+            atomic(saved,json.dumps({'reservations':reservations,'lease_seconds':600}))
+            atomic(config,render_dnsmasq(CATALOG,reservations,600)+'user=root\ngroup=root\n')
+            running=type('Result',(),{'stdout':'dhcp RUNNING pid 123, uptime 0:01:00','returncode':0})()
+            with patch('defense.node.DATA',root),patch('defense.node.supervisor',return_value=running):
+                result=observe_server(CATALOG)
+                self.assertEqual(result,{'target':'dhcp01','reservations':reservations,'lease_seconds':600,'supervisor_state':'RUNNING'})
+                atomic(config,'partial')
+                with self.assertRaises(ValueError):observe_server(CATALOG)
+                config.unlink();config.symlink_to(saved)
+                with self.assertRaises(ValueError):observe_server(CATALOG)
+                config.unlink();atomic(config,render_dnsmasq(CATALOG,reservations,600)+'user=root\ngroup=root\n')
+                config.chmod(0o644)
+                with self.assertRaises(ValueError):observe_server(CATALOG)
+
+    def test_allocator_observation_rejects_changes_and_inconsistent_supervisor(self):
+        from defense.node import observe_server
+        from defense.catalog import render_dnsmasq
+        reservations={d.name:d.address for d in CATALOG.devices if d.mode=='dhcp'}
+        moved=dict(reservations,dynweb01='10.77.1.25')
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder)
+            def write_settings(values):
+                atomic(root/'reservations.json',json.dumps({'reservations':values,'lease_seconds':600}))
+                atomic(root/'dhcp.conf',render_dnsmasq(CATALOG,values,600)+'user=root\ngroup=root\n')
+            write_settings(reservations)
+            running=type('Result',(),{'stdout':'dhcp RUNNING pid 123','returncode':0})()
+            def change(*args,**kwargs):
+                write_settings(moved)
+                return running
+            with patch('defense.node.DATA',root),patch('defense.node.supervisor',side_effect=change):
+                with self.assertRaises(ValueError):observe_server(CATALOG)
+            bad=type('Result',(),{'stdout':'dhcp RUNNING pid 123','returncode':1})()
+            with patch('defense.node.DATA',root),patch('defense.node.supervisor',return_value=bad):
+                with self.assertRaises(ValueError):observe_server(CATALOG)
+
     def test_peer_ping_is_fixed_and_cannot_accept_a_user_supplied_destination(self):
         self.assertEqual(validate_request(CATALOG,'web03',{'operation':'peer-ping'}),{'operation':'peer-ping'})
         with self.assertRaises(ValueError):validate_request(CATALOG,'win01',{'operation':'peer-ping'})

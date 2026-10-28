@@ -63,7 +63,11 @@ wired to the presenter. An offline `dhcp_journal.py` component can record privat
 and validates its phase and pinned container IDs. An offline rollback decision
 function selects one step from supplied observations and refuses ambiguous
 client or allocator state; it does not collect observations, execute commands,
-or establish that recovery succeeded. The updated presenter refuses
+or establish that recovery succeeded. The node source also provides a
+server-only read operation that compares the saved reservations with the
+generated DHCP configuration and samples Supervisor state twice. It does not
+prove what configuration a running daemon loaded; the pilot image has not yet
+been rebuilt with it. The updated presenter refuses
 all modifying commands while any entry named `dhcp-move.json` exists in the
 private host-Docker directory; status remains available. The journal writer and
 presenter must both hold the same lab claim. This guard is not a recovery
