@@ -19,6 +19,10 @@ address transitions and appliance acceptance remain unverified. Offline DHCP
 move planning, private recovery-intent validation, and supplied VirtualBox
 membership validation exist, but no presenter address-move or DHCP/static
 execution is delivered. See the [pilot report](../docs/test-runs/2026-10-27-issue-274-host-presenter/REPORT.md).
+The presenter walkthrough, cue card and portable fault script were migrated from
+`~/Documents/Pinpoint-Demo/` into `demo/` (`Pinpoint-Demo-Script.md`,
+`Pinpoint-Defense-Cue-Card.md`, `Pinpoint-Demo-faults.sh`); the Documents files
+are now links to them. The walkthrough has not yet been rehearsed end to end.
 The following paragraphs describe earlier preparation and its historical state.
 
 The [defense demo plan](../docs/plans/Defense_Demo_Lab_Plan.md) records the

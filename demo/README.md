@@ -17,6 +17,12 @@ checks preparation, ownership, subnet/VPN conflicts and startup resources.
 Neither starts containers or implies fifteen devices have been discovered.
 Add `--json` to either command for structured output.
 
+Presenter walkthrough, cue card and fault controls for the defense lab:
+[`Pinpoint-Demo-Script.md`](Pinpoint-Demo-Script.md),
+[`Pinpoint-Defense-Cue-Card.md`](Pinpoint-Defense-Cue-Card.md) and
+`demo/Pinpoint-Demo-faults.sh` (run `help` for targets and services). The old
+five-VM `demo_lab.py` commands below are separate and not used by these files.
+
 Everything is run by hand with [`demo_lab.py`](demo_lab.py) (Python 3.10+,
 `VBoxManage` and `ssh`; no pip packages). Commands that create or delete things
 print a plan and change nothing until you add `--apply`.
