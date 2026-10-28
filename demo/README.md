@@ -19,7 +19,8 @@ Add `--json` to either command for structured output.
 
 Presenter walkthrough, cue card and fault controls for the defense lab:
 [`Pinpoint-Demo-Script.md`](Pinpoint-Demo-Script.md),
-[`Pinpoint-Defense-Cue-Card.md`](Pinpoint-Defense-Cue-Card.md) and
+[`Pinpoint-Defense-Cue-Card.md`](Pinpoint-Defense-Cue-Card.md),
+[`REHEARSAL.md`](REHEARSAL.md) (how to time and record a rehearsal) and
 `demo/Pinpoint-Demo-faults.sh` (run `help` for targets and services). The old
 five-VM `demo_lab.py` commands below are separate and not used by these files.
 
