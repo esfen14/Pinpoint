@@ -49,6 +49,12 @@ A user-initiated Docker daemon restart and presenter recovery also passed;
 Windows pinged all fourteen targets afterward. Host reboot, full Pinpoint
 monitoring, other fault scenarios and migration have not been verified. Keep the Docker network and
 VirtualBox `vboxnet1` in place; up refuses when the expected network is missing.
+Start the appliance or Windows VM before checking the DHCP clients. With both
+VMs off, `vboxnet1` can have no carrier, so the DHCP clients cannot reach the
+allocator and their leases may expire. Once the adapter has carrier again,
+the existing clients can reacquire their reservations. Run demo connectivity
+checks from a VM attached to the demo subnet: the laptop itself may route
+`10.77.1.0/27` through its normal network instead of `vboxnet1`.
 The `up` command restores baseline services, including services intentionally
 stopped by `break`. `host-stop` and `host-start` act on one Linux catalog device;
 starting a DHCP client requires the DHCP server to be running. `dhcp-server`
