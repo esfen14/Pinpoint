@@ -1,0 +1,269 @@
+# Defense target runtime (issue #274, preparation)
+
+For appliance connection and credential locations, see [presenter setup](PRESENTER_SETUP.md).
+The [monitoring checklist](MONITORING_CHECKLIST.md) describes the remaining live demo checks.
+
+## Current laptop Docker pilot: presenter controls
+
+A persistent checkout is available at
+`~/.local/share/pinpoint-defense/host-presenter-checkout`; unlike the development
+worktree under `/tmp`, it can remain available after a reboot. From that checkout
+(or the current issue worktree), use the existing, privately pinned pilot
+containers:
+
+```bash
+cd "$HOME/.local/share/pinpoint-defense/host-presenter-checkout"
+```
+
+The persistent checkout is a detached copy of a recorded checkpoint and is not
+a self-updating branch. Update it only to an inspected newer checkpoint while
+its working tree is clean.
+
+```bash
+./demo/demo presenter status
+./demo/demo presenter break web03 http
+./demo/demo presenter fix web03 http
+./demo/demo presenter down
+./demo/demo presenter up
+./demo/demo presenter host-stop dynweb02
+./demo/demo presenter host-start dynweb02
+./demo/demo presenter dhcp-server stop
+./demo/demo presenter dhcp-server start
+./demo/demo presenter dhcp-lease release dynweb02
+./demo/demo presenter dhcp-lease acquire dynweb02
+./demo/demo presenter dhcp-move dynweb01 10.77.1.25
+./demo/demo presenter dhcp-move dynweb01 10.77.1.20
+```
+
+`status` reports locally observed service states and addresses. `break` and
+`fix` accept catalog Linux targets and their preset services. Web03 HTTP and
+HTTPS share nginx and stop or start together. DHCP is excluded from these
+service-fault commands. `down` stops only the fourteen pinned Linux containers;
+`up` starts those existing containers, restores baseline services, reconnects
+the five unnumbered DHCP interfaces and reacquires their reserved addresses.
+Neither command starts or stops Windows or the Pinpoint appliance. The initial
+`enroll` operation pins the current pilot containers once; it has already run on
+this laptop. The controls refuse changed container identities or the wrong
+host-only network. They do not create missing containers or migrate old VM data.
+
+A live down/up cycle and ping from Windows to all fourteen passed on 2026-10-27.
+A user-initiated Docker daemon restart and presenter recovery also passed;
+Windows pinged all fourteen targets afterward. Host reboot, full Pinpoint
+monitoring, other fault scenarios and migration have not been verified. Keep the Docker network and
+VirtualBox `vboxnet1` in place; up refuses when the expected network is missing.
+Start the appliance or Windows VM before checking the DHCP clients. With both
+VMs off, `vboxnet1` can have no carrier, so the DHCP clients cannot reach the
+allocator and their leases may expire. Once the adapter has carrier again,
+the existing clients can reacquire their reservations. Run demo connectivity
+checks from a VM attached to the demo subnet: the laptop itself may route
+`10.77.1.0/27` through its normal network instead of `vboxnet1`.
+The `up` command restores baseline services, including services intentionally
+stopped by `break`. `host-stop` and `host-start` act on one Linux catalog device;
+starting a DHCP client requires the DHCP server to be running. `dhcp-server`
+stops or starts the allocator with its saved reservations; existing leases may
+remain active while it is stopped. `dhcp-lease` releases or reacquires the
+specified DHCP client's currently saved reservation. After a fault demonstration,
+start the DHCP server and reacquire any released leases. These commands do not
+implement DHCP-to-static transitions. The current laptop pilot has
+`presenter dhcp-move TARGET ADDRESS` and `presenter dhcp-recover`, with a
+journaled release, reconfiguration, acquisition and rollback. The address must
+be an unused address in the DHCP pool. On 2026-10-28, `dynweb01` moved from
+`.20` to `.25` and back; a second move interrupted after the allocator change
+restored `.20` automatically. Windows ping confirmed the moved and restored
+addresses. Product history association and other interruption scenarios are
+not yet verified. If an incomplete move leaves a recovery intent, resolve the
+reported lab issue and run `presenter dhcp-recover`; other modifying presenter
+commands refuse to run while that intent remains.
+
+The updated DHCP containers use `pinpoint-defense-host274:dhcp-move-prepared`.
+The original six containers are retained stopped as `*-before-dhcp-upgrade`,
+with their old pins and a recovery tool in the private host-Docker directory.
+Do not remove those backups until the deployment has been fully accepted.
+An offline `dhcp_journal.py` component can record private recovery intent
+and validates its phase and pinned container IDs. An offline rollback decision
+function selects one step from supplied observations and refuses ambiguous
+client or allocator state; it does not collect observations, execute commands,
+or establish that recovery succeeded. The node source also provides a
+server-only read operation that compares the saved reservations with the
+generated DHCP configuration and samples Supervisor state twice. It does not
+by itself prove what configuration a running daemon loaded. An offline collector can compare supplied client,
+container identity and saved allocator observations twice. Its callbacks must
+independently establish real ownership; the node's reported client ID is a
+catalog value, not independent proof of the DHCP client's identity. The
+collector does not prove network membership or loaded allocator configuration.
+The updated presenter refuses
+all modifying commands while any entry named `dhcp-move.json` exists in the
+private host-Docker directory; status remains available. The journal writer and
+presenter must both hold the same lab claim. This guard is not a recovery
+command, and older presenter checkouts do not have it. The offline `host_members.py`
+validator checks VirtualBox observations against two pinned VMs. Its fixed
+read-only collector rechecks the VM list and adapter details, but does not
+account for other network namespaces. Foreign-device checks and a live move
+and rollback test remain required before the new commands are demo-ready.
+
+## Earlier target-host design and historical results
+
+This directory is the in-progress guest runtime for the dedicated VirtualBox
+Linux target host. The two-target DHCP exchange and all fourteen Linux
+containers, baseline services, and five DHCP leases have been prepared. The
+ping-only reachability pass from the Windows VM received a reply only from
+Windows itself; all fourteen Linux target pings timed out. Appliance discovery
+and product integration remain pending.
+The existing `lab/compose.yaml` is a separate five-target Docker lab.
+
+`compose.yaml` is a generated review artifact containing fourteen Linux targets.
+Windows remains a separate VM. The managed guest will render the same document
+with a pinned image ID and its private ownership marker. Each container starts
+with Docker networking disabled and no published ports. Persistent identity and
+data directories must already exist; Compose must not create or adopt them.
+Only the DHCP server and clients receive `NET_ADMIN`.
+
+The Docker build uses the repository root as its context and
+`demo/defense/Dockerfile` as its file. Its adjacent `Dockerfile.dockerignore`
+limits the context to runtime Python files and the manifest, independently of
+the existing root ignore file. Build and run belong inside the target-host VM;
+do not run this Compose file against the laptop's Docker daemon.
+
+`node.py` initializes persistent machine/SSH identities and fixed configurations
+for real SSH, HTTP/TLS, FTP, SMTP, IMAP, DNS, SNMP, PostgreSQL and DHCP daemons.
+Supervisor owns the processes, with automatic listener startup disabled until
+explicit baseline controls. The JSON command vocabulary currently covers
+inspection, baseline service startup and DHCP server/client operations. It does
+not yet provide listener changes, host lifecycle or DHCP/static transactions.
+SNMP configuration is supplied through a private file; no community value is
+passed in daemon arguments or committed here.
+
+`guest.py` checks the VirtualBox UUID, private root-owned context, unnumbered
+parent MAC, disabled forwarding, exact container ownership, pinned image,
+command, capabilities and bind mounts before attaching an explicit macvlan.
+`spike-up` is limited to `dhcp01` and `dynweb01`; that pair has exchanged a real
+DHCP offer/lease on the isolated guest network. `lab-up` starts and attaches all
+fourteen Linux targets after memory/disk checks; fixed node operations start
+the catalog daemons and five reserved DHCP clients separately. Both paths refuse
+conflicting links rather than deleting them. An interrupted attachment requires
+inspection; automatic cleanup/recovery is not delivered yet. Windows pinged its
+own address, but no Linux target replied. A trial `allow-all` setting on the
+target VM NIC did not improve ping and was reverted to `allow-vms`.
+
+The host-facing `demo/demo` still exposes only read-only `manifest` and
+`preflight`. `provision.py` separately previews or prepares a fresh Ubuntu Server 24.04 VM
+and private unattended media. It injects a generated ed25519 SSH host key before
+the first managed connection. It never boots, clones or deletes a VM. An existing
+preparation requires inspection and explicit resumption of its saved UUID; it is
+never recreated. The build runs as a one-use guest systemd service after a real
+boot, leaves all containers stopped, then disables forwarding. Installer execution,
+pinned SSH verification, Compose lifecycle and an end-to-end spike runner remain
+pending.
+
+Preview only (no VM or file creation):
+
+```bash
+python3 -I demo/defense/provision.py --iso /absolute/path/to/ubuntu-server.iso
+```
+
+The issue owner authorized preparing the new VM. `--apply` creates only the new
+VM and private installation media, after repeating ownership, route, port and
+resource gates. Passwords and private keys enter through private files/stdin,
+never command arguments. Setup artifacts contain credentials and must remain
+outside Git in the private controller store. Installation completion must include
+media cleanup. The management account has no Docker group or unrestricted sudo;
+only the fixed guest helper is permitted through sudo.
+
+VirtualBox may report `NS_ERROR_NOT_IMPLEMENTED` while identifying supported
+Ubuntu media. The detector accepts only the exact diagnostic plus a complete
+supported Ubuntu Server 24.04 report, consistent with
+[upstream detection/preparation behavior](https://github.com/VirtualBox/virtualbox/blob/main/src/VBox/Main/src-server/UnattendedImpl.cpp).
+Other errors remain fatal. These files neither authorize a product
+scan nor establish live protocol, memory or isolation acceptance.
+
+Offline checks (no Docker/VM changes):
+
+```bash
+python3 -I demo/defense/test_defense.py
+python3 -I demo/defense/test_runtime.py
+python3 -I demo/defense/test_guest.py
+python3 -I demo/defense/test_provision.py
+scripts/verify.sh docs
+```
+
+A preparation stopped in `created` may resume only media generation with
+`--resume-media` (preview) and `--resume-media --apply`. This checks the saved
+UUID/owner/MACs, powered-off process/endpoint boundary, exact disk and empty DVD;
+it never recreates storage. `media-ready` means installation has not started.
+
+`--start-install` previews the first boot; `--start-install --apply` boots only
+the saved `media-ready` VM after rechecking the exact disk/media/NIC/owner,
+processes, isolated segment, KVM release and one-VM resource budget. Other VMs
+must be powered off. A start failure becomes `start-needs-inspection`; retries
+never recreate the VM or silently reset installation state. Ubuntu powers off
+at installation completion; disk-only boot and private-media cleanup still need
+to precede normal use. This boot gate is separate from the stricter full-lab
+startup capacity gate.
+
+Guest UUID checks account for the two SMBIOS UUID byte orders controlled by
+VirtualBox's documented
+[`--system-uuid-le` setting](https://docs.oracle.com/en/virtualization/virtualbox/7.2/user/vboxmanage.html).
+They accept only the pinned VM UUID or its exact field-byte conversion; malformed
+or foreign UUIDs still fail. Service enable/disable operations in the installer
+use `SYSTEMD_OFFLINE=1`; starting the image build belongs to the installed OS.
+
+`--boot-installed` (preview) / `--boot-installed --apply` performs only the first
+disk-only verification boot after the saved installation phase and a confirmed
+powered-off VM. It detaches the private DVD and repeats the one-VM capacity,
+ownership and endpoint gates. A successful start is labelled
+`installed-boot-unverified` until actual pinned SSH and guest observations pass.
+
+The first actual installation required console recovery for UUID byte order,
+offline systemd, an interactive package notice and cloud-init key rotation.
+Original pinned SSH is now verified. Docker re-enables IPv4 forwarding on later
+boots; the helper refuses attachment, and durable forwarding plus remaining
+`lxd` group cleanup must precede target activation. See the
+[installation report](../../docs/test-runs/2026-10-27-issue-274-linux-target-host-install/REPORT.md).
+No fully repeatable installation or live target workflow is claimed yet.
+
+Offline hardening now defines a Docker `ip-forward: false` configuration and an
+every-start guard that resets/verifies both forwarding families. A separate
+ready service repeats group/sudo cleanup after cloud-init, and attachment checks
+effective management privileges. Image builds temporarily allow NAT only while
+the exact unnumbered demo NIC is down; normal cancellation resets forwarding and
+failures leave the NIC down. This is not yet applied/retested on the installed
+VM. Docker configuration behavior follows the
+[daemon reference](https://github.com/docker/cli/blob/master/docs/reference/dockerd.md).
+
+The private guest helper has `spike-up`, `lab-up`, `inspect TARGET`,
+`node TARGET` (JSON stdin), and `stop TARGET`. Spike startup checks every
+existing container and the exact private Compose document, then creates only
+network-none containers and attaches their macvlans. `lab-up` extends that
+guarded lifecycle to the fourteen catalog Linux devices after guest resource
+checks. The live run started the catalog daemons and acquired five reserved
+DHCP leases. The ping-only Windows-to-target pass reached only Windows itself;
+all Linux target addresses timed out. The target VM NIC retains the planned
+`allow-vms` policy after a trial `allow-all` setting made no difference. The
+two-target DHCP exchange is live-verified; appliance discovery and product
+connectivity remain pending. A fixed `peer-ping` operation now sends three
+bounded ICMP requests from an addressed Linux target to Windows at
+`10.77.1.3`; it takes no caller-supplied destination and reports only the
+reachability result. `reset-lab` validates the catalog containers, stops them
+before removing only the containers, retains all bind-mounted identities,
+device data and DHCP lease files, and rebuilds the pinned image. Use it to
+refresh the helper source before the next ping-only reachability pass. Guest
+operations are not yet wired to the presenter CLI.
+
+Every boot checks the runtime source fingerprint and pinned image/source label;
+changed code rebuilds only when no containers exist, preserving identity/data
+and SNMP settings. A stale prepared marker cannot authorize execution. Container
+validation permits only metadata inherited from that exact image, required
+project/target ownership and Compose metadata; entrypoint/device overrides fail.
+The demo NIC has a MAC-matched networkd configuration with manual activation,
+no DHCP/link-local/RA addresses or forwarding; the controller raises it only
+after safety gates. This follows the
+[networkd activation policy](https://www.freedesktop.org/software/systemd/man/250/systemd.network.html).
+
+`provision.py --maintenance-boot` previews a stock-ISO repair of the saved
+installed VM; `--apply` requires fresh host gates and KVM release. It verifies
+snapshot-disk ancestry back to the original private VDI, refuses attached setup
+media, and never invokes unattended installation or creates/replaces a disk.
+The private guest helper also has read-only `host-status` safety flags and a
+fixed `verify-restart` preparation probe; the latter refuses every container
+object before restarting only Docker and rechecking the boundary. Neither
+operation is a product scan or an authorization for target DHCP activation.

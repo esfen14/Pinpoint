@@ -5,6 +5,89 @@
 This file reports what is present in the repository. It is not a substitute for
 the normative behavior in the requirement specifications.
 
+## Defense demo preparation (#274)
+
+The owner subsequently chose laptop Docker with an isolated VirtualBox host-only
+network. The current presenter pilot supports `demo/demo presenter status`,
+`up`, `down`, individual host controls, DHCP server and reserved-lease controls,
+and allowlisted service `break`/`fix`. A live stop/start and
+Windows ping to all fourteen Linux targets passed; DHCP leases reacquired.
+Individual static and DHCP container restarts and service listener stop/restore
+were also tested. User-initiated Docker daemon restart and presenter recovery
+passed with Windows ping to all fourteen. Host reboot, original data migration,
+address transitions and appliance acceptance remain unverified. Offline DHCP
+move planning, private recovery-intent validation, and supplied VirtualBox
+membership validation exist, but no presenter address-move or DHCP/static
+execution is delivered. See the [pilot report](../docs/test-runs/2026-10-27-issue-274-host-presenter/REPORT.md).
+The presenter walkthrough, cue card and portable fault script were migrated from
+`~/Documents/Pinpoint-Demo/` into `demo/` (`Pinpoint-Demo-Script.md`,
+`Pinpoint-Defense-Cue-Card.md`, `Pinpoint-Demo-faults.sh`); the Documents files
+are now links to them. The walkthrough has not yet been rehearsed end to end.
+`demo/demo presenter preflight` is a read-only gate for the pilot: owned isolated
+network, only the two pinned VMs and no foreign link or Docker network on
+`vboxnet1`, no subnet collision, at least 3 GiB RAM and 20 GiB disk free, and no
+swap thrash (`enroll-vms` pins the VMs once). It does not read Pinpoint's
+configured scan range or capture physical-interface traffic.
+`presenter ports list|open|close|restore` open checked extra HTTP/TCP ports
+(1024-65535, not reserved, baseline or in use, at most four per target) through a
+fixed in-container helper; restart or `ports restore all` returns the baseline.
+`presenter address-mode show|static|dhcp|recover` switches one DHCP client between
+its reserved lease and an unused static slot (`.15` to `.19`) with a private
+intent file, rollback on failure and idempotent recovery; the live matrix covered
+static and DHCP return, an allocator outage and a killed process.
+`presenter manifest` reports the observed MAC, IP, live listeners and expected
+plugin of every device, and `presenter reset` returns the lab to its baseline;
+the [manifest and reset report](../docs/test-runs/2026-10-28-issue-274-manifest-and-reset/REPORT.md)
+records Pinpoint's view of all fifteen devices. `check_dns`, `check_ftp`,
+`check_smtp`, `check_snmp` and `check_tcp` were enabled for the demo; the appliance
+has no `check_pgsql`, so `db01` PostgreSQL is monitored by `check_tcp`.
+The delivered pilot against the issue's acceptance gates:
+
+- **Delivered and checked live:** isolated host-Docker lab on `vboxnet1` with fourteen Linux targets and the Windows VM; fifteen devices in one Pinpoint, each with a recorded MAC, IP, listeners and expected plugin (`presenter manifest`); five real DHCP leases; lease move and IP reuse; DHCP to static and back with rollback, outage refusal and interrupted-change recovery; service, host, DHCP-server and extra-port faults with undo; idempotent `reset`; migrated presenter files with the Documents shortcut; read-only `preflight`.
+- **Not met:** a licensed Windows VM (the owner has no license, so Windows 10 Home is used and the licensed-Windows gate is waived, not passed); two full rehearsals (one partial run, see the [rehearsal report](../docs/test-runs/2026-10-28-issue-274-rehearsal-1/REPORT.md), whose memory and swap gate failed); the issue's `demo windows status` and `reset --preview/--apply` commands, and a separate `dhcp leases` view (`status` and `reset` cover them without a preview); the issue's target-host VM architecture and `demo_lab.py` controller, which the owner replaced with laptop Docker and `presenter.py`.
+- **Open product findings:** [#277](https://github.com/esfen14/Pinpoint/issues/277) (no IP history) and [#278](https://github.com/esfen14/Pinpoint/issues/278) (default SNMP interface checks assume interface 3).
+
+The following paragraphs describe earlier preparation and its historical state.
+
+The [defense demo plan](../docs/plans/Defense_Demo_Lab_Plan.md) records the
+existing VM/snapshot inventory, proposed isolated target-host architecture,
+recovery procedure and command injection/secret-exposure review boundaries.
+The [read-only inventory report](../docs/test-runs/2026-10-27-issue-274-defense-inventory/REPORT.md)
+does not establish a delivered lab: the new controller, fifteen-device catalog,
+five-client DHCP/address-mode story and two rehearsals remain unimplemented and
+unverified. After the owner's continuation, the initial `demo/demo manifest`
+and read-only `preflight` commands validate the versioned fifteen-device catalog,
+reserved inputs, private state, subnet/VPN overlap, VM ownership/NAT sockets and
+resource planning. Negative contracts run offline in the docs gate. The initial
+[guest runtime](../demo/defense/README.md) now defines fourteen network-none
+Linux services, persistent identities, real daemon configurations, fixed
+DHCP controls and a checked two-target macvlan attachment helper. The initial
+image build completed inside a fresh Ubuntu target host, but container daemon
+execution remains untested. The [installation report](../docs/test-runs/2026-10-27-issue-274-linux-target-host-install/REPORT.md)
+records console recovery and verified original pinned SSH. Docker re-enables
+IPv4 forwarding on reboot; attachment refuses it. Durable forwarding and remaining
+management-group cleanup block live target activation. Offline regression-tested
+Docker-start/boot guards, post-cloud-init account hardening and build-only
+forwarding with the demo parent down now exist; their VM application and restart
+proof remain pending. The offline two-target helper now validates image/source
+provenance, inherited image metadata and the exact private Compose document
+before creation/attachment, with fixed node JSON and selected-target stop
+operations. A manual parent-link policy and changed-source image rebuild are
+implemented; these controls still need live maintenance and spike verification. Fresh-VM installer preparation
+now includes private unattended inputs and a pre-injected SSH host key, with a
+separate first-boot image build. Reproducible first-boot setup, lifecycle, actual
+guest networking and the architecture spike remain pending; no new product scan
+scope is authorized by this scaffolding.
+The owner selected Windows 10 Home for testing without a purchased license.
+A [prepared Windows device](../demo/WINDOWS_READY.md) now has build 19045 and
+NCPA 3.5.0, with observed local CPU/memory metrics, the Windows `C:|` disk node,
+a healthy process check and service startup before desktop sign-in. The
+[installation report](../docs/test-runs/2026-10-27-issue-274-windows-home-install/REPORT.md)
+records its powered-off baseline and remaining limits. Activation/licensed-Windows
+acceptance, appliance registration, UI metrics and the final catalog/rehearsals
+remain pending. Existing supported lab commands and approved scan ranges remain
+as documented below.
+
 ## Isolated DHCP acceptance lab (#187)
 
 The opt-in Docker lab in `lab/dhcp/` supplies real IPv4 DHCP on an isolated
@@ -259,7 +342,7 @@ The user's appliance, installer deployment and scale remain unverified.
 | Device Inventory beyond ports | The Ports section of the device drawer exists (state, reason, monitor, ignore, stop, leave suggested, resume, acknowledge, set service, remove pin). The host table shows a monitoring label (Monitored, Missing, Address unknown, Paused, Retired, Merged) with a filter that opens on Monitored, and the drawer pauses and resumes a device (`Include_Device_In_Scanning` now has a writer). A paused, retired or merged device is left out of the dashboard and Network Health counts and alerts. Identity review and merging now have an independent Needs Review table and linked device notice, comparison evidence, address history on demand, discovered-record lookup and confirmation (#164). Isolated interaction/backend regressions and [Docker real-Nagios/browser acceptance](../docs/test-runs/2026-10-15-issue-164-final-refresh/REPORT.md) pass, including the linked notice, both themes, keyboard focus, source outside Monitored and a saved merge with a configuration warning. Still API-only: `SERVICE_CHANGED` review resolution, retire and static/DHCP marking; standalone device confidence badges are not implemented | Follow-ups in `docs/plans/Device_Ports_UI_Plan.md` §10 and `docs/plans/DHCP_Device_Identity_Plan.md` §11 |
 | Acknowledgement filter on host and service tables | The Dashboard Active Alerts feed and History → Alerts have an acknowledgement filter. The Device Inventory host table and the Network Status service table do not show one in the UI, although `GET` host and service list routes accept `ack_filter` and `Display_Requirements.md` §2 asks for it (found while working #239; not yet filed as separate issues) | Add the control to both tables or amend the requirement; retest TC-ACK-06 on each page |
 | NCPA port per device | Installed `NCPADeployment.Port` is recorded and used by checks, probes, relocation and port protection, with a global fallback. The reversible migration backfills existing deployed rows. Isolated tests pass; actual main Nagios monitoring, authenticated probes and certificate relocation on port 5703 pass in [the finish-journeys report](../docs/test-runs/2026-10-15-issue-129-finish-journeys/REPORT.md). | No re-port UI; change deployed agents through the documented deployment workflow. |
-| Manual NCPA registration (#130) | `POST .../ncpa/<id>/register` and the **Register agent** dialog with Windows install help are implemented with isolated backend and frontend tests. | Not done: probing a lab Windows host for valid disk/process node names (the issue's open scope decision), Windows-specific metric defaults the lab report in `docs/test-runs/`, and checking the help wording on the lab host |
+| Manual NCPA registration (#130) | `POST .../ncpa/<id>/register` and the **Register agent** dialog with Windows install help are implemented with isolated backend and frontend tests. The [#274 local Windows preparation](../docs/test-runs/2026-10-27-issue-274-windows-home-install/REPORT.md) observes `disk/logical/C:\|/used_percent` and `processes?name=ncpa.exe` on Windows 10 Home/NCPA 3.5.0. | Still pending: actual Windows registration through Pinpoint, Windows-specific metric defaults/monitoring and checking help wording on the lab host. Local agent API proof does not establish those product results. |
 | NCPA deployment cleanup | The permission-protected failed-only cleanup endpoint and dialog remove bootstrap artifacts, optionally the account, recheck the SSH fingerprint and report each step. Isolated backend/frontend tests pass. | Verify deliberately failed install and cleanup on a lab target. |
 | SERVICE_CHANGED auto-clear | A `SERVICE_CHANGED` review item stays open after the mismatch disappears (seen when a port rule was removed); only an operator resolves it | Resolve the item automatically when the port again matches its frozen plugin |
 | Per-device plugin variables and SNMP v3 (#127) | `GET/PUT/DELETE /api/system/hosts/<id>/plugin-variables/<plugin>` and a Test route; SNMP version 1/2c/3 and v3 credentials in a drawer SNMP section; v3 passphrases encrypted, written to resource slots and given to `check_snmp` on stdin. Backend and frontend tests pass (mocked Nagios and `check_snmp`). | **Not run against a live Nagios or a real `snmpd` v3 device**, and the Nagios-validated apply, the `--extra-opts` support of the installed `check_snmp`, and a lab report in `docs/test-runs/` are still to do. `check_snmp` hands the passphrases to its `snmpget` helper in argv, so they are briefly visible in the process list during a check (Engineering Standards secret rule not met for this plugin). SNMP interface discovery (`snmpwalk -v2c`) does not support v3 devices. The other plugins' variables can be set through the API; besides SNMP only the web and mail options have a form (#131). Next: a lab run with an `snmpd` v3 authPriv device, and a decision on replacing `check_snmp` for v3 with a client that reads credentials from a protected file |

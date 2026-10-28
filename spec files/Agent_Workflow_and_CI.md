@@ -134,6 +134,43 @@ Where results go is defined in [`docs/test-runs/README.md`](../docs/test-runs/RE
 | Isolated DHCP acceptance | Docker with `CAP_NET_ADMIN` in a dedicated switch namespace | Opt-in `scripts/dhcp-lab` controls and `scripts/dhcp-accept`; see the [Local Lab manual](../docs/manuals/Local_Lab.md#isolated-dhcp-lab) and [acceptance plan](../server/tests/plans/DHCP_LAB_ACCEPTANCE.md). Real `dnsmasq` and `dhclient`, limited to approved `10.79.0.0/28`; never run in CI or on a physical/VPN subnet |
 | Real appliance and VM lab | Installer build, VirtualBox (this laptop) or libvirt (the retained lab) | `scripts/vmlab` with the `demo/` target VMs; plan in [`docs/plans/VM_Lab_Plan.md`](../docs/plans/VM_Lab_Plan.md). The snapshot holds Ubuntu + Nagios only, so it cannot go stale. The libvirt e2e harness in `server/tests/e2e/network_discovery/` is separate. Manual or scheduled, never on pull requests from forks |
 
+Issue #274's [defense demo plan](../docs/plans/Defense_Demo_Lab_Plan.md)
+now uses a laptop Docker pilot on a VirtualBox host-only network with an
+owner-supplied Windows VM. `demo/demo presenter` controls the existing pinned
+pilot containers; see the [pilot instructions](../demo/defense/README.md).
+The following text records the earlier dedicated target-host preparation. Its proposed network/controller is not yet a
+supported test environment or an approved additional scan scope. The existing
+VM ownership and command-path review rules apply before implementation.
+The versioned `demo/defense/manifest.json` lists the intended fifteen targets;
+`demo/demo manifest` reports expectations with no live verification claim.
+`demo/demo preflight` is read-only and checks host/Docker/configured VPN ranges,
+private VM pins, the VM/process/NAT boundary, available memory/disk planning
+and KVM availability. It refuses incomplete preparation. No lifecycle command
+or new scan authorization is delivered by these initial read-only commands.
+The [guest runtime preparation](../demo/defense/README.md) includes a generated
+fourteen-target network-none Compose artifact, an image definition, fixed real
+daemon controls and a root guest macvlan helper restricted to the two-target
+architecture spike. Exact image/identity/mount/capability checks precede
+attachment. A separate preview-first installer prepares a fresh Ubuntu target-host
+and private media with a pinned SSH host key; it does not boot the VM. A one-use
+guest boot service builds the image before any target starts. The first installation required console recovery; original pinned SSH and image
+preparation are observed. Docker re-enables IPv4 forwarding after reboot, so the
+guest helper refuses attachment. Durable forwarding, management-group cleanup,
+reproducible setup, lifecycle, real protocol checks and the architecture spike
+remain pending; this is not a supported live environment. The next offline
+hardening adds no-auto-forwarding Docker settings, an every-start reset guard,
+post-cloud-init account cleanup and a build-only gateway while the demo NIC is
+down. Apply/retest these on the saved VM before starting any target. The private guest
+helper can prepare only the two-target spike, dispatch fixed node JSON and stop
+one checked container. Runtime/image fingerprints and MAC-matched manual parent
+activation prevent stale builds or networkd link activation from bypassing the
+guards. No live spike or additional scan scope is established by these APIs.
+Offline defense input/ownership/resource/runtime contracts run in the docs gate.
+Its separate [Windows preparation](../demo/WINDOWS_READY.md) now has an installed
+Windows 10 Home test guest and locally verified NCPA agent, powered off at an
+owned snapshot. Activation, appliance registration and complete defense-lab
+acceptance remain pending; this adds no general QA scan authorization.
+
 The [DHCP lab design](../docs/plans/DHCP_Lab_Extension_Proposal.md) records the
 Docker feasibility decision and the separate lab's safety contract. The ordinary
 fast lab and VM demo continue to use static addresses.
