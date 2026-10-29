@@ -391,18 +391,20 @@ def hold_promotable_ports(enabled_plugins=None):
     return held
 
 
-def promote_identified_ports():
+def promote_identified_ports(device_ids=None):
     """
     Start monitoring every SUGGESTED port whose service is identified and whose
     plugin is now enabled in Plugin Manager, on devices that are scanned and not
     retired or merged. Enabling a plugin and finding a new device both lead
     here, so ports are attached without picking devices by hand. Ports flagged
     "not used as intended" wait for acknowledgement; IGNORED ports stay
-    ignored (see promotable_ports). Returns the number of ports promoted. Does
-    not commit.
+    ignored (see promotable_ports). device_ids limits a focused scan to its
+    observed devices. Returns the number of ports promoted. Does not commit.
     """
     promoted = 0
     for protocol, port in promotable_ports(enabled_plugin_names()):
+        if device_ids is not None and port.NetDiscoveryID not in device_ids:
+            continue
         start_monitoring(port, protocol)
         promoted += 1
     return promoted

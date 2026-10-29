@@ -20,7 +20,7 @@ GET /discover/status
 """
 
 from flask_login import login_required, current_user
-from flask import current_app
+from flask import current_app, request
 from app import app, db
 import threading
 from app.api.system import system_bp
@@ -31,6 +31,7 @@ from app.network_discovery import discover_network_create_hosts
 from app.logging.network_discovery_status import get_network_discovery_status
 from app.system_models import NetworkDiscovery
 import sqlalchemy as sa
+import ipaddress
 
 discovery_thread = None
 discovery_thread_stop_event = threading.Event()
@@ -45,11 +46,26 @@ def is_discovery_running():
     return discovery_thread is not None and discovery_thread.is_alive()
 
 
-def start_discovery_thread(user_id):
+def validate_scan_target(value):
+    """Return a canonical single IPv4 address, rejecting unsafe and non-host input."""
+    if not isinstance(value, str):
+        raise ValueError("Enter one IPv4 address to scan.")
+    try:
+        address = ipaddress.IPv4Address(value.strip())
+    except ipaddress.AddressValueError as exc:
+        raise ValueError("Enter one IPv4 address to scan, without a CIDR range.") from exc
+    if (address.is_loopback or address.is_multicast or address.is_unspecified
+            or address.is_reserved or address.is_link_local or address.packed[0] == 0):
+        raise ValueError("That IPv4 address cannot be scanned.")
+    return str(address)
+
+
+def start_discovery_thread(user_id, target=None):
     """
     Start a network discovery scan in a background daemon thread,
     attributed to user_id. Returns False without starting anything if a
-    scan is already running. Shared by the start route and the scheduled
+    scan is already running. The optional validated target applies to this run
+    only. Shared by the start route and the scheduled
     scan in app/automation.py so both respect the one-scan-at-a-time rule.
     """
     global discovery_thread
@@ -66,7 +82,8 @@ def start_discovery_thread(user_id):
             target=discover_network_create_hosts,
             args=(app,
                   user_id,
-                  discovery_thread_stop_event
+                  discovery_thread_stop_event,
+                  target,
                   )
         )
 
@@ -85,7 +102,7 @@ def start_discover_network():
     active will be rejected.
 
     Inputs:
-        None (no request body or query parameters).
+        Optional JSON {"target": "10.0.0.4"}; omission scans saved networks.
 
     Returns (JSON):
         {
@@ -97,10 +114,27 @@ def start_discover_network():
         400 – A discovery scan is already running.
         500 – Unexpected server error.
     """
-    if not start_discovery_thread(current_user.UserID):
+    if request.is_json:
+        body = request.get_json()
+        if not isinstance(body, dict) or set(body) - {"target"}:
+            return error("Expected only an optional target field.", 400)
+    elif request.get_data():
+        return error("Expected a JSON body.", 400)
+    else:
+        body = {}
+
+    target = None
+    if "target" in body:
+        try:
+            target = validate_scan_target(body["target"])
+        except ValueError as exc:
+            return error(str(exc), 400)
+
+    if not start_discovery_thread(current_user.UserID, target):
         return error("Network discovery is already running.", 400)
 
-    return success(message="Network discovery started.", status=202)
+    message = "Device scan started." if target else "Network discovery started."
+    return success(message=message, status=202)
 
 
 @system_bp.post('/network-discovery/stop')

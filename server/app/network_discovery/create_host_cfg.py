@@ -1332,7 +1332,7 @@ def get_monitoring_server_ips():
 
     return ips
 
-def _save_discovered_hosts(discovered_hosts, network_discovery_id, progress_weight):
+def _save_discovered_hosts(discovered_hosts, network_discovery_id, progress_weight, target=None):
     """
     Save one scan's results. The scan only reports what it saw; the
     reconciler (device_identity.py) decides which known device each result is,
@@ -1352,7 +1352,7 @@ def _save_discovered_hosts(discovered_hosts, network_discovery_id, progress_weig
     monitoring_server_ips = get_monitoring_server_ips()
 
     try:
-        devices = reconcile_scan(discovered_hosts, network_discovery_id, monitoring_server_ips)
+        devices = reconcile_scan(discovered_hosts, network_discovery_id, monitoring_server_ips, target=target)
 
         for (network, ip_address), device in devices.items():
             host_data = discovered_hosts[network][ip_address]
@@ -1380,7 +1380,7 @@ def _save_discovered_hosts(discovered_hosts, network_discovery_id, progress_weig
 
         # Ports of plugins enabled since the last scan, and of devices found
         # now, start being monitored (Plugin Manager is the switch).
-        promote_identified_ports()
+        promote_identified_ports({device.NetDiscoveryID for device in devices.values()} if target else None)
 
         # Save everything at once
         db.session.commit()
@@ -1588,15 +1588,19 @@ def _run_nagios_verify(main_cfg_path):
     except FileNotFoundError:
         return False, f"Nagios binary not found at {NAGIOS_BIN}."
 
-def _sync_running_plugins(app, user_id):
+def _sync_running_plugins(app, user_id, device_ids=None):
     """
     After a scan, attach the discovered ports of every enabled plugin and drop
     the ones that no longer apply (the plugin reconciler). Never raises: a
-    failure is logged and leaves the scan's own result alone.
+    failure is logged and leaves the scan's own result alone. device_ids limits
+    mutation to the scanned device for a focused run.
     """
     try:
         from app.api.plugin.reconcile import reconcile_plugin_monitoring
-        result = reconcile_plugin_monitoring(user_id)
+        if device_ids is None:
+            result = reconcile_plugin_monitoring(user_id)
+        else:
+            result = reconcile_plugin_monitoring(user_id, device_ids=device_ids)
         if not result["success"]:
             app.logger.warning("Plugin monitoring was not reconciled after discovery: %s", result["message"])
     except Exception:
@@ -1942,7 +1946,7 @@ def mark_discovery_interrupted(network_discovery_id):
     )
 
 
-def discover_network_create_hosts(app, user_id, stop_event):
+def discover_network_create_hosts(app, user_id, stop_event, target=None):
     network_discovery_id = None
    
     with app.app_context():
@@ -1960,7 +1964,10 @@ def discover_network_create_hosts(app, user_id, stop_event):
             
             # Gets the network info
             print("Discovering Hosts")
-            discovered_hosts = discover_network(network_discovery_id, PROGRESS_WEIGHT[0], stop_event)
+            if target is None:
+                discovered_hosts = discover_network(network_discovery_id, PROGRESS_WEIGHT[0], stop_event)
+            else:
+                discovered_hosts = discover_network(network_discovery_id, PROGRESS_WEIGHT[0], stop_event, target)
 
             if discovered_hosts is None:
                 mark_discovery_interrupted(network_discovery_id)
@@ -1968,6 +1975,13 @@ def discover_network_create_hosts(app, user_id, stop_event):
 
             if stop_event.is_set():
                 mark_discovery_interrupted(network_discovery_id)
+                return
+
+            if target is not None and not any(discovered_hosts.values()):
+                update_network_discovery_status(
+                    network_discovery_id, DiscoveryStatus.FAILED, 100,
+                    f"No device was discovered at {target}.", datetime.now(timezone.utc)
+                )
                 return
             
             # Collects identity evidence (NCPA certificate, SSH host key)
@@ -1987,11 +2001,21 @@ def discover_network_create_hosts(app, user_id, stop_event):
                 return
             
             # Save it to the database
-            _save_discovered_hosts(discovered_hosts, network_discovery_id, PROGRESS_WEIGHT[4])
+            saved_devices = _save_discovered_hosts(discovered_hosts, network_discovery_id, PROGRESS_WEIGHT[4], target)
+
+            if target is not None and not saved_devices:
+                update_network_discovery_status(
+                    network_discovery_id, DiscoveryStatus.FAILED, 100,
+                    f"No eligible device was saved at {target}.", datetime.now(timezone.utc)
+                )
+                return
 
             # Keep each SNMP device's interface list current (best effort, bounded).
             try:
-                refresh_interfaces_after_scan()
+                if target is None:
+                    refresh_interfaces_after_scan()
+                else:
+                    refresh_interfaces_after_scan({device.NetDiscoveryID for device in saved_devices.values()})
             except Exception:
                 db.session.rollback()
                 app.logger.exception("Could not refresh device interfaces after the scan.")
@@ -2031,7 +2055,10 @@ def discover_network_create_hosts(app, user_id, stop_event):
                         "Host configuration unchanged; Nagios was not reloaded",
                         datetime.now(timezone.utc)
                     )
-                    _sync_running_plugins(app, user_id)
+                    if target is None:
+                        _sync_running_plugins(app, user_id)
+                    else:
+                        _sync_running_plugins(app, user_id, {device.NetDiscoveryID for device in saved_devices.values()})
                     return
 
                 if stop_event.is_set():
@@ -2063,7 +2090,10 @@ def discover_network_create_hosts(app, user_id, stop_event):
                             "New host.cfg successfully applied",
                             datetime.now(timezone.utc)
                             )
-                        _sync_running_plugins(app, user_id)
+                        if target is None:
+                            _sync_running_plugins(app, user_id)
+                        else:
+                            _sync_running_plugins(app, user_id, {device.NetDiscoveryID for device in saved_devices.values()})
                         print(apply_message)
                     else:
                         update_network_discovery_status(

@@ -272,6 +272,16 @@ class TestStore:
 
 class TestScanRefresh:
 
+    def test_focused_refresh_does_not_probe_other_snmp_devices(self, db_session, admin_user):
+        target = snmp_device(db_session, admin_user, "target", "10.0.0.20")
+        other = snmp_device(db_session, admin_user, "other", "10.0.0.21")
+        calls = []
+        with patch.object(discovery.subprocess, "run", fake_run(calls=calls)):
+            assert refresh_interfaces_after_scan({target.NetDiscoveryID}) == 1
+        assert len(stored(target)) == 3
+        assert stored(other) == {}
+        assert all("10.0.0.21" not in str(call) for call in calls)
+
     def test_refreshes_snmp_devices_and_skips_failures(self, db_session, admin_user):
         good = snmp_device(db_session, admin_user, "good", "10.0.0.20")
         bad = snmp_device(db_session, admin_user, "bad", "10.0.0.21")

@@ -504,8 +504,20 @@ are recorded as `SkippedService` entries rather than silently discarded.
 Network targets, ports, service rules, NCPA metrics, SNMP defaults, and
 Nagios filesystem paths live in `server/config.py` and may be environment
 overridden where defined. Networks, ports and service rules can also be saved
-from the Settings page (`DiscoverySettings`), which then takes precedence. The SNMP
-OID table (`SNMP_OIDS`) and the NCPA metric table (`NCPA_METRICS`) can be saved from
+from the Settings page (`DiscoverySettings`), which then takes precedence. The
+manual start route may instead pass one validated IPv4 address to the worker for
+that run. The worker scans and probes only that address, uses its existing device
+network or a containing saved network for identity reconciliation (otherwise a
+`/32`), and never writes the saved `DiscoverySettings.Networks` list. Only the
+target address may count as unseen; unscanned devices, ports, and SNMP interfaces
+stay unchanged. The post-scan plugin reconciler limits suggested-port promotion
+and automatic configuration rows to the scanned device; ordinary full scans
+still reconcile all devices. If nmap discovers no target host, the run records a failed
+status before inventory or Nagios configuration changes. Scheduled and ordinary
+full scans continue to use the saved networks. The existing shared config writer
+still validates and rolls back any changed Nagios configuration.
+
+The SNMP OID table (`SNMP_OIDS`) and the NCPA metric table (`NCPA_METRICS`) can be saved from
 Settings -> Plugins (`PluginSettings`, one row per plugin: `snmp`, `ncpa`);
 `plugin_config()` in `network_discovery/plugin_settings.py` puts the saved values in
 place of their `config.py` keys once per config build, for both `hosts.cfg` and the
