@@ -444,7 +444,7 @@ encrypted with `secrets_store` as `<name>_enc` and never returned.
 
 | Method and path | Permission | Purpose |
 |---|---|---|
-| `GET /api/system/deployment/ncpa/devices` | `system.deploy.ncpa` | NCPA-eligible devices (and devices with a deployment record) with IP, trust state, saved fingerprint, agent status, last error, last outcome, last run and `deployable` |
+| `GET /api/system/deployment/ncpa/devices` | `system.deploy.ncpa` | NCPA-eligible devices (and devices with a deployment record) with IP, trust state, saved fingerprint, agent status, last error, last outcome, last run and `deployable`. `hostname` is the stored hostname, or the IP address when discovery stored the placeholder "Unknown" (#279); the trusted list, register candidates and run results follow the same rule |
 | `GET /api/system/deployment/ncpa/<device_id>/fingerprint` | `system.deploy.ncpa` | Fetch live SSH host-key fingerprint from the device's SSH port (`data.ssh_port`); 502 when the device does not answer |
 | `POST /api/system/deployment/ncpa/<device_id>/confirm-trust` | `system.deploy.ncpa` | Body `{"fingerprint"}`: save the key only if the live key on the device's SSH port still equals the one the user approved, pinning that port in `SSH_Port`; 409 with `data.fingerprint` when it changed, 502 when unreachable |
 | `POST /api/system/deployment/ncpa/check-credentials` | `system.deploy.ncpa` | Test each device's login and sudo on its pinned SSH port without deploying; per-device result `ok`, `auth_failed`, `no_sudo`, `unreachable`, `host_key_changed`, `not_trusted`, `not_found` or `rate_limited` (one check per device per 3 s) |

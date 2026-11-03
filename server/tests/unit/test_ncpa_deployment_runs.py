@@ -496,6 +496,24 @@ class TestDevicesList:
         assert pending.NetDiscoveryID == devices["db-02"]["device_id"]
         assert incompatible.NetDiscoveryID == devices["legacy-07"]["device_id"]
 
+    def test_unnamed_device_shows_its_ip_not_unknown(self, logged_in_client, db_session, admin_user):
+        unnamed = make_device(db_session, admin_user, hostname="Unknown", ip="10.0.20.99",
+                              agent_status=AgentStatus.FAILED)
+        named = make_device(db_session, admin_user, hostname="web-01", ip="10.0.20.11",
+                            agent_status=AgentStatus.FAILED)
+        make_run(admin_user, [(unnamed, DeploymentOutcome.FAILED, "x")], status=DeploymentStatus.FAILED)
+
+        listed = {d["device_id"]: d["hostname"]
+                  for d in logged_in_client.get(f"{BASE}/devices").get_json()["data"]["devices"]}
+        trusted = {d["device_id"]: d["hostname"]
+                   for d in logged_in_client.get(f"{BASE}/devices/trusted").get_json()["data"]["devices"]}
+        status = logged_in_client.get(f"{BASE}/status").get_json()["data"]["devices"]
+
+        assert listed[unnamed.NetDiscoveryID] == "10.0.20.99"
+        assert listed[named.NetDiscoveryID] == "web-01"
+        assert trusted[unnamed.NetDiscoveryID] == "10.0.20.99"
+        assert [d["hostname"] for d in status] == ["10.0.20.99"]
+
     def test_trusted_list_includes_failed_devices_for_retry(self, logged_in_client, db_session, admin_user):
         failed = make_device(db_session, admin_user, agent_status=AgentStatus.FAILED)
         resp = logged_in_client.get(f"{BASE}/devices/trusted")
