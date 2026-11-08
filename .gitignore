@@ -193,8 +193,13 @@ sketch
 # End of https://www.toptal.com/developers/gitignore/api/python,react
 
 ### Project specific ###
-# Database files
+# Database files and backups (they hold user rows and password hashes)
 *.db
+*.db.bak*
+system.db.bak*
+
+# Session cookies saved by curl or a browser
+cookies.txt
 
 
 # Runtime files created by the server (never commit these)
@@ -214,3 +219,7 @@ server/database-backups/
 /client/test-results/
 /client/playwright-report/
 /client/blob-report/
+
+# Local copies of third-party sources, not part of Pinpoint
+/nagios-plugins-*/
+/nmap2nagios-*/
