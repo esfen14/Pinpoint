@@ -1,7 +1,7 @@
 # Issue #284: Retire the duplicate black-box catalog and clean up docs/README.md
 
 Branch: `issue-284-retire-duplicate-catalog`
-Status: in-progress
+Status: blocked
 
 ## Finish condition
 
@@ -41,8 +41,12 @@ Status: in-progress
 - Last check run: ID diff
 - Result: green
 - Hypothesis: docs-only change
-- Next action: post inventory comment, then step 2
+- Last check run: scripts/verify.sh docs -> fails at qa_queue tests: 'Coverage catalog changed; review mappings'
+- Done so far: inventory posted; old catalog removed; byline + 2 QA_Test_Plan refs fixed; docs/README.md one qa/ row; QA_Case_Status.md regenerated
+- Next action: person decides how to refresh automation-coverage.json catalog/case hashes (see Decisions)
 
 ## Decisions and notes
 
 Canonical file mentions the removed file in 3 historical notes ("removed from the repo"); kept as provenance, not links.
+
+Blocked: any edit to the canonical catalog changes source_hash/global_context of all 239 cases, so automation-coverage.json and queues report stale. Precedent: Automation_Readiness.md '2026-10-19 result-only catalog refresh' (verify behavior unchanged, refresh fingerprints, record catalog_result_review). Awaiting owner decision; may be cheaper to batch with other catalog edits.
