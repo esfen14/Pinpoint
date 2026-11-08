@@ -72,6 +72,22 @@ cards remain subject to freshness checks. No automation was run or authorized
 by this consolidation.
 
 
+## 2026-11-08 catalog text refresh (#284)
+
+Removing the personal byline and repointing two `QA_Test_Plan.md` references to
+`QA_Journeys_and_Scope.md` changed only the catalog's source hash and shared
+`global_context`. A parsed-field comparison against the previous catalog showed
+titles, steps, expected items, prerequisites, requirements, safety classification
+and results unchanged for all 239 definitions. The register's catalog/case
+fingerprints were refreshed and the comparison is recorded in its
+`catalog_source_text_review` field; adapter claims, coverage statuses and
+execution permissions are unchanged. This is not a new automation run.
+
+The prepared `2026-10-18-next-permissions` queue and its cards now fail the
+freshness check ("coverage changed; review a replacement"). It was never started.
+It must be re-prepared and separately reviewed before any handoff; this change does
+not do that.
+
 ## 2026-10-19 result-only catalog refresh
 
 The Modules 1–11 verdict updates changed the catalog's exact hashes. A comparison
