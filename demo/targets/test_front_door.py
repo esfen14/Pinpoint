@@ -34,7 +34,7 @@ class FrontDoorTests(unittest.TestCase):
         cases={('setup',):['setup.py setup'],('qa','create','--apply'):['qa_vm.py create --apply'],('qa','destroy'):['qa_vm.py destroy'],('create-vms','--apply'):['create_vms.py --apply'],('setup','--apply'):['setup.py setup --apply'],
                ('destroy','--apply'):['setup.py destroy --apply'],
                ('up',):['setup.py up'],('down',):['presenter.py down'],
-               ('manifest',):['controller.py manifest'],('preflight',):['controller.py preflight'],
+               ('manifest',):['controller.py manifest'],('preflight',):['presenter.py preflight'],
                ('status',):['presenter.py status'],('reset',):['presenter.py reset'],
                ('down','web03','http'):['presenter.py break web03 http'],
                ('up','web03','http'):['presenter.py fix web03 http'],

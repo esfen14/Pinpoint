@@ -19,7 +19,7 @@ Lab lifecycle (run from the repository root):
   demo/demo create-vms [--apply]   create the Pinpoint appliance and Windows NCPA VMs (missing ones only)
   demo/demo destroy [--apply]      remove only the demo-owned containers and network (typed confirmation)
   demo/demo manifest [--json]      intended devices and listeners (no live check)
-  demo/demo preflight [--json]     read-only host, Docker and VPN checks
+  demo/demo preflight              read-only gate: RAM, disk, swap, subnet and VM membership
 
 HELP
 }
@@ -56,8 +56,11 @@ case "${1:-}" in
   setup|destroy)
     exec python3 -I "$here/targets/setup.py" "$@"
     ;;
-  manifest|preflight)
+  manifest)
     exec python3 -I "$here/targets/controller.py" "$@"
+    ;;
+  preflight)
+    exec python3 -I "$here/targets/presenter.py" preflight
     ;;
   up)
     if [[ $# -eq 1 ]]; then exec python3 -I "$here/targets/setup.py" up; fi
