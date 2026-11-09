@@ -5,7 +5,7 @@ This guide is for the current laptop pilot. The owner selected the existing
 VirtualBox host-only adapter `vboxnet1`; its NAT adapter forwards the web UI to
 `http://127.0.0.1:18080`. The Windows VM and fourteen host Docker devices use
 the same host-only segment. A persistent presenter checkout is available at
-`~/.local/share/pinpoint-defense/host-presenter-checkout`.
+a persistent checkout (example location: `~/.local/share/pinpoint-defense/host-presenter-checkout`).
 
 ## 1. Connect the appliance
 
@@ -70,7 +70,7 @@ application credentials have not been verified by this guide.
 
 The separate `pinpoint-qa-appliance` is powered off and still uses the old
 `pinpoint-demo` internal network. Its lab VM login password, administrator email
-and administrator password are under `~/.local/share/pinpoint-vmlab/` in
+and administrator password are under the old QA appliance's private directory (example: `~/.local/share/pinpoint-vmlab/`) in
 `lab-password`, `admin-email` and `admin-password` respectively. Those are for
 the old QA appliance; do not assume they work for `Pinpoint-Final`. Both VMs
 forward the same laptop ports, so do not start both without changing the port
@@ -110,7 +110,7 @@ image is a Home test installation; activation/license acceptance is still
 pending.
 
 For other credentials: the current SNMP pilot community is in the root-owned
-file `~/.local/share/pinpoint-defense/host-docker/pilot-catalog/private/snmp-community`.
+file `snmp-community` in the private host-Docker catalog (example: `~/.local/share/pinpoint-defense/host-docker/pilot-catalog/private/`).
 If needed, read it locally with `sudo cat` and keep it private. It is separate
 from the Windows NCPA token.
 

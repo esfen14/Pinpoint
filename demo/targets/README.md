@@ -1,18 +1,22 @@
-# Defense target runtime (issue #274, preparation)
+# Part 2: Docker container setup (the monitored devices)
 
-For appliance connection and credential locations, see [presenter setup](PRESENTER_SETUP.md).
+Fourteen Linux containers, their manifest and compose file, the DHCP allocator and
+the presenter fault controls. Do [Part 1 (Pinpoint device setup)](../appliance/README.md)
+first, then run the demo from the [demo index](../README.md). Commands for each
+task: [`USAGE.md`](../USAGE.md).
+
+For appliance connection and credential locations, see [presenter setup](../appliance/PRESENTER_SETUP.md).
 The [monitoring checklist](MONITORING_CHECKLIST.md) describes the remaining live demo checks.
 
 ## Current laptop Docker pilot: presenter controls
 
-A persistent checkout is available at
-`~/.local/share/pinpoint-defense/host-presenter-checkout`; unlike the development
+A persistent checkout (example location: `~/.local/share/pinpoint-defense/host-presenter-checkout`); unlike the development
 worktree under `/tmp`, it can remain available after a reboot. From that checkout
 (or the current issue worktree), use the existing, privately pinned pilot
 containers:
 
 ```bash
-cd "$HOME/.local/share/pinpoint-defense/host-presenter-checkout"
+cd /path/to/your/presenter-checkout   # example: ~/.local/share/pinpoint-defense/host-presenter-checkout
 ```
 
 The persistent checkout is a detached copy of a recorded checkpoint and is not

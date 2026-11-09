@@ -159,4 +159,4 @@ scripts/vmlab down
 ```
 
 Observed setup results are recorded in the
-[demo-ready report](../docs/test-runs/2026-10-12-demo-ready/REPORT.md).
+[demo-ready report](../../docs/test-runs/2026-10-12-demo-ready/REPORT.md).

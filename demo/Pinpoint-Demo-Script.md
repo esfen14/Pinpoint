@@ -1,6 +1,6 @@
 # Pinpoint live demo script
 
-**Lab:** the `Pinpoint-Final` appliance at <http://127.0.0.1:18080>, the Windows VM `pinpoint-defense-win01` and fourteen Linux containers, all on the isolated host-only network `10.77.1.0/27`. Setup and appliance addressing are in [`defense/PRESENTER_SETUP.md`](defense/PRESENTER_SETUP.md). Run the fault commands on the **laptop**; they affect only the demo containers. Use a second terminal for the live status wall. The commands below are written `Pinpoint-Demo-faults.sh`; run them as `demo/Pinpoint-Demo-faults.sh` from the repository root, or through the `~/Documents/Pinpoint-Demo/` shortcut.
+**Lab:** the `Pinpoint-Final` appliance at <http://127.0.0.1:18080>, the Windows VM `pinpoint-defense-win01` and fourteen Linux containers, all on the isolated host-only network `10.77.1.0/27`. Setup and appliance addressing are in [`appliance/PRESENTER_SETUP.md`](appliance/PRESENTER_SETUP.md). Run the fault commands on the **laptop**; they affect only the demo containers. Use a second terminal for the live status wall. The commands below are written `Pinpoint-Demo-faults.sh`; run them as `demo/Pinpoint-Demo-faults.sh` from the repository root, or through a symlink you keep elsewhere (for example `~/Documents/Pinpoint-Demo/`).
 
 ## Before the audience arrives
 

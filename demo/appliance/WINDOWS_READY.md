@@ -1,28 +1,28 @@
 # Prepared Windows test device (#274)
 
 `pinpoint-defense-win01` has Windows 10 Home build 19045 and NCPA 3.5.0 installed.
-It has a powered-off `ncpa-ready` snapshot; the VM is currently running for the laptop pilot. This is preparation for the
-[defense lab plan](../docs/plans/Defense_Demo_Lab_Plan.md), not the completed
-fifteen-device demo. [Observed installation and API results](../docs/test-runs/2026-10-27-issue-274-windows-home-install/REPORT.md).
+It has an `ncpa-ready` snapshot taken powered off; whether the VM is running depends on the session (check `VBoxManage list runningvms`). This is preparation for the
+[defense lab plan](../../docs/plans/Defense_Demo_Lab_Plan.md), not the completed
+fifteen-device demo. [Observed installation and API results](../../docs/test-runs/2026-10-27-issue-274-windows-home-install/REPORT.md).
 
 | Item | Value |
 |---|---|
-| VM UUID | `5fb21051-8a4f-45b0-a7f0-de3cedceab83` |
+| VM identity | Read the UUID from `VBoxManage showvminfo pinpoint-defense-win01` on your machine; it differs per installation |
 | Windows computer name | `WIN01` |
 | Resources | 3 GiB RAM, 2 CPUs, 40 GiB dynamic disk |
 | Network | Host-only Adapter `vboxnet1`; no NAT or physical bridge |
 | Address / MAC | `10.77.1.3/27`, `02:77:01:00:00:02`; no default route |
 | NCPA | Automatic Windows service `ncpa`, TCP 5693; firewall permits `10.77.1.1` only |
-| Final snapshot | `ncpa-ready`, UUID `24eb5fdd-5f6c-4fdb-bfb8-a4b19e08523e` |
+| Final snapshot | `ncpa-ready` |
 | Activation | Pending; owner selected Home for testing without a purchased license |
 
-For current appliance setup and registration steps, see [presenter setup](defense/PRESENTER_SETUP.md).
+For current appliance setup and registration steps, see [presenter setup](PRESENTER_SETUP.md).
 
 ## Access and private state
 
 The local Windows user is `presenter`. The generated login password and NCPA
 token are stored in `login-password` and `ncpa-token` under
-`~/.local/share/pinpoint-defense/windows-home/`. Read them privately when needed;
+the private state directory (example: `~/.local/share/pinpoint-defense/windows-home/`). Read them privately when needed;
 keep them outside recordings, reports and Git. Do not use credential values in
 command-line arguments. The temporary built-in Administrator account is disabled,
 UAC remains enabled, and automatic desktop logon is disabled. NCPA starts before
@@ -37,7 +37,7 @@ agent preparation.
 
 Before any later start, establish exclusive host/VM ownership, check the exact
 UUID/NIC attachment and resources, and acquire the canonical host control claim
-as required by the [VM lab procedure](../docs/plans/VM_Lab_Plan.md). Never start
+as required by the [VM lab procedure](../../docs/plans/VM_Lab_Plan.md). Never start
 this VM alongside another user's lab. Host KVM can block VirtualBox with
 `VERR_SVM_IN_USE`; the owner temporarily unloaded it for this installation.
 Restore with `sudo modprobe kvm_amd` only while VirtualBox VMs are off. A later

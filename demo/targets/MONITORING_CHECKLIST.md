@@ -4,7 +4,7 @@ Status: **partially verified on the connected appliance**. The owner reports
 Windows NCPA checks OK and observed web03 HTTP move from OK to CRITICAL and
 back to OK when its service was stopped and restored. The owner also reports all fifteen demo addresses visible and Windows
 memory 47.5944%, CPU 0.0853%, and disk 45.6%. Individual UI rows,
-alert-notification timing and full rehearsals still need evidence. See [presenter setup](PRESENTER_SETUP.md) and the
+alert-notification timing and full rehearsals still need evidence. See [presenter setup](../appliance/PRESENTER_SETUP.md) and the
 [web test report](../../docs/test-runs/2026-10-27-issue-274-pinpoint-web-alert/REPORT.md).
 The separate network connectivity test remains ping-only.
 

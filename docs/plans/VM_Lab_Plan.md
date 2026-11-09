@@ -1,5 +1,7 @@
 # VM Lab Plan (faithful lane)
 
+> **Lab map:** [Local lab](../manuals/Local_Lab.md) (Docker, fast) · [VM lab plan](VM_Lab_Plan.md) (real appliance, `scripts/vmlab`) · [Defense demo lab plan](Defense_Demo_Lab_Plan.md) and the [demo index](../../demo/README.md) (fifteen-device Docker demo) · [`lab/`](../../lab/) (harness code) · [legacy five-VM lab](../../lab/legacy-vms/README.md).
+
 Status: **working; clean appliance/base/five-target rebuild and real SSH/HTTP
 snapshot restoration verified for [#162](https://github.com/esfen14/Pinpoint/issues/162).
 See the [rebuild report](../test-runs/2026-10-15-issue-162-snapshot-rebuild/REPORT.md).
