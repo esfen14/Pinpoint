@@ -3,7 +3,7 @@
 **The current lab is the fifteen-device Docker lab:** fourteen Linux containers
 (`demo/targets/`) plus one Windows VM, all on the isolated host-only network
 `10.77.1.0/27`, monitored by a Pinpoint appliance VM. The earlier five-VM
-VirtualBox lab is legacy and lives in [`lab/legacy-vms/`](../lab/legacy-vms/README.md).
+VirtualBox lab was removed (#298); git history keeps it.
 
 ## Order
 

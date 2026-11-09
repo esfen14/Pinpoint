@@ -1,6 +1,6 @@
 # VM Lab Plan (faithful lane)
 
-> **Lab map:** [Local lab](../manuals/Local_Lab.md) (Docker, fast) · [VM lab plan](VM_Lab_Plan.md) (real appliance, `scripts/vmlab`) · [Defense demo lab plan](Defense_Demo_Lab_Plan.md) and the [demo index](../../demo/README.md) (fifteen-device Docker demo) · [`lab/`](../../lab/) (harness code) · [legacy five-VM lab](../../lab/legacy-vms/README.md).
+> **Lab map:** [Local lab](../manuals/Local_Lab.md) (Docker, fast) · [VM lab plan](VM_Lab_Plan.md) (real appliance, `scripts/vmlab`) · [Defense demo lab plan](Defense_Demo_Lab_Plan.md) and the [demo index](../../demo/README.md) (fifteen-device Docker demo) · [`lab/`](../../lab/) (harness code).
 
 Status: **working; clean appliance/base/five-target rebuild and real SSH/HTTP
 snapshot restoration verified for [#162](https://github.com/esfen14/Pinpoint/issues/162).
@@ -58,9 +58,9 @@ signal to run `provision --force`.
 
 | Piece | State |
 |---|---|
-| Targets: `lab/legacy-vms/demo_lab.py` (five Ubuntu 24.04 VMs on internal network `pinpoint-demo`, `10.77.0.0/28`; break, fix, load, reset, wall, NCPA login) | Built; `up` verified |
+| Targets: the fourteen Docker containers from `demo/demo setup` (and the Windows VM) on host-only `vboxnet1`, `10.77.1.0/27`; the earlier five-VM lab was removed (#301, git history keeps it) | Replaces the five-VM targets |
 | Appliance VM `pinpoint-appliance` (4 GB, 4 CPUs; NIC 1 NAT with SSH and web port forwards, NIC 2 on `pinpoint-demo`), built by `scripts/vmlab create` from the stock Ubuntu 22.04.5 live-server ISO, unattended | Built and verified. Your existing `pinpoint-demo` VM was left alone |
-| `scripts/vmlab`: iso, create, prepare, status, provision, fresh, sync, health, setup-admin, smoke, ncpa, alerts, creds, up, down, revert, targets | `create`, `prepare`, `provision`, `fresh`, `health`, `setup-admin`, `smoke`, `sync` (also `--client`), `ncpa`, `alerts`, `up`, `down`, `revert` verified ([run report](../test-runs/2026-10-08-vm-lab-remaining/REPORT.md)). Not run on its own: `status` with a live VM |
+| `scripts/vmlab`: iso, create, prepare, status, provision, fresh, sync, health, setup-admin, smoke, alerts, creds, up, down, revert | `create`, `prepare`, `provision`, `fresh`, `health`, `setup-admin`, `smoke`, `sync` (also `--client`), `alerts`, `up`, `down`, `revert` verified ([run report](../test-runs/2026-10-08-vm-lab-remaining/REPORT.md)). Not run on its own: `status` with a live VM |
 | `lab/smoke.py`: `--email`, `--password`/`SMOKE_PASSWORD`, `--set-network`, `--expect-ips` | Verified on the appliance and, as a regression, on the Docker lab |
 | `lab/vmlab.env.example` | Written |
 
@@ -177,8 +177,7 @@ recovery, prove the lane with `scripts/vmlab fresh`, `scripts/vmlab setup-admin`
 and `scripts/vmlab smoke` before claiming a journey case.  Record that recovery
 and the tested commit in a new sanitized test-run report.
 
-1. **Targets.** `python3 lab/legacy-vms/demo_lab.py create --apply` (after `build-base`), then
-   `scripts/vmlab targets up`.
+1. **Targets.** `demo/demo setup --apply` (Docker containers on `vboxnet1`; see the [demo index](../../demo/README.md)).
 2. **ISO.** `scripts/vmlab iso` downloads the stock Ubuntu 22.04.5 live-server ISO
    (about 2 GB). The installer's own ISO is not needed: its install screens are
    interactive, and the lab runs the same setup steps itself.
@@ -210,7 +209,7 @@ Test that by hand with `PinPoint-Installer-v1.1.iso` before a release.
   or `fresh` will fail at that step; fix by adapting `vmlab`, not the installer.
 - **The deploy step needs internet and GitHub access in the VM** (the NAT NIC) and a
   pushed branch.
-- **Unattended install on Ubuntu 22.04.5** follows the recipe `demo_lab.py` proved on
+- **Unattended install on Ubuntu 22.04.5** follows the recipe the removed five-VM lab proved on
   24.04. VirtualBox's generated installer file could differ for 22.04; `create` stops
   with a clear message if its apt section is not in the expected form.
 - **Disk:** the appliance disk is sparse (40 GB maximum); the host is near 90% full.

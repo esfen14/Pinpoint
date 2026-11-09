@@ -199,8 +199,8 @@ has the roles Administrator, Manager and Staff (§4A A16); where a journey says
 - **Source:** flowchart pp.96-97; BB-02 p.125; ERD pp.77, 82-85;
   `docs/test-runs/2026-10-08-ncpa-fresh-run/`.
 - **Steps:** NCPA Deployment, select devices, verify host keys, enter device
-  credentials, confirm. In the lab: `scripts/vmlab ncpa [ip,ip,...]` drives the same
-  deployment API; the browser wizard is the thing to check.
+  credentials, confirm. In the lab the Linux containers have no password SSH, so deploy to
+  the Windows VM by registering its installed agent (`demo/appliance/PRESENTER_SETUP.md` section 2); the browser wizard is the thing to check.
 - **Expect:**
   1. Only NCPA-eligible devices can be selected. Others show Incompatible or Excluded
      [REPO; the paper only records `NCPA_Eligible`, p.79].
@@ -258,11 +258,10 @@ has the roles Administrator, Manager and Staff (§4A A16); where a journey says
 - **Actor:** Network Administrator. **Verify in:** vm lab.
 - **Source:** BB-05 p.125; PT-04 p.126; Table 2 p.99; DFD p.119;
   `docs/test-runs/2026-10-08-vm-lab-remaining/`.
-- **Steps:** power a target off (`scripts/vmlab targets break <target> host`; or
+- **Steps:** power a target off (`demo/demo down <target> host`; or
   `scripts/vmlab alerts [target]`, which also acknowledges and restores), or, with the
-  matching plugin enabled (J4), stop a service (`scripts/vmlab targets break <target>
-  <service>`, for example `ssh` or `http`). Restore with `scripts/vmlab targets fix
-  <target> host|<service>|all`. Targets: `web01`, `web02`, `app01`, `snmp01`, `legacy01`.
+  matching plugin enabled (J4), stop a service (`demo/demo down <target> <service>`, for
+  example `ssh` or `http`). Restore with `demo/demo up <target> host|<service>`. Targets: see `demo/demo help`.
 - **Expect:**
   1. After Nagios's check and retry cycle the host or service shows DOWN or CRITICAL in
      Device Inventory and System Status. Detection delay is the check interval times

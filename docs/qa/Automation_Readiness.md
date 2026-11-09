@@ -379,7 +379,7 @@ and `PINPOINT_QA_CONTROL_FD` when calling this controller while supervision owns
 the claim. This is not yet wired to any production driver.
 
 The lock is cooperative within the same host `/tmp` and user namespace. Direct
-VBoxManage, `lab/legacy-vms/demo_lab.py`, legacy browser launchers, another user/namespace,
+VBoxManage, the removed five-VM lab scripts, legacy browser launchers, another user/namespace,
 or privileged/manual file replacement can bypass it. It is not a sandbox, access
 permission or sufficient unattended-readiness proof. Read-only status/preflight
 commands do not take this claim; structured observations alone do not claim

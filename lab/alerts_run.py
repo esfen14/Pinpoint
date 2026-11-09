@@ -4,9 +4,9 @@ acknowledge it, unacknowledge it, bring the target back and watch the alert clea
 Pinpoint names discovered hosts `dev-xxxxxx`, so the alert is found by comparing the
 active alerts before and after the target goes down, not by name. The target is always
 started again at the end, even when a check fails. Standard library only; needs the
-lab's `lab/legacy-vms/demo_lab.py` and VirtualBox. Run it after discovery (scripts/vmlab smoke).
+lab's `demo/demo` (Docker containers) and the appliance. Run it after discovery (scripts/vmlab smoke).
 
-    SMOKE_PASSWORD=... python3 lab/alerts_run.py --email ADMIN --target web01
+    SMOKE_PASSWORD=... python3 lab/alerts_run.py --email ADMIN --target web03
 
 Exit status 0 when every check passes.
 """
@@ -21,7 +21,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import smoke  # noqa: E402  (shares the API client and the PASS/FAIL printer)
 
-DEMO_LAB = Path(__file__).resolve().parent / "legacy-vms" / "demo_lab.py"
+DEMO = Path(__file__).resolve().parent.parent / "demo" / "demo"
 ALERTS = "/api/system/dashboard/alerts"
 ACK = "/api/system/dashboard/alerts/acknowledge"
 
@@ -45,7 +45,7 @@ def alert_keys(api, ack_filter="all"):
 
 
 def demo(*arguments):
-    return subprocess.run([sys.executable, str(DEMO_LAB), *arguments], capture_output=True, text=True)
+    return subprocess.run([str(DEMO), *arguments], capture_output=True, text=True)
 
 
 def wait_for(condition, seconds, step=10):
@@ -63,7 +63,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-url", default="http://127.0.0.1:18080")
     parser.add_argument("--email", required=True, help="Pinpoint administrator email")
-    parser.add_argument("--target", default="web01", help="demo target to take down (web01, web02, app01, snmp01, legacy01)")
+    parser.add_argument("--target", default="web03", help="demo container to take down (see demo/demo help for the names)")
     parser.add_argument("--timeout", type=int, default=400, help="seconds to wait for the alert to appear and to clear")
     args = parser.parse_args()
 
@@ -83,7 +83,7 @@ def main():
 
     before = alert_keys(api)
     print(f"alerts before: {len(before)}")
-    result = demo("break", args.target, "host")
+    result = demo("down", args.target, "host")
     if not check(f"take {args.target} down", result.returncode == 0, result.stdout.strip()[:80]):
         return 1
 
@@ -110,7 +110,7 @@ def main():
         check("unacknowledge it", status == 200, f"HTTP {status}: {body.get('message')}")
         check("it is listed as unacknowledged again", key in alert_keys(api, "unacknowledged"))
     finally:
-        result = demo("fix", args.target, "host")
+        result = demo("up", args.target, "host")
         check(f"bring {args.target} back", result.returncode == 0, result.stdout.strip()[:80])
 
     cleared = wait_for(lambda: key not in alert_keys(api), args.timeout)

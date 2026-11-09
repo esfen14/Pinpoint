@@ -8,4 +8,3 @@ Harness code for the test labs. Which lab is which:
 | Isolated DHCP lab | `lab/dhcp/` | [Local lab manual](../docs/manuals/Local_Lab.md#isolated-dhcp-lab) |
 | Appliance VM lab | `scripts/vmlab`, `lab/*.py` | [VM lab plan](../docs/plans/VM_Lab_Plan.md) |
 | Fifteen-device demo (current) | `demo/` | [Demo index](../demo/README.md) |
-| Legacy five-VM lab | `lab/legacy-vms/` | [Legacy README](legacy-vms/README.md) |

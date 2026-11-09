@@ -1,6 +1,6 @@
 # One defense demo lab (#274)
 
-> **Lab map:** [Local lab](../manuals/Local_Lab.md) (Docker, fast) · [VM lab plan](VM_Lab_Plan.md) (real appliance, `scripts/vmlab`) · [Defense demo lab plan](Defense_Demo_Lab_Plan.md) and the [demo index](../../demo/README.md) (fifteen-device Docker demo) · [`lab/`](../../lab/) (harness code) · [legacy five-VM lab](../../lab/legacy-vms/README.md).
+> **Lab map:** [Local lab](../manuals/Local_Lab.md) (Docker, fast) · [VM lab plan](VM_Lab_Plan.md) (real appliance, `scripts/vmlab`) · [Defense demo lab plan](Defense_Demo_Lab_Plan.md) and the [demo index](../../demo/README.md) (fifteen-device Docker demo) · [`lab/`](../../lab/) (harness code).
 
 ## Owner-directed host Docker transition
 

@@ -6,7 +6,7 @@
 | Commit tested | Application `1540545` (`main`, installed by the installer's deploy step). Lab tooling `04caffdf` plus uncommitted `smoke.py` and `sync` changes on `feat/vm-lab` |
 | Plan | [`docs/plans/VM_Lab_Plan.md`](../../plans/VM_Lab_Plan.md) |
 | Tester | Claude Code, supervised by the project owner |
-| Environment | VirtualBox 7.2.14 on Debian 13. Appliance: Ubuntu 22.04.5, 4 GB, 4 CPUs, NAT plus internal network `pinpoint-demo` (`10.77.0.1/28`). Nagios Core 4.5.11 and plugins built by the installer's own steps (installer repo commit `f0323ea`, local clone, unmodified). Targets: five Ubuntu 24.04 VMs from `lab/legacy-vms/demo_lab.py` at `10.77.0.2` to `.6`. Database: fresh |
+| Environment | VirtualBox 7.2.14 on Debian 13. Appliance: Ubuntu 22.04.5, 4 GB, 4 CPUs, NAT plus internal network `pinpoint-demo` (`10.77.0.1/28`). Nagios Core 4.5.11 and plugins built by the installer's own steps (installer repo commit `f0323ea`, local clone, unmodified). Targets: five Ubuntu 24.04 VMs from `demo/demo_lab.py` at `10.77.0.2` to `.6`. Database: fresh |
 | Raw evidence | Author's machine: `~/pinpoint-test-results/2026-10-08-vm-lab-first-run/` (install logs and smoke output; not committed) |
 
 ## Result

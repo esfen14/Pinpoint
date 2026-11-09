@@ -460,6 +460,13 @@ class PreflightTests(unittest.TestCase):
         for kwargs in ({'occupied':['10.77.1.0/27','10.0.0.0/8']},{'available':3000},{'disk':1000},{'swap':(400,400)}):
             with self.subTest(kwargs=kwargs):
                 with self.assertRaises(ValueError):self.run_preflight(**kwargs)
+    def test_preflight_failure_names_the_blocker(self):
+        import io
+        from contextlib import redirect_stderr,nullcontext
+        error=io.StringIO()
+        with patch.object(presenter,'read_pins',return_value={}),patch.object(presenter,'read_vm_pins',return_value={}),patch.object(presenter,'preflight',side_effect=ValueError('Active VPN/tunnel prevents defense startup preflight')),patch.object(presenter.qa_control,'claim',side_effect=lambda:nullcontext()),redirect_stderr(error):
+            code=presenter.main(['preflight'])
+        self.assertEqual(code,1);self.assertIn('Preflight blocked: Active VPN/tunnel',error.getvalue())
     def test_preflight_command_is_read_only_and_ignores_a_dhcp_intent(self):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory);(root/'dhcp-move.json').write_text('pending')

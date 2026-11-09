@@ -62,6 +62,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | 7 | setup --apply ends with VM attachment check and PASS/FAIL summary; `demo/demo up` creates missing containers first (setup.py up); `demo/demo CMD --help` shows that command's examples | test_setup.py, test_front_door.py, test_faults_script.py | green |
 | 8 | Live-run fixes found by the owner: stale macvlan network, owner-marker kept, SNMP community format, stale image check, vboxnet1 address preflight; new `demo/demo qa` (qa_vm.py) disposable QA appliance wrapping scripts/vmlab (VMLAB_LAB_HOSTONLY added), image build now excludes host-side files | offline tests green; live setup still in progress | partial |
 | 9 | Owner ran destroy then setup --apply live: 14 containers ready, both VMs on vboxnet1, Summary PASS | live: demo/demo setup --apply | green |
+| 10 | Owner chose to do #301 in this PR: removed lab/legacy-vms and lab/ncpa_run.py; scripts/vmlab defaults now 10.77.1.x on vboxnet1 with Docker target IPs, `targets` and `ncpa` removed, `alerts` uses demo/demo down|up (default web03); docs and specs updated; historical test-run reports keep their command names | verify.sh all (running) | pending |
 
 ## State for the next session
 

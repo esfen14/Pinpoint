@@ -68,7 +68,7 @@ Use lockfiles and requirements files as the source of truth for exact versions.
 |-- AGENTS.md                    specification router only
 |-- spec files/                 authoritative system specifications
 |-- demo/                       fifteen-device Docker demo: appliance/ (Pinpoint device setup), targets/ (Docker devices), run of show (no product code)
-|-- lab/                        test-lab harness code; legacy-vms/ is the older five-VM lab
+|-- lab/                        test-lab harness code
 |-- client/                     React + TypeScript application
 |   `-- src/
 |       |-- pages/              top-level routed pages

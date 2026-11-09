@@ -813,6 +813,8 @@ def main(argv=None):
         if args.command=='address-mode' and address_mode.intent_exists(ROOT):
             print('Address change incomplete; run presenter address-mode recover after resolving the lab issue.',file=sys.stderr)
             return 1
+        if args.command=='preflight' and isinstance(sys.exc_info()[1],ValueError) and str(sys.exc_info()[1]):
+            print('Preflight blocked: '+str(sys.exc_info()[1])+'.',file=sys.stderr);return 1
         print('Presenter control refused: pilot state or requested operation is unavailable.',file=sys.stderr);return 1
 
 if __name__=='__main__':raise SystemExit(main())

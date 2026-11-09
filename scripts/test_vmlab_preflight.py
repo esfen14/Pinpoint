@@ -113,7 +113,7 @@ class CommandGateTests(unittest.TestCase):
             env = dict(os.environ, PATH=str(path) + ':' + os.environ['PATH'],
                        VMLAB_CONFIG=str(config), VMLAB_STATE_DIR=str(path / 'state'), GATE_LOG=str(log))
             for command in ['create', 'prepare', 'provision', 'up', 'down', 'revert', 'fresh',
-                            'sync', 'health', 'setup-admin', 'setup-restricted', 'smoke', 'ncpa', 'alerts', 'targets']:
+                            'sync', 'health', 'setup-admin', 'setup-restricted', 'smoke', 'alerts']:
                 with self.subTest(command=command):
                     log.write_text('')
                     result = subprocess.run(['bash', str(root / 'scripts/vmlab'), command],
