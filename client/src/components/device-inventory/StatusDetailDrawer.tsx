@@ -12,6 +12,7 @@ import { DeviceInterfacesSection } from './DeviceInterfacesSection'
 import { DeviceSnmpSection } from './DeviceSnmpSection'
 import { DevicePortsSection } from './DevicePortsSection'
 import { FlapHistorySection } from './FlapHistorySection'
+import { DeviceAddressHistorySection } from './DeviceAddressHistorySection'
 import type { MonitoringState } from '../../types/host'
 import { useDisplayTime } from '../../hooks/useDisplayTime'
 import { DrawerShell } from '../shared/DrawerShell'
@@ -352,6 +353,10 @@ export function StatusDetailDrawer({ hostname, onClose, onMonitoringChanged, onI
               )}
               {!service && detail.device_id != null && hasPermission('system.hosts') && (
                 <DevicePortsSection key={detail.device_id} deviceId={detail.device_id} hostname={hostname} />
+              )}
+
+              {!service && detail.device_id != null && hasPermission('system.hosts') && (
+                <DeviceAddressHistorySection key={`addresses-${detail.device_id}`} deviceId={detail.device_id} />
               )}
 
               {!service && detail.device_id != null && hasPermission('system.hosts') && (
