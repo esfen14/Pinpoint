@@ -78,6 +78,7 @@ Then run the demo from [`README.md`](README.md) and [`USAGE.md`](USAGE.md).
 | Setup: `uses an older image` | Rebuilt image. `demo/demo destroy --apply`, then setup again |
 | `snmp02`/`dynsnmp01` refuse to start | The SNMP community file is invalid (needs 32 lowercase hex). Rewrite it: `openssl rand -hex 16 \| sudo tee <private dir>/pilot-catalog/private/snmp-community` |
 | `Host controller unavailable, already owned` in tests | Another `demo/demo` or `scripts/vmlab` run holds the host lock; wait for it |
+| `vmlab: preflight FAILED: ownership is ambiguous` during `demo/demo qa create` | A VM is running or port 2251/18080 is in use. Power off every VM first, then retry |
 | Start over | `demo/demo destroy --apply`, then `demo/demo setup --apply` |
 
 The private state (identities, credentials, pins) lives in

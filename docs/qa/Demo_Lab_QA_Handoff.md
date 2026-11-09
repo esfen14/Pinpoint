@@ -8,6 +8,11 @@ What is in and out of QA scope: [`QA_Journeys_and_Scope.md`](QA_Journeys_and_Sco
 
 ## Build
 
+**Before `demo/demo qa create --apply`, power off every VM** (including `Pinpoint-Final` and
+`pinpoint-defense-win01`). `scripts/vmlab`'s creation preflight refuses unless no VM is running,
+ports 2251 and 18080 are free and only one VirtualBox service is active; it fails with
+"ownership is ambiguous". Start the VMs again after the build.
+
 ```bash
 demo/demo qa create                   # plan: iso, create, provision, fresh
 demo/demo qa create --apply           # builds qa-pinpoint-appliance (30 to 60 minutes)
