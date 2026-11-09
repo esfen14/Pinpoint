@@ -24,6 +24,12 @@ class Step:
     input_text: str | None = None
 
 
+def new_community():
+    """The node code accepts exactly 32 lowercase hex characters."""
+    import secrets
+    return secrets.token_hex(16)
+
+
 def pilot(root):
     return Path(root)/'pilot-catalog'
 
@@ -47,7 +53,7 @@ def context_path(root):
     return Path(root)/'context'/'context.json'
 
 
-def host_steps(catalog,root,owner,vm_uuid,parent_mac,community):
+def host_steps(catalog,root,owner,vm_uuid,parent_mac,community,keep_context=False,keep_secret=False):
     """Root-owned private directories and files; context and SNMP secret via stdin, never argv."""
     steps=[]
     steps.append(Step(['mkdir','-p','-m','700',str(root)]))  # user-owned: the presenter keeps its pins and journals here
@@ -60,11 +66,13 @@ def host_steps(catalog,root,owner,vm_uuid,parent_mac,community):
         for leaf in ('identity','data'):
             steps.append(Step(['sudo','install','-d','-m','700','-o','root','-g','root',str(base/leaf)]))
     context=json.dumps({'version':2,'mode':'host-only','owner':owner,'vm_uuid':vm_uuid,'parent_mac':parent_mac})
-    steps.append(Step(['sudo','tee',str(context_path(root))],context+'\n'))
-    steps.append(Step(['sudo','chmod','600',str(context_path(root))]))
-    secret=pilot(root)/'private'/'snmp-community'
-    steps.append(Step(['sudo','tee',str(secret)],community+'\n'))
-    steps.append(Step(['sudo','chmod','600',str(secret)]))
+    if not keep_context:
+        steps.append(Step(['sudo','tee',str(context_path(root))],context+'\n'))
+        steps.append(Step(['sudo','chmod','600',str(context_path(root))]))
+    if not keep_secret:
+        secret=pilot(root)/'private'/'snmp-community'
+        steps.append(Step(['sudo','tee',str(secret)],community+'\n'))
+        steps.append(Step(['sudo','chmod','600',str(secret)]))
     return steps
 
 
@@ -130,14 +138,20 @@ def exists(runner,argv):
 
 def apply(catalog,root,repo,runner,owner,vm_uuid,parent_mac,community,image=IMAGE_TAG):
     """Create what is missing; anything that already exists is left untouched. Re-runnable."""
-    if not exists(runner,['docker','network','inspect',NETWORK]):
-        for step in host_steps(catalog,root,owner,vm_uuid,parent_mac,community):
-            runner(step.argv,step.input_text)
+    keep_context=exists(runner,['sudo','test','-e',str(context_path(root))])
+    keep_secret=exists(runner,['sudo','test','-e',str(pilot(root)/'private'/'snmp-community')])
+    for step in host_steps(catalog,root,owner,vm_uuid,parent_mac,community,keep_context,keep_secret):
+        runner(step.argv,step.input_text)
     runner(build_command(repo,image))
     if not exists(runner,['docker','network','inspect',NETWORK]):
         runner(network_command())
+    built=json.loads(runner(['docker','image','inspect',image]))[0]['Id']
     for device,argv in zip(linux_devices(catalog),container_commands(catalog,root,image)):
-        if not exists(runner,['docker','inspect','pinpoint274-host-'+device.name+'-pilot']):
+        name='pinpoint274-host-'+device.name+'-pilot'
+        if exists(runner,['docker','inspect',name]):
+            if json.loads(runner(['docker','inspect',name]))[0].get('Image')!=built:
+                raise ValueError(name+' uses an older image than the one just built; run demo/demo destroy --apply, then setup again')
+        else:
             runner(argv)
 
 

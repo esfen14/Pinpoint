@@ -17,6 +17,7 @@ def good_runner(argv):
     if argv[:2]==['VBoxManage','--version']:return '7.2.14'
     if argv[:3]==['VBoxManage','list','hostonlyifs']:return 'Name: vboxnet1\nIPAddress: 192.168.57.1\n'
     if argv[:2]==['VBoxManage','showvminfo']:return 'nic2="hostonly"\nhostonlyadapter2="vboxnet1"\n'
+    if argv[:4]==['ip','-j','-4','addr']:return '[{"addr_info":[{"local":"192.168.57.1"}]}]'
     if argv[:2]==['ip','-j']:return '[{"dst":"default","dev":"wlan0"},{"dst":"192.168.1.0/24","dev":"wlan0"},{"dst":"192.168.57.0/24","dev":"vboxnet1"}]'
     raise AssertionError('unexpected command %r'%(argv,))
 
@@ -49,9 +50,15 @@ class PreflightTests(unittest.TestCase):
             return good_runner(argv)
         failed={r[0] for r in setup.preflight(runner,available_mib=1024) if not r[1]}
         self.assertEqual(failed,{'Docker','Host-only network vboxnet1','Memory'})
+    def test_hostonly_interface_without_its_address_is_a_blocker(self):
+        def runner(argv):
+            if argv[:4]==['ip','-j','-4','addr']:return '[]'
+            return good_runner(argv)
+        failed={r[0] for r in setup.preflight(runner,available_mib=8192) if not r[1]}
+        self.assertEqual(failed,{'Host-only address'})
     def test_a_route_overlapping_the_demo_subnet_on_another_interface_is_a_blocker(self):
         def runner(argv):
-            if argv[:2]==['ip','-j']:return '[{"dst":"10.77.1.0/24","dev":"tun0"}]'
+            if argv[:2]==['ip','-j'] and 'route' in argv:return '[{"dst":"10.77.1.0/24","dev":"tun0"}]'
             return good_runner(argv)
         failed={r[0] for r in setup.preflight(runner,available_mib=8192) if not r[1]}
         self.assertEqual(failed,{'Subnet conflicts'})

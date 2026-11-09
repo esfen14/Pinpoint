@@ -71,6 +71,16 @@ def preflight(runner,available_mib):
         rows.append(('Host-only network '+PARENT,present,'present' if present else PARENT+' not found'))
     except (OSError,subprocess.SubprocessError,ValueError):
         rows.append(('Host-only network '+PARENT,False,'VBoxManage is not available'))
+    try:
+        addresses=json.loads(runner(['ip','-j','-4','addr','show','dev',PARENT]))
+        up=False
+        for link in addresses:
+            for info in link.get('addr_info',[]):
+                if info.get('local')=='192.168.57.1':
+                    up=True
+        rows.append(('Host-only address',up,'192.168.57.1 present' if up else PARENT+' has no address: start a VM attached to it (Windows or the appliance), then re-run'))
+    except (OSError,subprocess.SubprocessError,ValueError):
+        rows.append(('Host-only address',False,PARENT+' has no address: start a VM attached to it (Windows or the appliance), then re-run'))
     conflicts=[]
     try:
         routes=json.loads(runner(['ip','-j','route','show']))
@@ -189,13 +199,14 @@ def default_create_lab(catalog,out):
         if result.returncode:
             raise ValueError('command failed: '+argv[0]+' '+' '.join(argv[1:3]))
         return result.stdout
-    create.apply(catalog,presenter.ROOT,repo,runner,owner=secrets.token_hex(24),vm_uuid=uuid,parent_mac=mac,community=secrets.token_urlsafe(12))
-    if not presenter.PINS.exists():
-        pins=create.read_pins(catalog,runner)
-        fd=os.open(presenter.PINS,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
-        with os.fdopen(fd,'w') as stream:
-            json.dump(pins,stream)
-            stream.write('\n')
+    create.apply(catalog,presenter.ROOT,repo,runner,owner=secrets.token_hex(24),vm_uuid=uuid,parent_mac=mac,community=create.new_community())
+    pins=create.read_pins(catalog,runner)
+    if presenter.PINS.is_file() and not presenter.PINS.is_symlink():
+        presenter.PINS.unlink()  # pins always describe the containers that exist now
+    fd=os.open(presenter.PINS,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+    with os.fdopen(fd,'w') as stream:
+        json.dump(pins,stream)
+        stream.write('\n')
     print('Containers created and pinned; starting them with the presenter.',file=out)
     subprocess.run([sys.executable,'-I',str(Path(__file__).with_name('presenter.py')),'up'],check=True,timeout=900)
 
@@ -241,8 +252,8 @@ def main(argv,runner=default_runner,available_mib=default_available_mib,ask=inpu
     if apply:
         try:
             create_lab(catalog,out)
-        except (OSError,ValueError,subprocess.SubprocessError):
-            print('Setup stopped: a creation step failed. It is safe to re-run; existing objects are kept.',file=err)
+        except (OSError,ValueError,subprocess.SubprocessError) as problem:
+            print('Setup stopped: %s. It is safe to re-run; existing objects are kept.'%(problem or 'a creation step failed'),file=err)
             return 1
         vm_rows=vm_attachments(runner)
         print('\nVM attachment',file=out)

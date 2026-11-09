@@ -22,6 +22,15 @@ clears at the next check, and a new port or address needs a **Rescan Network**
 | Return everything to baseline | `demo/demo reset` | Addresses, daemons and extra ports back to baseline (about 90 seconds) |
 | Check the lab | `demo/demo preflight` and `demo/demo presenter manifest` | Host checks; observed MAC, IP and listeners |
 
+## QA tester: a disposable appliance
+
+| Task | Command | What happens |
+|---|---|---|
+| Build the QA appliance | `demo/demo qa create` then `demo/demo qa create --apply` | VM `qa-pinpoint-appliance` on `vboxnet1` at `10.77.1.1`; Ubuntu, Nagios and the current pushed branch (30 to 60 minutes). Prints the plan first |
+| Containers to test against | `demo/demo setup --apply` | The fourteen Docker targets (the demo and QA share `vboxnet1`, so run one at a time) |
+| Back to a clean build | `demo/demo qa reset` | Restores the Ubuntu and Nagios snapshot and installs a fresh build |
+| Throw it away | `demo/demo qa destroy --apply` | Removes only the QA VM, its disk and the QA state folder, after a typed confirmation |
+
 ## Take a device or service down and back up
 
 | Task | Command | Pinpoint shows |

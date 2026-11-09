@@ -3,3 +3,6 @@
 !demo/targets/
 !demo/targets/*.py
 !demo/targets/manifest.json
+demo/targets/test_*.py
+demo/targets/setup.py
+demo/targets/create.py

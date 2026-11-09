@@ -15,6 +15,7 @@ Lab lifecycle (run from the repository root):
   demo/demo setup [--apply]        prepare everything; without --apply it prints the plan and the manual checklist
   demo/demo up                     create any missing containers, start all fourteen and restore the baseline
   demo/demo down                   stop all fourteen containers
+  demo/demo qa create|reset|status|destroy  disposable QA appliance VM for testers (create and destroy need --apply)
   demo/demo create-vms [--apply]   create the Pinpoint appliance and Windows NCPA VMs (missing ones only)
   demo/demo destroy [--apply]      remove only the demo-owned containers and network (typed confirmation)
   demo/demo manifest [--json]      intended devices and listeners (no live check)
@@ -43,6 +44,10 @@ fi
 case "${1:-}" in
   help|-h|--help)
     full_help
+    ;;
+  qa)
+    shift
+    exec python3 -I "$here/appliance/qa_vm.py" "$@"
     ;;
   create-vms)
     shift

@@ -83,10 +83,51 @@ class ApplyTests(unittest.TestCase):
         log=[]
         def runner(argv,input_text=None):
             log.append(argv)
-            if argv[:2]==['docker','inspect'] or argv[:3]==['docker','network','inspect']:return '[{}]'
+            if argv[:3]==['docker','image','inspect']:return '[{"Id":"sha256:new"}]'
+            if argv[:2]==['docker','inspect']:return '[{"Image":"sha256:new"}]'
+            if argv[:3]==['docker','network','inspect']:return '[{}]'
             return ''
         create.apply(CATALOG,ROOT,Path('/repo'),runner,owner=OWNER,vm_uuid=UUID,parent_mac=MAC,community='c',image='i:t')
         self.assertFalse([a for a in log if a[:2]==['docker','create'] or a[:3]==['docker','network','create']])
+
+class StaleImageTests(unittest.TestCase):
+    def test_existing_containers_from_an_older_image_are_refused(self):
+        def runner(argv,input_text=None):
+            if argv[:3]==['docker','image','inspect']:return '[{"Id":"sha256:new"}]'
+            if argv[:2]==['docker','inspect']:return '[{"Image":"sha256:old"}]'
+            return ''
+        with self.assertRaises(ValueError) as caught:
+            create.apply(CATALOG,ROOT,Path('/repo'),runner,owner=OWNER,vm_uuid=UUID,parent_mac=MAC,community='c',image='i:t')
+        self.assertIn('older image',str(caught.exception))
+
+
+class KeepOwnerTests(unittest.TestCase):
+    def test_an_existing_context_file_is_never_overwritten(self):
+        log=[]
+        def runner(argv,input_text=None):
+            log.append((argv,input_text))
+            if argv[:3]==['docker','image','inspect']:return '[{"Id":"sha256:n"}]'
+            if argv[:2]==['docker','inspect']:return '[{"Image":"sha256:n"}]'
+            return '[{}]'
+        create.apply(CATALOG,ROOT,Path('/repo'),runner,owner=OWNER,vm_uuid=UUID,parent_mac=MAC,community='c',image='i:t')
+        self.assertFalse([a for a,i in log if a[:2]==['sudo','tee']])
+    def test_a_missing_context_file_is_written(self):
+        log=[]
+        def runner(argv,input_text=None):
+            log.append(argv)
+            if argv[:3]==['sudo','test','-e']:raise ValueError('absent')
+            if argv[:3]==['docker','image','inspect']:return '[{"Id":"sha256:n"}]'
+            if argv[:2]==['docker','inspect']:return '[{"Image":"sha256:n"}]'
+            return '[{}]'
+        create.apply(CATALOG,ROOT,Path('/repo'),runner,owner=OWNER,vm_uuid=UUID,parent_mac=MAC,community='c',image='i:t')
+        self.assertTrue([a for a in log if a[:2]==['sudo','tee']])
+
+
+class CommunityTests(unittest.TestCase):
+    def test_generated_community_matches_what_the_node_accepts(self):
+        import re
+        self.assertRegex(create.new_community(),r'[a-f0-9]{32}')
+
 
 class PinTests(unittest.TestCase):
     def test_pins_use_the_presenter_format(self):

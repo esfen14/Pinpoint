@@ -64,6 +64,7 @@ VMLAB_CPUS="4"
 VMLAB_DISK_MB="40960"
 VMLAB_LAB_ADDRESS="10.77.0.1/28"
 VMLAB_LAB_INTNET="pinpoint-demo"
+VMLAB_LAB_HOSTONLY=""   # set (e.g. vboxnet1) to attach the lab NIC to a host-only network instead of the internal network
 VMLAB_ADMIN_EMAIL=""
 VMLAB_ADMIN_PASSWORD=""
 VMLAB_LAB_NETWORK="10.77.0.0/28"
@@ -279,7 +280,8 @@ case "$cmd" in
     echo "Creating '$VMLAB_VM' ($VMLAB_RAM_MB MB, $VMLAB_CPUS CPUs, $VMLAB_DISK_MB MB disk); SSH on 127.0.0.1:$VMLAB_SSH_PORT, web on 127.0.0.1:$VMLAB_WEB_PORT"
     VBoxManage createvm --name "$VMLAB_VM" --ostype Ubuntu_64 --register >/dev/null
     VBoxManage modifyvm "$VMLAB_VM" --memory "$VMLAB_RAM_MB" --cpus "$VMLAB_CPUS" --audio-driver=none \
-      --graphicscontroller=vmsvga --rtc-use-utc=on --nic1=nat --nic2=intnet --intnet2="$VMLAB_LAB_INTNET"
+      --graphicscontroller=vmsvga --rtc-use-utc=on --nic1=nat \
+      $(if [ -n "$VMLAB_LAB_HOSTONLY" ]; then echo "--nic2=hostonly --host-only-adapter2=$VMLAB_LAB_HOSTONLY"; else echo "--nic2=intnet --intnet2=$VMLAB_LAB_INTNET"; fi)
     VBoxManage modifyvm "$VMLAB_VM" "--nat-pf1=ssh,tcp,127.0.0.1,$VMLAB_SSH_PORT,,22"
     VBoxManage modifyvm "$VMLAB_VM" "--nat-pf1=web,tcp,127.0.0.1,$VMLAB_WEB_PORT,,80"
     VBoxManage createmedium disk --filename "$disk" --size "$VMLAB_DISK_MB" >/dev/null

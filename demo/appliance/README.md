@@ -12,6 +12,11 @@ Read them locally and keep them out of slides, recordings and reports.
 
 `demo/demo create-vms` prints the VBoxManage plan for the Pinpoint appliance (`Pinpoint-Final`) and the Windows test VM (`pinpoint-defense-win01`) and creates only the missing ones with `--apply` (add `--windows-iso`). Installing the application is `scripts/vmlab`; the NCPA install and snapshots are manual.
 
+## Two kinds of appliance VM
+
+- **Demo VM** (`Pinpoint-Final`, `demo/demo create-vms`): the long-lived one you present with.
+- **QA VM** (`qa-pinpoint-appliance`, `demo/demo qa create`): disposable and ready-made for a tester. It is built by `scripts/vmlab` on the same `vboxnet1` with its own state folder, reset with `demo/demo qa reset` and removed with `demo/demo qa destroy --apply`. The demo and QA VMs share the network, so run one at a time. See [`USAGE.md`](../USAGE.md).
+
 ## What the appliance must have
 
 | Item | Required value | Check |
