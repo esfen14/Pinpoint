@@ -39,7 +39,8 @@ demo/demo destroy --apply             # type "destroy": removes only the demo co
 
 ## Known limits
 
-- The creation commands were run live for the containers only; `demo/demo qa create` and
-  `create-vms --apply` are untested live.
+- Run live: the container creation, `demo/demo preflight`, and `demo/demo create-vms` (it leaves
+  existing VMs untouched). Not yet run live: creating a missing VM with `create-vms --apply`, and
+  `demo/demo qa create`.
 - A new Windows VM has no scripted NCPA install (#302); the prepared VM already has it.
 - No automated NCPA deployment run: the Linux containers have no password SSH.
