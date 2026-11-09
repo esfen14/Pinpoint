@@ -6,6 +6,7 @@ six invariants, and the out-of-scope list. The cases that exercise them are in
 `qa-run` workflow, lab safety) are issue #63 and are not defined here.
 The paper-format case and actual-result tables are in
 [derived status view](QA_Case_Status.md).
+Building and resetting the test environment: [demo lab QA hand-off](Demo_Lab_QA_Handoff.md).
 
 | | |
 |---|---|

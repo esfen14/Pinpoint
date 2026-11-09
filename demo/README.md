@@ -7,6 +7,9 @@ VirtualBox lab was removed (#298); git history keeps it.
 
 ## Order
 
+Starting from nothing? Follow [`SETUP.md`](SETUP.md) (prerequisites, steps, troubleshooting).
+Testers: [QA hand-off](../docs/qa/Demo_Lab_QA_Handoff.md).
+
 1. **[Part 1: Pinpoint device setup](appliance/README.md)**: the appliance VM and
    the Windows test VM (what is under test).
 2. **[Part 2: Docker container setup](targets/README.md)**: the fourteen monitored
