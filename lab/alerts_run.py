@@ -4,7 +4,7 @@ acknowledge it, unacknowledge it, bring the target back and watch the alert clea
 Pinpoint names discovered hosts `dev-xxxxxx`, so the alert is found by comparing the
 active alerts before and after the target goes down, not by name. The target is always
 started again at the end, even when a check fails. Standard library only; needs the
-lab's `demo/demo_lab.py` and VirtualBox. Run it after discovery (scripts/vmlab smoke).
+lab's `lab/legacy-vms/demo_lab.py` and VirtualBox. Run it after discovery (scripts/vmlab smoke).
 
     SMOKE_PASSWORD=... python3 lab/alerts_run.py --email ADMIN --target web01
 
@@ -21,7 +21,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import smoke  # noqa: E402  (shares the API client and the PASS/FAIL printer)
 
-DEMO_LAB = Path(__file__).resolve().parent.parent / "demo" / "demo_lab.py"
+DEMO_LAB = Path(__file__).resolve().parent / "legacy-vms" / "demo_lab.py"
 ALERTS = "/api/system/dashboard/alerts"
 ACK = "/api/system/dashboard/alerts/acknowledge"
 

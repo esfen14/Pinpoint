@@ -39,7 +39,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 ## Plan
 
 1. [x] Branch, read specs, write this plan and checkpoint (`.agent/progress/issue-298.md`).
-2. [ ] Move legacy lab: `git mv demo/demo_lab.py demo/smoke_test.py demo/manual lab/legacy-vms/`; repoint `scripts/vmlab`, `lab/alerts_run.py`, `lab/ncpa_run.py`; run `scripts/vmlab` help / syntax check.
+2. [x] Move legacy lab: `git mv demo/demo_lab.py demo/smoke_test.py demo/manual lab/legacy-vms/`; repoint `scripts/vmlab`, `lab/alerts_run.py`, `lab/ncpa_run.py`; run `scripts/vmlab` help / syntax check.
 3. [ ] Structure move: `git mv` appliance docs (PRESENTER_SETUP, WINDOWS_READY, appliance parts of DEMO_READY) to `demo/appliance/`; `demo/defense/*` to `demo/targets/`; fix `demo/demo`, Dockerfile, `bootstrap.py`, `sampler.py`, tests, `Pinpoint-Demo-faults.sh`, `scripts/verify.sh`; run moved tests.
 4. [ ] Update path references: spec files, `AGENTS.md`, `docs/plans/*`, `docs/qa/Automation_Readiness.md`, `docs/test-runs/*` links, `.agent/` docs.
 5. [ ] Docs: rewrite `demo/README.md` index, `demo/appliance/README.md`, `demo/targets/README.md`; reconcile status lines; strip UUIDs/laptop paths; cross-link Local_Lab, VM_Lab_Plan, Defense_Demo_Lab_Plan, `lab/`.
@@ -53,11 +53,12 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 0 | Branch created, issue read, plan written | n/a | n/a |
+| 1 | git mv demo_lab.py, smoke_test.py, manual/ to lab/legacy-vms/; repointed scripts/vmlab, lab/alerts_run.py, lab/ncpa_run.py | bash -n scripts/vmlab; py_compile lab files; alerts_run.py --help | green (vmlab targets needs live VBox, not run) |
 
 ## State for the next session
 
-- Last check run (exact command): none yet
-- Result (first failing lines, or "green"): n/a
+- Last check run (exact command): bash -n scripts/vmlab && python3 -m py_compile lab/alerts_run.py lab/ncpa_run.py lab/legacy-vms/*.py
+- Result (first failing lines, or "green"): green
 - Hypothesis: moves are mechanical; setup/lifecycle need new code in presenter-style modules
 - Next action: step 2, `git mv demo/demo_lab.py demo/smoke_test.py demo/manual lab/legacy-vms/` and repoint scripts/vmlab line 541 and lab/alerts_run.py line 24
 

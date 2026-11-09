@@ -26,7 +26,7 @@
 #   scripts/vmlab creds                print the installer's one-time credentials (shows the password; lab only)
 #   scripts/vmlab up | down | revert   start (headless), power off, restore the snapshot only
 #   scripts/vmlab phase0 [--with-notification]  event-handler lab checks (docs/plans/Proactive_Resolution_Implementation_Plan.md); output saved too
-#   scripts/vmlab targets <cmd...>     pass through to demo/demo_lab.py (up, down, wall, break, ...)
+#   scripts/vmlab targets <cmd...>     pass through to lab/legacy-vms/demo_lab.py (up, down, wall, break, ...)
 #
 # The installer's own repository supplies the setup steps. Point VMLAB_INSTALLER_DIR at
 # your local clone to test installer changes before pushing them (it is only read).
@@ -229,7 +229,7 @@ systemctl enable ssh"
   echo "echo $(printf '%s' "$script" | base64 -w0) | base64 -d | bash"
 }
 
-# Same apt fix demo/demo_lab.py applies: the installer fetches only the main section.
+# Same apt fix lab/legacy-vms/demo_lab.py applies: the installer fetches only the main section.
 patch_user_data() { # patch_user_data <file>
   python3 -I -c '
 import sys
@@ -538,7 +538,7 @@ print("setup-email=" + (os.environ["SETUP_NEW_EMAIL"] if needs_setup else os.env
     exit "$rc"
     ;;
 
-  targets) exec python3 "$root/demo/demo_lab.py" "$@" ;;
+  targets) exec python3 "$root/lab/legacy-vms/demo_lab.py" "$@" ;;
 
   *) die "unknown command '$cmd' (try: scripts/vmlab help)" ;;
 esac

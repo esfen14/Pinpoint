@@ -6,7 +6,7 @@ Standard library only. Run it after discovery has found the targets (scripts/vml
 
     SMOKE_PASSWORD=... python3 lab/ncpa_run.py --email ADMIN --ips 10.77.0.2,10.77.0.6
 
-The targets' SSH login comes from a file (default: demo_lab.py's private password file),
+The targets' SSH login comes from a file (default: legacy-vms/demo_lab.py's private password file),
 never from the command line. Exit status 0 when every check passes.
 """
 import argparse
