@@ -338,7 +338,7 @@ python3 -I scripts/qa_queue.py check --queue docs/qa/queues/team-modules-01.json
 selector lists exclusions and selects only eligible cases. Optional `--purpose
 recheck` or `retest` records intended review scope; it is not permission to execute.
 `--evidence <review.json>` accepts only validated reviewer decisions for the exact
-target. The [historical evidence review](Historical_Evidence_Review.md) explains
+target. The [historical evidence review](../test-runs/2026-10-18-qa-historical-evidence-review/REPORT.md) explains
 partial candidates and why no current inherited PASS is automatic.
 
 Optional `--cards <cards.json>` supplies a dictionary keyed by current case ID.
@@ -369,7 +369,7 @@ review still matter. Keep actual runtime authorization separate from offline log
 
 Partial human verdicts require a linked investigation disposition even though the
 default untested queue excludes them. Follow the
-[partial-pass register and procedure](Partial_Pass_Investigations.md).
+[partial-pass register and procedure](../test-runs/2026-10-18-qa-partial-pass-investigations/REPORT.md).
 Prepare a review-only assignment with `--purpose investigate` and module selectors
 such as `--set partials:Reviewer:ACK,REM`. Only catalog partials are eligible;
 conflicts remain decisions. The preview disallows product execution and the offline
@@ -403,7 +403,7 @@ without failed-item evidence is inconclusive, and missing cleanup must halt.
 ## Moving from the completed pilot to new cases
 
 The accepted #211 recheck remains a consumed historical queue. The next finite
-permission scope is governed by [its review](Next_Permission_Batch_Review.md).
+permission scope is governed by [its review](../test-runs/2026-10-18-qa-next-permission-batch-review/REPORT.md).
 Use the canonical ledger and reviewed `qa_pilot.py handoff` to archive the prior
 complete state and append the next queue hash. All previous IDs must be complete,
 restored PASS and new untested IDs must have no prior accepted PASS in that ledger.

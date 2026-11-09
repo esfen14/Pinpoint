@@ -392,7 +392,7 @@ separately checks complete supervisor-backed PASS/cleanup/evidence/baseline befo
 archiving the exact old ledger and appending the new queue; no prior attempts,
 recoveries or budgets are cleared. Concrete cards, current proof, handoff review
 and a new explicit start are required. The new two cases have not run. See the
-[next batch review](../docs/qa/Next_Permission_Batch_Review.md).
+[next batch review](../docs/test-runs/2026-10-18-qa-next-permission-batch-review/REPORT.md).
 `qa_coverage.py` validates hashes/review/item coverage and binds cards to exact
 selection. `playwright.qa.config.ts` has one worker, zero retries, no setup
 dependencies/captures and private unique outputs; offline collection is checked.
@@ -406,7 +406,7 @@ the new config; only the narrow pilot entry below adds gated live integration.
 Other live cases remain blocked. No new case result
 is claimed. See [adapter preparation](../docs/qa/Automation_Readiness.md). Review-only `investigate`
 queues now retain human partials for mandatory evidence/issue triage and reject
-product case opening. The [partial-pass register](../docs/qa/Partial_Pass_Investigations.md)
+product case opening. The [partial-pass register](../docs/test-runs/2026-10-18-qa-partial-pass-investigations/REPORT.md)
 links reported confirmation defect #208 and unexplained-result clarification #209;
 neither is a fresh runtime reproduction.
 
@@ -479,7 +479,7 @@ completed and independent post-run baseline inspection passed. Overall result is
 INCONCLUSIVE because the parser rejected an E1 timestamp 44 ms beyond its computed
 attempt end; harness [#211](https://github.com/esfen14/Pinpoint/issues/211) tracks
 the offline bounded attach-window fix and pinned-worker timing investigation
-([timing rule](../docs/qa/QA_Report_Timing.md)). Import and composed-driver
+([timing rule](../docs/test-runs/2026-10-18-qa-report-timing/REPORT.md)). Import and composed-driver
 regressions accept the synthetic 44 ms relationship and halt on stale/foreign or
 failed-cleanup evidence. The original v4 result remains INCONCLUSIVE; its halted
 attempt, exact private ledger archive, evidence and original budgets are preserved.
@@ -499,7 +499,7 @@ Broader/unattended coverage stays blocked. Controlled launch/build provenance is
 trust boundary, not memory attestation. The standalone observer's negative
 readiness fields are unchanged.
 
-The [historical evidence inventory/review](../docs/qa/Historical_Evidence_Review.md)
+The [historical evidence inventory/review](../docs/test-runs/2026-10-18-qa-historical-evidence-review/REPORT.md)
 links 41 post-cutoff-directory-date reports and six partial current-case mappings.
 October 15 remains a provisional cutoff. No full-case inherited PASS is accepted.
 `scripts/qa_evidence.py` validates reviewer-bound target/report/case hashes and

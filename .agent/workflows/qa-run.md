@@ -23,7 +23,7 @@ prepares version-2 JSON scope plus a Markdown preview from the new catalog;
 `scripts/render_qa_case_tables.py --write` derives `docs/qa/QA_Case_Status.md`.
 Never recreate the old files or use an old version-1 ISO queue.
 
-The [historical evidence review](../../docs/qa/Historical_Evidence_Review.md) links
+The [historical evidence review](../../docs/test-runs/2026-10-18-qa-historical-evidence-review/REPORT.md) links
 candidate reports without promoting partial observations to whole-case passes.
 The reviewer-bound JSON ledger is optional input to queue preparation. Its target
 revision must match; accepted credit needs complete item-level coverage and a
@@ -120,12 +120,12 @@ ledger bytes and appends the next hash; all attempts, recoveries, archives and
 session budgets stay intact. It rejects an already passed ID in the next untested
 scope. Handoff is not a case start. Never clear/relocate a ledger or create an
 affirmative handoff/start record from preparation. See the
-[next permission review](../../docs/qa/Next_Permission_Batch_Review.md).
+[next permission review](../../docs/test-runs/2026-10-18-qa-next-permission-batch-review/REPORT.md).
 
 ## Mandatory partial-pass investigation
 
 Before treating the remaining queue as complete, review every catalog partial
-against the [partial-pass register](../../docs/qa/Partial_Pass_Investigations.md).
+against the [partial-pass register](../../docs/test-runs/2026-10-18-qa-partial-pass-investigations/REPORT.md).
 Use `--purpose investigate` for fixed module/person evidence-review assignments.
 These assignments cannot open product cases in the offline executor. Search open
 and closed issues; link an existing issue or file an attributed reported defect

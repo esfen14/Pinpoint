@@ -1,7 +1,7 @@
 # Next permission batch preparation — 2026-10-18
 
 Plan: [current black-box catalog](../../qa/Pinpoint%20-%20Black-Box%20Test%20Cases%20by%20Module%20with%20Traceability%20Matrix.md).
-Scope: [two-case review](../../qa/Next_Permission_Batch_Review.md), set `next-permissions`,
+Scope: [two-case review](../2026-10-18-qa-next-permission-batch-review/REPORT.md), set `next-permissions`,
 owner Paeng, [#206](https://github.com/esfen14/Pinpoint/issues/206).
 Executor: Codex, AI-assisted read-only preparation; no acceptance browser.
 

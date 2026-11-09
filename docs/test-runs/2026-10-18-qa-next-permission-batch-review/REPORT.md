@@ -1,10 +1,12 @@
 # Next permission batch: TC-ACC-09 and TC-NCPA-08
 
+> Moved from `docs/qa/Next_Permission_Batch_Review.md` by issue #286 (QA documentation consolidation). Content unchanged except relative links.
+
 State: prepared for review; no handoff or new case start. Owner Paeng, tracking
 [#206](https://github.com/esfen14/Pinpoint/issues/206), set/session `next-permissions`.
-[Queue preview](queues/2026-10-18-next-permissions.md) ·
-[immutable JSON](queues/2026-10-18-next-permissions.json) ·
-[preparation report](../test-runs/2026-10-18-issue-206-next-permissions-preflight/REPORT.md).
+[Queue preview](../../qa/queues/2026-10-18-next-permissions.md) ·
+[immutable JSON](../../qa/queues/2026-10-18-next-permissions.json) ·
+[preparation report](../2026-10-18-issue-206-next-permissions-preflight/REPORT.md).
 
 ## Fixed scope
 
@@ -68,7 +70,7 @@ fault, snapshot restore, restart or alternative browser is authorized.
 
 ## Separate reviewed forward handoff
 
-The previous [#211 v2 queue](queues/2026-10-18-issue-211-ss04-recheck-v2.json) is
+The previous [#211 v2 queue](../../qa/queues/2026-10-18-issue-211-ss04-recheck-v2.json) is
 complete and consumed; its source hashes are historical, not a launchable scope.
 Local read-only audit verified its accepted observation files, terminal custody,
 saved session and canonical history: two attempts, one recovery disposition,

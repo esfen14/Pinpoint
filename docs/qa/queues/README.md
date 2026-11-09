@@ -8,7 +8,7 @@ handoff and explicit start. No completed case may be replayed.
 
 | Queue | State | Scope |
 |---|---|---|
-| [Next permission batch](2026-10-18-next-permissions.md), [JSON](2026-10-18-next-permissions.json) | Prepared; handoff/start pending, zero attempts | Paeng; TC-ACC-09 E1/E2 then TC-NCPA-08 E1, one fixed serial batch; [review](../Next_Permission_Batch_Review.md), [execution log](2026-10-18-next-permissions-execution.md) |
+| [Next permission batch](2026-10-18-next-permissions.md), [JSON](2026-10-18-next-permissions.json) | Prepared; handoff/start pending, zero attempts | Paeng; TC-ACC-09 E1/E2 then TC-NCPA-08 E1, one fixed serial batch; [review](../../test-runs/2026-10-18-qa-next-permission-batch-review/REPORT.md), [execution log](2026-10-18-next-permissions-execution.md) |
 | [Accepted #211 recheck v2](2026-10-18-issue-211-ss04-recheck-v2.md), [JSON](2026-10-18-issue-211-ss04-recheck-v2.json) | PASS, consumed/historical; never replay | TC-SS-04 only; complete import/logout/resource/baseline proof; [report](../../test-runs/2026-10-18-issue-211-ss04-recheck/REPORT.md) |
 | [Earlier #211 recheck v1](2026-10-18-issue-211-ss04-recheck-v1.md), [JSON](2026-10-18-issue-211-ss04-recheck-v1.json) | Superseded/unstarted; source-stale preparation | Replaced by the separately authorized v2 recheck |
 | [Original pilot preview](2026-10-18-today-ss04-v4.md), [JSON](2026-10-18-today-ss04-v4.json) | Original attempt INCONCLUSIVE; preserved/consumed, audited recovery recorded; never replay | TC-SS-04 only, `today-ss04`, Paeng; browser assertions/logout passed, timing-import issue [#211](https://github.com/esfen14/Pinpoint/issues/211); [run report](../../test-runs/2026-10-18-issue-206-ss04-pilot/REPORT.md) |
