@@ -150,6 +150,21 @@ class TestAddresses:
         assert [r["current"] for r in rows] == [True, False]
         assert rows[0]["source"] == "SCAN" and rows[1]["closed_at"] is not None
 
+    def test_a_device_moving_20_to_25_and_back_keeps_one_device_and_every_address(self, logged_in_client, db_session, status):
+        device = new_device(db_session, status, ip="10.0.0.20", mac=MAC_1)
+        run_scan(db_session, status, scan("10.0.0.25", mac=MAC_1))
+        back = run_scan(db_session, status, scan("10.0.0.20", mac=MAC_1))[(NET, "10.0.0.20")]
+
+        assert back.NetDiscoveryID == device.NetDiscoveryID
+        assert len(all_devices()) == 1
+
+        data = logged_in_client.get(f"{BASE}/hosts/{device.NetDiscoveryID}/addresses").get_json()["data"]
+
+        rows = data["addresses"]
+        assert [r["ip_address"] for r in rows] == ["10.0.0.20", "10.0.0.25", "10.0.0.20"]
+        assert [r["current"] for r in rows] == [True, False, False]
+        assert all(r["first_seen_at"] and r["last_seen_at"] for r in rows)
+
 
 class TestIdentifiers:
 

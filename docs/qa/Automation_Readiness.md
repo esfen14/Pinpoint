@@ -626,3 +626,16 @@ not change those assertions, prerequisites or cleanup. DashboardPage's hash and
 its new hook/warning dependencies are recorded after source review. No coverage
 status, catalog verdict or live execution permission changes. TC-DASH-06 retest
 evidence remains a separate issue-specific report.
+
+
+## Device drawer IP address history review (#277)
+
+The device drawer gains an "IP address history" section (`DeviceAddressHistorySection`),
+rendered after the Ports section as its own `h3` and table. Codex reviewed
+TC-DI-02 and TC-DI-03: both scope their assertions to the Ports section
+(`h4` group headings, `ul > li` rows, the reason paragraph), which the new
+section does not touch, and neither asserts a heading list for the whole drawer.
+Prerequisites, observations and cleanup remain valid. Only the reviewed
+`StatusDetailDrawer.tsx` fingerprint is refreshed in `automation-coverage.json`.
+Coverage status, expected-item mappings, catalog verdicts and execution
+permissions are unchanged. This is source review, not a live QA result.

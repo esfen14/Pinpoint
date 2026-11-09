@@ -181,6 +181,16 @@ def user_name(user):
     return f"{user.First_Name} {user.Last_Name}".strip()
 
 
+def display_hostname(hostname, ip_address):
+    """
+    The name to show for a device: its hostname, or its IP address when
+    discovery found no name (it stores the placeholder "Unknown").
+    """
+    if hostname and hostname.strip() and hostname != "Unknown":
+        return hostname
+    return ip_address
+
+
 def iso(value):
     """ISO-8601 text for a datetime, or None."""
     return value.isoformat() if value else None
@@ -190,7 +200,7 @@ def serialize_result(result):
     """One device's outcome in a run, as the API returns it."""
     return {
         "device_id": result.NetworkDiscoveryID,
-        "hostname": result.Hostname,
+        "hostname": display_hostname(result.Hostname, result.IP_Address),
         "ip_address": result.IP_Address,
         "outcome": result.Outcome.value,
         "error": result.Error,
@@ -316,7 +326,7 @@ def get_ncpa_eligible_devices():
             fingerprint = creds.Key_Fingerprint if creds else None
             devices.append({
                 "device_id": device.NetDiscoveryID,
-                "hostname": device.Hostname,
+                "hostname": display_hostname(device.Hostname, device.IP_Address),
                 "ip_address": device.IP_Address,
                 "trusted": fingerprint is not None,
                 "fingerprint": fingerprint,
@@ -1135,7 +1145,7 @@ def get_trusted_devices():
             "devices": [
                 {
                     "device_id": device.NetDiscoveryID,
-                    "hostname": device.Hostname,
+                    "hostname": display_hostname(device.Hostname, device.IP_Address),
                     "ip_address": device.IP_Address,
                 }
                 for device in devices
@@ -1224,7 +1234,7 @@ def get_ncpa_register_candidates():
         return success({"devices": [
             {
                 "device_id": device.NetDiscoveryID,
-                "hostname": device.Hostname,
+                "hostname": display_hostname(device.Hostname, device.IP_Address),
                 "ip_address": device.IP_Address,
                 "agent_status": agent_status.value if agent_status else None,
             }

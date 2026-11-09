@@ -541,3 +541,15 @@ The comparison and confirmation support keyboard focus containment, Escape
 rules, merge validation, Nagios config validation/application, snapshot ownership,
 retire controls, static/DHCP editing, port mismatch resolution and undo remain
 outside this change.
+
+### IP address history (#277)
+
+A device that changes its DHCP address stays one record. Each address it is seen
+at is kept as a `DEVICE_ADDRESS_HISTORY` row (address, first seen, last seen),
+so a device that moves `.20` to `.25` and back to `.20` keeps one device, its
+history and checks, and three address rows. The device information drawer of a
+device (not a service) shows **IP address history** for users with
+`system.hosts`: addresses newest first with first seen, last seen and a
+**Current** mark on the open row, plus loading, no-history and retryable error
+states. It reads `GET /api/system/hosts/<id>/addresses` and writes nothing.
+Matching and merging by identity are unchanged.
