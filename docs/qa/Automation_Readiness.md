@@ -171,6 +171,23 @@ procedure coverage, each E1/E2 observation method and all relevant source hashes
 A partial adapter remains partial. If the catalog or a dependency changes, review
 the impact before refreshing hashes; regeneration alone is not a coverage review.
 
+## Data files and how each is produced
+
+Every JSON file in `docs/qa/` is either curated by a reviewer and checked by a
+script, or written by a script that refuses to overwrite its output. Neither kind
+is edited to change a result.
+
+| File | Kind | Script |
+|---|---|---|
+| `automation-coverage.json` | Reviewer-curated coverage registry | Validate with `python3 -I scripts/qa_coverage.py check`; its derived view [`Automation_Coverage.md`](Automation_Coverage.md) is regenerated with `python3 -I scripts/qa_coverage.py render --write` |
+| `historical-evidence-review.json` | Reviewer-curated evidence decisions; read by `check_traceability.py` and `render_qa_case_tables.py` | Validated by `scripts/qa_evidence.py` (`validate_review`); [`QA_Case_Status.md`](QA_Case_Status.md) is regenerated with `python3 -I scripts/render_qa_case_tables.py --write` |
+| `historical-report-inventory.json` | Candidate-report inventory with report hashes | `python3 -I scripts/qa_evidence.py --output <new file>` (refuses an existing output) |
+| `queues/*.json` and their `.md` previews | Prepared QA queues (planning snapshots) | `python3 -I scripts/qa_queue.py prepare --set NAME:OWNER:MODULE,ID ... --output <new>.json --target-revision <sha>`; check with `qa_queue.py check --queue <file>` |
+
+The one-off reviews that used to sit beside these files are dated reports under
+[`docs/test-runs/`](../test-runs/README.md), for example the
+[historical evidence review](../test-runs/2026-10-18-qa-historical-evidence-review/REPORT.md).
+
 ## Remaining live requirements
 
 The isolated runner now has an **offline preview entry point**. For a queue with
