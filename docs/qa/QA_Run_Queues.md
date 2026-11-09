@@ -101,10 +101,10 @@ its attempted cases passed while others were blocked, excluded or untested.
 The queue and offline journal validate schema/scope, adapter hashes, exact action
 order, budgets and evidence references. `qa_pilot.py run` supports the three
 permission IDs TC-SS-04, TC-ACC-09 and TC-NCPA-08 plus seven complete read-only
-Module 2–9 IDs (TC-ACC-08, TC-ROL-04, TC-DI-02, TC-DI-03, TC-DI-08, TC-HIS-04 and TC-DASH-07) in one
-fixed serial batch with complete cards and separate start. Other live dispatch,
-enforced scan guards and automatic recovery remain future runner work. The current offline journal validator checks these fields and budgets, but it
-neither dispatches actions nor verifies live preflight assertions. Human review and
+Module 2–9 IDs (TC-ACC-08, TC-ROL-04, TC-DI-02, TC-DI-03, TC-DI-08, TC-HIS-04 and
+TC-DASH-07) in one fixed serial batch with complete cards and a separate start. The
+offline journal neither
+dispatches actions nor verifies live preflight assertions. Human review and
 supervision remain required; these tools are not an OS sandbox or a model-proof
 unattended runner.
 
@@ -377,37 +377,18 @@ executor rejects opening a case. Prepare a separate reviewed `recheck` queue for
 any authorized live investigation. Never promote historical partial coverage to
 a whole-case PASS or invent a defect from missing evidence.
 
-## Source adapter coverage
+## Source adapter coverage and handoff
 
 Use the [coverage register and card preparation guide](Automation_Readiness.md)
-before supplying cards. Every queue case now snapshots source coverage; unmapped
-cases can be assigned but cannot execute. Complete source coverage alone does not
-make a live card ready. Supplied cards must bind `coverage_hash` and `selection` to
-the reviewed record and its exact argv; no default project list is accepted.
-Five Staff permission adapters are source-complete, with no new live results.
-Offline `scripts/playwright-lab --qa-preview` prepares one queue/journal-bound
-transport plan without reading credential values or running commands. Live
-supervision, actual preflight/ownership/recovery and all live cards remain pending.
+before supplying cards. Every queue case snapshots source coverage; unmapped cases can
+be assigned but cannot execute, and complete source coverage alone does not make a
+live card ready. Cards must bind `coverage_hash` and `selection` to the reviewed
+record and its exact argv. Process, result and supervisor components are described
+in the same guide; none of them starts a run on its own.
 
-The [supervisor lifecycle core](Automation_Readiness.md#supervisor-lifecycle-core)
-adds tested durable locks/action consumption and halted-state handling through
-a synthetic driver. It has no production driver or live CLI. Queues and offline
-journals alone still cannot start a run; actual runtime proofs, process control,
-recovery and a reviewed live start remain required.
-
-Runtime [process and result components](Automation_Readiness.md#runtime-process-and-result-components)
-now have isolated tests. They do not authorize queue execution: the actual
-deployment proof and production driver remain missing. A failed browser process
-without failed-item evidence is inconclusive, and missing cleanup must halt.
-
-## Moving from the completed pilot to new cases
-
-The accepted #211 recheck remains a consumed historical queue. The next finite
-permission scope is governed by [its review](../test-runs/2026-10-18-qa-next-permission-batch-review/REPORT.md).
-Use the canonical ledger and reviewed `qa_pilot.py handoff` to archive the prior
-complete state and append the next queue hash. All previous IDs must be complete,
-restored PASS and new untested IDs must have no prior accepted PASS in that ledger.
-Actual terminal-resource/baseline proof and separate expiring handoff review are
-required; clearing/relocating the store is forbidden. Handoff is not a test start.
-The subsequent start names the new queue, owner, set and fixed cases; no generic
-"continue preparation" instruction creates an affirmative live-start record.
+Which queues are current, consumed or archived is recorded only in the
+[queue state table](queues/README.md). Consumed queues are never replayed. The next
+permission scope is governed by [its review](../test-runs/2026-10-18-qa-next-permission-batch-review/REPORT.md): use the
+canonical ledger and the reviewed `qa_pilot.py handoff` to archive the prior state and
+append the next queue hash. Handoff is not a test start; a separate explicit start
+names the new queue, owner, set and fixed cases.

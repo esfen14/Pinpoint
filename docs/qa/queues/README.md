@@ -1,26 +1,39 @@
-# Prepared QA queues
+# QA queue state
 
-The original v4 attempt remains INCONCLUSIVE and consumed. After separately
-approved audited recovery, the v2 #211 recheck passed the complete supervised
-TC-SS-04 result/cleanup path. Its slot is also consumed. The active halt is false;
-old attempts/archives/budgets remain preserved. The new two-case assignment below is prepared, waiting for separately reviewed
-handoff and explicit start. No completed case may be replayed.
+Queues are immutable review artifacts and execution ledgers. A consumed queue is never
+replayed, and no file here is edited to change its scope. The preparation procedure is
+in [`QA_Run_Queues.md`](../QA_Run_Queues.md); the workflow is
+[`qa-run.md`](../../../.agent/workflows/qa-run.md). The active halt is false and no QA run
+is in flight.
+
+## Current
 
 | Queue | State | Scope |
 |---|---|---|
-| [Next permission batch](2026-10-18-next-permissions.md), [JSON](2026-10-18-next-permissions.json) | Prepared; handoff/start pending, zero attempts | Paeng; TC-ACC-09 E1/E2 then TC-NCPA-08 E1, one fixed serial batch; [review](../../test-runs/2026-10-18-qa-next-permission-batch-review/REPORT.md), [execution log](2026-10-18-next-permissions-execution.md) |
-| [Accepted #211 recheck v2](2026-10-18-issue-211-ss04-recheck-v2.md), [JSON](2026-10-18-issue-211-ss04-recheck-v2.json) | PASS, consumed/historical; never replay | TC-SS-04 only; complete import/logout/resource/baseline proof; [report](../../test-runs/2026-10-18-issue-211-ss04-recheck/REPORT.md) |
-| [Earlier #211 recheck v1](2026-10-18-issue-211-ss04-recheck-v1.md), [JSON](2026-10-18-issue-211-ss04-recheck-v1.json) | Superseded/unstarted; source-stale preparation | Replaced by the separately authorized v2 recheck |
-| [Original pilot preview](2026-10-18-today-ss04-v4.md), [JSON](2026-10-18-today-ss04-v4.json) | Original attempt INCONCLUSIVE; preserved/consumed, audited recovery recorded; never replay | TC-SS-04 only, `today-ss04`, Paeng; browser assertions/logout passed, timing-import issue [#211](https://github.com/esfen14/Pinpoint/issues/211); [run report](../../test-runs/2026-10-18-issue-206-ss04-pilot/REPORT.md) |
-| [Previous pilot preview](2026-10-18-today-ss04-v3.md), [JSON](2026-10-18-today-ss04-v3.json) | Superseded, never started; source check rejects it | `today-ss04`, Paeng, TC-SS-04 only; target `299ab3b` deployed and Staff initialized; fresh execution proof still required |
-| [Container/worker draft](2026-10-18-today-ss04-v2.md), [JSON](2026-10-18-today-ss04-v2.json) | Superseded, never started; source check rejects it | Preserved scope before owned bridge/deployment-observer changes |
-| [Initial draft](2026-10-18-today-ss04.md), [JSON](2026-10-18-today-ss04.json) | Superseded, never started; source check now rejects it | Preserved initial scope before container/worker preparation changes |
+| [Next permission batch](2026-10-18-next-permissions.md), [JSON](2026-10-18-next-permissions.json), [execution log](2026-10-18-next-permissions-execution.md) | Prepared; handoff and start pending, zero attempts | Paeng; TC-ACC-09 E1/E2 then TC-NCPA-08 E1, one fixed serial batch; [review](../../test-runs/2026-10-18-qa-next-permission-batch-review/REPORT.md) |
+| [Module 2–9 adapters v12](2026-10-18-modules-2-9-adapters-v12.md), [JSON](2026-10-18-modules-2-9-adapters-v12.json) | Latest adapter preparation; not started | Read by the adapter docs ([readiness guide](../Automation_Readiness.md)) |
+| [Card drafts v5](modules-2-9-card-drafts-v5.json) | Read by `scripts/qa_queue.py` | Frozen card drafts used by queue preparation |
 
-The accepted pilot proves TC-SS-04. The supported launcher now accepts only
-TC-SS-04, TC-ACC-09 and TC-NCPA-08 in one fixed serial permission batch, saving
-results before the next case and stopping on non-PASS. The new untested scope
-contains only the latter two. The separately reviewed `handoff` operation archives
-exact prior ledger bytes and appends the next queue; it preserves all original
-attempts, recovery history and budgets and grants no case start. Other case types
-and unattended execution remain blocked. Follow the
-[QA workflow](../../../.agent/workflows/qa-run.md).
+## Consumed (kept in place; never replay)
+
+| Queue | State | Scope |
+|---|---|---|
+| [Accepted #211 recheck v2](2026-10-18-issue-211-ss04-recheck-v2.md), [JSON](2026-10-18-issue-211-ss04-recheck-v2.json) | PASS, consumed | TC-SS-04; [report](../../test-runs/2026-10-18-issue-211-ss04-recheck/REPORT.md) |
+| [Pilot v4](2026-10-18-today-ss04-v4.md), [JSON](2026-10-18-today-ss04-v4.json) | INCONCLUSIVE, consumed, audited recovery recorded | TC-SS-04; [report](../../test-runs/2026-10-18-issue-206-ss04-pilot/REPORT.md) |
+| [Pilot v3](2026-10-18-today-ss04-v3.md), [JSON](2026-10-18-today-ss04-v3.json) | Superseded, never started; cited by a report | `today-ss04`; [report](../../test-runs/2026-10-18-issue-206-pilot-preflight/REPORT.md) |
+| [Initial draft](2026-10-18-today-ss04.md), [JSON](2026-10-18-today-ss04.json) | Superseded, never started; cited by reports | `today-ss04` initial scope |
+
+## Archived
+
+Superseded versions with no tool reader moved to [`archive/`](archive/) unchanged
+(issue [#285](https://github.com/esfen14/Pinpoint/issues/285)); none is current.
+
+| Group | Files in `archive/` |
+|---|---|
+| Earlier #211 recheck | `2026-10-18-issue-211-ss04-recheck-v1` |
+| Container/worker draft | `2026-10-18-today-ss04-v2` |
+| Module 2–9 adapters | `2026-10-18-modules-2-9-adapters-v1` to `v11` |
+| Module 2–9 queues | `2026-10-18-modules-2-9-v2` to `v10` |
+| Card drafts | `modules-2-9-card-drafts-v1` to `v4`, and `v6` |
+
+Each name above has a `.json` and a `.md` pair, except card drafts (`.json` only).

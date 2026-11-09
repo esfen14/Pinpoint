@@ -19,6 +19,7 @@ export function useNetworkRescan(onComplete?: () => void) {
   const [state, setState] = useState<RescanState>('idle')
   const [progress, setProgress] = useState(0)
   const [errorText, setErrorText] = useState<string | null>(null)
+  const [message, setMessage] = useState<string | null>(null)
   const pollRef = useRef<number | null>(null)
   const pollCountRef = useRef(0)
   const previousRunIdRef = useRef<number | null>(null)
@@ -53,6 +54,7 @@ export function useNetworkRescan(onComplete?: () => void) {
         if (isPreviousRun) return
 
         setProgress(data.progress)
+        setMessage(data.message)
 
         if (data.status === 'Success') {
           stopPolling()
@@ -74,11 +76,12 @@ export function useNetworkRescan(onComplete?: () => void) {
     }, POLL_INTERVAL_MS)
   }
 
-  const start = async () => {
+  const start = async (target?: string) => {
     if (state === 'scanning') return
     setState('scanning')
     setProgress(0)
     setErrorText(null)
+    setMessage(null)
     previousRunIdRef.current = null
     try {
       const previous = await apiGet<DiscoveryStatusResponse | null>('/api/system/discover/status')
@@ -87,11 +90,16 @@ export function useNetworkRescan(onComplete?: () => void) {
       // No previous run id; any new run counts as the rescan.
     }
     try {
-      await apiPost('/api/system/discover/start')
+      await apiPost('/api/system/discover/start', target ? { target } : undefined)
       window.dispatchEvent(new CustomEvent(DISCOVERY_STARTED_EVENT))
       pollStatus()
     } catch (err) {
       if (err instanceof ApiError && err.status === 400 && /already running/i.test(err.message)) {
+        if (target) {
+          setErrorText(err.message)
+          setState('error')
+          return
+        }
         window.dispatchEvent(new CustomEvent(DISCOVERY_STARTED_EVENT))
         pollStatus()
         return
@@ -106,5 +114,5 @@ export function useNetworkRescan(onComplete?: () => void) {
     if (state === 'error') setState('idle')
   }
 
-  return { state, progress, errorText, start, dismissError }
+  return { state, progress, errorText, message, start, dismissError }
 }

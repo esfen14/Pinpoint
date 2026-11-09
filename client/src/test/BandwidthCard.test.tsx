@@ -237,7 +237,9 @@ describe('the chart', () => {
     render(<MemoryRouter><BandwidthCard onReading={onReading} /></MemoryRouter>)
 
     await screen.findByTestId('line-chart')
-    expect(onReading).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'ok', hostname: 'switch-a' }))
+    await waitFor(() =>
+      expect(onReading).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'ok', hostname: 'switch-a' })),
+    )
 
     api.getBandwidth.mockReturnValue(new Promise(() => {}))
     choose('Device', 'router-b')

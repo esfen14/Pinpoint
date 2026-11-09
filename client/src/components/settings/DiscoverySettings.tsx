@@ -6,10 +6,19 @@ import { SettingsActions } from './SettingsActions'
 import { errorMessage } from '../../lib/api'
 import { getDiscoverySettings, saveDiscoverySettings } from '../../lib/discoverySettingsApi'
 import type { DiscoveryPort, DiscoverySettingsValues, PortResolution } from '../../types/discoverySettings'
+import { useCurrentUser } from '../../contexts/CurrentUserContext'
+import { useNetworkRescan } from '../../hooks/useNetworkRescan'
 
 const NETWORK_PATTERN = /^\d{1,3}(\.\d{1,3}){3}(\/\d{1,2})?$/
 const PORT_PATTERN = /^\d{1,5}(-\d{1,5})?$/
 const SERVICE_NAME_PATTERN = /^[a-z0-9][a-z0-9_-]{0,31}$/
+
+function validDeviceAddress(value: string): boolean {
+  const parts = value.split('.')
+  if (parts.length !== 4 || parts.some((part) => !/^(0|[1-9]\d{0,2})$/.test(part) || Number(part) > 255)) return false
+  const [first, second] = parts.map(Number)
+  return first !== 0 && first !== 127 && first < 224 && !(first === 169 && second === 254)
+}
 
 function toValues(data: DiscoverySettingsValues): DiscoverySettingsValues {
   return {
@@ -254,6 +263,11 @@ function PortServicesEditor({ label, description, services, savedServices, resol
 }
 
 export function DiscoverySettings() {
+  const { hasPermission } = useCurrentUser()
+  const canDiscover = hasPermission('system.discover')
+  const rescan = useNetworkRescan()
+  const [deviceAddress, setDeviceAddress] = useState('')
+  const [deviceError, setDeviceError] = useState<string | null>(null)
   const [saved, setSaved] = useState<DiscoverySettingsValues | null>(null)
   const [draft, setDraft] = useState<DiscoverySettingsValues | null>(null)
   const [defaults, setDefaults] = useState<DiscoverySettingsValues | null>(null)
@@ -304,6 +318,16 @@ export function DiscoverySettings() {
 
   const hasChanges = JSON.stringify(draft) !== JSON.stringify(saved)
 
+  const startDeviceScan = () => {
+    const target = deviceAddress.trim()
+    if (!validDeviceAddress(target)) {
+      setDeviceError('Enter one IPv4 address that can be scanned, without a CIDR range or hostname.')
+      return
+    }
+    setDeviceError(null)
+    void rescan.start(target)
+  }
+
   const handleSave = async () => {
     if (draft.networks.length === 0) {
       setSaveError('Add at least one network to scan.')
@@ -333,6 +357,40 @@ export function DiscoverySettings() {
           <AlertTriangle size={16} />
           A network discovery scan is running. Changes can be saved once it finishes.
         </div>
+      )}
+
+      {canDiscover && (
+        <SettingsCard
+          title="Run Network Discovery"
+          description="Scan one device now, or rescan the saved networks. A device scan does not change the saved network list or scheduled scans."
+        >
+          <div className="flex flex-wrap items-end gap-3">
+            <label className="min-w-56 flex-1 text-sm text-[var(--text)]">
+              Device IPv4 address
+              <input
+                aria-label="Device IPv4 address"
+                value={deviceAddress}
+                onChange={(event) => { setDeviceAddress(event.target.value); setDeviceError(null) }}
+                placeholder="192.168.1.10"
+                className={`mt-1 ${inputClass}`}
+              />
+            </label>
+            <button type="button" onClick={startDeviceScan} disabled={scanRunning || rescan.state === 'scanning'}
+              className="rounded-xl bg-[#F4A90B] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+              Scan device
+            </button>
+            <button type="button" onClick={() => { void rescan.start() }} disabled={scanRunning || rescan.state === 'scanning'}
+              className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm text-[var(--text)] disabled:opacity-50">
+              Rescan Network
+            </button>
+          </div>
+          <p className="mt-2 text-sm text-[var(--text-muted)]">Enter one IPv4 address. Ranges, hostnames, localhost, and reserved addresses cannot be scanned.</p>
+          {deviceError && <p role="alert" className="mt-2 text-sm text-red-600">{deviceError}</p>}
+          {rescan.state === 'scanning' && <p role="status" className="mt-2 text-sm text-[var(--text)]">Scanning… {rescan.progress}% {rescan.message}</p>}
+          {rescan.state === 'success' && <p role="status" className="mt-2 text-sm text-green-700">{rescan.message || 'Discovery completed.'}</p>}
+          {rescan.state === 'idle' && rescan.message && <p role="status" className="mt-2 text-sm text-[var(--text)]">{rescan.message}</p>}
+          {rescan.errorText && <p role="alert" className="mt-2 text-sm text-red-600">{rescan.errorText}</p>}
+        </SettingsCard>
       )}
 
       <SettingsCard

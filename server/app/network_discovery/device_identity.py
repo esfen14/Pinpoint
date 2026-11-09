@@ -779,7 +779,7 @@ def mark_address_unknown(device):
 # RECONCILE A WHOLE SCAN
 # ==========================================================
 
-def reconcile_scan(discovered_hosts, discovery_status_id, skip_ips=()):
+def reconcile_scan(discovered_hosts, discovery_status_id, skip_ips=(), target=None):
     """
     Reconcile every observation of a scan against the known devices.
 
@@ -791,6 +791,7 @@ def reconcile_scan(discovered_hosts, discovery_status_id, skip_ips=()):
     Returns {(network, ip): device} for every observation that became or
     matched a device; secondary addresses of a multi-NIC device are not
     included. Updates device lifecycle for devices the scan did not see.
+    With target, unseen-device lifecycle changes are limited to that address.
     Does not commit.
     """
     observations = []
@@ -876,11 +877,11 @@ def reconcile_scan(discovered_hosts, discovery_status_id, skip_ips=()):
         matched_ids.add(device.NetDiscoveryID)
         result[(decision.network, decision.ip)] = device
 
-    update_unseen_devices(matched_ids, set(discovered_hosts))
+    update_unseen_devices(matched_ids, set(discovered_hosts), target)
     return result
 
 
-def update_unseen_devices(matched_ids, scanned_networks):
+def update_unseen_devices(matched_ids, scanned_networks, target=None):
     """
     Lifecycle for devices the scan did not match (plan section 6):
     - a device whose IP was taken over by a device that WAS matched becomes
@@ -911,6 +912,8 @@ def update_unseen_devices(matched_ids, scanned_networks):
     ).all()
 
     for device in unseen:
+        if target is not None and device.IP_Address != target:
+            continue
         if device.Network not in scanned_networks:
             continue
 
