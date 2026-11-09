@@ -137,17 +137,17 @@ Where results go is defined in [`docs/test-runs/README.md`](../docs/test-runs/RE
 Issue #274's [defense demo plan](../docs/plans/Defense_Demo_Lab_Plan.md)
 now uses a laptop Docker pilot on a VirtualBox host-only network with an
 owner-supplied Windows VM. `demo/demo presenter` controls the existing pinned
-pilot containers; see the [pilot instructions](../demo/defense/README.md).
+pilot containers; see the [pilot instructions](../demo/targets/README.md).
 The following text records the earlier dedicated target-host preparation. Its proposed network/controller is not yet a
 supported test environment or an approved additional scan scope. The existing
 VM ownership and command-path review rules apply before implementation.
-The versioned `demo/defense/manifest.json` lists the intended fifteen targets;
+The versioned `demo/targets/manifest.json` lists the intended fifteen targets;
 `demo/demo manifest` reports expectations with no live verification claim.
 `demo/demo preflight` is read-only and checks host/Docker/configured VPN ranges,
 private VM pins, the VM/process/NAT boundary, available memory/disk planning
 and KVM availability. It refuses incomplete preparation. No lifecycle command
 or new scan authorization is delivered by these initial read-only commands.
-The [guest runtime preparation](../demo/defense/README.md) includes a generated
+The [guest runtime preparation](../demo/targets/README.md) includes a generated
 fourteen-target network-none Compose artifact, an image definition, fixed real
 daemon controls and a root guest macvlan helper restricted to the two-target
 architecture spike. Exact image/identity/mount/capability checks precede
@@ -166,7 +166,7 @@ one checked container. Runtime/image fingerprints and MAC-matched manual parent
 activation prevent stale builds or networkd link activation from bypassing the
 guards. No live spike or additional scan scope is established by these APIs.
 Offline defense input/ownership/resource/runtime contracts run in the docs gate.
-Its separate [Windows preparation](../demo/WINDOWS_READY.md) now has an installed
+Its separate [Windows preparation](../demo/appliance/WINDOWS_READY.md) now has an installed
 Windows 10 Home test guest and locally verified NCPA agent, powered off at an
 owned snapshot. Activation, appliance registration and complete defense-lab
 acceptance remain pending; this adds no general QA scan authorization.

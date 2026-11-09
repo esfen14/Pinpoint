@@ -1,0 +1,5 @@
+*
+!demo/
+!demo/targets/
+!demo/targets/*.py
+!demo/targets/manifest.json

@@ -4,6 +4,6 @@ set -euo pipefail
 root="$(cd "$(dirname "$0")/.." && pwd)"
 if [[ "${1:-}" == "presenter" ]]; then
     shift
-    exec python3 -I "$root/demo/defense/presenter.py" "$@"
+    exec python3 -I "$root/demo/targets/presenter.py" "$@"
 fi
-exec python3 -I "$root/demo/defense/controller.py" "$@"
+exec python3 -I "$root/demo/targets/controller.py" "$@"

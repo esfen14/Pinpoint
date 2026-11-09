@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Date | 2026-10-27, Asia/Manila |
-| Base and candidate | Base `231b86f7` plus uncommitted candidate. The individual host stop/start used `demo/defense/presenter.py` SHA-256 `684befec130f6556ff4bb026447684b44e7a282b0058c0d03a18a9b4658550a3`; DHCP and Docker restart trials used earlier candidates; the subsequent nine-service stop/restore matrix used candidate SHA-256 `a86269a6a3132a852729f8c1c8998180e8cdb7dc6a7d64daa4fe00d92bdcd4c7`. The SMTP stop/restore was repeated after the host-network guard was added, using candidate SHA-256 `f72695f8ed5c0e14acd81fcaaa29d076de03ff57286f647a86884d522a57a7e4`. |
+| Base and candidate | Base `231b86f7` plus uncommitted candidate. The individual host stop/start used `demo/targets/presenter.py` SHA-256 `684befec130f6556ff4bb026447684b44e7a282b0058c0d03a18a9b4658550a3`; DHCP and Docker restart trials used earlier candidates; the subsequent nine-service stop/restore matrix used candidate SHA-256 `a86269a6a3132a852729f8c1c8998180e8cdb7dc6a7d64daa4fe00d92bdcd4c7`. The SMTP stop/restore was repeated after the host-network guard was added, using candidate SHA-256 `f72695f8ed5c0e14acd81fcaaa29d076de03ff57286f647a86884d522a57a7e4`. |
 | Plan | [Defense demo lab](../../plans/Defense_Demo_Lab_Plan.md) |
 | Executor | AI-assisted, scripted live pilot |
 | Catalog | `manifest.json` SHA-256 `7a2ab626fb66bc71ff660347fd6ba8d118d2c67e600041c84575fa7d47fdc1f8` |

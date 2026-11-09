@@ -56,7 +56,7 @@ signal to run `provision --force`.
 
 | Piece | State |
 |---|---|
-| Targets: `demo/demo_lab.py` (five Ubuntu 24.04 VMs on internal network `pinpoint-demo`, `10.77.0.0/28`; break, fix, load, reset, wall, NCPA login) | Built; `up` verified |
+| Targets: `lab/legacy-vms/demo_lab.py` (five Ubuntu 24.04 VMs on internal network `pinpoint-demo`, `10.77.0.0/28`; break, fix, load, reset, wall, NCPA login) | Built; `up` verified |
 | Appliance VM `pinpoint-appliance` (4 GB, 4 CPUs; NIC 1 NAT with SSH and web port forwards, NIC 2 on `pinpoint-demo`), built by `scripts/vmlab create` from the stock Ubuntu 22.04.5 live-server ISO, unattended | Built and verified. Your existing `pinpoint-demo` VM was left alone |
 | `scripts/vmlab`: iso, create, prepare, status, provision, fresh, sync, health, setup-admin, smoke, ncpa, alerts, creds, up, down, revert, targets | `create`, `prepare`, `provision`, `fresh`, `health`, `setup-admin`, `smoke`, `sync` (also `--client`), `ncpa`, `alerts`, `up`, `down`, `revert` verified ([run report](../test-runs/2026-10-08-vm-lab-remaining/REPORT.md)). Not run on its own: `status` with a live VM |
 | `lab/smoke.py`: `--email`, `--password`/`SMOKE_PASSWORD`, `--set-network`, `--expect-ips` | Verified on the appliance and, as a regression, on the Docker lab |
@@ -175,7 +175,7 @@ recovery, prove the lane with `scripts/vmlab fresh`, `scripts/vmlab setup-admin`
 and `scripts/vmlab smoke` before claiming a journey case.  Record that recovery
 and the tested commit in a new sanitized test-run report.
 
-1. **Targets.** `python3 demo/demo_lab.py create --apply` (after `build-base`), then
+1. **Targets.** `python3 lab/legacy-vms/demo_lab.py create --apply` (after `build-base`), then
    `scripts/vmlab targets up`.
 2. **ISO.** `scripts/vmlab iso` downloads the stock Ubuntu 22.04.5 live-server ISO
    (about 2 GB). The installer's own ISO is not needed: its install screens are
