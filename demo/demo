@@ -1,9 +1,52 @@
 #!/usr/bin/env bash
-# One defense demo entry point; initially read-only until the isolation spike.
+# The one front door for the Pinpoint demo lab (see demo/USAGE.md).
+#   demo/demo setup|up|down|destroy        whole-lab lifecycle (setup and destroy print a plan without --apply)
+#   demo/demo status|down|up|ports|...     presenter controls (checked by Pinpoint-Demo-faults.sh)
+#   demo/demo manifest|preflight           read-only catalog and host checks
 set -euo pipefail
-root="$(cd "$(dirname "$0")/.." && pwd)"
+here="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+faults="$here/Pinpoint-Demo-faults.sh"
+
+lab_usage() {
+  cat <<'HELP'
+Pinpoint demo lab: one command, `demo/demo`. Full cheat sheet: demo/USAGE.md
+
+Lab lifecycle (run from the repository root):
+  demo/demo setup [--apply]        prepare everything; without --apply it prints the plan and the manual checklist
+  demo/demo up                     start all fourteen containers and restore the baseline
+  demo/demo down                   stop all fourteen containers
+  demo/demo destroy [--apply]      remove only the demo-owned containers and network (typed confirmation)
+  demo/demo manifest [--json]      intended devices and listeners (no live check)
+  demo/demo preflight [--json]     read-only host, Docker and VPN checks
+
+HELP
+}
+
 if [[ "${1:-}" == "presenter" ]]; then
-    shift
-    exec python3 -I "$root/demo/targets/presenter.py" "$@"
+  shift
+  exec python3 -I "$here/targets/presenter.py" "$@"
 fi
-exec python3 -I "$root/demo/targets/controller.py" "$@"
+
+case "${1:-}" in
+  help|-h|--help)
+    lab_usage
+    "$faults" help | sed -e 's#Pinpoint-Demo-faults.sh manifest  *\# observed#demo/demo presenter manifest   \# observed#' \
+        -e 's#Pinpoint-Demo-faults.sh#demo/demo#g' -e 's#^Alias of `demo/demo`; both accept the same commands. ##'
+    ;;
+  setup|destroy)
+    exec python3 -I "$here/targets/setup.py" "$@"
+    ;;
+  manifest|preflight)
+    exec python3 -I "$here/targets/controller.py" "$@"
+    ;;
+  up|down)
+    if [[ $# -eq 1 ]]; then exec "$faults" "$1-all"; fi
+    exec "$faults" "$@"
+    ;;
+  status|wall|services|reset|dhcp-move|dhcp-recover|address-mode|ports)
+    exec "$faults" "$@"
+    ;;
+  *)
+    exec python3 -I "$here/targets/controller.py" "$@"
+    ;;
+esac
