@@ -1,7 +1,7 @@
-"""Plan, preflight and teardown for the Docker demo lab (`demo/demo setup|destroy`).
+"""Plan, preflight, creation and teardown for the Docker demo lab (`demo/demo setup|destroy`).
 
-Prints a plan and changes nothing without --apply. Container creation under
---apply is deliberately not implemented yet: see issue #298 and the progress notes.
+Prints a plan and changes nothing without --apply. Creation commands are built in
+create.py; their live run needs the real Docker and VirtualBox lab (issue #298).
 """
 import ipaddress
 import json
@@ -11,6 +11,7 @@ import sys
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from targets.catalog import load_catalog
+from targets import create
 
 NETWORK_NAME='pinpoint274-host-test'
 PARENT='vboxnet1'
@@ -146,7 +147,32 @@ def destroy(runner,apply,ask,out,err):
     return 0
 
 
-def main(argv,runner=default_runner,available_mib=default_available_mib,ask=input,out=sys.stdout,err=sys.stderr):
+def default_create_lab(catalog,out):
+    """Create the network, image and fourteen containers, pin them, then start them with the presenter."""
+    import os
+    import secrets
+    from targets import presenter
+    repo=Path(__file__).resolve().parents[2]
+    uuid=subprocess.run(['sudo','cat','/sys/class/dmi/id/product_uuid'],capture_output=True,text=True,check=True,timeout=60).stdout.strip()
+    mac=Path('/sys/class/net/'+PARENT+'/address').read_text().strip()
+
+    def runner(argv,input_text=None):
+        result=subprocess.run(argv,input=input_text,capture_output=True,text=True,timeout=1800)
+        if result.returncode:
+            raise ValueError('command failed: '+argv[0]+' '+' '.join(argv[1:3]))
+        return result.stdout
+    create.apply(catalog,presenter.ROOT,repo,runner,owner=secrets.token_hex(24),vm_uuid=uuid,parent_mac=mac,community=secrets.token_urlsafe(12))
+    if not presenter.PINS.exists():
+        pins=create.read_pins(catalog,runner)
+        fd=os.open(presenter.PINS,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+        with os.fdopen(fd,'w') as stream:
+            json.dump(pins,stream)
+            stream.write('\n')
+    print('Containers created and pinned; starting them with the presenter.',file=out)
+    subprocess.run([sys.executable,'-I',str(Path(__file__).with_name('presenter.py')),'up'],check=True,timeout=900)
+
+
+def main(argv,runner=default_runner,available_mib=default_available_mib,ask=input,out=sys.stdout,err=sys.stderr,create_lab=default_create_lab):
     if not argv or argv[0] not in {'setup','destroy'} or any(a!='--apply' for a in argv[1:]) or len(argv)>2:
         print('usage: demo/demo setup [--apply] | demo/demo destroy [--apply]',file=err)
         return 2
@@ -172,8 +198,13 @@ def main(argv,runner=default_runner,available_mib=default_available_mib,ask=inpu
         print('\nSummary: FAIL, fix the blockers above first.',file=out)
         return 1
     if apply:
-        print('Container creation (steps 2 to 6) is not implemented yet; it needs review. Nothing was changed.',file=err)
-        return 2
+        try:
+            create_lab(catalog,out)
+        except (OSError,ValueError,subprocess.SubprocessError):
+            print('Setup stopped: a creation step failed. It is safe to re-run; existing objects are kept.',file=err)
+            return 1
+        print('\nSummary: containers created and started. Next: demo/demo presenter enroll-vms, then demo/demo presenter preflight.',file=out)
+        return 0
     print('\nSummary: preflight passed; no changes made.',file=out)
     return 0
 

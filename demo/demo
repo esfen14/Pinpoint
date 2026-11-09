@@ -15,6 +15,7 @@ Lab lifecycle (run from the repository root):
   demo/demo setup [--apply]        prepare everything; without --apply it prints the plan and the manual checklist
   demo/demo up                     start all fourteen containers and restore the baseline
   demo/demo down                   stop all fourteen containers
+  demo/demo create-vms [--apply]   create the Pinpoint appliance and Windows NCPA VMs (missing ones only)
   demo/demo destroy [--apply]      remove only the demo-owned containers and network (typed confirmation)
   demo/demo manifest [--json]      intended devices and listeners (no live check)
   demo/demo preflight [--json]     read-only host, Docker and VPN checks
@@ -32,6 +33,10 @@ case "${1:-}" in
     lab_usage
     "$faults" help | sed -e 's#Pinpoint-Demo-faults.sh manifest  *\# observed#demo/demo presenter manifest   \# observed#' \
         -e 's#Pinpoint-Demo-faults.sh#demo/demo#g' -e 's#^Alias of `demo/demo`; both accept the same commands. ##'
+    ;;
+  create-vms)
+    shift
+    exec python3 -I "$here/appliance/create_vms.py" "$@"
     ;;
   setup|destroy)
     exec python3 -I "$here/targets/setup.py" "$@"

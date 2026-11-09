@@ -8,6 +8,10 @@ Paths such as `~/.local/share/pinpoint-defense/` are **example locations** of
 private state on the presenter's laptop; credentials never live in the repository.
 Read them locally and keep them out of slides, recordings and reports.
 
+## Creating the two VMs
+
+`demo/demo create-vms` prints the VBoxManage plan for the Pinpoint appliance (`Pinpoint-Final`) and the Windows test VM (`pinpoint-defense-win01`) and creates only the missing ones with `--apply` (add `--windows-iso`). Installing the application is `scripts/vmlab`; the NCPA install and snapshots are manual.
+
 ## What the appliance must have
 
 | Item | Required value | Check |

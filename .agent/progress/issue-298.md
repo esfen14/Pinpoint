@@ -43,10 +43,10 @@ Requirement coverage (every requirement the issue states, and the check that pro
 3. [x] Structure move: `git mv` appliance docs (PRESENTER_SETUP, WINDOWS_READY, appliance parts of DEMO_READY) to `demo/appliance/`; `demo/defense/*` to `demo/targets/` (Python package renamed `defense` to `targets`, in-image path `/opt/pinpoint/targets`); fix `demo/demo`, Dockerfile, `bootstrap.py`, `sampler.py`, tests, `Pinpoint-Demo-faults.sh`, `scripts/verify.sh`; run moved tests.
 4. [x] Update path references: spec files, `AGENTS.md`, `docs/plans/*`, `docs/qa/Automation_Readiness.md`, `docs/test-runs/*` links, `.agent/` docs.
 5. [x] Docs (USAGE.md link added in step 8): rewrite `demo/README.md` index, `demo/appliance/README.md`, `demo/targets/README.md`; reconcile status lines; strip UUIDs/laptop paths; cross-link Local_Lab, VM_Lab_Plan, Defense_Demo_Lab_Plan, `lab/`.
-6. [~] (plan, preflight, checklist done; creation under --apply open, see Decisions) Tests first then `demo/targets/setup.py`: plan, preflight, `--apply` create/enroll, manual checklist; wire `demo/demo setup`.
-7. [~] (destroy done; up already starts existing containers, create-if-missing open with step 6) Tests first then `up` / `down` / `destroy` (typed confirmation, demo-owned only).
+6. [x] (creation commands offline-tested only) Tests first then `demo/targets/setup.py`: plan, preflight, `--apply` create/enroll, manual checklist; wire `demo/demo setup`.
+7. [x] (up after setup starts them) Tests first then `up` / `down` / `destroy` (typed confirmation, demo-owned only).
 8. [x] Front door (setup/destroy route to targets/setup.py, built in steps 6-7): `demo/demo` accepts presenter commands directly, `Pinpoint-Demo-faults.sh` becomes alias; `help` and `--help` examples; `demo/USAGE.md`, test that help examples match USAGE.
-9. [ ] Spec files + `Implementation_Status.md`, `scripts/verify.sh docs`, `scripts/verify.sh all`, finish (section 5), open follow-up chore issue for removing old VM references.
+9. [~] Spec files + `Implementation_Status.md`, `scripts/verify.sh docs`, `scripts/verify.sh all`, finish (section 5), open follow-up chore issue for removing old VM references.
 
 ## Round log
 
@@ -58,10 +58,11 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | 3 | Docs: new demo/README.md index, demo/appliance/README.md, Part 2 intro in demo/targets/README.md; old README and DEMO_READY moved to lab/legacy-vms/ with legacy banner; UUIDs and personal paths removed or labelled as examples; lab map line in Local_Lab, VM_Lab_Plan, Defense_Demo_Lab_Plan; lab/README.md | scripts/verify.sh docs; link check over demo/ and lab/ | green except demo/USAGE.md (planned, step 8) |
 | 4 | demo/demo is the front door (routes setup/destroy/up/down/presenter/faults, keeps faults-script validation, alias kept); demo/USAGE.md; faults usage reworded; test_front_door.py (routing, validation kept, help and every USAGE.md command accepted); added to verify.sh | test_front_door.py, test_faults_script.py | green |
 | 5 | demo/targets/setup.py: plan, preflight (Docker, VBoxManage, vboxnet1, subnet conflicts, RAM), manual checklist with check commands, destroy with owner-label checks and typed confirmation; --apply refuses container creation; test_setup.py (13 tests) added to verify.sh | python3 -I demo/targets/test_setup.py (failed first on missing module, then green) | green |
+| 6 | Spec updates; create.py (container creation commands, apply, pins) wired into setup --apply; appliance/create_vms.py + `demo/demo create-vms`; tests test_create.py, test_create_vms.py; created chore #301 | verify.sh all (before the create work): green; new tests green | green |
 
 ## State for the next session
 
-- Last check run (exact command): python3 -I demo/targets/test_setup.py
+- Last check run (exact command): scripts/verify.sh all (green before create work); python3 -I demo/targets/test_*.py and demo/appliance/test_create_vms.py green
 - Result (first failing lines, or "green"): green
 - Hypothesis: moves are mechanical; setup/lifecycle need new code in presenter-style modules
 - Next action: step 2, `git mv` of demo_lab.py, smoke_test.py and manual/ into `lab/legacy-vms/` and repoint scripts/vmlab line 541 and lab/alerts_run.py line 24

@@ -136,8 +136,10 @@ Where results go is defined in [`docs/test-runs/README.md`](../docs/test-runs/RE
 
 Issue #274's [defense demo plan](../docs/plans/Defense_Demo_Lab_Plan.md)
 now uses a laptop Docker pilot on a VirtualBox host-only network with an
-owner-supplied Windows VM. `demo/demo presenter` controls the existing pinned
-pilot containers; see the [pilot instructions](../demo/targets/README.md).
+owner-supplied Windows VM. `demo/demo` is the single front door (`setup`, `up`, `down`, `destroy`, presenter fault
+controls; [cheat sheet](../demo/USAGE.md)) and controls the existing pinned
+pilot containers; see the [demo index](../demo/README.md) and the
+[pilot instructions](../demo/targets/README.md).
 The following text records the earlier dedicated target-host preparation. Its proposed network/controller is not yet a
 supported test environment or an approved additional scan scope. The existing
 VM ownership and command-path review rules apply before implementation.

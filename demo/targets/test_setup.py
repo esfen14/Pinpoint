@@ -76,9 +76,22 @@ class MainTests(unittest.TestCase):
             return good_runner(argv)
         code,out,_=self.run_main(['setup'],runner)
         self.assertEqual(code,1);self.assertIn('FAIL',out)
-    def test_setup_apply_refuses_container_creation_until_it_is_reviewed(self):
-        code,_,err=self.run_main(['setup','--apply'])
-        self.assertEqual(code,2);self.assertIn('not implemented',err)
+    def test_setup_apply_runs_creation_only_after_a_clean_preflight(self):
+        created=[]
+        out=io.StringIO()
+        code=setup.main(['setup','--apply'],runner=good_runner,available_mib=lambda:8192,ask=lambda p:'',out=out,err=io.StringIO(),create_lab=lambda catalog,o:created.append(catalog))
+        self.assertEqual((code,len(created)),(0,1))
+        def bad(argv):
+            if argv[:2]==['docker','version']:raise OSError('x')
+            return good_runner(argv)
+        created.clear()
+        code=setup.main(['setup','--apply'],runner=bad,available_mib=lambda:8192,ask=lambda p:'',out=io.StringIO(),err=io.StringIO(),create_lab=lambda catalog,o:created.append(1))
+        self.assertEqual((code,created),(1,[]))
+    def test_a_failed_creation_step_is_reported_and_exits_nonzero(self):
+        def boom(catalog,o):raise ValueError('command failed')
+        err=io.StringIO()
+        code=setup.main(['setup','--apply'],runner=good_runner,available_mib=lambda:8192,ask=lambda p:'',out=io.StringIO(),err=err,create_lab=boom)
+        self.assertEqual(code,1);self.assertIn('safe to re-run',err.getvalue())
     def test_unknown_arguments_are_rejected(self):
         self.assertEqual(self.run_main(['setup','--force'])[0],2)
         self.assertEqual(self.run_main(['destroy','x'])[0],2)
