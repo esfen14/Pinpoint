@@ -146,10 +146,15 @@ export type StartResult = { runId: number; started: number; rejected: RejectedDe
 
 export type DeviceCredentials = { deviceId: number; username: string; password: string }
 
+// Discovery stores "Unknown" when it finds no name; show the IP address instead.
+function displayHostname(hostname: string | null | undefined, ipAddress: string | null | undefined): string | null {
+  return hostname && hostname.trim() && hostname !== 'Unknown' ? hostname : ipAddress || null
+}
+
 export function fromRawDevice(raw: RawNcpaDevice): NcpaDevice {
   return {
     id: raw.device_id,
-    hostname: raw.hostname,
+    hostname: displayHostname(raw.hostname, raw.ip_address) ?? `Device ${raw.device_id}`,
     ipAddress: raw.ip_address,
     trusted: raw.trusted,
     fingerprint: raw.fingerprint,
@@ -164,7 +169,7 @@ export function fromRawDevice(raw: RawNcpaDevice): NcpaDevice {
 export function fromRawResult(raw: RawDeviceResult): DeviceResult {
   return {
     deviceId: raw.device_id,
-    hostname: raw.hostname ?? `Device ${raw.device_id}`,
+    hostname: displayHostname(raw.hostname, raw.ip_address) ?? `Device ${raw.device_id}`,
     ipAddress: raw.ip_address ?? '—',
     outcome: raw.outcome,
     error: raw.error,
