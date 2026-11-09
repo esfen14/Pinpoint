@@ -120,19 +120,29 @@ def single_check(variables):
 # IF-MIB columns the bandwidth monitoring reads: ifInOctets and ifOutOctets, indexed by ifIndex.
 IF_IN_OCTETS_OID = "1.3.6.1.2.1.2.2.1.10"
 IF_OUT_OCTETS_OID = "1.3.6.1.2.1.2.2.1.16"
+IF_OPER_STATUS_OID = "1.3.6.1.2.1.2.2.1.8"
 
-# Most interfaces one device can have monitored; each one adds two Nagios services.
+# The fixed interface 3 entries older OID tables carry (they were the config.py defaults). They
+# assumed ifIndex 3 on every device, so snmp_checks() drops them: interface checks come from the
+# interfaces chosen for the device. An entry an administrator changed (extra keys) is kept.
+LEGACY_INTERFACE_3_ENTRIES = {
+    ("lan_status", f"{IF_OPER_STATUS_OID}.3"),
+    ("lan_in_octets", f"{IF_IN_OCTETS_OID}.3"),
+    ("lan_out_octets", f"{IF_OUT_OCTETS_OID}.3"),
+}
+
+# Most interfaces one device can have monitored; each one adds three Nagios services.
 MAX_MONITORED_INTERFACES = 16
 MAX_INTERFACE_INDEX = 2 ** 31 - 1
 
 
 def interface_metrics(if_index):
     """
-    Return (in_metric, out_metric), the SNMP metric names of the octet services of the interface
-    with this ifIndex, e.g. ("if5_in_octets", "if5_out_octets") for the services
-    "snmp-if5_in_octets-161-udp" and "snmp-if5_out_octets-161-udp".
+    Return (in_metric, out_metric, status_metric), the SNMP metric names of the services of the
+    interface with this ifIndex, e.g. ("if5_in_octets", "if5_out_octets", "if5_status") for the
+    services "snmp-if5_in_octets-161-udp", "snmp-if5_out_octets-161-udp" and "snmp-if5_status-161-udp".
     """
-    return f"if{if_index}_in_octets", f"if{if_index}_out_octets"
+    return f"if{if_index}_in_octets", f"if{if_index}_out_octets", f"if{if_index}_status"
 
 
 def valid_interface_indexes(interfaces):
@@ -160,8 +170,9 @@ def snmp_checks(variables):
     critical, label, units) is passed through as a per-service variable.
 
     variables["interfaces"], when present, is a list of ifIndex numbers chosen for bandwidth
-    monitoring (Device Inventory). Each adds an in and an out octet service after the OID
-    services; see interface_metrics. With no interfaces the services are exactly the OID list.
+    monitoring (Device Inventory). Each adds an in octet, an out octet and a status service after
+    the OID services; see interface_metrics. A device with no chosen interface gets no interface
+    service, so the fixed interface 3 entries of older OID tables are skipped.
     """
     oids = variables.get("oids") or []
     if not isinstance(oids, list):
@@ -172,14 +183,18 @@ def snmp_checks(variables):
         if not isinstance(entry, dict) or not entry.get("oid") or not entry.get("metric"):
             raise PluginConfigurationError("Each SNMP OID entry needs an 'oid' and a 'metric'.")
 
+        if set(entry) == {"metric", "oid"} and (entry["metric"], entry["oid"]) in LEGACY_INTERFACE_3_ENTRIES:
+            continue
+
         per_service = dict(entry)
         metric = per_service.pop("metric")
         checks.append(ServiceCheck(metric=metric, variables=per_service))
 
     for if_index in valid_interface_indexes(variables.get("interfaces") or []):
-        in_metric, out_metric = interface_metrics(if_index)
+        in_metric, out_metric, status_metric = interface_metrics(if_index)
         checks.append(ServiceCheck(metric=in_metric, variables={"oid": f"{IF_IN_OCTETS_OID}.{if_index}"}))
         checks.append(ServiceCheck(metric=out_metric, variables={"oid": f"{IF_OUT_OCTETS_OID}.{if_index}"}))
+        checks.append(ServiceCheck(metric=status_metric, variables={"oid": f"{IF_OPER_STATUS_OID}.{if_index}"}))
     return checks
 
 

@@ -917,7 +917,7 @@ def octet_service_names(hostname, if_index):
         ).distinct().order_by(ServiceStatus.Service)
     ).all()
 
-    in_metric, out_metric = interface_metrics(if_index)
+    in_metric, out_metric, _status_metric = interface_metrics(if_index)
     found = []
     for own, default in ((in_metric, "lan_in_octets"), (out_metric, "lan_out_octets")):
         wanted = [own] + ([default] if if_index == DEFAULT_INTERFACE_INDEX else [])
