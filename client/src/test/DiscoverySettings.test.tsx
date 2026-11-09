@@ -5,6 +5,18 @@ import { ApiError } from '../lib/api'
 
 const getDiscoverySettings = vi.fn()
 const saveDiscoverySettings = vi.fn()
+const startScan = vi.fn()
+let canDiscover = true
+let scanState = 'idle'
+let scanMessage: string | null = null
+let scanError: string | null = null
+
+vi.mock('../hooks/useNetworkRescan', () => ({
+  useNetworkRescan: () => ({ state: scanState, progress: 40, errorText: scanError, message: scanMessage, start: startScan }),
+}))
+vi.mock('../contexts/CurrentUserContext', () => ({
+  useCurrentUser: () => ({ hasPermission: (permission: string) => canDiscover && permission === 'system.discover' }),
+}))
 
 vi.mock('../lib/discoverySettingsApi', () => ({
   getDiscoverySettings: () => getDiscoverySettings(),
@@ -47,6 +59,11 @@ describe('DiscoverySettings', () => {
   beforeEach(() => {
     getDiscoverySettings.mockReset().mockResolvedValue(loaded())
     saveDiscoverySettings.mockReset()
+    startScan.mockReset()
+    canDiscover = true
+    scanState = 'idle'
+    scanMessage = null
+    scanError = null
   })
 
   it('shows the current networks, ports and expected services', async () => {
@@ -168,5 +185,46 @@ describe('DiscoverySettings', () => {
     expect(await screen.findByText(/scan is running/)).toBeInTheDocument()
     fireEvent.click(screen.getByLabelText('Remove 53'))
     expect(screen.getByRole('button', { name: /Save Changes/ })).toBeDisabled()
+  })
+
+  it('starts a one-time device scan without saving discovery settings', async () => {
+    render(<DiscoverySettings />)
+    fireEvent.change(await screen.findByLabelText('Device IPv4 address'), { target: { value: '10.0.0.4' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Scan device' }))
+    expect(startScan).toHaveBeenCalledWith('10.0.0.4')
+    expect(saveDiscoverySettings).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Rescan Network' }))
+    expect(startScan).toHaveBeenLastCalledWith()
+  })
+
+  it('rejects unsafe device targets before submitting', async () => {
+    render(<DiscoverySettings />)
+    fireEvent.change(await screen.findByLabelText('Device IPv4 address'), { target: { value: '10.0.0.0/24' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Scan device' }))
+    expect(screen.getByRole('alert')).toHaveTextContent(/one IPv4 address/)
+    expect(startScan).not.toHaveBeenCalled()
+  })
+
+  it('hides scan controls without system.discover', async () => {
+    canDiscover = false
+    render(<DiscoverySettings />)
+    await screen.findByText('Port → Service')
+    expect(screen.queryByRole('button', { name: 'Scan device' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Rescan Network' })).not.toBeInTheDocument()
+  })
+
+  it('shows progress, completion and failure feedback', async () => {
+    scanState = 'scanning'
+    scanMessage = 'Discovering hosts.'
+    const { rerender } = render(<DiscoverySettings />)
+    expect(await screen.findByRole('status')).toHaveTextContent('Scanning… 40% Discovering hosts.')
+    scanState = 'success'
+    scanMessage = 'Host configuration unchanged; Nagios was not reloaded'
+    rerender(<DiscoverySettings />)
+    expect(screen.getByRole('status')).toHaveTextContent('Host configuration unchanged')
+    scanState = 'error'
+    scanError = 'No device was discovered at 10.0.0.4.'
+    rerender(<DiscoverySettings />)
+    expect(screen.getByRole('alert')).toHaveTextContent(scanError)
   })
 })

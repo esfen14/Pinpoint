@@ -347,12 +347,13 @@ in the seed permission list. This is tracked in `Implementation_Status.md`.
 
 | Method and path | Permission | Purpose |
 |---|---|---|
-| `POST /api/system/discover/start` | `system.discover` | Start a background discovery/config-generation job |
+| `POST /api/system/discover/start` | `system.discover` | Start a background discovery/config-generation job. An omitted body scans saved networks; optional JSON `{ "target": "10.0.0.4" }` scans that one IPv4 device for this run only. A target must be a plain single IPv4 address; CIDR, IPv6, hostname, loopback, multicast, unspecified, reserved and link-local values return 400 before a worker starts. A concurrent start returns 400; accepted starts return 202. |
 | `GET /api/system/discover/status` | `system.discover` | Current or most recent discovery job status |
-| `POST /api/system/network-discovery/stop` | `network.discovery` in current code | Request cancellation of the running discovery job |
+| `POST /api/system/network-discovery/stop` | `system.discover` | Request cancellation of the running discovery job, including a focused scan |
 
-The stop-route permission differs from the seeded `system.discover` permission;
-this is a documented implementation mismatch, not a recommended convention.
+An unreachable focused target finishes with status `Failed` and a no-device
+message, without saving inventory or applying Nagios configuration. Status and
+progress use the existing status route for both scan modes.
 
 ### `app/api/system/discovery_settings.py`
 

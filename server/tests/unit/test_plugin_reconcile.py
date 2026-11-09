@@ -79,6 +79,35 @@ def port(device, number):
 
 class TestAttach:
 
+    def test_focused_reconcile_keeps_other_device_suggestions_and_rows(self, db_session, admin_user, status, writer):
+        target = new_device(status, "10.0.0.5", MAC_1, tcp={22: "ssh"})
+        other = new_device(status, "10.0.0.6", MAC_2, tcp={22: "ssh"})
+        add_plugin("check_ssh")
+
+        result = reconcile_plugin_monitoring(admin_user.UserID, device_ids={target.NetDiscoveryID})
+
+        assert result["promoted"] == 1 and result["applied"] == 1
+        assert port(target, 22).Port_State is PortState.MONITORED
+        assert port(other, 22).Port_State is PortState.SUGGESTED
+        assert {row.NetDiscoveryID for row in rows()} == {target.NetDiscoveryID}
+
+        full = reconcile_plugin_monitoring(admin_user.UserID)
+        assert full["applied"] == 1
+        assert {row.NetDiscoveryID for row in rows()} == {target.NetDiscoveryID, other.NetDiscoveryID}
+
+    def test_focused_reconcile_does_not_delete_an_unrelated_stale_auto_row(self, db_session, admin_user, status, writer):
+        target = new_device(status, "10.0.0.5", MAC_1, tcp={22: "ssh"})
+        other = new_device(status, "10.0.0.6", MAC_2, tcp={22: "ssh"})
+        add_plugin("check_ssh")
+        reconcile_plugin_monitoring(admin_user.UserID)
+        port(other, 22).Port_State = PortState.IGNORED
+        db.session.commit()
+
+        result = reconcile_plugin_monitoring(admin_user.UserID, device_ids={target.NetDiscoveryID})
+
+        assert result["removed"] == 0
+        assert {row.NetDiscoveryID for row in rows()} == {target.NetDiscoveryID, other.NetDiscoveryID}
+
     def test_enabling_a_plugin_monitors_its_discovered_ports_and_records_them(self, db_session, admin_user, status, writer):
         device = new_device(status, tcp={22: "ssh", 80: "http"})
         assert port(device, 22).Port_State is PortState.SUGGESTED     # nothing enabled yet

@@ -15,7 +15,7 @@ export function RescanButton({
     <div className="flex flex-col items-end gap-1">
       <button
         type="button"
-        onClick={rescan.start}
+        onClick={() => { void rescan.start() }}
         disabled={isScanning}
         className="flex items-center gap-2 rounded-full bg-[#F4A90B] px-4 py-2 text-sm font-semibold text-white shadow-lg transition hover:brightness-105 disabled:cursor-default disabled:hover:brightness-100"
       >

@@ -1,8 +1,11 @@
 import nmap3
 import xml.etree.ElementTree as ET
+import ipaddress
+import sqlalchemy as sa
 from flask import current_app
+from app import db
 from app.logging import update_network_discovery_status, calculate_progress
-from app.system_models import DiscoveryStatus, ServiceIdentification
+from app.system_models import DiscoveryStatus, ServiceIdentification, NetworkDiscovery, DeviceState
 from app.network_discovery.discovery_settings import get_discovery_setting
 
 # NETWORKS, TCP_PORTS, UDP_PORTS default to server/config.py's Config
@@ -239,21 +242,43 @@ def _parse_udp_ports(xmlroot):
 
     return confirmed, unconfirmed
 
-def discover_network(network_discvovery_status_id, progress_weight, stop_event):
+def network_for_target(target, saved_networks):
+    """Keep a known device's network or the most specific saved containing network for one target."""
+    known = db.session.scalars(
+        sa.select(NetworkDiscovery).where(
+            NetworkDiscovery.IP_Address == target,
+            NetworkDiscovery.Device_State.not_in((DeviceState.RETIRED, DeviceState.MERGED))
+        ).order_by(NetworkDiscovery.NetDiscoveryID)
+    ).first()
+    if known is not None:
+        return known.Network
+    address = ipaddress.IPv4Address(target)
+    containing = [ipaddress.ip_network(network, strict=False) for network in saved_networks
+                  if address in ipaddress.ip_network(network, strict=False)]
+    return str(max(containing, key=lambda network: network.prefixlen)) if containing else f"{target}/32"
+
+
+def discover_network(network_discvovery_status_id, progress_weight, stop_event, target=None):
     NETWORKS = get_discovery_setting('NETWORKS')
     hosts = {}
 
-    total_networks = len(NETWORKS)
+    scan_targets = [(network, network) for network in NETWORKS]
+    if target is not None:
+        scan_targets = [(network_for_target(target, NETWORKS), target)]
+
+    total_networks = len(scan_targets)
 
     if total_networks == 0:
         return hosts
 
-    for network_index, network in enumerate(NETWORKS):
+    for network_index, (network, scan_address) in enumerate(scan_targets):
 
         if stop_event.is_set():
             return None
         
-        hosts[network] = _discover_host(network)
+        found = _discover_host(scan_address)
+        hosts[network] = ({target: found[target]} if target is not None and target in found
+                          else {} if target is not None else found)
 
         total_hosts = len(hosts[network])
 
