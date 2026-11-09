@@ -237,7 +237,7 @@ reports. App/spec conflicts remain decisions, not automatic passes.
   distributed lab locks. Verify prerequisites per environment; separate machines
   run concurrently only with separate appliances AND targets. Preserve original
   human verdicts. New runs use attributable reports/index and separate journals.
-  [Historical evidence review](../docs/qa/Historical_Evidence_Review.md) inventories
+  [Historical evidence review](../docs/test-runs/2026-10-18-qa-historical-evidence-review/REPORT.md) inventories
   candidates without conferring PASS. Reviewer decisions for the exact target,
   report/case hashes, item coverage and environment/source compatibility determine
   reuse. October 15 remains a provisional cutoff. See [queue guide](../docs/qa/QA_Run_Queues.md).
@@ -315,7 +315,7 @@ reports. App/spec conflicts remain decisions, not automatic passes.
   cannot create it. Broader/unattended cases remain blocked.
 - **Partial-pass investigation:** Every catalog partial needs an evidence review,
   duplicate search, linked issue/disposition and next action in the
-  [partial-pass register](../docs/qa/Partial_Pass_Investigations.md). The
+  [partial-pass register](../docs/test-runs/2026-10-18-qa-partial-pass-investigations/REPORT.md). The
   `investigate` queue purpose selects partials only and cannot open product cases.
   Reported gaps may be filed with human attribution; unknown observations require
   evidence clarification. Preserve original verdicts and apply normal live
@@ -378,7 +378,7 @@ elapsed duration is bounded by 90 seconds and measured attach elapsed; attempt
 duration is bounded by 60 seconds. Future timestamps receive no grace. Exact
 source/case/initial-attempt/item checks and all cleanup requirements still apply.
 No report-only inference authenticates a malicious same-user writer. See the
-[timing investigation](../docs/qa/QA_Report_Timing.md) for pinned source semantics,
+[timing investigation](../docs/test-runs/2026-10-18-qa-report-timing/REPORT.md) for pinned source semantics,
 uncertainty and trust boundary. The real no-browser timing worker is included in
 the frontend gate; it is synthetic harness evidence, never a case verdict.
 
@@ -398,7 +398,7 @@ and its history against unchanged attempt prefixes; only the recovery's exact ne
 queue may consume a slot, still under a separate live-start grant and fresh proofs.
 No running-attempt recovery, ledger reset/relocation, implicit retry or resource
 cleanup mutation is supported. A new halt needs new review. See the
-[recovery contract](../docs/qa/Issue_211_Recheck_Review.md); same-user receipts and
+[recovery contract](../docs/test-runs/2026-10-18-qa-issue-211-recheck-review/REPORT.md); same-user receipts and
 cooperative locks remain a trust boundary, not cryptographic human authorization.
 
 ## Verification commands
@@ -507,4 +507,4 @@ fresh absence/baseline proof. It archives exact ledger bytes and appends the new
 queue hash, preserving original attempts, recovery archives and budgets. It grants
 no case start. Missing archives, unfinished prior cases, old accepted IDs in an
 untested scope or changed review reject. See
-[the concrete permission batch review](../docs/qa/Next_Permission_Batch_Review.md).
+[the concrete permission batch review](../docs/test-runs/2026-10-18-qa-next-permission-batch-review/REPORT.md).
