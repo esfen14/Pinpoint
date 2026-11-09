@@ -32,7 +32,7 @@ SNMP_CONFIG = {
     "SNMP_OIDS": [
         {"metric": "uptime", "oid": "1.3.6.1.2.1.1.3.0"},
         {"metric": "memory_total", "oid": "1.3.6.1.4.1.2021.4.5.0"},
-        {"metric": "lan_status", "oid": "1.3.6.1.2.1.2.2.1.8.3", "warning": "1", "critical": "2"},
+        {"metric": "sysname", "oid": "1.3.6.1.2.1.1.5.0", "warning": "1", "critical": "2"},
     ],
 }
 
@@ -207,12 +207,12 @@ class TestSnmpChecks:
         variables = resolve_plugin_variables("snmp", SNMP_CONFIG, discovered={"port": "161"})
         checks = build_service_checks("snmp", variables)
 
-        assert [check.metric for check, _ in checks] == ["uptime", "memory_total", "lan_status"]
+        assert [check.metric for check, _ in checks] == ["uptime", "memory_total", "sysname"]
         commands = [resolve_plugin_command("snmp", service_vars, Transport.UDP) for _, service_vars in checks]
         assert commands == [
             "pinpoint_nd_snmp!161!public!1.3.6.1.2.1.1.3.0!",
             "pinpoint_nd_snmp!161!public!1.3.6.1.4.1.2021.4.5.0!",
-            "pinpoint_nd_snmp!161!public!1.3.6.1.2.1.2.2.1.8.3!-w '1' -c '2'",
+            "pinpoint_nd_snmp!161!public!1.3.6.1.2.1.1.5.0!-w '1' -c '2'",
         ]
 
     def test_host_can_replace_oid_list(self):
@@ -244,18 +244,20 @@ class TestSnmpChecks:
         checks = build_service_checks("snmp", variables)
 
         assert [check.metric for check, _ in checks] == [
-            "uptime", "memory_total", "lan_status",
-            "if2_in_octets", "if2_out_octets", "if5_in_octets", "if5_out_octets",
+            "uptime", "memory_total", "sysname",
+            "if2_in_octets", "if2_out_octets", "if2_status",
+            "if5_in_octets", "if5_out_octets", "if5_status",
         ]
         commands = [resolve_plugin_command("snmp", v, Transport.UDP) for check, v in checks if check.metric.startswith("if5")]
         assert commands == [
             "pinpoint_nd_snmp!161!public!1.3.6.1.2.1.2.2.1.10.5!",
             "pinpoint_nd_snmp!161!public!1.3.6.1.2.1.2.2.1.16.5!",
+            "pinpoint_nd_snmp!161!public!1.3.6.1.2.1.2.2.1.8.5!",
         ]
 
     def test_duplicate_interfaces_are_one(self):
         variables = resolve_plugin_variables("snmp", SNMP_CONFIG, discovered={"interfaces": [4, 4]})
-        assert [c.metric for c, _ in build_service_checks("snmp", variables)][-2:] == ["if4_in_octets", "if4_out_octets"]
+        assert [c.metric for c, _ in build_service_checks("snmp", variables)][-3:] == ["if4_in_octets", "if4_out_octets", "if4_status"]
 
     @pytest.mark.parametrize("interfaces", ["3", [0], [-1], ["3"], [True], [1.5], list(range(1, 18))])
     def test_bad_interfaces_are_refused(self, interfaces):
@@ -264,7 +266,43 @@ class TestSnmpChecks:
             build_service_checks("snmp", variables)
 
     def test_metric_names(self):
-        assert interface_metrics(12) == ("if12_in_octets", "if12_out_octets")
+        assert interface_metrics(12) == ("if12_in_octets", "if12_out_octets", "if12_status")
+
+    def test_default_oid_table_has_no_fixed_interface_checks(self):
+        from config import Config
+        metrics = {entry["metric"] for entry in Config.SNMP_OIDS}
+        assert metrics.isdisjoint({"lan_status", "lan_in_octets", "lan_out_octets"})
+
+    LEGACY_INTERFACE_3_OIDS = [
+        {"metric": "lan_status", "oid": "1.3.6.1.2.1.2.2.1.8.3"},
+        {"metric": "lan_in_octets", "oid": "1.3.6.1.2.1.2.2.1.10.3"},
+        {"metric": "lan_out_octets", "oid": "1.3.6.1.2.1.2.2.1.16.3"},
+    ]
+
+    def metrics_for(self, interfaces):
+        config = {**SNMP_CONFIG, "SNMP_OIDS": [SNMP_CONFIG["SNMP_OIDS"][0]] + self.LEGACY_INTERFACE_3_OIDS}
+        discovered = {"port": "161"}
+        if interfaces is not None:
+            discovered["interfaces"] = interfaces
+        variables = resolve_plugin_variables("snmp", config, discovered=discovered)
+        return [check.metric for check, _ in build_service_checks("snmp", variables)]
+
+    def test_device_without_interface_3_gets_no_fixed_interface_checks(self):
+        # A saved OID table from before the change still lists the interface 3 checks.
+        assert self.metrics_for(None) == ["uptime"]
+        assert self.metrics_for([183]) == ["uptime", "if183_in_octets", "if183_out_octets", "if183_status"]
+
+    def test_device_with_interface_3_gets_checks_for_it_only_once(self):
+        assert self.metrics_for([3]) == ["uptime", "if3_in_octets", "if3_out_octets", "if3_status"]
+
+    def test_checks_follow_the_selected_interface_when_the_index_changes(self):
+        assert self.metrics_for([183]) != self.metrics_for([188])
+        assert self.metrics_for([188])[1:] == ["if188_in_octets", "if188_out_octets", "if188_status"]
+
+    def test_a_customised_interface_3_entry_is_kept(self):
+        config = {**SNMP_CONFIG, "SNMP_OIDS": [{"metric": "lan_status", "oid": "1.3.6.1.2.1.2.2.1.8.3", "warning": "1"}]}
+        variables = resolve_plugin_variables("snmp", config, discovered={"port": "161"})
+        assert [c.metric for c, _ in build_service_checks("snmp", variables)] == ["lan_status"]
 
     def test_per_service_variables_do_not_leak_between_services(self):
         variables = resolve_plugin_variables("snmp", SNMP_CONFIG)

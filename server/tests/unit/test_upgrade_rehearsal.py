@@ -100,7 +100,8 @@ class TestFirstReconcile:
 
     def test_each_service_is_attached_once(self, report):
         names = [(device, name) for device, name, _, _ in report["attached"]]
-        assert len(names) == len(set(names)) == report["first_reconcile"]["applied"] == 15
+        # 12, not 15: the three fixed interface 3 SNMP checks are no longer attached (#278).
+        assert len(names) == len(set(names)) == report["first_reconcile"]["applied"] == 12
 
     def test_a_second_reconcile_changes_nothing(self, report):
         second = report["second_reconcile"]

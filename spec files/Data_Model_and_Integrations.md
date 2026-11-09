@@ -603,11 +603,16 @@ Bandwidth is computed from stored samples; the Nagios checks are not changed.
 
 - **Services.** Every `DeviceInterface` with `Monitored` true becomes an `interfaces` fact for the
   device's SNMP port (`load_host_plugin_facts()` -> `{"snmp": {"interfaces": [ifIndex, ...]}}`).
-  `snmp_checks()` in `plugin_registry.py` then adds, after the OID-table services, one in and one
-  out octet service per interface: `snmp-if<N>_in_octets-<port>-udp` (OID `1.3.6.1.2.1.2.2.1.10.<N>`)
-  and `snmp-if<N>_out_octets-<port>-udp` (`...16.<N>`). A device with no monitored interface produces
-  exactly the services it did before (the fixed interface 3 services `lan_in_octets` / `lan_out_octets`
-  stay in the OID table). At most 16 interfaces per device; `interfaces` must be whole numbers
+  `snmp_checks()` in `plugin_registry.py` then adds, after the OID-table services, an in octet, an out
+  octet and a status service per interface: `snmp-if<N>_in_octets-<port>-udp` (OID `1.3.6.1.2.1.2.2.1.10.<N>`),
+  `snmp-if<N>_out_octets-<port>-udp` (`...16.<N>`) and `snmp-if<N>_status-<port>-udp` (`...8.<N>`, ifOperStatus).
+  There are no fixed interface checks: `ifIndex` differs per device and changes when a container is
+  recreated, so `config.py` `SNMP_OIDS` holds only device-wide OIDs and a device with no chosen interface
+  gets no interface service (none can go UNKNOWN on a missing index). `snmp_checks()` also skips the
+  three old default entries (`lan_status`, `lan_in_octets`, `lan_out_octets` on `.3`, exactly as they
+  were, no extra keys) that a saved OID table may still hold; an entry an administrator changed is kept.
+  The checks follow the interface the administrator selected (a refresh keeps the choice by ifIndex
+  and `Present` marks one that vanished). At most 16 interfaces per device (48 services); `interfaces` must be whole numbers
   (`PluginConfigurationError` otherwise). Changes are applied through
   `regenerate_and_apply_config_status()` (via `apply_config_change()`), so the Nagios binary validates
   them and a rejected config is rolled back.

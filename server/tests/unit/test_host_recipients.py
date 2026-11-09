@@ -225,7 +225,7 @@ def test_interface_bandwidth_services_inherit_host_recipients(
     db.session.commit()
     text = generate(app, monkeypatch, tmp_path)
     bandwidth = [obj for obj in objects(text, 'service') if 'snmp-if7_' in obj]
-    assert len(bandwidth) == 2
+    assert len(bandwidth) == 3
     expected = f'pinpoint_host_{first.NetDiscoveryID}' if selection == 'selected' else 'system_users'
     for obj in bandwidth:
         assert re.search(r'contact_groups\s+' + re.escape(expected) + r'\s*$', obj, re.M)

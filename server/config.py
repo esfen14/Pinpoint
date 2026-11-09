@@ -135,7 +135,9 @@ class Config:
     # SNMP polling defaults, used when a discovered host exposes SNMP
     # instead of (or alongside) NCPA. Each SNMP_OIDS entry becomes its own
     # Nagios service ("snmp-<metric>-<port>-<protocol>", e.g.
-    # snmp-uptime-161-udp); optional keys warning, critical, label and units
+    # snmp-uptime-161-udp). Interface checks are not in this table: ifIndex differs per device,
+    # so they follow the interfaces chosen for each device (DeviceInterface, Device Inventory).
+    # Optional keys warning, critical, label and units
     # are passed to check_snmp for that service.
     # SNMP_OIDS is only the default: the OID table can be edited from
     # Settings -> Plugins (PluginSettings, network_discovery/plugin_settings.py),
@@ -147,9 +149,6 @@ class Config:
     SNMP_OIDS = [
         {"metric": "uptime", "oid": "1.3.6.1.2.1.1.3.0"},
         {"metric": "system_description", "oid": "1.3.6.1.2.1.1.1.0"},
-        {"metric": "lan_status", "oid": "1.3.6.1.2.1.2.2.1.8.3"},
-        {"metric": "lan_in_octets", "oid": "1.3.6.1.2.1.2.2.1.10.3"},
-        {"metric": "lan_out_octets", "oid": "1.3.6.1.2.1.2.2.1.16.3"},
         {"metric": "memory_total", "oid": "1.3.6.1.4.1.2021.4.5.0"},
     ]
 
