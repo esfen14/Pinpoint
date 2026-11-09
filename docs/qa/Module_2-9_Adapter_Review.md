@@ -105,7 +105,7 @@ The current baseline does not establish the required `qa-accounts`/`qa-view`
 accounts, device/port fixture for TC-DI-02/03, or no-ping/no-NCPA fixture for
 TC-DASH-07. TC-ACC-10 is source-partial only; its E3 branch, persistent account
 disposition, and live recovery plan are unresolved. The current run-specific queue
-`docs/qa/queues/2026-10-18-modules-2-9-adapters-v1.json` selects only the seven
+`docs/qa/queues/archive/2026-10-18-modules-2-9-adapters-v1.json` selects only the seven
 complete read-only adapters and excludes the other 24 candidates from this run.
 It still does not establish the required role/device/dashboard/history fixtures or
 complete the live case cards; no case is ready to open. The broader 31-case v10
