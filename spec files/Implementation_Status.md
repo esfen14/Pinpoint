@@ -13,7 +13,7 @@ index and run order; `demo/demo` is the single front door (`demo/USAGE.md`).
 The legacy five-VM lab moved to `lab/legacy-vms/` because `scripts/vmlab` and
 `lab/*.py` still use it. `demo/demo setup --apply` builds the image, creates the
 macvlan network and the fourteen containers (`demo/targets/create.py`), pins them
-and starts them with the presenter; `demo/demo create-vms` creates the missing
+and starts them with the presenter, then checks both VMs are on `vboxnet1` (pass/fail summary); `demo/demo up` creates missing containers first; `demo/demo create-vms` creates the missing
 Pinpoint appliance and Windows NCPA VMs (`demo/appliance/create_vms.py`);
 `destroy` removes only demo-owned objects. **Known gaps:** the creation commands
 are tested offline only and have not been run against the live Docker and

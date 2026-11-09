@@ -32,7 +32,7 @@ class FrontDoorTests(unittest.TestCase):
     def test_lifecycle_and_read_only_commands_reach_the_right_program(self):
         cases={('setup',):['setup.py setup'],('create-vms','--apply'):['create_vms.py --apply'],('setup','--apply'):['setup.py setup --apply'],
                ('destroy','--apply'):['setup.py destroy --apply'],
-               ('up',):['presenter.py up'],('down',):['presenter.py down'],
+               ('up',):['setup.py up'],('down',):['presenter.py down'],
                ('manifest',):['controller.py manifest'],('preflight',):['controller.py preflight'],
                ('status',):['presenter.py status'],('reset',):['presenter.py reset'],
                ('down','web03','http'):['presenter.py break web03 http'],
@@ -67,6 +67,13 @@ class FrontDoorTests(unittest.TestCase):
                 result,calls=self.run_demo(*args)
                 self.assertEqual(result.returncode,0,result.stderr)
                 self.assertEqual(len(calls),1)
+    def test_command_help_shows_only_that_commands_examples(self):
+        result,calls=self.run_demo('ports','--help')
+        self.assertEqual((result.returncode,calls),(0,[]))
+        lines=result.stdout.strip().splitlines()
+        self.assertTrue(lines and all('demo/demo ports' in l for l in lines))
+        result,calls=self.run_demo('setup','--help')
+        self.assertEqual((result.returncode,calls),(0,[]));self.assertIn('--apply',result.stdout)
     def test_help_text_covers_every_usage_command_family(self):
         result,_=self.run_demo('help')
         for family in ('setup','up','down','destroy','dhcp-move','address-mode','ports open','ports close','ports restore','reset'):

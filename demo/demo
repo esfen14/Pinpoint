@@ -13,7 +13,7 @@ Pinpoint demo lab: one command, `demo/demo`. Full cheat sheet: demo/USAGE.md
 
 Lab lifecycle (run from the repository root):
   demo/demo setup [--apply]        prepare everything; without --apply it prints the plan and the manual checklist
-  demo/demo up                     start all fourteen containers and restore the baseline
+  demo/demo up                     create any missing containers, start all fourteen and restore the baseline
   demo/demo down                   stop all fourteen containers
   demo/demo create-vms [--apply]   create the Pinpoint appliance and Windows NCPA VMs (missing ones only)
   demo/demo destroy [--apply]      remove only the demo-owned containers and network (typed confirmation)
@@ -23,6 +23,18 @@ Lab lifecycle (run from the repository root):
 HELP
 }
 
+full_help() {
+  lab_usage
+  "$faults" help | sed -e 's#Pinpoint-Demo-faults.sh manifest  *\# observed#demo/demo presenter manifest   \# observed#' \
+      -e 's#Pinpoint-Demo-faults.sh#demo/demo#g' -e 's#^Alias of `demo/demo`; both accept the same commands. ##'
+}
+
+# demo/demo COMMAND --help: only the lines about that command
+if [[ $# -ge 2 && ( "${!#}" == "--help" || "${!#}" == "-h" ) && "${1}" != "presenter" ]]; then
+  matches="$(full_help | grep -F "demo/demo $1" || true)"
+  if [[ -n "$matches" ]]; then printf '%s\n' "$matches"; exit 0; fi
+fi
+
 if [[ "${1:-}" == "presenter" ]]; then
   shift
   exec python3 -I "$here/targets/presenter.py" "$@"
@@ -30,9 +42,7 @@ fi
 
 case "${1:-}" in
   help|-h|--help)
-    lab_usage
-    "$faults" help | sed -e 's#Pinpoint-Demo-faults.sh manifest  *\# observed#demo/demo presenter manifest   \# observed#' \
-        -e 's#Pinpoint-Demo-faults.sh#demo/demo#g' -e 's#^Alias of `demo/demo`; both accept the same commands. ##'
+    full_help
     ;;
   create-vms)
     shift
@@ -44,8 +54,12 @@ case "${1:-}" in
   manifest|preflight)
     exec python3 -I "$here/targets/controller.py" "$@"
     ;;
-  up|down)
-    if [[ $# -eq 1 ]]; then exec "$faults" "$1-all"; fi
+  up)
+    if [[ $# -eq 1 ]]; then exec python3 -I "$here/targets/setup.py" up; fi
+    exec "$faults" "$@"
+    ;;
+  down)
+    if [[ $# -eq 1 ]]; then exec "$faults" "down-all"; fi
     exec "$faults" "$@"
     ;;
   status|wall|services|reset|dhcp-move|dhcp-recover|address-mode|ports)

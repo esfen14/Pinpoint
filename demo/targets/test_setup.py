@@ -16,6 +16,7 @@ def good_runner(argv):
     if argv[:2]==['docker','version']:return 'Docker 27'
     if argv[:2]==['VBoxManage','--version']:return '7.2.14'
     if argv[:3]==['VBoxManage','list','hostonlyifs']:return 'Name: vboxnet1\nIPAddress: 192.168.57.1\n'
+    if argv[:2]==['VBoxManage','showvminfo']:return 'nic2="hostonly"\nhostonlyadapter2="vboxnet1"\n'
     if argv[:2]==['ip','-j']:return '[{"dst":"default","dev":"wlan0"},{"dst":"192.168.1.0/24","dev":"wlan0"},{"dst":"192.168.57.0/24","dev":"vboxnet1"}]'
     raise AssertionError('unexpected command %r'%(argv,))
 
@@ -56,6 +57,34 @@ class PreflightTests(unittest.TestCase):
         self.assertEqual(failed,{'Subnet conflicts'})
 
 
+class VmAttachmentTests(unittest.TestCase):
+    def test_both_vms_must_be_on_the_host_only_network(self):
+        def runner(argv):
+            if argv[2]=='Pinpoint-Final':return 'nic2="hostonly"\nhostonlyadapter2="vboxnet1"\n'
+            if argv[2]=='pinpoint-defense-win01':return 'nic1="hostonly"\nhostonlyadapter1="vboxnet1"\n'
+            raise ValueError('none')
+        self.assertEqual([r[1] for r in setup.vm_attachments(runner)],[True,True])
+    def test_a_missing_or_misattached_vm_fails(self):
+        def runner(argv):
+            if argv[2]=='Pinpoint-Final':return 'nic2="nat"\n'
+            raise ValueError('none')
+        self.assertEqual([r[1] for r in setup.vm_attachments(runner)],[False,False])
+
+
+class UpTests(unittest.TestCase):
+    def run_up(self,present):
+        created=[];started=[]
+        def runner(argv):
+            if argv[:2]==['docker','inspect'] and not present:raise ValueError('missing')
+            return '[{}]'
+        code=setup.main(['up'],runner=runner,available_mib=lambda:8192,ask=lambda p:'',out=io.StringIO(),err=io.StringIO(),
+                        create_lab=lambda c,o:created.append(1),start=lambda:started.append(1))
+        return code,created,started
+    def test_up_creates_the_lab_only_when_a_container_is_missing_then_starts_it(self):
+        self.assertEqual(self.run_up(False),(0,[1],[1]))
+        self.assertEqual(self.run_up(True),(0,[],[1]))
+
+
 class MainTests(unittest.TestCase):
     def run_main(self,argv,runner=good_runner,answer='',mem=8192):
         out=io.StringIO();err=io.StringIO()
@@ -81,6 +110,13 @@ class MainTests(unittest.TestCase):
         out=io.StringIO()
         code=setup.main(['setup','--apply'],runner=good_runner,available_mib=lambda:8192,ask=lambda p:'',out=out,err=io.StringIO(),create_lab=lambda catalog,o:created.append(catalog))
         self.assertEqual((code,len(created)),(0,1))
+        self.assertIn('Summary: PASS',out.getvalue())
+        def no_vm(argv):
+            if argv[:2]==['VBoxManage','showvminfo']:raise ValueError('none')
+            return good_runner(argv)
+        out2=io.StringIO()
+        code=setup.main(['setup','--apply'],runner=no_vm,available_mib=lambda:8192,ask=lambda p:'',out=out2,err=io.StringIO(),create_lab=lambda c,o:None)
+        self.assertEqual(code,1);self.assertIn('Summary: FAIL',out2.getvalue())
         def bad(argv):
             if argv[:2]==['docker','version']:raise OSError('x')
             return good_runner(argv)

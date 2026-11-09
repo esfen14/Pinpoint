@@ -16,7 +16,7 @@ clears at the next check, and a new port or address needs a **Rescan Network**
 |---|---|---|
 | First-time or fresh-machine setup | `demo/demo setup` then `demo/demo setup --apply` | The first prints the plan and the manual checklist and changes nothing |
 | Create the two VMs (missing ones only) | `demo/demo create-vms` then `demo/demo create-vms --apply --windows-iso WIN.iso` | Appliance and Windows VMs on `vboxnet1`; OS install of the appliance is `scripts/vmlab`, NCPA is installed in Windows |
-| Start everything and restore baseline | `demo/demo up` | Starts the fourteen containers, restores baseline services and DHCP leases |
+| Start everything and restore baseline | `demo/demo up` | Creates missing containers first, then starts the fourteen and restores baseline services and DHCP leases |
 | Stop everything | `demo/demo down` | Stops the fourteen containers; Windows and the appliance are untouched |
 | Remove the lab | `demo/demo destroy --apply` | Removes only demo-owned containers and network after a typed confirmation |
 | Return everything to baseline | `demo/demo reset` | Addresses, daemons and extra ports back to baseline (about 90 seconds) |

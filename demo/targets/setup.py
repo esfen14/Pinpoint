@@ -91,6 +91,20 @@ def preflight(runner,available_mib):
     return rows
 
 
+def vm_attachments(runner):
+    """Read-only: each demo VM must have a host-only adapter on vboxnet1."""
+    rows=[]
+    for name in ('Pinpoint-Final','pinpoint-defense-win01'):
+        try:
+            info=runner(['VBoxManage','showvminfo',name,'--machinereadable'])
+        except (OSError,ValueError,subprocess.SubprocessError):
+            rows.append(('VM '+name,False,'not found'))
+            continue
+        attached='hostonlyadapter' in info and '="'+PARENT+'"' in info
+        rows.append(('VM '+name,attached,'on '+PARENT if attached else 'not attached to '+PARENT))
+    return rows
+
+
 def default_runner(argv):
     result=subprocess.run(argv,capture_output=True,text=True,timeout=30)
     if result.returncode:
@@ -147,6 +161,20 @@ def destroy(runner,apply,ask,out,err):
     return 0
 
 
+def default_start():
+    subprocess.run([sys.executable,'-I',str(Path(__file__).with_name('presenter.py')),'up'],check=True,timeout=900)
+
+
+def lab_complete(catalog,runner):
+    for device in catalog.devices:
+        if device.kind=='linux':
+            try:
+                runner(['docker','inspect','pinpoint274-host-'+device.name+'-pilot'])
+            except (OSError,ValueError,subprocess.SubprocessError):
+                return False
+    return True
+
+
 def default_create_lab(catalog,out):
     """Create the network, image and fourteen containers, pin them, then start them with the presenter."""
     import os
@@ -172,8 +200,8 @@ def default_create_lab(catalog,out):
     subprocess.run([sys.executable,'-I',str(Path(__file__).with_name('presenter.py')),'up'],check=True,timeout=900)
 
 
-def main(argv,runner=default_runner,available_mib=default_available_mib,ask=input,out=sys.stdout,err=sys.stderr,create_lab=default_create_lab):
-    if not argv or argv[0] not in {'setup','destroy'} or any(a!='--apply' for a in argv[1:]) or len(argv)>2:
+def main(argv,runner=default_runner,available_mib=default_available_mib,ask=input,out=sys.stdout,err=sys.stderr,create_lab=default_create_lab,start=default_start):
+    if not argv or argv[0] not in {'setup','destroy','up'} or any(a!='--apply' for a in argv[1:]) or len(argv)>2:
         print('usage: demo/demo setup [--apply] | demo/demo destroy [--apply]',file=err)
         return 2
     apply='--apply' in argv[1:]
@@ -184,6 +212,19 @@ def main(argv,runner=default_runner,available_mib=default_available_mib,ask=inpu
             print('Destroy refused: Docker state could not be read.',file=err)
             return 1
     catalog=load_catalog()
+    if argv[0]=='up':
+        if apply:
+            print('usage: demo/demo up',file=err)
+            return 2
+        try:
+            if not lab_complete(catalog,runner):
+                print('Containers are missing; creating them first.',file=out)
+                create_lab(catalog,out)
+            start()
+        except (OSError,ValueError,subprocess.SubprocessError):
+            print('Up stopped: a step failed. Run demo/demo setup to see the plan and preflight.',file=err)
+            return 1
+        return 0
     rows=preflight(runner,available_mib())
     print('Preflight',file=out)
     for name,ok,detail in rows:
@@ -203,7 +244,14 @@ def main(argv,runner=default_runner,available_mib=default_available_mib,ask=inpu
         except (OSError,ValueError,subprocess.SubprocessError):
             print('Setup stopped: a creation step failed. It is safe to re-run; existing objects are kept.',file=err)
             return 1
-        print('\nSummary: containers created and started. Next: demo/demo presenter enroll-vms, then demo/demo presenter preflight.',file=out)
+        vm_rows=vm_attachments(runner)
+        print('\nVM attachment',file=out)
+        for name,ok,detail in vm_rows:
+            print('  %-4s %s: %s'%('ok' if ok else 'FAIL',name,detail),file=out)
+        if any(not ok for _,ok,_ in vm_rows):
+            print('\nSummary: FAIL, containers are up but a VM is missing or not on %s. Run demo/demo create-vms, then see demo/appliance/README.md.'%PARENT,file=out)
+            return 1
+        print('\nSummary: PASS, containers created and started. Next: demo/demo presenter enroll-vms, then demo/demo presenter preflight.',file=out)
         return 0
     print('\nSummary: preflight passed; no changes made.',file=out)
     return 0

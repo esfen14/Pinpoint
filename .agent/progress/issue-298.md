@@ -59,6 +59,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | 4 | demo/demo is the front door (routes setup/destroy/up/down/presenter/faults, keeps faults-script validation, alias kept); demo/USAGE.md; faults usage reworded; test_front_door.py (routing, validation kept, help and every USAGE.md command accepted); added to verify.sh | test_front_door.py, test_faults_script.py | green |
 | 5 | demo/targets/setup.py: plan, preflight (Docker, VBoxManage, vboxnet1, subnet conflicts, RAM), manual checklist with check commands, destroy with owner-label checks and typed confirmation; --apply refuses container creation; test_setup.py (13 tests) added to verify.sh | python3 -I demo/targets/test_setup.py (failed first on missing module, then green) | green |
 | 6 | Spec updates; create.py (container creation commands, apply, pins) wired into setup --apply; appliance/create_vms.py + `demo/demo create-vms`; tests test_create.py, test_create_vms.py; created chore #301 | verify.sh all (before the create work): green; new tests green | green |
+| 7 | setup --apply ends with VM attachment check and PASS/FAIL summary; `demo/demo up` creates missing containers first (setup.py up); `demo/demo CMD --help` shows that command's examples | test_setup.py, test_front_door.py, test_faults_script.py | green |
 
 ## State for the next session
 
