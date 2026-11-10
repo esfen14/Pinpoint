@@ -49,6 +49,10 @@ demo/demo destroy --apply             # type "destroy": removes only the demo co
   against the QA appliance. Discovery of the /27 takes about 13 minutes there (the smoke test
   waits up to 20). `create-vms --apply` was also run live to create a missing Pinpoint-Final (4096 MB, NAT with
   127.0.0.1:18080 to port 80, host-only vboxnet1 on NIC 2).
+- The Windows unattended install was run live (Windows 10 Enterprise evaluation ISO fetched with
+  `--download-windows-iso`): it reaches the desktop as `presenter` with the Guest Additions running.
+  Evaluation media need no product key, so `create-vms` passes VirtualBox's answer-file template with
+  the ProductKey element removed. NCPA is still installed by hand (#302).
 - `demo/demo qa create` was run live (VM built, Ubuntu + Nagios provisioned, Pinpoint deployed).
   The installer health check ends with one expected failure, "pinpoint has sudo rights beyond
   'systemctl reload nagios'", so `qa create` reports "stopped at fresh" even though the appliance
