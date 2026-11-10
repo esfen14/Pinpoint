@@ -96,6 +96,9 @@ vm_ssh() {
   local extra=(); mapfile -t extra < <(ssh_args)
   ssh "${extra[@]}" "$VMLAB_SSH_TARGET" "$@"
 }
+# True only when the key works AND sudo needs no password (a key alone is not enough:
+# provision and fresh run sudo non-interactively).
+vm_sudo_ready() { vm_ssh "sudo -n true" 2>/dev/null; }
 preflight() {
   python3 -I "$root/scripts/vmlab_preflight.py" "$@" "$VMLAB_VM" "$VMLAB_SSH_TARGET" "$VMLAB_SSH_PORT" "$VMLAB_WEB_PORT"
 }
@@ -172,6 +175,9 @@ deb https://archive.ubuntu.com/ubuntu jammy-backports main restricted universe m
 deb https://security.ubuntu.com/ubuntu jammy-security main restricted universe multiverse
 SRC
 sudo rm -f /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources
+if [ -f /etc/netplan/60-pinpoint-lab.yaml ] && ip -4 -br addr | grep -qF "$VMLAB_LAB_ADDRESS"; then
+  echo "lab network already configured"; exit 0
+fi
 iface=""
 for i in \$(ls /sys/class/net); do
   [ "\$i" = lo ] && continue
@@ -297,14 +303,14 @@ case "$cmd" in
     VBoxManage startvm "$VMLAB_VM" --type headless >/dev/null
     echo "Installing Ubuntu unattended (10 to 25 minutes) ..."
     for i in $(seq 1 180); do
-      if vm_ssh true 2>/dev/null; then break; fi
+      if vm_sudo_ready; then break; fi
       # VirtualBox's post-install step does not install the key on Ubuntu 22.04, so once
       # sshd answers, install it ourselves with the lab password.
-      if preflight && bootstrap_key 2>/dev/null && vm_ssh true 2>/dev/null; then echo "installed our SSH key using the lab password"; break; fi
+      if preflight && bootstrap_key 2>/dev/null && vm_sudo_ready; then echo "installed our SSH key using the lab password"; break; fi
       if [ "$i" -gt 5 ] && [ "$(vm_state)" != "running" ]; then die "the VM stopped during the install; open its console: VBoxManage startvm $VMLAB_VM --type separate"; fi
       sleep 15
     done
-    vm_ssh true 2>/dev/null || die "no SSH after 45 minutes (the VM is left running; check its console, then run: scripts/vmlab prepare)"
+    vm_sudo_ready || die "no SSH with passwordless sudo after 45 minutes (the VM is left running; check its console, then run: scripts/vmlab prepare)"
     "$0" prepare
     echo "Created. Next: scripts/vmlab provision   (user '$user'; password file: $pw)"
     ;;
@@ -312,7 +318,7 @@ case "$cmd" in
   prepare)
     # Apt sources and the lab NIC. Safe to re-run; `create` calls it, or run it after fixing a failed create.
     need_config
-    vm_ssh true 2>/dev/null || bootstrap_key || die "cannot log in to the appliance (key or lab password)"
+    vm_sudo_ready || bootstrap_key || die "cannot log in to the appliance (key or lab password)"
     echo "Preparing apt sources and the lab network ($VMLAB_LAB_ADDRESS) ..."
     prepare_script | vm_ssh "bash -s"
     ensure_swap

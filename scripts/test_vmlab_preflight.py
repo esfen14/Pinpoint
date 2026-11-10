@@ -149,6 +149,24 @@ class CommandGateTests(unittest.TestCase):
                     self.assertEqual(log.read_text().splitlines(), ['python3'] * expected)
 
 
+class LoginReadinessTests(unittest.TestCase):
+    """A working SSH key alone is not enough: provision and fresh run sudo non-interactively."""
+
+    def setUp(self):
+        self.source = (Path(__file__).resolve().parents[1] / 'scripts/vmlab').read_text()
+
+    def test_readiness_means_key_and_passwordless_sudo(self):
+        self.assertIn('vm_sudo_ready() { vm_ssh "sudo -n true" 2>/dev/null; }', self.source)
+
+    def test_create_and_prepare_wait_for_that_readiness(self):
+        self.assertEqual(self.source.count('vm_sudo_ready'), 5)
+        self.assertNotIn('vm_ssh true 2>/dev/null || bootstrap_key', self.source)
+        self.assertNotIn('bootstrap_key 2>/dev/null && vm_ssh true', self.source)
+
+    def test_prepare_is_safe_to_repeat(self):
+        self.assertIn('lab network already configured', self.source)
+
+
 class ObservationTests(unittest.TestCase):
     UUID = '12345678-1234-1234-1234-123456789abc'
 

@@ -45,7 +45,12 @@ demo/demo destroy --apply             # type "destroy": removes only the demo co
 ## Known limits
 
 - Run live: the container creation, `demo/demo preflight`, and `demo/demo create-vms` (it leaves
-  existing VMs untouched). Not yet run live: creating a missing VM with `create-vms --apply`, and
-  `demo/demo qa create`.
+  existing VMs untouched). Not yet run live: creating a missing VM with `create-vms --apply`.
+- `demo/demo qa create` was run live (VM built, Ubuntu + Nagios provisioned, Pinpoint deployed).
+  The installer health check ends with one expected failure, "pinpoint has sudo rights beyond
+  'systemctl reload nagios'", so `qa create` reports "stopped at fresh" even though the appliance
+  is up. The app grants `pinpoint` `systemctl restart nagios` on purpose (#121); the installer's
+  `setup/pinpoint-healthcheck.sh` has not been updated to match. Continue with
+  `scripts/vmlab setup-admin` (same `VMLAB_CONFIG`/`VMLAB_STATE_DIR` as `qa status`).
 - A new Windows VM has no scripted NCPA install (#302); the prepared VM already has it.
 - No automated NCPA deployment run: the Linux containers have no password SSH.
