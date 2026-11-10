@@ -1,7 +1,9 @@
 """Offline tests for the appliance and Windows VM creation commands; VBoxManage is never run."""
 from pathlib import Path
 import io
+import os
 import sys
+import tempfile
 import unittest
 
 sys.path.insert(0,str(Path(__file__).resolve().parent))
@@ -52,6 +54,55 @@ class MainTests(unittest.TestCase):
         code,calls,_=self.run_main(['--apply'])
         self.assertEqual(code,0)
         self.assertEqual(len([c for c in calls if c[1]=='createvm']),2)
+    def run_download(self,argv,present=False):
+        downloads=[]
+        out=io.StringIO()
+        err=io.StringIO()
+        home=Path(tempfile.mkdtemp())
+        old_default=create_vms.WINDOWS_ISO_DEFAULT
+        old_appliance=create_vms.APPLIANCE_ISO_DEFAULT
+        create_vms.WINDOWS_ISO_DEFAULT=home/'win.iso'
+        create_vms.APPLIANCE_ISO_DEFAULT=home/'ubuntu.iso'
+        if present:
+            (home/'win.iso').write_text('x')
+        def runner(argv_):
+            if argv_[:2]==['VBoxManage','showvminfo']:raise ValueError('none')
+            if argv_[:3]==['VBoxManage','list','systemproperties']:return 'Default machine folder: /vms\n'
+            return ''
+        def downloader(url,target):
+            downloads.append((url,target))
+        try:
+            code=create_vms.main(argv,runner=runner,out=out,err=err,downloader=downloader)
+        finally:
+            create_vms.WINDOWS_ISO_DEFAULT=old_default
+            create_vms.APPLIANCE_ISO_DEFAULT=old_appliance
+        return code,downloads,out.getvalue(),err.getvalue(),home
+    def test_plan_names_the_download_but_does_not_fetch_it(self):
+        code,downloads,out,_,home=self.run_download(['--download-windows-iso'])
+        self.assertEqual(code,0);self.assertEqual(downloads,[])
+        self.assertIn('will be downloaded from https://go.microsoft.com',out)
+        self.assertIn('--iso='+str(home/'win.iso'),out)
+    def test_apply_downloads_once_and_skips_a_present_file(self):
+        code,downloads,_,_,home=self.run_download(['--apply','--download-windows-iso'])
+        self.assertEqual(code,0);self.assertEqual(downloads,[(create_vms.WINDOWS_ISO_URL,home/'win.iso')])
+        code,downloads,out,_,_=self.run_download(['--apply','--download-windows-iso'],present=True)
+        self.assertEqual(downloads,[]);self.assertIn('already present',out)
+    def test_a_given_path_and_the_download_option_conflict(self):
+        code,downloads,_,err,_=self.run_download(['--windows-iso','/iso/w.iso','--download-windows-iso'])
+        self.assertEqual(code,1);self.assertEqual(downloads,[]);self.assertIn('not both',err)
+    def test_apply_rejects_a_missing_iso_path(self):
+        code,_,_,err,_=self.run_download(['--apply','--windows-iso','/nonexistent/w.iso'])
+        self.assertEqual(code,1);self.assertIn('not found',err)
+    def test_appliance_download_uses_the_vmlab_iso_path(self):
+        old=os.environ.get('VMLAB_ISO')
+        os.environ['VMLAB_ISO']='/tmp/shared.iso'
+        try:
+            self.assertEqual(create_vms.appliance_iso_default(),Path('/tmp/shared.iso'))
+        finally:
+            if old is None:
+                del os.environ['VMLAB_ISO']
+            else:
+                os.environ['VMLAB_ISO']=old
     def test_unknown_arguments_fail(self):
         self.assertEqual(self.run_main(['--wipe'])[0],2)
 if __name__=='__main__':unittest.main()

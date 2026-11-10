@@ -12,8 +12,8 @@ repository root. Commands that change things print a plan first and need `--appl
 | VirtualBox 7.x | `VBoxManage --version` |
 | `sudo` | Setup writes root-owned private files (run `sudo -v` first) |
 | RAM and disk | At least 3 GiB RAM free for the containers (preflight refuses less), more for two VMs; about 20 GiB disk free |
-| Windows 10 ISO | Only if you create the Windows VM; or reuse your prepared `pinpoint-defense-win01` |
-| Ubuntu 22.04.5 live-server ISO | Only for the QA appliance (`scripts/vmlab iso` downloads it) |
+| Windows 10 ISO | Only if you create the Windows VM; or reuse your prepared `pinpoint-defense-win01`. `create-vms --download-windows-iso` fetches Microsoft's Windows 10 Enterprise evaluation ISO (about 5.5 GB), or pass your own with `--windows-iso` |
+| Ubuntu 22.04.5 live-server ISO | For the QA appliance (`scripts/vmlab iso` downloads it) and the demo appliance (`create-vms --download-appliance-iso`, or `--appliance-iso PATH`); both use the same file, `VMLAB_ISO` (default `~/Downloads/ubuntu-22.04.5-live-server-amd64.iso`) |
 | NCPA 3.5.0 Windows installer | For the Windows VM; scripted install is tracked in #302 |
 | Internet | Image build, Ubuntu and installer downloads |
 
@@ -30,7 +30,9 @@ other VPN). The presenter refuses an active tunnel.
 
 ```bash
 demo/demo create-vms                  # plan: what is missing
-demo/demo create-vms --apply          # creates only the missing VMs (add --windows-iso WIN.iso)
+demo/demo create-vms --apply          # creates only the missing VMs
+demo/demo create-vms --apply --download-windows-iso --download-appliance-iso   # also fetch the ISOs (plan without --apply shows the URLs)
+demo/demo create-vms --apply --windows-iso WIN.iso --appliance-iso UBUNTU.iso  # or use ISOs you already have
 ```
 
 Then, by hand (see [`appliance/README.md`](appliance/README.md) and

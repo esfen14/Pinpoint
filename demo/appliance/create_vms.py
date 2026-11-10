@@ -1,13 +1,14 @@
 """Create the two VMs the demo keeps: the Pinpoint appliance and the Windows NCPA test VM.
 
-`python3 demo/appliance/create_vms.py [--apply] [--appliance-iso ISO] [--windows-iso ISO]`
-prints the VBoxManage plan and changes nothing without --apply. Existing VMs are
+`python3 demo/appliance/create_vms.py [--apply] [--appliance-iso ISO | --download-appliance-iso]
+[--windows-iso ISO | --download-windows-iso]` prints the VBoxManage plan and changes nothing without --apply. Existing VMs are
 never touched. Both VMs use the host-only network vboxnet1; the appliance also has
 NAT with the web UI forwarded to 127.0.0.1:18080. Installing the application on the
 appliance is `scripts/vmlab`; the Windows NCPA agent is installed inside Windows
 (demo/appliance/WINDOWS_READY.md), so those steps stay manual.
 """
 import argparse
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -17,6 +18,12 @@ APPLIANCE_VM='Pinpoint-Final'
 WINDOWS_VM='pinpoint-defense-win01'
 WINDOWS_MAC='02:77:01:00:00:02'
 WEB_PORT=18080
+# The appliance ISO is the same file `scripts/vmlab iso` uses (VMLAB_ISO), so one download serves both.
+APPLIANCE_ISO_URL='https://releases.ubuntu.com/22.04/ubuntu-22.04.5-live-server-amd64.iso'
+APPLIANCE_ISO_DEFAULT=Path.home()/'Downloads/ubuntu-22.04.5-live-server-amd64.iso'
+# Microsoft's evaluation download of Windows 10 Enterprise 22H2 (about 5.5 GB, 90-day evaluation).
+WINDOWS_ISO_URL='https://go.microsoft.com/fwlink/p/?LinkID=2208844&clcid=0x409&culture=en-us&country=US'
+WINDOWS_ISO_DEFAULT=Path.home()/'Downloads/Windows10-Enterprise-Eval-22H2-x64.iso'
 DEFAULT_STATE=Path.home()/'.local/share/pinpoint-defense/windows-home'
 
 
@@ -50,6 +57,47 @@ def iso_attach_command(name,iso):
     return ['VBoxManage','storageattach',name,'--storagectl','SATA','--port','1','--device','0','--type','dvddrive','--medium',str(iso)]
 
 
+def appliance_iso_default():
+    configured=os.environ.get('VMLAB_ISO')
+    if configured:
+        return Path(configured)
+    return APPLIANCE_ISO_DEFAULT
+
+
+def default_downloader(url,target):
+    """Resumable download to target (via a .part file); an existing file is kept."""
+    if target.exists():
+        return
+    target.parent.mkdir(parents=True,exist_ok=True)
+    part=target.with_name(target.name+'.part')
+    result=subprocess.run(['curl','-fL','-C','-','-o',str(part),url])
+    if result.returncode:
+        raise ValueError('Download failed; re-run to resume')
+    part.rename(target)
+
+
+def resolve_iso(given,download,default_path,url,label,downloader,apply,out):
+    """The ISO to use: a path the user gave, or the default path after an optional download."""
+    if given and download:
+        raise ValueError('Give either a %s ISO path or the download option, not both'%label)
+    if given:
+        if apply and not given.exists():
+            raise ValueError('%s ISO not found: %s'%(label,given))
+        return given
+    if not download:
+        return None
+    if default_path.exists():
+        print('%s ISO already present: %s'%(label,default_path),file=out)
+    else:
+        print('%s ISO will be downloaded from %s to %s'%(label,url,default_path),file=out)
+        if apply:
+            downloader(url,default_path)
+            print('Downloaded. sha256:',file=out)
+            digest=subprocess.run(['sha256sum',str(default_path)],capture_output=True,text=True).stdout.strip()
+            print('  '+digest,file=out)
+    return default_path
+
+
 def default_runner(argv):
     result=subprocess.run(argv,capture_output=True,text=True,timeout=600)
     if result.returncode:
@@ -72,11 +120,13 @@ def machine_folder(runner):
     raise ValueError('Default machine folder unknown')
 
 
-def main(argv=None,runner=default_runner,out=sys.stdout,err=sys.stderr):
+def main(argv=None,runner=default_runner,out=sys.stdout,err=sys.stderr,downloader=default_downloader):
     parser=argparse.ArgumentParser(description=__doc__,formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--apply',action='store_true')
     parser.add_argument('--appliance-iso',type=Path)
     parser.add_argument('--windows-iso',type=Path)
+    parser.add_argument('--download-appliance-iso',action='store_true',help='download Ubuntu 22.04.5 live-server (about 2 GB) unless it is already present')
+    parser.add_argument('--download-windows-iso',action='store_true',help='download the Windows 10 Enterprise evaluation ISO (about 5.5 GB) unless it is already present')
     parser.add_argument('--windows-password-file',type=Path,default=DEFAULT_STATE/'login-password')
     try:
         args=parser.parse_args(argv)
@@ -89,14 +139,15 @@ def main(argv=None,runner=default_runner,out=sys.stdout,err=sys.stderr):
         if args.apply:
             print('VBoxManage is not available.',file=err)
             return 1
-    plans=[(APPLIANCE_VM,appliance_commands(APPLIANCE_VM,folder/APPLIANCE_VM/(APPLIANCE_VM+'.vdi')),args.appliance_iso,None),
-           (WINDOWS_VM,windows_commands(WINDOWS_VM,folder/WINDOWS_VM/(WINDOWS_VM+'.vdi')),args.windows_iso,windows_install_command)]
+    plans=[(APPLIANCE_VM,appliance_commands(APPLIANCE_VM,folder/APPLIANCE_VM/(APPLIANCE_VM+'.vdi')),(args.appliance_iso,args.download_appliance_iso,appliance_iso_default(),APPLIANCE_ISO_URL,'Appliance'),None),
+           (WINDOWS_VM,windows_commands(WINDOWS_VM,folder/WINDOWS_VM/(WINDOWS_VM+'.vdi')),(args.windows_iso,args.download_windows_iso,WINDOWS_ISO_DEFAULT,WINDOWS_ISO_URL,'Windows'),windows_install_command)]
     try:
-        for name,commands,iso,installer in plans:
+        for name,commands,iso_choice,installer in plans:
             exists=vm_exists(runner,name)
             print('%s %s'%(name,'exists: left untouched' if exists else 'will be created'),file=out)
             if exists:
                 continue
+            iso=resolve_iso(*iso_choice,downloader,args.apply,out)
             for command in commands:
                 print('  '+' '.join(command),file=out)
             if iso:
@@ -110,7 +161,8 @@ def main(argv=None,runner=default_runner,out=sys.stdout,err=sys.stderr):
                     runner(iso_attach_command(name,iso))
                 if installer and iso:
                     runner(installer(name,iso,args.windows_password_file))
-    except (OSError,ValueError,subprocess.SubprocessError):
+    except (OSError,ValueError,subprocess.SubprocessError) as problem:
+        print(problem if str(problem) else 'VM creation stopped',file=err)
         print('VM creation stopped; re-run is safe, existing VMs are kept.',file=err)
         return 1
     print('\nStill manual: install the application on the appliance (scripts/vmlab), set its adapter 2 address 10.77.1.1/27,'

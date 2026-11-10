@@ -10,7 +10,7 @@ Read them locally and keep them out of slides, recordings and reports.
 
 ## Creating the two VMs
 
-`demo/demo create-vms` prints the VBoxManage plan for the Pinpoint appliance (`Pinpoint-Final`) and the Windows test VM (`pinpoint-defense-win01`) and creates only the missing ones with `--apply` (add `--windows-iso`). Installing the application is `scripts/vmlab`; the NCPA install and snapshots are manual.
+`demo/demo create-vms` prints the VBoxManage plan for the Pinpoint appliance (`Pinpoint-Final`) and the Windows test VM (`pinpoint-defense-win01`) and creates only the missing ones with `--apply`. ISOs: pass a path (`--windows-iso`, `--appliance-iso`) or let it download them (`--download-windows-iso`, about 5.5 GB Microsoft evaluation; `--download-appliance-iso`, the Ubuntu ISO shared with `scripts/vmlab iso`). A download only happens with `--apply`, resumes if interrupted and never overwrites a file. Installing the application is `scripts/vmlab`; the NCPA install and snapshots are manual.
 
 ## Two kinds of appliance VM
 
