@@ -47,7 +47,8 @@ demo/demo destroy --apply             # type "destroy": removes only the demo co
 - Run live: the container creation, `demo/demo preflight`, `demo/demo create-vms` (it leaves
   existing VMs untouched), `scripts/vmlab smoke` (18 of 18) and `scripts/vmlab alerts` (12 of 12)
   against the QA appliance. Discovery of the /27 takes about 13 minutes there (the smoke test
-  waits up to 20). Not yet run live: creating a missing VM with `create-vms --apply`.
+  waits up to 20). `create-vms --apply` was also run live to create a missing Pinpoint-Final (4096 MB, NAT with
+  127.0.0.1:18080 to port 80, host-only vboxnet1 on NIC 2).
 - `demo/demo qa create` was run live (VM built, Ubuntu + Nagios provisioned, Pinpoint deployed).
   The installer health check ends with one expected failure, "pinpoint has sudo rights beyond
   'systemctl reload nagios'", so `qa create` reports "stopped at fresh" even though the appliance
