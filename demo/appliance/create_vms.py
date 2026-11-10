@@ -137,7 +137,7 @@ def machine_folder(runner):
     raise ValueError('Default machine folder unknown')
 
 
-def main(argv=None,runner=default_runner,out=sys.stdout,err=sys.stderr,downloader=default_downloader):
+def main(argv=None,runner=default_runner,out=sys.stdout,err=sys.stderr,downloader=default_downloader,template_writer=write_keyless_template):
     parser=argparse.ArgumentParser(description=__doc__,formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--apply',action='store_true')
     parser.add_argument('--appliance-iso',type=Path)
@@ -177,7 +177,7 @@ def main(argv=None,runner=default_runner,out=sys.stdout,err=sys.stderr,downloade
                 if iso:
                     runner(iso_attach_command(name,iso))
                 if installer and iso:
-                    write_keyless_template()
+                    template_writer()
                     runner(installer(name,iso,args.windows_password_file))
     except (OSError,ValueError,subprocess.SubprocessError) as problem:
         print(problem if str(problem) else 'VM creation stopped',file=err)

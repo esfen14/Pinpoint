@@ -57,7 +57,7 @@ class MainTests(unittest.TestCase):
             if argv_[:3]==['VBoxManage','list','systemproperties']:return 'Default machine folder: /vms\n'
             return ''
         out=io.StringIO()
-        code=create_vms.main(argv,runner=runner,out=out,err=io.StringIO())
+        code=create_vms.main(argv,runner=runner,out=out,err=io.StringIO(),template_writer=lambda:None)
         return code,calls,out.getvalue()
     def test_without_apply_it_only_prints_the_plan(self):
         code,calls,out=self.run_main(['--windows-iso','/iso/w.iso'])
@@ -89,7 +89,7 @@ class MainTests(unittest.TestCase):
         def downloader(url,target):
             downloads.append((url,target))
         try:
-            code=create_vms.main(argv,runner=runner,out=out,err=err,downloader=downloader)
+            code=create_vms.main(argv,runner=runner,out=out,err=err,downloader=downloader,template_writer=lambda:None)
         finally:
             create_vms.WINDOWS_ISO_DEFAULT=old_default
             create_vms.APPLIANCE_ISO_DEFAULT=old_appliance
