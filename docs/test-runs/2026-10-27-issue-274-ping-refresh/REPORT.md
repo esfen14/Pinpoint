@@ -6,7 +6,7 @@
 | Commit tested | `e0cb5047` |
 | Plan | [Defense demo lab plan](../../plans/Defense_Demo_Lab_Plan.md) |
 | Tester / executor mode | Codex, AI-assisted scripted host/guest controls |
-| Catalog revision and SHA-256 | `e0cb5047`; `demo/defense/manifest.json` SHA-256 `7a2ab626fb66bc71ff660347fd6ba8d118d2c67e600041c84575fa7d47fdc1f8` |
+| Catalog revision and SHA-256 | `e0cb5047`; `demo/targets/manifest.json` SHA-256 `7a2ab626fb66bc71ff660347fd6ba8d118d2c67e600041c84575fa7d47fdc1f8` |
 | Queue / set / session / batch | Issue #274, stage 2 restoration and stage 3 ping-only pass |
 | Deployed application / installer revision | No appliance/app was started or scanned |
 | Baseline / preflight / restoration | Target-host source/image refreshed through the pinned stock-ISO path. Target-host safety status passed (forwarding IPv4/IPv6 off, management restricted, image current). The read-only presenter preflight remained blocked by absent controller pins. Two exact VMs and the 14-container catalog were left running for demo use; KVM remains unloaded while VirtualBox is active. |

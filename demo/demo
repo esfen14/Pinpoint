@@ -1,9 +1,79 @@
 #!/usr/bin/env bash
-# One defense demo entry point; initially read-only until the isolation spike.
+# The one front door for the Pinpoint demo lab (see demo/USAGE.md).
+#   demo/demo setup|up|down|destroy        whole-lab lifecycle (setup and destroy print a plan without --apply)
+#   demo/demo status|down|up|ports|...     presenter controls (checked by Pinpoint-Demo-faults.sh)
+#   demo/demo manifest|preflight           read-only catalog and host checks
 set -euo pipefail
-root="$(cd "$(dirname "$0")/.." && pwd)"
-if [[ "${1:-}" == "presenter" ]]; then
-    shift
-    exec python3 -I "$root/demo/defense/presenter.py" "$@"
+here="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+faults="$here/Pinpoint-Demo-faults.sh"
+
+lab_usage() {
+  cat <<'HELP'
+Pinpoint demo lab: one command, `demo/demo`. Full cheat sheet: demo/USAGE.md
+
+Lab lifecycle (run from the repository root):
+  demo/demo setup [--apply]        prepare everything; without --apply it prints the plan and the manual checklist
+  demo/demo up                     create any missing containers, start all fourteen and restore the baseline
+  demo/demo down                   stop all fourteen containers
+  demo/demo qa create|reset|status|destroy  disposable QA appliance VM for testers (create and destroy need --apply)
+  demo/demo create-vms [--apply]   create the Pinpoint appliance and Windows NCPA VMs (missing ones only)
+  demo/demo destroy [--apply]      remove only the demo-owned containers and network (typed confirmation)
+  demo/demo manifest [--json]      intended devices and listeners (no live check)
+  demo/demo preflight              read-only gate: RAM, disk, swap, subnet and VM membership
+
+HELP
+}
+
+full_help() {
+  lab_usage
+  "$faults" help | sed -e 's#Pinpoint-Demo-faults.sh manifest  *\# observed#demo/demo presenter manifest   \# observed#' \
+      -e 's#Pinpoint-Demo-faults.sh#demo/demo#g' -e 's#^Alias of `demo/demo`; both accept the same commands. ##'
+}
+
+# demo/demo COMMAND --help: only the lines about that command
+if [[ $# -ge 2 && ( "${!#}" == "--help" || "${!#}" == "-h" ) && "${1}" != "presenter" ]]; then
+  matches="$(full_help | grep -F "demo/demo $1" || true)"
+  if [[ -n "$matches" ]]; then printf '%s\n' "$matches"; exit 0; fi
 fi
-exec python3 -I "$root/demo/defense/controller.py" "$@"
+
+if [[ "${1:-}" == "presenter" ]]; then
+  shift
+  exec python3 -I "$here/targets/presenter.py" "$@"
+fi
+
+case "${1:-}" in
+  help|-h|--help)
+    full_help
+    ;;
+  qa)
+    shift
+    exec python3 -I "$here/appliance/qa_vm.py" "$@"
+    ;;
+  create-vms)
+    shift
+    exec python3 -I "$here/appliance/create_vms.py" "$@"
+    ;;
+  setup|destroy)
+    exec python3 -I "$here/targets/setup.py" "$@"
+    ;;
+  manifest)
+    exec python3 -I "$here/targets/controller.py" "$@"
+    ;;
+  preflight)
+    exec python3 -I "$here/targets/presenter.py" preflight
+    ;;
+  up)
+    if [[ $# -eq 1 ]]; then exec python3 -I "$here/targets/setup.py" up; fi
+    exec "$faults" "$@"
+    ;;
+  down)
+    if [[ $# -eq 1 ]]; then exec "$faults" "down-all"; fi
+    exec "$faults" "$@"
+    ;;
+  status|wall|services|reset|dhcp-move|dhcp-recover|address-mode|ports)
+    exec "$faults" "$@"
+    ;;
+  *)
+    exec python3 -I "$here/targets/controller.py" "$@"
+    ;;
+esac

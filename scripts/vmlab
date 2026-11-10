@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Pinpoint VM lab (faithful lane): a real installer-built appliance in VirtualBox
-# plus the demo target servers. See docs/plans/VM_Lab_Plan.md.
+# plus the Docker demo targets (demo/demo setup). See docs/plans/VM_Lab_Plan.md.
 #
 # The snapshot holds Ubuntu + Nagios only, never the app, so it cannot go stale
 # when the code changes. A fresh test installs the app on it with the installer's
@@ -21,12 +21,10 @@
 #   scripts/vmlab smoke                log in, add the lab network, run discovery, wait for hosts up
 #   scripts/vmlab setup-admin          complete first-run setup (real email, new password); kept in the state folder, never printed
 #   scripts/vmlab setup-restricted     create/reset a Staff QA account; credentials stay in the state folder
-#   scripts/vmlab ncpa [ip,ip,...]     deploy NCPA to targets through Pinpoint's deployment API (default: web01 and legacy01)
-#   scripts/vmlab alerts [target]     take a target down, check the alert, acknowledge it, bring it back (default: web01)
+#   scripts/vmlab alerts [target]     take a demo container down (demo/demo down), check the alert, acknowledge it, bring it back (default: web03)
 #   scripts/vmlab creds                print the installer's one-time credentials (shows the password; lab only)
 #   scripts/vmlab up | down | revert   start (headless), power off, restore the snapshot only
 #   scripts/vmlab phase0 [--with-notification]  event-handler lab checks (docs/plans/Proactive_Resolution_Implementation_Plan.md); output saved too
-#   scripts/vmlab targets <cmd...>     pass through to demo/demo_lab.py (up, down, wall, break, ...)
 #
 # The installer's own repository supplies the setup steps. Point VMLAB_INSTALLER_DIR at
 # your local clone to test installer changes before pushing them (it is only read).
@@ -38,8 +36,10 @@ root="$(cd "$(dirname "$0")/.." && pwd)"
 # Claim before reading controller configuration or performing any lab mutation.
 # Nested vmlab calls inherit the same verified open-file description; the PID
 # marker only selects verification and cannot substitute for a held kernel lock.
+# `alerts` is deliberately not claimed: it never touches the VM, and it drives the containers
+# through demo/demo, which takes the same host lock itself (holding it here would block that).
 case "${1:-help}" in
-  create|prepare|provision|up|down|revert|fresh|sync|health|setup-admin|setup-restricted|smoke|ncpa|alerts|targets|phase0)
+  create|prepare|provision|up|down|revert|fresh|sync|health|setup-admin|setup-restricted|smoke|phase0)
     if [ "${PINPOINT_QA_CONTROL_PID:-}" != "$$" ]; then
       exec python3 -I "$root/scripts/qa_control.py" "$0" "$@"
     fi
@@ -62,12 +62,13 @@ VMLAB_ISO_URL="https://releases.ubuntu.com/22.04/ubuntu-22.04.5-live-server-amd6
 VMLAB_RAM_MB="4096"
 VMLAB_CPUS="4"
 VMLAB_DISK_MB="40960"
-VMLAB_LAB_ADDRESS="10.77.0.1/28"
+VMLAB_LAB_ADDRESS="10.77.1.1/27"
 VMLAB_LAB_INTNET="pinpoint-demo"
+VMLAB_LAB_HOSTONLY="vboxnet1"   # the demo network; set empty to use the internal network VMLAB_LAB_INTNET instead
 VMLAB_ADMIN_EMAIL=""
 VMLAB_ADMIN_PASSWORD=""
-VMLAB_LAB_NETWORK="10.77.0.0/28"
-VMLAB_TARGET_IPS="10.77.0.2,10.77.0.3,10.77.0.4,10.77.0.5,10.77.0.6"
+VMLAB_LAB_NETWORK="10.77.1.0/27"
+VMLAB_TARGET_IPS="10.77.1.2,10.77.1.4,10.77.1.5,10.77.1.6,10.77.1.7,10.77.1.8,10.77.1.9,10.77.1.10,10.77.1.11,10.77.1.20,10.77.1.21,10.77.1.22,10.77.1.23,10.77.1.24"
 VMLAB_INSTALLER_REPO="https://github.com/lorraine-pangilinan/PinPoint-Installer.git"
 VMLAB_INSTALLER_DIR="$default_installer_dir"
 # shellcheck disable=SC1090
@@ -97,6 +98,9 @@ vm_ssh() {
   local extra=(); mapfile -t extra < <(ssh_args)
   ssh "${extra[@]}" "$VMLAB_SSH_TARGET" "$@"
 }
+# True only when the key works AND sudo needs no password (a key alone is not enough:
+# provision and fresh run sudo non-interactively).
+vm_sudo_ready() { vm_ssh "sudo -n true" 2>/dev/null; }
 preflight() {
   python3 -I "$root/scripts/vmlab_preflight.py" "$@" "$VMLAB_VM" "$VMLAB_SSH_TARGET" "$VMLAB_SSH_PORT" "$VMLAB_WEB_PORT"
 }
@@ -173,6 +177,9 @@ deb https://archive.ubuntu.com/ubuntu jammy-backports main restricted universe m
 deb https://security.ubuntu.com/ubuntu jammy-security main restricted universe multiverse
 SRC
 sudo rm -f /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources
+if [ -f /etc/netplan/60-pinpoint-lab.yaml ] && ip -4 -br addr | grep -qF "$VMLAB_LAB_ADDRESS"; then
+  echo "lab network already configured"; exit 0
+fi
 iface=""
 for i in \$(ls /sys/class/net); do
   [ "\$i" = lo ] && continue
@@ -229,7 +236,7 @@ systemctl enable ssh"
   echo "echo $(printf '%s' "$script" | base64 -w0) | base64 -d | bash"
 }
 
-# Same apt fix demo/demo_lab.py applies: the installer fetches only the main section.
+# Apt fix the unattended install needs: the installer fetches only the main section.
 patch_user_data() { # patch_user_data <file>
   python3 -I -c '
 import sys
@@ -249,7 +256,7 @@ cmd="${1:-help}"; shift || true
 # Gate every appliance/target mutation before SSH, API calls or VBox control.
 case "$cmd" in
   create) preflight --new ;;
-  prepare|provision|up|down|revert|fresh|sync|health|setup-admin|setup-restricted|smoke|ncpa|alerts|targets) preflight ;;
+  prepare|provision|up|down|revert|fresh|sync|health|setup-admin|setup-restricted|smoke|alerts) preflight ;;
 esac
 case "$cmd" in
   preflight) need_config; preflight "$@" ;;
@@ -279,7 +286,8 @@ case "$cmd" in
     echo "Creating '$VMLAB_VM' ($VMLAB_RAM_MB MB, $VMLAB_CPUS CPUs, $VMLAB_DISK_MB MB disk); SSH on 127.0.0.1:$VMLAB_SSH_PORT, web on 127.0.0.1:$VMLAB_WEB_PORT"
     VBoxManage createvm --name "$VMLAB_VM" --ostype Ubuntu_64 --register >/dev/null
     VBoxManage modifyvm "$VMLAB_VM" --memory "$VMLAB_RAM_MB" --cpus "$VMLAB_CPUS" --audio-driver=none \
-      --graphicscontroller=vmsvga --rtc-use-utc=on --nic1=nat --nic2=intnet --intnet2="$VMLAB_LAB_INTNET"
+      --graphicscontroller=vmsvga --rtc-use-utc=on --nic1=nat \
+      $(if [ -n "$VMLAB_LAB_HOSTONLY" ]; then echo "--nic2=hostonly --host-only-adapter2=$VMLAB_LAB_HOSTONLY"; else echo "--nic2=intnet --intnet2=$VMLAB_LAB_INTNET"; fi)
     VBoxManage modifyvm "$VMLAB_VM" "--nat-pf1=ssh,tcp,127.0.0.1,$VMLAB_SSH_PORT,,22"
     VBoxManage modifyvm "$VMLAB_VM" "--nat-pf1=web,tcp,127.0.0.1,$VMLAB_WEB_PORT,,80"
     VBoxManage createmedium disk --filename "$disk" --size "$VMLAB_DISK_MB" >/dev/null
@@ -297,14 +305,14 @@ case "$cmd" in
     VBoxManage startvm "$VMLAB_VM" --type headless >/dev/null
     echo "Installing Ubuntu unattended (10 to 25 minutes) ..."
     for i in $(seq 1 180); do
-      if vm_ssh true 2>/dev/null; then break; fi
+      if vm_sudo_ready; then break; fi
       # VirtualBox's post-install step does not install the key on Ubuntu 22.04, so once
       # sshd answers, install it ourselves with the lab password.
-      if preflight && bootstrap_key 2>/dev/null && vm_ssh true 2>/dev/null; then echo "installed our SSH key using the lab password"; break; fi
+      if preflight && bootstrap_key 2>/dev/null && vm_sudo_ready; then echo "installed our SSH key using the lab password"; break; fi
       if [ "$i" -gt 5 ] && [ "$(vm_state)" != "running" ]; then die "the VM stopped during the install; open its console: VBoxManage startvm $VMLAB_VM --type separate"; fi
       sleep 15
     done
-    vm_ssh true 2>/dev/null || die "no SSH after 45 minutes (the VM is left running; check its console, then run: scripts/vmlab prepare)"
+    vm_sudo_ready || die "no SSH with passwordless sudo after 45 minutes (the VM is left running; check its console, then run: scripts/vmlab prepare)"
     "$0" prepare
     echo "Created. Next: scripts/vmlab provision   (user '$user'; password file: $pw)"
     ;;
@@ -312,7 +320,7 @@ case "$cmd" in
   prepare)
     # Apt sources and the lab NIC. Safe to re-run; `create` calls it, or run it after fixing a failed create.
     need_config
-    vm_ssh true 2>/dev/null || bootstrap_key || die "cannot log in to the appliance (key or lab password)"
+    vm_sudo_ready || bootstrap_key || die "cannot log in to the appliance (key or lab password)"
     echo "Preparing apt sources and the lab network ($VMLAB_LAB_ADDRESS) ..."
     prepare_script | vm_ssh "bash -s"
     ensure_swap
@@ -499,22 +507,13 @@ print("setup-email=" + (os.environ["SETUP_NEW_EMAIL"] if needs_setup else os.env
     echo "restricted QA account ready; credentials stored in $state_dir/restricted-*"
     ;;
 
-  ncpa)
-    need_config
-    [ -n "$VMLAB_ADMIN_EMAIL" ] || { [ -f "$state_dir/admin-email" ] && VMLAB_ADMIN_EMAIL="$(cat "$state_dir/admin-email")"; }
-    [ -n "$VMLAB_ADMIN_PASSWORD" ] || { [ -f "$state_dir/admin-password" ] && VMLAB_ADMIN_PASSWORD="$(cat "$state_dir/admin-password")"; }
-    [ -n "$VMLAB_ADMIN_EMAIL" ] && [ -n "$VMLAB_ADMIN_PASSWORD" ] || die "no administrator login: run scripts/vmlab setup-admin"
-    SMOKE_PASSWORD="$VMLAB_ADMIN_PASSWORD" exec python3 -I "$root/lab/ncpa_run.py" --base-url "$(web_url)" \
-      --email "$VMLAB_ADMIN_EMAIL" --ips "${1:-10.77.0.2,10.77.0.6}"
-    ;;
-
   alerts)
     need_config
     [ -n "$VMLAB_ADMIN_EMAIL" ] || { [ -f "$state_dir/admin-email" ] && VMLAB_ADMIN_EMAIL="$(cat "$state_dir/admin-email")"; }
     [ -n "$VMLAB_ADMIN_PASSWORD" ] || { [ -f "$state_dir/admin-password" ] && VMLAB_ADMIN_PASSWORD="$(cat "$state_dir/admin-password")"; }
     [ -n "$VMLAB_ADMIN_EMAIL" ] && [ -n "$VMLAB_ADMIN_PASSWORD" ] || die "no administrator login: run scripts/vmlab setup-admin"
     SMOKE_PASSWORD="$VMLAB_ADMIN_PASSWORD" exec python3 -I "$root/lab/alerts_run.py" --base-url "$(web_url)" \
-      --email "$VMLAB_ADMIN_EMAIL" --target "${1:-web01}"
+      --email "$VMLAB_ADMIN_EMAIL" --target "${1:-web03}"
     ;;
 
   smoke)
@@ -537,8 +536,6 @@ print("setup-email=" + (os.environ["SETUP_NEW_EMAIL"] if needs_setup else os.env
     echo "saved: $out"
     exit "$rc"
     ;;
-
-  targets) exec python3 "$root/demo/demo_lab.py" "$@" ;;
 
   *) die "unknown command '$cmd' (try: scripts/vmlab help)" ;;
 esac

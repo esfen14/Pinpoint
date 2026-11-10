@@ -88,7 +88,7 @@ def wait_for(predicate, timeout, interval=5):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-url", default="http://127.0.0.1:8000")
-    parser.add_argument("--discovery-timeout", type=int, default=300)
+    parser.add_argument("--discovery-timeout", type=int, default=1200)
     parser.add_argument("--hosts-timeout", type=int, default=240)
     parser.add_argument("--email", default=DEFAULT_EMAIL, help="administrator email (default: the lab's seeded user)")
     parser.add_argument("--password", default=os.environ.get("SMOKE_PASSWORD", DEFAULT_PASSWORD),

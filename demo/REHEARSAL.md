@@ -11,7 +11,7 @@ itself is [`Pinpoint-Demo-Script.md`](Pinpoint-Demo-Script.md).
 3. In Pinpoint, Device Inventory shows 16 hosts UP: the fifteen devices plus the appliance's own `localhost`. Five DHCP clients hold `.20` to `.24` (`Pinpoint-Demo-faults.sh status`).
 4. Know the standing alerts. After enabling the SNMP plugin, six interface checks (`snmp-lan_*`) stay UNKNOWN on the two SNMP devices (issue #278). Treat them as part of the baseline.
 5. Start the resource sampler in a second terminal:
-   `python3 -I demo/defense/sampler.py record /path/samples.txt 5400 5`.
+   `python3 -I demo/targets/sampler.py record /path/samples.txt 5400 5`.
 
 ## What to time
 
@@ -23,7 +23,7 @@ itself is [`Pinpoint-Demo-Script.md`](Pinpoint-Demo-Script.md).
 | Address change | `address-mode static dynweb01 10.77.1.15`, run a scan, then read Device Inventory: the same device (`dev-8fbfd1`) shows `.15` and the host count stays 16. Repeat with `address-mode dhcp dynweb01` and `.20`. |
 | New port | `ports open web03 http PORT`, run a scan, then read the device's Ports section for `PORT` as Monitored. `ports close web03 PORT` makes its check CRITICAL. Use a new port each run. |
 | Undo | `ports restore all`, then `reset`; `manifest` and `preflight` must pass again and Device Inventory must return to 16 hosts UP. |
-| Resources | `python3 -I demo/defense/sampler.py summary /path/samples.txt`: minimum available RAM, swap in and out, peak swap rate, minimum free disk. Required: at least 3 GiB available and no sustained swap. |
+| Resources | `python3 -I demo/targets/sampler.py summary /path/samples.txt`: minimum available RAM, swap in and out, peak swap rate, minimum free disk. Required: at least 3 GiB available and no sustained swap. |
 
 ## After a run
 

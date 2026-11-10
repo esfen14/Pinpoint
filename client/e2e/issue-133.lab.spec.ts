@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 
 // Run only with scripts/playwright-lab --project issue-133-live against the approved VM.
-// The real SSH failure/recovery is driven separately by scripts/vmlab targets.
+// The real SSH failure/recovery is driven separately by demo/demo down|up.
 test('issue 133: real History events can be filtered and inspected', async ({ page }) => {
   const host = 'dev-28829a'
   const service = 'ssh-22-tcp'

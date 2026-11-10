@@ -29,7 +29,7 @@ DHCP acceptance evidence.
 
 The Docker lab in `lab/compose.yaml` uses static Compose addresses on an isolated
 `10.78.0.0/24` bridge. Its target image and entrypoint do not run a DHCP client.
-The VM demo in `demo/demo_lab.py` also generates static netplan addresses on its
+The VM demo in the removed five-VM lab script (`demo_lab.py`, in git history) also generates static netplan addresses on its
 `10.77.0.0/28` internal network. Neither of those ordinary environments is a
 DHCP test environment; the [Local Lab manual](../manuals/Local_Lab.md#what-it-cannot-test)
 excludes DHCP lease changes from the static lab and points to the separate

@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Date | 2026-10-27, Asia/Manila |
-| Commit / candidate tested | Base `6cd788d3` plus uncommitted presenter candidate; candidate used for the last live `up`: `demo/defense/presenter.py` SHA-256 `d39d9f319f01870dbd909bb8916aacfcd576eb6de51e2b7aed8862bfca0bbf48`. The full down/up was run on an earlier candidate; that candidate repeated `up` with one DHCP target stopped. |
+| Commit / candidate tested | Base `6cd788d3` plus uncommitted presenter candidate; candidate used for the last live `up`: `demo/targets/presenter.py` SHA-256 `d39d9f319f01870dbd909bb8916aacfcd576eb6de51e2b7aed8862bfca0bbf48`. The full down/up was run on an earlier candidate; that candidate repeated `up` with one DHCP target stopped. |
 | Plan | [Defense demo lab](../../plans/Defense_Demo_Lab_Plan.md) |
 | Executor | AI-assisted, scripted live pilot |
 | Catalog revision | `manifest.json` SHA-256 `7a2ab626fb66bc71ff660347fd6ba8d118d2c67e600041c84575fa7d47fdc1f8` |

@@ -28,13 +28,16 @@ Examples:
   Pinpoint-Demo-faults.sh down web03 http      # one monitored service fails
   Pinpoint-Demo-faults.sh up web03 http        # restore it
   Pinpoint-Demo-faults.sh down dynapp01 host   # stop one container
-  Pinpoint-Demo-faults.sh dhcp-move dynweb01 10.77.1.25   # change its lease; move back with .20
+  Pinpoint-Demo-faults.sh dhcp-move dynweb01 10.77.1.25   # change its lease
+  Pinpoint-Demo-faults.sh dhcp-move dynweb01 10.77.1.20   # move it back
   Pinpoint-Demo-faults.sh dhcp-recover         # only after an interrupted move
-  Pinpoint-Demo-faults.sh ports open web03 http 8088   # extra port; close it with: ports close web03 8088
+  Pinpoint-Demo-faults.sh ports open web03 http 8088   # extra port, found by the next rescan
+  Pinpoint-Demo-faults.sh ports close web03 8088       # its check goes CRITICAL
   Pinpoint-Demo-faults.sh ports restore all    # close every extra port (end of demo)
-  Pinpoint-Demo-faults.sh address-mode static dynweb01 10.77.1.15   # same device, fixed address; return with: address-mode dhcp dynweb01
+  Pinpoint-Demo-faults.sh address-mode static dynweb01 10.77.1.15   # same device, fixed address
+  Pinpoint-Demo-faults.sh address-mode dhcp dynweb01   # back to DHCP
 
-Only use these controls with the disposable defense demo lab. Windows (win01) has
+Alias of `demo/demo`; both accept the same commands. Only use these controls with the disposable defense demo lab. Windows (win01) has
 no controls here.
 HELP
 }

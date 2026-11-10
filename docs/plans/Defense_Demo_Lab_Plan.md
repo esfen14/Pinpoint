@@ -1,5 +1,7 @@
 # One defense demo lab (#274)
 
+> **Lab map:** [Local lab](../manuals/Local_Lab.md) (Docker, fast) · [VM lab plan](VM_Lab_Plan.md) (real appliance, `scripts/vmlab`) · [Defense demo lab plan](Defense_Demo_Lab_Plan.md) and the [demo index](../../demo/README.md) (fifteen-device Docker demo) · [`lab/`](../../lab/) (harness code).
+
 ## Owner-directed host Docker transition
 
 On 2026-10-27 the owner chose to run Linux target containers directly on the
@@ -38,7 +40,7 @@ direction, use ping only for connectivity tests.
 Status: **host Docker pilot reachable from Windows; supported lifecycle and appliance acceptance remain pending**.
 Tracking: [#274](https://github.com/esfen14/Pinpoint/issues/274).
 No new scan range is authorized by this document. Existing supported commands
-remain in the [VM lab plan](VM_Lab_Plan.md) and [demo manual](../../demo/README.md).
+remain in the [VM lab plan](VM_Lab_Plan.md) and [demo index](../../demo/README.md).
 
 ## DHCP address-change continuation
 

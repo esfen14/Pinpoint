@@ -7,6 +7,19 @@ the normative behavior in the requirement specifications.
 
 ## Defense demo preparation (#274)
 
+Layout (#298, #289): `demo/appliance/` holds the Pinpoint device setup,
+`demo/targets/` the Docker devices and presenter code, and `demo/README.md` the
+index and run order; `demo/demo` is the single front door (`demo/USAGE.md`).
+The legacy five-VM lab (and `vmlab targets`/`ncpa`, `lab/ncpa_run.py`) was removed (#301); `scripts/vmlab smoke` and `alerts` now target the Docker containers on `vboxnet1`. `demo/demo setup --apply` builds the image, creates the
+macvlan network and the fourteen containers (`demo/targets/create.py`), pins them
+and starts them with the presenter, then checks both VMs are on `vboxnet1` (pass/fail summary); `demo/demo up` creates missing containers first; `demo/demo create-vms` creates the missing
+Pinpoint appliance and Windows NCPA VMs (`demo/appliance/create_vms.py`);
+`destroy` removes only demo-owned objects. **Known gaps:** the creation commands
+are tested offline only and have not been run against the live Docker and
+VirtualBox lab; appliance OS install (`scripts/vmlab`), its adapter address and
+Windows NCPA install stay manual, as does registering Windows NCPA in Pinpoint (the Linux
+containers have no password SSH, so there is no automated NCPA deployment run). The `vmlab smoke`/`alerts` runs against the containers are untested live.
+
 The owner subsequently chose laptop Docker with an isolated VirtualBox host-only
 network. The current presenter pilot supports `demo/demo presenter status`,
 `up`, `down`, individual host controls, DHCP server and reserved-lease controls,
@@ -59,7 +72,7 @@ unverified. After the owner's continuation, the initial `demo/demo manifest`
 and read-only `preflight` commands validate the versioned fifteen-device catalog,
 reserved inputs, private state, subnet/VPN overlap, VM ownership/NAT sockets and
 resource planning. Negative contracts run offline in the docs gate. The initial
-[guest runtime](../demo/defense/README.md) now defines fourteen network-none
+[guest runtime](../demo/targets/README.md) now defines fourteen network-none
 Linux services, persistent identities, real daemon configurations, fixed
 DHCP controls and a checked two-target macvlan attachment helper. The initial
 image build completed inside a fresh Ubuntu target host, but container daemon
@@ -79,7 +92,7 @@ separate first-boot image build. Reproducible first-boot setup, lifecycle, actua
 guest networking and the architecture spike remain pending; no new product scan
 scope is authorized by this scaffolding.
 The owner selected Windows 10 Home for testing without a purchased license.
-A [prepared Windows device](../demo/WINDOWS_READY.md) now has build 19045 and
+A [prepared Windows device](../demo/appliance/WINDOWS_READY.md) now has build 19045 and
 NCPA 3.5.0, with observed local CPU/memory metrics, the Windows `C:|` disk node,
 a healthy process check and service startup before desktop sign-in. The
 [installation report](../docs/test-runs/2026-10-27-issue-274-windows-home-install/REPORT.md)

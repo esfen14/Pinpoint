@@ -1,5 +1,7 @@
 # Local Lab (fast lane)
 
+> **Lab map:** [Local lab](Local_Lab.md) (Docker, fast) · [VM lab plan](../plans/VM_Lab_Plan.md) (real appliance, `scripts/vmlab`) · [Defense demo lab plan](../plans/Defense_Demo_Lab_Plan.md) and the [demo index](../../demo/README.md) (fifteen-device Docker demo) · [`lab/`](../../lab/) (harness code).
+
 A disposable Pinpoint appliance and five small servers in Docker, on an
 isolated network, for quick QA on your own machine. It starts in about a minute,
 resets in seconds, and needs no VirtualBox or installer run.

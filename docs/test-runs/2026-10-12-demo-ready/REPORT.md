@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-12 |
 | Commit tested | Appliance application `6b558198`; installer checkout `2859361` |
-| Plan | [Demo walkthrough](../../../demo/DEMO_READY.md) |
+| Plan | Demo walkthrough (the removed five-VM lab's `DEMO_READY.md`, in git history) |
 | Tester | Codex, at the lab owner's request |
 | Environment | Ubuntu 22.04.5 appliance, Nagios Core 4.5.11, five Ubuntu 24.04 targets, isolated `10.77.0.0/28`, fresh application databases |
 | Raw evidence | Local tool transcripts and VirtualBox console captures; not committed |
