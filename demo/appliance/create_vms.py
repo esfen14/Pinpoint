@@ -9,6 +9,7 @@ appliance is `scripts/vmlab`; the Windows NCPA agent is installed inside Windows
 """
 import argparse
 import os
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -24,6 +25,12 @@ APPLIANCE_ISO_DEFAULT=Path.home()/'Downloads/ubuntu-22.04.5-live-server-amd64.is
 # Microsoft's evaluation download of Windows 10 Enterprise 22H2 (about 5.5 GB, 90-day evaluation).
 WINDOWS_ISO_URL='https://go.microsoft.com/fwlink/p/?LinkID=2208844&clcid=0x409&culture=en-us&country=US'
 WINDOWS_ISO_DEFAULT=Path.home()/'Downloads/Windows10-Enterprise-Eval-22H2-x64.iso'
+# VirtualBox's Windows answer file has a ProductKey element; with an empty key, evaluation media stop
+# with "Windows cannot find the Microsoft Software License Terms", and a key of the wrong edition
+# leaves "No images are available". Evaluation media need no key, so we use VirtualBox's own template
+# with that element removed.
+VBOX_TEMPLATE=Path('/usr/share/virtualbox/UnattendedTemplates/win_nt6_unattended.xml')
+KEYLESS_TEMPLATE=Path.home()/'.cache/pinpoint-demo/win_nt6_unattended_no_key.xml'
 DEFAULT_STATE=Path.home()/'.local/share/pinpoint-defense/windows-home'
 
 
@@ -47,10 +54,20 @@ def windows_commands(name,disk):
             ['VBoxManage','storageattach',name,'--storagectl','SATA','--port','0','--device','0','--type','hdd','--medium',str(disk)]]
 
 
-def windows_install_command(name,iso,password_file):
+def write_keyless_template(source=VBOX_TEMPLATE,target=KEYLESS_TEMPLATE):
+    """VirtualBox's Windows answer-file template without the ProductKey element (no secrets in it)."""
+    text=source.read_text()
+    stripped=re.sub(r'[ \t]*<ProductKey>.*?</ProductKey>[ \t]*\n','',text,flags=re.DOTALL)
+    if stripped==text:
+        raise ValueError('The VirtualBox answer-file template has no ProductKey element to remove: %s'%source)
+    target.parent.mkdir(parents=True,exist_ok=True)
+    target.write_text(stripped)
+
+
+def windows_install_command(name,iso,password_file,template=KEYLESS_TEMPLATE):
     """Unattended Windows install; the password comes from a private file, never an argument."""
     return ['VBoxManage','unattended','install',name,'--iso='+str(iso),'--user=presenter',
-            '--user-password-file='+str(password_file),'--install-additions']
+            '--user-password-file='+str(password_file),'--image-index=1','--script-template='+str(template),'--install-additions']
 
 
 def iso_attach_command(name,iso):
@@ -160,6 +177,7 @@ def main(argv=None,runner=default_runner,out=sys.stdout,err=sys.stderr,downloade
                 if iso:
                     runner(iso_attach_command(name,iso))
                 if installer and iso:
+                    write_keyless_template()
                     runner(installer(name,iso,args.windows_password_file))
     except (OSError,ValueError,subprocess.SubprocessError) as problem:
         print(problem if str(problem) else 'VM creation stopped',file=err)

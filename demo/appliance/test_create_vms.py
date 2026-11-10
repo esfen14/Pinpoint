@@ -24,6 +24,23 @@ class CommandTests(unittest.TestCase):
         self.assertIn('--mac-address1=027701000002',joined)
         self.assertIn('--memory 3072',joined);self.assertIn('--cpus 2',joined)
         self.assertNotIn('nat',joined.replace('unattended',''))
+    def test_windows_install_uses_a_template_without_a_product_key(self):
+        cmds=create_vms.windows_install_command('pinpoint-defense-win01',Path('/iso/w.iso'),Path('/p/password'),Path('/t/x.xml'))
+        self.assertIn('--script-template=/t/x.xml',cmds)
+        self.assertIn('--image-index=1',cmds)
+        self.assertFalse([c for c in cmds if c.startswith('--key')])
+    def test_template_loses_only_the_product_key_element(self):
+        directory=Path(tempfile.mkdtemp())
+        source=directory/'in.xml'
+        source.write_text('<UserData>\n    <ProductKey>\n        <Key>@@K@@</Key>\n    </ProductKey>\n    <AcceptEula>true</AcceptEula>\n</UserData>\n')
+        create_vms.write_keyless_template(source,directory/'out.xml')
+        result=(directory/'out.xml').read_text()
+        self.assertNotIn('ProductKey',result);self.assertIn('<AcceptEula>true</AcceptEula>',result)
+    def test_template_without_a_product_key_element_is_an_error(self):
+        directory=Path(tempfile.mkdtemp())
+        (directory/'in.xml').write_text('<x/>')
+        with self.assertRaises(ValueError):
+            create_vms.write_keyless_template(directory/'in.xml',directory/'out.xml')
     def test_install_commands_take_secrets_from_files_never_arguments(self):
         cmds=create_vms.windows_install_command('pinpoint-defense-win01',Path('/iso/w.iso'),Path('/p/password'))
         self.assertIn('--user-password-file=/p/password',cmds)
