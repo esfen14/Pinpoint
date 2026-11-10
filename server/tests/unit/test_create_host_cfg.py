@@ -43,7 +43,7 @@ from app.history_models import ServiceStatus
 SNMP_OIDS = [
     {"metric": "uptime", "oid": "1.3.6.1.2.1.1.3.0"},
     {"metric": "memory_total", "oid": "1.3.6.1.4.1.2021.4.5.0"},
-    {"metric": "lan_status", "oid": "1.3.6.1.2.1.2.2.1.8.3"},
+    {"metric": "sysname", "oid": "1.3.6.1.2.1.1.5.0"},
 ]
 
 NCPA_METRICS = [
@@ -161,7 +161,7 @@ class TestSnmpHost:
         assert services == {
             "snmp-uptime-161-udp": "pinpoint_nd_snmp!161!public!1.3.6.1.2.1.1.3.0!",
             "snmp-memory_total-161-udp": "pinpoint_nd_snmp!161!public!1.3.6.1.4.1.2021.4.5.0!",
-            "snmp-lan_status-161-udp": "pinpoint_nd_snmp!161!public!1.3.6.1.2.1.2.2.1.8.3!",
+            "snmp-sysname-161-udp": "pinpoint_nd_snmp!161!public!1.3.6.1.2.1.1.5.0!",
         }
 
     def test_interfaces_add_in_and_out_octet_services(self, app, plugin_config):
@@ -175,8 +175,10 @@ class TestSnmpHost:
         assert {name: value for name, value in services.items() if name not in defaults} == {
             "snmp-if2_in_octets-161-udp": "pinpoint_nd_snmp!161!public!1.3.6.1.2.1.2.2.1.10.2!",
             "snmp-if2_out_octets-161-udp": "pinpoint_nd_snmp!161!public!1.3.6.1.2.1.2.2.1.16.2!",
+            "snmp-if2_status-161-udp": "pinpoint_nd_snmp!161!public!1.3.6.1.2.1.2.2.1.8.2!",
             "snmp-if10_in_octets-161-udp": "pinpoint_nd_snmp!161!public!1.3.6.1.2.1.2.2.1.10.10!",
             "snmp-if10_out_octets-161-udp": "pinpoint_nd_snmp!161!public!1.3.6.1.2.1.2.2.1.16.10!",
+            "snmp-if10_status-161-udp": "pinpoint_nd_snmp!161!public!1.3.6.1.2.1.2.2.1.8.10!",
         }
 
     def test_host_overrides_community_port_and_oids(self, app, plugin_config):
@@ -598,7 +600,7 @@ class TestCreateHostCfgFile:
         cfg_text = cfg_path.read_text()
         services = services_by_host(cfg_text)
 
-        assert set(services["host-a"]) == {"snmp-uptime-161-udp", "snmp-memory_total-161-udp", "snmp-lan_status-161-udp"}
+        assert set(services["host-a"]) == {"snmp-uptime-161-udp", "snmp-memory_total-161-udp", "snmp-sysname-161-udp"}
         assert set(services["host-b"]) == {"pinpoint-ncpa-port-5693-tcp", "ncpa-cpu-5693-tcp", "ncpa-memory-5693-tcp", "ncpa-disk_sda1-5693-tcp"}
         assert services["host-c"] == {"ssh-22-tcp": "pinpoint_nd_ssh!22!"}
         assert services["host-d"] == {"ntp-123-udp": "pinpoint_nd_ntp!123!"}

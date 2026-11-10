@@ -1,5 +1,7 @@
 # Permission pilot report timing (#211)
 
+> Moved from `docs/qa/QA_Report_Timing.md` by issue #286 (QA documentation consolidation). Content unchanged except relative links.
+
 The importer previously treated `attempt.startTime + attempt.duration` as a
 wall-clock end. That inference is invalid for pinned Playwright **1.64.0**.
 The sanitized fixture in `scripts/test_qa_results.py` reproduces the original
@@ -76,11 +78,11 @@ forwarding, with no new interpolation, output copying or secret-bearing fields.
 
 ## History and recheck
 
-The [original pilot](../test-runs/2026-10-18-issue-206-ss04-pilot/REPORT.md)
+The [original pilot](../2026-10-18-issue-206-ss04-pilot/REPORT.md)
 remains INCONCLUSIVE. Its private evidence, consumed v4 attempt and halted ledger
 must remain intact. These fixture results cannot retrospectively accept it.
 A new reviewed queue, separately granted halted-state recovery and explicit
 start are required before another case attempt. The separately approved
-[audited recovery implementation](Issue_211_Recheck_Review.md) preserves exact
+[audited recovery implementation](../2026-10-18-qa-issue-211-recheck-review/REPORT.md) preserves exact
 original ledger bytes and attempt/budget history; it supplies no store reset. Fresh live result acceptance and complete cleanup
 remain unverified until that separately authorized run.

@@ -92,7 +92,7 @@ original queue/log/catalog verdicts are unchanged.
 | Recorded case elapsed | 12.038034 seconds including supervision; not a product performance measurement |
 
 This fresh run reproduced the same clock relationship with a 47 ms gap. The
-[reviewed rule](../../qa/QA_Report_Timing.md) accepted it using independently
+[reviewed rule](../2026-10-18-qa-report-timing/REPORT.md) accepted it using independently
 captured host attach launch/completion bounds and monotonic elapsed/budget, not
 `startTime + duration`, import-time fallback, a grace period or altered assertions.
 The retained daemon window also encloses E1. This does not identify how the

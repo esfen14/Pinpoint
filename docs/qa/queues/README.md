@@ -10,8 +10,8 @@ is in flight.
 
 | Queue | State | Scope |
 |---|---|---|
-| [Next permission batch](2026-10-18-next-permissions.md), [JSON](2026-10-18-next-permissions.json), [execution log](2026-10-18-next-permissions-execution.md) | Prepared; handoff and start pending, zero attempts | Paeng; TC-ACC-09 E1/E2 then TC-NCPA-08 E1, one fixed serial batch; [review](../Next_Permission_Batch_Review.md) |
-| [Module 2–9 adapters v12](2026-10-18-modules-2-9-adapters-v12.md), [JSON](2026-10-18-modules-2-9-adapters-v12.json) | Latest adapter preparation; not started | Read by the adapter docs ([review](../Module_2-9_Adapter_Review.md)) |
+| [Next permission batch](2026-10-18-next-permissions.md), [JSON](2026-10-18-next-permissions.json), [execution log](2026-10-18-next-permissions-execution.md) | Prepared; handoff and start pending, zero attempts | Paeng; TC-ACC-09 E1/E2 then TC-NCPA-08 E1, one fixed serial batch; [review](../../test-runs/2026-10-18-qa-next-permission-batch-review/REPORT.md) |
+| [Module 2–9 adapters v12](2026-10-18-modules-2-9-adapters-v12.md), [JSON](2026-10-18-modules-2-9-adapters-v12.json) | Latest adapter preparation; not started | Read by the adapter docs ([readiness guide](../Automation_Readiness.md)) |
 | [Card drafts v5](modules-2-9-card-drafts-v5.json) | Read by `scripts/qa_queue.py` | Frozen card drafts used by queue preparation |
 
 ## Consumed (kept in place; never replay)

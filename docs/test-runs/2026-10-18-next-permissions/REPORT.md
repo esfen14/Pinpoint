@@ -4,7 +4,7 @@
 This is one fixed permission batch, not whole Accounts/NCPA module acceptance.
 
 Plan: [current black-box catalog](../../qa/Pinpoint%20-%20Black-Box%20Test%20Cases%20by%20Module%20with%20Traceability%20Matrix.md).
-[Prepared scope](../../qa/Next_Permission_Batch_Review.md) ·
+[Prepared scope](../2026-10-18-qa-next-permission-batch-review/REPORT.md) ·
 [queue JSON](../../qa/queues/2026-10-18-next-permissions.json) ·
 [execution log](../../qa/queues/2026-10-18-next-permissions-execution.md).
 

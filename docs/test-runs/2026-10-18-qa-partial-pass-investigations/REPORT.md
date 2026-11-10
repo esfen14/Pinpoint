@@ -1,5 +1,7 @@
 # Partial-pass investigations
 
+> Moved from `docs/qa/Partial_Pass_Investigations.md` by issue #286 (QA documentation consolidation). Content unchanged except relative links.
+
 A human-recorded partial pass requires investigation and a durable issue or
 existing-issue disposition. It is neither a whole-case PASS nor proof that every
 expectation failed. Preserve the original catalog result and executor attribution.
@@ -10,11 +12,11 @@ This register records evidence review, not a new runtime test run.
 | TC-ACK-05 | Human reports no prompt before removing acknowledgement | [#208: reported defect](https://github.com/esfen14/Pinpoint/issues/208) | Verify confirmation and cancellation across all acknowledgement surfaces in an explicitly started, reviewed live queue; attach evidence and follow normal finding/retest rules |
 | TC-REM-04 | Human recorded `PARTIALLY PASS -` without a reason | [#209: evidence clarification](https://github.com/esfen14/Pinpoint/issues/209) | Recover the failed expectation/observation, account role, target version and evidence; otherwise prepare the missing checks for authorized execution |
 
-Source: [current human catalog](Pinpoint%20-%20Black-Box%20Test%20Cases%20by%20Module%20with%20Traceability%20Matrix.md),
+Source: [current human catalog](../../qa/Pinpoint%20-%20Black-Box%20Test%20Cases%20by%20Module%20with%20Traceability%20Matrix.md),
 the detailed results for these exact IDs. The original run date, deployed revision
 and attached runtime evidence are unknown; do not invent them.
 
-For TC-ACK-05, [Display Requirements §4.6](../../spec%20files/Display_Requirements.md)
+For TC-ACK-05, [Display Requirements §4.6](../../../spec%20files/Display_Requirements.md)
 requires confirmation. Source inspection at revision
 `9e8d7f1baaf85f56aa3e78c59da6b523a964886b` found direct removal requests in
 DashboardPage, DeviceInventoryPage, SystemStatusPage and StatusDetailDrawer. This
@@ -22,7 +24,7 @@ corroborates the human report but does not constitute fresh runtime reproduction
 
 For TC-REM-04, source inspection at the same revision found UI permission guards
 and backend `remediation.manage` checks. The historical
-[issue #182 report](../test-runs/2026-10-17-issue-182-playwright/REPORT.md) contains view-only
+[issue #182 report](../2026-10-17-issue-182-playwright/REPORT.md) contains view-only
 checks (RR-12c), which cannot explain the blank human partial verdict or establish
 a current whole-case PASS. No permission bypass is asserted.
 
@@ -51,4 +53,4 @@ product case from it. The tool does not file issues or claim investigation is do
 
 Partial **historical evidence coverage** is different: an old report covering only
 some expectations leaves missing coverage; it is not by itself a product defect.
-See [historical evidence review](Historical_Evidence_Review.md).
+See [historical evidence review](../2026-10-18-qa-historical-evidence-review/REPORT.md).

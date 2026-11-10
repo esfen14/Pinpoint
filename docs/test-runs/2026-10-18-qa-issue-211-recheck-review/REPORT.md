@@ -1,15 +1,17 @@
 # #211 recheck review and authorized completion
 
-The [v2 recheck preview](queues/2026-10-18-issue-211-ss04-recheck-v2.md) and
-[immutable JSON](queues/2026-10-18-issue-211-ss04-recheck-v2.json) select only
+> Moved from `docs/qa/Issue_211_Recheck_Review.md` by issue #286 (QA documentation consolidation). Content unchanged except relative links.
+
+The [v2 recheck preview](../../qa/queues/2026-10-18-issue-211-ss04-recheck-v2.md) and
+[immutable JSON](../../qa/queues/2026-10-18-issue-211-ss04-recheck-v2.json) select only
 TC-SS-04, one initial attempt, one worker, zero retries, owned by Paeng under
 tracking issue #211. Target remains `299ab3ba7203c89a3ca5d8fabea42d9e5f239be2`.
 This is an explicit diagnostic recheck after the
-[INCONCLUSIVE pilot](../test-runs/2026-10-18-issue-206-ss04-pilot/REPORT.md),
+[INCONCLUSIVE pilot](../2026-10-18-issue-206-ss04-pilot/REPORT.md),
 not a new untested slot or accepted retest of a merged product fix.
 
 Source review covers the unchanged Staff/UI/redirect/logout assertions and the
-[bounded timing fix](QA_Report_Timing.md). No account, product, browser assertion,
+[bounded timing fix](../2026-10-18-qa-report-timing/REPORT.md). No account, product, browser assertion,
 case expectation, scope or verdict rule was changed to obtain a pass. The source
 coverage register remains current. Queue `check` passes; that is neither live
 readiness nor exclusive lab ownership.
@@ -61,7 +63,7 @@ path: durable new-attempt consumption, actual one-case browser execution, strict
 current-run import, logout/401 evidence, owned container removal/daemon absence,
 bridge/process cleanup and fresh independent baseline proof. Save a new attributable
 report, index and execution log; keep original results and TC/E2E counts separate.
-Stop on uncertainty, with no repeat or automatic recovery. The [separate v2 run](../test-runs/2026-10-18-issue-211-ss04-recheck/REPORT.md)
+Stop on uncertainty, with no repeat or automatic recovery. The [separate v2 run](../2026-10-18-issue-211-ss04-recheck/REPORT.md)
 now proves #211 finish condition 6; broad/unattended readiness remains incomplete.
 
 ## Approved mechanism and remaining authorization
