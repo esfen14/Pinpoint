@@ -36,8 +36,10 @@ root="$(cd "$(dirname "$0")/.." && pwd)"
 # Claim before reading controller configuration or performing any lab mutation.
 # Nested vmlab calls inherit the same verified open-file description; the PID
 # marker only selects verification and cannot substitute for a held kernel lock.
+# `alerts` is deliberately not claimed: it never touches the VM, and it drives the containers
+# through demo/demo, which takes the same host lock itself (holding it here would block that).
 case "${1:-help}" in
-  create|prepare|provision|up|down|revert|fresh|sync|health|setup-admin|setup-restricted|smoke|alerts|phase0)
+  create|prepare|provision|up|down|revert|fresh|sync|health|setup-admin|setup-restricted|smoke|phase0)
     if [ "${PINPOINT_QA_CONTROL_PID:-}" != "$$" ]; then
       exec python3 -I "$root/scripts/qa_control.py" "$0" "$@"
     fi
