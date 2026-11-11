@@ -67,13 +67,36 @@ generated Nagios files inside the container, never into your repository.
 
 | Real appliance (installer) | Lab |
 |---|---|
-| Ubuntu 22.04.5, Nagios Core 4.5.11, plugins 2.4.12, Python 3.14 via uv | Same versions, same install steps |
-| Nginx :80 to Gunicorn 127.0.0.1:8000 (1 worker, 4 threads), Apache on 127.0.0.1:8081 | Same layout |
+| Ubuntu 22.04.5, Nagios Core 4.5.11, plugins 2.4.12 (with `check_mysql`), `check_ncpa.py` 1.2.4, Python 3.14 via uv | Same versions, same download URLs and SHA-256, same build options |
+| Nginx :80 to Gunicorn 127.0.0.1:8000 (1 worker, 4 threads, 300 s timeout), Apache on 127.0.0.1:8081 | Same layout and settings |
+| `pinpoint` system user, restricted `nmap` (`root:pinpoint 0750`, raw-socket capabilities), event-handler spool, `plugin-services.cfg`, `/bin/mail` with `/etc/msmtprc` | Same accounts, modes and paths |
 | `/etc/pinpoint/pinpoint.env` with the README settings | Same names, lab values (`lab/appliance/pinpoint.env`) |
-| `pinpoint` user, `sudo -n systemctl reload nagios`, `nmap-sudo` | Shims in `lab/appliance/shims/` with the same call shape |
+| `pinpoint` user, real `sudo` with the installer's sudoers rules (reload and restart `nagios`, SMTP and resource helpers) | Same sudoers rules and the installer's root helpers `pinpoint-apply-smtp` and `pinpoint-apply-resources` (copied to `lab/appliance/helpers/`); only `systemctl` is a shim |
+| `nmap-sudo` wrapper | Same wrapper |
 | systemd | supervisord |
 
+Last audited against PinPoint-Installer `setup/` at main `9bc7150` (issue #316);
+`server/tests/unit/test_lab_appliance_drift.py` pins the settings copied from it.
+Re-audit when the installer's baseline manifest or `setup/` scripts change.
+
 Deliberate lab differences:
+
+- **No systemd.** supervisord runs the processes, `make install-daemoninit` is
+  skipped, and `/usr/bin/systemctl` is a shim that only handles `nagios` (reload,
+  restart, is-active, status) through supervisord.
+- **Lab credentials.** `nagiosadmin` exists with a fixed password, `pinpoint-api`
+  has a fixed password, and `pinpoint.env` holds lab values. A first-start seed
+  fills the databases.
+- **Not installed:** PHP, the built web client (use `scripts/lab ui`), the
+  installer's first-boot and update machinery, and journald and logrotate settings.
+  The SMTP and resource helpers are installed, and the SMTP path is tested against
+  the lab mail sink (see "Testing the Email settings"). NCPA deployment and remote
+  service restarts are unverified because the targets have no init system (those
+  helpers are installed on the target by the app).
+- The app tree is copied in from the working tree at start (`pp-sync`) and the
+  event handler is installed from it then, instead of from a fresh clone.
+- `hosts.cfg` and `plugin-services.cfg` are added to the end of `nagios.cfg`
+  instead of below `localhost.cfg` (same effect).
 
 - **Time runs faster in Nagios.** `interval_length` is 10 seconds instead of 60
   and first checks are not staggered, so results appear in about a minute.
@@ -83,6 +106,22 @@ Deliberate lab differences:
   no address, so discovery sees only the five targets and nothing leaves Docker.
   `PINPOINT_NETWORKS` is `10.78.0.0/24`; never add your real LAN to it.
 - Databases are seeded with development data on first start.
+
+## Testing the Email settings
+
+`mail01` is a stand-in SMTP relay (`lab/mail/`): STARTTLS and a login are
+required, it keeps every message, and it is on its own network so discovery never
+lists it. The appliance trusts its CA, so the real chain is exercised: Settings ->
+Email, `sudo`, `pinpoint-apply-smtp`, `/etc/msmtprc`, `/bin/mail` and msmtp.
+
+- **Automatic:** `scripts/lab smoke` saves the settings, sends the test email, then
+  breaks `web01` and checks that Nagios's alert mail reaches the sink. It adds about
+  a minute to the run.
+- **By hand:** in Settings -> Email choose Custom with host `mail01`, port `587`,
+  user `lab-smtp-user`, password `lab smtp pass #1`. Read what arrived with
+  `curl http://127.0.0.1:8025/messages` (`curl -X DELETE` on the same URL clears it).
+- Gmail itself, real certificates and delivery to a real mailbox are not tested.
+- `scripts/lab down` and `reset` remove the sink's volume so the CA is recreated.
 
 ## What it cannot test
 

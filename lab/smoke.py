@@ -10,6 +10,10 @@ With --lab-script (scripts/lab passes it) the smoke test also enables the SSH pl
 and checks the service it creates, then takes a target's sshd down with
 `scripts/lab break`, checks the alert, and brings it back with `fix` (#315).
 
+With --mail-sink-url (scripts/lab passes it) it also saves the Email settings against the lab
+mail sink (lab/mail), sends the test email, and checks that the break/fix alert's notification
+mail reaches the sink through Nagios, `/bin/mail` and msmtp (#316).
+
 For a real appliance (scripts/vmlab smoke) pass the administrator's --email and
 --password and, if discovery does not already cover the lab, --set-network CIDR.
 """
@@ -150,6 +154,45 @@ def run_lab_script(path):
     return run
 
 
+SINK_SETTINGS = {
+    "provider": "custom", "host": "mail01", "port": 587, "tls": "starttls",
+    "username": "lab-smtp-user", "sender": "pinpoint@lab.test",
+    # The sink's own login; spaces and "#" check the helper's quoting.
+    "password": "lab smtp pass #1",
+}
+
+
+def sink_messages(url, clear=False):
+    request = urllib.request.Request(url.rstrip("/") + "/messages", method="DELETE" if clear else "GET")
+    with urllib.request.urlopen(request, timeout=10) as response:
+        return json.loads(response.read() or b"[]")
+
+
+def smtp_settings_checks(api, sink_url, email):
+    """Save the Email settings (runs pinpoint-apply-smtp through sudo) and send the test email."""
+    sink_messages(sink_url, clear=True)
+    status, body = api.call("GET", "/api/system/smtp-settings")
+    version = ((body.get("data") or {}).get("settings") or {}).get("version", 0)
+    status, body = api.call("PUT", "/api/system/smtp-settings", dict(SINK_SETTINGS, version=version))
+    if not check("save the Email settings against the lab mail sink", status == 200 and body.get("success"),
+                 f"HTTP {status}: {body.get('message')}"):
+        return False
+    status, body = api.call("POST", "/api/system/smtp-settings/test")
+    result = body.get("data") or {}
+    if not check("the test email is sent over STARTTLS with a login", status == 200 and result.get("ok"),
+                 str(result.get("message") or result.get("details") or f"HTTP {status}")[:120]):
+        return False
+    received = [m for m in sink_messages(sink_url) if email in m["to"]]
+    return check("the sink received the test email", bool(received), f"{len(received)} message(s) to {email}")
+
+
+def notification_mail_check(sink_url, timeout, interval=5):
+    """Nagios mails the alert through /bin/mail and msmtp; the sink must receive it."""
+    found = wait_for(lambda: sink_messages(sink_url) or None, timeout, interval=interval)
+    return check("the alert's notification email reaches the sink through msmtp", bool(found),
+                 found[0]["subject"][:80] if found else f"none in {timeout}s")
+
+
 def alert_checks(api, lab, target, service, timeout, interval=5):
     """
     Take target's service down with lab("break", ...), wait for a new alert, bring it
@@ -195,6 +238,8 @@ def main():
                         help="check the targets by address instead of by name (real appliances name hosts dev-xxxxxx)")
     parser.add_argument("--lab-script", metavar="PATH",
                         help="path to scripts/lab: also check an enabled plugin and a break/fix alert (local Docker lab only)")
+    parser.add_argument("--mail-sink-url", metavar="URL",
+                        help="lab mail sink (scripts/lab passes it): also check the Email settings and notification mail")
     parser.add_argument("--plugin", default="check_ssh", help="plugin to enable (default: check_ssh)")
     parser.add_argument("--break-target", default="web01", help="lab target to take down (default: web01)")
     parser.add_argument("--break-service", default="ssh", help="its service to stop: ssh, http or snmp (default: ssh)")
@@ -265,9 +310,15 @@ def main():
         for target in TARGETS:
             check(f"host table lists {target}", any(target in name for name in names))
 
+    mail_ready = bool(args.mail_sink_url) and smtp_settings_checks(api, args.mail_sink_url, args.email)
+
     if args.lab_script:
         if plugin_service_checks(api, args.plugin, args.service_timeout):
+            if mail_ready:
+                sink_messages(args.mail_sink_url, clear=True)
             alert_checks(api, run_lab_script(args.lab_script), args.break_target, args.break_service, args.service_timeout)
+            if mail_ready:
+                notification_mail_check(args.mail_sink_url, args.service_timeout)
 
     failed = results.count(False)
     print(f"\n{len(results) - failed} passed, {failed} failed")

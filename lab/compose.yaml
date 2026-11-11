@@ -17,10 +17,30 @@ services:
     cap_add: [NET_RAW, NET_ADMIN]
     volumes:
       - ..:/src:ro
+      - mail-ca:/lab-mail-ca:ro   # the sink's CA; the entrypoint trusts it
+    depends_on: [mail01]
     ports:
       - "127.0.0.1:8000:80"     # Pinpoint API through Nginx (Vite proxies /api here)
     networks:
       lab: { ipv4_address: 10.78.0.10 }
+      mail: {}
+      mgmt: {}
+
+  # Stand-in SMTP relay (STARTTLS + login). On its own network so discovery,
+  # which scans only the lab network, never lists it as a host. In Settings ->
+  # Email choose Custom: host mail01, port 587, user lab-smtp-user, password
+  # "lab smtp pass #1". Received mail: curl http://127.0.0.1:8025/messages
+  mail01:
+    build:
+      context: ..
+      dockerfile: lab/mail/Dockerfile
+    hostname: mail01
+    volumes:
+      - mail-ca:/ca
+    ports:
+      - "127.0.0.1:8025:8025"
+    networks:
+      mail: {}
       mgmt: {}
 
   web01:
@@ -62,5 +82,12 @@ networks:
     driver_opts:
       com.docker.network.bridge.gateway_mode_ipv4: isolated
     ipam: { config: [{ subnet: 10.78.0.0/24 }] }
+  # Appliance and mail sink only: not scanned by discovery.
+  mail:
+    internal: true
+    ipam: { config: [{ subnet: 10.78.1.0/24 }] }
   # Only for publishing the appliance's ports to 127.0.0.1.
   mgmt: {}
+
+volumes:
+  mail-ca: {}

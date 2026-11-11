@@ -8,6 +8,25 @@ chmod 644 /etc/pinpoint/pinpoint.env
 
 pp-sync --no-restart
 
+# Lab mail sink (lab/mail): trust its CA so msmtp and the app's test email can
+# verify the relay the way they verify a real one. Absent in the DHCP lab.
+if [ -d /lab-mail-ca ]; then
+  for _ in $(seq 1 30); do [ -f /lab-mail-ca/lab-mail-ca.crt ] && break; sleep 1; done
+  if [ -f /lab-mail-ca/lab-mail-ca.crt ]; then
+    cp /lab-mail-ca/lab-mail-ca.crt /usr/local/share/ca-certificates/lab-mail-ca.crt
+    update-ca-certificates >/dev/null
+  else
+    echo "[lab] mail sink CA not found; SMTP relay checks will fail" >&2
+  fi
+fi
+
+# Root-owned copy of the event handler Nagios runs, as configure-event-handler.sh
+# installs it. The app tree is synced in at start, so this happens here.
+handler=/opt/pinpoint/Network-Diagnosis-System/server/scripts/pinpoint_event_handler.py
+if [ -f "$handler" ]; then
+  install -m 755 -o root -g root "$handler" /usr/local/sbin/pinpoint-event-handler
+fi
+
 if [ ! -f /var/lib/pinpoint-lab-initialized ]; then
   echo "[lab] first start: creating databases and seeding development data"
   su pinpoint -s /bin/sh -c '
