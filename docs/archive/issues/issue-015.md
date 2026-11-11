@@ -1,5 +1,7 @@
 ### Issue #15 — System Refinement Add Load Average, Swap and Disk I/O Defaults and Guided Process Check
 
+GitHub implementation issue: [#128](https://github.com/esfen14/Pinpoint/issues/128).
+
 **Category:** System
 
 **Work Type:** Refinement

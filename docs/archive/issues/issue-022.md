@@ -1,5 +1,7 @@
 ### Issue #22 — System Implementation Add Failure Escalation and Outcome Visibility for Automatic Recovery
 
+GitHub implementation issue: [#153](https://github.com/esfen14/Pinpoint/issues/153).
+
 **Category:** System
 
 **Work Type:** Implementation

@@ -1,5 +1,7 @@
 ### Issue #23 — Web-Interface Implementation Add Per-Service Recover Automatically Toggle With Restart Limit
 
+GitHub implementation issue: [#154](https://github.com/esfen14/Pinpoint/issues/154).
+
 **Category:** Web-Interface
 
 **Work Type:** Implementation

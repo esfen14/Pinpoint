@@ -1,5 +1,7 @@
 ### Issue #19 — System Implementation Add Nagios Command Channel, Acknowledgement Propagation and Check Now
 
+GitHub implementation issue: [#132](https://github.com/esfen14/Pinpoint/issues/132).
+
 **Category:** System
 
 **Work Type:** Implementation

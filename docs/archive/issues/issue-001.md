@@ -1,5 +1,7 @@
 ### Issue #1 — System Implementation Add Configurable Notification Policy With Nagios Timeperiods and Settings Screen
 
+GitHub implementation issue: [#113](https://github.com/esfen14/Pinpoint/issues/113).
+
 **Category:** System
 
 **Work Type:** Implementation

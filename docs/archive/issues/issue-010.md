@@ -1,5 +1,7 @@
 ### Issue #10 — System Refinement Add Retry Interval and Maximum Check Attempts Settings
 
+GitHub implementation issue: [#123](https://github.com/esfen14/Pinpoint/issues/123).
+
 **Category:** System
 
 **Work Type:** Refinement

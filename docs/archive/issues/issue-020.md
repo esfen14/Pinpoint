@@ -1,5 +1,7 @@
 ### Issue #20 — System Refinement Clear Acknowledgements on Recovery and Audit the History Page
 
+GitHub implementation issue: [#133](https://github.com/esfen14/Pinpoint/issues/133).
+
 **Category:** System
 
 **Work Type:** Refinement

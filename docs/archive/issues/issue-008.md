@@ -1,5 +1,7 @@
 ### Issue #8 — System Implementation Add Local and Remote Service Recovery Actions With Restricted Sudo Rule
 
+GitHub implementation issue: [#121](https://github.com/esfen14/Pinpoint/issues/121).
+
 **Category:** System
 
 **Work Type:** Implementation

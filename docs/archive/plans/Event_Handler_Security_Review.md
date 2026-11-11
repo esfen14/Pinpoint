@@ -1,6 +1,6 @@
 # Event Handler Security Review (Issues #7, #8, #22)
 
-Status: **draft checklist, review not yet held.** Prepared 2026-10-13 for the reviewer. Part of [`Proactive_Resolution_Implementation_Plan.md`](Proactive_Resolution_Implementation_Plan.md) section 3.4. The mandatory review is required by [`Issue #7`](../issues/issue-007.md) and the gap plan before any code is written.
+Status: **archived.** The design was reviewed and the owner's decisions D1 to D3 were recorded on 2026-10-14 (sign-off table in section 6). The framework shipped in #120 and #158; remote restart was reviewed separately in [`Issue_182_Remote_Restart_Security_Review.md`](Issue_182_Remote_Restart_Security_Review.md). The reviewer line in section 6 was never filled in, and the narrower `nagios` group rights (D1) are still an open installer item in [`Installer_Handoff.md`](Installer_Handoff.md). Original status: draft checklist. Prepared 2026-10-13 for the reviewer. Part of [`Proactive_Resolution_Implementation_Plan.md`](Proactive_Resolution_Implementation_Plan.md) section 3.4. The mandatory review is required by [`Issue #7`](../issues/issue-007.md) and the gap plan before any code is written.
 
 ## 1. What is being approved
 

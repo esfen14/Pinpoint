@@ -1,6 +1,6 @@
 # Proactive Resolution Implementation Plan
 
-Status: **draft, Phase 0 in progress.** Drafted 2026-10-13. Nothing in this plan is implemented.
+Status: **finished and archived.** Drafted 2026-10-13. Audited 2026-11-11 (#303): every issue it covers is closed and merged (#119, #120, #121, #123, #132, #153 to #156; see the [issue index](../issues/INDEX.md) for pull requests). Open items are the installer-side ones in [`Installer_Handoff.md`](Installer_Handoff.md) and the live checks recorded in `Implementation_Status.md`. The text below is the original draft and is kept unchanged for history.
 
 Scope: the issues in [`docs/issues/`](../issues/INDEX.md) that make PinPoint act on a confirmed problem, tune when a problem is confirmed, and warn before one occurs: #6, #7, #8, #10, #19, #22, #23, #24, #25. Issue #9 (maintenance windows) is a dependency of one check in #24.
 

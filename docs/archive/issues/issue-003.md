@@ -1,5 +1,7 @@
 ### Issue #3 — System Implementation Add Alert Contact Groups and Nagios Escalations With Management Screen
 
+GitHub implementation issue: [#116](https://github.com/esfen14/Pinpoint/issues/116).
+
 **Category:** System
 
 **Work Type:** Implementation

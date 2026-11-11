@@ -1,5 +1,7 @@
 ### Issue #18 — System Refinement Add POP3, IMAP and Expected-Response Options With Per-Device Web Check Form
 
+GitHub implementation issue: [#131](https://github.com/esfen14/Pinpoint/issues/131).
+
 **Category:** System
 
 **Work Type:** Refinement

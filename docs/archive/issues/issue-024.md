@@ -1,5 +1,7 @@
 ### Issue #24 — System Implementation Add Remediation Safety Controls, Run Retention and Consumer Health Reporting
 
+GitHub implementation issue: [#155](https://github.com/esfen14/Pinpoint/issues/155).
+
 **Category:** System
 
 **Work Type:** Implementation

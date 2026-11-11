@@ -1,5 +1,7 @@
 ### Issue #21 — Web-Interface Refinement Reconcile Reports Documentation and Add Availability Target Support
 
+GitHub implementation issue: [#134](https://github.com/esfen14/Pinpoint/issues/134).
+
 **Category:** Web-Interface
 
 **Work Type:** Refinement

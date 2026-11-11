@@ -1,5 +1,7 @@
 ### Issue #13 — System Implementation Add Interface Bandwidth Rates, Interface Discovery and Bandwidth Chart
 
+GitHub implementation issue: [#126](https://github.com/esfen14/Pinpoint/issues/126).
+
 **Category:** System
 
 **Work Type:** Implementation

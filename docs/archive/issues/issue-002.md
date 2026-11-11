@@ -1,5 +1,7 @@
 ### Issue #2 — System Refinement Broaden Notification Mail Delivery Beyond Gmail and Report Failed Mail
 
+GitHub implementation issue: [#115](https://github.com/esfen14/Pinpoint/issues/115).
+
 **Category:** System
 
 **Work Type:** Refinement
