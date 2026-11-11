@@ -37,10 +37,10 @@ Deliberate lab-only (to record): no systemd (supervisord), `install-daemoninit` 
 
 ## Plan
 
-1. [ ] Test first: `server/tests/unit/test_lab_appliance_drift.py` asserting the fixes above on lab files.
-2. [ ] Dockerfile: items 1-8, 11 (`lab/appliance/Dockerfile`)
-3. [ ] entrypoint (handler install), supervisord (gunicorn flags), nginx conf (items 6, 9, 10)
-4. [ ] `docs/manuals/Local_Lab.md`: drift/deliberate-differences table, installer ref
+1. [x] Test first: `server/tests/unit/test_lab_appliance_drift.py` asserting the fixes above on lab files.
+2. [x] Dockerfile: items 1-8, 11 (`lab/appliance/Dockerfile`)
+3. [x] entrypoint (handler install), supervisord (gunicorn flags), nginx conf (items 6, 9, 10)
+4. [x] `docs/manuals/Local_Lab.md`: drift/deliberate-differences table, installer ref
 5. [ ] Build image and DHCP lab base build; `scripts/verify.sh docs` then `all`
 6. [ ] Finish (section 5): delete progress file, PR
 
@@ -49,13 +49,14 @@ Deliberate lab-only (to record): no systemd (supervisord), `install-daemoninit` 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 0 | audit, plan | - | - |
+| 1 | drift test, Dockerfile, entrypoint, supervisord, nginx, Local_Lab.md | pytest drift file; docker build base + DHCP appliance; container boot | 6 passed; builds ok; nmap/handler/CGI ok |
 
 ## State for the next session
 
 - Last check run (exact command): none
 - Result: n/a
 - Hypothesis: n/a
-- Next action: write the failing drift test (plan step 1)
+- Next action: scripts/verify.sh docs then all, then finish (section 5)
 
 ## Decisions and notes
 

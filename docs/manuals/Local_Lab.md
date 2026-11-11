@@ -67,13 +67,35 @@ generated Nagios files inside the container, never into your repository.
 
 | Real appliance (installer) | Lab |
 |---|---|
-| Ubuntu 22.04.5, Nagios Core 4.5.11, plugins 2.4.12, Python 3.14 via uv | Same versions, same install steps |
-| Nginx :80 to Gunicorn 127.0.0.1:8000 (1 worker, 4 threads), Apache on 127.0.0.1:8081 | Same layout |
+| Ubuntu 22.04.5, Nagios Core 4.5.11, plugins 2.4.12 (with `check_mysql`), `check_ncpa.py` 1.2.4, Python 3.14 via uv | Same versions, same download URLs and SHA-256, same build options |
+| Nginx :80 to Gunicorn 127.0.0.1:8000 (1 worker, 4 threads, 300 s timeout), Apache on 127.0.0.1:8081 | Same layout and settings |
+| `pinpoint` system user, restricted `nmap` (`root:pinpoint 0750`, raw-socket capabilities), event-handler spool, `plugin-services.cfg`, `/bin/mail` with `/etc/msmtprc` | Same accounts, modes and paths |
 | `/etc/pinpoint/pinpoint.env` with the README settings | Same names, lab values (`lab/appliance/pinpoint.env`) |
 | `pinpoint` user, `sudo -n systemctl reload nagios`, `nmap-sudo` | Shims in `lab/appliance/shims/` with the same call shape |
 | systemd | supervisord |
 
+Last audited against PinPoint-Installer `setup/` at main `9bc7150` (issue #316);
+`server/tests/unit/test_lab_appliance_drift.py` pins the settings copied from it.
+Re-audit when the installer's baseline manifest or `setup/` scripts change.
+
 Deliberate lab differences:
+
+- **No systemd.** supervisord runs the processes, `make install-daemoninit` is
+  skipped, and `sudo`, `systemctl` and `nmap-sudo` are shims (`NMAP_PRIVILEGED=1`
+  instead of `--privileged`). `systemctl` only handles `nagios`.
+- **Lab credentials.** `nagiosadmin` exists with a fixed password, `pinpoint-api`
+  has a fixed password, and `pinpoint.env` holds lab values. A first-start seed
+  fills the databases.
+- **Not installed:** PHP, the built web client (use `scripts/lab ui`), the
+  installer's first-boot and update machinery, journald and logrotate settings, the
+  root helpers (`pinpoint-apply-smtp`, `pinpoint-ncpa-deploy`,
+  `pinpoint-apply-resources`, `pinpoint-service-restart`), and their sudoers rules.
+  SMTP settings, NCPA deployment, resource blocks and service restarts therefore do
+  not work end to end here.
+- The app tree is copied in from the working tree at start (`pp-sync`) and the
+  event handler is installed from it then, instead of from a fresh clone.
+- `hosts.cfg` and `plugin-services.cfg` are added to the end of `nagios.cfg`
+  instead of below `localhost.cfg` (same effect).
 
 - **Time runs faster in Nagios.** `interval_length` is 10 seconds instead of 60
   and first checks are not staggered, so results appear in about a minute.
