@@ -10,6 +10,24 @@ Use it for UI and API checks, discovery, Nagios config generation and reload,
 plugin enablement and alert behavior. Use a real appliance (installer build in a
 VM) for anything the container cannot imitate; see [What it cannot test](#what-it-cannot-test).
 
+## Role of this lab
+
+The owner decided in issue #306 to keep the local lab as the **headless lane**:
+it needs only Docker, so it is the one lab that runs without VirtualBox, a
+Windows VM or an installer build. The decision also sets these rules:
+
+- **Not in CI.** A lab job would slow every pull request. Run `scripts/lab smoke`
+  by hand; CI runs the docs, backend and frontend jobs only.
+- **Kept in step with the installer.** The appliance image copies the installer's
+  steps by hand. It was audited against the installer in issue #316, and
+  `scripts/lab check-drift` (issue #317) reports when its pinned versions fall
+  behind; see [Checking for drift](#checking-for-drift).
+- **Two target images stay.** `lab/targets/` is not merged with `demo/targets/`,
+  and the lab is not retired.
+
+The plugin and alert gap in the smoke test is closed (issue #315); see
+[Status](#status) for what is still unverified.
+
 ## Requirements
 
 Docker with Compose v2 and about 4 GB of free RAM and 6 GB of disk for the
@@ -212,12 +230,21 @@ identities, IPv6, DHCP failover or NCPA deployment.
 
 ## Status
 
-Spike. Verified on Docker 29.7 / Compose 5.5: build, start, login, discovery of
-all five targets (about 2 minutes), Nagios config validation and reload through
-the shim, and `scripts/lab smoke`, which also enables `check_ssh`, checks its five
-services, runs `break web01 ssh`, checks the alert and runs `fix` (16 of 16 checks
-pass from a fresh reset; [run report](../test-runs/2026-11-11-issue-315-lab-smoke/REPORT.md)).
-**Not yet verified:** `scripts/lab ui`, `scripts/lab sync`, NCPA.
+Kept as the headless lane (issue #306); not in CI. See [Role of this lab](#role-of-this-lab).
+
+Verified on Docker 29.7 / Compose 5.5: build, start, login, discovery of all
+five targets (about 2 minutes), Nagios config validation and reload through the
+shim, and `scripts/lab smoke`.
+
+| Area | Where it stands |
+|---|---|
+| Plugin and alert checks in the smoke test | Done in issue #315. The smoke test enables `check_ssh`, checks its five services, runs `break web01 ssh`, checks the alert and runs `fix`. 16 of 16 checks passed from a fresh reset ([run report](../test-runs/2026-11-11-issue-315-lab-smoke/REPORT.md)) |
+| Email checks in the smoke test | Added in issue #316: save the Email settings, send the test email, and check that the alert's notification mail reaches the lab mail sink. Pull request #321 reports 20 of 20 checks passing; no run report was committed for that run |
+| Match with the installer | Audited at installer main `9bc7150` (issue #316). `scripts/lab check-drift` (issue #317) compares pinned versions only |
+| `scripts/lab sync` | Ran without error on 2026-11-10 (issue #306 evidence); no run report |
+| `scripts/lab ui` | Not yet verified |
+| NCPA deployment and remote service restart | Cannot run here because the targets have no init system. The rerun on a VM-lab appliance is issue #322 |
+| Delivery through Gmail or another real relay | Not verified; the lab mail sink stands in for the relay |
 
 
 ## Controlled device identity review acceptance
