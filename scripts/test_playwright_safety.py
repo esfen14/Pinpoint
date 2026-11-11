@@ -15,6 +15,14 @@ class BrowserSafety(unittest.TestCase):
         self.assertRegex(pin, r'^\d+\.\d+\.\d+$')
         self.assertEqual(pin, lock['packages']['']['devDependencies']['@playwright/test'])
 
+    def test_live_specs_do_not_hardcode_removed_lab_subnet(self):
+        # The five-VM lab on 10.77.0.0/28 was removed (#298); read lab addresses from labAddresses.ts.
+        offenders = []
+        for path in (ROOT / 'client/e2e').glob('*.ts'):
+            if '10.77.0.' in path.read_text():
+                offenders.append(path.name)
+        self.assertEqual(offenders, [])
+
     def test_auth_has_no_fallback_credentials(self):
         source = ''.join(
             (ROOT / name).read_text()

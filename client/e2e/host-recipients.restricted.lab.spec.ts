@@ -1,11 +1,12 @@
 import { test, expect } from '@playwright/test'
+import { isLabAddress } from './labAddresses'
 
 test('restricted user cannot read or change host recipients and sees no editor', async ({ page }) => {
   await page.goto('/device-inventory')
   const response = await page.request.get('/api/system/network-health/hosts?per_page=100')
   expect(response.ok()).toBeTruthy()
   const hosts = (await response.json()).data.items as { hostname: string; device_id: number | null; ip_address: string | null }[]
-  const host = hosts.find((item) => item.device_id && item.ip_address?.startsWith('10.77.0.'))
+  const host = hosts.find((item) => item.device_id && isLabAddress(item.ip_address))
   expect(host, 'a discovered lab host is required').toBeTruthy()
   await page.getByRole('button', { name: host!.hostname, exact: true }).click()
   // Wait for detail data, so absence of the editor cannot pass during loading.

@@ -9,7 +9,7 @@ production host. Owner requested a fresh VM on 2026-10-17.
   `VMLAB_CONFIG`, state folder and unused loopback SSH/HTTP ports. Run the VM
   control/endpoint preflight before each mutation. Keep existing lab VMs off.
 - Create a separate clean target from the OS-only `base-ready` image. Confirm its
-  management endpoint ownership, assign only `10.77.0.2/28` on the isolated lab
+  management endpoint ownership, assign only a fresh address inside the isolated lab range (recorded as `PINPOINT_ISSUE182_TARGET_IP`) on the isolated lab
   network and keep its NAT management endpoint separate from service SSH.
 - Install the pushed issue branch with the installer through `vmlab provision`
   and `vmlab fresh`. Record application/installer SHAs, migrations and health.
@@ -58,7 +58,7 @@ failure/blocker and safety deviation in a sanitized run report.
 ## Playwright RR-12 runner
 
 `client/e2e/remote-restart.lab.spec.ts` is the opt-in `issue-182-live` project.
-Run only with `PINPOINT_ISSUE182_LIVE=1` after both owned VM endpoint preflights.
+Run only with `PINPOINT_ISSUE182_LIVE=1` and `PINPOINT_ISSUE182_TARGET_IP=<target address>` (the original `10.77.0.2` lab was removed in #298; the spec skips without both) after both owned VM endpoint preflights.
 Use the no-network Docker/Unix-socket bridge pattern in `scripts/playwright-lab`,
 pointing its host socket at the exclusively owned appliance HTTP port (18882
 for this run). The container browser uses only loopback 18080 through that socket.
