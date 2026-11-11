@@ -60,7 +60,7 @@ RUN cd /usr/local/src \
 # Nginx fronts Gunicorn on :80, like the installer (added after the slow Nagios
 # layers so it does not invalidate their cache). libcap2-bin gives setcap; msmtp-mta
 # and bsd-mailx give the /bin/mail that Nagios notification commands pipe to.
-RUN apt-get update && apt-get install -y --no-install-recommends nginx libcap2-bin msmtp-mta bsd-mailx \
+RUN apt-get update && apt-get install -y --no-install-recommends nginx libcap2-bin sudo msmtp-mta bsd-mailx \
  && rm -rf /var/lib/apt/lists/* /etc/nginx/sites-enabled/default
 COPY lab/appliance/nginx-pinpoint.conf /etc/nginx/conf.d/pinpoint.conf
 
@@ -97,11 +97,25 @@ RUN useradd --system --user-group --home-dir /opt/pinpoint --no-create-home --sh
  && install -d -m 2770 -o nagios -g pinpoint /usr/local/nagios/var/spool/pinpoint-events \
  && : > /etc/msmtprc && chown root:nagios /etc/msmtprc && chmod 640 /etc/msmtprc
 
-COPY lab/appliance/shims/sudo lab/appliance/shims/systemctl lab/appliance/shims/nmap-sudo /usr/local/bin/
+# Real sudo with the installer's sudoers rules and root helpers (copied from
+# PinPoint-Installer setup/, see lab/appliance/helpers/). Only `systemctl` is a
+# shim, at the path the sudoers rules name (/usr/bin/systemctl).
+COPY lab/appliance/shims/systemctl /usr/bin/systemctl
+COPY lab/appliance/shims/nmap-sudo /usr/local/bin/nmap-sudo
+COPY lab/appliance/helpers/pinpoint-apply-smtp lab/appliance/helpers/pinpoint-apply-resources /usr/local/sbin/
 COPY lab/appliance/pp-sync lab/appliance/entrypoint.sh /usr/local/bin/
 COPY lab/appliance/supervisord.conf /etc/supervisor/supervisord.conf
 COPY lab/appliance/pinpoint.env /opt/lab/pinpoint.env
-RUN chmod 755 /usr/local/bin/sudo /usr/local/bin/systemctl /usr/local/bin/nmap-sudo /usr/local/bin/pp-sync /usr/local/bin/entrypoint.sh \
+RUN chmod 755 /usr/bin/systemctl /usr/local/bin/nmap-sudo /usr/local/bin/pp-sync /usr/local/bin/entrypoint.sh \
+ && chown root:root /usr/local/sbin/pinpoint-apply-smtp /usr/local/sbin/pinpoint-apply-resources \
+ && chmod 755 /usr/local/sbin/pinpoint-apply-smtp /usr/local/sbin/pinpoint-apply-resources \
+ && chown nagios:nagios /usr/local/nagios/etc/resource.cfg && chmod 660 /usr/local/nagios/etc/resource.cfg \
+ && printf '%s\n' 'pinpoint ALL=(root) NOPASSWD: /usr/bin/systemctl reload nagios, /bin/systemctl reload nagios' > /etc/sudoers.d/pinpoint-nagios-reload \
+ && printf '%s\n' 'pinpoint ALL=(root) NOPASSWD: /usr/bin/systemctl restart nagios' > /etc/sudoers.d/pinpoint-restart \
+ && printf '%s\n' 'pinpoint ALL=(root) NOPASSWD: /usr/local/sbin/pinpoint-apply-smtp ""' > /etc/sudoers.d/pinpoint-apply-smtp \
+ && printf '%s\n' 'pinpoint ALL=(root) NOPASSWD: /usr/local/sbin/pinpoint-apply-resources ""' > /etc/sudoers.d/pinpoint-apply-resources \
+ && chmod 440 /etc/sudoers.d/pinpoint-* && visudo -cf /etc/sudoers.d/pinpoint-nagios-reload \
+ && visudo -c >/dev/null \
  && dpkg-statoverride --update --add root pinpoint 0750 /usr/bin/nmap \
  && setcap cap_net_raw,cap_net_admin,cap_net_bind_service=eip /usr/bin/nmap \
  && mkdir -p /opt/pinpoint/Network-Diagnosis-System/server && chown -R pinpoint:pinpoint /opt/pinpoint/Network-Diagnosis-System

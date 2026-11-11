@@ -1,0 +1,155 @@
+#!/usr/bin/python3 -I
+# Managed by PinPoint Installer.
+# Writes /etc/msmtprc from settings sent by the PinPoint web
+# interface. Input: one JSON object on stdin:
+#   {"host": str, "port": int, "tls": "starttls",
+#    "username": str, "password": str, "sender": str}
+# Exit 0 on success, 1 for rejected input, 2 for misuse.
+# Messages go to stderr and never contain the password.
+
+import grp
+import json
+import os
+import re
+import sys
+
+CONFIG = "/etc/msmtprc"
+OWNER_GROUP = "nagios"
+MAX_INPUT = 4096
+
+FIELDS = {"host", "port", "tls", "username", "password", "sender"}
+# Encryption is mandatory: the login is always sent, so a plain
+# connection would expose the password.
+TLS_MODES = {"starttls"}
+
+HOST_RE = re.compile(r"^[A-Za-z0-9]([A-Za-z0-9.-]{0,251}[A-Za-z0-9])?$")
+EMAIL_RE = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
+# Any printable ASCII character, spaces included, so the admin can
+# choose a password freely. No control characters: a line break
+# would end the config line and let a value start another one.
+# The value is always written inside double quotes; msmtp removes
+# exactly the outer pair and keeps everything inside as typed
+# (checked for spaces, "#", quotes and backslashes).
+PRINTABLE_RE = re.compile(r"[ -~]+")
+
+
+def reject(message):
+    print("pinpoint-apply-smtp: " + message, file=sys.stderr)
+    sys.exit(1)
+
+
+def pairs(items):
+    keys = [key for key, _ in items]
+    if len(keys) != len(set(keys)):
+        reject("duplicate field in input.")
+    return dict(items)
+
+
+def text(data, name, limit):
+    value = data[name]
+    if not isinstance(value, str) or not value:
+        reject("'%s' must be a non-empty string." % name)
+    if len(value) > limit:
+        reject("'%s' is too long." % name)
+    return value
+
+
+def main():
+    if len(sys.argv) > 1:
+        print("pinpoint-apply-smtp: takes no arguments; send JSON on stdin.",
+              file=sys.stderr)
+        sys.exit(2)
+
+    if os.geteuid() != 0:
+        print("pinpoint-apply-smtp: must run as root (use sudo).",
+              file=sys.stderr)
+        sys.exit(2)
+
+    raw = sys.stdin.buffer.read(MAX_INPUT + 1)
+    if len(raw) > MAX_INPUT:
+        reject("input is too large.")
+
+    try:
+        data = json.loads(raw.decode("utf-8"), object_pairs_hook=pairs)
+    except (UnicodeDecodeError, ValueError):
+        reject("input is not valid JSON.")
+
+    if not isinstance(data, dict):
+        reject("input must be a JSON object.")
+    if set(data) != FIELDS:
+        reject("fields must be exactly: " + ", ".join(sorted(FIELDS)) + ".")
+
+    host = text(data, "host", 253)
+    if not HOST_RE.fullmatch(host):
+        reject("'host' is not a valid host name or address.")
+
+    port = data["port"]
+    if isinstance(port, bool) or not isinstance(port, int) or not 1 <= port <= 65535:
+        reject("'port' must be a number from 1 to 65535.")
+
+    tls = text(data, "tls", 16)
+    if tls not in TLS_MODES:
+        reject("'tls' must be starttls.")
+
+    username = text(data, "username", 254)
+    if not PRINTABLE_RE.fullmatch(username):
+        reject("'username' may only contain printable characters.")
+
+    password = text(data, "password", 256)
+    if not PRINTABLE_RE.fullmatch(password):
+        reject("'password' may only contain printable characters "
+               "(no line breaks, tabs or other control characters).")
+
+    sender = text(data, "sender", 254)
+    if not EMAIL_RE.fullmatch(sender):
+        reject("'sender' is not a valid email address.")
+
+    lines = [
+        "# Managed by PinPoint. Written by pinpoint-apply-smtp; edits are overwritten.",
+        "defaults",
+        "auth on",
+        "tls_trust_file /etc/ssl/certs/ca-certificates.crt",
+        "syslog on",
+        "",
+        "account pinpoint",
+        "host " + host,
+        "port %d" % port,
+        "tls on",
+        "tls_starttls on",
+        "from " + sender,
+        'user "' + username + '"',
+        'password "' + password + '"',
+        "",
+        "account default : pinpoint",
+        "",
+    ]
+
+    gid = grp.getgrnam(OWNER_GROUP).gr_gid
+    temp = CONFIG + ".tmp"
+
+    # Replace atomically: a crash leaves the old file or the new
+    # one, never half of either. The temp file is created with the
+    # final owner and mode, so the password is never exposed.
+    try:
+        os.unlink(temp)
+    except FileNotFoundError:
+        pass
+
+    fd = os.open(temp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o640)
+    try:
+        os.fchown(fd, 0, gid)
+        os.fchmod(fd, 0o640)
+        with os.fdopen(fd, "w", encoding="ascii") as handle:
+            handle.write("\n".join(lines))
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temp, CONFIG)
+    except BaseException:
+        try:
+            os.unlink(temp)
+        except FileNotFoundError:
+            pass
+        raise
+
+
+main()

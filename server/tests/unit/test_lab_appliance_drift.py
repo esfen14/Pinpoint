@@ -70,3 +70,18 @@ def test_gunicorn_and_nginx_match_installer():
     assert "client_max_body_size 50M" in nginx
     assert "proxy_read_timeout 300s" in nginx
     assert "X-Real-IP" in nginx and "X-Forwarded-Proto" in nginx
+
+
+def test_real_sudo_and_root_helpers_match_installer():
+    dockerfile = _read("Dockerfile")
+    assert not (APPLIANCE / "shims" / "sudo").exists()
+    assert "apt-get install -y --no-install-recommends nginx libcap2-bin sudo" in dockerfile
+    for helper in ("pinpoint-apply-smtp", "pinpoint-apply-resources"):
+        assert (APPLIANCE / "helpers" / helper).is_file()
+        assert f"/usr/local/sbin/{helper}" in dockerfile
+        assert f"/etc/sudoers.d/{helper}" in dockerfile
+    assert "pinpoint ALL=(root) NOPASSWD: /usr/bin/systemctl reload nagios" in dockerfile
+    assert "pinpoint ALL=(root) NOPASSWD: /usr/bin/systemctl restart nagios" in dockerfile
+    assert "visudo -cf" in dockerfile
+    assert "/usr/bin/systemctl" in dockerfile
+    assert "--privileged" in _read("shims/nmap-sudo")

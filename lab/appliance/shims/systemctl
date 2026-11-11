@@ -1,7 +1,7 @@
 #!/bin/sh
-# Lab stand-in for systemctl. Only the actions Pinpoint uses, only for nagios.
-# Goes through supervisord's control socket (group-writable for `nagios`, which
-# `pinpoint` belongs to), the way the installer's sudo rule lets it reload.
+# Lab stand-in for systemctl (installed at /usr/bin/systemctl, the path the sudoers
+# rules name). Only the actions Pinpoint uses, only for nagios. Runs as root via
+# sudo and goes through supervisord's control socket.
 action="$1"; unit="${2%.service}"
 ctl="supervisorctl -c /etc/supervisor/supervisord.conf"
 if [ "$unit" != "nagios" ]; then

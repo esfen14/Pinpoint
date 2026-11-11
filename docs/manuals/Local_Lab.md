@@ -71,7 +71,8 @@ generated Nagios files inside the container, never into your repository.
 | Nginx :80 to Gunicorn 127.0.0.1:8000 (1 worker, 4 threads, 300 s timeout), Apache on 127.0.0.1:8081 | Same layout and settings |
 | `pinpoint` system user, restricted `nmap` (`root:pinpoint 0750`, raw-socket capabilities), event-handler spool, `plugin-services.cfg`, `/bin/mail` with `/etc/msmtprc` | Same accounts, modes and paths |
 | `/etc/pinpoint/pinpoint.env` with the README settings | Same names, lab values (`lab/appliance/pinpoint.env`) |
-| `pinpoint` user, `sudo -n systemctl reload nagios`, `nmap-sudo` | Shims in `lab/appliance/shims/` with the same call shape |
+| `pinpoint` user, real `sudo` with the installer's sudoers rules (reload and restart `nagios`, SMTP and resource helpers) | Same sudoers rules and the installer's root helpers `pinpoint-apply-smtp` and `pinpoint-apply-resources` (copied to `lab/appliance/helpers/`); only `systemctl` is a shim |
+| `nmap-sudo` wrapper | Same wrapper |
 | systemd | supervisord |
 
 Last audited against PinPoint-Installer `setup/` at main `9bc7150` (issue #316);
@@ -81,17 +82,17 @@ Re-audit when the installer's baseline manifest or `setup/` scripts change.
 Deliberate lab differences:
 
 - **No systemd.** supervisord runs the processes, `make install-daemoninit` is
-  skipped, and `sudo`, `systemctl` and `nmap-sudo` are shims (`NMAP_PRIVILEGED=1`
-  instead of `--privileged`). `systemctl` only handles `nagios`.
+  skipped, and `/usr/bin/systemctl` is a shim that only handles `nagios` (reload,
+  restart, is-active, status) through supervisord.
 - **Lab credentials.** `nagiosadmin` exists with a fixed password, `pinpoint-api`
   has a fixed password, and `pinpoint.env` holds lab values. A first-start seed
   fills the databases.
 - **Not installed:** PHP, the built web client (use `scripts/lab ui`), the
-  installer's first-boot and update machinery, journald and logrotate settings, the
-  root helpers (`pinpoint-apply-smtp`, `pinpoint-ncpa-deploy`,
-  `pinpoint-apply-resources`, `pinpoint-service-restart`), and their sudoers rules.
-  SMTP settings, NCPA deployment, resource blocks and service restarts therefore do
-  not work end to end here.
+  installer's first-boot and update machinery, and journald and logrotate settings.
+  The SMTP and resource helpers are installed, but there is no real SMTP server to
+  relay to, and NCPA deployment and remote service restarts are unverified because
+  the targets have no init system (those helpers are installed on the target by the
+  app).
 - The app tree is copied in from the working tree at start (`pp-sync`) and the
   event handler is installed from it then, instead of from a fresh clone.
 - `hosts.cfg` and `plugin-services.cfg` are added to the end of `nagios.cfg`
