@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-17 |
 | Commit tested | `8c39c1ba2b732cfe2f86d76a09d2736924921f26` |
-| Scope | [PR #185](https://github.com/esfen14/Pinpoint/pull/185), [issue #156](https://github.com/esfen14/Pinpoint/issues/156) sections E–H, and [plan issue #25](../../issues/issue-025.md) |
+| Scope | [PR #185](https://github.com/esfen14/Pinpoint/pull/185), [issue #156](https://github.com/esfen14/Pinpoint/issues/156) sections E–H, and [plan issue #25](../../archive/issues/issue-025.md) |
 | Tester | Codex |
 | Environment | Linux 6.12.105+deb13-amd64; Python 3.14.2; Node 20.19.2; disposable in-memory system/history SQLite databases; scheduler suppressed by the test configuration |
 | Raw evidence | Local repository `test-results/pr-185-issue-156/` (ignored; not committed) |

@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-08 |
 | Commit tested | Application `1540545` (`main`, installed by the installer's deploy step); installer repo `f0323ea`; lab tooling `5cc98d41` plus the `ncpa` command added in this change |
-| Plan | [`docs/plans/VM_Lab_Plan.md`](../../plans/VM_Lab_Plan.md) (section 6, "NCPA deployment") |
+| Plan | [`docs/archive/plans/VM_Lab_Plan.md`](../../archive/plans/VM_Lab_Plan.md) (section 6, "NCPA deployment") |
 | Tester | Claude Code, supervised by the project owner |
 | Environment | The VM lab from [`2026-10-08-vm-lab-first-run`](../2026-10-08-vm-lab-first-run/REPORT.md): installer-built appliance (Ubuntu 22.04.5, Nagios Core 4.5.11) and the `demo/` targets (Ubuntu 24.04, 512 MB each) at `10.77.0.2` to `.6` |
 | Raw evidence | Author's machine: `~/pinpoint-test-results/2026-10-08-ncpa-run/` (not committed) |

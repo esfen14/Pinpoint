@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-15 |
 | Commit tested | Backend application `c1bf732f` (all seven changed backend implementation/template files hash-identical at `b4d2c1648592c2e8294eb0d44fccb868d1fa9adb`); final browser source and test `b4d2c1648592c2e8294eb0d44fccb868d1fa9adb` |
-| Plan | [Issue #116](https://github.com/esfen14/Pinpoint/issues/116), sections E–H; [repository plan](../../issues/issue-003.md) |
+| Plan | [Issue #116](https://github.com/esfen14/Pinpoint/issues/116), sections E–H; [repository plan](../../archive/issues/issue-003.md) |
 | Tester | Codex |
 | Environment | Separate Docker project `pinpoint-issue116`, cached Ubuntu 22.04/Nagios Core 4.5.11 lab images; fresh multi-bind upgraded/seeded databases, two eligible contacts, two discovered targets. Exclusive internal bridge; scan restricted to two explicit /32 targets and TCP 22/80 plus UDP 161; addresses retained only in raw evidence |
 | Timing | Lab `interval_length=10`: one Nagios time unit is ten seconds. Production uses the standard sixty-second unit. Notification-count routing, not production elapsed-minute timing, was tested |

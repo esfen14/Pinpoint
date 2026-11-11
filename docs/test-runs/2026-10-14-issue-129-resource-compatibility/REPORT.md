@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-14 |
 | Commit tested | `87e00907` full verification; `61ebb946` command-equivalence tests (application source unchanged) |
-| Plan | [Issue #129 transport plan](../../plans/Issue_129_Check_Secret_Transport.md) |
+| Plan | [Issue #129 transport plan](../../archive/plans/Issue_129_Check_Secret_Transport.md) |
 | Tester | Codex; owner authorized sensitive application work and VM usage |
 | Environment | Local isolated Python/React tests; existing Ubuntu 22.04.5 LTS QA appliance; NCPA check client 1.2.4; Nagios Plugins 2.4.12; documented VM lab 10.77.0.0/28; no database migration or app sync |
 | Raw evidence | Local workstation: git-ignored `test-results/issue-129/verify-all.log`, `command-equivalence.log`, `installed-compatibility.txt` |
@@ -49,7 +49,7 @@ No extra full-suite rerun was needed for unchanged application source.
 ## Follow-up
 
 - [Issue #129](https://github.com/esfen14/Pinpoint/issues/129) remains open: implement secure credential transport and an ownership-compatible installer mechanism; repeat all skipped live cases and process inspection.
-- The concrete installer handoff is in [the transport plan](../../plans/Issue_129_Check_Secret_Transport.md). No installer code or permissions were changed.
+- The concrete installer handoff is in [the transport plan](../../archive/plans/Issue_129_Check_Secret_Transport.md). No installer code or permissions were changed.
 - CI, PR evidence publication and reviewer approval are still outstanding.
 
 ## Sanitization checklist

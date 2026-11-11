@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-15 |
 | Commit tested | Merge working tree: issue head `e5c7e6f0` and main `9ce590eb`, with stored-port inventory integration fix |
-| Plan | [Issue #129](https://github.com/esfen14/Pinpoint/issues/129) D/G/H; [transport plan](../../plans/Issue_129_Check_Secret_Transport.md) |
+| Plan | [Issue #129](https://github.com/esfen14/Pinpoint/issues/129) D/G/H; [transport plan](../../archive/plans/Issue_129_Check_Secret_Transport.md) |
 | Tester | Codex |
 | Environment | Local isolated backend/frontend verification; no lab mutation in this merge run |
 | Raw evidence | Local git-ignored `test-results/issue-129/`: `main-merge-inventory-red.log`, `main-merge-focused.log`, `main-merge-verify-all.log`, `main-merge-final-docs.log`. |

@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-16 |
 | Commit tested | `8869235` (`main` after PR #175, which delivered #121 Parts 8.1 and 8.2) |
-| Plan | Issue #121 (`docs/issues/issue-008.md`) sections E and G, Parts 8.1 and 8.2 |
+| Plan | Issue #121 (`docs/archive/issues/issue-008.md`) sections E and G, Parts 8.1 and 8.2 |
 | Tester | Claude Code agent for the project owner, who gave the lab access and approved each change to it |
 | Environment | New lab appliance (Ubuntu 22.04, Nagios Core 4.5.11, gunicorn service `pinpoint-gunicorn`). The installer had already placed `/etc/sudoers.d/pinpoint-restart`, the event spool folder and the event handler. The application was updated in place from `edb5036` to `8869235` (fast-forward), then both databases were upgraded by migration `b8e3d5f2a417`, the client was rebuilt and the service restarted. Not a fresh build |
 | Raw evidence | On the appliance: `/usr/local/nagios/var/nagios.log`, the journal of `pinpoint-gunicorn`, and the `REMEDIATION_RUN` table. Not committed |

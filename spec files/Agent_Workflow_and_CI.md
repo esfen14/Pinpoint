@@ -135,9 +135,9 @@ Where results go is defined in [`docs/test-runs/README.md`](../docs/test-runs/RE
 | Unit and mocked API tests | Nothing | `scripts/verify.sh`, and CI on every PR |
 | Local lab (fast lane) | Docker | `scripts/lab up`, `scripts/lab smoke`; see [`docs/manuals/Local_Lab.md`](../docs/manuals/Local_Lab.md). A real Nagios and five target servers on an isolated network; not the installer, systemd, DHCP or NCPA installs |
 | Isolated DHCP acceptance | Docker with `CAP_NET_ADMIN` in a dedicated switch namespace | Opt-in `scripts/dhcp-lab` controls and `scripts/dhcp-accept`; see the [Local Lab manual](../docs/manuals/Local_Lab.md#isolated-dhcp-lab) and [acceptance plan](../server/tests/plans/DHCP_LAB_ACCEPTANCE.md). Real `dnsmasq` and `dhclient`, limited to approved `10.79.0.0/28`; never run in CI or on a physical/VPN subnet |
-| Real appliance and VM lab | Installer build, VirtualBox (this laptop) or libvirt (the retained lab) | `scripts/vmlab` with the `demo/` target VMs; plan in [`docs/plans/VM_Lab_Plan.md`](../docs/plans/VM_Lab_Plan.md). The snapshot holds Ubuntu + Nagios only, so it cannot go stale. The libvirt e2e harness in `server/tests/e2e/network_discovery/` is separate. Manual or scheduled, never on pull requests from forks |
+| Real appliance and VM lab | Installer build, VirtualBox (this laptop) or libvirt (the retained lab) | `scripts/vmlab` with the `demo/` target VMs; plan in [`docs/archive/plans/VM_Lab_Plan.md`](../docs/archive/plans/VM_Lab_Plan.md). The snapshot holds Ubuntu + Nagios only, so it cannot go stale. The libvirt e2e harness in `server/tests/e2e/network_discovery/` is separate. Manual or scheduled, never on pull requests from forks |
 
-Issue #274's [defense demo plan](../docs/plans/Defense_Demo_Lab_Plan.md)
+Issue #274's [defense demo plan](../docs/archive/plans/Defense_Demo_Lab_Plan.md)
 now uses a laptop Docker pilot on a VirtualBox host-only network with an
 owner-supplied Windows VM. `demo/demo` is the single front door (`setup`, `up`, `down`, `destroy`, presenter fault
 controls; [cheat sheet](../demo/USAGE.md)) and controls the existing pinned
@@ -176,7 +176,7 @@ Windows 10 Home test guest and locally verified NCPA agent, powered off at an
 owned snapshot. Activation, appliance registration and complete defense-lab
 acceptance remain pending; this adds no general QA scan authorization.
 
-The [DHCP lab design](../docs/plans/DHCP_Lab_Extension_Proposal.md) records the
+The [DHCP lab design](../docs/archive/plans/DHCP_Lab_Extension_Proposal.md) records the
 Docker feasibility decision and the separate lab's safety contract. The ordinary
 fast lab and VM demo continue to use static addresses.
 
@@ -206,7 +206,7 @@ returns only timestamped host UUID/state/controller/endpoint observations, with
 remain separate missing proof. The collector rechecks session/process identity,
 including kernel start ticks, and bounds each VBoxManage read to 20
 seconds. The future driver must enforce a total deadline. See
-[VM Lab Plan §4.0](../docs/plans/VM_Lab_Plan.md) for recovery and the disposable
+[VM Lab Plan §4.0](../docs/archive/plans/VM_Lab_Plan.md) for recovery and the disposable
 endpoint-marker snapshot trial. Never treat a snapshot command's success alone
 as proof that the endpoint is protected. The #162 owner accepted the lost edits as unrecoverable and authorized retirement
 of the old lab disks. Positive ownership proof passed on the newly created appliance;

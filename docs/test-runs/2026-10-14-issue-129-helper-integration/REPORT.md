@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-14 |
 | Commit tested | Application `ea0a4284`; installer functional source `15c27d1` (documentation follows in `b166953`); remote adapter CI `d1d60627` |
-| Plan | [Check secret transport](../../plans/Issue_129_Check_Secret_Transport.md) |
+| Plan | [Check secret transport](../../archive/plans/Issue_129_Check_Secret_Transport.md) |
 | Tester | Codex |
 | Environment | Host isolated suites; existing Ubuntu 22.04.5 QA appliance, Nagios 4.5.11, NCPA client 1.2.4; existing web01 target started headlessly, guarded network 10.77.0.0/28. Database read-only; full application source/database not upgraded. |
 | Raw evidence | Local git-ignored `test-results/issue-129/`: `helper-integration-verify-all.log`, `helper-checkpoint-focused.log`, `installed-helper-acceptance.log`, `live-ncpa-adapter-parity.log`. |

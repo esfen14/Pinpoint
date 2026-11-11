@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-15 |
 | Commit tested | `708dd520` deployed first; the consumer was then replaced by the fix in `420e55d9` and the live sequence repeated. Final state: `420e55d9` |
-| Plan | Finish condition in `.agent/progress/issue-120.md` (issue #120, plan step 7); design in `docs/plans/Event_Handler_Design.md` |
+| Plan | Finish condition in `.agent/progress/issue-120.md` (issue #120, plan step 7); design in `docs/archive/plans/Event_Handler_Design.md` |
 | Tester | Claude Code agent for the project owner, who approved running on this appliance |
 | Environment | Existing lab appliance (Ubuntu 22.04, Nagios Core from the installer, gunicorn service `pinpoint-gunicorn`, Apache in front), 20 hosts in the generated config, no PinPoint-generated services. The database was upgraded in place; this is not a fresh build |
 | Raw evidence | On the appliance: the pre-deploy backup `/var/tmp/pinpoint-120-backup-20261015-081845` (code, built frontend, both databases, `hosts.cfg`), `/usr/local/nagios/var/nagios.log`, and the `REMEDIATION_RUN` table. Not committed |

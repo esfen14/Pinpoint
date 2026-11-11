@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-27, Asia/Manila |
 | Presenter / plan revision | `47698bc5`; running appliance revision not established |
-| Plan | [Defense demo lab](../../plans/Defense_Demo_Lab_Plan.md) |
+| Plan | [Defense demo lab](../../archive/plans/Defense_Demo_Lab_Plan.md) |
 | Executor | Owner observes Pinpoint UI; AI-assisted fixed presenter operations |
 | Environment | Owner's Pinpoint-Final VM and laptop Docker pilot on `10.77.1.0/27` |
 | Raw evidence | Owner-reported status and local presenter observations; no raw log retained |

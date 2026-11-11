@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-10 |
 | Commit tested | Application `431f50ae` (`issue-59-discovery-duplicate-device`); installer checkout at local branch (not modified) |
-| Plan | [Issue #59](https://github.com/esfen14/Pinpoint/issues/59) sequence and [VM Lab plan](../../plans/VM_Lab_Plan.md) |
+| Plan | [Issue #59](https://github.com/esfen14/Pinpoint/issues/59) sequence and [VM Lab plan](../../archive/plans/VM_Lab_Plan.md) |
 | Tester | OpenCode agent, with owner authorization |
 | Environment | VirtualBox `pinpoint-appliance-45`, Ubuntu 22.04.5 / Nagios Core 4.5.11; freshly restored `os-nagios-ready` snapshot and installed branch; five `demo/` targets at `10.77.0.2`–`.6`; SQLite databases initialized fresh. |
 | Raw evidence | VM lab on tester's machine; `scripts/vmlab` output and SQLite state on the disposable appliance, not committed. |

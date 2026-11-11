@@ -6,7 +6,7 @@ need a password.
 
 **Applies to:** the build with `feature/host-level-checks`, `feature/server-host-checks` and
 `feature/custom-check-secrets` (and the earlier custom checks work) merged. Design and decisions are in
-[`Custom_Checks_Plan.md`](../plans/Custom_Checks_Plan.md); lab test cases are in
+[`Custom_Checks_Plan.md`](../archive/plans/Custom_Checks_Plan.md); lab test cases are in
 [`CUSTOM_CHECKS_AND_NCPA_ACCEPTANCE_TEST_PLAN.md`](../../server/tests/plans/CUSTOM_CHECKS_AND_NCPA_ACCEPTANCE_TEST_PLAN.md).
 
 ---
@@ -205,7 +205,7 @@ How it is handled:
   extra-options stdin after verifying installed support. Password-bearing SMB checks are refused because
   this plugin lacks secure child credential input. The default resource path uses the restricted installer helper for foreign-owned
   updates and rollback; custom paths must be writable with preserved ownership by the
-  application itself. Full live generated-config acceptance remains unfinished; see [the transport plan](../plans/Issue_129_Check_Secret_Transport.md).
+  application itself. Full live generated-config acceptance remains unfinished; see [the transport plan](../archive/plans/Issue_129_Check_Secret_Transport.md).
 
 If the key changes:
 

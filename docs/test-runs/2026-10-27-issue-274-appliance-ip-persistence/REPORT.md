@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-27, Asia/Manila |
 | Controller and documentation revision | `da59d88b`; application revision on the owner's VM not observed |
-| Plan | [Defense demo lab](../../plans/Defense_Demo_Lab_Plan.md) |
+| Plan | [Defense demo lab](../../archive/plans/Defense_Demo_Lab_Plan.md) |
 | Executor | Owner configured cloud-init and rebooted the appliance; AI-assisted ping observation |
 | Environment | Owner's `Pinpoint-Final`, Windows VM and laptop Docker pilot on `10.77.1.0/27` |
 | Raw evidence | Owner's confirmation, shared screenshot and console observations; no raw log retained |

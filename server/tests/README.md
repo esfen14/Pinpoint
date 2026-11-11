@@ -12,7 +12,7 @@ workflows.
 The draft live-lab plan is in
 [`plans/NETWORK_DISCOVERY_EXTENDED_TEST_PLAN.md`](plans/NETWORK_DISCOVERY_EXTENDED_TEST_PLAN.md).
 Its opt-in automation lives under
-[`e2e/network_discovery/`](e2e/network_discovery/). That harness is separate
+[`e2e/network_discovery/`](e2e/network_discovery). That harness is separate
 from normal pytest collection and must never run during installation or
 application startup.
 

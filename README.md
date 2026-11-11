@@ -13,10 +13,10 @@ installer is maintained separately from this repository.
 
 | Path | Purpose |
 |---|---|
-| [`client/`](client/) | React, TypeScript, and Vite frontend |
-| [`server/`](server/) | Flask backend, Nagios integrations, migrations, and tests |
+| [`client/`](client) | React, TypeScript, and Vite frontend |
+| [`server/`](server) | Flask backend, Nagios integrations, migrations, and tests |
 | [`spec files/`](spec%20files/) | Authoritative system specifications and implementation status |
-| [`server/tests/`](server/tests/) | Backend tests and opt-in live-lab tooling |
+| [`server/tests/`](server/tests) | Backend tests and opt-in live-lab tooling |
 
 Start with the [specification index](spec%20files/README.md) before changing
 system behavior. Contributor and agent routing rules are in [AGENTS.md](AGENTS.md).

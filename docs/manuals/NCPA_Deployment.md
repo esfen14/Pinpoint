@@ -65,4 +65,4 @@ passwords through extra-options stdin. Password-based SMB generation is refused
 because the plugin exposes child credentials. Automated process tests pass;
 installed ownership/rollback tests and four live adapter metric comparisons pass.
 Full generated-config application under the main Nagios service remains unverified. The implementation and installer handoff are tracked in
-[the transport plan](../plans/Issue_129_Check_Secret_Transport.md).
+[the transport plan](../archive/plans/Issue_129_Check_Secret_Transport.md).

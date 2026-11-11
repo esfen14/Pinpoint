@@ -170,5 +170,5 @@ table while you test, not afterward.
 | [2026-10-08 vm-lab-first-run](2026-10-08-vm-lab-first-run/REPORT.md) | VM lab, installer-built appliance | app `1540545` | Pass (tooling); defect #43 found | [REPORT.md](2026-10-08-vm-lab-first-run/REPORT.md) |
 
 Add a row when you commit a report. Earlier runs mentioned in
-[`../plans/`](../plans/) (for example the 2026-10-03 and 2026-10-06 live runs)
+[`../plans/`](../plans) (for example the 2026-10-03 and 2026-10-06 live runs)
 were reported outside the repository and are not reproduced here.

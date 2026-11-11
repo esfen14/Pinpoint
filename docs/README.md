@@ -6,10 +6,11 @@ description of what Pinpoint is and must do lives in
 
 | Folder | What belongs here | Lifecycle |
 |---|---|---|
-| [`plans/`](plans/) | Implementation plans, design proposals, acceptance and remediation reports tied to one piece of work | Starts as a draft with a **Status** line. When the work ships, fold what is still true into the matching spec, then delete the plan or mark it closed. Open defects belong in GitHub issues |
-| [`manuals/`](manuals/) | How-to guides for operators and users | Kept current with the feature |
+| [`plans/`](plans) | Implementation plans, design proposals, acceptance and remediation reports tied to one piece of work | Starts as a draft with a **Status** line. When the work ships, fold what is still true into the matching spec, then delete the plan or mark it closed. Open defects belong in GitHub issues |
+| [`archive/`](archive) | Finished plans and the 25 planned issues, kept for history and inbound links | Read-only record; not a specification. Each folder has a README saying what the files were for |
+| [`manuals/`](manuals) | How-to guides for operators and users | Kept current with the feature |
 | [`qa/`](qa/QA_Journeys_and_Scope.md) | Six documents: [scope](qa/QA_Journeys_and_Scope.md), [current black-box catalog](qa/Pinpoint%20-%20Black-Box%20Test%20Cases%20by%20Module%20with%20Traceability%20Matrix.md), [derived status](qa/QA_Case_Status.md), [module queues](qa/QA_Run_Queues.md), [Playwright setup](qa/Playwright_Setup.md) and [automation readiness](qa/Automation_Readiness.md) (with the generated [coverage view](qa/Automation_Coverage.md)), plus JSON data files whose generating scripts are listed in the readiness guide | Preserve human results; new executions go in immutable `test-runs/` reports. One-off reviews are filed in `test-runs/`, not here. Regenerate the derived view after source/evidence changes |
-| [`reference/`](reference/) | Third-party reference material kept for lookup, such as [`nagios-openapi.json`](reference/nagios-openapi.json), an OpenAPI description of the Nagios Core 4.5.11 JSON CGI endpoints (captured from a lab appliance) | Not maintained against the product; replace it when the Nagios version changes |
+| [`reference/`](reference) | Third-party reference material kept for lookup, such as [`nagios-openapi.json`](reference/nagios-openapi.json), an OpenAPI description of the Nagios Core 4.5.11 JSON CGI endpoints (captured from a lab appliance) | Not maintained against the product; replace it when the Nagios version changes |
 | [`test-runs/`](test-runs/README.md) | Sanitized reports of live-lab and acceptance runs: commit tested, per-case results, issues raised | Permanent record; never edited to change a result |
 | [`../server/tests/plans/`](../server/tests/plans/README.md) | Test plans and live-lab plans | Stay beside the tests they drive |
 

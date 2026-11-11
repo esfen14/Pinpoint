@@ -97,7 +97,7 @@ scripts/playwright-lab
 
 Do not start these commands if another tester owns the VM lab.  If `status`
 reports a missing appliance or snapshot, recover it through
-[VM Lab Plan §4](../plans/VM_Lab_Plan.md#4-steps-to-get-running) rather than
+[VM Lab Plan §4](../archive/plans/VM_Lab_Plan.md#4-steps-to-get-running) rather than
 pointing Playwright at an ad-hoc environment.  `scripts/vmlab fresh` is
 destructive to the current appliance state; use it only for an approved clean
 baseline.

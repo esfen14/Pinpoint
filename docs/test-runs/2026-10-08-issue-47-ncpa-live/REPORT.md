@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-08 |
 | Commit tested | `7735fc1e` (`issue-47-ncpa-log-level`, PR #54) |
-| Plan | [`docs/plans/VM_Lab_Plan.md`](../../plans/VM_Lab_Plan.md) (NCPA deployment case) |
+| Plan | [`docs/archive/plans/VM_Lab_Plan.md`](../../archive/plans/VM_Lab_Plan.md) (NCPA deployment case) |
 | Tester | OpenCode, supervised by the project owner |
 | Environment | VM lab: installer-built `pinpoint-appliance` from snapshot `os-nagios-ready` (Ubuntu 22.04.5, Nagios Core 4.5.11) plus demo targets on `10.77.0.0/28`; fresh install of PR branch through `scripts/vmlab fresh issue-47-ncpa-log-level` |
 | Raw evidence | Command transcript in this OpenCode session; appliance logs inspected with `journalctl` only. No raw secrets or full logs committed. |

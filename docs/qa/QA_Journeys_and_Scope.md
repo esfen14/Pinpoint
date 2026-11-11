@@ -109,7 +109,7 @@ Each journey names the lowest environment that can verify it:
   approval does not widen the ordinary Docker or VM QA scan ranges and does
   not authorize scans on physical or VPN networks.
 - **vm lab**: `scripts/vmlab` (faithful lane; real installer steps, five target VMs on
-  `10.77.0.0/28`; see `docs/plans/VM_Lab_Plan.md`).
+  `10.77.0.0/28`; see `docs/archive/plans/VM_Lab_Plan.md`).
 - **manual**: a human is needed.
 
 Actors in the paper are *Network Administrator* and *Network Technician*. The product
@@ -228,7 +228,7 @@ has the roles Administrator, Manager and Staff (§4A A16); where a journey says
 ### J4. Enable a plugin and put it to work
 - **Actor:** Network Administrator. **Verify in:** mock or vm lab.
 - **Source:** flowchart p.97 ("Plugin Setup"); Plugin Manager pp.138-139 and Table 2 p.99;
-  `Plugins_List.md`; `docs/plans/Plugin_Driven_Monitoring_Plan.md`.
+  `Plugins_List.md`; `docs/archive/plans/Plugin_Driven_Monitoring_Plan.md`.
 - **Steps:** Plugins, All Plugins, select, verify, enable (the dialog previews what will
   be monitored), save. Monitoring attaches by itself to every device with a matching
   port; there is no device picking. (The paper's flowchart, p.97, still says the administrator "adds the devices

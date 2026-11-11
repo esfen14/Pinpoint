@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-15 Asia/Manila (2026-10-14 UTC) |
 | Commit tested | Application functional source `c9f8e263`; local full gate `a119afa4`; installed helper `15c27d1` (published installer `b166953`) |
-| Plan | [Issue #129](https://github.com/esfen14/Pinpoint/issues/129) E/G/H; [transport plan](../../plans/Issue_129_Check_Secret_Transport.md) |
+| Plan | [Issue #129](https://github.com/esfen14/Pinpoint/issues/129) E/G/H; [transport plan](../../archive/plans/Issue_129_Check_Secret_Transport.md) |
 | Tester | Codex |
 | Environment | Existing Ubuntu 22.04.5 QA appliance, Nagios 4.5.11, NCPA client 1.2.4, existing web01. Network guard 10.77.0.0/28; actual sweeps limited to 10.77.0.2/32. Current application runs in the clean acceptance worktree with upgraded shared databases. |
 | Raw evidence | Local git-ignored `test-results/issue-129/`: `finish-resume-verify.log`, `failed-install-cleanup-live.log`, `failed-install-cleanup-live-repeat.log`, `alternate-port-live.log`, `alternate-port-live-ready.log`, `finish-journeys-restoration.log`. Harness source retained locally under that same ignored directory. |

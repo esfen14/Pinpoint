@@ -6,7 +6,7 @@
 | Guard/harness commit | Marker trial at `f15ff1ab` (implementation `ec9e2517`); final SSH-boundary refinement at `10fcb05f` |
 | Application deployed | `82ba9ce9aefda8fbbad93ba500a9cacf23c56409` (`main`) |
 | Installer | Clean checkout `697869e`; existing deploy and privilege scripts |
-| Plan | [VM Lab Plan](../../plans/VM_Lab_Plan.md), [issue #162](https://github.com/esfen14/Pinpoint/issues/162) |
+| Plan | [VM Lab Plan](../../archive/plans/VM_Lab_Plan.md), [issue #162](https://github.com/esfen14/Pinpoint/issues/162) |
 | Tester | Codex; owner authorized deleting the old configured lab disks and rebuilding |
 | Environment | VirtualBox 7.2.14, new Ubuntu 22.04.5 appliance, new Ubuntu 24.04.5 target base and five targets; discovery restricted to `10.77.0.0/28` |
 | Raw evidence | Ignored `test-results/issue162/`: creation/provision/deploy logs, `snapshot-marker.log`, `snapshot-marker.json`, setup/scope/smoke/health logs |
