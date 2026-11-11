@@ -6,5 +6,6 @@ description: Work one GitHub issue end to end in a verify loop with a written pl
 # Work one issue
 
 The procedure is tool-neutral and lives in `.agent/workflows/work-issue.md`. Read that
-file completely, then follow it exactly for the issue number in `$ARGUMENTS`. Do not
+file completely, then follow it exactly for the issue number given after the command
+(Pi appends it to these instructions as the request; it has no `$ARGUMENTS` placeholder). Do not
 add, skip or reorder steps; change the procedure by editing that file, not this one.
