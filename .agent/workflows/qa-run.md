@@ -344,7 +344,7 @@ precedence over completing the batch. Report all remaining IDs as pending/blocke
 2. Verify environment safety: exclusive ownership, exact deployed SHA, private
    credential access, known baseline, authorized fault/setup operations, capacity,
    restoration plan and terminal access before discovery. Use `scripts/vmlab preflight`
-   before VM mutation. Only `10.77.0.0/28` may be scanned by this suite; read back
+   before VM mutation. Only `10.77.1.0/27` may be scanned by this suite; read back
    configured networks and reject any outside range. If the guard cannot be established,
    stop that case. This manual preflight is not an atomic enforced scan guard;
    unattended scan starts remain blocked until that guard exists. Never use the
