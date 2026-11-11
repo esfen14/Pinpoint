@@ -1,5 +1,7 @@
 ### Issue #16 — System Refinement Harden NCPA Deployment With Per-Device Port, Cleanup Action and Macro Secrets
 
+GitHub implementation issue: [#129](https://github.com/esfen14/Pinpoint/issues/129).
+
 **Category:** System
 
 **Work Type:** Refinement

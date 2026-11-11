@@ -1,5 +1,7 @@
 ### Issue #14 — System Implementation Add Per-Device Plugin Variables API and SNMP v3 Credential Support With Device Form
 
+GitHub implementation issue: [#127](https://github.com/esfen14/Pinpoint/issues/127).
+
 **Category:** System
 
 **Work Type:** Implementation

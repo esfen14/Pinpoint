@@ -1,5 +1,7 @@
 ### Issue #5 — System Implementation Add Host-Based Service Notification Dependencies
 
+GitHub implementation issue: [#118](https://github.com/esfen14/Pinpoint/issues/118).
+
 **Category:** System
 
 **Work Type:** Implementation

@@ -1,5 +1,7 @@
 ### Issue #11 — System Refinement Set Journald Limit, Report Storage Usage and Add Nagios Log Tab
 
+GitHub implementation issue: [#124](https://github.com/esfen14/Pinpoint/issues/124).
+
 **Category:** System
 
 **Work Type:** Refinement

@@ -1,6 +1,6 @@
 # PinPoint Development Issues
 
-These issues turn the gaps in [`docs/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../../NAGIOS_CORE_FEATURE_GAP_PLAN.md) into engineering-ready tasks. They were planned on 2026-10-13 and **none is implemented**.
+These issues turn the gaps in [`docs/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../../NAGIOS_CORE_FEATURE_GAP_PLAN.md) into engineering-ready tasks. They were planned on 2026-10-13. **All 25 GitHub issues are closed** and the work is merged; the Status column below records the evidence checked on 2026-11-11 (GitHub issue closed, pull requests merged, behavior present in code and specifications).
 
 ## How to read the numbers
 
@@ -15,33 +15,33 @@ These issues turn the gaps in [`docs/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../../NAG
 
 ## Index
 
-| Issue | Title | Category | Priority | Dependencies |
-|---|---|---|---|---|
-| [Issue #1](issue-001.md) | System Implementation Add Configurable Notification Policy With Nagios Timeperiods and Settings Screen | System | High | None |
-| [Issue #2](issue-002.md) | System Refinement Broaden Notification Mail Delivery Beyond Gmail and Report Failed Mail | System | Medium | None |
-| [Issue #3](issue-003.md) | System Implementation Add Alert Contact Groups and Nagios Escalations With Management Screen | System | Medium | [Issue #1](issue-001.md) |
-| [Issue #4](issue-004.md) | System Implementation Add Parent Device Relationships and Nagios Parents Rendering With Device Selector | System | Medium | None |
-| [Issue #5](issue-005.md) | System Implementation Add Host-Based Service Notification Dependencies | System | Low | [Issue #4](issue-004.md) |
-| [Issue #6](issue-006.md) | System Refinement Add Flap Detection Settings, Flapping Filter and Flap History | System | Medium | [Issue #10](issue-010.md) |
-| [Issue #7](issue-007.md) | System Implementation Add Allowlisted Event Handler Framework With Remediation Screen and Installer Support | System | Medium | None |
-| [Issue #8](issue-008.md) | System Implementation Add Local and Remote Service Recovery Actions With Restricted Sudo Rule | System | Low | [Issue #7](issue-007.md) |
-| [Issue #9](issue-009.md) | System Implementation Add Maintenance Windows That Create Nagios Scheduled Downtime and a Management Page | System | High | [Issue #19](issue-019.md) |
-| [Issue #10](issue-010.md) | System Refinement Add Retry Interval and Maximum Check Attempts Settings | System | Low | None |
-| [Issue #11](issue-011.md) | System Refinement Set Journald Limit, Report Storage Usage and Add Nagios Log Tab | System | Low | None |
-| [Issue #12](issue-012.md) | System Implementation Add Database Restore Command and Backup Health Reporting | System | Low | None |
-| [Issue #13](issue-013.md) | System Implementation Add Interface Bandwidth Rates, Interface Discovery and Bandwidth Chart | System | Medium | [Issue #14](issue-014.md) |
-| [Issue #14](issue-014.md) | System Implementation Add Per-Device Plugin Variables API and SNMP v3 Credential Support With Device Form | System | Medium | [Issue #16](issue-016.md) |
-| [Issue #15](issue-015.md) | System Refinement Add Load Average, Swap and Disk I/O Defaults and Guided Process Check | System | Medium | None |
-| [Issue #16](issue-016.md) | System Refinement Harden NCPA Deployment With Per-Device Port, Cleanup Action and Macro Secrets | System | Medium | None |
-| [Issue #17](issue-017.md) | System Implementation Add Manual NCPA Agent Registration for Windows Hosts With Registration Form | System | Low | [Issue #16](issue-016.md) |
-| [Issue #18](issue-018.md) | System Refinement Add POP3, IMAP and Expected-Response Options With Per-Device Web Check Form | System | Medium | [Issue #14](issue-014.md) |
-| [Issue #19](issue-019.md) | System Implementation Add Nagios Command Channel, Acknowledgement Propagation and Check Now | System | High | None |
-| [Issue #20](issue-020.md) | System Refinement Clear Acknowledgements on Recovery and Audit the History Page | System | Medium | None |
-| [Issue #21](issue-021.md) | Web-Interface Refinement Reconcile Reports Documentation and Add Availability Target Support | Web-Interface | Low | None |
-| [Issue #22](issue-022.md) | System Implementation Add Failure Escalation and Outcome Visibility for Automatic Recovery | System | Medium | [Issue #7](issue-007.md), [Issue #8](issue-008.md), [Issue #19](issue-019.md) |
-| [Issue #23](issue-023.md) | Web-Interface Implementation Add Per-Service Recover Automatically Toggle With Restart Limit | Web-Interface | Low | [Issue #7](issue-007.md), [Issue #8](issue-008.md) |
-| [Issue #24](issue-024.md) | System Implementation Add Remediation Safety Controls, Run Retention and Consumer Health Reporting | System | Medium | [Issue #7](issue-007.md) |
-| [Issue #25](issue-025.md) | System Implementation Add Disk and Resource Trend Forecast Warnings From Stored Performance Data | System | Low | None (notifications need [Issue #19](issue-019.md), [Issue #22](issue-022.md)) |
+| Issue | Title | Category | Priority | Dependencies | GitHub | Status (2026-11-11) | Pull requests |
+|---|---|---|---|---|---|---|---|
+| [Issue #1](issue-001.md) | System Implementation Add Configurable Notification Policy With Nagios Timeperiods and Settings Screen | System | High | None | [#113](https://github.com/esfen14/Pinpoint/issues/113) | Implemented | #140, #152 |
+| [Issue #2](issue-002.md) | System Refinement Broaden Notification Mail Delivery Beyond Gmail and Report Failed Mail | System | Medium | None | [#115](https://github.com/esfen14/Pinpoint/issues/115) | Partly implemented: Part 2.1 (implicit-TLS SMTP) deferred; needs the installer repository | #172 |
+| [Issue #3](issue-003.md) | System Implementation Add Alert Contact Groups and Nagios Escalations With Management Screen | System | Medium | [Issue #1](issue-001.md) | [#116](https://github.com/esfen14/Pinpoint/issues/116) | Implemented | #168 |
+| [Issue #4](issue-004.md) | System Implementation Add Parent Device Relationships and Nagios Parents Rendering With Device Selector | System | Medium | None | [#117](https://github.com/esfen14/Pinpoint/issues/117) | Implemented | #174 |
+| [Issue #5](issue-005.md) | System Implementation Add Host-Based Service Notification Dependencies | System | Low | [Issue #4](issue-004.md) | [#118](https://github.com/esfen14/Pinpoint/issues/118) | Implemented | #184, #192 |
+| [Issue #6](issue-006.md) | System Refinement Add Flap Detection Settings, Flapping Filter and Flap History | System | Medium | [Issue #10](issue-010.md) | [#119](https://github.com/esfen14/Pinpoint/issues/119) | Implemented | #148 |
+| [Issue #7](issue-007.md) | System Implementation Add Allowlisted Event Handler Framework With Remediation Screen and Installer Support | System | Medium | None | [#120](https://github.com/esfen14/Pinpoint/issues/120) | Partly implemented: installer item for narrower `nagios` group rights (Handoff D1) is open | #158, #171, #204 |
+| [Issue #8](issue-008.md) | System Implementation Add Local and Remote Service Recovery Actions With Restricted Sudo Rule | System | Low | [Issue #7](issue-007.md) | [#121](https://github.com/esfen14/Pinpoint/issues/121) | Implemented (Parts 8.1 to 8.3; sudoers drop-in merged in the installer repository) | #175, #183, #300 |
+| [Issue #9](issue-009.md) | System Implementation Add Maintenance Windows That Create Nagios Scheduled Downtime and a Management Page | System | High | [Issue #19](issue-019.md) | [#122](https://github.com/esfen14/Pinpoint/issues/122) | Implemented | #166 |
+| [Issue #10](issue-010.md) | System Refinement Add Retry Interval and Maximum Check Attempts Settings | System | Low | None | [#123](https://github.com/esfen14/Pinpoint/issues/123) | Implemented | #148 |
+| [Issue #11](issue-011.md) | System Refinement Set Journald Limit, Report Storage Usage and Add Nagios Log Tab | System | Low | None | [#124](https://github.com/esfen14/Pinpoint/issues/124) | Implemented (Part 11.1 journald limit delivered in the installer repository) | #178 |
+| [Issue #12](issue-012.md) | System Implementation Add Database Restore Command and Backup Health Reporting | System | Low | None | [#125](https://github.com/esfen14/Pinpoint/issues/125) | Implemented (cold standby only; no frontend display of `backup_health`, as planned) | #203 |
+| [Issue #13](issue-013.md) | System Implementation Add Interface Bandwidth Rates, Interface Discovery and Bandwidth Chart | System | Medium | [Issue #14](issue-014.md) | [#126](https://github.com/esfen14/Pinpoint/issues/126) | Implemented | #163, #262 |
+| [Issue #14](issue-014.md) | System Implementation Add Per-Device Plugin Variables API and SNMP v3 Credential Support With Device Form | System | Medium | [Issue #16](issue-016.md) | [#127](https://github.com/esfen14/Pinpoint/issues/127) | Implemented | #179, #58 |
+| [Issue #15](issue-015.md) | System Refinement Add Load Average, Swap and Disk I/O Defaults and Guided Process Check | System | Medium | None | [#128](https://github.com/esfen14/Pinpoint/issues/128) | Implemented | #159 |
+| [Issue #16](issue-016.md) | System Refinement Harden NCPA Deployment With Per-Device Port, Cleanup Action and Macro Secrets | System | Medium | None | [#129](https://github.com/esfen14/Pinpoint/issues/129) | Implemented | #161 |
+| [Issue #17](issue-017.md) | System Implementation Add Manual NCPA Agent Registration for Windows Hosts With Registration Form | System | Low | [Issue #16](issue-016.md) | [#130](https://github.com/esfen14/Pinpoint/issues/130) | Implemented | #202 |
+| [Issue #18](issue-018.md) | System Refinement Add POP3, IMAP and Expected-Response Options With Per-Device Web Check Form | System | Medium | [Issue #14](issue-014.md) | [#131](https://github.com/esfen14/Pinpoint/issues/131) | Implemented | #149, #180, #257 |
+| [Issue #19](issue-019.md) | System Implementation Add Nagios Command Channel, Acknowledgement Propagation and Check Now | System | High | None | [#132](https://github.com/esfen14/Pinpoint/issues/132) | Implemented | #139, #194 |
+| [Issue #20](issue-020.md) | System Refinement Clear Acknowledgements on Recovery and Audit the History Page | System | Medium | None | [#133](https://github.com/esfen14/Pinpoint/issues/133) | Implemented | #145 |
+| [Issue #21](issue-021.md) | Web-Interface Refinement Reconcile Reports Documentation and Add Availability Target Support | Web-Interface | Low | None | [#134](https://github.com/esfen14/Pinpoint/issues/134) | Implemented (Part 21.1 only; Parts 21.2 and 21.3 rejected by the owner on 2026-10-17) | #150, #200 |
+| [Issue #22](issue-022.md) | System Implementation Add Failure Escalation and Outcome Visibility for Automatic Recovery | System | Medium | [Issue #7](issue-007.md), [Issue #8](issue-008.md), [Issue #19](issue-019.md) | [#153](https://github.com/esfen14/Pinpoint/issues/153) | Implemented (browser pass and mail receipt not yet confirmed) | #157, #185, #204 |
+| [Issue #23](issue-023.md) | Web-Interface Implementation Add Per-Service Recover Automatically Toggle With Restart Limit | Web-Interface | Low | [Issue #7](issue-007.md), [Issue #8](issue-008.md) | [#154](https://github.com/esfen14/Pinpoint/issues/154) | Implemented | #157, #205 |
+| [Issue #24](issue-024.md) | System Implementation Add Remediation Safety Controls, Run Retention and Consumer Health Reporting | System | Medium | [Issue #7](issue-007.md) | [#155](https://github.com/esfen14/Pinpoint/issues/155) | Implemented | #157, #194 |
+| [Issue #25](issue-025.md) | System Implementation Add Disk and Resource Trend Forecast Warnings From Stored Performance Data | System | Low | None (notifications need [Issue #19](issue-019.md), [Issue #22](issue-022.md)) | [#156](https://github.com/esfen14/Pinpoint/issues/156) | Implemented | #157, #185 |
 
 ## Totals
 
@@ -50,6 +50,8 @@ These issues turn the gaps in [`docs/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../../NAG
 - Issues #22 to #25 were added on 2026-10-13 to complete the proactive-recovery work started by Issues #7 and #8 (escalation, the per-service toggle, safety and health controls, and forecasting). Their parts are labelled in the same way.
 
 ## Blocked or conditional issues
+
+Historical: these conditions applied when the issues were planned. All of these issues are now closed; see the Status column above for what was delivered and what remains.
 
 | Issue | Why |
 |---|---|

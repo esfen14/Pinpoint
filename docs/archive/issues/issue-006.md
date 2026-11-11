@@ -1,5 +1,7 @@
 ### Issue #6 — System Refinement Add Flap Detection Settings, Flapping Filter and Flap History
 
+GitHub implementation issue: [#119](https://github.com/esfen14/Pinpoint/issues/119).
+
 **Category:** System
 
 **Work Type:** Refinement

@@ -1,5 +1,7 @@
 ### Issue #12 — System Implementation Add Database Restore Command and Backup Health Reporting
 
+GitHub implementation issue: [#125](https://github.com/esfen14/Pinpoint/issues/125).
+
 **Category:** System
 
 **Work Type:** Implementation

@@ -1,5 +1,7 @@
 ### Issue #7 — System Implementation Add Allowlisted Event Handler Framework With Remediation Screen and Installer Support
 
+GitHub implementation issue: [#120](https://github.com/esfen14/Pinpoint/issues/120).
+
 **Category:** System
 
 **Work Type:** Implementation

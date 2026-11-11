@@ -1,5 +1,7 @@
 ### Issue #9 — System Implementation Add Maintenance Windows That Create Nagios Scheduled Downtime and a Management Page
 
+GitHub implementation issue: [#122](https://github.com/esfen14/Pinpoint/issues/122).
+
 **Category:** System
 
 **Work Type:** Implementation
