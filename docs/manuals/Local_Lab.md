@@ -30,6 +30,7 @@ scripts/lab logs [svc]  # follow logs (default: appliance)
 scripts/lab shell [svc] # shell in a container
 scripts/lab break <target> <ssh|http|snmp|all>   # stop a service or the whole target
 scripts/lab fix   <target> <ssh|http|snmp|all>   # start it again
+scripts/lab check-drift # compare the Dockerfile's pinned versions with the PinPoint-Installer (needs no Docker)
 ```
 
 Targets: `web01`, `web02`, `app01`, `snmp01`, `legacy01`.
@@ -78,6 +79,33 @@ generated Nagios files inside the container, never into your repository.
 Last audited against PinPoint-Installer `setup/` at main `9bc7150` (issue #316);
 `server/tests/unit/test_lab_appliance_drift.py` pins the settings copied from it.
 Re-audit when the installer's baseline manifest or `setup/` scripts change.
+
+### Checking for drift
+
+Run `scripts/lab check-drift` whenever the installer changes. It compares the
+versions pinned in `lab/appliance/Dockerfile` with the installer and exits
+non-zero when they differ:
+
+| Compared | Installer source |
+|---|---|
+| Ubuntu release; Nagios Core and plugins version, download URL and SHA-256; `check_ncpa` download URL and SHA-256 | Newest `setup/manifests/pp-mon-baseline-<n>.json` |
+| Python version, Gunicorn requirement | `setup/deploy-pinpoint-web.sh` |
+
+Exit status: `0` the pins match, `1` a pin differs (each one is listed with both
+values), `2` the installer checkout could not be read.
+
+The installer checkout is the one `scripts/vmlab` uses. By default that is the
+cache `~/.cache/pinpoint-vmlab/PinPoint-Installer`, which the command clones or
+fast-forwards to the installer's default branch (this needs network access). Set
+`VMLAB_INSTALLER_DIR` (in the environment, or in `~/.config/pinpoint-vmlab/env`)
+to compare with your own clone instead; it is only read, never fetched or reset,
+so update it yourself first.
+
+The check covers pinned versions only. It does not see changes to the installer's
+`setup/` steps, sudoers rules or helpers, so a match does not replace the
+re-audit above. It is a manual command, not a CI job, because CI has no installer
+checkout (decided in #306); `scripts/test_lab_drift.py` tests the comparison
+offline in `scripts/verify.sh docs`.
 
 Deliberate lab differences:
 
