@@ -21,6 +21,26 @@ installer is maintained separately from this repository.
 Start with the [specification index](spec%20files/README.md) before changing
 system behavior. Contributor and agent routing rules are in [AGENTS.md](AGENTS.md).
 
+## Optional AI-agent tooling
+
+Some folders and files in this repository exist only to support developers who
+use AI coding assistants. They are **optional development tooling**. Pinpoint
+does not read, import, or run any of them, so IT staff can ignore them, and
+deleting them does not affect installing, configuring, or running Pinpoint.
+
+| Path | What it is |
+|---|---|
+| [`AGENTS.md`](AGENTS.md), [`CLAUDE.md`](CLAUDE.md) | Entry points that tell an AI assistant which specification files to read before changing code |
+| [`.agent/`](.agent/) | The shared, tool-neutral step-by-step procedures (`work-issue`, `qa-run`, `fix-found`) and per-issue progress notes |
+| [`.claude/skills/`](.claude/skills/) | Claude Code shortcuts that load the `.agent/` procedures |
+| [`.codex/skills/`](.codex/skills/) | Codex shortcuts that load the same procedures |
+| [`.opencode/commands/`](.opencode/commands/) | OpenCode shortcuts that load the same procedures |
+| [`.pi/skills/`](.pi/skills/) | Pi shortcuts that load the same procedures |
+
+The per-tool folders are thin adapters that point at `.agent/workflows/`, so the
+same workflow is available in each tool. Manuals for operating Pinpoint are in
+[`docs/manuals/`](docs/manuals/).
+
 ## Development setup
 
 Use Python 3.14 for the backend. Use a current Node.js/npm installation that
