@@ -85,3 +85,14 @@ def test_real_sudo_and_root_helpers_match_installer():
     assert "visudo -cf" in dockerfile
     assert "/usr/bin/systemctl" in dockerfile
     assert "--privileged" in _read("shims/nmap-sudo")
+
+
+def test_mail_sink_is_wired_into_the_lab_and_smoke_test():
+    compose = (ROOT / "lab" / "compose.yaml").read_text()
+    assert "mail01:" in compose and "lab/mail/Dockerfile" in compose
+    assert "mail-ca:/lab-mail-ca:ro" in compose
+    entrypoint = _read("entrypoint.sh")
+    assert "update-ca-certificates" in entrypoint
+    smoke = (ROOT / "lab" / "smoke.py").read_text()
+    assert "--mail-sink-url" in smoke and "notification_mail_check" in smoke
+    assert "--mail-sink-url" in (ROOT / "scripts" / "lab").read_text()

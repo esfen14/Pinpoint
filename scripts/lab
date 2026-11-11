@@ -12,7 +12,7 @@
 #   scripts/lab shell [svc]   shell in a container (default: appliance)
 #   scripts/lab break <target> <ssh|http|snmp|all>   stop a service, or the whole target
 #   scripts/lab fix   <target> <ssh|http|snmp|all>   start it again
-#   scripts/lab smoke         run the smoke checks (lab/smoke.py): discovery, plugin, break/fix alert
+#   scripts/lab smoke         run the smoke checks (lab/smoke.py): discovery, plugin, break/fix alert, Email settings and mail
 #
 # Lab-only credentials: admin@test.com / Password123! (seeded development users).
 set -euo pipefail
@@ -58,8 +58,8 @@ wait_ready() {
 cmd="${1:-help}"; shift || true
 case "$cmd" in
   up)     need_docker; "${compose[@]}" up -d --build; wait_ready ;;
-  down)   need_docker; "${compose[@]}" down ;;
-  reset)  need_docker; "${compose[@]}" down; "${compose[@]}" up -d; wait_ready ;;
+  down)   need_docker; "${compose[@]}" down -v ;;
+  reset)  need_docker; "${compose[@]}" down -v; "${compose[@]}" up -d; wait_ready ;;
   status) need_docker; "${compose[@]}" ps ;;
   sync)   need_docker; "${compose[@]}" exec appliance pp-sync; wait_ready ;;
   logs)   need_docker; "${compose[@]}" logs -f --tail 100 "${1:-appliance}" ;;
@@ -82,7 +82,7 @@ case "$cmd" in
       "${compose[@]}" exec "$target" supervisorctl "$action" "$program"
     fi
     ;;
-  smoke)  need_docker; exec python3 -I "$root/lab/smoke.py" --lab-script "$root/scripts/lab" "$@" ;;
+  smoke)  need_docker; exec python3 -I "$root/lab/smoke.py" --lab-script "$root/scripts/lab" --mail-sink-url http://127.0.0.1:8025 "$@" ;;
   help|-h|--help) sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//' ;;
   *) die "unknown command '$cmd' (try: scripts/lab help)" ;;
 esac

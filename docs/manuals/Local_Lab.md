@@ -89,10 +89,10 @@ Deliberate lab differences:
   fills the databases.
 - **Not installed:** PHP, the built web client (use `scripts/lab ui`), the
   installer's first-boot and update machinery, and journald and logrotate settings.
-  The SMTP and resource helpers are installed, but there is no real SMTP server to
-  relay to, and NCPA deployment and remote service restarts are unverified because
-  the targets have no init system (those helpers are installed on the target by the
-  app).
+  The SMTP and resource helpers are installed, and the SMTP path is tested against
+  the lab mail sink (see "Testing the Email settings"). NCPA deployment and remote
+  service restarts are unverified because the targets have no init system (those
+  helpers are installed on the target by the app).
 - The app tree is copied in from the working tree at start (`pp-sync`) and the
   event handler is installed from it then, instead of from a fresh clone.
 - `hosts.cfg` and `plugin-services.cfg` are added to the end of `nagios.cfg`
@@ -106,6 +106,22 @@ Deliberate lab differences:
   no address, so discovery sees only the five targets and nothing leaves Docker.
   `PINPOINT_NETWORKS` is `10.78.0.0/24`; never add your real LAN to it.
 - Databases are seeded with development data on first start.
+
+## Testing the Email settings
+
+`mail01` is a stand-in SMTP relay (`lab/mail/`): STARTTLS and a login are
+required, it keeps every message, and it is on its own network so discovery never
+lists it. The appliance trusts its CA, so the real chain is exercised: Settings ->
+Email, `sudo`, `pinpoint-apply-smtp`, `/etc/msmtprc`, `/bin/mail` and msmtp.
+
+- **Automatic:** `scripts/lab smoke` saves the settings, sends the test email, then
+  breaks `web01` and checks that Nagios's alert mail reaches the sink. It adds about
+  a minute to the run.
+- **By hand:** in Settings -> Email choose Custom with host `mail01`, port `587`,
+  user `lab-smtp-user`, password `lab smtp pass #1`. Read what arrived with
+  `curl http://127.0.0.1:8025/messages` (`curl -X DELETE` on the same URL clears it).
+- Gmail itself, real certificates and delivery to a real mailbox are not tested.
+- `scripts/lab down` and `reset` remove the sink's volume so the CA is recreated.
 
 ## What it cannot test
 
