@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-14 |
 | Commit tested | `fd5f0f62` initial macro regression; `4a784b83` merged-source regression, process diagnostic and full gate |
-| Plan | [Issue #129 transport plan](../../plans/Issue_129_Check_Secret_Transport.md) |
+| Plan | [Issue #129 transport plan](../../archive/plans/Issue_129_Check_Secret_Transport.md) |
 | Tester | Codex |
 | Environment | Local isolated Python/React suites; Linux process diagnostic with a synthetic credential and fake NCPA executable; no real credentials, live Nagios execution or network checks |
 | Raw evidence | Git-ignored `test-results/issue-129/`: `macro-secrets-retest.log`/`.xml`, `merged-macro-tests.log`, `post-merge-verify-all.log`, `process-diagnostic.txt` |

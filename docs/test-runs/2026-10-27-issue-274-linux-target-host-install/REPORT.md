@@ -4,7 +4,7 @@
 |---|---|
 | Date / executor | 2026-10-27 Asia/Manila; Codex, scripted VirtualBox/SSH plus guest console recovery |
 | Source | Base `cf170772` plus the versioned installation/recovery fixes identified below; no deployed Pinpoint changes |
-| Plan / issue | [Defense demo plan](../../plans/Defense_Demo_Lab_Plan.md); [#274](https://github.com/esfen14/Pinpoint/issues/274) |
+| Plan / issue | [Defense demo plan](../../archive/plans/Defense_Demo_Lab_Plan.md); [#274](https://github.com/esfen14/Pinpoint/issues/274) |
 | Catalog | `manifest.json`, SHA-256 `7a2ab626fb66bc71ff660347fd6ba8d118d2c67e600041c84575fa7d47fdc1f8` |
 | Queue / credit | Issue preparation only; no QA queue/session/card; 0 unique TC and 0 unique E2E executions; no historical credit |
 | Environment | VirtualBox 7.2.14; fresh Ubuntu Server 24.04.5 VM, 2048 MiB, 2 CPUs, dynamic 16 GiB disk |

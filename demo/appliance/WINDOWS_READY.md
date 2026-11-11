@@ -2,7 +2,7 @@
 
 `pinpoint-defense-win01` has Windows 10 Home build 19045 and NCPA 3.5.0 installed.
 It has an `ncpa-ready` snapshot taken powered off; whether the VM is running depends on the session (check `VBoxManage list runningvms`). This is preparation for the
-[defense lab plan](../../docs/plans/Defense_Demo_Lab_Plan.md), not the completed
+[defense lab plan](../../docs/archive/plans/Defense_Demo_Lab_Plan.md), not the completed
 fifteen-device demo. [Observed installation and API results](../../docs/test-runs/2026-10-27-issue-274-windows-home-install/REPORT.md).
 
 | Item | Value |
@@ -37,7 +37,7 @@ agent preparation.
 
 Before any later start, establish exclusive host/VM ownership, check the exact
 UUID/NIC attachment and resources, and acquire the canonical host control claim
-as required by the [VM lab procedure](../../docs/plans/VM_Lab_Plan.md). Never start
+as required by the [VM lab procedure](../../docs/archive/plans/VM_Lab_Plan.md). Never start
 this VM alongside another user's lab. Host KVM can block VirtualBox with
 `VERR_SVM_IN_USE`; the owner temporarily unloaded it for this installation.
 Restore with `sudo modprobe kvm_amd` only while VirtualBox VMs are off. A later

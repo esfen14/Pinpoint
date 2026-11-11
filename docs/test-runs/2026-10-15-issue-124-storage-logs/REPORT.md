@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-15 |
 | Commit tested | Application fresh `f80d6c1f`; upgrade/API/browser `5f0a7ef8`; installer `ffb4cc3c` |
-| Plan | [Issue 124 / plan issue 11](../../issues/issue-011.md) sections E–H |
+| Plan | [Issue 124 / plan issue 11](../../archive/issues/issue-011.md) sections E–H |
 | Tester | Codex |
 | Environment | Exclusive linked VM clone `pinpoint-issue124-appliance`, Ubuntu 22.04.5, Nagios 4.5.11; fresh SQLite databases followed by a populated upgrade; dedicated internal network and loopback SSH/web endpoints; no target scans |
 | Raw evidence | Task laptop: `/tmp/issue124-evidence/`; private credentials are separately retained outside the repository and never included in evidence |

@@ -24,6 +24,6 @@ IP, open a port, return to baseline. One front door: `demo/demo`.
 ## Related
 
 - [Local lab manual](../docs/manuals/Local_Lab.md): the fast five-target Docker lab (`scripts/lab`), not this demo.
-- [Defense demo lab plan](../docs/plans/Defense_Demo_Lab_Plan.md): why this lab is built this way.
-- [VM lab plan](../docs/plans/VM_Lab_Plan.md) and [`lab/`](../lab/): the appliance/VM test harness.
+- [Defense demo lab plan](../docs/archive/plans/Defense_Demo_Lab_Plan.md): why this lab is built this way.
+- [VM lab plan](../docs/archive/plans/VM_Lab_Plan.md) and [`lab/`](../lab): the appliance/VM test harness.
 - Rules and status: `spec files/Agent_Workflow_and_CI.md` (test environments) and `spec files/Implementation_Status.md`.

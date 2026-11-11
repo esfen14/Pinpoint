@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-14 |
 | Commit tested | Application `7f531562`; installer `faca298`; pushed PR checks `d536fdfc` |
-| Plan | [Check secret transport](../../plans/Issue_129_Check_Secret_Transport.md) |
+| Plan | [Check secret transport](../../archive/plans/Issue_129_Check_Secret_Transport.md) |
 | Tester | Codex |
 | Environment | Host isolated test suite; existing Ubuntu 22.04.5 QA appliance, installed NCPA client 1.2.4 and Nagios Plugins 2.4.12. Application source was not synced or deployed. No database migration or managed config replacement. |
 | Raw evidence | Local git-ignored `test-results/issue-129/`: `secure-transport-backend.log`, `secure-transport-frontend.log`, `transport-compatibility-observations.txt`. Earlier NCPA-only stage: `secure-ncpa-backend.log`. |

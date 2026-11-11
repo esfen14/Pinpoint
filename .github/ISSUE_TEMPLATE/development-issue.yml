@@ -11,7 +11,7 @@ body:
         The description states one concrete engineering outcome. Do not use titles such as "Fix monitoring" or "Improve system".
 
         Add a priority label (`Top Priority`, `Medium Priority` or `Low Priority`) after filing. Add `needs-decision` if the work is waiting on a product or scope decision.
-        The full specifications for the planned backlog are in `docs/issues/`.
+        The full specifications for the planned backlog are in `docs/archive/issues/`.
   - type: input
     id: plan
     attributes:

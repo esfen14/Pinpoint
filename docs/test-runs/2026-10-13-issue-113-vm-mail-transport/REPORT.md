@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-13 |
 | Commit tested | PinPoint application `560ad780`; installer `697869e` (only `configure-pinpoint-privileges.sh` re-run on the existing VM) |
-| Plan | Issue #113 email-delivery follow-up; `docs/plans/VM_Lab_Plan.md` (incremental VM update, not a fresh installer acceptance run) |
+| Plan | Issue #113 email-delivery follow-up; `docs/archive/plans/VM_Lab_Plan.md` (incremental VM update, not a fresh installer acceptance run) |
 | Tester | OpenCode agent |
 | Environment | Existing installer-built Ubuntu 22.04.5 VM, Nagios Core 4.5.11; no SMTP credentials configured |
 | Raw evidence | Local `/tmp/opencode/issue113-installer-update.log`, `/tmp/opencode/issue113-mail-health.log`; VM `/var/log/pinpoint-privileges.log` (not committed) |

@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-27 |
 | Commit tested | `e0cb5047` |
-| Plan | [Defense demo lab plan](../../plans/Defense_Demo_Lab_Plan.md) |
+| Plan | [Defense demo lab plan](../../archive/plans/Defense_Demo_Lab_Plan.md) |
 | Tester / executor mode | Codex, AI-assisted scripted host/guest controls |
 | Catalog revision and SHA-256 | `e0cb5047`; `demo/targets/manifest.json` SHA-256 `7a2ab626fb66bc71ff660347fd6ba8d118d2c67e600041c84575fa7d47fdc1f8` |
 | Queue / set / session / batch | Issue #274, stage 2 restoration and stage 3 ping-only pass |

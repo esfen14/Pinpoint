@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-08 |
 | Commit tested | Application: `issue-43-pending-hosts` at `d8dc63e0` (fresh install) and `main` at `483c8bdc`; lab tooling `483c8bdc` plus the `alerts` command added in this change |
-| Plan | [`docs/plans/VM_Lab_Plan.md`](../../plans/VM_Lab_Plan.md) |
+| Plan | [`docs/archive/plans/VM_Lab_Plan.md`](../../archive/plans/VM_Lab_Plan.md) |
 | Tester | Claude Code, supervised by the project owner |
 | Environment | The VM lab from [`2026-10-08-vm-lab-first-run`](../2026-10-08-vm-lab-first-run/REPORT.md): installer-built appliance (Ubuntu 22.04.5, Nagios Core 4.5.11) and the `demo/` targets at `10.77.0.2` to `.6`. Database state: fresh install each time |
 | Raw evidence | Author's machine: `~/pinpoint-test-results/2026-10-08-alerts-run/` (not committed) |

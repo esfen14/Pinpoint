@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-27, Asia/Manila; checks after 21:25 |
 | Controller and documentation revision | `d4f69043`; application revision on the owner's VM not observed |
-| Plan | [Defense demo lab](../../plans/Defense_Demo_Lab_Plan.md) |
+| Plan | [Defense demo lab](../../archive/plans/Defense_Demo_Lab_Plan.md) |
 | Executor | Owner performed Windows registration; AI-assisted status and ping observations |
 | Catalog | `manifest.json` SHA-256 `7a2ab626fb66bc71ff660347fd6ba8d118d2c67e600041c84575fa7d47fdc1f8` |
 | Environment | Owner's `Pinpoint-Final` VM, Windows VM, laptop Docker pilot on host-only `10.77.1.0/27` |

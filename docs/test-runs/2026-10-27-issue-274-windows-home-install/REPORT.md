@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-27, Asia/Manila |
 | Repository revision during installation | `2a0bb730716f808a937fd80818dff570b8fae360`; lab source unchanged from `00d78f10` |
-| Plan | [Defense demo plan](../../plans/Defense_Demo_Lab_Plan.md), user-requested Windows preparation before the remaining controller stages |
+| Plan | [Defense demo plan](../../archive/plans/Defense_Demo_Lab_Plan.md), user-requested Windows preparation before the remaining controller stages |
 | Executor / mode | Codex, AI-assisted VirtualBox CLI, bounded private one-time helpers and observed guest setup screens |
 | Catalog / queue / credit | Not a QA catalog run; no TC/E2E or historical credit |
 | Successful installation / verification window | 07:11:56–07:44:14 Asia/Manila (2026-10-26 23:11:56–23:44:14 UTC); includes guest-tools restart and setup diagnostics |

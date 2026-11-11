@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-16 |
 | Commit tested | `f7905202` (branch `issue-8-3-remote-restart`, Part 8.3), applied as a patch on top of `main` at `8869235`. The migration chain at that time ended at `b8e3d5f2a417`; the branch has since been re-parented onto `d117f3b8a053` and has not been re-run on the lab |
-| Plan | Issue #121 (`docs/issues/issue-008.md`) Part 8.3 acceptance criteria; design in `docs/plans/Issue_8_3_Remote_Restart_Design_Note.md` |
+| Plan | Issue #121 (`docs/archive/issues/issue-008.md`) Part 8.3 acceptance criteria; design in `docs/archive/plans/Issue_8_3_Remote_Restart_Design_Note.md` |
 | Tester | Claude Code agent for the project owner, who approved running this on the lab |
 | Environment | Same lab appliance as `2026-10-16-issue-121-local-restart`, with the 8.3 patch applied to the checkout (uncommitted there), migration `c7a1f4d92e60` applied to both databases and the service restarted. Four Linux devices were in the inventory; none had the NCPA deployment key installed, and no administrator login for any of them was available |
 | Raw evidence | On the appliance: the journal of `pinpoint-gunicorn` and the `REMEDIATION_RUN` table. Not committed |

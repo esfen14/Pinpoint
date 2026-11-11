@@ -25,7 +25,7 @@ is in flight.
 
 ## Archived
 
-Superseded versions with no tool reader moved to [`archive/`](archive/) unchanged
+Superseded versions with no tool reader moved to [`archive/`](archive) unchanged
 (issue [#285](https://github.com/esfen14/Pinpoint/issues/285)); none is current.
 
 | Group | Files in `archive/` |

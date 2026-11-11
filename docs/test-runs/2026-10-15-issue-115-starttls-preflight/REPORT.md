@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-15 |
 | Commit tested | `899e7cd2c4ef5b53fcf55c3b478d3e267feb51ac` (source at preflight) |
-| Plan | [Issue #115 specification](../../issues/issue-002.md), STARTTLS-only user decision |
+| Plan | [Issue #115 specification](../../archive/issues/issue-002.md), STARTTLS-only user decision |
 | Tester | Codex |
 | Environment | Development checkout; VirtualBox unavailable and Docker socket access denied. No appliance or database changed. No lab network contacted. |
 | Raw evidence | Local checkout `test-results/issue-115-vmlab-preflight.log`, `issue-115-docker-preflight.log`; not committed |

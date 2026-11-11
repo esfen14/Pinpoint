@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-13 |
 | Commit tested | 1ca2c757 |
-| Plan | docs/issues/issue-001.md §G; VM lab acceptance |
+| Plan | docs/archive/issues/issue-001.md §G; VM lab acceptance |
 | Tester | OpenCode agent |
 | Environment | Installer-built appliance VM, Nagios Core 4.5.11 |
 | Raw evidence | Local `/tmp/opencode/issue113-vm-fresh.log`, `/tmp/opencode/issue113-vm-smoke.log`, `/tmp/opencode/issue113-ncpa-deploy.log`; live appliance Nagios log (not committed) |

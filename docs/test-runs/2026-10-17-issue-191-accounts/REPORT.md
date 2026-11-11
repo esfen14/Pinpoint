@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-17 |
 | Commit tested | `2688e430` |
-| Plan | [Account creation investigation](../../plans/Issue_191_Account_Creation_Investigation.md) |
+| Plan | [Account creation investigation](../../archive/plans/Issue_191_Account_Creation_Investigation.md) |
 | Tester | Codex |
 | Environment | Local Linux, headless Chromium, Vite on loopback, real Flask API with fresh temporary file-backed SQLite system/history databases; scheduler disabled; Nagios writer stubbed |
 | Raw evidence | Local `/tmp/issue191-browser.cjs`, `/tmp/issue191-local-server.py`, `/tmp/issue191-local-server.log`; isolated verification logs `/tmp/issue-191-frontend.log` and `/tmp/issue-191-all.log` |

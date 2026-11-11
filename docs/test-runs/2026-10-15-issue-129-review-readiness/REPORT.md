@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-15 |
 | Commit tested | Application `7c0bb631`; final cleanup changes only documentation and removes the completed progress file |
-| Plan | [Issue #129](https://github.com/esfen14/Pinpoint/issues/129) E/F/H; [transport plan](../../plans/Issue_129_Check_Secret_Transport.md) |
+| Plan | [Issue #129](https://github.com/esfen14/Pinpoint/issues/129) E/F/H; [transport plan](../../archive/plans/Issue_129_Check_Secret_Transport.md) |
 | Tester | Codex |
 | Environment | Isolated local suites and GitHub CI; no live database/appliance changed in this finish step |
 | Raw evidence | Local git-ignored `test-results/issue-129/`: `final-ready-verify-all.log`, `final-ready-docs.log`, `recipient-merge-red.log`, `recipient-merge-focused.log`, `recipient-merge-backend.log`. CI [run38695633494](https://github.com/esfen14/Pinpoint/actions/runs/38695633494). |

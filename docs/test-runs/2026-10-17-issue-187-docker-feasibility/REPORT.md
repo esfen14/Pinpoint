@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-17 |
 | Commit tested | `f53cc067` (proposal baseline; experiment was outside the repository) |
-| Plan | `docs/plans/DHCP_Lab_Extension_Proposal.md` feasibility stage |
+| Plan | `docs/archive/plans/DHCP_Lab_Extension_Proposal.md` feasibility stage |
 | Tester and owner | Codex, exclusive owner of `p187-*` throwaway resources; existing `pinpoint-lab` was not changed |
 | Environment | Linux host, Docker Engine 29.7.2, Ubuntu 22.04 test image; isolated `10.79.0.0/28`; no Pinpoint database or Nagios used |
 | Raw evidence | Lab host `/tmp/pinpoint-187-feasibility/evidence/` (not committed; may be removed by host cleanup) |

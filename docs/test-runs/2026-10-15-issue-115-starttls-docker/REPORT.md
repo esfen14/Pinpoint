@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-15 |
 | Commit tested | Application `6e14836e8e0f441d7785a741dfaac8ef34f41732` (same application source as `de7909e4`); new browser spec was uncommitted during the run |
-| Plan | [STARTTLS acceptance](../../../server/tests/plans/SMTP_Relay_Acceptance.md), [#115 scope](../../issues/issue-002.md); implicit TLS deferred by requester |
+| Plan | [STARTTLS acceptance](../../../server/tests/plans/SMTP_Relay_Acceptance.md), [#115 scope](../../archive/issues/issue-002.md); implicit TLS deferred by requester |
 | Tester | Codex |
 | Environment | Owned standalone Ubuntu 22.04 Docker appliance, Nagios 4.5.11, Python 3.14, msmtp 1.8.16, real sudo; fresh migrated/seeded databases; loopback SMTP sink and browser port 18115; background automation disabled; no network scans |
 | Image | `sha256:ecfc82b51c40fe08cc2874540dd321560582bb8b921b04745f4b8ab111038251` |

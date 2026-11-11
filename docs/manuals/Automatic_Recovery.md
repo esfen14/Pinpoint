@@ -11,7 +11,7 @@ Restarting services on monitored devices is not part of this feature (it is trac
 ## Before you turn it on
 
 - The appliance installer must have installed the restart permission, `/etc/sudoers.d/pinpoint-restart`, which allows `pinpoint` to run exactly `systemctl restart nagios` and nothing else. Without it the action runs but fails with "Restart of nagios failed with exit code 1."
-- The event handler and its spool folder must be installed (see [`Installer_Handoff.md`](../plans/Installer_Handoff.md)). Without them no event reaches PinPoint and no rule runs.
+- The event handler and its spool folder must be installed (see [`Installer_Handoff.md`](../archive/plans/Installer_Handoff.md)). Without them no event reaches PinPoint and no rule runs.
 
 ## Create a rule
 

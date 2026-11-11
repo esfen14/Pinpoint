@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-13 |
 | Commit tested | Appliance application `1ca2c757` (source same for policy; browser test parametrization was uncommitted during run) |
-| Plan | `docs/issues/issue-001.md` §G; issue #113 VM acceptance |
+| Plan | `docs/archive/issues/issue-001.md` §G; issue #113 VM acceptance |
 | Tester | OpenCode agent |
 | Environment | Fresh installer-built Ubuntu 22.04.5 appliance VM, Nagios Core 4.5.11, five targets on isolated `10.77.0.0/28`; system database created by installer |
 | Raw evidence | Local `/tmp/opencode/issue113-vm-fresh.log`, `/tmp/opencode/issue113-vm-smoke.log`, `/tmp/opencode/issue113-ncpa-deploy.log`, `/tmp/opencode/issue113-vm-browser.log`, `/tmp/opencode/issue113-vm-frontend.log`; appliance `/usr/local/nagios/var/nagios.log` (not committed) |

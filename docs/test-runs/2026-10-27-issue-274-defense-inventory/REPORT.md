@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-27, Asia/Manila |
 | Commit inspected | `8201ce27ca4fcce3e8fb398e35d8cdcef1a1d874` (plan checkpoint; lab code unchanged from `00d78f10`) |
-| Plan | [Defense demo plan](../../plans/Defense_Demo_Lab_Plan.md) |
+| Plan | [Defense demo plan](../../archive/plans/Defense_Demo_Lab_Plan.md) |
 | Executor / mode | Codex, AI-assisted host CLI; read-only inventory, no browser or product case execution |
 | Catalog / queue / session / batch | Not a QA catalog run; issue #274 preparation only; no catalog credit |
 | Deployed application / installer | Not inspected; no deployment or guest login performed |

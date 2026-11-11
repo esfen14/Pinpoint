@@ -4,7 +4,7 @@
 |---|---|
 | Date and time | 2026-10-27, Asia/Manila; Docker active since 20:51:06 |
 | Controller revision | `4ce0dedf` in the persistent presenter checkout; the later `c68dfc70` checkpoint changed progress only |
-| Plan | [Defense demo lab](../../plans/Defense_Demo_Lab_Plan.md) |
+| Plan | [Defense demo lab](../../archive/plans/Defense_Demo_Lab_Plan.md) |
 | Executor | Owner initiated daemon restart and presenter up; AI-assisted read-only status and ping checks |
 | Catalog | `manifest.json` SHA-256 `7a2ab626fb66bc71ff660347fd6ba8d118d2c67e600041c84575fa7d47fdc1f8` |
 | Environment | Laptop Docker, VirtualBox Windows and host-only `10.77.1.0/27` pilot |

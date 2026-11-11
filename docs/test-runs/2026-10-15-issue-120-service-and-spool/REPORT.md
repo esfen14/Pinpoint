@@ -39,7 +39,7 @@ Totals: Pass 7, Fail 0, Blocked 0, Skipped 3.
 ## Follow-up
 
 - A live SOFT state needs an active-check failure (a service that really fails twice before the third attempt); repeat when a lab service can be made to fail on demand.
-- The Remediation page walk-through is still outstanding; the owner can do it with the checklist in section 8 of `docs/plans/Event_Handler_Design.md` once a login works.
+- The Remediation page walk-through is still outstanding; the owner can do it with the checklist in section 8 of `docs/archive/plans/Event_Handler_Design.md` once a login works.
 - The INFO-level logging observation from the first run is unchanged.
 
 ## Sanitization checklist

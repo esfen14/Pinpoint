@@ -78,7 +78,7 @@ Plugin lifecycle and active monitoring are separate:
   never touches, `Custom` for checks an administrator added for a plugin
   discovery cannot drive). `(PluginID, NetDiscoveryID, Nagios_Service_Name)` is unique;
   rows without a service name are not compared. The reconciler itself is
-  planned, see `docs/plans/Plugin_Driven_Monitoring_Plan.md`; today every row is `Manual`.
+  planned, see `docs/archive/plans/Plugin_Driven_Monitoring_Plan.md`; today every row is `Manual`.
 - Command overrides preserve an immutable snapshot of the original command.
 - Plugin Manager targets existing `NetworkDiscovery` devices; free-form targets
   are out of scope.
@@ -99,7 +99,7 @@ Plugin lifecycle and active monitoring are separate:
   the generic TCP fallback needs `check_tcp` enabled too. Ports keep their state
   and frozen plugin when a plugin is off, so enabling restores them.
 - **Custom checks** (`network_discovery/custom_checks.py`, `api/plugin/custom_checks.py`;
-  `docs/plans/Custom_Checks_Plan.md`): a `PluginConfiguration` row with `Origin = Custom`, no port
+  `docs/archive/plans/Custom_Checks_Plan.md`): a `PluginConfiguration` row with `Origin = Custom`, no port
   (`Port_Number` and `Protocol` stay NULL), `Service_Description` the admin's name,
   `Nagios_Service_Name` `custom-<plugin>-<name>` and `Configuration_Data`
   `{"variables": {...}, "paused": bool}`. `create_host_cfg.load_custom_checks()` reads the
@@ -899,7 +899,7 @@ pass. Installed service-user writes, resource validation and exact rollback have
 also passed; four real NCPA adapter metrics matched the stock client as `nagios`.
 Applying/reloading the complete generated configuration and final live Nagios
 acceptance remain incomplete; see
-[the issue #129 transport plan](../docs/plans/Issue_129_Check_Secret_Transport.md).
+[the issue #129 transport plan](../docs/archive/plans/Issue_129_Check_Secret_Transport.md).
 
 ## Alert acknowledgement lifecycle
 

@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-15 (Asia/Manila) |
 | Code tested | Preflight rejection at `5fefa6a2`; positive runtime-NAT preflight at `b22221eb` plus working-tree refinements |
-| Plan | [VM Lab Plan](../../plans/VM_Lab_Plan.md), [issue #162](https://github.com/esfen14/Pinpoint/issues/162) |
+| Plan | [VM Lab Plan](../../archive/plans/VM_Lab_Plan.md), [issue #162](https://github.com/esfen14/Pinpoint/issues/162) |
 | Tester | Codex; lab owner supplied retirement and data-loss decisions |
 | Environment | Debian Linux host, VirtualBox 7.2.14; inherited Ubuntu appliance and demo target |
 | Raw evidence | Tool-session read-only process/source inspection; ignored worktree `test-results/issue162/` (retired inventory and fresh NAT runtime) |

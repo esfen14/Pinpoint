@@ -4,7 +4,7 @@
 |---|---|
 | Date | 2026-10-15 Asia/Manila (2026-10-14 UTC) |
 | Commit tested | Application `c9f8e263`; installed helper functional source `15c27d1`, published installer `b166953` |
-| Plan | [Check secret transport](../../plans/Issue_129_Check_Secret_Transport.md); issue #129 sections E/G |
+| Plan | [Check secret transport](../../archive/plans/Issue_129_Check_Secret_Transport.md); issue #129 sections E/G |
 | Tester | Codex |
 | Environment | Existing Ubuntu 22.04.5 QA appliance, Nagios 4.5.11, NCPA client 1.2.4; existing web01 on guarded 10.77.0.0/28. Shared system/history databases upgraded from 143c48cd6663 to 7db78f308ee5. |
 | Raw evidence | Local git-ignored `test-results/issue-129/`: `main-daemon-resume-verify.log`, `clean-checkout-migration.log`, `main-daemon-setup.log`, `main-daemon-observed.log`, `main-daemon-acceptance.log`. Root-private guest pre-upgrade DB backups: `/var/backups/pinpoint/issue129-pre-upgrade/`. |
