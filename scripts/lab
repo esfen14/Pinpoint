@@ -13,6 +13,7 @@
 #   scripts/lab break <target> <ssh|http|snmp|all>   stop a service, or the whole target
 #   scripts/lab fix   <target> <ssh|http|snmp|all>   start it again
 #   scripts/lab smoke         run the smoke checks (lab/smoke.py): discovery, plugin, break/fix alert, Email settings and mail
+#   scripts/lab check-drift   compare the versions pinned in lab/appliance/Dockerfile with the PinPoint-Installer
 #
 # Lab-only credentials: admin@test.com / Password123! (seeded development users).
 set -euo pipefail
@@ -55,6 +56,40 @@ wait_ready() {
   die "Pinpoint did not come up in 3 minutes"
 }
 
+# The PinPoint-Installer checkout to compare with, as scripts/vmlab chooses it:
+# VMLAB_INSTALLER_DIR (environment, or the vmlab settings file) is the user's own
+# clone and is only read; otherwise the vmlab cache is cloned or fast-forwarded.
+# Sets installer_dir and installer_rev.
+installer_checkout() {
+  local config="${VMLAB_CONFIG:-$HOME/.config/pinpoint-vmlab/env}"
+  local default_dir="$HOME/.cache/pinpoint-vmlab/PinPoint-Installer"
+  local repo="https://github.com/lorraine-pangilinan/PinPoint-Installer.git"
+  local from_config=""
+  installer_dir="${VMLAB_INSTALLER_DIR:-}"
+  if [ -f "$config" ]; then
+    # shellcheck disable=SC1090
+    from_config="$(unset VMLAB_INSTALLER_DIR; . "$config" >/dev/null 2>&1; printf '%s' "${VMLAB_INSTALLER_DIR:-}")"
+    # shellcheck disable=SC1090
+    repo="$(VMLAB_INSTALLER_REPO="$repo"; . "$config" >/dev/null 2>&1; printf '%s' "$VMLAB_INSTALLER_REPO")"
+  fi
+  [ -n "$installer_dir" ] || installer_dir="${from_config:-$default_dir}"
+  if [ "$installer_dir" = "$default_dir" ]; then
+    command -v git >/dev/null || die "git is not installed"
+    mkdir -p "$(dirname "$installer_dir")"
+    if [ -d "$installer_dir/.git" ]; then
+      git -C "$installer_dir" fetch -q origin && git -C "$installer_dir" reset -q --hard origin/HEAD \
+        || die "could not update the installer cache $installer_dir (offline?); set VMLAB_INSTALLER_DIR to a local clone"
+    else
+      git clone -q "$repo" "$installer_dir" \
+        || die "could not clone $repo; set VMLAB_INSTALLER_DIR to a local clone"
+    fi
+  else
+    [ -d "$installer_dir/setup" ] || die "VMLAB_INSTALLER_DIR has no setup/ directory: $installer_dir"
+  fi
+  installer_rev="$(git -C "$installer_dir" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+  if [ -n "$(git -C "$installer_dir" status --porcelain 2>/dev/null)" ]; then installer_rev="$installer_rev+dirty"; fi
+}
+
 cmd="${1:-help}"; shift || true
 case "$cmd" in
   up)     need_docker; "${compose[@]}" up -d --build; wait_ready ;;
@@ -83,6 +118,10 @@ case "$cmd" in
     fi
     ;;
   smoke)  need_docker; exec python3 -I "$root/lab/smoke.py" --lab-script "$root/scripts/lab" --mail-sink-url http://127.0.0.1:8025 "$@" ;;
-  help|-h|--help) sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//' ;;
+  check-drift)
+    installer_checkout
+    exec python3 -I "$root/scripts/lab_drift.py" --installer-dir "$installer_dir" --installer-label "$installer_rev" "$@"
+    ;;
+  help|-h|--help) sed -n '2,18p' "$0" | sed 's/^# \{0,1\}//' ;;
   *) die "unknown command '$cmd' (try: scripts/lab help)" ;;
 esac

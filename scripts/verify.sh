@@ -24,6 +24,8 @@ docs() {
   python3 -I "$root/scripts/render_qa_case_tables.py" --check
   echo "==> docs: local lab smoke plugin and alert checks (offline)"
   python3 -I "$root/scripts/test_lab_smoke.py"
+  echo "==> docs: lab appliance and installer pin comparison (offline fixtures)"
+  python3 -I "$root/scripts/test_lab_drift.py"
   echo "==> docs: traceability validator contract tests"
   python3 -I "$root/scripts/test_traceability.py"
   echo "==> docs: module/person QA queue selection and freshness"
