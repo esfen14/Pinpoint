@@ -94,6 +94,9 @@ registration dialog. Do not put either value into a command argument, a report,
 Git, or a recording. Windows is at `10.77.1.3`; NCPA listens on TCP `5693` and
 its Windows firewall rule permits the appliance address `10.77.1.1`.
 
+To script this registration instead of using the UI, run `demo/demo install-ncpa ... --register`
+([`README.md`](README.md#install-ncpa-and-register-it-demodemo-install-ncpa)).
+
 In Pinpoint, open **NCPA Deployment → Register an agent I installed**, select
 the discovered Windows device, and enter the NCPA token and port `5693`. The
 owner confirmed Windows appeared in this manual registration picker and later

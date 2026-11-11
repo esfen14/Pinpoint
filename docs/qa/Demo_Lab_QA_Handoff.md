@@ -52,12 +52,12 @@ demo/demo destroy --apply             # type "destroy": removes only the demo co
 - The Windows unattended install was run live (Windows 10 Enterprise evaluation ISO fetched with
   `--download-windows-iso`): it reaches the desktop as `presenter` with the Guest Additions running.
   Evaluation media need no product key, so `create-vms` passes VirtualBox's answer-file template with
-  the ProductKey element removed. NCPA is still installed by hand (#302).
+  the ProductKey element removed. NCPA is installed afterwards by `demo/demo install-ncpa` (#302; offline-tested, not yet run live).
 - `demo/demo qa create` was run live (VM built, Ubuntu + Nagios provisioned, Pinpoint deployed).
   The installer health check ends with one expected failure, "pinpoint has sudo rights beyond
   'systemctl reload nagios'", so `qa create` reports "stopped at fresh" even though the appliance
   is up. The app grants `pinpoint` `systemctl restart nagios` on purpose (#121); the installer's
   `setup/pinpoint-healthcheck.sh` has not been updated to match. Continue with
   `scripts/vmlab setup-admin` (same `VMLAB_CONFIG`/`VMLAB_STATE_DIR` as `qa status`).
-- A new Windows VM has no scripted NCPA install (#302); the prepared VM already has it.
+- `demo/demo install-ncpa` (#302) has only offline tests; its guest steps (silent NCPA 3.5.0 install, `ncpa.cfg.d` token file, firewall, authenticated check) have not been run against a real VM. The prepared VM already has NCPA.
 - No automated NCPA deployment run: the Linux containers have no password SSH.

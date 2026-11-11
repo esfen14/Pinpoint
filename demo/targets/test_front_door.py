@@ -20,6 +20,7 @@ class FrontDoorTests(unittest.TestCase):
         (self.root/'appliance').mkdir()
         (self.root/'appliance'/'create_vms.py').write_text(STUB)
         (self.root/'appliance'/'qa_vm.py').write_text(STUB)
+        (self.root/'appliance'/'install_ncpa_windows.py').write_text(STUB)
         for name in ('presenter','controller','setup'):
             (self.root/'targets'/(name+'.py')).write_text(STUB)
         self.log=self.root/'log'
@@ -31,7 +32,7 @@ class FrontDoorTests(unittest.TestCase):
         calls=self.log.read_text().splitlines() if self.log.exists() else []
         return result,calls
     def test_lifecycle_and_read_only_commands_reach_the_right_program(self):
-        cases={('setup',):['setup.py setup'],('qa','create','--apply'):['qa_vm.py create --apply'],('qa','destroy'):['qa_vm.py destroy'],('create-vms','--apply'):['create_vms.py --apply'],('setup','--apply'):['setup.py setup --apply'],
+        cases={('setup',):['setup.py setup'],('qa','create','--apply'):['qa_vm.py create --apply'],('qa','destroy'):['qa_vm.py destroy'],('create-vms','--apply'):['create_vms.py --apply'],('install-ncpa','--installer','n.exe'):['install_ncpa_windows.py --installer n.exe'],('setup','--apply'):['setup.py setup --apply'],
                ('destroy','--apply'):['setup.py destroy --apply'],
                ('up',):['setup.py up'],('down',):['presenter.py down'],
                ('manifest',):['controller.py manifest'],('preflight',):['presenter.py preflight'],
