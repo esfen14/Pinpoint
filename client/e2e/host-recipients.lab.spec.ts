@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test'
+import { isLabAddress } from './labAddresses'
 import type { HostRecipients } from '../src/types/hostRecipients'
 
 // Opt-in: scripts/playwright-lab --project issue-79-live.
@@ -8,7 +9,7 @@ test('host recipients save, survive reload, and return to default in the browser
   const response = await page.request.get('/api/system/network-health/hosts?per_page=100')
   expect(response.ok()).toBeTruthy()
   const hosts = (await response.json()).data.items as { hostname: string; device_id: number | null; ip_address: string | null }[]
-  const host = hosts.find((item) => item.device_id && item.ip_address?.startsWith('10.77.0.'))
+  const host = hosts.find((item) => item.device_id && isLabAddress(item.ip_address))
   expect(host, 'a discovered lab host is required').toBeTruthy()
   const path = `/api/system/hosts/${host!.device_id}/recipients`
   const originalResponse = await page.request.get(path)

@@ -1,7 +1,12 @@
 import { expect, test, type Page } from '@playwright/test'
 
-// Opt-in against the exclusively owned #182 VM through the private Unix-socket tunnel.
-test.skip(process.env.PINPOINT_ISSUE182_LIVE !== '1', 'Requires the reserved issue182 appliance and target.')
+// Opt-in against an exclusively owned appliance and target through the private Unix-socket tunnel.
+// The #182 five-VM lab is gone (#298), so the target address is supplied, never assumed.
+const targetIp = process.env.PINPOINT_ISSUE182_TARGET_IP
+test.skip(
+  process.env.PINPOINT_ISSUE182_LIVE !== '1' || !targetIp,
+  'Requires PINPOINT_ISSUE182_LIVE=1, PINPOINT_ISSUE182_TARGET_IP and an exclusively owned appliance with one deployed target; the original issue182 VM lab was removed.',
+)
 const base = 'http://127.0.0.1:18080'
 const settingsPath = '/api/system/deployment/ncpa/1/remote-restart'
 function credential(name: string) {
@@ -22,7 +27,7 @@ async function ownedTarget(page: Page) {
   const devices = (await response.json()).data.devices
   expect(devices).toHaveLength(1)
   expect(devices[0].device_id).toBe(1)
-  expect(devices[0].ip_address).toBe('10.77.0.2')
+  expect(devices[0].ip_address).toBe(targetIp)
   expect(devices[0].trusted).toBe(true)
   expect(devices[0].agent_status).toBe('Deployed NCPA')
 }
