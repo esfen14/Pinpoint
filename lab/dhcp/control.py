@@ -160,7 +160,7 @@ def preflight() -> None:
         for config in network.get("IPAM", {}).get("Config") or []:
             if config.get("Subnet"):
                 occupied.append(config["Subnet"])
-    # Existing VM demo uses this internal range even while powered off.
+    # Retired five-VM lab range (#298); kept reserved so a new lab never reuses it.
     occupied.append("10.77.0.0/28")
     validate_range(RANGE, occupied)
     if STATE_DIR.exists():

@@ -136,7 +136,7 @@ class DriverTests(unittest.TestCase):
             processes=[dict(pid=123,parent_pid=1,starts_after_source_files=False)])
         guest=dict(observation=obs,main_pid=123,boot_id='synthetic-boot',configuration={'config':{}},
             dependencies=dict(file_count=30,inventory_sha256='a'*64),sources={name:dict(sha256=h) for name,h in sources.items()},
-            executables={'123':{}},staff=[['ACTIVE',0,0,'Staff',1,0]],networks=[['["10.77.0.0/28"]']],
+            executables={'123':{}},staff=[['ACTIVE',0,0,'Staff',1,0]],networks=[['["10.77.1.0/27"]']],
             scans=[3,'synthetic'],database_versions={'system.db':['synthetic']},scheduler_enabled=False,inputs_precede_launch=True)
         host=dict(lab_uuid=f.UUID,controller_pid=1,controller_start_ticks=2,vm_pid=3,vm_start_ticks=4,running_endpoints_verified=True)
         launch=dict(main_pid=123,target='a'*40,database_revisions_after=guest['database_versions'],scheduler_enabled=False,service_active=True,

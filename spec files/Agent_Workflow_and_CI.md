@@ -311,6 +311,8 @@ reports. App/spec conflicts remain decisions, not automatic passes.
 - **Narrow pilot integration:** `qa_pilot.py inspect` performs read-only checks;
   `run` supports only one TC-SS-04 initial attempt behind source-bound card,
   private reviewed controlled-deployment baseline and separate explicit start.
+  The baseline's configured scan networks must be exactly `10.77.1.0/27`, the
+  demo/QA lab range (#311).
   It composes the shared ledger, bridge/container/process/results components.
   Fresh VM/boot/process/source/config/runtime/Staff/served-byte checks surround
   execution; local image and browser pins are checked without launching them.

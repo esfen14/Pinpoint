@@ -71,7 +71,7 @@ def validate_baseline(value):
         or guest.get('inputs_precede_launch') is not True
         or not any(row['pid']==guest['main_pid'] and row['parent_pid']==1 for row in obs['processes'])
         or guest.get('staff')!=[['ACTIVE',0,0,'Staff',1,0]] or guest.get('scheduler_enabled') is not False
-        or [json.loads(row[0]) for row in guest.get('networks',[])]!=[['10.77.0.0/28']]
+        or [json.loads(row[0]) for row in guest.get('networks',[])]!=[['10.77.1.0/27']]
         or guest.get('dependencies',{}).get('file_count',0)<20 or not guest.get('configuration')
         or not guest.get('sources') or not guest.get('executables') or not guest.get('boot_id')):
         raise ValueError('Incomplete or unsuitable controlled baseline')
