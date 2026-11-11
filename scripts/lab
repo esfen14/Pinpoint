@@ -12,7 +12,7 @@
 #   scripts/lab shell [svc]   shell in a container (default: appliance)
 #   scripts/lab break <target> <ssh|http|snmp|all>   stop a service, or the whole target
 #   scripts/lab fix   <target> <ssh|http|snmp|all>   start it again
-#   scripts/lab smoke         run the smoke checks (lab/smoke.py)
+#   scripts/lab smoke         run the smoke checks (lab/smoke.py): discovery, plugin, break/fix alert
 #
 # Lab-only credentials: admin@test.com / Password123! (seeded development users).
 set -euo pipefail
@@ -82,7 +82,7 @@ case "$cmd" in
       "${compose[@]}" exec "$target" supervisorctl "$action" "$program"
     fi
     ;;
-  smoke)  need_docker; exec python3 -I "$root/lab/smoke.py" "$@" ;;
+  smoke)  need_docker; exec python3 -I "$root/lab/smoke.py" --lab-script "$root/scripts/lab" "$@" ;;
   help|-h|--help) sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//' ;;
   *) die "unknown command '$cmd' (try: scripts/lab help)" ;;
 esac

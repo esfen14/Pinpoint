@@ -6,6 +6,10 @@ to http://127.0.0.1:8000. Exit status 0 when every check passes.
 
     scripts/lab smoke [--base-url URL] [--discovery-timeout S] [--hosts-timeout S]
 
+With --lab-script (scripts/lab passes it) the smoke test also enables the SSH plugin
+and checks the service it creates, then takes a target's sshd down with
+`scripts/lab break`, checks the alert, and brings it back with `fix` (#315).
+
 For a real appliance (scripts/vmlab smoke) pass the administrator's --email and
 --password and, if discovery does not already cover the lab, --set-network CIDR.
 """
@@ -13,6 +17,7 @@ import argparse
 import http.cookiejar
 import json
 import os
+import subprocess
 import sys
 import time
 import urllib.error
@@ -85,6 +90,98 @@ def wait_for(predicate, timeout, interval=5):
     return None
 
 
+def plugin_service_checks(api, plugin_name, timeout, interval=5):
+    """
+    Enable plugin_name, then wait until every service it created reports OK.
+    Returns True when the plugin was found, enabled and its services are healthy.
+    """
+    status, body = api.call("GET", f"/api/plugin?search={plugin_name}&per_page=100")
+    plugin_id = None
+    for item in (body.get("data") or {}).get("items") or []:
+        if item.get("name") == plugin_name:
+            plugin_id = item.get("id")
+    if not check(f"plugin {plugin_name} is in the Plugin Manager", status == 200 and plugin_id is not None, f"HTTP {status}"):
+        return False
+
+    status, body = api.call("POST", f"/api/plugin/{plugin_id}/enable")
+    if not check(f"enable {plugin_name}", status == 200 and body.get("success"), f"HTTP {status}: {body.get('message')}"):
+        return False
+
+    def services():
+        _, listing = api.call("GET", f"/api/plugin/{plugin_id}/services?per_page=100")
+        return (listing.get("data") or {}).get("items") or []
+
+    def all_ok():
+        items = services()
+        if not items:
+            return None
+        for item in items:
+            if (item.get("status") or {}).get("kind") != "ok":
+                return None
+        return items
+
+    healthy = wait_for(all_ok, timeout, interval=interval)
+    if healthy:
+        detail = f"{len(healthy)} services OK"
+    else:
+        kinds = []
+        for item in services():
+            kinds.append(f"{item.get('service')}: {(item.get('status') or {}).get('kind')}")
+        detail = "; ".join(kinds) or "no service was created"
+    return check(f"{plugin_name} created services and they report OK", bool(healthy), detail)
+
+
+def active_alert_keys(api):
+    """Return the set of (hostname, service_name) pairs in the active alerts feed."""
+    status, body = api.call("GET", "/api/system/dashboard/alerts?limit=100&ack_filter=all")
+    keys = set()
+    if status != 200:
+        return keys
+    for alert in (body.get("data") or {}).get("alerts") or []:
+        keys.add((alert.get("hostname"), alert.get("service_name")))
+    return keys
+
+
+def run_lab_script(path):
+    """Return a function that runs `path <args>` and gives (exit code, output)."""
+    def run(*arguments):
+        result = subprocess.run([path, *arguments], capture_output=True, text=True, timeout=120)
+        return result.returncode, (result.stdout + result.stderr).strip()
+    return run
+
+
+def alert_checks(api, lab, target, service, timeout, interval=5):
+    """
+    Take target's service down with lab("break", ...), wait for a new alert, bring it
+    back with lab("fix", ...) (always, even when a check fails) and wait for the alert
+    to clear. Pinpoint names discovered hosts dev-xxxxxx, so the alert is the pair that
+    was not in the feed before the break.
+    """
+    before = active_alert_keys(api)
+    code, output = lab("break", target, service)
+    if not check(f"break {target} {service}", code == 0, output[:80]):
+        return False
+
+    new_key = None
+    try:
+        def new_alert():
+            for key in active_alert_keys(api) - before:
+                return key
+            return None
+
+        new_key = wait_for(new_alert, timeout, interval=interval)
+        check("a new alert appears in the active alerts feed", new_key is not None,
+              f"{new_key[0]} / {new_key[1]}" if new_key else f"none in {timeout}s")
+    finally:
+        code, output = lab("fix", target, service)
+        check(f"fix {target} {service}", code == 0, output[:80])
+
+    if new_key is None:
+        return False
+    cleared = wait_for(lambda: new_key not in active_alert_keys(api), timeout, interval=interval)
+    return check("the alert clears after the service is back", cleared is not None)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-url", default="http://127.0.0.1:8000")
@@ -96,6 +193,12 @@ def main():
     parser.add_argument("--set-network", metavar="CIDR", help="add this network to Network Discovery if missing")
     parser.add_argument("--expect-ips", default="", metavar="IP,IP,...",
                         help="check the targets by address instead of by name (real appliances name hosts dev-xxxxxx)")
+    parser.add_argument("--lab-script", metavar="PATH",
+                        help="path to scripts/lab: also check an enabled plugin and a break/fix alert (local Docker lab only)")
+    parser.add_argument("--plugin", default="check_ssh", help="plugin to enable (default: check_ssh)")
+    parser.add_argument("--break-target", default="web01", help="lab target to take down (default: web01)")
+    parser.add_argument("--break-service", default="ssh", help="its service to stop: ssh, http or snmp (default: ssh)")
+    parser.add_argument("--service-timeout", type=int, default=300, help="seconds to wait for a service check or an alert")
     args = parser.parse_args()
     api = Client(args.base_url)
 
@@ -161,6 +264,10 @@ def main():
         names = [str(item.get("hostname") or item.get("host_name") or "") for item in host_items()]
         for target in TARGETS:
             check(f"host table lists {target}", any(target in name for name in names))
+
+    if args.lab_script:
+        if plugin_service_checks(api, args.plugin, args.service_timeout):
+            alert_checks(api, run_lab_script(args.lab_script), args.break_target, args.break_service, args.service_timeout)
 
     failed = results.count(False)
     print(f"\n{len(results) - failed} passed, {failed} failed")
