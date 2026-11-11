@@ -21,8 +21,8 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 ## Plan
 
-1. [ ] Test first: scripts/test_lab_smoke.py with a fake API and fake lab script; add to scripts/verify.sh docs
-2. [ ] Implement plugin and alert checks in lab/smoke.py (opt-in flags), scripts/lab smoke passes them
+1. [x] Test first: scripts/test_lab_smoke.py with a fake API and fake lab script; add to scripts/verify.sh docs
+2. [x] Implement plugin and alert checks in lab/smoke.py (opt-in flags), scripts/lab smoke passes them
 3. [ ] Update docs/manuals/Local_Lab.md, Implementation_Status.md, Agent_Workflow_and_CI.md as needed
 4. [ ] Live run (issue authorizes it), record docs/test-runs report
 5. [ ] verify.sh all, remove progress file, open PR
@@ -32,13 +32,14 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 0 | plan written | - | - |
+| 1 | tests + smoke.py plugin/alert checks + scripts/lab flag + verify.sh | python3 -I scripts/test_lab_smoke.py | green (8 tests) |
 
 ## State for the next session
 
-- Last check run (exact command): none yet
-- Result (first failing lines, or "green"): n/a
+- Last check run (exact command): python3 -I scripts/test_lab_smoke.py
+- Result (first failing lines, or "green"): green
 - Hypothesis: smoke.py runs by default for vmlab too, so new checks must be flag-gated; scripts/lab adds the flags
-- Next action: write scripts/test_lab_smoke.py (fails first)
+- Next action: live run `scripts/lab reset` then `scripts/lab smoke` (Docker), then docs updates and report
 
 ## Decisions and notes
 
