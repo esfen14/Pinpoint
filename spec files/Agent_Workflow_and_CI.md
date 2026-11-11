@@ -48,7 +48,7 @@ branches and their pull requests are unaffected.
 
 The executable version is `.agent/workflows/work-issue.md`, written for any agent.
 Claude Code (`.claude/skills/work-issue/`) and OpenCode (`.opencode/commands/work-issue.md`)
-load it through thin adapters, run as `/work-issue <issue number>`. Pi loads it the
+load it through thin adapters, run as `/work-issue <issue number>`. Pi loads it, run as `/skill:work-issue <issue number>`, the
 same way from `.pi/skills/work-issue/SKILL.md`. The Codex adapter
 ([`.codex/skills/work-issue/SKILL.md`](../.codex/skills/work-issue/SKILL.md))
 loads the same procedure for `$work-issue <issue number>`; any other agent is told
