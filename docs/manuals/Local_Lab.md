@@ -20,7 +20,7 @@ plugins 2.4.12, like the installer); later starts reuse the cache.
 
 ```bash
 scripts/lab up          # build if needed, start, wait until the API answers
-scripts/lab smoke       # log in, run discovery, wait for 6 hosts up (about 3 min)
+scripts/lab smoke       # log in, run discovery, wait for 6 hosts up, enable check_ssh, break/fix web01 ssh and check the alert (about 5 min)
 scripts/lab ui          # Vite dev server on :5173, proxying /api to the lab
 scripts/lab sync        # copy your working tree into the appliance, restart Gunicorn
 scripts/lab reset       # throw the appliance away and start fresh
@@ -147,9 +147,10 @@ identities, IPv6, DHCP failover or NCPA deployment.
 
 Spike. Verified on Docker 29.7 / Compose 5.5: build, start, login, discovery of
 all five targets (about 2 minutes), Nagios config validation and reload through
-the shim, and `scripts/lab smoke` (9 of 9 checks pass from a fresh reset).
-**Not yet verified:** `scripts/lab break` and `fix`, `scripts/lab ui`,
-`scripts/lab sync`, plugin enablement with the lab targets, alert behavior, NCPA.
+the shim, and `scripts/lab smoke`, which also enables `check_ssh`, checks its five
+services, runs `break web01 ssh`, checks the alert and runs `fix` (16 of 16 checks
+pass from a fresh reset; [run report](../test-runs/2026-11-11-issue-315-lab-smoke/REPORT.md)).
+**Not yet verified:** `scripts/lab ui`, `scripts/lab sync`, NCPA.
 
 
 ## Controlled device identity review acceptance
