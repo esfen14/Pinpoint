@@ -10,7 +10,7 @@ Read them locally and keep them out of slides, recordings and reports.
 
 ## Creating the two VMs
 
-`demo/demo create-vms` prints the VBoxManage plan for the Pinpoint appliance (`Pinpoint-Final`) and the Windows test VM (`pinpoint-defense-win01`) and creates only the missing ones with `--apply`. ISOs: pass a path (`--windows-iso`, `--appliance-iso`) or let it download them (`--download-windows-iso`, about 5.5 GB Microsoft evaluation; `--download-appliance-iso`, the Ubuntu ISO shared with `scripts/vmlab iso`). A download only happens with `--apply`, resumes if interrupted and never overwrites a file. Installing the application is `scripts/vmlab`; the NCPA install and snapshots are manual.
+`demo/demo create-vms` prints the VBoxManage plan for the Pinpoint appliance (`Pinpoint-Final`) and the Windows test VM (`pinpoint-defense-win01`) and creates only the missing ones with `--apply`. ISOs: pass a path (`--windows-iso`, `--appliance-iso`) or let it download them (`--download-windows-iso`, about 5.5 GB Microsoft evaluation; `--download-appliance-iso`, the Ubuntu ISO shared with `scripts/vmlab iso`). A download only happens with `--apply`, resumes if interrupted and never overwrites a file. Installing the application is `scripts/vmlab`; NCPA is installed by `demo/demo install-ncpa` (below); snapshots are manual.
 
 ## Two kinds of appliance VM
 
@@ -38,6 +38,36 @@ Windows 10 Home with NCPA, host-only `vboxnet1`, address `10.77.1.3`. Preparatio
 facts, credentials location and the verified agent paths: [`WINDOWS_READY.md`](WINDOWS_READY.md).
 Registering it in Pinpoint (**NCPA Deployment, Register an agent I installed**,
 port `5693`): [`PRESENTER_SETUP.md`](PRESENTER_SETUP.md) section 2.
+
+### Install NCPA and register it (`demo/demo install-ncpa`)
+
+Needs the running Windows VM (Windows installed, VirtualBox Guest Additions present), the NCPA
+Windows installer you downloaded and its SHA-256. Keep the secrets in files outside Git:
+
+```bash
+umask 077
+python3 -c 'import secrets;print(secrets.token_hex(16))' > ncpa-token    # the agent token (32 hex characters)
+printf '%s\n' 'the presenter password you gave create-vms' > login-password   # or use the default path below
+demo/demo install-ncpa --installer ncpa-3.5.0.exe --sha256 HASH --token-file ncpa-token --windows-password-file login-password            # plan
+demo/demo install-ncpa --installer ncpa-3.5.0.exe --sha256 HASH --token-file ncpa-token --windows-password-file login-password --apply    # run
+```
+
+It copies and silently installs the installer through `VBoxManage guestcontrol`, writes the token
+and port into NCPA's `ncpa.cfg.d` (copied as a file, never on a command line), sets `10.77.1.3/27`
+with no default route, replaces the installer's firewall rules with one that admits `10.77.1.1`
+only, and confirms an authenticated answer on port 5693 from inside the guest. Every step can be
+re-run. The Windows password defaults to `login-password` in the private state directory.
+
+Registration in Pinpoint is optional and needs the appliance running with the Windows device
+discovered (Rescan Network first):
+
+```bash
+demo/demo install-ncpa ... --apply --register --pinpoint-email admin@example.com --pinpoint-password-file pinpoint-password
+```
+
+Without `--register`, use **NCPA Deployment, Register an agent I installed** by hand
+([`PRESENTER_SETUP.md`](PRESENTER_SETUP.md) section 2). Windows licensing is not handled here.
+Offline tests: `python3 -I demo/appliance/test_install_ncpa_windows.py`.
 
 ## Credentials
 

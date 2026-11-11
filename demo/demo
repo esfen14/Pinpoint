@@ -17,6 +17,8 @@ Lab lifecycle (run from the repository root):
   demo/demo down                   stop all fourteen containers
   demo/demo qa create|reset|status|destroy  disposable QA appliance VM for testers (create and destroy need --apply)
   demo/demo create-vms [--apply]   create the Pinpoint appliance and Windows NCPA VMs (missing ones only)
+  demo/demo install-ncpa --installer EXE --sha256 HASH --token-file FILE [--apply] [--register ...]
+                                   install NCPA in the Windows VM and optionally register it in Pinpoint
   demo/demo destroy [--apply]      remove only the demo-owned containers and network (typed confirmation)
   demo/demo manifest [--json]      intended devices and listeners (no live check)
   demo/demo preflight              read-only gate: RAM, disk, swap, subnet and VM membership
@@ -52,6 +54,10 @@ case "${1:-}" in
   create-vms)
     shift
     exec python3 -I "$here/appliance/create_vms.py" "$@"
+    ;;
+  install-ncpa)
+    shift
+    exec python3 -I "$here/appliance/install_ncpa_windows.py" "$@"
     ;;
   setup|destroy)
     exec python3 -I "$here/targets/setup.py" "$@"

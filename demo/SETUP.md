@@ -14,7 +14,7 @@ repository root. Commands that change things print a plan first and need `--appl
 | RAM and disk | At least 3 GiB RAM free for the containers (preflight refuses less), more for two VMs; about 20 GiB disk free |
 | Windows 10 ISO | Only if you create the Windows VM; or reuse your prepared `pinpoint-defense-win01`. `create-vms --download-windows-iso` fetches Microsoft's Windows 10 Enterprise evaluation ISO (about 5.5 GB), or pass your own with `--windows-iso` |
 | Ubuntu 22.04.5 live-server ISO | For the QA appliance (`scripts/vmlab iso` downloads it) and the demo appliance (`create-vms --download-appliance-iso`, or `--appliance-iso PATH`); both use the same file, `VMLAB_ISO` (default `~/Downloads/ubuntu-22.04.5-live-server-amd64.iso`) |
-| NCPA 3.5.0 Windows installer | For the Windows VM; scripted install is tracked in #302 |
+| NCPA 3.5.0 Windows installer and its SHA-256 | For the Windows VM; `demo/demo install-ncpa` installs it (demo/appliance/README.md) |
 | Internet | Image build, Ubuntu and installer downloads |
 
 ## 2. Host network
@@ -38,7 +38,7 @@ demo/demo create-vms --apply --windows-iso WIN.iso --appliance-iso UBUNTU.iso  #
 Then, by hand (see [`appliance/README.md`](appliance/README.md) and
 [`appliance/PRESENTER_SETUP.md`](appliance/PRESENTER_SETUP.md)): install the application
 on the appliance, give its second adapter `10.77.1.1/27`, install NCPA in Windows
-(`10.77.1.3`) and register it in Pinpoint. For a disposable tester appliance use
+(`10.77.1.3`, `demo/demo install-ncpa`) and register it in Pinpoint (`--register`, or by hand). For a disposable tester appliance use
 `demo/demo qa create` instead ([QA hand-off](../docs/qa/Demo_Lab_QA_Handoff.md)).
 
 **Start both VMs and leave them running.** The presenter's safety check requires exactly

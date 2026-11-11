@@ -15,7 +15,8 @@ clears at the next check, and a new port or address needs a **Rescan Network**
 | Task | Command | What happens |
 |---|---|---|
 | First-time or fresh-machine setup | `demo/demo setup` then `demo/demo setup --apply` | The first prints the plan and the manual checklist and changes nothing |
-| Create the two VMs (missing ones only) | `demo/demo create-vms` then `demo/demo create-vms --apply --windows-iso WIN.iso` | Appliance and Windows VMs on `vboxnet1`; OS install of the appliance is `scripts/vmlab`, NCPA is installed in Windows |
+| Create the two VMs (missing ones only) | `demo/demo create-vms` then `demo/demo create-vms --apply --windows-iso WIN.iso` | Appliance and Windows VMs on `vboxnet1`; OS install of the appliance is `scripts/vmlab`; NCPA goes into Windows with the next row |
+| Install NCPA in the Windows VM | `demo/demo install-ncpa --installer NCPA.exe --sha256 HASH --token-file FILE` then add `--apply` | Prints the plan first. Verifies the installer hash, installs silently, sets `10.77.1.3/27`, opens the firewall to `10.77.1.1` only and checks port 5693. Add `--register --pinpoint-email EMAIL --pinpoint-password-file FILE` to register the agent in Pinpoint (needs the device discovered first). Secrets are read from files, never arguments |
 | Start everything and restore baseline | `demo/demo up` | Creates missing containers first, then starts the fourteen and restores baseline services and DHCP leases |
 | Stop everything | `demo/demo down` | Stops the fourteen containers; Windows and the appliance are untouched |
 | Remove the lab | `demo/demo destroy --apply` | Removes only demo-owned containers and network after a typed confirmation |

@@ -4,8 +4,8 @@
 [--windows-iso ISO | --download-windows-iso]` prints the VBoxManage plan and changes nothing without --apply. Existing VMs are
 never touched. Both VMs use the host-only network vboxnet1; the appliance also has
 NAT with the web UI forwarded to 127.0.0.1:18080. Installing the application on the
-appliance is `scripts/vmlab`; the Windows NCPA agent is installed inside Windows
-(demo/appliance/WINDOWS_READY.md), so those steps stay manual.
+appliance is `scripts/vmlab`; the Windows NCPA agent is installed once Windows is up with
+`demo/demo install-ncpa` (demo/appliance/install_ncpa_windows.py), so those steps stay separate.
 """
 import argparse
 import os
@@ -184,7 +184,7 @@ def main(argv=None,runner=default_runner,out=sys.stdout,err=sys.stderr,downloade
         print('VM creation stopped; re-run is safe, existing VMs are kept.',file=err)
         return 1
     print('\nStill manual: install the application on the appliance (scripts/vmlab), set its adapter 2 address 10.77.1.1/27,'
-          ' install NCPA in Windows and take the ncpa-ready snapshot (demo/appliance/README.md).',file=out)
+          ' then install NCPA in Windows with demo/demo install-ncpa (demo/appliance/README.md).',file=out)
     if not args.apply:
         print('Nothing was changed. Add --apply to create the missing VMs.',file=out)
     return 0

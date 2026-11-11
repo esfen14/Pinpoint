@@ -78,6 +78,7 @@ docs() {
   python3 -I "$root/demo/targets/test_setup.py"
   python3 -I "$root/demo/targets/test_create.py"
   python3 -I "$root/demo/appliance/test_create_vms.py"
+  python3 -I "$root/demo/appliance/test_install_ncpa_windows.py"
   python3 -I "$root/demo/appliance/test_qa_vm.py"
   echo "==> docs: agent progress files are well formed"
   python3 -I "$root/scripts/check_agent_progress.py"
