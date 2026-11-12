@@ -21,7 +21,7 @@ const STATUS_STYLES: Record<string, string> = {
 }
 
 // The Interfaces section of the device drawer: the interfaces an SNMP device reports and a monitor on/off
-// choice for each. A monitored interface gets an in and an out octet check in Nagios, which the Interface
+// choice for each. A monitored interface gets an in and an out octet check and a status check in Nagios, which the Interface
 // Bandwidth card on Network Health charts. Refresh reads the list from the device (system.hosts.edit);
 // the server decides everything and the list is replaced by its answer after each action.
 export function DeviceInterfacesSection({ deviceId, hostname }: Props) {
@@ -138,7 +138,7 @@ export function DeviceInterfacesSection({ deviceId, hostname }: Props) {
 
       {data && data.interfaces.length > 0 && (
         <p className="mb-2 text-[13px] text-[var(--text-muted)]">
-          {monitoredCount} of {data.max_monitored} monitored. Each monitored interface adds an in and an out bandwidth check.
+          {monitoredCount} of {data.max_monitored} monitored. Each monitored interface adds an in and an out bandwidth check and a status check.
           {!canEdit && ' You can view interfaces but not change them.'}
         </p>
       )}

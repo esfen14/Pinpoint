@@ -604,10 +604,14 @@ Bandwidth is computed from stored samples; the Nagios checks are not changed.
 - **Services.** Every `DeviceInterface` with `Monitored` true becomes an `interfaces` fact for the
   device's SNMP port (`load_host_plugin_facts()` -> `{"snmp": {"interfaces": [ifIndex, ...]}}`).
   `snmp_checks()` in `plugin_registry.py` then adds, after the OID-table services, one in and one
-  out octet service per interface: `snmp-if<N>_in_octets-<port>-udp` (OID `1.3.6.1.2.1.2.2.1.10.<N>`)
-  and `snmp-if<N>_out_octets-<port>-udp` (`...16.<N>`). A device with no monitored interface produces
-  exactly the services it did before (the fixed interface 3 services `lan_in_octets` / `lan_out_octets`
-  stay in the OID table). At most 16 interfaces per device; `interfaces` must be whole numbers
+  out octet service and one status service per interface: `snmp-if<N>_in_octets-<port>-udp` (OID
+  `1.3.6.1.2.1.2.2.1.10.<N>`), `snmp-if<N>_out_octets-<port>-udp` (`...16.<N>`) and
+  `snmp-if<N>_status-<port>-udp` (`...8.<N>`). The default OID table (`SNMP_OIDS`) holds no interface
+  OID: it no longer carries the fixed interface 3 services `lan_status` / `lan_in_octets` /
+  `lan_out_octets`, which read ifIndex 3 on every device and went UNKNOWN where the interface had another
+  index (#278). A device with no monitored interface therefore gets no interface checks. An OID table an
+  administrator saved earlier keeps any `lan_*` entries it contains until they are removed in Settings ->
+  Plugins. At most 16 interfaces per device; `interfaces` must be whole numbers
   (`PluginConfigurationError` otherwise). Changes are applied through
   `regenerate_and_apply_config_status()` (via `apply_config_change()`), so the Nagios binary validates
   them and a rejected config is rolled back.
@@ -621,7 +625,11 @@ Bandwidth is computed from stored samples; the Nagios checks are not changed.
   (it is visible in the process list for the length of a walk, as with `check_snmp`). The list is
   refreshed on demand (`POST /hosts/<id>/interfaces/refresh`) and after the scan has saved its results
   (`refresh_interfaces_after_scan()`: best effort, at most 64 devices and 120 s per scan; a device that
-  does not answer is skipped).
+  does not answer is skipped). The refresh runs before the Nagios config is generated. When a monitored
+  interface disappears and exactly one new interface has the same name (a recreated container keeps the
+  name but gets a new ifIndex), `store_interfaces()` moves the `Monitored` choice to the new row and
+  removes the old one, so the checks follow the interface (#278). With no such single match the monitored
+  row is kept and marked not present.
 - **Rate calculation** (`app/bandwidth.py`). `rate = (counter now - counter before) * 8 / seconds`
   between consecutive samples of a service's first perf-data value. A sample's time is the Nagios
   `Last_Check` (when the counter was read), not the stored `Timestamp`: the two differ by up to a

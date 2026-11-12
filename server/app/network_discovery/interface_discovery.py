@@ -206,7 +206,8 @@ def store_interfaces(device, interfaces, now=None):
     """
     Save a fresh interface list for the device: new interfaces are added, known ones updated (the
     Monitored choice is kept), and ones no longer reported are removed unless they are monitored,
-    which are kept and marked not present. Does not commit. Returns the DeviceInterface rows.
+    which are kept and marked not present, unless one new interface has the same name: the
+    monitoring choice moves to it (the index changed). Does not commit. Returns the DeviceInterface rows.
     """
     now = now or datetime.now(timezone.utc)
     existing = {
@@ -217,18 +218,35 @@ def store_interfaces(device, interfaces, now=None):
     }
 
     seen = set()
+    created = []
     for interface in interfaces:
         seen.add(interface["if_index"])
         row = existing.get(interface["if_index"])
         if row is None:
             row = DeviceInterface(NetDiscoveryID=device.NetDiscoveryID, If_Index=interface["if_index"], Monitored=False)
             db.session.add(row)
+            created.append(row)
         row.Name = interface["name"]
         row.Speed_Bps = interface["speed_bps"]
         row.Admin_Status = interface["admin_status"]
         row.Oper_Status = interface["oper_status"]
         row.Present = True
         row.Last_Seen_At = now
+
+    # A monitored interface whose index changed (a recreated container keeps the name but gets
+    # a new ifIndex) hands its Monitored choice to the new row with the same name, so its checks
+    # follow the interface instead of reading an index that no longer exists. Only an
+    # unambiguous match moves; otherwise the old row is kept, marked not present, below.
+    created_by_name = {}
+    for row in created:
+        created_by_name.setdefault(row.Name, []).append(row)
+    for index, row in existing.items():
+        if index in seen or not row.Monitored:
+            continue
+        successors = created_by_name.get(row.Name, [])
+        if len(successors) == 1:
+            successors[0].Monitored = True
+            row.Monitored = False
 
     for index, row in existing.items():
         if index in seen:

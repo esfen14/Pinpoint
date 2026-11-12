@@ -142,14 +142,14 @@ class Config:
     # which then takes precedence. A host can override any of these (including
     # the whole OID list) via NetworkDiscovery.Plugin_Variables["snmp"] — see
     # network_discovery/plugin_registry.py.
+    # No interface OID is listed here: an interface number differs per device (and changes
+    # when a container is recreated), so interface checks (status, in and out octets) are
+    # attached to the interfaces chosen per device in Device Inventory instead (#278).
     SNMP_COMMUNITY_STRING = os.environ.get('SNMP_COMMUNITY_STRING') or "public"
     SNMP_PORT = "161"
     SNMP_OIDS = [
         {"metric": "uptime", "oid": "1.3.6.1.2.1.1.3.0"},
         {"metric": "system_description", "oid": "1.3.6.1.2.1.1.1.0"},
-        {"metric": "lan_status", "oid": "1.3.6.1.2.1.2.2.1.8.3"},
-        {"metric": "lan_in_octets", "oid": "1.3.6.1.2.1.2.2.1.10.3"},
-        {"metric": "lan_out_octets", "oid": "1.3.6.1.2.1.2.2.1.16.3"},
         {"metric": "memory_total", "oid": "1.3.6.1.4.1.2021.4.5.0"},
     ]
 

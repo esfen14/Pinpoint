@@ -79,7 +79,7 @@ describe('states of the section', () => {
     expect(screen.getByText('#2')).toBeInTheDocument()
     expect(screen.getByText('1.00 Gbit/s')).toBeInTheDocument()
     expect(screen.getAllByText('up').length).toBeGreaterThan(0)
-    expect(screen.getByText('0 of 16 monitored. Each monitored interface adds an in and an out bandwidth check.')).toBeInTheDocument()
+    expect(screen.getByText('0 of 16 monitored. Each monitored interface adds an in and an out bandwidth check and a status check.')).toBeInTheDocument()
   })
 
   it('marks an interface the device no longer reports', async () => {

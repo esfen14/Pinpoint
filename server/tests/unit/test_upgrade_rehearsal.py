@@ -99,8 +99,9 @@ class TestFirstReconcile:
         assert RUNNING_BEFORE <= attached
 
     def test_each_service_is_attached_once(self, report):
+        # 12, not 15: the default SNMP table no longer carries the three lan_* interface-3 services (#278).
         names = [(device, name) for device, name, _, _ in report["attached"]]
-        assert len(names) == len(set(names)) == report["first_reconcile"]["applied"] == 15
+        assert len(names) == len(set(names)) == report["first_reconcile"]["applied"] == 12
 
     def test_a_second_reconcile_changes_nothing(self, report):
         second = report["second_reconcile"]

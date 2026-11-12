@@ -251,6 +251,40 @@ class TestStore:
         assert sorted(rows) == [2, 3]                       # lo (1) removed
         assert rows[3].Monitored is True and rows[3].Present is False
 
+    def test_a_monitored_interface_follows_its_name_to_a_new_index(self, db_session, admin_user):
+        # A recreated container keeps the interface name but gets a new ifIndex (#278).
+        device = snmp_device(db_session, admin_user)
+        store_interfaces(device, [
+            {"if_index": 1, "name": "lo", "speed_bps": None, "admin_status": "up", "oper_status": "up"},
+            {"if_index": 183, "name": "eth0", "speed_bps": None, "admin_status": "up", "oper_status": "up"},
+        ])
+        stored(device)[183].Monitored = True
+        db_session.session.commit()
+
+        store_interfaces(device, [
+            {"if_index": 1, "name": "lo", "speed_bps": None, "admin_status": "up", "oper_status": "up"},
+            {"if_index": 188, "name": "eth0", "speed_bps": None, "admin_status": "up", "oper_status": "up"},
+        ])
+        db_session.session.commit()
+
+        rows = stored(device)
+        assert sorted(rows) == [1, 188]                  # the old index is gone, not left as a failing check
+        assert rows[188].Monitored is True and rows[188].Present is True
+        assert rows[1].Monitored is False
+
+    def test_a_monitored_interface_with_no_same_name_is_kept_not_present(self, db_session, admin_user):
+        device = snmp_device(db_session, admin_user)
+        store_interfaces(device, [{"if_index": 5, "name": "eth0", "speed_bps": None, "admin_status": "up", "oper_status": "up"}])
+        stored(device)[5].Monitored = True
+        db_session.session.commit()
+
+        store_interfaces(device, [{"if_index": 9, "name": "eth1", "speed_bps": None, "admin_status": "up", "oper_status": "up"}])
+        db_session.session.commit()
+
+        rows = stored(device)
+        assert rows[5].Monitored is True and rows[5].Present is False
+        assert rows[9].Monitored is False
+
     def test_a_failed_save_rolls_back(self, db_session, admin_user):
         device = snmp_device(db_session, admin_user)
         with patch.object(discovery.subprocess, "run", fake_run()), \

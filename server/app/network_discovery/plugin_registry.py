@@ -120,6 +120,7 @@ def single_check(variables):
 # IF-MIB columns the bandwidth monitoring reads: ifInOctets and ifOutOctets, indexed by ifIndex.
 IF_IN_OCTETS_OID = "1.3.6.1.2.1.2.2.1.10"
 IF_OUT_OCTETS_OID = "1.3.6.1.2.1.2.2.1.16"
+IF_OPER_STATUS_OID = "1.3.6.1.2.1.2.2.1.8"
 
 # Most interfaces one device can have monitored; each one adds two Nagios services.
 MAX_MONITORED_INTERFACES = 16
@@ -133,6 +134,11 @@ def interface_metrics(if_index):
     "snmp-if5_in_octets-161-udp" and "snmp-if5_out_octets-161-udp".
     """
     return f"if{if_index}_in_octets", f"if{if_index}_out_octets"
+
+
+def interface_status_metric(if_index):
+    """The SNMP metric name of the operational-status service of an interface, e.g. "if5_status"."""
+    return f"if{if_index}_status"
 
 
 def valid_interface_indexes(interfaces):
@@ -160,8 +166,9 @@ def snmp_checks(variables):
     critical, label, units) is passed through as a per-service variable.
 
     variables["interfaces"], when present, is a list of ifIndex numbers chosen for bandwidth
-    monitoring (Device Inventory). Each adds an in and an out octet service after the OID
-    services; see interface_metrics. With no interfaces the services are exactly the OID list.
+    monitoring (Device Inventory). Each adds an in and an out octet service and a status service
+    after the OID services; see interface_metrics. With no interfaces the services are exactly
+    the OID list, so a device never gets a check for an interface it does not have.
     """
     oids = variables.get("oids") or []
     if not isinstance(oids, list):
@@ -180,6 +187,9 @@ def snmp_checks(variables):
         in_metric, out_metric = interface_metrics(if_index)
         checks.append(ServiceCheck(metric=in_metric, variables={"oid": f"{IF_IN_OCTETS_OID}.{if_index}"}))
         checks.append(ServiceCheck(metric=out_metric, variables={"oid": f"{IF_OUT_OCTETS_OID}.{if_index}"}))
+        checks.append(ServiceCheck(
+            metric=interface_status_metric(if_index), variables={"oid": f"{IF_OPER_STATUS_OID}.{if_index}"},
+        ))
     return checks
 
 

@@ -1063,7 +1063,7 @@ A card showing how much data one interface of an SNMP device sends and receives.
 separate from the network-wide Bandwidth stat card in the metrics column.
 
 **Controls:** a Device selector, an Interface selector (the interfaces monitored on that device,
-plus the default interface 3 when the device has the default check) and the time range control
+plus interface 3 only for a device that still has a saved legacy `lan_in_octets` check, #278) and the time range control
 with 1 hour, 6 hours, 24 hours (default) and 7 days. The 5-minute range is not offered: a rate
 needs two readings, and the server refuses windows other than 1, 6, 24 and 168 hours.
 
