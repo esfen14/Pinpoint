@@ -9,14 +9,45 @@ Nagios remains the monitoring engine. Pinpoint manages application state,
 configuration workflows, history, and the operator experience. The production
 installer is maintained separately from this repository.
 
+## What Pinpoint does
+
+- **Dashboard and Network Health:** current host and service state read from
+  Nagios, alert acknowledgement, bandwidth and forecast cards.
+- **Device Inventory and Network Topology:** discovered devices, their ports and
+  interfaces, why each is or is not monitored, pause and resume, identity review,
+  manual merge and manual parent relationships.
+- **Network Discovery and NCPA deployment:** scans approved subnets, generates
+  validated Nagios host and service configuration, and installs the NCPA agent
+  over SSH with a verified host fingerprint.
+- **Plugin Manager and custom checks:** inventory of the Nagios plugins on the
+  server, plugin-driven monitoring, and custom checks with protected passwords.
+- **Alerts, notifications and recovery:** notification policy and escalations,
+  email delivery, maintenance windows, event handlers and remote service restart.
+- **Reports, logs and history:** service reports, audit and activity logs, and
+  alert and notification history.
+- **Administration:** accounts, roles and permissions, system settings, and
+  database backup and restore.
+
+The authoritative description of each area is in [`spec files/`](spec%20files/README.md);
+step-by-step guides for operators are in [`docs/manuals/`](docs/manuals/).
+
 ## Repository guide
 
-| Path | Purpose |
-|---|---|
-| [`client/`](client) | React, TypeScript, and Vite frontend |
-| [`server/`](server) | Flask backend, Nagios integrations, migrations, and tests |
-| [`spec files/`](spec%20files/) | Authoritative system specifications and implementation status |
-| [`server/tests/`](server/tests) | Backend tests and opt-in live-lab tooling |
+| Path | Purpose | Guide |
+|---|---|---|
+| [`client/`](client) | React, TypeScript, and Vite frontend, plus its browser tests (`client/e2e/`, `client/qa/`) | [`client/README.md`](client/README.md) |
+| [`server/`](server) | Flask backend, Nagios integrations, migrations, and tests | [`server/README.md`](server/README.md) |
+| [`spec files/`](spec%20files/) | Authoritative system specifications and implementation status | [`spec files/README.md`](spec%20files/README.md) |
+| [`docs/`](docs) | Manuals, plans, QA documents and sanitized test-run reports | [`docs/README.md`](docs/README.md) |
+| [`scripts/`](scripts) | Developer and QA command-line tools, including `verify.sh` and the lab launchers | [`scripts/README.md`](scripts/README.md) |
+| [`dev/`](dev) | Two shell scripts that start the backend and frontend for local development | [`dev/README.md`](dev/README.md) |
+| [`lab/`](lab) | Harness code for the Docker and VM test labs | [`lab/README.md`](lab/README.md) |
+| [`demo/`](demo) | Fifteen-device demonstration environment | [`demo/README.md`](demo/README.md) |
+| [`server/tests/`](server/tests) | Backend tests and opt-in live-lab tooling | [`server/tests/README.md`](server/tests/README.md) |
+
+Of these, only `client/` and `server/` are installed on a production appliance.
+`dev/`, `lab/`, `demo/`, `scripts/`, `docs/` and `spec files/` are for
+developers, testers and documentation, and are never run by the application.
 
 Start with the [specification index](spec%20files/README.md) before changing
 system behavior. Contributor and agent routing rules are in [AGENTS.md](AGENTS.md).
@@ -127,6 +158,38 @@ The live harness guide contains the detailed ACL, SSH trust, VM verification,
 recovery, evidence, and SCP retrieval procedures. Do not duplicate or improvise
 those sensitive steps from this overview.
 
+## Production deployment
+
+Production is an Ubuntu Server 22.04 appliance built by the separate
+PinPoint Installer repository (`lorraine-pangilinan/PinPoint-Installer`). It
+installs Nagios Core, clones this repository to `/opt/pinpoint/Network-Diagnosis-System`,
+builds `client/`, and runs `server/` under Gunicorn (one worker, four threads,
+service `pinpoint-gunicorn.service`) behind Nginx, reading its settings from
+`/etc/pinpoint/pinpoint.env`. Do not hand-install it from this README.
+
+- What this repository promises the installer (settings table, migrations,
+  `flask init-production`, service name, file permissions):
+  [Agent_Workflow_and_CI.md, "Deployment environment"](spec%20files/Agent_Workflow_and_CI.md#deployment-environment-installer-contract).
+- Upgrading, backing up and restoring: [Backup and restore](docs/manuals/Backup_and_Restore.md)
+  and [Database setup](#database-setup) below.
+- Operating the features: [`docs/manuals/`](docs/manuals/).
+
+## Troubleshooting
+
+| Symptom | Likely cause and fix |
+|---|---|
+| The server exits at start with "SECRET_KEY is not set" | `SECRET_KEY` is missing. Set it in `/etc/pinpoint/pinpoint.env` (production) or `server/.env` (development). |
+| The server exits with "must be a number greater than zero" or "must be on or off" | A setting in the [Production settings](#production-settings) table has an invalid value. Fix it; startup refuses typos on purpose. |
+| Dashboard shows no data or stale data | The scheduler is off. Set `PINPOINT_SCHEDULER=1` for the Gunicorn service only, and run one worker. Check `NAGIOS_HOST`, `NAGIOS_PORT`, `NAGIOS_USERNAME` and `NAGIOS_PASSWORD`. |
+| Nagios calls fail with 401 | `NAGIOS_USERNAME` or `NAGIOS_PASSWORD` is wrong for the Nagios JSON CGIs. |
+| A scan finds nothing | `PINPOINT_NETWORKS` does not list the subnet. Never add localhost. |
+| Stored custom-check passwords stopped working | `SECRET_KEY` or `PINPOINT_SECRETS_KEY` changed. Restore the old value, or enter the passwords again. |
+| `flask db upgrade` fails on an older server | The server was built with `db.create_all()`. See [Database setup](#database-setup). |
+| The first administrator cannot sign in | Use `flask recover-bootstrap-admin`; see [`server/README.md`](server/README.md#command-line-commands). |
+| `flask` commands start the poller | `PINPOINT_SCHEDULER` is set in your shell. Leave it unset outside the Gunicorn service. |
+
+Service log: `journalctl -u pinpoint-gunicorn`.
+
 ## Contributing
 
 Use a feature branch, keep behavioral specifications current, run the smallest
@@ -140,6 +203,12 @@ In production every machine-specific value comes from the environment. The
 PinPoint Installer writes them to `/etc/pinpoint/pinpoint.env`. This table is
 the agreed interface between this repository and the installer: when you add
 a setting the app reads from the environment, add it here too.
+`python3 -I scripts/check_env_drift.py` (part of `scripts/verify.sh docs`)
+fails when a variable the server reads is missing from this table, or the table
+lists one the server no longer reads. Defaults come from
+[`server/config.py`](server/config.py). "Required in production" means the
+installer must set it; "no" means the default is correct for a standard install.
+An unset or empty value falls back to the default.
 
 Supported Python version: **3.14** (developed on 3.14.2).
 
@@ -154,12 +223,12 @@ Supported Python version: **3.14** (developed on 3.14.2).
 | `PINPOINT_SCHEDULER` | `0` | yes (`1` for the Gunicorn service only) | `1` starts Nagios polling, data retention and automation jobs. Leave unset for `flask` commands and scripts. Run Gunicorn with one worker, since each process would start its own scheduler. |
 | `SNMP_COMMUNITY_STRING` | `public` | no | SNMP community used when polling discovered hosts. |
 | `FLASK_DEBUG` | `0` | yes (`0`) | Must be `0` in production. `server/.flaskenv` sets it to `1` for development. |
-| `DATABASE_URL` | `sqlite:///server/system.db` | no | Location of `system.db`. |
+| `DATABASE_URL` | `sqlite:///` plus the absolute path of `server/system.db` | no | Location of `system.db`. `history.db` is not configurable: it always sits next to `server/config.py`. |
 | `DATABASE_BACKUP_DIR` | `server/database-backups` | no | Where automatic database backups are written. |
 | `NAGIOS_HOST_CFG` | `/usr/local/nagios/etc/objects/hosts.cfg` | no | Hosts file that network discovery writes. |
 | `NAGIOS_RESOURCE_CFG` | `/usr/local/nagios/etc/resource.cfg` | no | Nagios resource file for the managed check-secret macro block; updates must preserve its owner, group and mode. |
-| `NAGIOS_LOG_PATH` | `/usr/local/nagios/var/nagios.log` | Fixed server-side Nagios log source; HTTP requests cannot override it |
-| `NAGIOS_LOG_ARCHIVE_DIR` | `/usr/local/nagios/var/archives` | Directory measured for Dashboard archive storage |
+| `NAGIOS_LOG_PATH` | `/usr/local/nagios/var/nagios.log` | no | Fixed server-side Nagios log source; HTTP requests cannot override it. |
+| `NAGIOS_LOG_ARCHIVE_DIR` | `/usr/local/nagios/var/archives` | no | Directory measured for Dashboard archive storage. |
 | `NAGIOS_MAIN_CFG` | `/usr/local/nagios/etc/nagios.cfg` | no | Main Nagios config, used for `nagios -v` validation. |
 | `NAGIOS_BIN` | `/usr/local/nagios/bin/nagios` | no | Nagios binary, used for validation. |
 | `NAGIOS_LOG_FILE` | `/usr/local/nagios/var/nagios.log` | no | Read-only notification failure diagnostics; a missing or unreadable log gives an empty indicator. |

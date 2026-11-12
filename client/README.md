@@ -76,6 +76,8 @@ client/
 |   |-- App.tsx            application route map
 |   |-- main.tsx           React entry point
 |   `-- index.css          global styles and Tailwind setup
+|-- e2e/                    Playwright browser tests for a running lab (see e2e/README.md)
+|-- qa/                     QA case selection used by the browser tests (see qa/README.md)
 |-- package.json           scripts and dependencies
 |-- vite.config.ts         dev server and /api proxy
 `-- vitest.config.ts       frontend test configuration
@@ -84,6 +86,15 @@ client/
 Pages belong in `src/pages/`. Page-specific components belong in the matching
 `src/components/<feature>/` folder. New API-backed pages should also update
 `src/lib/pageAccess.ts` when they require a permission.
+
+## Troubleshooting
+
+| Symptom | Fix |
+|---|---|
+| Pages load but every request fails or returns 502 | The backend is not running on `http://127.0.0.1:5000`. Start it, or set `API_PROXY_TARGET` (see `../dev/start-client.sh`) |
+| `npm run build` type errors after pulling | Run `npm install` (the lockfile pins exact versions) |
+| A page is missing from the sidebar | The signed-in user lacks its permission; see `src/lib/pageAccess.ts` |
+| `npm run test` fails on browser tests | Playwright tests are in `e2e/` and are not part of `npm run test`; see [`e2e/README.md`](e2e/README.md) |
 
 ## Main stack
 

@@ -29,11 +29,9 @@ Useful commands:
 ```bash
 pytest                                      # run the backend suite
 pytest tests/unit/test_dashboard.py -v        # run one test module
-flask seed                                  # add missing seed data
-flask sync-permissions                      # upgrade: add new permissions, grant to Administrator
-flask recover-bootstrap-admin               # privately recover the original bootstrap account
 ```
 
+See [Command-line commands](#command-line-commands) for the `flask` commands.
 Do not use `flask seed --reset` on data you need to keep; it drops and rebuilds
 the databases.
 
@@ -45,6 +43,52 @@ flask db init --multidb
 flask db migrate --multidb -m "description"
 flask db upgrade --multidb
 ```
+
+## Python version
+
+The backend targets **Python 3.14** (developed on 3.14.2). That is the version
+the CI `backend` job, the dev container (`.devcontainer/devcontainer.json`), the
+installer's appliance build and the Docker lab appliance (installed with `uv`,
+because Ubuntu 22.04 ships an older Python) all use, and the pins in
+`requirements.txt` are the set tested on it. Using another version is
+unsupported: dependencies may resolve to untested versions and the tests may
+behave differently. Changing the supported version means changing all four
+places together, and the installer.
+
+## Database layout
+
+Two SQLite files, both in `server/` and git-ignored:
+
+| File | Models | Contents | Bind |
+|---|---|---|---|
+| `system.db` | `app/system_models.py`, `app/plugin_models.py` | Users, roles, permissions, settings, acknowledgements, devices, discovery and deployment state, Plugin Manager records, logs | default (`DATABASE_URL` overrides the location) |
+| `history.db` | `app/history_models.py` | Polled Nagios host, service, performance and program snapshots | `history` (fixed path next to `config.py`) |
+
+Each model change ships with a migration in `migrations/versions/` that covers
+both databases; see [`migrations/README.md`](migrations/README.md).
+
+Backups: the scheduler writes a dated folder (`YYYYMMDD-HHMMSS`) holding both
+files into `DATABASE_BACKUP_DIR` (default `server/database-backups/`) and keeps
+the newest 7. Other folders under `server/` are generated, not source:
+`running-host-config-backup/` (a copy of Nagios' `hosts.cfg` taken before it is
+rewritten) and `host-config-files/` (generated host configuration files). Restore is described below and in
+[Backup and restore](../docs/manuals/Backup_and_Restore.md).
+
+## Command-line commands
+
+Run from `server/` with the virtual environment active. Leave
+`PINPOINT_SCHEDULER` unset so a command does not start the Nagios poller.
+
+| Command | Use | When |
+|---|---|---|
+| `flask db upgrade --multidb` | Apply migrations to both databases | Fresh install and every upgrade |
+| `flask init-production --admin-email EMAIL --password-stdin` | Seed permissions, roles and settings and create the first administrator; refuses to run if any user exists | Fresh production install, once (the installer runs it) |
+| `flask sync-permissions` | Add permissions introduced since the install and grant them to the built-in `Super Admin` role; idempotent | After `flask db upgrade` on an existing install |
+| `flask recover-bootstrap-admin` | Prompt twice for a temporary password for the earliest-created account and require a change at next sign-in | An administrator is locked out |
+| `flask restore-backup FOLDER --yes` | Replace both databases with backup `FOLDER` (a name from `DATABASE_BACKUP_DIR`, not a path); the current files are kept in a `pre-restore-*` folder; stop `pinpoint-gunicorn.service` first | Disaster recovery. Then run `flask db upgrade --multidb`, `flask sync-permissions`, regenerate the Nagios configuration and start the service |
+| `flask seed` | Add test users and sample data; `--reset` drops and rebuilds both databases | Development only, never on a real server |
+
+The commands are defined in `app/api/commands/`.
 
 ## What this side does
 
@@ -75,7 +119,14 @@ The API is mounted under three prefixes:
 - `app/ncpa_deployment/` performs fingerprint-verified remote NCPA deployment.
 - `app/scheduler.py` polls Nagios, purges retained data, and triggers
   settings-driven automation.
-- `config.py` contains database, Nagios, scan, plugin, and filesystem settings.
+- `config.py` contains database, Nagios, scan, plugin, and filesystem settings;
+  the environment variables it reads are listed in the root
+  [README](../README.md#production-settings).
+- Package guides: [`app/api/`](app/api/README.md), [`app/nagios/`](app/nagios/README.md),
+  [`app/network_discovery/`](app/network_discovery/README.md),
+  [`app/ncpa_deployment/`](app/ncpa_deployment/README.md),
+  [`app/logging/`](app/logging/README.md), [`scripts/`](scripts/README.md) and
+  [`migrations/`](migrations/README.md).
 
 ## Folder structure
 
@@ -97,6 +148,8 @@ server/
 |   |-- history_models.py      history-bind Nagios snapshot models
 |   |-- scheduler.py           recurring jobs
 |   `-- automation.py          settings-driven scheduled tasks
+|-- migrations/                Alembic migrations for both databases
+|-- scripts/                   Nagios-side helper scripts installed on the appliance
 |-- tests/                     unit, integration, e2e, support and plans
 |-- config.py                  runtime configuration
 |-- conftest.py                shared pytest environment and fixtures
@@ -124,6 +177,15 @@ Historical state-change and notification events come from Nagios'
 Network discovery, SSH deployment, plugin installation, and Nagios
 configuration touch external systems. Development and tests should use mocks or
 temporary paths unless a live integration run is intentional.
+
+## Troubleshooting
+
+| Symptom | Fix |
+|---|---|
+| "SECRET_KEY is not set" at start | Set `SECRET_KEY` in `server/.env`, or start with `FLASK_DEBUG=1` (development only) |
+| No monitoring data in development | Set `NAGIOS_HOST`, `NAGIOS_USERNAME` and `NAGIOS_PASSWORD` in `server/.env`, and set `PINPOINT_SCHEDULER=1` with `FLASK_DEBUG=0` so the poller runs (`../dev/start-server.sh` does this) |
+| `flask db upgrade` complains about missing tables or revisions | Read [`migrations/README.md`](migrations/README.md) before stamping |
+| Tests touch a real Nagios | They should not; run `pytest tests/unit/`. Live tests are opt-in under `tests/integration/` and `tests/e2e/` |
 
 ## Testing
 
