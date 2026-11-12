@@ -14,7 +14,7 @@ GitHub implementation issue: [#156](https://github.com/esfen14/Pinpoint/issues/1
 
 **Dependencies:** None to compute forecasts. Delivering a forecast as a notification depends on [Issue #19](issue-019.md) and [Issue #22](issue-022.md).
 
-**Plan reference:** Issue #25 in [`docs/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../../NAGIOS_CORE_FEATURE_GAP_PLAN.md) §3. The number is a plan identifier, not a GitHub issue number.
+**Plan reference:** Issue #25 in [`docs/archive/plans/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../plans/NAGIOS_CORE_FEATURE_GAP_PLAN.md) §3. The number is a plan identifier, not a GitHub issue number.
 
 > **Blocked / conditional:** **Awaiting a product decision.** Nagios Core only reacts to thresholds that have already been crossed. A forecast ("disk full in about 6 days") goes beyond Nagios Core and is new PinPoint behavior, so the team must confirm it wants it and whether a forecast may notify or only display. Do not start until that is decided. Part 25.1's computation also needs *further investigation*: confirm on a lab appliance how many samples per check exist and how long history is kept.
 

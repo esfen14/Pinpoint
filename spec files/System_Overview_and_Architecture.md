@@ -1,6 +1,6 @@
 # System Overview and Architecture
 
-**Last verified against the repository:** 2026-09-27
+**Last verified against the repository:** 2026-11-12
 
 ## Product purpose
 
@@ -67,6 +67,9 @@ Use lockfiles and requirements files as the source of truth for exact versions.
 /
 |-- AGENTS.md                    specification router only
 |-- spec files/                 authoritative system specifications
+|-- docs/                      manuals, active plans, archive, QA documents and test-run reports
+|-- scripts/                    developer, QA and lab command-line tools; verify.sh
+|-- dev/                        local development launchers
 |-- demo/                       fifteen-device Docker demo: appliance/ (Pinpoint device setup), targets/ (Docker devices), run of show (no product code)
 |-- lab/                        test-lab harness code
 |-- client/                     React + TypeScript application

@@ -14,7 +14,7 @@ GitHub implementation issue: [#154](https://github.com/esfen14/Pinpoint/issues/1
 
 **Dependencies:** [Issue #7](issue-007.md), [Issue #8](issue-008.md)
 
-**Plan reference:** Issue #23 in [`docs/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../../NAGIOS_CORE_FEATURE_GAP_PLAN.md) §3. The number is a plan identifier, not a GitHub issue number.
+**Plan reference:** Issue #23 in [`docs/archive/plans/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../plans/NAGIOS_CORE_FEATURE_GAP_PLAN.md) §3. The number is a plan identifier, not a GitHub issue number.
 
 > **Blocked / conditional:** Waits for the framework (Issue #7) and at least the local restart action (Part 8.1). Remote services also wait for Part 8.3, which is blocked by investigation. The security review of Issue #7 applies here too, because this issue is how an operator turns automatic action on.
 

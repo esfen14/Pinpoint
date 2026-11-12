@@ -14,7 +14,7 @@ GitHub implementation issue: [#116](https://github.com/esfen14/Pinpoint/issues/1
 
 **Dependencies:** [Issue #1](issue-001.md)
 
-**Plan reference:** Issue #3 in [`docs/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../../NAGIOS_CORE_FEATURE_GAP_PLAN.md) §3. The number is a plan identifier, not a GitHub issue number.
+**Plan reference:** Issue #3 in [`docs/archive/plans/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../plans/NAGIOS_CORE_FEATURE_GAP_PLAN.md) §3. The number is a plan identifier, not a GitHub issue number.
 
 > **Blocked / conditional:** **Part 3.1 (System):** Coordinate with the already open GitHub issue #79 (per-host alert recipients). Do not start before #79's data model is decided, to avoid two competing recipient models.  
 > **Part 3.2 (Web-Interface):** Same condition as Part 3.1.

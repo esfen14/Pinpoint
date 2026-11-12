@@ -1,5 +1,7 @@
 # Service reports from Nagios availability
 
+> **Archive note (2026-11-12, #288):** Implemented in [#198](https://github.com/esfen14/Pinpoint/issues/198), now closed; see `Implementation_Status.md` (Service-report availability) and the [operator guide](../../manuals/Service_Reports.md). The status below is the state when the plan was approved.
+
 Status: approved for an implementation issue by the owner on 2026-10-17;
 application implementation has not started.
 

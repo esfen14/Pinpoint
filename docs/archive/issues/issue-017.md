@@ -14,7 +14,7 @@ GitHub implementation issue: [#130](https://github.com/esfen14/Pinpoint/issues/1
 
 **Dependencies:** [Issue #16](issue-016.md)
 
-**Plan reference:** Issue #17 in [`docs/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../../NAGIOS_CORE_FEATURE_GAP_PLAN.md) §3. The number is a plan identifier, not a GitHub issue number.
+**Plan reference:** Issue #17 in [`docs/archive/plans/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../plans/NAGIOS_CORE_FEATURE_GAP_PLAN.md) §3. The number is a plan identifier, not a GitHub issue number.
 
 > **Blocked / conditional:** **Part 17.1 (System):** Needs a scope decision on Windows hosts, and NCPA's Windows API paths (disk and process names differ from Linux) must be probed on a lab Windows host first. NRPE is out of scope by team decision.  
 > **Part 17.2 (Web-Interface):** Same condition as Part 17.1.

@@ -1,5 +1,7 @@
 # Reports revision aligned with Nagios Core
 
+> **Archive note (2026-11-12, #288):** Implemented in [#199](https://github.com/esfen14/Pinpoint/issues/199), now closed; `Frontend_Modules_and_Routes.md` and `Implementation_Status.md` describe the current Reports page. The status below is the state when the backlog was proposed.
+
 Status: proposed implementation backlog — requested 2026-10-17; no application
 changes made. Implementation issue: [#199](https://github.com/esfen14/Pinpoint/issues/199).
 Priority: Low. Labels: `Low Priority`, `enhancement`, `web-interface`.
