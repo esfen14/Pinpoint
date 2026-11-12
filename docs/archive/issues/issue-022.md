@@ -14,7 +14,7 @@ GitHub implementation issue: [#153](https://github.com/esfen14/Pinpoint/issues/1
 
 **Dependencies:** [Issue #7](issue-007.md), [Issue #8](issue-008.md), [Issue #19](issue-019.md). Benefits from [Issue #1](issue-001.md) and [Issue #3](issue-003.md) but does not require them.
 
-**Plan reference:** Issue #22 in [`docs/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../../NAGIOS_CORE_FEATURE_GAP_PLAN.md) §3. The number is a plan identifier, not a GitHub issue number.
+**Plan reference:** Issue #22 in [`docs/archive/plans/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../plans/NAGIOS_CORE_FEATURE_GAP_PLAN.md) §3. The number is a plan identifier, not a GitHub issue number.
 
 > **Blocked / conditional:** **Part 22.1 (System):** Waits for the event handler framework (Issue #7) and the Nagios command channel (Issue #19). Whether the appliance's Nagios accepts custom notification external commands (`check_external_commands`, the command file path and its permissions) was not verified, *further investigation required* on a lab appliance.
 > **Part 22.2 (Web-Interface):** Same condition as Part 22.1.

@@ -14,7 +14,7 @@ GitHub implementation issue: [#118](https://github.com/esfen14/Pinpoint/issues/1
 
 **Dependencies:** [Issue #4](issue-004.md)
 
-**Plan reference:** Issue #5 in [`docs/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../../NAGIOS_CORE_FEATURE_GAP_PLAN.md) §3. The number is a plan identifier, not a GitHub issue number.
+**Plan reference:** Issue #5 in [`docs/archive/plans/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../plans/NAGIOS_CORE_FEATURE_GAP_PLAN.md) §3. The number is a plan identifier, not a GitHub issue number.
 
 > **Dependency satisfied:** Issue #4 was completed in GitHub issue #117. On
 > 2026-10-17 the user approved verifying Nagios's native same-host suppression

@@ -1,6 +1,6 @@
 # Data Model and Integrations
 
-**Last verified against the repository:** 2026-09-27
+**Last verified against the repository:** 2026-11-12
 
 ## Database ownership
 
@@ -31,6 +31,7 @@ acknowledgements belong in `system.db` even though they relate to Nagios alerts.
 - Audit/logging: `ActivityLog`, `ConfigurationChanges`, `ExportLog`.
 - Discovery: `NetworkDiscoveryStatus`, `SkippedService`, `NetworkDiscovery`,
   `Open_TCP_Services`, `Open_UDP_Services`, `DeviceParent` (manual reachability links).
+- Device identity (migration `d41f7a2b9e10`): `DeviceIdentifier` (`DEVICE_IDENTIFIER`), one piece of evidence that identifies a device across address changes (`Kind`: NCPA Certificate, Machine ID, SSH Host Key, MAC or DNS Name; `Value`; `Is_Strong`; first and last seen). Strong identifiers are unique on `Kind` and `Value`, so one key never belongs to two devices; weak ones may be shared, and a multi-NIC device has several MAC rows. `DeviceAddressHistory` (`DEVICE_ADDRESS_HISTORY`), every address a device has been seen at (`IP_Address`, `Network`, `MAC_Address`, `Source`: Scan, NCPA Relocate or Manual; first seen, last seen, `Closed_At`); the open row (`Closed_At` null) is the current address and a device has at most one. Both reference `NetDiscoveryID`. The address history is read by `GET /api/system/hosts/<id>/addresses` (see `Device_Inventory_Requirements.md`, "IP address history").
 - NCPA deployment: `SSHCredentials` (also `Remote_Restart_Enabled`, default false, and `Remote_Restart_Services`, a JSON list of unit names, both added by `c7a1f4d92e60` for #8 Part 8.3), `NCPADeploymentStatus` (one row per run,
   with `Reviewed_At`/`Reviewed_By`), `NCPADeploymentResult` (one row per device
   per run), `NCPADeployment` (each device's latest agent state and nullable installed `Port`; `Deployement_Method` is Automatic for SSH installs and Manual for an agent registered by the administrator, #130, which needs no migration because the enum already had `Manual`),

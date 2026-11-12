@@ -1,7 +1,7 @@
 # Archived development issues (plan #1 to #25)
 
 Engineering-ready tickets written on 2026-10-13 from
-[`NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../../NAGIOS_CORE_FEATURE_GAP_PLAN.md). Each
+[`NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../plans/NAGIOS_CORE_FEATURE_GAP_PLAN.md). Each
 `issue-NNN.md` is one plan issue with parts, acceptance criteria and deliverables.
 [`INDEX.md`](INDEX.md) is the index, with the GitHub issue, status and pull requests for each plan
 issue (audited in #303), and the plan-number to GitHub-number table.

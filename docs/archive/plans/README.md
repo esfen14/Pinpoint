@@ -27,6 +27,7 @@ design; do not treat them as current requirements.
 | `Plugin_Driven_Monitoring_Plan.md` | Plugin Manager and plugin-driven monitoring |
 | `Reports_Revision_Nagios_Alignment_Plan.md` | Reports page revision (#199) |
 | `Service_Reports_Nagios_Availability_Plan.md` | Service reports from Nagios availability (#198) |
+| `NAGIOS_CORE_FEATURE_GAP_PLAN.md` | The 2026-10-13 audit of Nagios Core features against Pinpoint, from which the 25 planned issues were written. Its status counts are out of date; all 25 issues shipped |
 
 Still active and left in [`../../plans/`](../../plans/): only the plugin acceptance remediation list
 (`Plugin_Driven_Monitoring_Remediation.md`).

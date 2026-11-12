@@ -14,7 +14,7 @@ GitHub implementation issue: [#115](https://github.com/esfen14/Pinpoint/issues/1
 
 **Dependencies:** None
 
-**Plan reference:** Issue #2 in [`docs/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../../NAGIOS_CORE_FEATURE_GAP_PLAN.md) §3. The number is a plan identifier, not a GitHub issue number.
+**Plan reference:** Issue #2 in [`docs/archive/plans/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../plans/NAGIOS_CORE_FEATURE_GAP_PLAN.md) §3. The number is a plan identifier, not a GitHub issue number.
 
 > **Blocked / conditional:** **Part 2.1 (Installer):** Conditional. Only needed if the team decides to support a relay that requires implicit TLS (port 465). STARTTLS relays work without any installer change. The helper is maintained in the installer repository, which is outside this repository, so the exact code location there is *further investigation required*.
 

@@ -1,3 +1,5 @@
+> **Archived, 2026-11-12 (#288).** This is the audit that produced the 25 planned issues, as it stood on 2026-10-13. Its status counts and "Not Implemented" rows are **out of date**: all 25 issues have since shipped (see the [issue index](../issues/INDEX.md)). Do not read it as the current state of Pinpoint; [`Implementation_Status.md`](../../../spec%20files/Implementation_Status.md) is.
+
 # Nagios Core Feature-Gap Plan for Pinpoint
 
 **Audit date:** 2026-10-13 · **Revised after `git pull` and a read-only inspection of a live appliance VM (`pinpoint-2`, `main` at `d4df736`)** (branch `issue-62-qa-journeys-test-plan` at `c9414d41`, which includes `main` as of 2026-10-10) · **Method:** code and specification reading, plus read-only commands on one live appliance (marked "VM-verified"). No application code was changed and **no test suite was executed.** "Fully Implemented" therefore means "present and complete in the code read", not "proven by a test run".
@@ -31,7 +33,7 @@ These totals match the Section 2 table row by row. **25 issues** are raised (Sec
 
 ### Development issues
 
-Each issue below is expanded into one engineering-ready ticket in [`docs/archive/issues/`](archive/issues/INDEX.md) with the same number. Work that spans layers is divided into labelled parts inside the ticket (for example `Part 19.2`). Writing them corrected three statements in this plan, which are fixed in place: `check_pop` and `check_imap` are not in the bundled catalog, the per-device `Plugin_Variables` override has no writer, and PinPoint stores no SSH password.
+Each issue below is expanded into one engineering-ready ticket in [`docs/archive/issues/`](../issues/INDEX.md) with the same number. Work that spans layers is divided into labelled parts inside the ticket (for example `Part 19.2`). Writing them corrected three statements in this plan, which are fixed in place: `check_pop` and `check_imap` are not in the bundled catalog, the per-device `Plugin_Variables` override has no writer, and PinPoint stores no SSH password.
 
 ### Scope decisions applied (team, 2026-10-13)
 
@@ -785,7 +787,7 @@ Conventions: "Existing" paths were verified in the repository. "(new)" marks pro
 
 ### Issues #22 to #25 — Completing proactive recovery (added 2026-10-13)
 
-Issues #7 and #8 deliver the event-handler framework and the restart actions. Reviewing them against the Proactive Resolution row in Section 2 left four gaps, each written up in [`docs/archive/issues/`](archive/issues/INDEX.md):
+Issues #7 and #8 deliver the event-handler framework and the restart actions. Reviewing them against the Proactive Resolution row in Section 2 left four gaps, each written up in [`docs/archive/issues/`](../issues/INDEX.md):
 
 - **Issue #22 — Escalation and outcome visibility.** A failed, capped or repeating recovery is raised as a Nagios custom notification (through the Issue #19 command channel) so it follows the normal contacts and escalations, and the outcome is shown beside the alert. Needed because the Issue #8 acceptance criterion "a failed restart escalates as a normal alert" had no implementation in #7 or #8. Priority Medium · Complexity Medium · Dependencies #7, #8, #19.
 - **Issue #23 — Per-service "Recover automatically" toggle with the restart limit.** Listed as the frontend change for #8 above but missing from its ticket. Priority Low · Complexity Medium · Dependencies #7, #8.

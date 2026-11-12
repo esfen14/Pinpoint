@@ -131,7 +131,8 @@ those sensitive steps from this overview.
 
 Use a feature branch, keep behavioral specifications current, run the smallest
 relevant tests while developing, and broaden verification in proportion to the
-change before merging. Never commit credentials, private keys, runtime lab
+change before merging. If a CI job fails, see
+[CI failed, now what?](spec%20files/Agent_Workflow_and_CI.md#ci-failed-now-what). Never commit credentials, private keys, runtime lab
 manifests, VM disks, database backups, or unsanitized test evidence.
 
 ## Production settings

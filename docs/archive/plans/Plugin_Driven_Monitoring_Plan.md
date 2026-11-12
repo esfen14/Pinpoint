@@ -1,5 +1,7 @@
 # Plugin-Driven Monitoring Implementation Plan
 
+> **Archive note (2026-11-12, #288):** The branch `feature/plugin-driven-monitoring` was merged to `main` in PR #28 (2026-10-06). The status below is the state before that merge. Defects found by the acceptance run are in [`Plugin_Driven_Monitoring_Remediation.md`](../../plans/Plugin_Driven_Monitoring_Remediation.md).
+
 Status: **in progress.** Decisions Q1–Q7 are answered (§10). Phase 0 is done
 (results in §7.1). Phase 1 (descriptions) is committed on the feature branch.
 Phases 2 (data model), 2b (Port → Service map), 3 (reconciler and gating), 4

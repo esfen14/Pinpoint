@@ -1,5 +1,7 @@
 # Plan: DHCP Device Identity and Port Handling
 
+> **Archive note (2026-11-12, #288):** Phases 0 to 4 (back end) were built; the Device Inventory identity review and manual merge exist (`Device_Inventory_Requirements.md`); NRDP (phase 5) was not built. See the [implementation report](DHCP_Device_Identity_Implementation_Report.md). The status below is the state when this was proposed.
+
 **Status:** Proposal, for team review
 **Scope:** `server/app/network_discovery/`, `server/app/ncpa_deployment/`, `server/app/system_models.py`, Device Inventory UI
 **Related:** `pinpoint-dhcp-methods-comparison.md` (method catalogue — this plan picks from it and maps it onto the code)
