@@ -14,7 +14,7 @@ GitHub implementation issue: [#121](https://github.com/esfen14/Pinpoint/issues/1
 
 **Dependencies:** [Issue #7](issue-007.md)
 
-**Plan reference:** Issue #8 in [`docs/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../../NAGIOS_CORE_FEATURE_GAP_PLAN.md) §3. The number is a plan identifier, not a GitHub issue number.
+**Plan reference:** Issue #8 in [`docs/archive/plans/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../plans/NAGIOS_CORE_FEATURE_GAP_PLAN.md) §3. The number is a plan identifier, not a GitHub issue number.
 
 > **Blocked / conditional:** **Part 8.1 (System):** Waits for the event handler framework (Issue #7).  
 > **Part 8.2 (Installer):** Waits for the security review of Issue #7. The code location is known (installer repository, `setup/configure-pinpoint-privileges.sh`).  

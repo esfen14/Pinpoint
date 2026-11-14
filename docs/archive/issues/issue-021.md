@@ -14,7 +14,7 @@ GitHub implementation issue: [#134](https://github.com/esfen14/Pinpoint/issues/1
 
 **Dependencies:** None
 
-**Plan reference:** Issue #21 in [`docs/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../../NAGIOS_CORE_FEATURE_GAP_PLAN.md) §3. The number is a plan identifier, not a GitHub issue number.
+**Plan reference:** Issue #21 in [`docs/archive/plans/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../plans/NAGIOS_CORE_FEATURE_GAP_PLAN.md) §3. The number is a plan identifier, not a GitHub issue number.
 
 > **Product decision (2026-10-17, GitHub #134):** The owner rejected availability
 > targets: Pinpoint only needs to show measured uptime, which is already

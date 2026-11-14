@@ -1,5 +1,7 @@
 # Event handler framework: design for review (GitHub #120, plan Issue #7)
 
+> **Archive note (2026-11-12, #288):** The design shipped as the event handler framework in #120 and #158 (see the [issue index](../issues/INDEX.md)). The status below is the state when the design was approved.
+
 Status: **approved 2026-10-15; implementation may start.** The project owner asked for the
 design to be reviewed before any code touches the sensitive files (`app/network_discovery/`, and a
 new path that runs actions). Written for the reviewer and for the engineer who will build it.

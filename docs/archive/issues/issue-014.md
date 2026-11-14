@@ -14,7 +14,7 @@ GitHub implementation issue: [#127](https://github.com/esfen14/Pinpoint/issues/1
 
 **Dependencies:** [Issue #16](issue-016.md)
 
-**Plan reference:** Issue #14 in [`docs/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../../NAGIOS_CORE_FEATURE_GAP_PLAN.md) §3. The number is a plan identifier, not a GitHub issue number.
+**Plan reference:** Issue #14 in [`docs/archive/plans/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../plans/NAGIOS_CORE_FEATURE_GAP_PLAN.md) §3. The number is a plan identifier, not a GitHub issue number.
 
 #### A. Problem Description
 

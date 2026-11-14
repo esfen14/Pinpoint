@@ -14,7 +14,7 @@ GitHub implementation issue: [#155](https://github.com/esfen14/Pinpoint/issues/1
 
 **Dependencies:** [Issue #7](issue-007.md). The acknowledgement and downtime checks also need [Issue #19](issue-019.md) and [Issue #9](issue-009.md).
 
-**Plan reference:** Issue #24 in [`docs/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../../NAGIOS_CORE_FEATURE_GAP_PLAN.md) §3. The number is a plan identifier, not a GitHub issue number.
+**Plan reference:** Issue #24 in [`docs/archive/plans/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../plans/NAGIOS_CORE_FEATURE_GAP_PLAN.md) §3. The number is a plan identifier, not a GitHub issue number.
 
 > **Blocked / conditional:** Work that only needs the framework (kill switch, retention, health, interrupted-run handling) can start after Issue #7. The acknowledgement check waits for Issue #19 (acknowledgements reaching Nagios) and the downtime check waits for Issue #9.
 

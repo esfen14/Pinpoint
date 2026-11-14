@@ -16,7 +16,7 @@ body:
     id: plan
     attributes:
       label: Plan issue
-      description: The number from docs/NAGIOS_CORE_FEATURE_GAP_PLAN.md, or "none" if this issue is not from the plan.
+      description: The number from docs/archive/plans/NAGIOS_CORE_FEATURE_GAP_PLAN.md, or "none" if this issue is not from the plan.
       placeholder: "Plan issue #19"
     validations:
       required: true

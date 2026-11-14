@@ -3,8 +3,9 @@
 Source: the acceptance run `plugin-driven-monitoring-20261006` (tested commit `2b054050`, lab
 `10.0.2.0/28`). 42 cases: 32 Pass, 2 Fail (O-03, L-08), 5 Blocked, 3 Skipped. Findings D-1 to D-8.
 
-Status: **draft.** Code fixes are on branch `fix/plugin-monitoring-acceptance-defects`; none of
-them has been re-run on the lab yet.
+Status: **open: lab re-run outstanding.** The code fixes were merged to `main` in PR #27
+(branch `fix/plugin-monitoring-acceptance-defects`, 2026-10-06); none of them has been re-run on the
+lab yet.
 
 ## 1. Findings and state
 

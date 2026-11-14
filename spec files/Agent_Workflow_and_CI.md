@@ -1,6 +1,6 @@
 # Agent Workflow and CI
 
-**Last verified against the repository:** 2026-10-08
+**Last verified against the repository:** 2026-11-12
 
 How work is picked up, verified and merged, by people and by coding agents.
 Origin: the 2026-10-07 mentoring session (source of truth must be readable by
@@ -11,7 +11,9 @@ agents; loop engineering; last-mile checks in CI; reproducible environments).
 | Kind | Location |
 |---|---|
 | Specifications (current behavior and constraints) | `spec files/` |
-| Plans, proposals, acceptance and remediation reports | `docs/plans/` |
+| Active plans, proposals and remediation lists | `docs/plans/` |
+| Finished plans and the 25 planned issues (history only) | `docs/archive/` |
+| Sanitized reports of live-lab and acceptance runs | `docs/test-runs/` |
 | Operator and user manuals | `docs/manuals/` |
 | Test plans and live-lab plans | `server/tests/plans/` |
 | QA journeys, QA scope and the master QA test plan | `docs/qa/` |
@@ -410,32 +412,54 @@ cooperative locks remain a trust boundary, not cryptographic human authorization
 
 ## Verification commands
 
-| Stage | Command | Notes |
+| Stage | Command | What it runs |
 |---|---|---|
-| Docs | `scripts/verify.sh docs` | VM ownership safety and administrator setup regression tests pass; agent progress files are well formed; relative links resolve; environment variables match the README table; browser routes match `App.tsx`, `pageAccess.ts` and the spec; module requirement mappings, derived status, queue/evidence/offline-executor regressions pass; fix-found queue and stop-rule contracts are present. Standard library only |
-| Backend | `scripts/verify.sh backend` | Route and client-API drift checks, then `pytest tests/unit` in `server/` with `FLASK_DEBUG=1`; ~4 min, 2,167 passed / 14 skipped on 2026-10-08 |
-| Frontend | `scripts/verify.sh frontend` | `npm run test`, `npm run build`, `npm run lint` (errors fail; warnings do not) |
-| Everything | `scripts/verify.sh all` | Same stages as CI |
+| Docs | `scripts/verify.sh docs` | Relative-link check; environment-variable, browser-route and module-traceability checks; the derived QA case status (`render_qa_case_tables.py --check`) and automation coverage (`qa_coverage.py check`); offline regression tests for the lab smoke and lab drift tools, the QA tooling (`scripts/test_qa_*.py`, queue, catalog, evidence, execute, coverage, transport, supervisor, recovery, process, results, container, bridge, deployment, pilot, control), VM preflight and administrator setup, and the defense-demo tools (`demo/targets/test_*.py`, `demo/appliance/test_*.py`); agent progress-file structure; and the fix-found workflow contract. Standard library only; no Docker, VM, browser or network |
+| Backend | `scripts/verify.sh backend` | Route-catalog drift, client-API drift, then `pytest tests/unit` in `server/` with `FLASK_DEBUG=1`. Takes several minutes; the pass and skip counts change with the code, so read them from the CI run or the `backend-test-results` artifact |
+| Frontend | `scripts/verify.sh frontend` | Type-check of the QA Playwright sources and the `qa/*.node.mjs` tests, then `npm run test`, `npm run build` and `npm run lint` (errors fail; warnings do not) |
+| Everything | `scripts/verify.sh all` | The three stages above in order |
 
 Live tests (`server/tests/integration/`, `server/tests/e2e/`) are never part of
 CI or an agent loop without explicit approval; they need a lab Nagios.
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` runs on every pull request and on pushes to `main`.
+`.github/workflows/ci.yml` runs on every pull request (opened, updated, reopened
+or marked ready) and on pushes to `main`. A new push cancels the earlier run for
+the same ref.
 
 | Job | Runs | Blocking |
 |---|---|---|
-| `docs` | `scripts/verify.sh docs` | yes |
-| `backend` | Python 3.14, install `requirements*.txt`, `scripts/verify.sh backend` | yes |
-| `frontend` | Node 22, `npm ci`, test, build, lint | yes |
+| `docs` | `scripts/verify.sh docs`; on a pull request that is not a draft, also `check_agent_progress.py --none` (no `.agent/progress/issue-<n>.md` may remain) | yes |
+| `backend` | Python 3.14, install `requirements*.txt`, `scripts/verify.sh backend`; uploads JUnit XML | yes |
+| `frontend` | Node 22, `npm ci`, `npm run test` (with JUnit output), `npm run build`, `npm run lint`; uploads JUnit XML | yes |
+
+The `frontend` job calls the npm scripts directly, so it does **not** run the
+offline QA selection checks that `scripts/verify.sh frontend` adds (`tsc -p
+tsconfig.qa.json` and `node --test qa/*.node.mjs`). Run `scripts/verify.sh
+frontend` locally when you change `client/qa/` or the QA Playwright configs.
 
 Rules: CI uses no secrets and no network devices; every setting comes from the
 environment (see the production settings table in `README.md`); a failing job
-is fixed in the PR, never skipped. Protect `main` by requiring the three jobs.
+is fixed in the PR, never skipped.
 
 Each test job uploads its JUnit XML as an artifact (`if: always()`, so failures keep
-their results).
+their results) for 30 days.
+
+### Branch protection
+
+`main` is protected by the active repository ruleset `Safety-net` (read from the
+GitHub API on 2026-11-12). It applies to the default branch with no bypass actors
+and:
+
+- requires the status checks `docs`, `backend` and `frontend` to pass before merge
+  (the branch need not be up to date with `main`);
+- requires a pull request, with zero required approvals;
+- blocks deleting `main` and blocks non-fast-forward pushes (no force-push).
+
+Because `docs` is required, a stray progress file or a failing offline tool test
+blocks the merge just as a failing unit test does. If the ruleset changes, update
+this section.
 
 Not yet automated (see `Implementation_Status.md`): deployment, installer ISO
 build and install test, spec-vs-code drift checks.
@@ -452,7 +476,8 @@ the code) in the same change.
 | `check_client_api_drift.py` | Every `/api/...` string in `client/src` (including `${CONST}` prefixes) against the routes Flask serves, with the HTTP method when the call states it. A `${...}` placeholder matches any one segment | backend |
 | `check_frontend_route_drift.py` | `<Route>` paths and page components in `App.tsx`, `PAGE_PERMISSIONS` in `pageAccess.ts` and the "Browser route catalog" table in `Frontend_Modules_and_Routes.md` | docs |
 | `check_env_drift.py` | Environment variables the server reads (`os.environ`, `os.getenv`, `env_*` helpers) against the README "Production settings" table, which the installer builds `pinpoint.env` from | docs |
-| `check_doc_links.py` | Relative markdown links in `AGENTS.md`, `README.md` and `spec files/` | docs |
+| `check_doc_links.py` | Relative markdown links in `AGENTS.md`, `README.md`, `spec files/`, `docs/`, `.agent/` and `server/tests/` | docs |
+| `check_traceability.py`, `render_qa_case_tables.py --check`, `qa_coverage.py check` | The QA case catalog, its requirement mappings, and the derived status and coverage views | docs |
 
 Rules the checks rely on: put each route in its own table row (a combined row
 such as "`/pause` and `/resume`" cannot be checked); a new environment variable
@@ -462,6 +487,35 @@ Not yet checked: seeded permissions versus `require_permission` calls, the
 permission list in `Backend_Modules_and_Routes.md` and the client permissions
 (`Implementation_Status.md` already lists one known mismatch, the discovery stop
 permission); component and module inventories; model inventories.
+
+## CI failed, now what?
+
+Find the failing job and step in the pull request's **Checks** tab (or `gh pr
+checks <n>`), reproduce it with the command in the second column, and make the
+fix in the same pull request. Never skip or weaken a check. This table is the one
+place these fixes are listed; other documents link here.
+
+| Failing job and step | Run locally | Usual fix |
+|---|---|---|
+| `docs`: relative markdown links | `python3 -I scripts/check_doc_links.py .` | Repair or remove the broken link; after moving or archiving a file, update links to it |
+| `docs`: environment variables match the README table | `python3 -I scripts/check_env_drift.py` | A variable the server reads is missing from the README "Production settings" table: add a row. A row for a variable the server no longer reads: delete it |
+| `docs`: browser routes match `App.tsx`, `pageAccess.ts` and the spec | `python3 -I scripts/check_frontend_route_drift.py` | Make `App.tsx`, `PAGE_PERMISSIONS` and the "Browser route catalog" in `Frontend_Modules_and_Routes.md` agree |
+| `docs`: module catalog and requirement mappings | `python3 -I scripts/check_traceability.py` | Fix the case ID, requirement reference or source in the black-box catalog it names |
+| `docs`: derived module QA status | `python3 -I scripts/render_qa_case_tables.py --check` | Regenerate with `python3 -I scripts/render_qa_case_tables.py --write` and include `docs/qa/QA_Case_Status.md` |
+| `docs`: automation coverage | `python3 -I scripts/qa_coverage.py check` | Fix the adapter or coverage record it names; if the derived view differs, `qa_coverage.py render --write` after review |
+| `docs`: any `scripts/test_*.py` or `demo/*/test_*.py` | `python3 -I <that file>` | The tool or its test changed behavior; fix the code, or update the test only if the documented contract changed |
+| `docs`: agent progress files are well formed | `python3 -I scripts/check_agent_progress.py` | Restore the missing section, a valid `Status:` line, a checklist and a concrete "Next action" |
+| `docs`: no agent progress files in a ready pull request | `python3 -I scripts/check_agent_progress.py --none` | `git rm .agent/progress/issue-<n>.md` and push; or keep the pull request a draft until the work is finished |
+| `backend`: route catalog matches the Flask routes | `cd server && FLASK_DEBUG=1 python ../scripts/check_route_drift.py` | Document the route in its own `METHOD /api/...` row of `Backend_Modules_and_Routes.md`, or remove the row for a deleted route |
+| `backend`: every client `/api` call matches a Flask route | `cd server && FLASK_DEBUG=1 python ../scripts/check_client_api_drift.py` | Correct the URL or method in `client/src`, or add the missing route |
+| `backend`: pytest | `cd server && FLASK_DEBUG=1 python -m pytest tests/unit -q` | Fix the code or the test (see `server/tests/README.md`); open the `backend-test-results` artifact for the failing case |
+| `frontend`: `npm run test` | `cd client && npm run test` | Fix the failing Vitest case |
+| `frontend`: `npm run build` | `cd client && npm run build` | Fix the TypeScript error `tsc -b` reports |
+| `frontend`: `npm run lint` | `cd client && npm run lint` | Fix the ESLint error; warnings do not fail the job |
+
+If a job is red only on CI, check the Python (3.14) and Node (22) versions first,
+then use the dev container (below). Re-run a transient failure once; a failure
+that repeats is a real failure.
 
 ## Reproducible environment
 

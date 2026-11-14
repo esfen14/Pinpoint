@@ -1,6 +1,6 @@
 # Pinpoint System Specifications
 
-**Last verified against the repository:** 2026-09-27
+**Last verified against the repository:** 2026-11-12
 
 This directory is the authoritative documentation set for Pinpoint. The root
 `AGENTS.md` is only a router into these documents.

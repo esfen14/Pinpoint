@@ -1,6 +1,6 @@
 # PinPoint Development Issues
 
-These issues turn the gaps in [`docs/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../../NAGIOS_CORE_FEATURE_GAP_PLAN.md) into engineering-ready tasks. They were planned on 2026-10-13. **All 25 GitHub issues are closed** and the work is merged; the Status column below records the evidence checked on 2026-11-11 (GitHub issue closed, pull requests merged, behavior present in code and specifications).
+These issues turn the gaps in [`docs/archive/plans/NAGIOS_CORE_FEATURE_GAP_PLAN.md`](../plans/NAGIOS_CORE_FEATURE_GAP_PLAN.md) into engineering-ready tasks. They were planned on 2026-10-13. **All 25 GitHub issues are closed** and the work is merged; the Status column below records the evidence checked on 2026-11-11 (GitHub issue closed, pull requests merged, behavior present in code and specifications).
 
 ## How to read the numbers
 
