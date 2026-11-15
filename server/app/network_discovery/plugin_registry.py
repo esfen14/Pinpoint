@@ -84,6 +84,7 @@ COMMAND_TEMPLATE = """define command {{
 
 
 class Transport(Enum):
+    """Network transport a check runs over: TCP or UDP."""
     TCP = "TCP"
     UDP = "UDP"
 

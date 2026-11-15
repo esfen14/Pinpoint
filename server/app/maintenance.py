@@ -73,6 +73,10 @@ def iso(value: datetime | None) -> str | None:
 
 
 def epoch(value: datetime) -> int:
+    """
+    Convert a naive UTC datetime, as stored, into whole seconds since the Unix
+    epoch. It is used in the Nagios downtime comment.
+    """
     return int(value.replace(tzinfo=timezone.utc).timestamp())
 
 

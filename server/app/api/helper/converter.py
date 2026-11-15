@@ -1,3 +1,5 @@
+"""Conversions between Nagios values and Pinpoint enums, time conversion, email normalising and performance-data parsing."""
+
 from app.system_models import UserStatus
 from typing import Union
 from email_validator import validate_email
@@ -8,10 +10,19 @@ from datetime import datetime, timedelta, timezone
 This is a separation of conern regarding conversion of data
 """
 def convert_user_status(status):
+    """Convert a status name such as "active" (any case, surrounding spaces ignored) to the UserStatus enum member.
+
+    Raises AttributeError if the name is not a UserStatus member.
+    """
     status = status.strip().upper()
     return getattr(UserStatus, status)
 
 def convert_host_state_type_enum(val):
+    """Convert a host state name to the HostStateType enum member.
+
+    Returns None for None and for "PENDING". Raises AttributeError for any
+    other name that is not a HostStateType member.
+    """
     if val is None:
         return None
     s = str(val).strip().upper()
@@ -106,6 +117,10 @@ def convert_acknowledgement_type_enum(val):
 def convert_to_UTC(timestamp):
     # Nagios statusjson.cgi returns timestamps in milliseconds (e.g. 1790410811000).
     # Python's datetime.fromtimestamp expects seconds, so divide by 1000.
+    """Convert a Nagios timestamp in milliseconds since the epoch to a timezone-aware UTC datetime.
+
+    Returns None when the timestamp is None.
+    """
     if timestamp is None:
         return None
     return datetime.fromtimestamp(timestamp / 1000, timezone.utc)
@@ -114,6 +129,12 @@ def convert_to_UNIX(date_str, time_obj):
     # Bug fix: was strptime(f"{date_str} {time_str}", "%m:%d:%Y %H:%M")
     # — the separator in the format was ":" not "-" and time_obj is a datetime.time,
     # not a string; also date format from Nagios is YYYY-MM-DD not MM:DD:YYYY.
+    """Combine a YYYY-MM-DD date string and a time into a UNIX timestamp in seconds.
+
+    time_obj may be a datetime.time (for example time.min or time.max) or a
+    HH:MM:SS string. The result uses the server's local time zone. Raises
+    ValueError if the text does not match the expected format.
+    """
     if hasattr(time_obj, 'hour'):
         # time_obj is a datetime.time instance (e.g. time.min / time.max)
         time_str = time_obj.strftime("%H:%M:%S")
@@ -126,6 +147,10 @@ def convert_to_UNIX(date_str, time_obj):
     return int(dt.timestamp())
 
 def normalize_email(email):
+    """Return the normalised form of an email address, without checking that the domain can receive mail.
+
+    Raises email_validator.EmailNotValidError if the address is malformed.
+    """
     return validate_email(email, check_deliverability=False).normalized
 
 def split_value_unit(data):
@@ -226,6 +251,7 @@ def parse_perf_token(token):
     return [parse_perf_data(token)]
     
 def get_range_day(days):
+    """Return (start, end) UNIX timestamps for the last `days` days ending now."""
     end = datetime.now()
     start = end - timedelta(days)
     return int(start.timestamp()), int(end.timestamp())

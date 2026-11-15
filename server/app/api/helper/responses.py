@@ -1,3 +1,5 @@
+"""The `success` and `error` helpers that build the standard JSON response body and status code used by every route."""
+
 from flask import jsonify
 
 

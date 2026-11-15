@@ -69,6 +69,11 @@ def serialize_window(window, now):
 
 
 def get_window_or_404(id):
+    """Look up a maintenance window by id.
+
+    Returns (window, None) when found, or (None, error response) with a 404
+    when it does not exist. Read only.
+    """
     window = db.session.get(MaintenanceWindow, id)
     if window is None:
         return None, error("Maintenance window not found.", 404)
@@ -76,6 +81,10 @@ def get_window_or_404(id):
 
 
 def apply_fields(window, fields):
+    """Copy each name and value in `fields` onto the window as attributes.
+
+    The caller is responsible for validating the fields and committing.
+    """
     for name, value in fields.items():
         setattr(window, name, value)
 

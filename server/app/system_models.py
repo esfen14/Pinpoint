@@ -1,3 +1,14 @@
+"""
+Models and enums for system.db, the default database bind. It covers accounts, roles and
+permissions; the activity, configuration-change and export logs; network discovery runs,
+discovered devices and their identity, address and review records; open TCP and UDP
+ports; NCPA deployment runs and results; system, discovery, plugin, notification, SMTP
+and per-user settings; alert acknowledgements and their history; notification read
+cursors; password reset requests; and the remediation (automatic recovery) actions, runs
+and consumer state. Nagios telemetry lives in history_models.py and Plugin Manager
+tables in plugin_models.py.
+"""
+
 from datetime import datetime, timezone
 from typing import Optional
 from flask_login import UserMixin
@@ -14,6 +25,10 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 
 class Permission(db.Model):
+    """
+    A named permission that can be granted to roles, such as the right to manage
+    users. Roles gain it through RolePermission rows.
+    """
     # Table Name
     __tablename__ = "PERMISSION"
     
@@ -25,6 +40,10 @@ class Permission(db.Model):
     RolePermission: so.WriteOnlyMapped['RolePermission'] = so.relationship(back_populates='Permissions')
         
 class Role(db.Model):
+    """
+    A named, optionally inactive role that groups permissions and is assigned to
+    users.
+    """
     # Table Name
     __tablename__ = "ROLE"
     
@@ -40,6 +59,10 @@ class Role(db.Model):
 
 
 class RolePermission(db.Model):
+    """
+    Link row granting one permission to one role. A role and permission pair can
+    appear only once.
+    """
     # Table Name
     __tablename__ = "ROLE_PERMISSION"
     
@@ -59,11 +82,18 @@ class RolePermission(db.Model):
     Permissions: so.Mapped['Permission'] = so.relationship(back_populates='RolePermission')
    
 class UserStatus(Enum):
+    """The account state of a user: Active, Inactive or Suspended."""
     ACTIVE = "Active"
     INACTIVE = "Inactive"
     SUSPENDED = "Suspended"
     
 class User(UserMixin, db.Model):
+    """
+    A PinPoint account: name, email, hashed password, status, role, and flags for
+    forced password change, first-time setup and whether the user receives alert
+    email. It works with Flask-Login. Use set_password and check_password rather
+    than touching the hash directly.
+    """
     # Table Name
     __tablename__ = "USER"
 
@@ -127,9 +157,18 @@ class User(UserMixin, db.Model):
 
 @login.user_loader
 def load_user(id):
+    """
+    Flask-Login user loader. It takes the user ID stored in the session as a string
+    and returns the matching User, or None if there is no such user. It only reads.
+    """
     return db.session.get(User, int(id))
     
 class ActivityLog(db.Model):
+    """
+    One entry in the user activity and audit log: what action a user performed and
+    when. The specific log tables (configuration changes, exports, discovery,
+    deployment and plugin records) link to it by LogID.
+    """
     # Table Name
     __tablename__ = "ACTIVITY_LOG"
     
@@ -162,6 +201,11 @@ class ActivityLog(db.Model):
     Plugin_Scan_Logs: so.WriteOnlyMapped['PluginScanStatus'] = so.relationship(back_populates='Logs')
     
 class ConfigurationChanges( db.Model):
+    """
+    Detail row for a configuration change: the type, parameter name, old value, new
+    value and time. It is linked to the ActivityLog entry of the user who made the
+    change.
+    """
     # Table Name
     __tablename__ = "CONFIGURATION_CHANGES"
     
@@ -189,11 +233,16 @@ To call use "ExportFormat.Export_Format = ExportFormat.PDF"
 The models class need to be imported to use the Enums
 """
 class ExportFormat(Enum):
+    """The file format of an exported report: csv, pdf or xls."""
     CSV="csv"
     PDF="pdf"
     XLS="xls"
     
 class ExportLog(db.Model):
+    """
+    Detail row for a report export: the report type, format, date range and export
+    time. It is linked to the ActivityLog entry of the user who exported it.
+    """
     # Table Name
     __tablename__ = "EXPORT_LOG"
     
@@ -215,12 +264,20 @@ class ExportLog(db.Model):
     Logs: so.Mapped[ActivityLog] = so.relationship(back_populates='Export_Logs')
 
 class DiscoveryStatus(Enum):
+    """
+    The state of a network discovery run: Running, Success, Failed or Interrupted.
+    """
     RUNNING = "Running"
     SUCCESS = "Success"
     FAILED = "Failed"
     INTERRUPTED = "Interrupted"
 
 class NetworkDiscoveryStatus(db.Model):
+    """
+    One network discovery run: its state, progress percentage, message, start and
+    completion times and any error. It is linked to the ActivityLog entry of the
+    user who started it and owns the devices and skipped services found in that run.
+    """
     # Table name
     __tablename__ = "NETWORK_DISCOVERY_STATUS"
 
@@ -247,6 +304,7 @@ The models class need to be imported to use the Enums
 """
 
 class ServiceProtocol(Enum):
+    """The transport protocol of a port: TCP or UDP."""
     TCP = "TCP"
     UDP = "UDP"
 
@@ -259,6 +317,11 @@ of the run, so the record stays readable if the device changes later.
 """
 
 class SkippedService(db.Model):
+    """
+    A discovered open port that a discovery run did not turn into a Nagios service,
+    with the reason. The hostname and IP address are snapshots taken at the time of
+    the run.
+    """
     # Table name
     __tablename__ = "SKIPPED_SERVICE"
 
@@ -289,16 +352,25 @@ ReviewKind       - why a DeviceReviewItem was raised.
 """
 
 class AddressingMode(Enum):
+    """How a device gets its IP address: DHCP, Static or Unknown."""
     DHCP = "DHCP"
     STATIC = "Static"
     UNKNOWN = "Unknown"
 
 class IdentityConfidence(Enum):
+    """
+    How sure PinPoint is that a device record is one physical device: Verified,
+    Likely or Unverified.
+    """
     VERIFIED = "Verified"
     LIKELY = "Likely"
     UNVERIFIED = "Unverified"
 
 class DeviceState(Enum):
+    """
+    The lifecycle state of a device record and its Nagios config entry: Active,
+    Missing, Address Unknown, Retired or Merged.
+    """
     ACTIVE = "Active"
     MISSING = "Missing"
     ADDRESS_UNKNOWN = "Address Unknown"
@@ -306,6 +378,10 @@ class DeviceState(Enum):
     MERGED = "Merged"
 
 class IdentifierKind(Enum):
+    """
+    The kind of identity evidence stored for a device, such as an NCPA certificate,
+    machine ID, SSH host key, MAC address or DNS name.
+    """
     NCPA_CERT = "NCPA Certificate"
     MACHINE_ID = "Machine ID"
     SSH_HOST_KEY = "SSH Host Key"
@@ -313,11 +389,20 @@ class IdentifierKind(Enum):
     DNS_NAME = "DNS Name"
 
 class AddressSource(Enum):
+    """
+    What produced an address history row for a device: a scan, an NCPA relocation or
+    a manual change.
+    """
     SCAN = "Scan"
     NCPA_RELOCATE = "NCPA Relocate"
     MANUAL = "Manual"
 
 class ReviewKind(Enum):
+    """
+    Why a device review item was raised, such as an identity conflict, a changed
+    identity, a reused IP address, a duplicate identity, a moved static device or a
+    changed service.
+    """
     CONFLICT = "Conflict"
     IDENTITY_CHANGED = "Identity Changed"
     IP_REUSE = "IP Reused"
@@ -330,6 +415,10 @@ Port lifecycle enums for Open_TCP_Services / Open_UDP_Services.
 """
 
 class PortState(Enum):
+    """
+    The lifecycle state of a discovered port: Suggested, Monitored, Missing,
+    Archived or Ignored.
+    """
     SUGGESTED = "Suggested"
     MONITORED = "Monitored"
     MISSING = "Missing"
@@ -337,6 +426,7 @@ class PortState(Enum):
     IGNORED = "Ignored"
 
 class PortSource(Enum):
+    """What recorded a discovered port: a scan, NCPA or a user."""
     SCAN = "Scan"
     NCPA = "NCPA"
     USER = "User"
@@ -360,6 +450,14 @@ The models class need to be imported to use the Enums
 """
 
 class NetworkDiscovery(db.Model):
+    """
+    A discovered device. IP_Address always holds its current address, while
+    Nagios_Host_Name is fixed when the record is created and is the name Nagios
+    uses. It also holds display name, MAC, OS and device type, addressing mode,
+    identity confidence, device state, scan bookkeeping, per-host plugin variable
+    overrides and links to its discovery run, SSH credentials, NCPA deployment and
+    plugin configurations.
+    """
     # Table Name
     __tablename__ = "NETWORK_DISCOVERY"
     __table_args__ = (
@@ -637,6 +735,11 @@ class DeviceReviewItem(db.Model):
     DiscoveryStatusID: so.Mapped[Optional[int]] = so.mapped_column(sa.ForeignKey(NetworkDiscoveryStatus.DiscoveryStatusID), index=True)
 
 class Open_TCP_Services(db.Model):
+    """
+    An open TCP port found on a device, with its service name, lifecycle state,
+    source, frozen plugin name, how the service was identified and the first, last
+    and closing times. There is one row per device and port.
+    """
     __tablename__ = "OPEN_TCP_Services"
     __table_args__ = (
         sa.UniqueConstraint('NetDiscoveryID', 'Port_Number', name='uq_open_tcp_device_port'),
@@ -675,6 +778,10 @@ class Open_TCP_Services(db.Model):
     NetDiscoveryID: so.Mapped[int] = so.mapped_column(sa.ForeignKey(NetworkDiscovery.NetDiscoveryID), index=True)
 
 class Open_UDP_Services(db.Model):
+    """
+    An open UDP port found on a device, with the same fields and lifecycle as
+    Open_TCP_Services. There is one row per device and port.
+    """
     __tablename__ = "OPEN_UDP_Services"
     __table_args__ = (
         sa.UniqueConstraint('NetDiscoveryID', 'Port_Number', name='uq_open_udp_device_port'),
@@ -713,6 +820,11 @@ class Open_UDP_Services(db.Model):
     NetDiscoveryID: so.Mapped[int] = so.mapped_column(sa.ForeignKey(NetworkDiscovery.NetDiscoveryID), index=True)
 
 class SSHCredentials(db.Model):
+    """
+    SSH access details for a device: the SSH port, whether PinPoint's key is
+    installed, the key fingerprint, and the per-device settings for remote service
+    restart (enabled flag and allowed units).
+    """
     # Table Name
     __tablename__ = "SSH_CREDENTIALS"
     
@@ -737,6 +849,10 @@ class SSHCredentials(db.Model):
     Device: so.Mapped[NetworkDiscovery] = so.relationship(back_populates='SSH_Creds')
 
 class DeploymentStatus(Enum):
+    """
+    The state of an NCPA deployment run: Running, Success, Partial Failure, Failed
+    or Interrupted.
+    """
     RUNNING = "Running"
     SUCCESS = "Success"
     PARTIAL_FAILURE = "Partial Failure"
@@ -744,6 +860,12 @@ class DeploymentStatus(Enum):
     INTERRUPTED = "Interrupted"
 
 class NCPADeploymentStatus(db.Model):
+    """
+    One NCPA deployment run across devices: its state, progress, message, times,
+    error and whether an administrator has reviewed it. It is linked to the
+    ActivityLog entry of the user who started it and owns the per-device result
+    rows.
+    """
     # Table Name
     __tablename__ = "NCPA_DEPLOYMENT_STATUS"
 
@@ -818,6 +940,10 @@ To call use "NRPEDeployment.Agent_Status = AgentStatus.DISCOVERED"
 The models class need to be imported to use the Enums
 """
 class AgentStatus(Enum):
+    """
+    The NCPA agent state of a device: Pending NCPA, Deployed NCPA, Deployment
+    Failed, Excluded or Incompatible.
+    """
     PENDING_NCPA = "Pending NCPA"
     DEPLOYED = "Deployed NCPA"
     FAILED = "Deployment Failed"
@@ -825,10 +951,17 @@ class AgentStatus(Enum):
     INCOMPATIBLE = "Incompatible"
 
 class DeploymentMethod(Enum):
+    """How NCPA was put on a device: Automatic or Manual."""
     AUTOMATIC = "Automatic"
     MANUAL = "Manual"
     
 class NCPADeployment(db.Model):
+    """
+    The latest NCPA deployment state of one device: method, token, port, agent
+    status and error. It links to the device, the run that last changed it and the
+    partitions found during installation. Per-run history is kept in
+    NCPADeploymentResult.
+    """
     # Table Name
     __tablename__ = "NCPA_DEPLOYMENT"
     
@@ -897,6 +1030,13 @@ Personal display preferences (theme, language, font, dashboard layout,
 time zone, date format) live in UserPreferences instead, one row per user.
 """
 class SystemSettings(db.Model):
+    """
+    The system-wide settings singleton (one row, Id 1): scan, polling, check and
+    retry intervals, flap detection, notifications, export formats, security
+    options, maintenance mode, backups, retention periods, remediation controls, and
+    a version and update audit trail. Per-user display preferences are in
+    UserPreferences. to_dict returns the Settings page shape in camelCase.
+    """
     # Table Name
     __tablename__ = "SYSTEM_SETTINGS"
 
@@ -1001,6 +1141,11 @@ class NotificationPolicy(db.Model):
 
 
 class DiscoverySettings(db.Model):
+    """
+    The discovery settings singleton: the networks to scan, the TCP and UDP ports to
+    probe, and the service an administrator expects on each port, with a version and
+    update audit trail.
+    """
     # Table Name
     __tablename__ = "DISCOVERY_SETTINGS"
 
@@ -1023,6 +1168,11 @@ class DiscoverySettings(db.Model):
 
 
 class PluginSettings(db.Model):
+    """
+    Saved plugin variable values from Settings, one row per plugin definition name,
+    kept as a JSON object with a version and update audit trail. Variables that are
+    absent use their defaults from config.py.
+    """
     # Table Name
     __tablename__ = "PLUGIN_SETTINGS"
 
@@ -1073,6 +1223,10 @@ class SmtpSettings(db.Model):
 
 
 class NetworkProfile(db.Model):
+    """
+    A named network profile with a reference and JSON details, plus the time and
+    user of the last update.
+    """
     __tablename__ = "NETWORK_PROFILE"
 
     Id: so.Mapped[int] = so.mapped_column(primary_key=True)
@@ -1093,6 +1247,10 @@ a user would reasonably expect to be "theirs" on this account, not shared
 system-wide config.
 """
 class UserPreferences(db.Model):
+    """
+    One user's personal display settings, such as theme, time zone, date format,
+    font, dashboard layout and refresh rate. There is one row per user.
+    """
     __tablename__ = "USER_PREFERENCES"
 
     Id: so.Mapped[int] = so.mapped_column(primary_key=True)
@@ -1215,6 +1373,11 @@ class AlertAcknowledgement(db.Model):
     User: so.Mapped['User'] = so.relationship()
 
 class AckAction(Enum):
+    """
+    The kind of acknowledgement event recorded in AckHistory: Acknowledged,
+    Unacknowledged by a user, or Auto-Resolved when the system clears it on
+    recovery.
+    """
     ACKNOWLEDGED   = "Acknowledged"
     UNACKNOWLEDGED = "Unacknowledged"
     AUTO_RESOLVED  = "Auto-Resolved"   # cleared by the system when alert returns to OK/UP
@@ -1304,17 +1467,26 @@ class PasswordResetRequest(db.Model):
 # ==========================================================
 
 class RemediationActionType(Enum):
+    """
+    The kind of remediation action an administrator can configure: record only,
+    restart a local service, or restart a remote service.
+    """
     RECORD_ONLY = "record_only"
     RESTART_LOCAL_SERVICE = "restart_local_service"
     RESTART_REMOTE_SERVICE = "restart_remote_service"
 
 
 class RemediationScope(Enum):
+    """Whether a remediation action applies to a service or to a host."""
     SERVICE = "service"
     HOST = "host"
 
 
 class RemediationEventState(Enum):
+    """
+    The Nagios state an event reports that a remediation action can match: OK,
+    Warning, Critical, Unknown, Up, Down or Unreachable.
+    """
     OK = "OK"
     WARNING = "WARNING"
     CRITICAL = "CRITICAL"
@@ -1325,11 +1497,20 @@ class RemediationEventState(Enum):
 
 
 class RemediationEventStateType(Enum):
+    """
+    Whether the Nagios event is in a soft state (still being retried) or a hard
+    state (confirmed).
+    """
     SOFT = "SOFT"
     HARD = "HARD"
 
 
 class RemediationOutcome(Enum):
+    """
+    What became of a remediation run: running, succeeded, failed, timed out,
+    interrupted, or skipped for a reason such as cooldown, hourly cap, kill switch,
+    maintenance, scheduled downtime or an acknowledged problem.
+    """
     RUNNING = "running"
     SUCCEEDED = "succeeded"
     FAILED = "failed"

@@ -74,6 +74,7 @@ def _get_singleton_row():
 @system_bp.route("", methods=["GET"])
 @login_required
 def get_settings():
+    """Return the system settings row as JSON, creating and committing a default row first if none exists."""
     try:
         row = _get_singleton_row()
         return success(row.to_dict())

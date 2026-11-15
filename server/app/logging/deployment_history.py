@@ -1,3 +1,9 @@
+"""
+NCPA deployment run records: create the run status row, update its progress, read the
+latest run, and keep one result row per device in each run (add, move to a new outcome,
+close open rows, read and count them).
+"""
+
 from app.system_models import (
     NCPADeploymentStatus, DeploymentStatus, NCPADeploymentResult, DeploymentOutcome,
 )
@@ -9,6 +15,11 @@ from app.logging.user_activity import create_user_log
 
 
 def create_ncpa_deployment_status(user_id):
+    """
+    Start a new NCPA deployment run for a user. It writes the activity log entry and
+    a NCPADeploymentStatus row in the Running state at 0 percent, then commits. It
+    returns the new status row, or rolls back, logs the error and returns None.
+    """
     try:
         action = "NCPA Deployed"
         user_log = create_user_log(user_id, action)
@@ -30,6 +41,12 @@ def create_ncpa_deployment_status(user_id):
         return None
 
 def update_ncpa_deployment_status(ncpa_deployment_status_id, status, progress, message, competed_at=None,error=None):
+    """
+    Set the status, progress, message, completion time and error of one NCPA
+    deployment run, then commit. If the run does not exist it logs an error and
+    returns without changing anything. Other errors are logged and swallowed; it
+    returns None either way.
+    """
     try:
         ncpa_deployment_status = db.session.scalar(
             sa.Select(NCPADeploymentStatus)
@@ -56,6 +73,10 @@ def update_ncpa_deployment_status(ncpa_deployment_status_id, status, progress, m
         current_app.logger.exception(f"Cannot update NCPA Deployement log {ncpa_deployment_status_id}")
 
 def get_deployment_ncpa_status():
+    """
+    Return the most recently started NCPA deployment run, or None when there is none
+    or the query fails. It does not change the database.
+    """
     try:
         return db.session.scalar(
             sa.select(NCPADeploymentStatus)
@@ -68,6 +89,11 @@ def get_deployment_ncpa_status():
         return None
     
 def calculate_progress(current, total, start, end):
+    """
+    Map the current step of a total onto a progress percentage between start and end
+    and return it as an integer. When total is zero or less it returns end. It is a
+    pure function.
+    """
     if total <= 0:
         return end
 

@@ -45,42 +45,49 @@ SUPPORTED_EXTENSIONS = (".tar.gz", ".tgz", ".zip")
 
 
 class InvalidUrlError(Exception):
+    """Raised by validate_download_url() when a download URL is not http or https, has no hostname, cannot be resolved, or points at a private or internal address."""
     def __init__(self, message):
         super().__init__(message)
         self.message = message
 
 
 class DownloadError(Exception):
+    """Raised by receive_archive() when downloading the update archive from a URL fails."""
     def __init__(self, message):
         super().__init__(message)
         self.message = message
 
 
 class ArchiveTooLargeError(Exception):
+    """Raised by receive_archive() when an uploaded or downloaded archive exceeds MAX_ARCHIVE_SIZE_BYTES."""
     def __init__(self, message):
         super().__init__(message)
         self.message = message
 
 
 class UnsupportedArchiveError(Exception):
+    """Raised when an archive is not one of the supported types (.tar.gz, .tgz, .zip), by receive_archive() and extract_archive()."""
     def __init__(self, message):
         super().__init__(message)
         self.message = message
 
 
 class UnsafeArchiveError(Exception):
+    """Raised by extract_archive() when an archive holds a symlink or hardlink member or a member that would extract outside the target directory."""
     def __init__(self, message):
         super().__init__(message)
         self.message = message
 
 
 class PluginNotInArchiveError(Exception):
+    """Raised by find_plugin_in_extracted() when no file with the plugin's name exists anywhere in the extracted archive."""
     def __init__(self, message):
         super().__init__(message)
         self.message = message
 
 
 class NoBackupAvailableError(Exception):
+    """Raised by restore_from_backup() when no backup file exists for the plugin."""
     def __init__(self, message):
         super().__init__(message)
         self.message = message
@@ -273,10 +280,15 @@ def backup_plugin(plugin_name, current_executable_path):
 
 
 def get_backup_path(plugin_name):
+    """Return the path of the single backup slot for this plugin, inside the hidden backup folder of the Nagios plugin directory.
+
+    The file may not exist; see has_backup().
+    """
     return os.path.join(get_plugin_dir(), BACKUP_DIR_NAME, plugin_name)
 
 
 def has_backup(plugin_name):
+    """Return True if a backup file exists for this plugin."""
     return os.path.exists(get_backup_path(plugin_name))
 
 
@@ -304,4 +316,5 @@ def restore_from_backup(plugin_name, target_path):
 
 
 def cleanup_staging(staging_dir):
+    """Delete a staging directory and everything in it. Errors are ignored, so it is safe to call on a missing directory."""
     shutil.rmtree(staging_dir, ignore_errors=True)

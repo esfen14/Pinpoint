@@ -81,6 +81,7 @@ IDENTIFIED_BY = (
 
 
 def utcnow():
+    """Return the current time as a timezone-aware UTC datetime."""
     return datetime.now(timezone.utc)
 
 
@@ -90,6 +91,9 @@ def port_model(protocol):
 
 
 def transport_for(protocol):
+    """Return the Transport enum member for a protocol name: UDP for "udp" (case-
+    insensitive), TCP for anything else.
+    """
     return Transport.UDP if str(protocol).lower() == "udp" else Transport.TCP
 
 

@@ -67,6 +67,11 @@ def clean(value, limit):
 
 
 def parse(argv):
+    """Parse the command-line arguments into (kind, fields). The first argument must be
+    host or service and the rest key=value pairs; values are cleaned and length-
+    capped. Raises InputRejected on unknown keys, a missing or invalid recipient, or
+    missing required fields.
+    """
     if len(argv) < 2 or argv[0] not in KINDS:
         raise InputRejected("first argument must be 'host' or 'service'")
     kind, fields = argv[0], {}
@@ -88,6 +93,9 @@ def parse(argv):
 # ---------------------------------------------------------------- wording
 
 def target_of(kind, f):
+    """Return the display name of what the notification is about: the host name for a
+    host notification, or "service on host" for a service notification.
+    """
     return f["host"] if kind == "host" else f"{f['service']} on {f['host']}"
 
 
@@ -169,6 +177,9 @@ SUBJECT_LABELS = {
 
 
 def subject_for(kind, f):
+    """Build the email subject line from the notification kind and fields, such as a
+    RECOVERY line or the state or notification label with the host and service.
+    """
     target = f["host"] if kind == "host" else f"{f['host']} / {f['service']}"
     state = f["state"].upper()
     kind_type = f["type"].upper()
@@ -190,6 +201,10 @@ def blend(foreground, background, amount):
 
 
 def device_rows(kind, f):
+    """Return the (label, value, monospace) rows for the detail table: host, IP address
+    when given, service for a service notification, and the detection time in UTC
+    when known.
+    """
     rows = [("Host", f["host"], False)]
     if f.get("address"):
         rows.append(("IP address", f["address"], True))
@@ -202,6 +217,10 @@ def device_rows(kind, f):
 
 
 def render_text(kind, f):
+    """Render the plain-text alternative of the notification email as a string, covering
+    headline, device details, status, check output, any note and the recommended
+    action.
+    """
     pill, _icon, headline, support, action, _accent = describe(kind, f)
     lines = [f"PinPoint: {headline}", ""]
     if support:
@@ -219,6 +238,9 @@ def render_text(kind, f):
 
 
 def render_html(kind, f):
+    """Render the HTML body of the notification email as a string. Every value is HTML-
+    escaped, and colours and wording come from describe().
+    """
     e = html.escape
     pill, icon, headline, support, action, accent = describe(kind, f)
     state = f["state"].upper()
@@ -304,6 +326,9 @@ Please check on this alert.<br>This is an automated message from PinPoint. Pleas
 
 
 def build_message(kind, f):
+    """Assemble the EmailMessage for a notification, with recipient, subject, a plain-
+    text body and an HTML alternative.
+    """
     msg = EmailMessage()
     msg["To"] = f["to"]
     msg["Subject"] = subject_for(kind, f)
@@ -313,6 +338,10 @@ def build_message(kind, f):
 
 
 def main(argv):
+    """Command-line entry point. Parses argv, then prints the message (with --print) or
+    sends it through sendmail. Returns the exit status: 0 sent or printed, 1 rejected
+    input, 2 misuse, 3 sendmail failed.
+    """
     preview = "--print" in argv
     argv = [a for a in argv if a != "--print"]
     try:

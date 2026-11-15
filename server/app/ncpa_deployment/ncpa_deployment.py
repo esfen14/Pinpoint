@@ -1,3 +1,8 @@
+"""NCPA deployment over SSH: host-key verification, creating the deployment user, key,
+restricted sudo rule and helper script on a device, installing and verifying NCPA,
+discovering its disk partitions, and recording per-device deployment results and
+progress.
+"""
 import paramiko
 from flask import current_app
 from app.logging.deployment_history import *
@@ -134,12 +139,20 @@ def ssh_host_key_name(ip_address, ssh_port):
 
 
 def mark_device_incompatible(device_id):
+    """Mark a device as not eligible for NCPA deployment (NCPA_Eligible set to False)
+    and commit. Does nothing if the device does not exist.
+    """
     device = db.session.get(NetworkDiscovery, device_id)
     if device is not None:
         device.NCPA_Eligible = False
         db.session.commit()
 
 def update_ncpa_deployment_info(device_id, ncpa_deployment_status_id, deployment_method=None, token=None, agent_status=None, error=None):
+    """Update the device's NCPADeployment row with whichever of the deployment method,
+    token, agent status and error are given (None leaves a field unchanged), set its
+    deployment status id, and commit. Returns False when the device has no deployment
+    row.
+    """
     ncpa_deployment = db.session.scalar(
         sa.select(NCPADeployment).where(
             NCPADeployment.NetworkDiscoveryID == device_id
@@ -306,6 +319,13 @@ def connect_with_fingerprint_check(
         password=None,
         private_key=None,
     ): 
+    """Open an SSH connection to the device only if its host key matches
+    `expected_fingerprint`. The key is checked once before connecting and again on
+    the connecting transport, and unknown keys are rejected. Authenticates with
+    `password` or `private_key`. Returns the connected paramiko client, or None on a
+    fingerprint mismatch or key retrieval failure; authentication and connection
+    errors are raised after the client is closed.
+    """
 
     result = verify_host_fingerprint( 
         ip_address,
@@ -389,6 +409,9 @@ def check_debian_based(client):
     return is_debian_based, os_release
 
 def ensure_deployment_user(client, password): 
+    """Make sure the deployment user exists on the device, creating it with sudo useradd
+    when `id` reports it missing. Returns True when the user exists afterwards.
+    """
     
     result = run_command( client, f"id {DEPLOYMENT_USER}", expected_exit_codes=(1,) ) 
 
@@ -400,6 +423,11 @@ def ensure_deployment_user(client, password):
     return result["success"]
 
 def install_deployment_key(client, password): 
+    """Install the Pinpoint deployment public key into the deployment user's
+    authorized_keys on the device, if not already present, and set the directory and
+    file permissions and ownership. Returns True on success, False if the local key
+    is unreadable or malformed or any remote command fails.
+    """
     try: 
         with open(PUBLIC_KEY_PATH, "r", encoding="utf-8") as file: 
             public_key = file.read().strip() 
@@ -453,6 +481,10 @@ def install_deployment_key(client, password):
     return True
 
 def install_restricted_sudo(client, password): 
+    """Write a sudoers rule that lets the deployment user run only the deployment helper
+    as root without a password, set its mode to 440 and check it with visudo. Returns
+    True on success.
+    """
 
     sudoers_content = ( f"{DEPLOYMENT_USER} ALL=(root) " f"NOPASSWD: {REMOTE_HELPER}\n" ) 
 
@@ -469,6 +501,10 @@ def install_restricted_sudo(client, password):
     return result["success"]
 
 def install_deployment_helper(client, password):
+    """Upload the root-owned deployment helper script that installs NCPA to
+    /usr/local/sbin on the device, via a temporary file that is removed afterwards,
+    and set its ownership and mode. Returns True on success, False on any failure.
+    """
 
 
     helper_path = "/usr/local/sbin/pinpoint-ncpa-deploy"

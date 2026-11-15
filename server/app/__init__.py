@@ -1,3 +1,11 @@
+"""
+Application factory module. Importing it builds the Flask app, loads the configuration,
+refuses to run without a SECRET_KEY outside debug mode, creates the runtime folders, and
+sets up CORS, the database, Flask-Migrate and the login manager. It then registers the
+command-line commands and the /api blueprint, and starts the background scheduler only
+when PINPOINT_SCHEDULER is set to 1.
+"""
+
 import os
 import secrets
 

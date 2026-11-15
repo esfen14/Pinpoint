@@ -1,3 +1,10 @@
+"""
+Models and enums for history.db, the "history" database bind that mirrors Nagios
+telemetry: host and service status snapshots, their performance data, and Nagios program
+status. Rows are written by the status poller and pruned by the scheduler's retention
+purge. Administrative state lives in system_models.py instead.
+"""
+
 from datetime import datetime
 from typing import Optional
 from enum import Enum
@@ -9,32 +16,53 @@ import sqlalchemy.orm as so
 from app import db 
 
 class ConnectionStateType(Enum):
+    """
+    Whether a Nagios problem state is soft (still being retried) or hard (confirmed
+    after the maximum check attempts).
+    """
     SOFT = "Soft"
     HARD = "Hard"
 
 class HostStateType(Enum):
+    """The state Nagios reports for a host: Up, Down or Unreachable."""
     UP = "Up"
     DOWN = "Down"
     UNREACHABLE = "Unreachable"
 
 class ServiceStateType(Enum):
+    """
+    The state Nagios reports for a service: Ok, Warning, Critical or Unknown.
+    """
     OK = "Ok"
     WARNING = "Warning"
     CRITICAL = "Critical"
     UNKNOWN = "Unknown"
     
 class PluginStatusType(Enum):
+    """
+    The plugin result status of a host check, using the same four values as a
+    service state: Ok, Warning, Critical or Unknown.
+    """
     OK = "Ok"
     WARNING = "Warning"
     CRITICAL = "Critical"
     UNKNOWN = "Unknown" 
 
 class AcknowledgementType(Enum):
+    """
+    Whether Nagios has a problem acknowledged: none, a normal acknowledgement, or a
+    sticky one that lasts until recovery.
+    """
     NOACK = "No Acknowledgement"
     NORMACK = "Normal Acknowledgement"
     STICKYACK = "Sticky Acknowledgement"
 
 class HostStatus(db.Model):
+    """
+    One timestamped snapshot of a host's Nagios status in history.db: current state,
+    check attempts, check times, flapping, acknowledgement, downtime depth and
+    notification setting. Its performance data rows are in HostPerfData.
+    """
     # Table Name
     __tablename__ = "HOST_STATUS"
     __bind_key__ = "history"
@@ -67,6 +95,10 @@ class HostStatus(db.Model):
     PerfData: so.WriteOnlyMapped['HostPerfData'] = so.relationship(back_populates='HostStatusInfo')
     
 class HostPerfData(db.Model):
+    """
+    One performance metric (value, unit, thresholds and range) parsed from a host
+    check and linked to the HostStatus snapshot it came from.
+    """
     # Table Name
     __tablename__ = "HOST_PERF_DATA"
     __bind_key__ = "history"
@@ -88,6 +120,11 @@ class HostPerfData(db.Model):
     HostStatusInfo: so.Mapped['HostStatus'] = so.relationship(back_populates='PerfData')
 
 class ServiceStatus(db.Model): 
+    """
+    One timestamped snapshot of a service's Nagios status in history.db. It holds
+    the check command name only, without its arguments, because arguments can carry
+    secrets. Its performance data rows are in ServicePerfData.
+    """
     # Table Name
     __tablename__ = "SERVICE_STATUS"
     __bind_key__ = "history"
@@ -125,6 +162,10 @@ class ServiceStatus(db.Model):
     PerfData: so.WriteOnlyMapped['ServicePerfData'] = so.relationship(back_populates='ServiceStatusInfo')
 
 class ServicePerfData(db.Model):
+    """
+    One performance metric (value, unit, thresholds and range) parsed from a service
+    check and linked to the ServiceStatus snapshot it came from.
+    """
     # Table Names
     __tablename__ = "SERVICE_PERF_DATA"
     __bind_key__ = "history"
@@ -146,6 +187,11 @@ class ServicePerfData(db.Model):
     ServiceStatusInfo: so.Mapped['ServiceStatus'] = so.relationship(back_populates='PerfData')
 
 class ProgramStatus(db.Model):
+    """
+    A timestamped snapshot of the Nagios process itself: version, update
+    availability, process ID, start time and whether notifications, flap detection
+    and active or passive checks are enabled.
+    """
     # Table Name
     __tablename__ = "PROGRAM_STATUS"
     __bind_key__ = "history"

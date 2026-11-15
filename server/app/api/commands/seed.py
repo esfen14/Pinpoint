@@ -1,3 +1,5 @@
+"""Seed and bootstrap commands: the permission and built-in role definitions, development users, `sync-permissions`, `recover-bootstrap-admin`, `init-production` and the default system settings."""
+
 import sys
 
 import click
@@ -126,11 +128,13 @@ SEED_USERS = [
 # =========================
 
 def get_role(name: str):
+    """Return the Role row with the given exact name, or None if there is none."""
     return db.session.scalar(
         sa.select(Role).where(Role.Name == name)
     )
 
 def get_permission(name: str):
+    """Return the Permission row with the given exact name, or None if there is none."""
     return db.session.scalar(
         sa.select(Permission).where(Permission.Name == name)
     )
@@ -161,6 +165,10 @@ def find_bootstrap_administrator():
 # =========================
 
 def seed_permissions():
+    """Insert every name in PERMISSIONS that is not already in the Permission table.
+
+    Existing rows are left alone. Commits the session when done.
+    """
     for name in PERMISSIONS:
 
         exists = db.session.scalar(
@@ -270,6 +278,11 @@ def warn_if_permissions_missing(logger):
 # =========================
 
 def seed_roles():
+    """Create any missing roles from ROLES and attach every permission to the built-in role.
+
+    Other roles get no permissions. Existing roles and links are not duplicated.
+    Commits the session when done.
+    """
     for name, desc in ROLES:
 
         role = get_role(name)
@@ -313,6 +326,12 @@ def seed_roles():
 # =========================
 
 def seed_users():
+    """Create the development users in SEED_USERS that do not exist yet.
+
+    Each new user gets its seeded role and status and the fixed development
+    password. Users whose role is missing are skipped. Commits the session
+    when done.
+    """
     for first, last, email, role_name, status in SEED_USERS:
 
         exists = db.session.scalar(
@@ -348,6 +367,11 @@ def seed_users():
 def remove_seed_data():
 
     # delete in correct FK order
+    """Delete every role permission link, user, role and permission.
+
+    Rows are deleted in foreign-key order and the session is committed. This
+    wipes all accounts, not only the seeded ones.
+    """
     db.session.execute(sa.delete(RolePermission))
     db.session.execute(sa.delete(User))
     db.session.execute(sa.delete(Role))
@@ -366,7 +390,13 @@ def remove_seed_data():
 @click.option("--reset", is_flag=True)
 @with_appcontext
 def seed_command(remove, permissions_only, reset):
+    """Run the `flask seed` command.
 
+    --reset drops and recreates every table and seeds again, --remove deletes
+    all seed data and stops, and --permissions-only seeds permissions and
+    stops. With no option it seeds permissions, roles and users. Any error
+    rolls the session back and is printed instead of raised.
+    """
     try:
         if reset:
             click.echo("Resetting DB...")

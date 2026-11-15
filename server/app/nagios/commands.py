@@ -66,6 +66,10 @@ TIMEOUT = "timeout"
 
 @dataclass(frozen=True)
 class CommandResult:
+    """Outcome of sending a Nagios command: `ok` says whether the line was written to
+    the command pipe, `error` is one of the error codes above when it was not, and
+    `message` is a safe description for the caller.
+    """
     ok: bool
     error: str | None = None
     message: str = ""
@@ -217,6 +221,10 @@ def _target_label(hostname, service) -> str:
 # ---------------------------------------------------------------------------
 
 def acknowledge_host_problem(hostname, comment, author, targets=None) -> CommandResult:
+    """Acknowledge the current problem on a host. Validates the comment and target, then
+    writes ACKNOWLEDGE_HOST_PROBLEM to the Nagios command pipe. Returns a
+    CommandResult; nothing is sent if validation fails.
+    """
     bad = _comment_failure(comment) or _validate_target(hostname, None, targets)
     if bad:
         return bad
@@ -228,6 +236,10 @@ def acknowledge_host_problem(hostname, comment, author, targets=None) -> Command
 
 
 def acknowledge_service_problem(hostname, service, comment, author, targets=None) -> CommandResult:
+    """Acknowledge the current problem on one service of a host. Validates the comment
+    and target, then writes ACKNOWLEDGE_SVC_PROBLEM to the Nagios command pipe.
+    Returns a CommandResult; nothing is sent if validation fails.
+    """
     bad = _comment_failure(comment) or _validate_target(hostname, service, targets)
     if bad:
         return bad
@@ -239,6 +251,9 @@ def acknowledge_service_problem(hostname, service, comment, author, targets=None
 
 
 def remove_host_acknowledgement(hostname, targets=None) -> CommandResult:
+    """Remove the acknowledgement from a host by writing REMOVE_HOST_ACKNOWLEDGEMENT to
+    the Nagios command pipe after validating the target. Returns a CommandResult.
+    """
     bad = _validate_target(hostname, None, targets)
     if bad:
         return bad
@@ -246,6 +261,9 @@ def remove_host_acknowledgement(hostname, targets=None) -> CommandResult:
 
 
 def remove_service_acknowledgement(hostname, service, targets=None) -> CommandResult:
+    """Remove the acknowledgement from one service by writing REMOVE_SVC_ACKNOWLEDGEMENT
+    to the Nagios command pipe after validating the target. Returns a CommandResult.
+    """
     bad = _validate_target(hostname, service, targets)
     if bad:
         return bad
@@ -255,6 +273,10 @@ def remove_service_acknowledgement(hostname, service, targets=None) -> CommandRe
 
 
 def schedule_forced_host_check(hostname, targets=None) -> CommandResult:
+    """Ask Nagios to run a host check immediately by writing SCHEDULE_FORCED_HOST_CHECK
+    with the current time to the command pipe, after validating the target. Returns a
+    CommandResult.
+    """
     bad = _validate_target(hostname, None, targets)
     if bad:
         return bad
@@ -264,6 +286,10 @@ def schedule_forced_host_check(hostname, targets=None) -> CommandResult:
 
 
 def schedule_forced_service_check(hostname, service, targets=None) -> CommandResult:
+    """Ask Nagios to run a service check immediately by writing
+    SCHEDULE_FORCED_SVC_CHECK with the current time to the command pipe, after
+    validating the target. Returns a CommandResult.
+    """
     bad = _validate_target(hostname, service, targets)
     if bad:
         return bad
@@ -282,6 +308,10 @@ def _downtime_window_error(start, end) -> str | None:
 
 
 def schedule_host_downtime(hostname, start, end, comment, author, targets=None) -> CommandResult:
+    """Schedule fixed downtime for a host between the epoch seconds `start` and `end`.
+    Validates the window, comment and target, then writes SCHEDULE_HOST_DOWNTIME to
+    the command pipe. Returns a CommandResult.
+    """
     bad = _downtime_window_error(start, end)
     bad = (bad and _fail(INVALID, bad)) or _comment_failure(comment) or _validate_target(hostname, None, targets)
     if bad:
@@ -294,6 +324,10 @@ def schedule_host_downtime(hostname, start, end, comment, author, targets=None) 
 
 
 def schedule_service_downtime(hostname, service, start, end, comment, author, targets=None) -> CommandResult:
+    """Schedule fixed downtime for one service between the epoch seconds `start` and
+    `end`. Validates the window, comment and target, then writes
+    SCHEDULE_SVC_DOWNTIME to the command pipe. Returns a CommandResult.
+    """
     bad = _downtime_window_error(start, end)
     bad = (bad and _fail(INVALID, bad)) or _comment_failure(comment) or _validate_target(hostname, service, targets)
     if bad:
@@ -455,5 +489,8 @@ def claim_recheck(hostname, service=None) -> int:
 
 
 def release_recheck(hostname, service=None) -> None:
+    """Free the per-target recheck slot taken by claim_recheck, so a failed command does
+    not block the next attempt. Safe to call when no slot is held.
+    """
     with _recheck_lock:
         _recheck_times.pop((hostname, service), None)

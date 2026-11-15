@@ -74,6 +74,10 @@ def is_printable_ascii(value):
 # ==========================================================
 
 def get_smtp_row():
+    """
+    Return the single SmtpSettings row (ID 1), or None if no settings have been
+    saved. It only reads; it does not create the row.
+    """
     return db.session.get(SmtpSettings, 1)
 
 

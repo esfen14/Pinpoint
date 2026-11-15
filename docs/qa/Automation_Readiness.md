@@ -72,6 +72,17 @@ cards remain subject to freshness checks. No automation was run or authorized
 by this consolidation.
 
 
+## 2026-11-15 backend docstring refresh (#331)
+
+Issue #331 added docstrings to backend files, including five that the register
+hashes: `api/user/login.py`, `api/user/management.py`, `api/commands/seed.py`,
+`api/helper/responses.py` and `api/helper/database_access/permissions.py`. A
+comparison of the parsed code with docstrings removed showed no change in any
+file. The register's source hashes for them were refreshed;
+adapter claims, coverage statuses and execution permissions are unchanged. This
+is not a new automation run. Queues that pin the old hash fail their freshness
+check and must be re-prepared before use.
+
 ## 2026-11-08 catalog text refresh (#284)
 
 Removing the personal byline and repointing two `QA_Test_Plan.md` references to

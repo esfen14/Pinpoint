@@ -22,11 +22,19 @@ def is_audit_logging_enabled() -> bool:
 
 
 def is_failed_login_monitoring_enabled() -> bool:
+    """Whether failed logins should be recorded and monitored.
+
+    Defaults to True if the settings row does not exist yet.
+    """
     settings = _get_settings()
     return settings is None or settings.Failed_Login_Monitoring
 
 
 def is_strong_password_policy_enabled() -> bool:
+    """Whether the full password complexity rule applies instead of a minimum length only.
+
+    Defaults to True if the settings row does not exist yet.
+    """
     settings = _get_settings()
     return settings is None or settings.Strong_Password_Policy
 

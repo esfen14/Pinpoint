@@ -1,9 +1,9 @@
 # Code documentation inventory
 
-**Status:** draft inventory for issue #292; feeds the Technical Manual module reference (#181 §3.7), which does not exist yet.
-**Counted:** 2026-11-14 on branch `sys-missing-docu-inventory`.
+**Status:** draft inventory for issue #292; the gaps it listed were closed by issue #331; feeds the Technical Manual module reference (#181 §3.7), which does not exist yet.
+**Counted:** 2026-11-14 on branch `sys-missing-docu-inventory`; re-counted 2026-11-15 after issue #331 (0 files without a module docstring, 0 public names without a docstring).
 
-This records which Python modules and public names under `server/app` and `server/scripts` have no docstring. It is documentation only: no code was changed. Adding the docstrings themselves is a separate follow-up that needs owner approval (see [Follow-up](#follow-up)).
+This records which Python modules and public names under `server/app` and `server/scripts` have no docstring. The inventory itself changed no code. The docstrings were added afterwards by issue #331 (see [Follow-up](#follow-up)); the tables below record the state before that change.
 
 ## How it was counted
 
@@ -14,9 +14,9 @@ Every `.py` file under `server/app` and `server/scripts` was parsed with Python'
 | Measure | Count |
 |---|---|
 | Python files scanned | 116 |
-| Files with no module docstring | 37 (35 with code, 2 empty package markers) |
+| Files with no module docstring | 37 (35 with code, 2 empty package markers); 0 after #331 |
 | Public top-level functions and classes | 1,106 |
-| Of those, with no docstring | 217 |
+| Of those, with no docstring | 217; 0 after #331 |
 
 The issue's scan reported about 225 of 1,092; the difference is the counting rules above and code added since.
 
@@ -133,4 +133,11 @@ Owning specifications: routes and helpers in [`Backend_Modules_and_Routes.md`](.
 
 ## Follow-up
 
-The follow-up is issue #331: add a one-paragraph module docstring to the 37 files above, then docstrings to the 217 public names, starting with the larger modules (`system_models.py`, `api/user/management.py`, `ncpa_deployment.py`, `create_host_cfg.py`). It changes code files (comments only).
+Issue #331 added a module docstring to each of the 37 files and a docstring to each of the 217 public names (comments only; the code is unchanged). The AST count was re-run on 2026-11-15 with the rules above: 116 files, 0 without a module docstring, 1,106 public names, 0 without a docstring.
+
+Corrections found while writing the docstrings (the module reference above is the pre-#331 draft):
+
+- `network_discovery/__init__.py` and `network_discovery/templates/__init__.py` are not empty: each holds one import line without a trailing newline, which is why they counted as 0 lines. The templates one imports from `server.app.network_discovery...`, an odd path left unchanged.
+- `logging/__init__.py` also re-exports the network discovery, export, NCPA deployment and configuration-change helpers, not only audit-log writers; it does not re-export the plugin scan helpers.
+- `scheduler.py` also runs the `settings_automation` job (`run_due_automation`) and handles `polling_schedule_change`.
+- `system_models.py` also holds notification cursors, password reset requests, SMTP, notification and plugin settings, and the remediation tables.

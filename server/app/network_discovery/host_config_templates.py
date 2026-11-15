@@ -1,3 +1,8 @@
+"""Renders Nagios object definitions from the template files: hosts, services, contacts,
+contact templates, host and contact groups, notification and event-handler commands,
+escalations, and flap-detection settings, using the saved notification policy and
+system settings.
+"""
 import re
 from pathlib import Path
 
@@ -47,6 +52,9 @@ def create_notification_timeperiod(policy=None):
 
 
 def check_interval():
+    """Return the saved service check interval in minutes from SystemSettings, or 5 when
+    no settings row exists.
+    """
     row = db.session.get(SystemSettings, 1)
     return row.Check_Interval if row else 5
 
@@ -159,6 +167,10 @@ def create_host(host):
     return rendered
     
 def create_service(service, service_command):
+    """Render one Nagios service definition for `service` using `service_command`, with
+    the saved check timing, notification policy, flap detection and event handler
+    settings. Returns the definition text.
+    """
     retry_interval, max_attempts = check_timing()
     policy = notification_policy()
     fields = (f"\n    notification_period         {notification_period(policy)}"
@@ -296,6 +308,10 @@ def add_event_handler_lines(rendered, kind, host_name, service_name):
 
 
 def create_contact(contact):
+    """Render one Nagios contact definition from a contact dictionary (name, template,
+    full name, email), adding the HTML notification commands when they are in use.
+    Returns the definition text.
+    """
     commands = notification_command_names()
     # Only the HTML commands are written. Without them the contact inherits
     # Nagios's stock commands from its template, so the file is unchanged.
@@ -311,6 +327,10 @@ def create_contact(contact):
     )
 
 def create_contact_template(contact_template):
+    """Render the Nagios contact template named `contact_template` with the notification
+    period and host and service options from the saved notification policy. Returns
+    the definition text.
+    """
     policy = notification_policy()
     return _load_template("contact_template.cfg.tpl").format(
         template_name=contact_template,
@@ -321,6 +341,9 @@ def create_contact_template(contact_template):
     )
     
 def create_hostgroup(hostgroup):
+    """Render a Nagios hostgroup definition from a dictionary with group_name,
+    alias_name and member_list. Returns the definition text.
+    """
     return _load_template("hostgroup.cfg.tpl").format(
         group_name=hostgroup["group_name"],
         alias=hostgroup["alias_name"],
@@ -328,6 +351,9 @@ def create_hostgroup(hostgroup):
     )
 
 def create_contactgroup(contactgroup):
+    """Render a Nagios contactgroup definition from a dictionary with group_name,
+    alias_name and member_list. Returns the definition text.
+    """
     return _load_template("contactgroup.cfg.tpl").format(
         contactgroup_name=contactgroup["group_name"],
         alias=contactgroup["alias_name"],
@@ -335,6 +361,9 @@ def create_contactgroup(contactgroup):
     )
 
 def create_multi_host_service(host_group_name, service_name, command, contactgroup):
+    """Render one Nagios service definition that applies to every member of a host
+    group, using the given command and contact group. Returns the definition text.
+    """
     return _load_template("multi_host_service.cfg.tpl").format(
         host_group_name=host_group_name,
         service_name=service_name,

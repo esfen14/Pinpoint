@@ -1,3 +1,5 @@
+"""The `flask restore-backup` command: replaces system.db and history.db with a chosen backup folder and prints the follow-up steps the operator must run afterwards."""
+
 from datetime import datetime, timezone
 
 import click

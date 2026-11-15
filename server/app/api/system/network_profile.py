@@ -1,3 +1,5 @@
+"""Network profile routes: the saved network name, reference and editable details, plus the IP range, subnet mask, gateway device and DNS server derived from the scanned networks and discovered devices."""
+
 import ipaddress
 import subprocess
 
@@ -155,6 +157,11 @@ def _serialize(row):
 @login_required
 @require_permission('system.network_health')
 def get_network_profile():
+    """Return the network profile as JSON: name, reference and the list of detail fields.
+
+    Saved details are merged with the derived ones, each marked with whether
+    it is derived. Requires the system.network_health permission. Read only.
+    """
     try:
         return success(_serialize(db.session.get(NetworkProfile, 1)))
     except Exception:
@@ -166,6 +173,16 @@ def get_network_profile():
 @login_required
 @require_permission('settings.discovery')
 def update_network_profile():
+    """Save the network profile and return the saved values.
+
+    Requires the settings.discovery permission. Expected JSON body:
+    {"name": str, "reference": str (optional),
+     "details": [{"label": str, "value": str}, ...]}
+
+    Derived detail labels are ignored and never stored. Returns 400 for a
+    missing name, an over-long value or an unknown label. Writes an audit log
+    entry when audit logging is on and commits; rolls back on failure.
+    """
     data = request.get_json(silent=True)
     err = validate_json_data(data)
     if err is not None:

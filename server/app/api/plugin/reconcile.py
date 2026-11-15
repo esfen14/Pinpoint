@@ -148,6 +148,7 @@ def preview_enable(plugin_name):
 # ==========================================================
 
 def utcnow():
+    """Return the current time as a timezone-aware UTC datetime."""
     return datetime.now(timezone.utc)
 
 

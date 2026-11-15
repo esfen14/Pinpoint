@@ -1,3 +1,5 @@
+"""Permission checks: the `require_permission` route decorator and `user_has_permission`, plus existence lookups for permissions."""
+
 import sqlalchemy as sa
 from flask import current_app, jsonify
 from app import db
@@ -48,7 +50,13 @@ Returns a standardized 400/403 JSON error if the check fails;
 otherwise calls the decorated route function normally.
 """
 def require_permission(permission_name):
+    """Decorator that lets a route run only if the logged-in user's active role holds the named permission.
 
+    Usage: @require_permission("permission_name"). Returns a 400 JSON error if the
+    permission is not in the database and a 403 JSON error if the user lacks
+    it; otherwise calls the route normally. Raises ValueError at decoration
+    time if the name is missing, not a string or empty.
+    """
     if permission_name is None:
         raise ValueError("permission_name is required for require_permission decorator")
 
@@ -82,6 +90,7 @@ def user_has_permission(permission_name):
 # ============ Checks From Database ===================
 
 def exists_permission_by_id(permission_id):
+    """Return True if a Permission row with this id exists."""
     return db.session.scalar(
         sa.select(
             sa.exists()
@@ -91,6 +100,7 @@ def exists_permission_by_id(permission_id):
 
 
 def exists_permission_by_name(permission_name):
+    """Return True if a Permission row with exactly this name exists."""
     return db.session.scalar(
         sa.select(
             sa.exists()

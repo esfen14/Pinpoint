@@ -685,6 +685,12 @@ class InvalidCommandError(Exception):
 
 
 def serialize_command(command, active_override):
+    """Build the JSON-ready dict for a plugin command.
+
+    It holds the id, command name, default definition, the active definition
+    (the override if one is given, otherwise the default), and whether the
+    command is overridden or the default. Reads only; no database writes.
+    """
     return {
         "id": command.PluginCommandID,
         "command_name": command.Command_Name,
@@ -718,6 +724,7 @@ def get_command_for_plugin(plugin_id, command_id):
 
 
 def get_active_override(command_id):
+    """Return the newest active PluginCommandOverride for a command id, or None if the command has no active override."""
     return db.session.scalar(
         sa.select(PluginCommandOverride)
         .where(
@@ -887,6 +894,7 @@ def validate_plugin(plugin_id, user_id):
 # ==========================================================
 
 class PluginNameTakenError(Exception):
+    """Raised when registering a custom plugin whose name is already used by another plugin."""
     def __init__(self, message):
         super().__init__(message)
         self.message = message
@@ -1152,6 +1160,7 @@ def register_custom_plugin(file_storage, name, version, description, author, plu
 # ==========================================================
 
 class NoExecutableError(Exception):
+    """Raised when an update or rollback needs the plugin's installed executable but the plugin has none recorded or the file is missing."""
     def __init__(self, message):
         super().__init__(message)
         self.message = message
@@ -1369,6 +1378,7 @@ STALE_AFTER_INTERVALS = 3
 
 
 def configured_check_interval_minutes():
+    """Return the system-wide check interval in minutes from the settings row, or 5 if the settings row does not exist."""
     from app.system_models import SystemSettings
 
     row = db.session.get(SystemSettings, 1)

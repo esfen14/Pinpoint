@@ -1,3 +1,5 @@
+"""Defines the /user blueprint and loads the login, management, password-request and preference routes."""
+
 from flask import Blueprint
 
 user_bp = Blueprint('user', __name__, url_prefix='/user')

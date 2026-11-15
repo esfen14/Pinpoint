@@ -65,6 +65,9 @@ class CheckField:
 
 
 def field(name, flag, label, required=False, placeholder="", secret=False):
+    """Build a CheckField describing one argument of a custom check (name, command-line
+    flag, label, whether it is required, placeholder and whether it is a secret).
+    """
     return CheckField(name, flag, label, required, placeholder, secret)
 
 
