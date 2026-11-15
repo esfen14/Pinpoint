@@ -38,8 +38,8 @@ Requirement coverage:
 
 ## Plan
 
-1. [ ] Read required specs and topic guides; note facts per manual section.
-2. [ ] Write `docs/User_Manual/User_Manual.md`.
+1. [x] Read required specs and topic guides; note facts per manual section.
+2. [x] Write `docs/User_Manual/User_Manual.md`.
 3. [ ] Write `docs/Technical_Manual/Technical_Manual.md`.
 4. [ ] Link from `AGENTS.md`, `spec files/README.md`, `README.md`, `docs/manuals/README.md`.
 5. [ ] `scripts/verify.sh docs`, then open a draft PR.
@@ -49,13 +49,14 @@ Requirement coverage:
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 1 | Plan | - | - |
+| 2 | User Manual draft | - | written |
 
 ## State for the next session
 
 - Last check run (exact command): none
 - Result (first failing lines, or "green"): -
 - Hypothesis: -
-- Next action (one specific step, not "continue"): read specs, then write the User Manual draft
+- Next action (one specific step, not "continue"): write the Technical Manual draft
 
 ## Decisions and notes
 
