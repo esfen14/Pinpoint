@@ -1,13 +1,13 @@
 # Issue #292: Inventory missing code documentation and cover it in the Technical Manual
 
 Branch: `sys-missing-docu-inventory` (user instruction: work on the current branch; do NOT commit or push)
-Status: in-progress
+Status: done
 
 ## Finish condition
 
 - [x] Inventory (file list and counts) committed to `docs/`: `docs/plans/Code_Documentation_Inventory.md`.
 - [x] Each undocumented module described, as the module reference section of that file, for the Technical Manual (#181 §3.7). The Technical Manual itself does not exist yet.
-- [ ] Follow-up issue for the docstrings opened if approved: NOT opened; needs owner approval.
+- [x] Follow-up issue for the docstrings opened: #331 (user approved).
 
 Requirement coverage:
 

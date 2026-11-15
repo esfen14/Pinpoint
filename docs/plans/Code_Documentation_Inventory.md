@@ -133,4 +133,4 @@ Owning specifications: routes and helpers in [`Backend_Modules_and_Routes.md`](.
 
 ## Follow-up
 
-A follow-up issue should propose adding a one-paragraph module docstring to the 37 files above, then docstrings to the 217 public names, starting with the larger modules (`system_models.py`, `api/user/management.py`, `ncpa_deployment.py`, `create_host_cfg.py`). It changes code files (comments only) and needs owner approval before it is opened; it has not been opened.
+The follow-up is issue #331: add a one-paragraph module docstring to the 37 files above, then docstrings to the 217 public names, starting with the larger modules (`system_models.py`, `api/user/management.py`, `ncpa_deployment.py`, `create_host_cfg.py`). It changes code files (comments only).
