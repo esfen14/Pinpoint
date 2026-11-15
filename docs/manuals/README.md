@@ -2,7 +2,7 @@
 
 How-to guides for operators and users. Each guide gives the purpose, prerequisites, numbered steps, the expected result and precautions. A guide marked **TBC** inside has items not yet checked step by step on a demo build.
 
-A future User Manual (issue #181) should link to these guides rather than copy them.
+The [User Manual](../User_Manual/User_Manual.md) and [Technical Manual](../Technical_Manual/Technical_Manual.md) (drafts, issue #181) link to these guides rather than copy them.
 
 ## Guide for each page
 

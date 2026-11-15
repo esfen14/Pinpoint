@@ -30,6 +30,8 @@ installer is maintained separately from this repository.
 
 The authoritative description of each area is in [`spec files/`](spec%20files/README.md);
 step-by-step guides for operators are in [`docs/manuals/`](docs/manuals/).
+Draft manuals (issue #181): [User Manual](docs/User_Manual/User_Manual.md) and
+[Technical Manual](docs/Technical_Manual/Technical_Manual.md).
 
 ## Repository guide
 

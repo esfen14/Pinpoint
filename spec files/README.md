@@ -41,6 +41,11 @@ Preparing module/person assignments and coordinating case assignments:
 
 ## What does not belong here
 
+The [User Manual](../docs/User_Manual/User_Manual.md) and
+[Technical Manual](../docs/Technical_Manual/Technical_Manual.md) summarise these
+specifications for readers outside the team; when they disagree, the
+specification wins.
+
 Plans, proposals, acceptance or remediation reports, and manuals live in
 [`../docs/`](../docs/README.md). A specification states current behavior; it has
 no draft status, decision log or task list. When a plan ships, move what is

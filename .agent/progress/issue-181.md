@@ -1,7 +1,7 @@
 # Issue #181: Create User Manual and Technical Manual for PinPoint
 
 Branch: `issue-181-manuals-draft`
-Status: in-progress
+Status: ready-for-review
 
 ## Finish condition
 
@@ -9,15 +9,15 @@ Scope for this session (user request, 2026-11-15): produce a **draft** of both
 manuals, each in its own folder under `docs/`. The issue's full checklist is
 kept below; items outside the draft are marked out of scope with the reason.
 
-- [ ] `docs/User_Manual/User_Manual.md` drafted with sections 2.1 to 2.7 (issue B)
-- [ ] `docs/Technical_Manual/Technical_Manual.md` drafted with sections 3.1 to 3.12 (issue C)
-- [ ] Both have title page, version, table of contents, numbered sections, glossary, appendices (issue D)
-- [ ] Existing `docs/manuals/` guides are linked, not duplicated
-- [ ] Verified facts, assumptions, recommendations and TBC items are distinguished (issue A, E)
-- [ ] Screenshot placeholders where no real screenshot exists (issue D)
-- [ ] Credentials locations only, never values (issue H)
-- [ ] `AGENTS.md`, `spec files/README.md`, root `README.md`, `docs/manuals/README.md` link the manuals
-- [ ] `scripts/verify.sh docs` passes
+- [x] `docs/User_Manual/User_Manual.md` drafted with sections 2.1 to 2.7 (issue B)
+- [x] `docs/Technical_Manual/Technical_Manual.md` drafted with sections 3.1 to 3.12 (issue C)
+- [x] Both have title page, version, table of contents, numbered sections, glossary, appendices (issue D)
+- [x] Existing `docs/manuals/` guides are linked, not duplicated
+- [x] Verified facts, assumptions, recommendations and TBC items are distinguished (issue A, E)
+- [x] Screenshot placeholders where no real screenshot exists (issue D)
+- [x] Credentials locations only, never values (issue H)
+- [x] `AGENTS.md`, `spec files/README.md`, root `README.md`, `docs/manuals/README.md` link the manuals
+- [x] `scripts/verify.sh docs` passes
 
 Requirement coverage:
 
@@ -40,8 +40,8 @@ Requirement coverage:
 
 1. [x] Read required specs and topic guides; note facts per manual section.
 2. [x] Write `docs/User_Manual/User_Manual.md`.
-3. [ ] Write `docs/Technical_Manual/Technical_Manual.md`.
-4. [ ] Link from `AGENTS.md`, `spec files/README.md`, `README.md`, `docs/manuals/README.md`.
+3. [x] Write `docs/Technical_Manual/Technical_Manual.md`.
+4. [x] Link from `AGENTS.md`, `spec files/README.md`, `README.md`, `docs/manuals/README.md`.
 5. [ ] `scripts/verify.sh docs`, then open a draft PR.
 
 ## Round log
@@ -50,13 +50,14 @@ Requirement coverage:
 |---|---|---|---|
 | 1 | Plan | - | - |
 | 2 | User Manual draft | - | written |
+| 3 | Technical Manual draft, index links | `scripts/verify.sh docs` | green |
 
 ## State for the next session
 
-- Last check run (exact command): none
-- Result (first failing lines, or "green"): -
+- Last check run (exact command): scripts/verify.sh docs
+- Result (first failing lines, or "green"): green
 - Hypothesis: -
-- Next action (one specific step, not "continue"): write the Technical Manual draft
+- Next action (one specific step, not "continue"): owner review of the drafts; then DOCX/PDF export, installer review (TBC items), lab screenshots
 
 ## Decisions and notes
 
