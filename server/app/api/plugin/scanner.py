@@ -80,6 +80,12 @@ _VERSION_PATTERN = re.compile(r'(\d+\.\d+(?:\.\d+)?)')
 
 @dataclass
 class ScannedPlugin:
+    """One plugin executable found by the filesystem scan.
+
+    Holds its name, path, size, modification time, whether it is executable, the
+    version parsed from `--version` with the raw output, and a description
+    taken from `--help` for plugins outside the bundled catalog.
+    """
     name: str
     path: str
     size: int

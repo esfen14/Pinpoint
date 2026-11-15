@@ -1,3 +1,6 @@
+"""Reads alert and notification archives from Nagios (archivejson.cgi), then normalises
+the entries, fills in previous states and collapses repeats for the History page.
+"""
 import requests
 from app.api.helper import get_range_day
 from flask import current_app
@@ -100,6 +103,10 @@ def request_host_availability_range(start_ts, end_ts, hostname=None):
 
 
 def request_notifications_last(day=None):
+    """Fetch the Nagios notification list for one day (today when `day` is None) using
+    the day range from get_range_day. Returns the archive data, or None if Nagios
+    cannot be reached.
+    """
     start, end = get_range_day(day)
         
     params = {

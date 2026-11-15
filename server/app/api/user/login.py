@@ -100,6 +100,14 @@ _SETUP_ALLOWED_ENDPOINTS = {
 
 @user_bp.before_app_request
 def enforce_password_change():
+    """Before-request guard that blocks the API for accounts that must finish first-run setup or change their password.
+
+    Signed-out requests and requests outside the API pass through. For a
+    flagged account, only the endpoints needed to log out, read the account's
+    permissions and complete setup or change the password are allowed; every
+    other API call gets a 403 JSON error. Returns None to let the request
+    continue.
+    """
     if not current_user.is_authenticated:
         return None
     needs_setup = bool(current_user.Needs_Setup)

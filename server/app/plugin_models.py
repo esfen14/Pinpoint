@@ -43,6 +43,7 @@ To call use "Plugin.Plugin_Type = PluginType.CUSTOM"
 The models class need to be imported to use the Enums
 """
 class PluginType(Enum):
+    """Whether a plugin is a standard Nagios plugin or a custom one."""
     NAGIOS = "Nagios"
     CUSTOM = "Custom"
 
@@ -54,6 +55,10 @@ manually through Plugin Manager (UI Flow Section 8, "Installation
 Source").
 """
 class PluginSource(Enum):
+    """
+    Where a plugin came from: shipped with the baseline ISO install, or registered
+    by an administrator through Plugin Manager.
+    """
     BASELINE_ISO = "Baseline (ISO)"
     ADMINISTRATOR_ADDED = "Administrator Added"
 
@@ -69,6 +74,11 @@ configuration has validated, and that configuration has been applied
 (Phase 10).
 """
 class PluginStatus(Enum):
+    """
+    The lifecycle state of a plugin, from Available through Installed, Enabled and
+    Active, plus the Disabled, Update Available, failure and Rollback states.
+    Installed is deliberately distinct from Active.
+    """
     AVAILABLE = "Available"
     READY = "Ready"
     INSTALLED = "Installed"
@@ -84,6 +94,12 @@ class PluginStatus(Enum):
 
 
 class Plugin(db.Model):
+    """
+    A server-side Nagios plugin managed by Plugin Manager: its name, type, source,
+    current version, lifecycle status and executable path. It owns the version,
+    command, dependency, configuration and history rows. It does not describe
+    software installed on monitored devices.
+    """
     # Table Name
     __tablename__ = "PLUGIN"
 
@@ -119,6 +135,11 @@ class Plugin(db.Model):
 
 
 class PluginVersion(db.Model):
+    """
+    One installed version of a plugin, with its executable path, checksum and
+    source, and whether it is the current version. There is one row per plugin and
+    version.
+    """
     # Table Name
     __tablename__ = "PLUGIN_VERSION"
 
@@ -148,6 +169,11 @@ class PluginVersion(db.Model):
 
 
 class PluginCommand(db.Model):
+    """
+    A Nagios command definition that belongs to a plugin. Is_Default marks the
+    definition that ships with the plugin; administrator overrides are kept in
+    PluginCommandOverride.
+    """
     # Table Name
     __tablename__ = "PLUGIN_COMMAND"
 
@@ -179,6 +205,12 @@ class PluginCommand(db.Model):
 
 
 class PluginCommandOverride(db.Model):
+    """
+    An administrator's replacement for a plugin command. It stores a snapshot of the
+    original command taken when the override was made, so the original survives
+    later changes to the plugin default, and links to the activity log entry of the
+    administrator.
+    """
     # Table Name
     __tablename__ = "PLUGIN_COMMAND_OVERRIDE"
 
@@ -220,6 +252,10 @@ class PluginCommandOverride(db.Model):
 
 
 class DependencyType(Enum):
+    """
+    The kind of thing a plugin needs: a binary, library, package, runtime or Linux
+    capability such as CAP_NET_RAW.
+    """
     BINARY = "Binary"
     LIBRARY = "Library"
     PACKAGE = "Package"
@@ -231,12 +267,19 @@ class DependencyType(Enum):
 
 
 class DependencyStatus(Enum):
+    """
+    The result of checking a plugin dependency: Ok, Missing or Incompatible.
+    """
     OK = "Ok"
     MISSING = "Missing"
     INCOMPATIBLE = "Incompatible"
 
 
 class PluginDependency(db.Model):
+    """
+    One dependency a plugin requires, with its type, required version and the latest
+    check status.
+    """
     # Table Name
     __tablename__ = "PLUGIN_DEPENDENCY"
 
@@ -350,6 +393,10 @@ class PluginConfiguration(db.Model):
 
 
 class PluginHistoryAction(Enum):
+    """
+    The kind of Plugin Manager action recorded in PluginHistory, such as install,
+    update, enable, configure or remove.
+    """
     INSTALL = "Install"
     UPDATE = "Update"
     ENABLE = "Enable"
@@ -362,11 +409,17 @@ class PluginHistoryAction(Enum):
 
 
 class PluginActionResult(Enum):
+    """Whether a recorded Plugin Manager action succeeded or failed."""
     SUCCESS = "Success"
     FAILED = "Failed"
 
 
 class PluginHistory(db.Model):
+    """
+    An audit row for one Plugin Manager action on a plugin: the action, old and new
+    values, result and message, linked to the activity log entry of the
+    administrator who performed it.
+    """
     # Table Name
     __tablename__ = "PLUGIN_HISTORY"
 
@@ -397,6 +450,7 @@ class PluginHistory(db.Model):
 
 
 class PluginScanStatusValue(Enum):
+    """The state of a plugin directory scan run: Running, Success or Failed."""
     RUNNING = "Running"
     SUCCESS = "Success"
     FAILED = "Failed"

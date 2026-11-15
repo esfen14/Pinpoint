@@ -61,6 +61,7 @@ IP_MATCHABLE_STATES = (DeviceState.ACTIVE, DeviceState.MISSING, DeviceState.ADDR
 
 
 def utcnow():
+    """Return the current time as a timezone-aware UTC datetime."""
     return datetime.now(timezone.utc)
 
 
@@ -431,6 +432,9 @@ def sanitize_host_label(name):
 
 
 def host_name_in_use(name):
+    """Return True when some device already uses `name` as its Nagios host name. Reads
+    the database only.
+    """
     return db.session.scalar(
         sa.select(NetworkDiscovery.NetDiscoveryID).where(NetworkDiscovery.Nagios_Host_Name == name)
     ) is not None

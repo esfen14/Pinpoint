@@ -1,3 +1,5 @@
+"""Defines the /system blueprint and loads each system route module so its routes are registered."""
+
 from flask import Blueprint
 
 system_bp = Blueprint('system', __name__, url_prefix='/system')

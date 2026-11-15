@@ -1,3 +1,5 @@
+"""Per-user display preferences routes: read and update the logged-in user's theme, time zone, fonts and dashboard settings."""
+
 from flask import jsonify, request
 from flask_login import login_required, current_user
 
@@ -20,6 +22,10 @@ def _get_or_create_preferences():
 @user_bp.route("/preferences", methods=["GET"])
 @login_required
 def get_preferences():
+    """Return the logged-in user's display preferences as JSON.
+
+    Creates and commits a default preferences row first if the user has none.
+    """
     row = _get_or_create_preferences()
     return jsonify(row.to_dict())
 
@@ -27,6 +33,14 @@ def get_preferences():
 @user_bp.route("/preferences", methods=["PUT"])
 @login_required
 def update_preferences():
+    """Update the logged-in user's display preferences and return the saved values.
+
+    Expected JSON body (every key optional; missing keys keep their value):
+    {"theme": str, "timeZone": str, "dateTimeFormat": str, "systemFont": str,
+     "systemFontSize": int, "dashboardLayout": str, "dashboardRefreshRate": int}
+
+    Commits the change.
+    """
     row = _get_or_create_preferences()
     payload = request.get_json(force=True)
 

@@ -29,18 +29,21 @@ MAX_UPLOAD_SIZE_BYTES = 20 * 1024 * 1024  # 20 MB — generous for a plugin scri
 
 
 class UploadTooLargeError(Exception):
+    """Raised by stage_upload() when the uploaded file is larger than MAX_UPLOAD_SIZE_BYTES."""
     def __init__(self, message):
         super().__init__(message)
         self.message = message
 
 
 class InvalidFilenameError(Exception):
+    """Raised by stage_upload() when the uploaded filename is missing or empty after sanitising."""
     def __init__(self, message):
         super().__init__(message)
         self.message = message
 
 
 class NameCollisionError(Exception):
+    """Raised by check_name_collision() when a file with that name already exists in the Nagios plugin directory."""
     def __init__(self, message):
         super().__init__(message)
         self.message = message

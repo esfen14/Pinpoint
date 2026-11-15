@@ -1,3 +1,6 @@
+"""Runs nmap scans, TCP and UDP, over the configured networks or a single device, and
+maps the results to services and host data used by the discovery pipeline.
+"""
 import nmap3
 import xml.etree.ElementTree as ET
 import ipaddress
@@ -259,6 +262,11 @@ def network_for_target(target, saved_networks):
 
 
 def discover_network(network_discvovery_status_id, progress_weight, stop_event, target=None):
+    """Scan the configured networks (or only `target`'s network) for hosts, then scan
+    each found host's TCP and UDP ports, updating the discovery status record's
+    progress within `progress_weight`. Returns a dictionary of hosts per network, an
+    empty one when there is nothing to scan, or None if `stop_event` was set.
+    """
     NETWORKS = get_discovery_setting('NETWORKS')
     hosts = {}
 

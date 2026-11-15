@@ -1,3 +1,7 @@
+"""Builds and applies Nagios host and service configuration from discovery results: runs
+discovery, saves devices and ports, plans plugin checks, substitutes secrets, writes
+and validates a new hosts.cfg, backs up the old one and applies the new one.
+"""
 import os
 from pathlib import Path
 from datetime import datetime, timezone
@@ -1947,6 +1951,13 @@ def mark_discovery_interrupted(network_discovery_id):
 
 
 def discover_network_create_hosts(app, user_id, stop_event, target=None):
+    """Run a full network discovery in a background thread with its own app context:
+    scan, collect identifiers, save devices and ports, refresh interfaces, then
+    generate, validate and apply a new Nagios configuration. Progress and the final
+    result go to a NetworkDiscoveryStatus record. Stops early and marks the run
+    interrupted when `stop_event` is set, and logs and records a failure on any
+    error. `target` limits the run to one device.
+    """
     network_discovery_id = None
    
     with app.app_context():
@@ -2130,6 +2141,11 @@ def discover_network_create_hosts(app, user_id, stop_event, target=None):
                 )
 
 def add_ncpa_port(app, successful_device, ncpa_deployment_status_id, stop_event):
+    """Record the NCPA port as a monitored port for each device in `successful_device`,
+    then regenerate the Nagios configuration so it takes effect. Progress is reported
+    on the NCPA deployment status record and the run stops early when `stop_event` is
+    set.
+    """
     with app.app_context():
         try:
             NCPA_PORT = current_app.config['NCPA_PORT']

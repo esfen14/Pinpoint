@@ -48,6 +48,15 @@ _GENERIC_MESSAGE = (
 
 @user_bp.post('/forgot-password')
 def forgot_password():
+    """Public route: record a password reset request for an active account.
+
+    Expected JSON body: {"email": "user@example.com"}
+
+    A pending request is created (and logged) only if the email belongs to an
+    active account that has none pending, and the session is committed. The
+    reply is the same generic success message whether or not the email is
+    known, so it cannot be used to discover accounts. No email is sent.
+    """
     try:
         data = request.get_json(silent=True)
         err = validate_json_data(data)
@@ -185,6 +194,12 @@ def resolve_password_request(id):
 @login_required
 @require_permission("account.edit")
 def dismiss_password_request(id):
+    """Dismiss a pending password reset request without resetting the password.
+
+    Requires the account.edit permission and takes no body. Marks the
+    request dismissed with the current user and time, writes a user log
+    entry and commits. Returns an error if the request is not pending.
+    """
     try:
         req, err = _get_pending(id)
         if err is not None:

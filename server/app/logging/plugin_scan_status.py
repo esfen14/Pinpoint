@@ -1,3 +1,8 @@
+"""
+Plugin scan run records: create the run status row, update it, and read the latest one.
+It also re-exports calculate_progress from the network discovery helpers.
+"""
+
 from app.plugin_models import PluginScanStatus, PluginScanStatusValue
 from flask import current_app
 import sqlalchemy as sa
@@ -9,6 +14,11 @@ from app.logging.network_discovery_status import calculate_progress  # noqa: F40
 
 
 def create_plugin_scan_status(user_id):
+    """
+    Start a new plugin scan run for a user. It writes the activity log entry and a
+    PluginScanStatus row in the Running state at 0 percent, then commits. It returns
+    the new status row, or rolls back, logs the error and returns None.
+    """
     try:
         user_log = create_user_log(user_id, "Scanning Nagios Plugin Directory")
 
@@ -30,6 +40,11 @@ def create_plugin_scan_status(user_id):
 
 
 def update_plugin_scan_status(plugin_scan_status_id, status, progress, message, completed_at=None, error=None):
+    """
+    Set the status, progress, message, completion time and error of one plugin scan
+    run, then commit. A missing run is treated as an error. On any failure it rolls
+    back, logs it and returns None; on success it returns the updated row.
+    """
     try:
         plugin_scan_status = db.session.scalar(
             sa.select(PluginScanStatus).where(
@@ -58,6 +73,10 @@ def update_plugin_scan_status(plugin_scan_status_id, status, progress, message, 
 
 
 def get_plugin_scan_status():
+    """
+    Return the most recently started plugin scan run, or None when there is none or
+    the query fails. It does not change the database.
+    """
     try:
         return db.session.scalar(
             sa.select(PluginScanStatus)

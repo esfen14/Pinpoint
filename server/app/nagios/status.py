@@ -1,3 +1,7 @@
+"""Polls Nagios status (statusjson.cgi and objectjson.cgi), stores program, host and
+service status snapshots in the database, and resolves acknowledgements whose problem
+has since recovered.
+"""
 import requests 
 from flask import current_app
 import sqlalchemy as sa
@@ -15,6 +19,10 @@ from app.api.helper import convert_host_state_type_enum, convert_plugin_status_t
 # NAGIOS_PASSWORD — read into same-named locals inside get_status() below.
 
 def insert_programstatus_data(data):
+    """Store one ProgramStatus row from the `programstatus` dictionary returned by
+    Nagios, including the latest known Nagios version. Commits on success; on any
+    error it rolls back and logs, and does not raise.
+    """
     try:
         program_status = ProgramStatus(
             Timestamp=datetime.now(timezone.utc),
@@ -59,6 +67,11 @@ def _extract_plugin_status(plugin_output):
 
 
 def insert_host_status_data(data):
+    """Store one HostStatus row from a Nagios host dictionary. Does nothing when the
+    state cannot be converted or when the host's last check is the one already
+    stored. Commits on success; on any error it rolls back and logs, and does not
+    raise.
+    """
     try:
         plugin_status = _extract_plugin_status(data.get('plugin_output', ''))
         current_state = convert_host_state_type_enum(data.get('status'))
@@ -133,6 +146,10 @@ def insert_host_status_data(data):
         current_app.logger.exception("Failed to insert host status")
         
 def insert_service_status_data(hostname, service, data):
+    """Store one ServiceStatus row for `service` on `hostname` from a Nagios service
+    dictionary. Does nothing when the service's last check is the one already stored.
+    Commits on success; on any error it rolls back and logs, and does not raise.
+    """
     try:
         last_check = convert_to_UTC(data.get('last_check'))
         if last_check is not None:
@@ -269,6 +286,12 @@ def _resolve_recovered_acks(host_states, service_states):
 
 
 def get_status():
+    """Poll Nagios once. Requests program status, the host list and each host's service
+    list (fetching everything before changing any acknowledgement), stores each as a
+    status row, then resolves acknowledgements that have recovered. Uses the Nagios
+    URLs and credentials from the app config. A failed request is logged and the poll
+    ends without raising.
+    """
     NAGIOS_URL = current_app.config['NAGIOS_STATUS_URL']
     OBJECT_URL = current_app.config['NAGIOS_OBJECT_URL']
     USERNAME = current_app.config['NAGIOS_USERNAME']

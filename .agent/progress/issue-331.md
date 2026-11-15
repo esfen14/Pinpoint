@@ -6,10 +6,10 @@ Status: in-progress
 
 ## Finish condition
 
-- [ ] Each of the 37 files has a one-paragraph module docstring (inventory text, TBC lines confirmed)
-- [ ] The 217 public names have docstrings, largest modules first
-- [ ] AST count re-run and inventory totals updated
-- [ ] `scripts/verify.sh backend` passes
+- [x] Each of the 37 files has a one-paragraph module docstring (inventory text, TBC lines confirmed)
+- [x] The 217 public names have docstrings, largest modules first
+- [x] AST count re-run and inventory totals updated
+- [x] `scripts/verify.sh backend` passes
 
 Requirement coverage (every requirement the issue states, and the check that proves it):
 

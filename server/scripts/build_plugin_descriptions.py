@@ -167,6 +167,10 @@ def render(entries):
 
 
 def main():
+    """Command-line entry point. Regenerates plugin_catalog_data.py from the plugin
+    catalog, or with --check only reports whether the file is out of date. Returns
+    the process exit code: 1 when --check finds it out of date, otherwise 0.
+    """
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--check", action="store_true", help="exit 1 if the file is out of date")
     args = parser.parse_args()

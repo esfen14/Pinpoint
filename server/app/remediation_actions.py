@@ -74,6 +74,12 @@ class RunResult:
 
 @dataclass(frozen=True)
 class ActionType:
+    """
+    One entry in the remediation action registry. It holds the key, label and
+    description shown to administrators, the parameter schema, a validate function
+    that returns cleaned parameters and per-field errors, a run function that takes
+    the validated parameters and a RunContext, and a timeout in seconds.
+    """
     key: str
     label: str
     description: str

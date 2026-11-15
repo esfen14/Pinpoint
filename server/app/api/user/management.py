@@ -1,3 +1,5 @@
+"""Account and role administration routes: roles, accounts, password change, first-run setup and the protections that keep the bootstrap administrator able to administer accounts and roles."""
+
 from flask import request
 from flask_login import login_required, current_user
 from app.api.helper.database_access.permissions import require_permission, user_has_permission
@@ -51,6 +53,10 @@ def role_preserves_bootstrap_admin_access(role_id):
 @login_required
 @require_permission("role.edit")
 def permission_list():
+    """Return every permission, ordered by name, for the role editor.
+
+    Requires the role.edit permission. Read only.
+    """
     try:
         query = (
             sa.select(Permission)
@@ -154,6 +160,13 @@ def create_role():
 @login_required
 @require_permission("role.view")
 def roles():
+    """Return a paginated list of roles.
+
+    Requires the role.view permission. Query parameters: page, per_page (1 to
+    100), sort_by (name, created_at or id), order (asc or desc) and search
+    (matches the role name). Each item marks whether the role is the Super
+    Admin's locked role. Read only.
+    """
     try:
         page = request.args.get("page", default=1, type=int)
         per_page = request.args.get("per_page", default=10, type=int)
@@ -229,6 +242,11 @@ def roles():
 @login_required
 @require_permission("role.list")
 def list_roles():
+    """Return the active roles (id and name) for pick lists.
+
+    Requires the role.list permission. Each item also says whether the role
+    keeps account and role administration access. Read only.
+    """
     try:
         query = (sa.select(Role)
                 .order_by(Role.Name.asc())
@@ -259,6 +277,11 @@ def list_roles():
 @login_required
 @require_permission("role.info")
 def role_info(id):
+    """Return one role with its description, active flag and permissions.
+
+    Requires the role.info permission. Returns an error if the role does not
+    exist. Read only.
+    """
     try:
         err = validate_role_exists(id)
         if err is not None:
@@ -420,6 +443,12 @@ def edit_role(id):
 @login_required
 @require_permission("role.edit")
 def roles_status(id):
+    """Toggle a role between active and inactive.
+
+    Requires the role.edit permission and takes no body. The Super Admin's
+    role cannot be deactivated. Writes an audit log entry and commits;
+    returns the previous and current status.
+    """
     try:
         err = validate_role_exists(id)
         if err is not None:
@@ -567,6 +596,14 @@ def create_account():
 @login_required
 @require_permission("account.view")
 def available_accounts():
+    """Return a paginated list of accounts.
+
+    Requires the account.view permission. Query parameters: page, per_page (1
+    to 100), sort_by (id, first_name, last_name, email, role, status,
+    created_at or updated_at), order (asc or desc) and search (matches name,
+    email, status or role). Each item marks the Super Admin account. Read
+    only.
+    """
     try:
         page = request.args.get("page", default=1, type=int)
         per_page = request.args.get("per_page", default=10, type=int)
@@ -659,6 +696,11 @@ def available_accounts():
 @login_required
 @require_permission("account.info")
 def account_info(id):
+    """Return one account's details: names, email, role, status, alert setting and timestamps.
+
+    Requires the account.info permission. Returns an error if the account
+    does not exist. Read only.
+    """
     try:
         err = validate_user_exists(id)
         if err is not None:
@@ -834,6 +876,16 @@ def edit_account(id):
 @user_bp.post('/change-password')
 @login_required
 def change_password():
+    """Change the logged-in user's own password.
+
+    Expected JSON body:
+    {"current_password": str, "new_password": str, "confirm_password": str}
+
+    The current password must be correct, the new one must satisfy the
+    password policy, match the confirmation and differ from the current one.
+    Clears the must-change-password flag, writes a user log entry when audit
+    logging is on and commits.
+    """
     try:
         data = request.get_json(silent=True)
         err = validate_json_data(data)
@@ -881,6 +933,18 @@ def change_password():
 @user_bp.post('/complete-setup')
 @login_required
 def complete_setup():
+    """Finish first-run setup for the logged-in bootstrap account.
+
+    Expected JSON body:
+    {"current_password": str, "new_email": str, "new_password": str,
+     "confirm_password": str}
+
+    Returns an error if setup is not required. The new email must be valid,
+    deliverable and not already used; the new password must satisfy the
+    policy and differ from the current one. Replaces the email and password,
+    clears the setup and must-change-password flags, writes an audit log
+    entry, commits and then refreshes the Nagios alert contacts.
+    """
     try:
         if not current_user.Needs_Setup:
             return error("First-run setup is not required for this account.", 400)
@@ -981,6 +1045,11 @@ def _apply_contact_change(saved="Setup"):
 @user_bp.get('/me')
 @login_required
 def user_permission():
+    """Return the logged-in user's profile: names, email, role name and permission names.
+
+    An inactive role yields an empty permission list. Also reports whether
+    the user must change the password or finish first-run setup. Read only.
+    """
     try:
         permissions = db.session.scalars(
             sa.select(Permission)

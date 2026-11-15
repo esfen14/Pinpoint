@@ -1,3 +1,5 @@
+"""Request validation helpers: password policy, JSON body and field checks, user and role existence, status values and email checks. Each returns None when the input is valid, or an error response tuple to return from the route."""
+
 from app.system_models import UserStatus
 from email_validator import validate_email, EmailNotValidError
 from .database_access import *
@@ -14,6 +16,13 @@ RELAXED_MIN_PASSWORD_LENGTH = 8
 
 
 def validate_password(password):
+    """Check a password against the active password policy.
+
+    With the strong policy on, it needs at least 12 characters with an
+    uppercase letter, a lowercase letter, a digit and a special character.
+    With it off, only a minimum of 8 characters applies. Returns None if
+    valid, otherwise a 400 error response.
+    """
     password = password.strip()
     if not password:
         return error("Password must not be empty.", 400)
@@ -39,6 +48,7 @@ def validate_password(password):
     return None
 
 def validate_password_is_same(password, confirm_password):
+    """Return a 400 error response if the two passwords differ, otherwise None."""
     if not password == confirm_password:
         return error("Password is not the same.", 400)
     return None
@@ -46,6 +56,11 @@ def validate_password_is_same(password, confirm_password):
 # ================= USER  =========================
 def validate_user_exists(user):
     
+    """Check that a user id (an int) refers to an existing user.
+
+    Returns a 400 error response for a non-int, a 404 if the user does not
+    exist, otherwise None.
+    """
     exists = True
     if isinstance(user, int):
         exists = exists_user_by_id(user)
@@ -59,6 +74,11 @@ def validate_user_exists(user):
 
 def validate_user_not_exists(user):
     
+    """Check that a user id (an int) does not refer to an existing user.
+
+    Returns a 400 error response for a non-int, a 409 if the user exists,
+    otherwise None.
+    """
     exists = True
     if isinstance(user, int):
         exists = exists_user_by_id(user)
@@ -73,6 +93,11 @@ def validate_user_not_exists(user):
 # ================= ROLE  ========================
 def validate_role_exists(role):
     
+    """Check that a role id (an int) refers to an existing role.
+
+    Returns a 400 error response for a non-int, a 404 if the role does not
+    exist, otherwise None.
+    """
     exists = True
     if isinstance(role, int):
         exists = exists_role_by_id(role)
@@ -85,6 +110,11 @@ def validate_role_exists(role):
     return None
 
 def validate_role_not_exists(role):
+    """Check that a role id (an int) or a role name (a non-numeric string) is not in use.
+
+    Returns a 400 error response for any other type, a 409 if the role
+    exists, otherwise None.
+    """
     exists = True
     if isinstance(role, int):
         exists = exists_role_by_id(role)
@@ -99,6 +129,7 @@ def validate_role_not_exists(role):
     return None
 
 def validate_role_name_available(role):
+    """Return a 409 error response if a role already has this name (ignoring case), otherwise None."""
     if exists_role_by_name(role):
         return error("That role name is already taken.", 409)
     return None
@@ -106,6 +137,11 @@ def validate_role_name_available(role):
 # ================= PERMISSION  ==================
 def validate_permission_exists(permission):
     
+    """Check that a permission id (an int) refers to an existing permission.
+
+    Returns a 400 error response for a non-int, a 404 if it does not exist,
+    otherwise None.
+    """
     exists = True
     if isinstance(permission, int):
         exists = exists_permission_by_id(permission)
@@ -119,6 +155,11 @@ def validate_permission_exists(permission):
 
 # ================== JSON  =======================
 def validate_json_data(data):
+    """Check that a request body is a non-empty JSON object.
+
+    Returns a 400 error response if it is missing, not an object or empty,
+    otherwise None.
+    """
     if data is None:
         return error("No JSON data provided", 400)
 
@@ -162,6 +203,7 @@ def validate_json_fields(data, required_fields):
 
 # ================ USERSTATUS ====================
 def validate_userstatus(status):
+    """Return None if the text matches a UserStatus value (ignoring case and surrounding spaces), otherwise a 400 error response."""
     status = status.strip().lower()
     for main_status in UserStatus:
         if status == main_status.value.lower():
@@ -170,6 +212,10 @@ def validate_userstatus(status):
 
 # =================== EMAIL ======================
 def validate_user_email(email):
+    """Return None if the text is a syntactically valid email address, otherwise a 400 error response.
+
+    Deliverability is not checked.
+    """
     try:
         validate_email(email, check_deliverability=False)
         return None
@@ -183,6 +229,12 @@ RESERVED_EMAIL_DOMAINS = (
 
 
 def validate_deliverable_email_domain(email):
+    """Reject email domains that cannot receive mail.
+
+    Returns a 400 error response for the installer placeholder domain and for
+    reserved domains such as local, lan, test and example (and their
+    subdomains), otherwise None.
+    """
     domain = str(email).rsplit("@", 1)[-1].strip().lower().rstrip(".")
     if domain == PLACEHOLDER_EMAIL_DOMAIN or domain.endswith("." + PLACEHOLDER_EMAIL_DOMAIN):
         return error("Enter a real email address, not the installer placeholder.", 400)
@@ -193,6 +245,7 @@ def validate_deliverable_email_domain(email):
 
 
 def validate_email_available(email):
+    """Return a 409 error response if an account already uses this email, otherwise None."""
     if exists_user_by_email(email):
         return error("Email already exists.", 409)
     return None

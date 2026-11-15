@@ -1,3 +1,5 @@
+"""Defines the /api blueprint and attaches the user, system and plugin sub-blueprints to it."""
+
 from flask import Blueprint
 from app.api import(
     user,

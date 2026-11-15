@@ -1,3 +1,11 @@
+"""
+Background scheduler for the serving process. It runs APScheduler jobs for Nagios status
+polling, handing maintenance windows to Nagios, the daily retention purge of logs and
+history, settings automation, NCPA device relocation, the remediation spool consumer and
+resource forecasts. init_scheduler starts it once, and only in the real serving process;
+polling_schedule_change lets the settings route change the poll interval safely.
+"""
+
 import atexit
 import os
 from contextlib import contextmanager

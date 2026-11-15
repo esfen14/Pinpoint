@@ -1,3 +1,7 @@
+"""Turns completed network-discovery runs (NetworkDiscoveryStatus rows) into events
+shaped like the Nagios entries shown on the History page, tagged with source
+"pinpoint".
+"""
 from datetime import timezone
 
 import sqlalchemy as sa
@@ -38,6 +42,10 @@ def _to_event(row):
 
 
 def get_scan_events(start_ts, end_ts):
+    """Return History events for network scans that finished successfully, failed or
+    were cancelled between the UNIX timestamps `start_ts` and `end_ts` (inclusive of
+    the end second), newest first. Reads the database only.
+    """
     from datetime import datetime
     start = datetime.fromtimestamp(start_ts, tz=timezone.utc).replace(tzinfo=None)
     end = datetime.fromtimestamp(end_ts + 1, tz=timezone.utc).replace(tzinfo=None)
@@ -55,6 +63,10 @@ def get_scan_events(start_ts, end_ts):
 
 
 def get_scan_event(discovery_status_id):
+    """Return the History event for one finished network scan, or None if the record
+    does not exist, is still running or has no completion time. Reads the database
+    only.
+    """
     row = db.session.get(NetworkDiscoveryStatus, discovery_status_id)
     if row is None or row.Status not in SCAN_TITLES or row.Completed_At is None:
         return None
