@@ -251,9 +251,9 @@
         "client/src/components/layout/Sidebar.tsx": "13118d2479e7a89c4096bc2614818d21e6ad036b7081a2da103b933139056c7e",
         "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
         "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
-        "server/app/api/user/login.py": "0d0f9d269758533d8463b3b3191d629d17e18960b8a0b8d012e0d7de4fac7dfc",
-        "server/app/api/user/management.py": "f81baeaa04a614c784a7bd3f8da14679f70483e940ce4d38ee631e052902cdf7",
-        "server/app/api/commands/seed.py": "a1768b1aee8b898d8af3b7d4ae56ea392a15012d46315e1874c1b1aa519726f4",
+        "server/app/api/user/login.py": "e791d5a65dc94c598daf38fe7f95fecc7fb825fcca07736d5a93af7a96332e61",
+        "server/app/api/user/management.py": "32c52228345aec7cb5e2d8da691a991a3592c6aaf6f38117c1ae7efc1ba2cd97",
+        "server/app/api/commands/seed.py": "d677f543c44f1548bf4f4005ba0e14707cfe1f355ac49cc5501644a93c660a96",
         "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
         "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
         "client/src/components/login/LoginRoute.tsx": "4f2efe6b6c952c75850e6796afa9ea1bb122595286fc9ed881e7c3ed31f32d02"
@@ -302,7 +302,7 @@
         "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
         "client/src/lib/api.ts": "41740092051ab506b57b7c9f6b38cd3f38f12bc508a6c034af3133a089d9c5e5",
         "client/src/types/user.ts": "b67b1d2d488248ff5a24f715622f7b603c752416b663233a4d5c37e51ed27d7e",
-        "server/app/api/user/management.py": "f81baeaa04a614c784a7bd3f8da14679f70483e940ce4d38ee631e052902cdf7",
+        "server/app/api/user/management.py": "32c52228345aec7cb5e2d8da691a991a3592c6aaf6f38117c1ae7efc1ba2cd97",
         "client/src/test/ManageAccountsPage.test.tsx": "bb46c09772cb5b0995abb82e3c8bec3f032fe039b3fca3ef42379089732552fa"
       },
       "prerequisites": [
@@ -351,8 +351,8 @@
         "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",
         "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
         "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
-        "server/app/api/user/management.py": "f81baeaa04a614c784a7bd3f8da14679f70483e940ce4d38ee631e052902cdf7",
-        "server/app/api/helper/database_access/permissions.py": "223c0628444524cdae232fb02c29ebbb18b5e4c2e0307990acbe597a40e2ecff"
+        "server/app/api/user/management.py": "32c52228345aec7cb5e2d8da691a991a3592c6aaf6f38117c1ae7efc1ba2cd97",
+        "server/app/api/helper/database_access/permissions.py": "e1a4a18958ba8265369add1b92fee85ffd2a43829b26742adaed6507fef87009"
       },
       "prerequisites": [
         "An initialized Super Admin account with account.view and account.alerts.",
@@ -403,11 +403,11 @@
         "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
         "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
         "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
-        "server/app/api/helper/database_access/permissions.py": "223c0628444524cdae232fb02c29ebbb18b5e4c2e0307990acbe597a40e2ecff",
+        "server/app/api/helper/database_access/permissions.py": "e1a4a18958ba8265369add1b92fee85ffd2a43829b26742adaed6507fef87009",
         "server/app/api/system/log.py": "0217cd8e0b016a80bb77b01684d8e47a1af0a1ea445a73ddf20b35874be1e706",
         "server/app/api/system/report.py": "255dac41453d4bf2dd0b0650e0cc20b6e214cb5ede54bf40ab352ba9504033ea",
-        "server/app/api/user/management.py": "f81baeaa04a614c784a7bd3f8da14679f70483e940ce4d38ee631e052902cdf7",
-        "server/app/api/user/login.py": "0d0f9d269758533d8463b3b3191d629d17e18960b8a0b8d012e0d7de4fac7dfc",
+        "server/app/api/user/management.py": "32c52228345aec7cb5e2d8da691a991a3592c6aaf6f38117c1ae7efc1ba2cd97",
+        "server/app/api/user/login.py": "e791d5a65dc94c598daf38fe7f95fecc7fb825fcca07736d5a93af7a96332e61",
         "client/src/components/login/LoginRoute.tsx": "4f2efe6b6c952c75850e6796afa9ea1bb122595286fc9ed881e7c3ed31f32d02"
       },
       "prerequisites": [
@@ -534,9 +534,9 @@
         "client/src/components/layout/Sidebar.tsx": "13118d2479e7a89c4096bc2614818d21e6ad036b7081a2da103b933139056c7e",
         "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
         "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
-        "server/app/api/user/login.py": "0d0f9d269758533d8463b3b3191d629d17e18960b8a0b8d012e0d7de4fac7dfc",
-        "server/app/api/user/management.py": "f81baeaa04a614c784a7bd3f8da14679f70483e940ce4d38ee631e052902cdf7",
-        "server/app/api/commands/seed.py": "a1768b1aee8b898d8af3b7d4ae56ea392a15012d46315e1874c1b1aa519726f4",
+        "server/app/api/user/login.py": "e791d5a65dc94c598daf38fe7f95fecc7fb825fcca07736d5a93af7a96332e61",
+        "server/app/api/user/management.py": "32c52228345aec7cb5e2d8da691a991a3592c6aaf6f38117c1ae7efc1ba2cd97",
+        "server/app/api/commands/seed.py": "d677f543c44f1548bf4f4005ba0e14707cfe1f355ac49cc5501644a93c660a96",
         "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
         "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
         "client/src/components/login/LoginRoute.tsx": "4f2efe6b6c952c75850e6796afa9ea1bb122595286fc9ed881e7c3ed31f32d02"
@@ -579,9 +579,9 @@
         "client/src/components/layout/Sidebar.tsx": "13118d2479e7a89c4096bc2614818d21e6ad036b7081a2da103b933139056c7e",
         "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
         "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
-        "server/app/api/user/login.py": "0d0f9d269758533d8463b3b3191d629d17e18960b8a0b8d012e0d7de4fac7dfc",
-        "server/app/api/user/management.py": "f81baeaa04a614c784a7bd3f8da14679f70483e940ce4d38ee631e052902cdf7",
-        "server/app/api/commands/seed.py": "a1768b1aee8b898d8af3b7d4ae56ea392a15012d46315e1874c1b1aa519726f4",
+        "server/app/api/user/login.py": "e791d5a65dc94c598daf38fe7f95fecc7fb825fcca07736d5a93af7a96332e61",
+        "server/app/api/user/management.py": "32c52228345aec7cb5e2d8da691a991a3592c6aaf6f38117c1ae7efc1ba2cd97",
+        "server/app/api/commands/seed.py": "d677f543c44f1548bf4f4005ba0e14707cfe1f355ac49cc5501644a93c660a96",
         "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
         "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
         "client/src/components/login/LoginRoute.tsx": "4f2efe6b6c952c75850e6796afa9ea1bb122595286fc9ed881e7c3ed31f32d02"
@@ -624,9 +624,9 @@
         "client/src/components/layout/Sidebar.tsx": "13118d2479e7a89c4096bc2614818d21e6ad036b7081a2da103b933139056c7e",
         "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
         "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
-        "server/app/api/user/login.py": "0d0f9d269758533d8463b3b3191d629d17e18960b8a0b8d012e0d7de4fac7dfc",
-        "server/app/api/user/management.py": "f81baeaa04a614c784a7bd3f8da14679f70483e940ce4d38ee631e052902cdf7",
-        "server/app/api/commands/seed.py": "a1768b1aee8b898d8af3b7d4ae56ea392a15012d46315e1874c1b1aa519726f4",
+        "server/app/api/user/login.py": "e791d5a65dc94c598daf38fe7f95fecc7fb825fcca07736d5a93af7a96332e61",
+        "server/app/api/user/management.py": "32c52228345aec7cb5e2d8da691a991a3592c6aaf6f38117c1ae7efc1ba2cd97",
+        "server/app/api/commands/seed.py": "d677f543c44f1548bf4f4005ba0e14707cfe1f355ac49cc5501644a93c660a96",
         "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
         "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
         "client/src/components/login/LoginRoute.tsx": "4f2efe6b6c952c75850e6796afa9ea1bb122595286fc9ed881e7c3ed31f32d02"
@@ -669,9 +669,9 @@
         "client/src/components/layout/Sidebar.tsx": "13118d2479e7a89c4096bc2614818d21e6ad036b7081a2da103b933139056c7e",
         "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
         "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
-        "server/app/api/user/login.py": "0d0f9d269758533d8463b3b3191d629d17e18960b8a0b8d012e0d7de4fac7dfc",
-        "server/app/api/user/management.py": "f81baeaa04a614c784a7bd3f8da14679f70483e940ce4d38ee631e052902cdf7",
-        "server/app/api/commands/seed.py": "a1768b1aee8b898d8af3b7d4ae56ea392a15012d46315e1874c1b1aa519726f4",
+        "server/app/api/user/login.py": "e791d5a65dc94c598daf38fe7f95fecc7fb825fcca07736d5a93af7a96332e61",
+        "server/app/api/user/management.py": "32c52228345aec7cb5e2d8da691a991a3592c6aaf6f38117c1ae7efc1ba2cd97",
+        "server/app/api/commands/seed.py": "d677f543c44f1548bf4f4005ba0e14707cfe1f355ac49cc5501644a93c660a96",
         "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
         "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
         "client/src/components/login/LoginRoute.tsx": "4f2efe6b6c952c75850e6796afa9ea1bb122595286fc9ed881e7c3ed31f32d02"
@@ -714,9 +714,9 @@
         "client/src/components/layout/Sidebar.tsx": "13118d2479e7a89c4096bc2614818d21e6ad036b7081a2da103b933139056c7e",
         "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
         "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
-        "server/app/api/user/login.py": "0d0f9d269758533d8463b3b3191d629d17e18960b8a0b8d012e0d7de4fac7dfc",
-        "server/app/api/user/management.py": "f81baeaa04a614c784a7bd3f8da14679f70483e940ce4d38ee631e052902cdf7",
-        "server/app/api/commands/seed.py": "a1768b1aee8b898d8af3b7d4ae56ea392a15012d46315e1874c1b1aa519726f4",
+        "server/app/api/user/login.py": "e791d5a65dc94c598daf38fe7f95fecc7fb825fcca07736d5a93af7a96332e61",
+        "server/app/api/user/management.py": "32c52228345aec7cb5e2d8da691a991a3592c6aaf6f38117c1ae7efc1ba2cd97",
+        "server/app/api/commands/seed.py": "d677f543c44f1548bf4f4005ba0e14707cfe1f355ac49cc5501644a93c660a96",
         "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
         "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
         "client/src/components/login/LoginRoute.tsx": "4f2efe6b6c952c75850e6796afa9ea1bb122595286fc9ed881e7c3ed31f32d02"
@@ -759,9 +759,9 @@
         "client/src/components/layout/Sidebar.tsx": "13118d2479e7a89c4096bc2614818d21e6ad036b7081a2da103b933139056c7e",
         "client/src/pages/LoginPage.tsx": "8b735a5deaf21fc04084ca280b207df8821e36de571a266d90c675b936a2f865",
         "client/src/contexts/CurrentUserContext.tsx": "2945de6f728d14813b85ac7e670433ad3b273e595c8748a7dca67c23ee7b90bf",
-        "server/app/api/user/login.py": "0d0f9d269758533d8463b3b3191d629d17e18960b8a0b8d012e0d7de4fac7dfc",
-        "server/app/api/user/management.py": "f81baeaa04a614c784a7bd3f8da14679f70483e940ce4d38ee631e052902cdf7",
-        "server/app/api/commands/seed.py": "a1768b1aee8b898d8af3b7d4ae56ea392a15012d46315e1874c1b1aa519726f4",
+        "server/app/api/user/login.py": "e791d5a65dc94c598daf38fe7f95fecc7fb825fcca07736d5a93af7a96332e61",
+        "server/app/api/user/management.py": "32c52228345aec7cb5e2d8da691a991a3592c6aaf6f38117c1ae7efc1ba2cd97",
+        "server/app/api/commands/seed.py": "d677f543c44f1548bf4f4005ba0e14707cfe1f355ac49cc5501644a93c660a96",
         "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
         "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
         "client/src/components/login/LoginRoute.tsx": "4f2efe6b6c952c75850e6796afa9ea1bb122595286fc9ed881e7c3ed31f32d02"
@@ -1117,7 +1117,7 @@
         "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
         "server/app/api/system/network_hosts.py": "dd238e3cca7d1b5434f07c0f3e61f2ca9da021dd186f1683d3d844a176a5f8bf",
         "server/app/api/system/device_identity.py": "8e6e9c77b8d0adec67b0db5e317adf10fbcce474d2fc989dc859eeef65692e30",
-        "server/app/api/helper/database_access/permissions.py": "223c0628444524cdae232fb02c29ebbb18b5e4c2e0307990acbe597a40e2ecff"
+        "server/app/api/helper/database_access/permissions.py": "e1a4a18958ba8265369add1b92fee85ffd2a43829b26742adaed6507fef87009"
       },
       "prerequisites": [
         "PINPOINT_QA_DEVICE_HOST identifies a previously reviewed discovered device; no scan or device creation is performed.",
@@ -1168,7 +1168,7 @@
         "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
         "server/app/api/system/network_hosts.py": "dd238e3cca7d1b5434f07c0f3e61f2ca9da021dd186f1683d3d844a176a5f8bf",
         "server/app/api/system/device_identity.py": "8e6e9c77b8d0adec67b0db5e317adf10fbcce474d2fc989dc859eeef65692e30",
-        "server/app/api/helper/database_access/permissions.py": "223c0628444524cdae232fb02c29ebbb18b5e4c2e0307990acbe597a40e2ecff"
+        "server/app/api/helper/database_access/permissions.py": "e1a4a18958ba8265369add1b92fee85ffd2a43829b26742adaed6507fef87009"
       },
       "prerequisites": [
         "PINPOINT_QA_DEVICE_HOST identifies a previously reviewed discovered device; no scan or device creation is performed.",
@@ -1251,7 +1251,7 @@
         "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
         "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
         "server/app/api/system/dashboard.py": "d984eecb2f6ad5a86680ef211b842117b659ec158b0cc58390b9b8a332374d32",
-        "server/app/api/helper/database_access/permissions.py": "223c0628444524cdae232fb02c29ebbb18b5e4c2e0307990acbe597a40e2ecff",
+        "server/app/api/helper/database_access/permissions.py": "e1a4a18958ba8265369add1b92fee85ffd2a43829b26742adaed6507fef87009",
         "client/src/hooks/useNagiosStatus.ts": "066b2d49039edd38a71e85f88886ae85f3ea3cd3d39f125771a7539a3b00016c",
         "client/src/components/dashboard/NagiosWarning.tsx": "f06bd5ccb2bcb3b59325272064dbcbaeed057c0b4aa7e38255f9d40f3bf966cf"
       },
@@ -1615,7 +1615,7 @@
         "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
         "server/app/api/system/network_hosts.py": "dd238e3cca7d1b5434f07c0f3e61f2ca9da021dd186f1683d3d844a176a5f8bf",
         "server/app/api/system/device_identity.py": "8e6e9c77b8d0adec67b0db5e317adf10fbcce474d2fc989dc859eeef65692e30",
-        "server/app/api/helper/database_access/permissions.py": "223c0628444524cdae232fb02c29ebbb18b5e4c2e0307990acbe597a40e2ecff"
+        "server/app/api/helper/database_access/permissions.py": "e1a4a18958ba8265369add1b92fee85ffd2a43829b26742adaed6507fef87009"
       },
       "prerequisites": [
         "PINPOINT_QA_DEVICE_HOST identifies a reviewed existing discovered device; no scan or device creation is performed.",
@@ -1675,7 +1675,7 @@
         "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
         "server/app/api/system/network_hosts.py": "dd238e3cca7d1b5434f07c0f3e61f2ca9da021dd186f1683d3d844a176a5f8bf",
         "server/app/api/system/device_identity.py": "8e6e9c77b8d0adec67b0db5e317adf10fbcce474d2fc989dc859eeef65692e30",
-        "server/app/api/helper/database_access/permissions.py": "223c0628444524cdae232fb02c29ebbb18b5e4c2e0307990acbe597a40e2ecff"
+        "server/app/api/helper/database_access/permissions.py": "e1a4a18958ba8265369add1b92fee85ffd2a43829b26742adaed6507fef87009"
       },
       "prerequisites": [
         "PINPOINT_QA_DEVICE_HOST identifies a reviewed existing discovered device; no scan or device creation is performed.",
@@ -2003,8 +2003,8 @@
         "client/package.json": "eb1592c32fa00eea0d9da8efcaf5e724dbc5c23fb5a940b70b39657466363681",
         "client/package-lock.json": "4e2a820d3d9889348a7867c9c736c0c4f61254aa1568749971c70cb6365f6a5a",
         "server/app/api/system/history.py": "bac073e7b026e6309106231e526f9c083c091d07ac8ea7bb184cbb62965a2cf4",
-        "server/app/api/helper/responses.py": "1fa6d94e99c13c91bdb60002f804d06c1d3195269afeb5e64b47dc4de832b56f",
-        "server/app/api/helper/database_access/permissions.py": "223c0628444524cdae232fb02c29ebbb18b5e4c2e0307990acbe597a40e2ecff"
+        "server/app/api/helper/responses.py": "1af83970b599198bb43fe188697f86cbb31a193097684b6fe45e89b6f4fe9f76",
+        "server/app/api/helper/database_access/permissions.py": "e1a4a18958ba8265369add1b92fee85ffd2a43829b26742adaed6507fef87009"
       },
       "prerequisites": [
         "An initialized Super Admin account is available privately with system.history.",
