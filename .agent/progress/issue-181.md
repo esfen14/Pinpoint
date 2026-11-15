@@ -1,7 +1,7 @@
 # Issue #181: Create User Manual and Technical Manual for PinPoint
 
 Branch: `issue-181-manuals-draft`
-Status: ready-for-review
+Status: in-progress
 
 ## Finish condition
 
@@ -44,6 +44,54 @@ Requirement coverage:
 4. [x] Link from `AGENTS.md`, `spec files/README.md`, `README.md`, `docs/manuals/README.md`.
 5. [ ] `scripts/verify.sh docs`, then open a draft PR.
 
+## Remaining work (tracking list)
+
+Issue items still open after the draft (PR #333, draft). Tick here and in
+issue #181 together.
+
+### Owner decisions needed
+- [ ] Install Pandoc (`sudo apt install pandoc`) or choose the HTML -> LibreOffice fallback for export
+- [ ] Render Mermaid with `npx @mermaid-js/mermaid-cli` (downloads Chromium) or commit pre-rendered PNGs
+- [ ] Commit trailers: drop `Co-Authored-By` to match condition F, or keep (issue section H, Attribution)
+- [ ] Merge as one PR or split into the two PRs the issue asks for (User Manual / Technical Manual)
+- [ ] Confirm the folder change (`docs/User_Manual/`, `docs/Technical_Manual/` instead of `docs/manuals/`); then amend the issue's Deliverables paths
+
+### Printable export (issue section G)
+- [ ] `scripts/export_manuals.sh`: Markdown -> DOCX (Pandoc, `--toc`, `reference.docx`) -> PDF (`soffice --headless`)
+- [ ] `reference.docx` template: fonts, margins, spacing, page numbers, title page
+- [ ] Rewrite relative links as printed repo-path notes (Pandoc Lua filter), or include linked guides as appendices
+- [ ] Wide tables fit the page (landscape sections or smaller font)
+- [ ] Document the export command and template in `docs/manuals/README.md`
+- [ ] Produce DOCX and PDF of each manual
+
+### Diagrams (issue section G, depends on #283)
+- [ ] Embed the capstone paper's ERD, architecture and network diagrams at print resolution once #283 lands
+- [ ] Compare them with `system_models.py`, `history_models.py`, `plugin_models.py` and `System_Overview_and_Architecture.md`; list differences
+- [ ] Image-path check: `check_doc_links.py` validates only `.md` links; extend it or keep a manual checklist once images exist (section H, Images)
+
+### Installer verification (issue section H; ask @lorraine-pangilinan)
+- [ ] Technical Manual §8: installer steps in order, upgrade behaviour, health check
+- [ ] §5: ports, host firewall, static address, DNS/DHCP/gateway, production Nginx config, HTTPS
+- [ ] §8.4: where the bootstrap admin placeholder login is reported; NCPA SSH key and token locations
+- [ ] Nagios systemd unit name (§8.5)
+
+### Lab evidence (issue section H, Evidence)
+- [ ] Capture screenshots UM-01 to UM-08 (User Manual Appendix B) on a named appliance; record build, who and when
+- [ ] Hardware sizing and bandwidth figures from a named appliance (Technical Manual §3.1, §5.8)
+- [ ] Follow each User Manual procedure on a demo build and clear its TBCs
+
+### Open TBC questions
+- [ ] User Manual Appendix C (8 items: browsers, HTTPS, Remember me, Manager/Staff permissions, self-service password change, sidebar order, support contact, screenshot appliance)
+- [ ] Technical Manual Appendix B (11 items)
+
+### Review-only items (need a reviewer, not more writing)
+- [ ] A: nothing invented; every TBC marked; every claim checked against code or `Implementation_Status.md`
+- [ ] E: comprehensive, beginner-friendly, technically accurate, easy to follow, maintainable, security-conscious, system-specific, usable by every audience
+
+### Before the PR leaves draft
+- [ ] `scripts/verify.sh all`
+- [ ] Delete this progress file (`git rm .agent/progress/issue-181.md`); CI rejects a ready PR that still has it
+
 ## Round log
 
 | Round | Change made | Check run | Result |
@@ -51,13 +99,14 @@ Requirement coverage:
 | 1 | Plan | - | - |
 | 2 | User Manual draft | - | written |
 | 3 | Technical Manual draft, index links | `scripts/verify.sh docs` | green |
+| 4 | Draft PR #333 opened; CI green; issue checkboxes ticked; remaining-work list added | `gh pr checks 333` | pass |
 
 ## State for the next session
 
 - Last check run (exact command): scripts/verify.sh docs
 - Result (first failing lines, or "green"): green
 - Hypothesis: -
-- Next action (one specific step, not "continue"): owner review of the drafts; then DOCX/PDF export, installer review (TBC items), lab screenshots
+- Next action (one specific step, not "continue"): get the owner decisions in "Remaining work", then write `scripts/export_manuals.sh`
 
 ## Decisions and notes
 
