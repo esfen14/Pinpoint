@@ -81,7 +81,6 @@ is assumed.
 | 5 | HTTPS, host firewall, static address, DNS and gateway: what the installer configures | Installer maintainer |
 | 6 | Where the installer reports the bootstrap login, and where the NCPA key and token are stored | Installer maintainer |
 | 7 | The final maintainer list and a named university IT contact | Project owners, university IT |
-| 8 | Differences between the capstone paper's ERD (Chapter 3, Figure 4) and architecture (Chapter 4, Figure 61) figures and the generated diagrams | Project owners |
 
 The Technical Manual's [Appendix B](Technical_Manual/Technical_Manual.md) lists
 the remaining technical questions.

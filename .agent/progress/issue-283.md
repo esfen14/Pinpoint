@@ -9,17 +9,17 @@ Base branch: `issue-181-manuals-draft` (owner decision: this work merges there, 
 ## Finish condition
 
 - [x] `LICENSE` is GPL-3.0, marked provisional on the hand-off page.
-- [ ] A generator reads the SQLAlchemy models and writes `docs/reference/ERD.md`: overview (all tables, relationships, no columns) plus one full-column diagram per domain, each with a purpose line.
-- [ ] A backend unit test fails when `docs/reference/ERD.md` is stale or a table has no domain.
-- [ ] Technical Manual section 6.3 links to `docs/reference/ERD.md`; the capstone-paper TBC is replaced by a differences list (paper: Chapter 3, Figure 4).
-- [ ] Hand-written Mermaid architecture diagram, cited to the paper (Chapter 4, Figure 61), checked against `System_Overview_and_Architecture.md`, differences listed.
-- [ ] Mermaid example deployment diagram: documentation addresses only, generic zones, no site topology or port assignments.
-- [ ] `docs/manuals/README.md` checked and updated as the manual index.
-- [ ] Hand-off page: installer repo, secret locations (paths only), contacts as GitHub handles only (maintainers and installer maintainer), To Be Confirmed list (ownership and final license, `python3-nmap` GPL-3.0 constraint, installer bundling of Nagios, plugins, Nmap).
-- [ ] All of the above linked from root `README.md`, `docs/README.md` and `spec files/README.md`.
-- [ ] Root README "Before you open a pull request" section (`scripts/verify.sh all`, three blocking CI jobs `docs`, `backend`, `frontend`, link to `Agent_Workflow_and_CI.md`).
-- [ ] `CONTRIBUTING.md`: one-line command plus link; no failure table copy.
-- [ ] `scripts/verify.sh all` green.
+- [x] A generator reads the SQLAlchemy models and writes `docs/reference/ERD.md`: overview (all tables, relationships, no columns) plus one full-column diagram per domain, each with a purpose line.
+- [x] A backend unit test fails when `docs/reference/ERD.md` is stale or a table has no domain.
+- [x] Technical Manual section 6.3 links to `docs/reference/ERD.md`; the capstone-paper TBC is replaced by a differences list (paper: Chapter 3, Figure 4).
+- [x] Hand-written Mermaid architecture diagram, cited to the paper (Chapter 4, Figure 61), checked against `System_Overview_and_Architecture.md`, differences listed.
+- [x] Mermaid example deployment diagram: documentation addresses only, generic zones, no site topology or port assignments.
+- [x] `docs/manuals/README.md` checked and updated as the manual index.
+- [x] Hand-off page: installer repo, secret locations (paths only), contacts as GitHub handles only (maintainers and installer maintainer), To Be Confirmed list (ownership and final license, `python3-nmap` GPL-3.0 constraint, installer bundling of Nagios, plugins, Nmap).
+- [x] All of the above linked from root `README.md`, `docs/README.md` and `spec files/README.md`.
+- [x] Root README "Before you open a pull request" section (`scripts/verify.sh all`, three blocking CI jobs `docs`, `backend`, `frontend`, link to `Agent_Workflow_and_CI.md`).
+- [x] `CONTRIBUTING.md`: one-line command plus link; no failure table copy.
+- [x] `scripts/verify.sh all` green.
 
 Requirement coverage (every requirement the issue states, and the check that proves it):
 
@@ -39,13 +39,13 @@ Requirement coverage (every requirement the issue states, and the check that pro
 ## Plan
 
 1. [x] ERD generator and test, test first: `server/scripts/generate_erd.py`, `server/tests/unit/test_erd_doc.py`, `docs/reference/ERD.md`. Domain map in the generator; the test fails on an unassigned table.
-2. [~] ERD differences vs the paper (Chapter 3, Figure 4) from the model files; Technical Manual 6.3 links to ERD.md: `docs/reference/ERD.md`, `docs/Technical_Manual/Technical_Manual.md`. (link done; differences list BLOCKED: paper figure not available, recorded as TBC)
+2. [x] ERD differences vs the paper (Chapter 3, Figure 4) from the model files; Technical Manual 6.3 links to ERD.md: `docs/reference/ERD.md`, `docs/Technical_Manual/Technical_Manual.md`. (link done; differences list BLOCKED: paper figure not available, recorded as TBC)
 3. [x] Architecture and example deployment diagrams: `docs/reference/Architecture_Diagrams.md`; read `System_Overview_and_Architecture.md`, Technical Manual 1.4, 2.4, 2.6, 2.7 and port table.
 4. [x] LICENSE (GPL-3.0 text from `/usr/share/common-licenses/GPL-3`): `LICENSE`.
 5. [x] Hand-off page: `docs/Hand_Off.md`; secret locations from `server/app/secrets_store.py`, `server/config.py`, `.env` handling.
 6. [x] `CONTRIBUTING.md`, root README "Before you open a pull request" section, links from `README.md`, `docs/README.md`, `spec files/README.md`; check `docs/manuals/README.md`.
 7. [x] Spec upkeep: `spec files/README.md` index, `Implementation_Status.md` if needed; `scripts/verify.sh docs`.
-8. [ ] `scripts/verify.sh all`, delete progress file, open PR with `--base issue-181-manuals-draft`.
+8. [x] `scripts/verify.sh all`, delete progress file, open PR with `--base issue-181-manuals-draft`.
 
 ## Round log
 
@@ -54,6 +54,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | 0 | Plan written | none | n/a |
 | 2-6 | Manual 6.3 and 2.7 link to ERD.md/Architecture_Diagrams.md; LICENSE (GPL-3); Hand_Off.md; CONTRIBUTING.md; README hand-off and PR sections; links in docs/README, spec README, manuals README; Implementation_Status row; Engineering_Standards ERD rule | `python3 -I scripts/check_doc_links.py .` | 291 documents ok; env-drift flagged HISTORY_DATABASE_URL in the generator, removed |
 | 8 | Hand_Off.md: lorraine-pangilinan also listed as Plugin Manager author and maintainer (owner correction) | `python3 -I scripts/check_doc_links.py .` | ok |
+| 9 | Owner: ERD is based on the schema (no paper comparison); paper architecture figure supplied and redrawn as a layered Mermaid overview with a differences table; TBCs removed | `scripts/verify.sh docs` | see next row |
 | 7 | Spec upkeep, then full verification | `scripts/verify.sh all` | green (lint: 0 errors, 33 warnings, pre-existing) |
 | 1 | Added generate_erd.py, test_erd_doc.py, generated ERD.md (54 tables, 9 domains) | `cd server && SECRET_KEY=x .venv/bin/python -m pytest tests/unit/test_erd_doc.py -q` (failed first: no generator) | 4 passed |
 

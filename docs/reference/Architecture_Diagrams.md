@@ -6,12 +6,51 @@ change. The entity relationship diagram is separate and generated:
 
 | Diagram | Shows | Source of truth |
 |---|---|---|
+| [Layered overview](#layered-overview) | The paper's three-layer view: web interface, PinPoint modules, monitored infrastructure | Capstone paper, Chapter 4, Figure 61 |
 | [Software architecture](#software-architecture) | The parts inside the PinPoint server and how they talk | [`System_Overview_and_Architecture.md`](../../spec%20files/System_Overview_and_Architecture.md), Technical Manual sections 1.4 and 2.2 |
 | [Example deployment](#example-deployment) | A generic, illustrative placement of the server on a network | Technical Manual section 5 |
 
-The capstone paper's architecture figure (Chapter 4, Figure 61) is the original
-of the software diagram. It is cited, not copied; where the two differ, the
-specification and the code win.
+The capstone paper's architecture figure (Chapter 4, Figure 61) is redrawn here
+as the layered overview, and the software architecture adds the detail the
+paper leaves out. Where they differ, the specification and the code win.
+
+## Layered overview
+
+Redrawn from the capstone paper (Chapter 4, Figure 61): a 3-layer architecture.
+
+```mermaid
+flowchart TB
+  subgraph Presentation["Presentation layer: web interface"]
+    ADMIN["Network administrator"]
+  end
+
+  subgraph Application["Application layer: PinPoint system modules"]
+    DEPLOY["Deployment automation"]
+    MONCFG["Monitoring configuration"]
+    ALERTS["Alert system"]
+  end
+
+  subgraph Infrastructure["Infrastructure layer: monitored by Nagios Core"]
+    SERVERS["Servers"]
+    ROUTERS["Routers"]
+    SWITCHES["Switches"]
+    ENDDEV["End devices"]
+  end
+
+  ADMIN <--> MONCFG
+  DEPLOY <--> MONCFG
+  MONCFG <--> ALERTS
+  MONCFG <--> Infrastructure
+  SERVERS --> ROUTERS --> SWITCHES --> ENDDEV
+```
+
+How the paper's modules map to the code (details in the next diagram):
+
+| Paper module | In the code |
+|---|---|
+| Deployment automation | Network discovery and NCPA deployment (`app/network_discovery/`, `app/ncpa_deployment/`) |
+| Monitoring configuration | Nagios config generation (`create_host_cfg.py`), Plugin Manager (`app/api/plugin/`) and the settings that feed them |
+| Alert system | Notification policy, recipients, escalations, acknowledgements and maintenance windows; Nagios sends the email |
 
 ## Software architecture
 
@@ -95,9 +134,16 @@ Compared with the runtime diagram in
 
 ### Comparison with the capstone paper
 
-**TBC:** a list of differences between this diagram and the paper's Figure 61
-(Chapter 4) has not been prepared, because the figure is not in the repository.
-Compare by hand and add the differences here.
+Compared with Chapter 4, Figure 61:
+
+| Item | Paper | This repository | Reason |
+|---|---|---|---|
+| Layers | Three: presentation, application, infrastructure | The layered overview keeps them; the software architecture shows what runs inside | The paper is a concept view |
+| Nagios Core | A label on the infrastructure layer ("monitored by Nagios Core") | A component on the server that runs every check and decides state | Nagios sits between PinPoint and the devices; PinPoint does not run checks |
+| Modules | Three boxes in a hub: deployment automation, monitoring configuration, alert system | Three API groups (`/api/user`, `/api/system`, `/api/plugin`) sharing two databases, a scheduler and a config writer | The code has no single hub; modules are independent and share the databases |
+| Not in the paper | | Accounts and roles, reports and history, audit logs, Plugin Manager as its own area, remediation, backups, the scheduler, `system.db` and `history.db`, Nginx and Gunicorn | Added after the figure, or too detailed for it |
+| Device chain | Servers to routers to switches to end devices | Not drawn as a chain: devices are checked by Nagios individually; parent links are optional and set by hand (Topology page) | The arrows in the paper show how the network is wired, not data flow |
+| Administrator arrow | Straight to "monitoring configuration" | Browser to Nginx, then to the Flask API | Same intent, with the real path drawn |
 
 ## Example deployment
 

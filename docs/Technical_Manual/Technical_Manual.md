@@ -19,8 +19,8 @@
 > repository (`lorraine-pangilinan/PinPoint-Installer`) or a named lab
 > appliance. Installer-owned behaviour, hardware sizing and bandwidth figures
 > are therefore marked **TBC**. Diagrams are drawn from the code as Mermaid
-> diagrams; the capstone paper's ERD and architecture figures are cited, not
-> copied (see section 2.7).
+> diagrams; the capstone paper's architecture figure is redrawn and compared in
+> section 2.7, and the ERD is generated from the schema (section 6.3).
 
 ### Labelling convention
 
@@ -249,8 +249,8 @@ software architecture diagram and a generic example deployment are in
 [`docs/reference/Architecture_Diagrams.md`](../reference/Architecture_Diagrams.md);
 the entity relationship diagram is generated and lives in
 [`docs/reference/ERD.md`](../reference/ERD.md) (section 6.3). The capstone paper's
-architecture figure (Chapter 4, Figure 61) is cited there, not copied.
-**TBC:** the list of differences between the paper's figures and these diagrams.
+architecture figure (Chapter 4, Figure 61) is redrawn there as a layered overview,
+with a list of differences.
 
 ---
 
@@ -490,10 +490,9 @@ change, refresh it from `server/` with the virtual environment active:
 python scripts/generate_erd.py
 ```
 
-The capstone paper's ERD (Chapter 3, Figure 4) is a snapshot taken during the
-project; the generated file supersedes it. **TBC:** the list of differences
-between the paper's figure and the models has not been prepared, because the
-figure is not in the repository.
+The diagram is built from the database schema (the model files), not from the
+capstone paper's ERD (Chapter 3, Figure 4), which was a snapshot taken during the
+project and is superseded by the generated file.
 
 ### 6.4 Keys, validation and integrity
 
@@ -1040,7 +1039,6 @@ and service tables, custom plugin upload decision.
 | 8 | Bootstrap credentials location | 8.4 | Where does the installer report the placeholder login? |
 | 9 | NCPA key and token location | 8.4 | Where are they stored on disk? |
 | 10 | Backup time of day | 6.6 | Backups run once a day when due; is a fixed time wanted? |
-| 11 | Capstone figures | 2.7, 6.3 | List differences between the paper's ERD (Chapter 3, Figure 4) and architecture (Chapter 4, Figure 61) figures and the generated diagrams |
 
 ### Appendix C. Not covered by this draft
 
