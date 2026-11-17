@@ -33,7 +33,8 @@ GitHub handles only. Ask through a GitHub issue in the relevant repository.
 | Role | GitHub handle |
 |---|---|
 | Installer maintainer | [`lorraine-pangilinan`](https://github.com/lorraine-pangilinan) |
-| Maintainers (this repository) | [`esfen14`](https://github.com/esfen14), [`eliarzx`](https://github.com/eliarzx), [`RinkoCheesekek`](https://github.com/RinkoCheesekek), [`jaaasantiago`](https://github.com/jaaasantiago) |
+| Plugin Manager author | [`lorraine-pangilinan`](https://github.com/lorraine-pangilinan) |
+| Maintainers (this repository) | [`esfen14`](https://github.com/esfen14), [`eliarzx`](https://github.com/eliarzx), [`RinkoCheesekek`](https://github.com/RinkoCheesekek), [`jaaasantiago`](https://github.com/jaaasantiago), [`lorraine-pangilinan`](https://github.com/lorraine-pangilinan) |
 | University IT contact after hand-off | **TBC:** to be named by the university |
 
 ## Where credentials and secrets live

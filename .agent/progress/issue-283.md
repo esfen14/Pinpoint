@@ -53,6 +53,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 |---|---|---|---|
 | 0 | Plan written | none | n/a |
 | 2-6 | Manual 6.3 and 2.7 link to ERD.md/Architecture_Diagrams.md; LICENSE (GPL-3); Hand_Off.md; CONTRIBUTING.md; README hand-off and PR sections; links in docs/README, spec README, manuals README; Implementation_Status row; Engineering_Standards ERD rule | `python3 -I scripts/check_doc_links.py .` | 291 documents ok; env-drift flagged HISTORY_DATABASE_URL in the generator, removed |
+| 8 | Hand_Off.md: lorraine-pangilinan also listed as Plugin Manager author and maintainer (owner correction) | `python3 -I scripts/check_doc_links.py .` | ok |
 | 7 | Spec upkeep, then full verification | `scripts/verify.sh all` | green (lint: 0 errors, 33 warnings, pre-existing) |
 | 1 | Added generate_erd.py, test_erd_doc.py, generated ERD.md (54 tables, 9 domains) | `cd server && SECRET_KEY=x .venv/bin/python -m pytest tests/unit/test_erd_doc.py -q` (failed first: no generator) | 4 passed |
 
