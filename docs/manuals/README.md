@@ -38,3 +38,13 @@ Every route in the web interface (`client/src/App.tsx`) is listed here.
 | Reset a forgotten password | [Sign in, accounts and roles](Login_Accounts_and_Roles.md) |
 | Back up and restore | [Backup and restore](Backup_and_Restore.md) |
 | Build a local test lab | [Local lab](Local_Lab.md) |
+
+## Manuals and hand-off documents
+
+| Document | Purpose |
+|---|---|
+| [User Manual](../User_Manual/User_Manual.md) | For people who use the web interface |
+| [Technical Manual](../Technical_Manual/Technical_Manual.md) | For administrators and maintainers: architecture, installation, operations |
+| [Hand-off page](../Hand_Off.md) | License, installer location, credential locations, contacts, open questions |
+| [Database diagram (ERD)](../reference/ERD.md) | Generated from the models; always current |
+| [Architecture and example deployment diagrams](../reference/Architecture_Diagrams.md) | Software architecture and a generic deployment |

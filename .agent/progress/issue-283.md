@@ -8,7 +8,7 @@ Base branch: `issue-181-manuals-draft` (owner decision: this work merges there, 
 
 ## Finish condition
 
-- [ ] `LICENSE` is GPL-3.0, marked provisional on the hand-off page.
+- [x] `LICENSE` is GPL-3.0, marked provisional on the hand-off page.
 - [ ] A generator reads the SQLAlchemy models and writes `docs/reference/ERD.md`: overview (all tables, relationships, no columns) plus one full-column diagram per domain, each with a purpose line.
 - [ ] A backend unit test fails when `docs/reference/ERD.md` is stale or a table has no domain.
 - [ ] Technical Manual section 6.3 links to `docs/reference/ERD.md`; the capstone-paper TBC is replaced by a differences list (paper: Chapter 3, Figure 4).
@@ -39,12 +39,12 @@ Requirement coverage (every requirement the issue states, and the check that pro
 ## Plan
 
 1. [x] ERD generator and test, test first: `server/scripts/generate_erd.py`, `server/tests/unit/test_erd_doc.py`, `docs/reference/ERD.md`. Domain map in the generator; the test fails on an unassigned table.
-2. [ ] ERD differences vs the paper (Chapter 3, Figure 4) from the model files; Technical Manual 6.3 links to ERD.md: `docs/reference/ERD.md`, `docs/Technical_Manual/Technical_Manual.md`.
-3. [ ] Architecture and example deployment diagrams: `docs/reference/Architecture_Diagrams.md`; read `System_Overview_and_Architecture.md`, Technical Manual 1.4, 2.4, 2.6, 2.7 and port table.
-4. [ ] LICENSE (GPL-3.0 text from `/usr/share/common-licenses/GPL-3`): `LICENSE`.
-5. [ ] Hand-off page: `docs/Hand_Off.md`; secret locations from `server/app/secrets_store.py`, `server/config.py`, `.env` handling.
-6. [ ] `CONTRIBUTING.md`, root README "Before you open a pull request" section, links from `README.md`, `docs/README.md`, `spec files/README.md`; check `docs/manuals/README.md`.
-7. [ ] Spec upkeep: `spec files/README.md` index, `Implementation_Status.md` if needed; `scripts/verify.sh docs`.
+2. [~] ERD differences vs the paper (Chapter 3, Figure 4) from the model files; Technical Manual 6.3 links to ERD.md: `docs/reference/ERD.md`, `docs/Technical_Manual/Technical_Manual.md`. (link done; differences list BLOCKED: paper figure not available, recorded as TBC)
+3. [x] Architecture and example deployment diagrams: `docs/reference/Architecture_Diagrams.md`; read `System_Overview_and_Architecture.md`, Technical Manual 1.4, 2.4, 2.6, 2.7 and port table.
+4. [x] LICENSE (GPL-3.0 text from `/usr/share/common-licenses/GPL-3`): `LICENSE`.
+5. [x] Hand-off page: `docs/Hand_Off.md`; secret locations from `server/app/secrets_store.py`, `server/config.py`, `.env` handling.
+6. [x] `CONTRIBUTING.md`, root README "Before you open a pull request" section, links from `README.md`, `docs/README.md`, `spec files/README.md`; check `docs/manuals/README.md`.
+7. [x] Spec upkeep: `spec files/README.md` index, `Implementation_Status.md` if needed; `scripts/verify.sh docs`.
 8. [ ] `scripts/verify.sh all`, delete progress file, open PR with `--base issue-181-manuals-draft`.
 
 ## Round log
@@ -52,14 +52,16 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 0 | Plan written | none | n/a |
+| 2-6 | Manual 6.3 and 2.7 link to ERD.md/Architecture_Diagrams.md; LICENSE (GPL-3); Hand_Off.md; CONTRIBUTING.md; README hand-off and PR sections; links in docs/README, spec README, manuals README; Implementation_Status row; Engineering_Standards ERD rule | `python3 -I scripts/check_doc_links.py .` | 291 documents ok; env-drift flagged HISTORY_DATABASE_URL in the generator, removed |
+| 7 | Spec upkeep, then full verification | `scripts/verify.sh all` | green (lint: 0 errors, 33 warnings, pre-existing) |
 | 1 | Added generate_erd.py, test_erd_doc.py, generated ERD.md (54 tables, 9 domains) | `cd server && SECRET_KEY=x .venv/bin/python -m pytest tests/unit/test_erd_doc.py -q` (failed first: no generator) | 4 passed |
 
 ## State for the next session
 
-- Last check run (exact command): `cd server && SECRET_KEY=x .venv/bin/python -m pytest tests/unit/test_erd_doc.py -q`
-- Result (first failing lines, or "green"): green, 4 passed
+- Last check run (exact command): `scripts/verify.sh all`
+- Result (first failing lines, or "green"): green
 - Hypothesis: Mermaid syntax of ERD.md is unverified (installing a parser was blocked); GitHub render must be eyeballed
-- Next action: step 2: link Technical Manual 6.3 to ERD.md and add the 'differences vs paper (Chapter 3, Figure 4)' section; the paper figure is not in the repo, so mark the comparison TBC unless the owner supplies the figure
+- Next action: owner supplies the paper figures (Chapter 3 Figure 4, Chapter 4 Figure 61) so the differences lists can be written in `docs/reference/Architecture_Diagrams.md` and the Technical Manual 6.3, or accepts them as TBC; then confirm maintainer list, mark ready and delete this file. Was step 2: link Technical Manual 6.3 to ERD.md and add the 'differences vs paper (Chapter 3, Figure 4)' section; the paper figure is not in the repo, so mark the comparison TBC unless the owner supplies the figure
 
 ## Decisions and notes
 

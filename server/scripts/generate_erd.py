@@ -30,7 +30,6 @@ ERD_PATH = os.path.join(REPO_DIR, "docs", "reference", "ERD.md")
 # so generating the diagram never needs, or touches, a real database or secret.
 os.environ.setdefault("SECRET_KEY", "erd-generation-only")
 os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
-os.environ.setdefault("HISTORY_DATABASE_URL", "sqlite:///:memory:")
 if SERVER_DIR not in sys.path:
     sys.path.insert(0, SERVER_DIR)
 

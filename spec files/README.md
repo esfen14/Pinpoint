@@ -46,6 +46,15 @@ The [User Manual](../docs/User_Manual/User_Manual.md) and
 specifications for readers outside the team; when they disagree, the
 specification wins.
 
+For IT hand-off, see [`docs/Hand_Off.md`](../docs/Hand_Off.md) (license, installer,
+contacts, open questions), the generated
+[entity relationship diagram](../docs/reference/ERD.md) and the
+[architecture and example deployment diagrams](../docs/reference/Architecture_Diagrams.md).
+The ERD is generated from `system_models.py`, `plugin_models.py` and
+`history_models.py` by `server/scripts/generate_erd.py`; after a model change,
+run `python scripts/generate_erd.py` from `server/` (a unit test fails
+otherwise).
+
 Plans, proposals, acceptance or remediation reports, and manuals live in
 [`../docs/`](../docs/README.md). A specification states current behavior; it has
 no draft status, decision log or task list. When a plan ships, move what is

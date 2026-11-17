@@ -102,6 +102,9 @@ for role in roles.items:
 - Put only Nagios-produced snapshots in `history_models.py`; all
   application-produced data belongs on the default bind.
 - Run multi-database migrations after any model change.
+- After any model change, regenerate the database diagram from `server/` with
+  `python scripts/generate_erd.py`; `tests/unit/test_erd_doc.py` fails while
+  `docs/reference/ERD.md` is stale or a new table has no domain in the generator.
 
 ## Sensitive modules
 

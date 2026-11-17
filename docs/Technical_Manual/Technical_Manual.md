@@ -19,8 +19,8 @@
 > repository (`lorraine-pangilinan/PinPoint-Installer`) or a named lab
 > appliance. Installer-owned behaviour, hardware sizing and bandwidth figures
 > are therefore marked **TBC**. Diagrams are drawn from the code as Mermaid
-> diagrams; the capstone paper's ERD and architecture figures (issue #283) are
-> not yet embedded.
+> diagrams; the capstone paper's ERD and architecture figures are cited, not
+> copied (see section 2.7).
 
 ### Labelling convention
 
@@ -244,9 +244,13 @@ separate products by design.
 
 ### 2.7 Architecture diagrams
 
-Diagrams in sections 1.4, 2.4, 2.6 and 6.3 are drawn from the code. **TBC:**
-replace or complement them with the capstone paper's figures at print
-resolution once issue #283 lands, and list any differences.
+Diagrams in sections 1.4, 2.4 and 2.6 are drawn from the code. A fuller
+software architecture diagram and a generic example deployment are in
+[`docs/reference/Architecture_Diagrams.md`](../reference/Architecture_Diagrams.md);
+the entity relationship diagram is generated and lives in
+[`docs/reference/ERD.md`](../reference/ERD.md) (section 6.3). The capstone paper's
+architecture figure (Chapter 4, Figure 61) is cited there, not copied.
+**TBC:** the list of differences between the paper's figures and these diagrams.
 
 ---
 
@@ -474,61 +478,22 @@ Field-level detail: [`Data_Model_and_Integrations.md`](../../spec%20files/Data_M
 
 ### 6.3 Entity relationship diagram
 
-Core relationships (primary keys and foreign keys from the model files;
-attributes abbreviated):
+The full entity relationship diagram is generated from the models, so it is
+always current: [`docs/reference/ERD.md`](../reference/ERD.md). It has an
+overview of every table and relationship for skimming, then one diagram per
+domain (accounts, settings, audit log, discovery and devices, NCPA deployment,
+alerts, plugins, remediation, Nagios history) with every column, type and key.
+A backend unit test fails when that file differs from the models. After a model
+change, refresh it from `server/` with the virtual environment active:
 
-```mermaid
-erDiagram
-  ROLE ||--o{ ROLE_PERMISSION : grants
-  PERMISSION ||--o{ ROLE_PERMISSION : "granted by"
-  ROLE ||--o{ USER : "assigned to"
-  USER ||--o| USER_PREFERENCES : has
-  USER ||--o{ ACTIVITY_LOG : writes
-  ACTIVITY_LOG ||--o{ CONFIGURATION_CHANGES : details
-  ACTIVITY_LOG ||--o{ EXPORT_LOG : details
-  ACTIVITY_LOG ||--o{ NETWORK_DISCOVERY_STATUS : records
-  USER ||--o{ ALERT_ACKNOWLEDGEMENT : acknowledges
-  USER ||--o{ ACK_HISTORY : "acts (nullable)"
-  USER ||--o{ PASSWORD_RESET_REQUEST : requests
-  NETWORK_DISCOVERY_STATUS ||--o{ NETWORK_DISCOVERY : discovers
-  NETWORK_DISCOVERY_STATUS ||--o{ SKIPPED_SERVICE : skips
-  NETWORK_DISCOVERY ||--o{ OPEN_TCP_Services : has
-  NETWORK_DISCOVERY ||--o{ OPEN_UDP_Services : has
-  NETWORK_DISCOVERY ||--o{ DEVICE_IDENTIFIER : "identified by"
-  NETWORK_DISCOVERY ||--o{ DEVICE_ADDRESS_HISTORY : "seen at"
-  NETWORK_DISCOVERY ||--o{ DEVICE_INTERFACE : has
-  NETWORK_DISCOVERY ||--o{ DEVICE_PARENT : "child / parent"
-  NETWORK_DISCOVERY ||--o| NETWORK_DISCOVERY : "merged into"
-  NETWORK_DISCOVERY ||--o{ HOST_ALERT_RECIPIENT : notifies
-  USER ||--o{ HOST_ALERT_RECIPIENT : receives
-  NETWORK_DISCOVERY ||--o{ ESCALATION : "scoped (nullable)"
-  NETWORK_DISCOVERY ||--o{ MAINTENANCE_WINDOW : "scoped (nullable)"
-  MAINTENANCE_WINDOW ||--o{ MAINTENANCE_OCCURRENCE : produces
-  NETWORK_DISCOVERY ||--o{ SSH_CREDENTIALS : "trusted via"
-  NCPA_DEPLOYMENT_STATUS ||--o{ NCPA_DEPLOYMENT_RESULT : "per device"
-  NETWORK_DISCOVERY ||--o{ NCPA_DEPLOYMENT : "agent state"
-  NCPA_DEPLOYMENT ||--o{ NCPA_DEVICE_PARTITION : has
-  PLUGIN ||--o{ PLUGIN_VERSION : has
-  PLUGIN ||--o{ PLUGIN_COMMAND : defines
-  PLUGIN_COMMAND ||--o{ PLUGIN_COMMAND_OVERRIDE : overridden
-  PLUGIN ||--o{ PLUGIN_DEPENDENCY : needs
-  PLUGIN ||--o{ PLUGIN_CONFIGURATION : monitors
-  NETWORK_DISCOVERY ||--o{ PLUGIN_CONFIGURATION : "monitored by"
-  PLUGIN ||--o{ PLUGIN_HISTORY : logs
-  REMEDIATION_ACTION ||--o{ REMEDIATION_RUN : "runs (SET NULL)"
+```bash
+python scripts/generate_erd.py
 ```
 
-History bind (separate file; no foreign keys to `system.db`):
-
-```mermaid
-erDiagram
-  HOST_STATUS ||--o{ HOST_PERF_DATA : has
-  SERVICE_STATUS ||--o{ SERVICE_PERF_DATA : has
-  PROGRAM_STATUS
-```
-
-**TBC:** compare with the capstone paper's ERD (issue #283) and list
-differences.
+The capstone paper's ERD (Chapter 3, Figure 4) is a snapshot taken during the
+project; the generated file supersedes it. **TBC:** the list of differences
+between the paper's figure and the models has not been prepared, because the
+figure is not in the repository.
 
 ### 6.4 Keys, validation and integrity
 
@@ -1075,7 +1040,7 @@ and service tables, custom plugin upload decision.
 | 8 | Bootstrap credentials location | 8.4 | Where does the installer report the placeholder login? |
 | 9 | NCPA key and token location | 8.4 | Where are they stored on disk? |
 | 10 | Backup time of day | 6.6 | Backups run once a day when due; is a fixed time wanted? |
-| 11 | Capstone figures | 2.7, 6.3 | Embed the paper's ERD and diagrams (#283) and reconcile |
+| 11 | Capstone figures | 2.7, 6.3 | List differences between the paper's ERD (Chapter 3, Figure 4) and architecture (Chapter 4, Figure 61) figures and the generated diagrams |
 
 ### Appendix C. Not covered by this draft
 
