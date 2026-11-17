@@ -42,7 +42,7 @@ team.
 
 | You want | Go to |
 |---|---|
-| The license (GPL-3.0, provisional) | [`LICENSE`](LICENSE) and [License](docs/Hand_Off.md#license) |
+| The license (GPL-3.0, provisional) and credits | [`LICENSE`](LICENSE), [`NOTICE`](NOTICE) and [License](docs/Hand_Off.md#license) |
 | Database diagram (generated, always current) | [`docs/reference/ERD.md`](docs/reference/ERD.md) |
 | Software architecture and an example deployment | [`docs/reference/Architecture_Diagrams.md`](docs/reference/Architecture_Diagrams.md) |
 | Index of all manuals and guides | [`docs/manuals/README.md`](docs/manuals/README.md) |

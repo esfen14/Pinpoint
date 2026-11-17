@@ -8,7 +8,7 @@ network details (subnets, hostnames, firewall rules).
 
 | You want | Go to |
 |---|---|
-| The license | [`LICENSE`](../LICENSE) (GPL-3.0, **provisional**; see [License](#license)) |
+| The license and who is credited | [`LICENSE`](../LICENSE) (GPL-3.0, **provisional**; see [License](#license)) and [`NOTICE`](../NOTICE) (copyright line and developers) |
 | What Pinpoint is and how to run it | [Root `README.md`](../README.md) |
 | How to use it (operators and users) | [User Manual](User_Manual/User_Manual.md) |
 | How to install, run and maintain it | [Technical Manual](Technical_Manual/Technical_Manual.md) |
@@ -62,6 +62,9 @@ changes, stored passwords can no longer be read and must be entered again.
   combines with it and is distributed must be offered under GPL-compatible
   terms. Nagios Core, Nagios Plugins and Nmap are run as separate programs and
   do not force a license on Pinpoint's code.
+- [`NOTICE`](../NOTICE) credits the developers and Bulacan State University, Main
+  Campus, as the capstone adviser suggested. That is an acknowledgement, not a
+  ruling on ownership.
 - Who owns the code, and so who may choose the final license, is not yet
   settled. The capstone adviser and the university's research office or
   Innovation and Technology Support Office (ITSO) are to answer it, with
@@ -74,7 +77,7 @@ is assumed.
 
 | # | Question | Owner |
 |---|---|---|
-| 1 | Who owns the code (students, university, or both), and which license may be used. The `LICENSE` stays provisional until this is answered | Capstone adviser, university research office or ITSO |
+| 1 | Who owns the code (students, university, or both), and which license may be used. The adviser's informal advice was to name both the institution and the developers (done in `NOTICE`); get the ownership answer in writing. The `LICENSE` stays provisional until then | Capstone adviser, university research office or ITSO |
 | 2 | If GPL-3.0 is not acceptable: replace the two `nmap3` imports (`network_discovery.py`, `ncpa_relocation.py`) with direct `nmap` calls and XML parsing, then choose another license | Project owners, after item 1 |
 | 3 | Licensing of what the installer bundles or downloads (Nagios Core GPL-2.0, Nagios Plugins GPL-3.0, Nmap under its own license, NCPA). Redistribution terms were not reviewed | Installer maintainer |
 | 4 | A license scan of the frontend and remaining Python dependencies; only `python3-nmap` and the Nagios components were reviewed | Project owners |

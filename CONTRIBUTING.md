@@ -2,7 +2,7 @@
 
 Pinpoint is licensed under the GNU General Public License v3.0 (provisional;
 see [`docs/Hand_Off.md`](docs/Hand_Off.md#license)). By contributing you agree
-your changes are offered under the same terms.
+your changes are offered under the same terms. Credits are in [`NOTICE`](NOTICE).
 
 Before you open a pull request, run everything CI runs:
 
