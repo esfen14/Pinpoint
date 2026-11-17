@@ -38,7 +38,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 ## Plan
 
-1. [ ] ERD generator and test, test first: `server/scripts/generate_erd.py`, `server/tests/unit/test_erd_doc.py`, `docs/reference/ERD.md`. Domain map in the generator; the test fails on an unassigned table.
+1. [x] ERD generator and test, test first: `server/scripts/generate_erd.py`, `server/tests/unit/test_erd_doc.py`, `docs/reference/ERD.md`. Domain map in the generator; the test fails on an unassigned table.
 2. [ ] ERD differences vs the paper (Chapter 3, Figure 4) from the model files; Technical Manual 6.3 links to ERD.md: `docs/reference/ERD.md`, `docs/Technical_Manual/Technical_Manual.md`.
 3. [ ] Architecture and example deployment diagrams: `docs/reference/Architecture_Diagrams.md`; read `System_Overview_and_Architecture.md`, Technical Manual 1.4, 2.4, 2.6, 2.7 and port table.
 4. [ ] LICENSE (GPL-3.0 text from `/usr/share/common-licenses/GPL-3`): `LICENSE`.
@@ -52,13 +52,14 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 0 | Plan written | none | n/a |
+| 1 | Added generate_erd.py, test_erd_doc.py, generated ERD.md (54 tables, 9 domains) | `cd server && SECRET_KEY=x .venv/bin/python -m pytest tests/unit/test_erd_doc.py -q` (failed first: no generator) | 4 passed |
 
 ## State for the next session
 
-- Last check run (exact command): none yet
-- Result (first failing lines, or "green"): n/a
-- Hypothesis: `db.metadatas` (Flask-SQLAlchemy 3.1) gives tables per bind without a database
-- Next action: write `server/tests/unit/test_erd_doc.py` and watch it fail (no generator, no ERD.md)
+- Last check run (exact command): `cd server && SECRET_KEY=x .venv/bin/python -m pytest tests/unit/test_erd_doc.py -q`
+- Result (first failing lines, or "green"): green, 4 passed
+- Hypothesis: Mermaid syntax of ERD.md is unverified (installing a parser was blocked); GitHub render must be eyeballed
+- Next action: step 2: link Technical Manual 6.3 to ERD.md and add the 'differences vs paper (Chapter 3, Figure 4)' section; the paper figure is not in the repo, so mark the comparison TBC unless the owner supplies the figure
 
 ## Decisions and notes
 
@@ -67,3 +68,6 @@ Requirement coverage (every requirement the issue states, and the check that pro
 - Contacts are GitHub handles only (maintainers, installer maintainer `lorraine-pangilinan`); no personal emails. Which collaborators count as maintainers is to confirm with the owner.
 - Secrets: paths only, never values. Installer-managed secrets marked TBC.
 - Out of this issue: replacing `python3-nmap` (new issue only if the university refuses GPL-3.0); subnet default change is #334.
+
+- The paper's ERD (Chapter 3, Figure 4) and architecture (Chapter 4, Figure 61) are not available to the agent; differences lists stay TBC until the owner supplies the figures or compares by hand.
+- Mermaid syntax check: a temporary parser install was denied by the permission classifier; not retried. Syntax follows the Mermaid erDiagram docs; confirm by viewing on GitHub.
