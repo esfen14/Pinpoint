@@ -2,7 +2,12 @@
 
 This guide covers the **Network Topology** page: reading the map of devices and their parent relationships, and setting a device's parent.
 
-> **Verification status.** Written on 2026-11-14 from the route specification, `Device_Inventory_Requirements.md` §13 and the source. It has not yet been followed step by step on a demo build; items marked **TBC** need that check, and screenshots are not included yet.
+> **Verification status.** Written on 2026-11-14 from the route specification, `Device_Inventory_Requirements.md` §13 and the source. It has not yet been followed step by step on a demo build; items marked **TBC** need that check.
+
+![Topology page](../images/manual/page-topology.png)
+
+*Figure: Topology.*
+
 
 ## Purpose
 

@@ -41,6 +41,7 @@ in [`spec files/`](spec%20files/).
 | Tests, migrations, style, validation, security | **Required:** [`Engineering_Standards.md`](spec%20files/Engineering_Standards.md) | The domain specification for the code being changed |
 | Backend tests, fixtures, or test failures | **Required:** [`server/tests/README.md`](server/tests/README.md), [`Engineering_Standards.md`](spec%20files/Engineering_Standards.md) | The backend/domain specification for the behavior under test |
 | Frontend tests | **Required:** [`Frontend_Modules_and_Routes.md`](spec%20files/Frontend_Modules_and_Routes.md), [`Engineering_Standards.md`](spec%20files/Engineering_Standards.md) | The page/domain specification for the behavior under test |
+| User Manual or Technical Manual | **Required:** [`User_Manual.md`](docs/User_Manual/User_Manual.md), [`Technical_Manual.md`](docs/Technical_Manual/Technical_Manual.md), [`docs/manuals/README.md`](docs/manuals/README.md) | The specifications each manual summarises, and [`Implementation_Status.md`](spec%20files/Implementation_Status.md) |
 | Scope, unfinished work, or exclusions | **Required:** [`Implementation_Status.md`](spec%20files/Implementation_Status.md) | Relevant domain specification |
 
 ## Working an issue

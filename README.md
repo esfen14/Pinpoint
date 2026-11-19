@@ -30,6 +30,23 @@ installer is maintained separately from this repository.
 
 The authoritative description of each area is in [`spec files/`](spec%20files/README.md);
 step-by-step guides for operators are in [`docs/manuals/`](docs/manuals/).
+Draft manuals (issue #181): [User Manual](docs/User_Manual/User_Manual.md) and
+[Technical Manual](docs/Technical_Manual/Technical_Manual.md).
+
+## For IT hand-off
+
+Start with the [hand-off page](docs/Hand_Off.md): where the installer lives
+(`lorraine-pangilinan/PinPoint-Installer`), where credentials are stored
+(locations only), who to contact, and the open questions for the university IT
+team.
+
+| You want | Go to |
+|---|---|
+| The license (GPL-3.0, provisional) and credits | [`LICENSE`](LICENSE), [`NOTICE`](NOTICE) and [License](docs/Hand_Off.md#license) |
+| Database diagram (generated, always current) | [`docs/reference/ERD.md`](docs/reference/ERD.md) |
+| Software architecture and an example deployment | [`docs/reference/Architecture_Diagrams.md`](docs/reference/Architecture_Diagrams.md) |
+| Index of all manuals and guides | [`docs/manuals/README.md`](docs/manuals/README.md) |
+| Open questions (To Be Confirmed) | [`docs/Hand_Off.md`](docs/Hand_Off.md#to-be-confirmed) |
 
 ## Repository guide
 
@@ -196,7 +213,22 @@ Use a feature branch, keep behavioral specifications current, run the smallest
 relevant tests while developing, and broaden verification in proportion to the
 change before merging. If a CI job fails, see
 [CI failed, now what?](spec%20files/Agent_Workflow_and_CI.md#ci-failed-now-what). Never commit credentials, private keys, runtime lab
-manifests, VM disks, database backups, or unsanitized test evidence.
+manifests, VM disks, database backups, or unsanitized test evidence. A short
+version is in [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
+### Before you open a pull request
+
+Run everything CI runs:
+
+```bash
+scripts/verify.sh all
+```
+
+It runs the three blocking CI jobs, which you can also run one at a time:
+`scripts/verify.sh docs`, `scripts/verify.sh backend` and
+`scripts/verify.sh frontend`. All three must pass. What each job checks, and
+what to do when one fails, is in
+[`spec files/Agent_Workflow_and_CI.md`](spec%20files/Agent_Workflow_and_CI.md).
 
 ## Production settings
 

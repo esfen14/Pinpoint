@@ -1,5 +1,15 @@
 # Maintenance windows
 
+![Maintenance page](../images/manual/page-maintenance.png)
+
+*Figure: Maintenance.*
+
+![New maintenance window form](../images/manual/maintenance-new-window.png)
+
+*Figure: The **New maintenance window** form.*
+
+
+
 Administrators with **maintenance.manage** can open **Maintenance** in the sidebar to schedule planned work. A maintenance window puts devices into Nagios **scheduled downtime**, so alerts and notification email for them stop while the work is done, and the downtime ends by itself at the end time. Run `flask sync-permissions` after upgrading to add the permission (granted to Administrator only); grant it to other roles under **Manage Roles**.
 
 This is not the **Maintenance Mode** switch in **Settings → System**. That switch only pauses PinPoint's own scheduled scans, update checks and security checks and shows a notice; it does not silence any alert. Use a maintenance window to silence alerts.

@@ -2,7 +2,12 @@
 
 The **History** page is the record of what happened: every state change of a host or service, and every notification Nagios sent. Use it to answer "when did this go down, for how long, and who was told?" The Dashboard and Network Health answer "what is wrong right now".
 
-> **Verification status.** Written on 2026-11-14 from `Alerts_Notifications_History_Requirements.md`, `HistoryPage.tsx` and the route specification. It has not yet been followed on a demo build; items marked **TBC** need that check, and screenshots are not included.
+> **Verification status.** Written on 2026-11-14 from `Alerts_Notifications_History_Requirements.md`, `HistoryPage.tsx` and the route specification. It has not yet been followed on a demo build; items marked **TBC** need that check.
+
+![History page](../images/manual/page-history.png)
+
+*Figure: History.*
+
 
 ## Purpose
 

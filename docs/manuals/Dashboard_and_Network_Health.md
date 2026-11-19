@@ -2,7 +2,16 @@
 
 Three pages show the current state of the monitored network: the **Dashboard** (the first page after sign-in: is anything broken right now?), **Network Health** (a deeper look at hosts, services and trends) and **Network Status** (a service table with acknowledgement). This guide also covers acknowledging alerts and the **Check now** button.
 
-> **Verification status.** Written on 2026-11-14 from `Display_Requirements.md`, the route specification and the page source. It has not yet been followed on a demo build; items marked **TBC** need that check, and screenshots are not included.
+> **Verification status.** Written on 2026-11-14 from `Display_Requirements.md`, the route specification and the page source. It has not yet been followed on a demo build; items marked **TBC** need that check.
+
+![Network Health page](../images/manual/page-network-health.png)
+
+*Figure: Network Health.*
+
+![Network Status page](../images/manual/page-network-status.png)
+
+*Figure: Network Status.*
+
 
 ## Purpose
 

@@ -1,5 +1,10 @@
 # Reading service availability reports
 
+![Reports page](../images/manual/page-reports.png)
+
+*Figure: Reports.*
+
+
 Network Services and Device Services use Nagios archive durations. Run Report
 loads the selected historical range and separately reads current Nagios status.
 There is no extra polling schedule or availability target.

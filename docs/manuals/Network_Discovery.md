@@ -2,7 +2,12 @@
 
 This guide covers choosing which networks and ports Pinpoint scans, running a scan on demand, and what happens to the devices and ports it finds.
 
-> **Verification status.** Written on 2026-11-14 from the route specification, `DiscoverySettings.tsx` and the discovery code. It has not yet been followed step by step on a demo build; items marked **TBC** need that check, and screenshots are not included yet.
+> **Verification status.** Written on 2026-11-14 from the route specification, `DiscoverySettings.tsx` and the discovery code. It has not yet been followed step by step on a demo build; items marked **TBC** need that check.
+
+![Network Discovery settings tab](../images/manual/settings-discovery.png)
+
+*Figure: Network Discovery tab.*
+
 
 ## Purpose
 

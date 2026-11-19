@@ -2,7 +2,12 @@
 
 **Plugin Manager** (`/plugins`) lists the Nagios plugins installed on the Pinpoint server and decides which ones Nagios uses to check your devices. Pinpoint can only monitor a port or service when the plugin that checks it is **enabled** here.
 
-> **Verification status.** Written on 2026-11-14 from the route specification, `Plugins_List.md` and the page source. It has not yet been followed on a demo build; items marked **TBC** need that check, and screenshots are not included. Custom checks that need arguments have their own guide, [Custom checks](Custom_Checks_Manual.md); this guide does not repeat it.
+> **Verification status.** Written on 2026-11-14 from the route specification, `Plugins_List.md` and the page source. It has not yet been followed on a demo build; items marked **TBC** need that check. Custom checks that need arguments have their own guide, [Custom checks](Custom_Checks_Manual.md); this guide does not repeat it.
+
+![Plugin Manager inventory](../images/manual/page-plugin-manager.png)
+
+*Figure: Plugin Manager.*
+
 
 ## Purpose
 

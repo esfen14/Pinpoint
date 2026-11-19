@@ -2,7 +2,20 @@
 
 This guide covers the **Settings** page and its six tabs.
 
-> **Verification status.** Written on 2026-11-14 from the route specification and the `components/settings/` source. It has not yet been followed step by step on a demo build; items marked **TBC** need that check, and screenshots are not included yet.
+> **Verification status.** Written on 2026-11-14 from the route specification and the `components/settings/` source. It has not yet been followed step by step on a demo build; items marked **TBC** need that check.
+
+![General settings tab](../images/manual/settings-general.png)
+
+*Figure: General tab.*
+
+![Security settings tab](../images/manual/settings-security.png)
+
+*Figure: Security tab.*
+
+![System settings tab](../images/manual/settings-system.png)
+
+*Figure: System tab.*
+
 
 ## Purpose
 

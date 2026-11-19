@@ -2,7 +2,12 @@
 
 This guide covers the **System Logs** page: the audit logs of what people and the system did in Pinpoint, and the Nagios log tab.
 
-> **Verification status.** Written on 2026-11-14 from the route specification and `SystemLogsPage.tsx`. It has not yet been followed step by step on a demo build; items marked **TBC** need that check, and screenshots are not included yet.
+> **Verification status.** Written on 2026-11-14 from the route specification and `SystemLogsPage.tsx`. It has not yet been followed step by step on a demo build; items marked **TBC** need that check.
+
+![System Logs page](../images/manual/page-system-logs.png)
+
+*Figure: System Logs.*
+
 
 ## Purpose
 

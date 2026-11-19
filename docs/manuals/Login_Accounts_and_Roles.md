@@ -2,7 +2,20 @@
 
 This guide covers signing in and out, the first-run setup window, forgotten passwords, and the **Manage Accounts** and **Manage Roles** pages for administrators.
 
-> **Verification status.** Written on 2026-11-14 from the route specification (`spec files/Frontend_Modules_and_Routes.md`, `Backend_Modules_and_Routes.md`) and the source. It has not yet been followed step by step on a demo build; items marked **TBC** need that check, and screenshots are not included yet.
+> **Verification status.** Written on 2026-11-14 from the route specification (`spec files/Frontend_Modules_and_Routes.md`, `Backend_Modules_and_Routes.md`) and the source. It has not yet been followed step by step on a demo build; items marked **TBC** need that check.
+
+![Sign-in page](../images/manual/UM-01-sign-in.png)
+
+*Figure: Sign-in page.*
+
+![Manage Accounts page](../images/manual/page-accounts.png)
+
+*Figure: Manage Accounts.*
+
+![Manage Roles page](../images/manual/page-manage-roles.png)
+
+*Figure: Manage Roles.*
+
 
 ## Purpose
 
@@ -60,7 +73,7 @@ A new password may not be the account's current password.
 
 ## Manage Accounts (administrators)
 
-Open **Manage Accounts** (`/accounts`). The table lists name, email, role, status, joined date and **Email Alerts** (On/Off), with search, a status filter and sorting.
+Open **Manage Accounts** (`/accounts`). The table lists name, email, role, status, create date and **Email Alerts** (On/Off), with search, a status filter and sorting.
 
 ### Add a user
 
