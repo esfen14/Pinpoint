@@ -1,5 +1,15 @@
 # NCPA deployment and failed-install cleanup
 
+![NCPA Deployment page](../images/manual/page-ncpa-deployment.png)
+
+*Figure: NCPA Deployment.*
+
+![Register an agent I installed dialog](../images/manual/ncpa-register-agent.png)
+
+*Figure: The **Register an agent I installed** dialog, with the install steps expanded.*
+
+
+
 The issue #129 build tracks each installed agent's listener port and adds explicit
 cleanup of failed deployment bootstrap artifacts. Process-secret transport and
 full generated-config live acceptance remains unfinished; this build is

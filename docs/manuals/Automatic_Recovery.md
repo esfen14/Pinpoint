@@ -1,5 +1,10 @@
 # Automatic recovery: restarting a PinPoint host service
 
+![Remediation page](../images/manual/page-remediation.png)
+
+*Figure: Remediation page.*
+
+
 Administrators with **remediation.manage** can open **Remediation** in the sidebar to tell PinPoint what to do when a check reaches a hard failure. People with **remediation.view** can read the rules and the run log. Run `flask sync-permissions` after upgrading; both permissions go to Administrator, and other roles get them under **Manage Roles**.
 
 ## What PinPoint can restart automatically

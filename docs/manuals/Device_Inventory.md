@@ -2,7 +2,12 @@
 
 **Device Inventory** (`/device-inventory`) lists every device Pinpoint has found, shows whether Nagios is checking it, and lets an administrator change what is monitored. Each row opens a detail drawer with the device's state, ports, interfaces, settings and history.
 
-> **Verification status.** Written on 2026-11-14 from `Device_Inventory_Requirements.md`, the route specification and the page source. It has not yet been followed on a demo build; items marked **TBC** need that check, and screenshots are not included. Duplicate-device merging has its own guide, [Review and merge duplicate device records](Device_Identity_Review.md); this guide does not repeat it.
+> **Verification status.** Written on 2026-11-14 from `Device_Inventory_Requirements.md`, the route specification and the page source. It has not yet been followed on a demo build; items marked **TBC** need that check. Duplicate-device merging has its own guide, [Review and merge duplicate device records](Device_Identity_Review.md); this guide does not repeat it.
+
+![Device Inventory host list](../images/manual/page-device-inventory.png)
+
+*Figure: Device Inventory.*
+
 
 ## Purpose
 

@@ -13,9 +13,9 @@
 | Companion | [Technical Manual](../Technical_Manual/Technical_Manual.md) |
 
 > **Draft notice.** This draft was written from the repository's specifications
-> and topic guides (`spec files/`, `docs/manuals/`). It has not yet been
-> followed step by step on a lab appliance, and it has no real screenshots.
-> Each screenshot is a labelled placeholder. Items marked **TBC** (To Be
+> and topic guides (`spec files/`, `docs/manuals/`). The screenshots were taken
+> on a disposable demo lab (light theme, 14 demo devices); the written steps
+> have not yet all been followed on it. Items marked **TBC** (To Be
 > Confirmed) need a check on a running system before the manual is final.
 
 ### How to read this manual
@@ -136,9 +136,9 @@ report.
 3. The sign-in page opens. Any page that needs you to be signed in sends you
    here first.
 
-> **Screenshot placeholder UM-01:** Sign-in page showing the email and
-> password fields, **Remember me**, the sign-in button and **Forgot
-> Password?**.
+![Sign-in page with email and password fields, Remember me, Log In and Forgot Password](../images/manual/UM-01-sign-in.png)
+
+*Figure UM-01. The sign-in page: email, password, **Remember me**, **Log In** and **Forgot Password?**.*
 
 ### 2.3 Registration and login
 
@@ -200,9 +200,9 @@ After that, the administrator should, in order:
 
 ### 2.5 Overview of the interface
 
-> **Screenshot placeholder UM-02:** Whole application window after sign-in,
-> with the sidebar on the left, the header across the top, and the Dashboard
-> in the main area. Label each of the three areas.
+![Application window after sign-in](../images/manual/UM-02-interface-overview.png)
+
+*Figure UM-02. After sign-in: the sidebar is on the left, the header runs across the top, and the Dashboard fills the main area.*
 
 | Area | What it holds |
 |---|---|
@@ -319,8 +319,9 @@ in `code style` are explained in [section 5](#5-user-roles-and-permissions).
 5. Read the freshness line ("last updated"). A warning appears when data is
    older than expected.
 
-> **Screenshot placeholder UM-03:** Dashboard with at least one critical and
-> one acknowledged alert, the summary cards and the freshness line visible.
+![Dashboard with summary cards, a freshness line, critical alerts and one acknowledged alert](../images/manual/UM-03-dashboard-alerts.png)
+
+*Figure UM-03. The Dashboard with the summary cards, the "last updated" line, two unacknowledged critical alerts, one acknowledged critical alert and three warnings from the NCPA agent checks.*
 
 **Expected result:** you know whether there is a problem, what it is and
 whether someone is already handling it (acknowledged badge).
@@ -413,9 +414,9 @@ change them `system.hosts.edit`.
 4. For a port, choose an action such as **Monitor**, **Ignore** or **Stop**,
    where offered.
 
-> **Screenshot placeholder UM-04:** Device Inventory drawer for one device,
-> showing the Monitoring label and the Ports section with at least one
-> monitored and one suggested port.
+![Device Inventory drawer showing the Ports section with two monitored ports](../images/manual/UM-04-device-drawer.png)
+
+*Figure UM-04. The Device Inventory drawer for one device, with its **Ports** section listing two monitored ports. Ports that Pinpoint can monitor but you have not chosen appear as suggested.*
 
 **Expected result:** the port's state and reason update. A change that needs
 Nagios is applied and checked by PinPoint before it takes effect.

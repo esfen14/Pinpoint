@@ -1,5 +1,10 @@
 # Email settings
 
+![Email settings tab](../images/manual/settings-email.png)
+
+*Figure: Email tab.*
+
+
 Open **Settings → Email** with the **settings.email** permission. One shared
 SMTP account sends Pinpoint's alert email for the whole system.
 
