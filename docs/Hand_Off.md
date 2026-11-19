@@ -67,8 +67,7 @@ changes, stored passwords can no longer be read and must be entered again.
   ruling on ownership.
 - Who owns the code, and so who may choose the final license, is not yet
   settled. The capstone adviser and the university's research office or
-  Innovation and Technology Support Office (ITSO) are to answer it, with
-  reference to the university's intellectual property policy.
+  Information Communications and Technology Office (ICTO) are to answer it, with reference to the university's intellectual property policy.
 
 ## To Be Confirmed
 
