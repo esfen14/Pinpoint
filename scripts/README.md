@@ -12,6 +12,7 @@ from the repository root.
 | `agent-worktree.sh <name>` | A separate git worktree and environment for an AI agent |
 | `agent_checkpoint.sh <issue> "<msg>"`, `check_agent_progress.py` | Commit/push and validate an agent's `.agent/progress/` file |
 | `new_test_run.sh <slug>` | Start a report in `docs/test-runs/` from the template |
+| `export_manuals.sh [user\|technical\|all]` | Export the User and Technical Manuals to DOCX and PDF in `build/manuals/` (helpers in `manual_export/`); see [docs/manuals/README.md](../docs/manuals/README.md#printable-copies-docx-and-pdf) |
 | `file_plan_issues.sh` | File the planned issues in `docs/issues/` on GitHub (dry run by default) |
 
 ## Drift checks (run by `verify.sh docs`)

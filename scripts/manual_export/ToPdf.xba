@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="Module1" script:language="StarBasic">
+REM Open a .docx, refresh the contents list (Pandoc leaves it empty) and save a PDF.
+Sub ToPdf(src As String, dst As String)
+  Dim args(0) As New com.sun.star.beans.PropertyValue
+  args(0).Name = "Hidden"
+  args(0).Value = True
+  doc = StarDesktop.loadComponentFromURL(ConvertToURL(src), "_blank", 0, args())
+  For i = 0 To doc.DocumentIndexes.Count - 1
+    doc.DocumentIndexes(i).update()
+  Next i
+  Dim out(0) As New com.sun.star.beans.PropertyValue
+  out(0).Name = "FilterName"
+  out(0).Value = "writer_pdf_Export"
+  doc.storeToURL(ConvertToURL(dst), out())
+  doc.close(True)
+End Sub
+</script:module>

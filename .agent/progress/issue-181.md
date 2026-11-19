@@ -57,15 +57,16 @@ issue #181 together.
 - [ ] Confirm the folder change (`docs/User_Manual/`, `docs/Technical_Manual/` instead of `docs/manuals/`); then amend the issue's Deliverables paths
 
 ### Printable export (issue section G)
-- [ ] `scripts/export_manuals.sh`: Markdown -> DOCX (Pandoc, `--toc`, `reference.docx`) -> PDF (`soffice --headless`)
-- [ ] `reference.docx` template: fonts, margins, spacing, page numbers, title page
-- [ ] Rewrite relative links as printed repo-path notes (Pandoc Lua filter), or include linked guides as appendices
-- [ ] Wide tables fit the page (landscape sections or smaller font)
-- [ ] Document the export command and template in `docs/manuals/README.md`
-- [ ] Produce DOCX and PDF of each manual
+- [x] `scripts/export_manuals.sh`: Markdown -> DOCX (Pandoc) -> PDF (LibreOffice macro that refreshes the contents list); LibreOffice is run under `env -i` because it crashes with `std::bad_alloc` under this session's environment
+- [x] `docs/manuals/export/reference.docx` template: A4, 2 cm margins, Arial, page-number footer, page break per chapter; built by `scripts/manual_export/make_reference.py`
+- [x] Relative links rewritten as printed repo-path notes (`scripts/manual_export/prepare.py`); linked guides are not appended
+- [x] Wide tables: smaller font and borders (not rotated to landscape)
+- [x] Export command documented in `docs/manuals/README.md`
+- [x] DOCX and PDF produced for both manuals (User 25 pages, Technical 32 pages) in `build/manuals/`; not committed (git-ignored)
+- [ ] Owner to open the DOCX in Word and check the contents list and look; decide whether to commit the PDFs
 
 ### Diagrams (issue section G, depends on #283)
-- [ ] Embed the ERD and architecture diagrams at print resolution: they are Mermaid in `docs/reference/` (from #283 work); render in the export step
+- [x] Mermaid diagrams render in the export step at 2x scale; the ERD and architecture diagrams in `docs/reference/` are separate files and are not part of the printed manuals (the Technical Manual links to them)
 - [x] Compared with the models and `System_Overview_and_Architecture.md`: the ERD is generated from the schema and the differences from the paper are listed in Technical Manual section 6.3
 - [x] Image-path check: `scripts/verify.sh docs` already fails on a missing image path (it caught one during the screenshots work)
 

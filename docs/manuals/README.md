@@ -48,3 +48,21 @@ Every route in the web interface (`client/src/App.tsx`) is listed here.
 | [Hand-off page](../Hand_Off.md) | License, installer location, credential locations, contacts, open questions |
 | [Database diagram (ERD)](../reference/ERD.md) | Generated from the models; always current |
 | [Architecture and example deployment diagrams](../reference/Architecture_Diagrams.md) | Software architecture and a generic deployment |
+
+## Printable copies (DOCX and PDF)
+
+```bash
+scripts/export_manuals.sh            # both manuals; or: user | technical
+```
+
+Writes `build/manuals/User_Manual.docx` and `.pdf`, and the same for the Technical Manual (`build/` is git-ignored). Needs `pandoc`, LibreOffice (`soffice`), `node`/`npx` and `python3`; mermaid-cli is fetched on first use and reuses a Playwright Chromium if one is installed (set `MERMAID_CHROME` to choose another).
+
+What the export does to the Markdown (see `scripts/manual_export/`):
+
+- Replaces the manual's own contents list with a generated one that has page numbers, and puts the title block on a title page.
+- Renders each Mermaid diagram to an image. Left-to-right diagrams are stacked top to bottom so they stay readable on a portrait page.
+- Turns links to other repository files into a printed note, for example "Device Inventory (repository file `docs/manuals/Device_Inventory.md`)"; web links and links inside the same manual stay.
+- Uses the Word styles in `docs/manuals/export/reference.docx` (A4, 2 cm margins, Arial, page numbers, bordered tables, a new page for each chapter). Edit that file in Word to change the look; delete it and run the script to regenerate the default from `scripts/manual_export/make_reference.py`.
+- The linked guides in `docs/manuals/` are not copied into the printed manuals; they stay in the repository. Wide tables are shrunk to a smaller font, not rotated to landscape.
+
+In Word, open the DOCX and choose **Update field** on the contents list the first time; the PDF already has it filled in.
