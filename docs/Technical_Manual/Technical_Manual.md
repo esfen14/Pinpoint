@@ -146,8 +146,9 @@ A three-tier, single-host design:
 
 **[A]** The installer's Nginx serves the built `client/dist` for `/`. The
 repository's lab Nginx (`lab/appliance/nginx-pinpoint.conf`) proxies only
-`/api/` and serves a placeholder at `/`; the production Nginx file is in the
-installer (**TBC**).
+`/api/` and serves a placeholder at `/`. The installer's `deploy-pinpoint-web.sh`
+writes the production site `/etc/nginx/sites-available/pinpoint` (listens on
+port 80 only, `server_name _`) and removes the default site.
 
 ### 2.2 Software architecture
 
@@ -361,7 +362,7 @@ VirtualBox (VM lab), Playwright (QA smokes). See
 
 > Sections 5.2 to 5.7 depend on the site. Values below are what the
 > application needs; site-specific addressing and firewall configuration are
-> **TBC** and must be confirmed with the installer maintainers.
+> **TBC** (the installer was checked on 2026-11-19; see the notes in each subsection).
 
 ### 5.1 Topology
 
@@ -374,7 +375,7 @@ directly, so the server must reach target addresses without NAT in between
 | Item | Value |
 |---|---|
 | Monitored subnets | `PINPOINT_NETWORKS` (default `192.168.130.0/24`) or Settings → Network Discovery; a range larger than /16 is refused; localhost is never scanned |
-| PinPoint server address | **[R]** Static address or DHCP reservation. **TBC:** what the installer configures |
+| PinPoint server address | Chosen by the administrator in the Ubuntu installer's network step (DHCP or static); the installer does not set it afterwards. **[R]** Use a static address or a DHCP reservation |
 | Monitored devices | DHCP or static; PinPoint tracks address changes through device identity evidence (NCPA certificate, SSH host key, MAC, machine ID, DNS name) |
 
 ### 5.3 Router and switch configuration
@@ -393,7 +394,7 @@ Not required. With VLANs, route or trunk the PinPoint server to each VLAN.
 | Direction | Protocol/port | Purpose | Basis |
 |---|---|---|---|
 | Users → PinPoint | TCP 80 (HTTP) | Web UI and `/api` via Nginx | Lab Nginx, installer contract |
-| Users → PinPoint | TCP 443 (HTTPS) | **TBC:** not in the repository's lab config | |
+| Users → PinPoint | TCP 443 (HTTPS) | Not configured by the installer (Nginx listens on 80 only) | |
 | Loopback | TCP 8000 | Nginx → Gunicorn **[A]** | Lab Nginx |
 | Loopback | TCP 8081 | Nagios web / JSON CGIs | Installer contract |
 | PinPoint → devices | ICMP echo | `check-host-alive` and discovery | |
@@ -408,7 +409,8 @@ Not required. With VLANs, route or trunk the PinPoint server to each VLAN.
 
 PinPoint needs a default gateway to reach routed subnets and the SMTP relay,
 and DNS to resolve the SMTP host. Device DNS names are optional identity
-evidence. **TBC:** what the installer configures.
+evidence. The installer does not configure them; the administrator sets them in the
+Ubuntu installer's network step.
 
 ### 5.7 Firewall rules and network security
 
@@ -422,7 +424,8 @@ evidence. **TBC:** what the installer configures.
 | Allow outbound to monitored subnets and the SMTP relay | Monitoring and email |
 
 On monitored hosts allow 5693/tcp (NCPA) and 22/tcp (deployment) only from the
-PinPoint address. **TBC:** whether the installer configures a host firewall.
+PinPoint address. The installer does not configure a host firewall; its health check
+only verifies that, if `ufw` is active, it allows port 80.
 
 ### 5.8 Bandwidth and connectivity
 
@@ -653,23 +656,26 @@ permissions (usability only; the server enforces).
 
 ## 8. Installation and deployment
 
-> **TBC (installer).** Production installation is performed by the separate
-> `PinPoint-Installer` repository. The steps below are this repository's side
-> of the contract
+> **Installer.** Production installation is performed by the separate
+> [`PinPoint-Installer`](https://github.com/lorraine-pangilinan/PinPoint-Installer)
+> repository (read on 2026-11-19; its README and `setup/` scripts). The steps below are
+> this repository's side of the contract
 > ([`Agent_Workflow_and_CI.md`, "Deployment environment"](../../spec%20files/Agent_Workflow_and_CI.md#deployment-environment-installer-contract)).
-> The installer's exact order, upgrade behaviour and host configuration must
-> be confirmed with its maintainers. Do not hand-install from this manual.
+> The installer maintainer should still confirm the order and upgrade behaviour.
+> Do not hand-install from this manual.
 
 ### 8.1 Prerequisites
 
 - A server meeting section 3, with Ubuntu Server 22.04.5 LTS.
 - Network access from the server to the monitored subnets and the SMTP relay.
-- The installer media or repository (**TBC:** ISO or script).
+- The installer media: a bootable Ubuntu Server ISO built by the installer's `scripts/build.sh`. The administrator answers language, keyboard, time zone, network, user name, password and host name; the rest is automatic.
 
 ### 8.2 What the installer does (from the contract)
 
-1. Installs Nagios Core 4.5.11 and plugins; moves Nagios web to
-   `127.0.0.1:8081`.
+1. Installs the Ubuntu packages, Nagios Core 4.5.11, the Nagios Plugins 2.4.12 and the
+   NCPA `check_ncpa.py` plugin (versions and SHA-256 fixed in the installer's
+   `setup/manifests/pp-mon-baseline-1.json`), configures SNMP, and moves Nagios web
+   (Apache) to `127.0.0.1:8081`.
 2. Clones `main` into `/opt/pinpoint/Network-Diagnosis-System`.
 3. Builds the client: `npm ci && npm run build` in `client/`.
 4. Writes settings to `/etc/pinpoint/pinpoint.env` (see 8.4).
@@ -680,7 +686,15 @@ permissions (usability only; the server enforces).
    spool folder. See [Installer handoff](../archive/plans/Installer_Handoff.md).
 7. Runs `server/` under Gunicorn as `pinpoint-gunicorn.service` (1 worker,
    4 threads, user `pinpoint`, `PINPOINT_SCHEDULER=1`) behind Nginx.
-8. Runs its health check.
+8. Generates the web administrator credentials into
+   `/root/pinpoint-install-credentials.txt` and shows them once at the first console
+   login, then removes them after the administrator confirms (see 8.4).
+9. Runs its health check (`setup/pinpoint-healthcheck.sh`).
+
+The first-boot order in the installer's README is: Ubuntu installation, packages,
+Nagios Core, Nagios Plugins, SNMP, Nagios configuration, PinPoint web interface
+(Nginx and Gunicorn), PinPoint privileges. `sudo pinpoint-update` opens the read-only
+Update Manager for Nagios Core, the plugins and `check_ncpa.py`.
 
 ### 8.3 Service account rights required
 
@@ -704,16 +718,16 @@ Credential locations (values are never written in this manual):
 | Credential | Where it is stored |
 |---|---|
 | `SECRET_KEY`, `PINPOINT_SECRETS_KEY`, Nagios CGI user and password | `/etc/pinpoint/pinpoint.env` |
-| Bootstrap administrator placeholder email and password | Created by the installer; **TBC:** where the installer reports them |
+| Bootstrap administrator placeholder email and password | Generated by the installer into `/root/pinpoint-install-credentials.txt`, shown once at the first console login, and removed after the administrator confirms they were recorded |
 | SMTP password | `SMTP_SETTINGS.Password_Encrypted` (Fernet) and `/etc/msmtprc` (root helper) |
 | Custom-check passwords, SNMPv3 passphrases | Encrypted in `system.db`; written to the Nagios resource file at config time |
-| NCPA deployment SSH key and NCPA token | **TBC:** on-disk location |
+| NCPA deployment SSH key and NCPA token | Key: `/opt/pinpoint/.ssh/pinpoint_ncpa_deploy` (read by the application as the `pinpoint` user). Token: `NCPADeployment.Token` in `system.db` |
 
 ### 8.5 Service start-up and verification
 
 ```bash
 sudo systemctl status pinpoint-gunicorn.service
-sudo systemctl status nagios        # TBC: unit name on the appliance
+sudo systemctl status nagios
 journalctl -u pinpoint-gunicorn
 ```
 
@@ -767,7 +781,7 @@ administrator-mediated (no email reset).
 
 | Path | Protection |
 |---|---|
-| Browser ↔ PinPoint | HTTP on port 80 in the lab. **TBC:** HTTPS on production. **[R]** Enable TLS in Nginx with an internal CA or Let's Encrypt and set secure cookie flags |
+| Browser ↔ PinPoint | HTTP on port 80, in the lab and as installed (the installer configures no HTTPS). **[R]** Enable TLS in Nginx with an internal CA or Let's Encrypt and set secure cookie flags |
 | PinPoint ↔ SMTP | STARTTLS required (Gmail or custom relay) |
 | PinPoint ↔ NCPA | NCPA HTTPS API with token |
 | PinPoint ↔ devices (SSH) | Pinned host-key fingerprint, explicit trust |
@@ -798,7 +812,7 @@ scanning (`pip-audit`, `npm audit`) and OS unattended security updates.
 
 | Item | Status | Recommendation |
 |---|---|---|
-| HTTPS | **TBC** | **[R]** TLS on Nginx, HSTS, secure cookies |
+| HTTPS | Not configured by the installer | **[R]** TLS on Nginx, HSTS, secure cookies |
 | SNMPv3 passphrases in `check_snmp` child argv | Known gap | **[R]** Replace the v3 client with one reading a protected file |
 | Narrower `nagios` group rights for event handlers | Open installer item | Complete in installer |
 | No account lockout or login rate limiting; failed logins are only recorded in the activity log when Failed Login Monitoring is on (`api/user/login.py`) | Gap | **[R]** Add rate limiting in Nginx or the app |
@@ -885,8 +899,12 @@ clauses; failed commits roll back; Nagios-rejected configs roll back with
 
 ### 11.2 Updates and patching
 
-Upgrades are delivered by the installer (**TBC:** upgrade command). After any
-application upgrade: `flask db upgrade` then `flask sync-permissions`.
+Upgrades are delivered by the installer. To update the web interface, run
+`sudo bash /root/pinpoint/deploy-pinpoint-web.sh` as root; it pulls the latest `main`,
+rebuilds the client and restarts the service, backing up databases and configuration first
+and restoring them if the update fails (log: `/var/log/pinpoint-web.log`). Nagios Core, the
+plugins and `check_ncpa.py` are handled by `sudo pinpoint-update` (read-only in the current
+release). After any application upgrade: `flask db upgrade` then `flask sync-permissions`.
 
 ### 11.3 Hardware maintenance
 
@@ -1029,19 +1047,19 @@ and service tables, custom plugin upload decision.
 
 | # | Item | Section | Question |
 |---|---|---|---|
-| 1 | Installer order and upgrades | 8 | What does the installer do, in order, on a fresh appliance and on upgrade? |
-| 2 | HTTPS | 5.5, 9.4 | Does the production Nginx serve TLS? With which certificate? |
-| 3 | Host firewall | 5.7 | Does the installer configure `ufw` or similar? Which rules? |
-| 4 | Server addressing, DNS, gateway | 5.2, 5.6 | Does the installer set a static address? |
-| 5 | Production Nginx config | 2.1 | Where is it, and does it serve `client/dist`? |
+| 1 | ~~Installer order and upgrades~~ | 8 | Answered from the installer README and scripts (2026-11-19); the maintainer should confirm |
+| 2 | ~~HTTPS~~ | 5.5, 9.4 | Answered: the installer configures no TLS; Nginx listens on 80 only. Decision for the site: add TLS |
+| 3 | ~~Host firewall~~ | 5.7 | Answered: not configured; the health check only tests `ufw` if active |
+| 4 | ~~Server addressing, DNS, gateway~~ | 5.2, 5.6 | Answered: chosen in the Ubuntu installer's network step |
+| 5 | ~~Production Nginx config~~ | 2.1 | Answered: `/etc/nginx/sites-available/pinpoint`, written by `deploy-pinpoint-web.sh` |
 | 6 | Sizing | 3.1 | Expected host count; measured CPU, memory, disk and bandwidth on a named appliance |
 | 7 | Supported monitored OSes | 4.1 | Which Linux distributions does NCPA deployment support? |
-| 8 | Bootstrap credentials location | 8.4 | Where does the installer report the placeholder login? |
-| 9 | NCPA key and token location | 8.4 | Where are they stored on disk? |
+| 8 | ~~Bootstrap credentials location~~ | 8.4 | Answered: `/root/pinpoint-install-credentials.txt`, removed after first confirmation |
+| 9 | ~~NCPA key and token location~~ | 8.4 | Answered: `/opt/pinpoint/.ssh/pinpoint_ncpa_deploy`; token in `system.db` |
 | 10 | Backup time of day | 6.6 | Backups run once a day when due; is a fixed time wanted? |
 
 ### Appendix C. Not covered by this draft
 
 - DOCX and PDF export for the capstone appendix (issue #181 section G).
-- Verification against the installer repository (section H).
-- Screenshots and measurements from a named lab appliance.
+- Confirmation of the installer answers by its maintainer (they were read from the repository, not run on a production appliance).
+- Measurements from a named lab appliance.

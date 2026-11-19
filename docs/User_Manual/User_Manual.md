@@ -130,8 +130,8 @@ report.
 
 1. Ask your administrator for the PinPoint address. It is the address of the
    PinPoint server, for example `http://<server-address>/`.
-   **TBC:** whether production uses `https://`; see the Technical Manual,
-   section 9.
+   The installer serves plain `http://`; an administrator may add `https://`
+   (Technical Manual, section 9).
 2. Type the address in your browser's address bar.
 3. The sign-in page opens. Any page that needs you to be signed in sends you
    here first.
@@ -931,7 +931,7 @@ captured it and the date, and must not show passwords or real personal data.
 | # | Item | Section | Question for the owner |
 |---|---|---|---|
 | 1 | Supported browsers and devices | 2.1 | Which browsers and versions are supported? Are tablets in scope? |
-| 2 | HTTPS address | 2.2 | Does the installed appliance serve `https://`? |
+| 2 | ~~HTTPS address~~ | 2.2 | Answered: the installer serves `http://` only |
 | 3 | Remember me | 2.3 | What does Remember me change? |
 | 4 | Manager and Staff permissions | 5.1 | What does `flask init-production` grant each? |
 | 5 | Self-service password change | 5.4 | Can a user change their own password at any time? |
