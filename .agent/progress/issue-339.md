@@ -21,9 +21,9 @@ Requirement coverage:
 
 ## Plan
 
-1. [ ] Tests first in server/tests/unit/test_session_timeout.py (no Set-Cookie when fresh, rewrite when stale, remembered too)
-2. [ ] Implement in server/app/api/user/login.py and server/app/config.py (SESSION_REFRESH_EACH_REQUEST=False)
-3. [ ] Spec: spec files/Backend_Modules_and_Routes.md
+1. [x] Tests first in server/tests/unit/test_session_timeout.py (no Set-Cookie when fresh, rewrite when stale, remembered too)
+2. [x] Implement in server/app/api/user/login.py and server/app/config.py (SESSION_REFRESH_EACH_REQUEST=False)
+3. [x] Spec (+ QA register login.py hashes, Automation_Readiness note): spec files/Backend_Modules_and_Routes.md
 4. [ ] Playwright lab check (needs lab up)
 5. [ ] verify.sh all, finish
 
@@ -32,13 +32,14 @@ Requirement coverage:
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 0 | plan | | |
+| 1 | throttle + config + tests + spec + register hashes | pytest test_session_timeout.py; verify.sh docs | 13 passed; docs green apart from offline lab-smoke FAIL lines also on main |
 
 ## State for the next session
 
-- Last check run (exact command): none
-- Result: n/a
+- Last check run (exact command): scripts/verify.sh docs
+- Result: green (lab-smoke FAIL lines identical on main)
 - Hypothesis: n/a
-- Next action: write failing tests in test_session_timeout.py
+- Next action: Playwright lab check. Running Docker lab mounts the issue-337 checkout as /src, so lab sync does not carry this branch; owner asked which of: docker cp patch, separate lab, wait. Then scripts/verify.sh all, finish.
 
 ## Decisions and notes
 

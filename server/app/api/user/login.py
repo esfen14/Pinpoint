@@ -48,6 +48,9 @@ def _record_failed_login(user):
 # SESSION TIMEOUT
 # ==========================================================
 
+LAST_ACTIVITY_WRITE_SECONDS = 60
+
+
 @user_bp.before_app_request
 def enforce_session_timeout():
     """
@@ -56,7 +59,7 @@ def enforce_session_timeout():
     time of the last request is kept in the signed session cookie, and
     if the gap since then is too long the user is logged out and the
     request is rejected with 401. Otherwise the timestamp is refreshed,
-    so any request counts as activity.
+    so any request counts as activity (written at most once a minute).
 
     The front-end also logs the user out after the same idle period
     (SessionTimeoutWatcher), since background polling keeps making
@@ -89,7 +92,11 @@ def enforce_session_timeout():
         session.pop("last_activity", None)
         return error("Session expired. Please log in again.", 401)
 
-    session["last_activity"] = now
+    # Write only when stale: a changed session makes Flask send Set-Cookie, and
+    # a response that finishes after logout would put a signed-in cookie back
+    # (#339). The idle timeout stays accurate to within the throttle.
+    if last_activity is None or now - last_activity > LAST_ACTIVITY_WRITE_SECONDS:
+        session["last_activity"] = now
     return None
 
 

@@ -106,3 +106,44 @@ class TestSessionTimeout:
 
         assert login.status_code == 200
         assert resp.status_code == 200
+
+
+class TestCookieThrottle:
+    """last_activity is rewritten at most once a minute (#339), so most
+    responses carry no Set-Cookie and cannot undo a logout."""
+
+    def test_fresh_activity_sets_no_cookie(self, logged_in_client):
+        set_idle_minutes(logged_in_client, 0.5)
+
+        resp = logged_in_client.get("/api/user/me")
+
+        assert resp.status_code == 200
+        assert resp.headers.get_all("Set-Cookie") == []
+
+    def test_stale_activity_is_rewritten(self, logged_in_client):
+        set_idle_minutes(logged_in_client, 2)
+        before = get_last_activity(logged_in_client)
+
+        resp = logged_in_client.get("/api/user/me")
+
+        assert resp.status_code == 200
+        assert resp.headers.get_all("Set-Cookie") != []
+        assert get_last_activity(logged_in_client) > before
+
+    def test_remembered_session_fresh_request_sets_no_cookie(
+        self, client, admin_user
+    ):
+        client.post(
+            "/api/user/login",
+            json={
+                "email": "admin@example.com",
+                "password": "AdminPass1!",
+                "remember_me": True,
+            },
+        )
+        set_idle_minutes(client, 0.5)
+
+        resp = client.get("/api/user/me")
+
+        assert resp.status_code == 200
+        assert resp.headers.get_all("Set-Cookie") == []

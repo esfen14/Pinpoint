@@ -82,6 +82,15 @@ cards remain subject to freshness checks. No automation was run or authorized
 by this consolidation.
 
 
+## 2026-11-24 session cookie throttle (#339)
+
+Issue #339 changed `api/user/login.py` so `enforce_session_timeout` rewrites
+`last_activity` at most once a minute. Eight cases hash that file. Their adapters
+only sign in and use pages, which the change does not alter, so the register's
+`login.py` hash was refreshed; adapter claims, coverage statuses and execution
+permissions are unchanged. This is not a new automation run. Queues that pin the
+old hash fail their freshness check and must be re-prepared before use.
+
 ## 2026-11-15 backend docstring refresh (#331)
 
 Issue #331 added docstrings to backend files, including five that the register

@@ -100,10 +100,20 @@ establishes the submitted active account, and `/api/user/me` and protected route
 use only that account's role permissions. Existing inactive-account and idle
 session expiry checks still run before login handling.
 
+**Cookie throttle (#339).** `enforce_session_timeout` writes `session["last_activity"]`
+only when it is missing or more than 60 seconds old (login always sets it), so most
+responses carry no `Set-Cookie`. A response to a request that began before logout
+therefore usually has no cookie to put the user back in. This reduces the race but
+does not remove it: the session is a stateless signed cookie, so a request that
+crosses the 60-second mark can still overwrite the logout cookie, and an older cookie
+replayed by a client stays valid until it idles out. Server-side revocation would
+need a session table and is not implemented.
+
 **Remember me (#337).** `remember_me: true` sets `session.permanent = True` (the
 signed cookie gets an `Expires` of `PERMANENT_SESSION_LIFETIME`, 30 days by default,
-set from whole days in `PINPOINT_REMEMBER_ME_DAYS`; Flask renews it on each request,
-so it is 30 days from last use) and stores `remembered` in the session. Otherwise
+set from whole days in `PINPOINT_REMEMBER_ME_DAYS`; `SESSION_REFRESH_EACH_REQUEST` is
+false, so the expiry is renewed only when `last_activity` is rewritten, at most once
+a minute, so it is 30 days from last use to within a minute) and stores `remembered` in the session. Otherwise
 the cookie stays a browser-session cookie. `enforce_session_timeout` skips the idle
 check when `remembered` is set, so a remembered session is not ended by the Session
 Timeout setting; it still signs out an account that is no longer Active. Logout,
