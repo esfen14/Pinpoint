@@ -1,6 +1,6 @@
 """Account and role administration routes: roles, accounts, password change, first-run setup and the protections that keep the bootstrap administrator able to administer accounts and roles."""
 
-from flask import request
+from flask import request, session
 from flask_login import login_required, current_user
 from app.api.helper.database_access.permissions import require_permission, user_has_permission
 from app.system_models import Permission, User, Role, RolePermission, UserStatus
@@ -1048,7 +1048,8 @@ def user_permission():
     """Return the logged-in user's profile: names, email, role name and permission names.
 
     An inactive role yields an empty permission list. Also reports whether
-    the user must change the password or finish first-run setup. Read only.
+    the user must change the password or finish first-run setup, and whether
+    the session was started with Remember me. Read only.
     """
     try:
         permissions = db.session.scalars(
@@ -1086,6 +1087,7 @@ def user_permission():
             "permissions": permission_array,
             "must_change_password": bool(current_user.Must_Change_Password),
             "needs_setup": bool(current_user.Needs_Setup),
+            "remembered": bool(session.get("remembered")),
         })
     except Exception:
         current_app.logger.exception("An unexpected error occured.")
