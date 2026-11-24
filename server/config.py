@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 from pathlib import Path
 
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -45,10 +46,40 @@ def env_bool(name, default):
     raise ValueError(f"{name} must be on or off.")
 
 
+def remember_me_lifetime():
+    """
+    How long a "Remember me" sign-in lasts, as a timedelta. Reads whole days
+    from PINPOINT_REMEMBER_ME_DAYS (default 30). A value that is not a whole
+    number of days above zero stops startup instead of silently changing how
+    long a browser stays signed in.
+    """
+    value = os.environ.get("PINPOINT_REMEMBER_ME_DAYS")
+    if value is None or not value.strip():
+        return timedelta(days=30)
+    try:
+        days = int(value)
+    except ValueError:
+        raise ValueError(
+            f"PINPOINT_REMEMBER_ME_DAYS must be a whole number of days above zero, got {value!r}."
+        ) from None
+    if days <= 0:
+        raise ValueError(
+            f"PINPOINT_REMEMBER_ME_DAYS must be a whole number of days above zero, got {value!r}."
+        )
+    return timedelta(days=days)
+
+
 class Config:
     # No fallback: a secret committed to source lets anyone forge sessions.
     # app/__init__.py refuses to start without it outside debug mode.
     SECRET_KEY = os.environ.get('SECRET_KEY')
+    # Session cookie. A normal sign-in gets a browser-session cookie; "Remember
+    # me" makes it permanent for this long (renewed on each request), and skips
+    # the idle timeout. Set PINPOINT_SESSION_COOKIE_SECURE=on when served over HTTPS.
+    PERMANENT_SESSION_LIFETIME = remember_me_lifetime()
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+    SESSION_COOKIE_SECURE = env_bool('PINPOINT_SESSION_COOKIE_SECURE', False)
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, 'system.db')
     SQLALCHEMY_BINDS = {

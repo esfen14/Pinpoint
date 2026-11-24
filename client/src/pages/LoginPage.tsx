@@ -65,6 +65,7 @@ export function LoginPage() {
         body: JSON.stringify({
           email,
           password,
+          remember_me: rememberMe,
         }),
       })
 

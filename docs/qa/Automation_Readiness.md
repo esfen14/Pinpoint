@@ -29,6 +29,16 @@ expected-item mappings, catalog verdicts and execution permissions are unchanged
 This is source review, not a live QA result; existing queues/cards still need
 normal freshness checks and separate live authorization.
 
+## 2026-11-24 Remember me dependency review (#337)
+
+The login request gained an optional `remember_me` field (default false) and
+`GET /api/user/me` gained a `remembered` field. The login-dependent adapters sign
+in without the field, so they still get a browser-session cookie and the idle
+timeout, and their assertions are unchanged. Only the reviewed fingerprints of
+`LoginPage.tsx`, `login.py` and `management.py` were refreshed in
+`automation-coverage.json`. Coverage statuses, mappings, verdicts and execution
+permissions are unchanged. This is source review, not a live QA result.
+
 ## 2026-10-19 existing-session login dependency review (#222)
 
 Codex compared the written procedures, expected-item assertions and login/logout

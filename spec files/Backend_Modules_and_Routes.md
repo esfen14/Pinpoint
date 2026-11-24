@@ -87,7 +87,7 @@ normal configured timeout; immediate invalidation is not part of this command.
 
 | Method and path | Permission | Purpose |
 |---|---|---|
-| `POST /api/user/login` | Public | Validate credentials and establish a session only when signed out; an existing authenticated session returns 409 before credential validation |
+| `POST /api/user/login` | Public | Validate credentials and establish a session only when signed out; an existing authenticated session returns 409 before credential validation. Body: `email`, `password`, optional boolean `remember_me` (default false; any other type returns 400) |
 | `POST /api/user/logout` | Login | End the current session |
 
 Login requires an explicit sign-out before signing in again, including the
@@ -99,6 +99,20 @@ unchanged. `POST /api/user/logout` ends that session; a subsequent accepted logi
 establishes the submitted active account, and `/api/user/me` and protected routes
 use only that account's role permissions. Existing inactive-account and idle
 session expiry checks still run before login handling.
+
+**Remember me (#337).** `remember_me: true` sets `session.permanent = True` (the
+signed cookie gets an `Expires` of `PERMANENT_SESSION_LIFETIME`, 30 days by default,
+set from whole days in `PINPOINT_REMEMBER_ME_DAYS`; Flask renews it on each request,
+so it is 30 days from last use) and stores `remembered` in the session. Otherwise
+the cookie stays a browser-session cookie. `enforce_session_timeout` skips the idle
+check when `remembered` is set, so a remembered session is not ended by the Session
+Timeout setting; it still signs out an account that is no longer Active. Logout,
+and the inactive-account sign-out, clear `remembered`. The audit entry reads
+"Signed in (email), remembered for N days". `GET /api/user/me` returns
+`remembered` so the client idle watcher can skip it. Cookie settings in
+`config.py`: `SESSION_COOKIE_HTTPONLY` true, `SESSION_COOKIE_SAMESITE` Lax,
+`SESSION_COOKIE_SECURE` from `PINPOINT_SESSION_COOKIE_SECURE` (default off, as the
+appliance serves plain HTTP unless TLS is set up).
 
 ### `app/api/user/management.py`
 
@@ -124,7 +138,7 @@ password retains the existing temporary-password and forced-change behavior.
 | `GET /api/user/accounts` | `account.view` | Paginated account list. Each row carries `is_super_admin` for the first account (lowest `UserID`) so clients can preserve its protected status |
 | `GET /api/user/accounts/<id>` | `account.info` | Account detail, including `receive_email_alerts` (the list rows carry it too) |
 | `PUT /api/user/accounts/<id>` | `account.edit` | Edit account details/status; users are not deleted. The first account (lowest `UserID`, the bootstrap administrator) must remain Active and may be assigned only an active role that has every permission required to manage accounts and roles (`account.view`, `account.edit`, `account.info`, `role.view`, `role.edit`, `role.info`, `role.list`); either violation returns 400 before account data changes. Other fields remain editable. `password`/`confirm_password` are optional (omit to keep the password, so suspend/deactivate needs none). Setting a password on another account (always, regardless of the create-form option), or returning an account to Active from Suspended/Inactive, sets `Must_Change_Password`. Optional `receive_email_alerts` (boolean): changing it needs `account.alerts` (403 otherwise; resending the current value is allowed) and is written to the activity log. When the account's Nagios contact changes (status, alerts setting, email or name of an Active alert user), the config is rebuilt as on create and the response carries `config_applied`, `config_ok`, `config_message` |
-| `GET /api/user/me` | Login | Return the current user, permissions, `must_change_password` and `needs_setup` |
+| `GET /api/user/me` | Login | Return the current user, permissions, `must_change_password`, `needs_setup` and `remembered` (the session was started with Remember me) |
 | `POST /api/user/complete-setup` | Login (`Needs_Setup` only) | First-run setup for the bootstrap administrator: `current_password`, `new_email`, `new_password`, `confirm_password`. Checks the current password and the password policy; rejects an invalid or already-used email, the installer's `pinpoint.lan` placeholder domain, and reserved/non-routable domains (`.local`, `.lan`, `.test`, `.example`, `.invalid`, `.localhost`, `.internal`, `home.arpa`). No deliverability check. Saves both, clears `Needs_Setup` and `Must_Change_Password`, writes an audit-log entry, then regenerates the Nagios config through `regenerate_and_apply_config_status()` (Nagios contacts are named and addressed by `User.Email`). Returns `config_applied`, `config_ok`, `config_message`; a failed apply does not undo the account change. 400 for any other account. While `Needs_Setup` is set, every `/api` route except login, logout, `/me` and this one returns 403 (`enforce_password_change`), including `change-password` |
 | `POST /api/user/change-password` | Login | Change the caller's own password (`current_password`, `new_password`, `confirm_password`); clears `Must_Change_Password`. While that flag is set every other `/api` route except login, logout and `/me` returns 403 (`enforce_password_change`). A user whose status is no longer Active is signed out on their next request |
 | `POST /api/user/forgot-password` | Public | Login-page "Forgot Password?". Body `{email}`. Creates a Pending `PasswordResetRequest` for an Active account (at most one pending per user) and always returns the same generic success, so it cannot reveal which emails exist. No email is sent |

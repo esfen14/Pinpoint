@@ -4,6 +4,8 @@ Routes
 ------
 POST /api/user/login
     Establish a signed-out session; reject an existing session with 409.
+    Optional boolean `remember_me` makes the session cookie persistent and
+    exempts it from the idle timeout.
 POST /api/user/logout
     End the authenticated session.
 """
@@ -67,13 +69,22 @@ def enforce_session_timeout():
     if current_user.Status != UserStatus.ACTIVE:
         logout_user()
         session.pop("last_activity", None)
+        session.pop("remembered", None)
+        session.permanent = False
         return error("Account inactive.", 401)
 
     now = time.time()
     last_activity = session.get("last_activity")
     timeout_seconds = get_session_timeout_minutes() * 60
 
-    if last_activity is not None and now - last_activity > timeout_seconds:
+    # A remembered session ("Remember me") is not ended by idleness; it lasts
+    # until the persistent cookie expires or the user signs out.
+    remembered = bool(session.get("remembered"))
+    if (
+        not remembered
+        and last_activity is not None
+        and now - last_activity > timeout_seconds
+    ):
         logout_user()
         session.pop("last_activity", None)
         return error("Session expired. Please log in again.", 401)
@@ -165,6 +176,10 @@ def login():
     if err is not None:
         return err
 
+    remember_me = data.get("remember_me", False)
+    if not isinstance(remember_me, bool):
+        return error("Invalid field types: remember_me (expected bool)", 400)
+
     email = data.get("email")
     password = data.get("password")
 
@@ -190,8 +205,16 @@ def login():
 
     login_user(user)
     session["last_activity"] = time.time()
+    session["remembered"] = remember_me
+    session.permanent = remember_me
     try:
-        create_audit_log(user.UserID, f"Signed in ({user.Email})")
+        if remember_me:
+            days = current_app.config["PERMANENT_SESSION_LIFETIME"].days
+            create_audit_log(
+                user.UserID, f"Signed in ({user.Email}), remembered for {days} days"
+            )
+        else:
+            create_audit_log(user.UserID, f"Signed in ({user.Email})")
         db.session.commit()
     except Exception:
         db.session.rollback()
@@ -218,4 +241,6 @@ def logout():
         current_app.logger.exception("Unable to record logout")
     logout_user()
     session.pop("last_activity", None)
+    session.pop("remembered", None)
+    session.permanent = False
     return success(message="User logged out.")

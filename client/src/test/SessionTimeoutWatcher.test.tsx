@@ -25,6 +25,18 @@ function mockMeStatus(status: number) {
   )
 }
 
+// /api/user/me for a session started with "Remember me".
+function mockRememberedSession() {
+  fetchMock.mockImplementation((url: string) =>
+    Promise.resolve({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve({ success: true, data: { remembered: true } }),
+      url,
+    }),
+  )
+}
+
 function renderDashboard() {
   return render(
     <MemoryRouter initialEntries={['/dashboard']}>
@@ -77,6 +89,16 @@ describe('SessionTimeoutWatcher', () => {
     )
     expect(screen.getByText(EXPIRED_NOTICE)).toBeInTheDocument()
     expect(localStorage.getItem(LAST_ACTIVITY_KEY)).toBeNull()
+  })
+
+  it('does not sign out a remembered session after the idle timeout', async () => {
+    mockRememberedSession()
+    renderDashboard()
+
+    await advance(10 * 60_000)
+
+    expect(screen.getByText('Dashboard Page')).toBeInTheDocument()
+    expect(fetchMock).not.toHaveBeenCalledWith('/api/user/logout', expect.anything())
   })
 
   it('stays signed in while the user is active', async () => {
