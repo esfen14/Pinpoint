@@ -17,7 +17,7 @@ Pinpoint shows each person only the pages their role allows. An account has one 
 ## Sign in and sign out
 
 1. Open Pinpoint in a browser. Any address that needs you to be signed in sends you to the sign-in page.
-2. Enter your **email** and **password**. Optionally choose **Remember me**. **TBC:** what Remember me changes in practice (the session timeout in **Settings → Security** still applies).
+2. Enter your **email** and **password**. Optionally tick **Remember me** (see below).
 3. Choose the sign-in button. You land on the first page your role is allowed to see (normally Dashboard).
 4. To switch accounts, sign out first. Signing in while already signed in is refused with "You are already signed in. Sign out before logging in to another account."
 5. To leave, use the sign-out control in the header.
@@ -25,7 +25,8 @@ Pinpoint shows each person only the pages their role allows. An account has one 
 Expected result: the sidebar shows only the pages you have permission for.
 
 Precautions:
-- A session ends after the idle period set in **Settings → Security → Session Timeout** (15 minutes, 30 minutes, 1, 2 or 4 hours). You are returned to the sign-in page ("Session expired. Please log in again.").
+- A session ends after the idle period set in **Settings → Security → Session Timeout** (15 minutes, 30 minutes, 1, 2 or 4 hours). You are returned to the sign-in page ("Session expired. Please log in again."). Closing the browser also ends the session.
+- **Remember me** keeps you signed in for **30 days** from your last activity, across browser restarts. A remembered session **ignores the Session Timeout**: idleness never signs you out. It ends only when you click **Log out**, the 30 days pass without use, or an administrator makes the account not **Active**. Tick it only on a computer you trust and do not share. The administrator can change the 30 days (`PINPOINT_REMEMBER_ME_DAYS` in the server environment).
 - An account whose status is not **Active** is refused ("Account inactive.").
 
 ## First-run setup (new installation)

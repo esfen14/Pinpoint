@@ -179,7 +179,39 @@ describe('LoginPage', () => {
         '/api/user/login',
         expect.objectContaining({
           method: 'POST',
-          body: JSON.stringify({ email: 'user@example.com', password: 'secret' }),
+          body: JSON.stringify({
+            email: 'user@example.com',
+            password: 'secret',
+            remember_me: false,
+          }),
+        }),
+      )
+    })
+  })
+
+  it('sends remember_me true when the checkbox is ticked', async () => {
+    const user = userEvent.setup()
+    const fetchSpy = vi.spyOn(global, 'fetch').mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({}),
+    } as Response)
+
+    renderLoginPage()
+
+    await user.type(screen.getByPlaceholderText('Enter your email'), 'user@example.com')
+    await user.type(screen.getByPlaceholderText('•••••••••••••••'), 'secret')
+    await user.click(screen.getByRole('checkbox', { name: /remember me/i }))
+    await user.click(screen.getByRole('button', { name: /log in/i }))
+
+    await waitFor(() => {
+      expect(fetchSpy).toHaveBeenCalledWith(
+        '/api/user/login',
+        expect.objectContaining({
+          body: JSON.stringify({
+            email: 'user@example.com',
+            password: 'secret',
+            remember_me: true,
+          }),
         }),
       )
     })

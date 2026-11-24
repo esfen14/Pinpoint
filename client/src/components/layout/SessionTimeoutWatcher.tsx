@@ -9,6 +9,11 @@ import { useSystemSettings } from '../../contexts/SystemSettingsContext'
 // for tabs that stopped making requests (see enforce_session_timeout in
 // server/app/api/user/login.py).
 //
+// A session started with "Remember me" is never ended by idleness: the
+// back end skips its idle check for it too, so it lasts until the
+// persistent cookie expires or the user logs out. /api/user/me says
+// whether the session is remembered.
+//
 // The last-activity time is shared through localStorage so an active tab
 // keeps other open tabs signed in too.
 
@@ -66,6 +71,10 @@ export function SessionTimeoutWatcher() {
   const { savedSettings } = useSystemSettings()
   const timeoutMs = savedSettings.sessionTimeout * 60_000
 
+  // Set once /api/user/me reports a remembered session; the idle check
+  // below reads it through the ref so the timer never restarts.
+  const rememberedRef = useRef(false)
+
   // navigate changes identity on every route change; keep the latest in a
   // ref so the effects below don't restart on each page navigation.
   const navigateRef = useRef(navigate)
@@ -84,9 +93,17 @@ export function SessionTimeoutWatcher() {
     let cancelled = false
 
     fetch('/api/user/me', { credentials: 'include' })
-      .then((res) => {
-        if (!cancelled && res.status === 401) {
+      .then(async (res) => {
+        if (cancelled) return
+        if (res.status === 401) {
           endSession(navigateRef.current, false)
+          return
+        }
+        try {
+          const body = await res.json()
+          rememberedRef.current = (body.data ?? body).remembered === true
+        } catch {
+          // Unreadable body: treat as not remembered, so the idle timeout applies.
         }
       })
       .catch(() => {
@@ -111,6 +128,8 @@ export function SessionTimeoutWatcher() {
     }
 
     const checkIdle = () => {
+      if (rememberedRef.current) return
+
       const shared = readLastActivity()
       if (shared !== null) {
         lastActivity = Math.max(lastActivity, shared)

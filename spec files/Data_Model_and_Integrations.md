@@ -52,7 +52,7 @@ a legacy inconsistency and must not be copied as a pattern.
 | Scope | Fields |
 |---|---|
 | System general | `scanFrequency`, notification enablement, allowed export formats |
-| System security | session timeout, strong-password policy, failed-login monitoring, audit logging, security-check frequency |
+| System security | session timeout (does not apply to a Remember me session, which lasts 30 days from last use; see `Backend_Modules_and_Routes.md`), strong-password policy, failed-login monitoring, audit logging, security-check frequency |
 | System operations | `dataPollingInterval` (Pinpoint reads of Nagios, seconds), `checkInterval` (Nagios-generated host and service checks, minutes), `retryInterval` and `maxCheckAttempts` (how soon a failing check is re-run and how many failures confirm a problem), `flapDetectionEnabled`, `flapLowThreshold` and `flapHighThreshold` (Nagios flap detection for generated hosts and services), update frequency, maintenance mode, automatic backups, log retention, diagnostic-history retention |
 | Per-user display | theme, time zone, date/time format, font, font size, dashboard layout, dashboard refresh rate |
 
