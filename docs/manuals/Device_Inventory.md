@@ -80,7 +80,7 @@ To silence a device for planned work for a limited time, use a [maintenance wind
 
 ## Interfaces and bandwidth (SNMP devices)
 
-For a device with an SNMP port monitored, the **Interfaces** section lists name, index, speed and status of each interface. Tick **Monitor** for the interfaces you want charted; each adds in and out bandwidth checks (and a status check) in Nagios, up to a limit per device. **Refresh** reads the list from the device again. The chart is **Interface Bandwidth** on [Network Health](Dashboard_and_Network_Health.md#network-health). **TBC:** the per-device limit shown on screen.
+For a device with an SNMP port monitored, the **Interfaces** section lists name, index, speed and status of each interface. Tick **Monitor** for the interfaces you want charted; each adds in and out bandwidth checks (and a status check) in Nagios, up to 16 per device. **Refresh** reads the list from the device again. The chart is **Interface Bandwidth** on [Network Health](Dashboard_and_Network_Health.md#network-health). The page shows how many are monitored (for example "3 of 16 monitored") and disables the remaining checkboxes at the limit.
 
 ## SNMP settings
 
@@ -106,5 +106,5 @@ When Pinpoint thinks two records may be the same device, **Needs Review** shows 
 
 - **A device is not in the list:** check the **Monitoring** filter (it opens on Monitored); then check that discovery has covered its network ([Network Discovery](Network_Discovery.md)).
 - **A port is not monitored though it is open:** read its reason; the usual cause is that its plugin is not enabled in [Plugin Manager](Plugin_Manager.md).
-- **A device shows Missing and DOWN:** it was not seen in recent scans but is still checked. Power it on, or leave it; it is archived after a long absence (**TBC:** the default wait; the setting is described in the data specification).
+- **A device shows Missing and DOWN:** it was not seen in recent scans but is still checked. Power it on, or leave it; it is retired automatically after 30 days of absence.
 - **Counts differ from Dashboard:** the Dashboard counts only monitored devices.

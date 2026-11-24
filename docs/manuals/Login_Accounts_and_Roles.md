@@ -105,13 +105,13 @@ Open **Manage Roles** (`/manage-roles`).
 2. Save. New roles are active.
 3. To change a role, choose **Edit role**, adjust name, description and permissions, and save. Use **Role status** to deactivate a role; an inactive role cannot be given to a new account.
 
-Built-in roles after a fresh install: **Super Admin** (all permissions), **Manager** and **Staff**. **TBC:** the exact permission set of Manager and Staff on a production install (`flask init-production` creates reference data; the development `flask seed` differs).
+Built-in roles after a fresh install: **Super Admin** (all permissions), **Manager** and **Staff**. **Manager** and **Staff** are created with no permissions, both by `flask init-production` and by the development `flask seed`; an administrator grants what each role needs here.
 
 Precautions:
 - **Super Admin** cannot be renamed and its permissions cannot be changed; the page shows every permission as read-only.
 - The role of the bootstrap administrator is marked locked: its edit form disables the seven account and role permission controls and deactivation, so the last administrator cannot lose the ability to manage accounts.
 - After an upgrade, run `flask sync-permissions` so newly introduced permissions exist and are granted to Super Admin; grant them to other roles here.
-- Permission changes apply to people already signed in at their next request to the server **TBC**.
+- Permission changes apply to people already signed in at their next request to the server, because permissions are read from the database on every request.
 
 ## Permission names used across the guides
 

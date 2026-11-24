@@ -68,7 +68,7 @@ Devices are never picked by hand: a plugin attaches to every matching port that 
 
 The drawer also shows the plugin's version, executable path, source, dependencies and commands.
 
-- **Override a command** (`plugin.command_override`): replace a command definition used when Pinpoint generates the check, and **Restore default** (`plugin.command_restore`) to undo it. **TBC:** which command fields can be edited in the current release.
+- **Override a command** (`plugin.command_override`): replace a command definition used when Pinpoint generates the check, and **Restore default** (`plugin.command_restore`) to undo it. The whole command line can be edited; text containing shell metacharacters is rejected, and the change applies when the Nagios configuration is next generated.
 - **Validate** (`plugin.validate`): checks the executable, its permissions and its dependencies. Failures count in **Validation Issues**.
 - **Update** (`plugin.update`): replace a plugin from an uploaded **Update archive** or an **Update URL**. The previous version is backed up, and **Roll back** (`plugin.update_rollback`) restores it. **TBC:** whether the Pinpoint service account can write to the plugin folder on your installation; the installer deliberately does not grant it, in which case updating is done on the server.
 

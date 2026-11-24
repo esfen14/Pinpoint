@@ -16,7 +16,7 @@ Use System Logs to answer "who changed this, and when?" and to export that recor
 ## Prerequisites
 
 - The **system.logs** permission (the page is hidden without it).
-- Audit logging on under **Settings → Security → Audit Logging**; otherwise new events are not recorded. **TBC:** which categories this setting covers.
+- Audit logging on under **Settings → Security → Audit Logging**; otherwise new events are not recorded. It covers the user-activity entries (sign-ins and administrator actions such as account, host and service changes). Configuration changes, discovery, NCPA deployment, exports and the Nagios log are recorded regardless.
 
 ## Read the logs
 
@@ -24,7 +24,7 @@ Use System Logs to answer "who changed this, and when?" and to export that recor
 2. Choose a tab: **Activity Log**, **Configuration Change**, **Network Discovery**, **NCPA Deployment**, **Export Log** or **Nagios log**.
 3. Type in **Search** to filter by text. Use the two date boxes (from and to) to limit the period. **Clear** removes all three filters.
 4. The list shows **Activity**, **Timestamp** and **Tag ID**. Select a row to see its detail on the right.
-5. In the detail panel, use the export control to download that entry. **TBC:** the file formats offered. Close the panel with the button beside it.
+5. In the detail panel, use the export control to download that entry. The formats offered are those enabled in **Settings → General → Export Formats** (CSV, PDF, XLS). Close the panel with the button beside it.
 
 Expected result: newest events first, shown in the date format and time zone chosen under **Settings → General**.
 

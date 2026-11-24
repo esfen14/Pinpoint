@@ -35,7 +35,7 @@ Under **Run Network Discovery**:
 
 1. To scan one device, enter its address in **Device IPv4 address** and choose the device scan button. A device scan does not change the saved network list or the scheduled scans.
 2. To scan every saved network, choose **Rescan Network** (also available from the Dashboard). The button shows **Scanning…** with a percentage while it runs.
-3. To stop a running scan, use the stop control. **TBC:** what is kept from a scan that is stopped part way.
+3. To stop a running scan, use the stop control. The run is recorded as **Interrupted** with the progress it had reached. Nagios is not reconfigured for a scan stopped before the apply step; devices already saved to the inventory by then are kept.
 4. When it finishes, open [Device Inventory](Device_Inventory.md) to see new and changed devices.
 
 Expected result: new devices appear in the inventory; ports seen again keep their state.
@@ -47,7 +47,7 @@ The automatic scan interval is **Scan Frequency** under **Settings → General**
 ## What happens to ports
 
 - A new port whose service was identified by more than its port number, and whose plugin is enabled, starts **monitored**. Otherwise it is **suggested** and waits for you.
-- A port missing from several scans in a row becomes **missing**, and later archived. A port seen again returns to monitored (missing) or suggested (archived). The number of missed scans before a port is marked missing is **TBC** on the live system.
+- A port missing from several scans in a row becomes **missing**, and later archived. A port seen again returns to monitored (missing) or suggested (archived). A port is marked missing after 5 missed scans in a row, and archived after 30 days as missing.
 - A port you ignored stays ignored. A service name you pinned stays pinned.
 - Ports in the ephemeral range are not recorded.
 

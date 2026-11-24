@@ -13,36 +13,36 @@ guides 36). Several repeat the same question.
 User Manual and guides; each is a "click it and see".
 
 ### Sign-in and accounts
-- [ ] What **Remember me** changes in practice. (`Login_Accounts_and_Roles.md:33`, `User_Manual.md:152`)
-- [ ] Exact permission set of **Manager** and **Staff** on a production install (`flask init-production` vs the dev `flask seed`). (`Login_Accounts_and_Roles.md:107`, `User_Manual.md:722-723`)
-- [ ] Do permission changes apply to a signed-in person at their next request? (`Login_Accounts_and_Roles.md:113`)
-- [ ] Is there a self-service password change outside the forced change window? (`User_Manual.md:766`)
+- [x] What **Remember me** changes in practice. (`Login_Accounts_and_Roles.md:33`, `User_Manual.md:152`) *(answered from source 2026-11-24)*
+- [x] Exact permission set of **Manager** and **Staff** on a production install (`flask init-production` vs the dev `flask seed`). (`Login_Accounts_and_Roles.md:107`, `User_Manual.md:722-723`) *(answered from source 2026-11-24)*
+- [x] Do permission changes apply to a signed-in person at their next request? (`Login_Accounts_and_Roles.md:113`) *(answered from source 2026-11-24)*
+- [x] Is there a self-service password change outside the forced change window? (`User_Manual.md:766`) *(answered from source 2026-11-24)*
 
 ### Dashboard and navigation
-- [ ] How many days ahead **Running out soon** looks. (`Dashboard_and_Network_Health.md:39`)
-- [ ] Card order and labels for each **Dashboard Layout** (default, compact, expanded). (`Dashboard_and_Network_Health.md:80`)
-- [ ] Exact sidebar order on a demo build. (`User_Manual.md:250`; the screenshots show it, so this one is nearly done)
+- [x] How many days ahead **Running out soon** looks. (`Dashboard_and_Network_Health.md:39`) *(answered from source 2026-11-24)*
+- [x] Card order and labels for each **Dashboard Layout** (default, compact, expanded). (`Dashboard_and_Network_Health.md:80`) *(answered from source 2026-11-24)*
+- [x] Exact sidebar order on a demo build. (`User_Manual.md:250`; the screenshots show it, so this one is nearly done) *(answered from source 2026-11-24)*
 
 ### Device Inventory, discovery, topology
-- [ ] Per-device limit for monitored interfaces, shown on screen. (`Device_Inventory.md:83`)
-- [ ] Default wait before a missing device is archived. (`Device_Inventory.md:109`)
-- [ ] What is kept when a running scan is stopped part way. (`Network_Discovery.md:38`)
-- [ ] Number of missed scans before a port is **missing**. (`Network_Discovery.md:50`)
+- [x] Per-device limit for monitored interfaces, shown on screen. (`Device_Inventory.md:83`) *(answered from source 2026-11-24)*
+- [x] Default wait before a missing device is archived. (`Device_Inventory.md:109`) *(answered from source 2026-11-24)*
+- [x] What is kept when a running scan is stopped part way. (`Network_Discovery.md:38`) *(answered from source 2026-11-24)*
+- [x] Number of missed scans before a port is **missing**. (`Network_Discovery.md:50`) *(answered from source 2026-11-24)*
 - [ ] How long the Topology map takes to show a parent change, and the message when Nagios rejects it. (`Topology.md:35`)
 
 ### History, reports, logs
-- [ ] Does the History custom range offer a time of day or dates only? (`Alerts_and_Notification_History.md:25`, `User_Manual.md:485`)
-- [ ] Previous state and duration near the start of a range with no earlier Nagios record. (`Alerts_and_Notification_History.md:44`)
-- [ ] Two Nagios records identical to the second: can the wrong row open? (`Alerts_and_Notification_History.md:70`)
-- [ ] Which categories **Audit Logging** covers. (`System_Logs.md:19`)
-- [ ] File formats offered when exporting a log entry. (`System_Logs.md:27`)
+- [x] Does the History custom range offer a time of day or dates only? (`Alerts_and_Notification_History.md:25`, `User_Manual.md:485`) *(answered from source 2026-11-24)*
+- [x] Previous state and duration near the start of a range with no earlier Nagios record. (`Alerts_and_Notification_History.md:44`) *(answered from source 2026-11-24)*
+- [x] Two Nagios records identical to the second: can the wrong row open? (`Alerts_and_Notification_History.md:70`) *(answered from source 2026-11-24)*
+- [x] Which categories **Audit Logging** covers. (`System_Logs.md:19`) *(answered from source 2026-11-24)*
+- [x] File formats offered when exporting a log entry. (`System_Logs.md:27`) *(answered from source 2026-11-24)*
 
 ### Plugins, settings, NCPA, recovery
-- [ ] Which command fields can be edited in **Override a command**. (`Plugin_Manager.md:71`)
+- [x] Which command fields can be edited in **Override a command**. (`Plugin_Manager.md:71`) *(answered from source 2026-11-24)*
 - [ ] Can the Pinpoint service account write to the plugin folder (needed for **Update**)? (`Plugin_Manager.md:73`)
-- [ ] Is each General setting stored per person or system-wide? (`Settings.md:44`)
-- [ ] Does Maintenance Mode (Settings) behave like a maintenance window? (`Settings.md:59`)
-- [ ] Full list of tables under **Settings → Plugins**. (`Settings.md:67`)
+- [x] Is each General setting stored per person or system-wide? (`Settings.md:44`) *(answered from source 2026-11-24)*
+- [x] Does Maintenance Mode (Settings) behave like a maintenance window? (`Settings.md:59`) *(answered from source 2026-11-24)*
+- [x] Full list of tables under **Settings → Plugins**. (`Settings.md:67`) *(answered from source 2026-11-24)*
 - [ ] **Register agent** end to end. (`User_Manual.md:581`; done once on `db01`, so this can now be written up. Wizard deploy is issue #336.)
 - [ ] Per-service recovery walkthrough, and a single walkthrough of the **Remediation** page. (`User_Manual.md:665`, `manuals/README.md:23`)
 

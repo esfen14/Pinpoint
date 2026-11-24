@@ -36,7 +36,7 @@ At least one monitored host, discovered through [Network Discovery](Network_Disc
 4. **Active Alerts** list: each problem host or service with its state, soft or hard, how long, the plugin output, and badges for acknowledged and in downtime. Order: critical first, then warning, then unknown; unacknowledged before acknowledged; devices in scheduled downtime last. Choose **View all** to go to the full tables.
 5. **Service overview, network status overview and network performance:** proportions of states, latency and packet loss, and bandwidth where configured. A section that needs a plugin that is not set up says "Plugin not configured" with what to add.
 6. **Average resource utilization:** CPU, memory and disk averaged over hosts with the NCPA agent. It is hidden when no host has the agent. An average shows "Insufficient data" when fewer than two hosts report.
-7. **Running out soon:** disk and memory that are on course to reach a warning or critical level, with an estimate. **TBC:** how many days ahead it looks.
+7. **Running out soon:** disk and memory that are on course to reach a warning or critical level, with an estimate. It looks up to 90 days ahead; later estimates are not shown.
 8. **Appliance storage:** size of the databases, backups and Nagios archives and free space on each disk; a warning appears when a disk has less than 10% free.
 9. **Recent Notifications:** the latest notifications Nagios sent.
 
@@ -77,4 +77,4 @@ Open a host or service in its detail drawer and choose **Check now** (needs `sys
 - **Data looks old:** read the freshness line. Check Nagios is running (Monitoring System section), then the polling and check intervals under **Settings → System**.
 - **A value says "Not configured" or "Plugin not configured":** the check is not set up for any host. Enable the plugin in [Plugin Manager](Plugin_Manager.md) or add the NCPA metric under **Settings → Plugins**.
 - Averages count only hosts that reported in the last check cycle, and say how many.
-- **TBC:** the exact card order and labels differ by **Settings → General → Dashboard Layout** (default, compact or expanded).
+- **Settings → General → Dashboard Layout** (default, compact or expanded) changes only the spacing and padding of the cards, not their order or labels. It is a personal preference.

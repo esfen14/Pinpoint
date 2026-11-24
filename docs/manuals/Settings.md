@@ -41,7 +41,7 @@ Settings holds your personal display preferences (General) and the system-wide r
 
 ## General Settings
 
-Display preferences: **Theme** (Dark or Light), **Time Zone** (Browser or a fixed offset), **System Font** and **System Font Size**, **Date and Time Format** (DD/MM/YYYY, MM/DD/YYYY or YYYY-MM-DD), **Dashboard Layout** (default, compact or expanded), the notification bell toggle, **Dashboard Refresh Rate** (1, 5 or 15 minutes, or Manual), **Export Formats** (CSV, PDF, XLS) and **Scan Frequency** (the automatic [network discovery](Network_Discovery.md) interval). **TBC:** whether each of these is stored per person or for the whole system.
+Display preferences: **Theme** (Dark or Light), **Time Zone** (Browser or a fixed offset), **System Font** and **System Font Size**, **Date and Time Format** (DD/MM/YYYY, MM/DD/YYYY or YYYY-MM-DD), **Dashboard Layout** (default, compact or expanded), the notification bell toggle, **Dashboard Refresh Rate** (1, 5 or 15 minutes, or Manual), **Export Formats** (CSV, PDF, XLS) and **Scan Frequency** (the automatic [network discovery](Network_Discovery.md) interval). Theme, Time Zone, System Font, Font Size, Date and Time Format, Dashboard Layout and Dashboard Refresh Rate are stored per person; the rest are system-wide.
 
 ## Security
 
@@ -56,7 +56,7 @@ Precaution: a short timeout signs people out while they work; turning audit logg
 - **Notifications** and **Escalations** cards: see [Notification policy](Notification_Policy.md).
 - **System Status** shows the current value of each of these at a glance.
 
-Precautions: shorter check intervals add load on Nagios and the monitored devices; shorter retention deletes older data permanently. For planned work use [Maintenance windows](Maintenance_Windows.md) rather than leaving Maintenance Mode on. **TBC:** whether Maintenance Mode here and a maintenance window behave the same.
+Precautions: shorter check intervals add load on Nagios and the monitored devices; shorter retention deletes older data permanently. For planned work use [Maintenance windows](Maintenance_Windows.md) rather than leaving Maintenance Mode on. They are not the same: Maintenance Mode pauses Pinpoint's scheduled scans, update checks, security checks and automatic recovery, and alerts are not silenced; a maintenance window is what suppresses alerts for chosen devices.
 
 ## Network Discovery
 
@@ -64,7 +64,7 @@ Networks, ports and the Port → Service tables. See [Network discovery](Network
 
 ## Plugins
 
-Network-wide defaults for plugin checks: the **SNMP OID** and **NCPA metric** tables, and any other plugin with network-wide values. Per-plugin enabling is done in [Plugin Manager](Plugin_Manager.md). **TBC:** the full list of tables on a demo build.
+Network-wide defaults for plugin checks: the **SNMP OID** and **NCPA metric** tables, and any other plugin with network-wide values. Per-plugin enabling is done in [Plugin Manager](Plugin_Manager.md). There are two tables, SNMP OID and NCPA metric; a table appears once its plugin is installed in Plugin Manager.
 
 ## Email
 

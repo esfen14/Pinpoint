@@ -149,8 +149,8 @@ temporary password through a channel you both trust.
 **Sign in**
 
 1. Enter your **email** and **password**.
-2. Optionally tick **Remember me**. **TBC:** what Remember me changes in
-   practice; the session timeout still applies.
+2. Optionally tick **Remember me**. It keeps you signed in for 30 days and
+   ignores the session timeout; use it only on a computer you trust.
 3. Choose the sign-in button. You land on the first page your role allows,
    normally the **Dashboard**.
 
@@ -231,24 +231,23 @@ Sidebar pages (shown only with the right permission):
 
 | Sidebar entry | Address | What it is for |
 |---|---|---|
-| Dashboard | `/dashboard` | Current overall status |
+| Overview | `/dashboard` | Current overall status |
 | Network Health | `/network-health` | Host and service tables, trends, bandwidth |
 | Device Inventory | `/device-inventory` | Every device, its ports and monitoring state |
 | Network Status | `/system-status` | Service table with acknowledgement (heading "Network Service Overview") |
 | Topology | `/topology` | Parent-child map of devices |
-| History | `/history` | Past alerts and notifications |
-| Plugin Manager | `/plugins` | Which kinds of checks are switched on |
+| Plugins | `/plugins` | Which kinds of checks are switched on (Plugin Manager) |
 | NCPA Deployment | `/ncpa-deployment` | Install and track the NCPA agent |
 | Maintenance | `/maintenance` | Planned maintenance windows |
 | Remediation | `/remediation` | Automatic recovery actions and their run log |
-| Reports | `/reports` | Availability and event reports, with export |
+| History | `/history` | Past alerts and notifications |
+| Report | `/reports` | Availability and event reports, with export |
 | System Logs | `/system-logs` | Audit logs and the Nagios log |
 | Manage Accounts | `/accounts` | User accounts |
 | Manage Roles | `/manage-roles` | Roles and permissions |
 | Settings | `/settings` | Personal display preferences and system settings |
 
-**TBC:** the exact sidebar order on a demo build. The confirmed order is that
-Device Inventory, Network Status and Topology appear one after another.
+The entries appear in this order.
 
 Other controls you will meet on most pages:
 
@@ -482,8 +481,7 @@ Full guide: [Network topology](../manuals/Topology.md).
 
 **Expected result:** a list of events in the chosen range.
 
-**Precautions:** **TBC:** the custom date-and-time picker on the page is not
-yet wired to every option the server supports.
+**Precautions:** the custom range takes dates only, not a time of day.
 
 Full guide: [Alerts and notification history](../manuals/Alerts_and_Notification_History.md).
 
@@ -719,8 +717,8 @@ An account has exactly one **role**. A role is a named set of
 | Role | Intended for | Permissions |
 |---|---|---|
 | **Super Admin** | System administrator | Every permission. Its name and permissions cannot be changed |
-| **Manager** | Supervisor or senior staff | **TBC:** exact set on a production install |
-| **Staff** | Day-to-day operators | **TBC:** exact set on a production install |
+| **Manager** | Supervisor or senior staff | None until an administrator grants them |
+| **Staff** | Day-to-day operators | None until an administrator grants them |
 
 Administrators can create more roles in **Manage Roles**.
 
@@ -763,7 +761,7 @@ The **Manage Roles** page is the authoritative list on a running system.
 
 | Task | Who | How |
 |---|---|---|
-| Change own password | Any user | **TBC:** whether there is a self-service change outside the forced change window |
+| Change own password | Any user | No self-service screen exists; only the forced change at first sign-in. Ask an administrator for a reset |
 | Forced password change | Any user | Appears at sign-in when flagged |
 | Reset someone's password | `account.edit` | [4.14](#414-reset-a-forgotten-password) |
 | Deactivate an account | `account.edit` | Edit Account → Status **Inactive** or **Suspended** |

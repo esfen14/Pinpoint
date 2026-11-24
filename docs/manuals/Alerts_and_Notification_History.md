@@ -22,7 +22,7 @@ The **History** page is the record of what happened: every state change of a hos
 ## Find an event
 
 1. Choose **History** in the sidebar. The **Alerts History** tab opens, newest first.
-2. Choose a time range with the presets (last 1 hour, 6 hours, 24 hours, 7 days or 30 days), or enter a custom start and end date. **TBC:** whether the page offers a time of day for custom ranges; the server accepts date-times but the page may offer dates only.
+2. Choose a time range with the presets (last 1 hour, 6 hours, 24 hours, 7 days or 30 days), or enter a custom start and end date. The page offers dates only, not a time of day.
 3. Narrow the list with the filters: **Type** (all, host, service), **Host**, **Service**, **New state** (OK/UP, WARNING, CRITICAL/DOWN, UNKNOWN/UNREACHABLE), **Acknowledged** (all, acknowledged only, unacknowledged only) and **State type** (hard or soft). All filters apply together.
 4. Sort by choosing a column heading. The default is timestamp, newest first.
 5. Choose 25, 50 or 100 rows per page. The count of matching events is shown above the table.
@@ -41,7 +41,7 @@ Select a row to expand it. The detail shows:
 Notes:
 - A problem and its recovery form one **episode**. An acknowledgement belongs to the episode it was made in; a later problem on the same device starts unacknowledged.
 - Soft states are checks that have not yet reached the maximum number of attempts (**Settings → System → Maximum check attempts**); only hard states send notifications.
-- For events near the start of the chosen range, the previous state and duration may be incomplete when Nagios has no earlier record **TBC**.
+- For events near the start of the chosen range, the previous state and duration may be incomplete when Nagios has no earlier record; the event then shows no previous state.
 
 ## Notifications History
 
@@ -67,5 +67,5 @@ Use the link in the expanded row. The page switches tab, finds the exact event e
 - **No events match the current filters:** choose the clear-filters shortcut, or widen the range.
 - **No alert history yet:** history appears as hosts and services change state; a new installation starts empty.
 - **A notification is missing:** quiet windows, maintenance windows, acknowledgements and the notification policy suppress notifications. See [Notification policy](Notification_Policy.md) and [Maintenance windows](Maintenance_Windows.md). If email did not arrive, see [Email settings](Email_Settings.md).
-- Two Nagios records that are identical to the second cannot be told apart and may open the wrong row **TBC**.
+- Two Nagios records that are identical to the second cannot be told apart and may open the wrong row (a known limitation).
 - This page is read-only; acknowledging an alert is done from the Dashboard or Network Health (see [Dashboard and Network Health](Dashboard_and_Network_Health.md)). Reports and exports are in [Service reports](Service_Reports.md).
