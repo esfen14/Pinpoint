@@ -10,8 +10,9 @@
 | Network interface | 1 × Ethernet on the monitored LAN | Wired, static address **[R]** | |
 | Administrator workstation | Any computer with a current browser | | |
 
-**Tested limit.** PinPoint has been measured with at most **14 monitored hosts**
-(containers in a lab), on virtual machines with 4 CPUs and about 4 GB of memory.
+**Tested limit.** Resource use has been measured with at most **14 monitored
+hosts** (containers in a lab), on virtual machines with 4 CPUs and about 4 GB of
+memory. A later timing run saw 15 monitored devices; no recorded run had more.
 Sizing for a larger network is not known. The 2-core minimum has not been tested.
 When monitoring more hosts, watch CPU, memory and free disk space. The measured
 figures and their limits are in [section 10.4](10_Testing_and_validation.md#104-performance-testing).

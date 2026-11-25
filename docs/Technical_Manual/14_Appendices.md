@@ -25,7 +25,7 @@ Struck-through items are answered.
 | 3 | ~~Host firewall~~ | 5.7 | Answered: not configured; the health check only tests `ufw` if active |
 | 4 | ~~Server addressing, DNS, gateway~~ | 5.2, 5.6 | Answered: chosen in the Ubuntu installer's network step |
 | 5 | ~~Production Nginx config~~ | 2.1 | Answered: `/etc/nginx/sites-available/pinpoint`, written by `deploy-pinpoint-web.sh` |
-| 6 | ~~Sizing~~ | 3.1, 10.4 | Answered by stating the tested limit: measured with at most 14 container hosts on 4 CPUs and about 4 GB. Larger sizing is not known; the rows-per-host measurement is deferred (#82) |
+| 6 | ~~Sizing~~ | 3.1, 10.4 | Answered by stating the tested limit: resource use measured with at most 14 container hosts on 4 CPUs and about 4 GB. Larger sizing is not known; the rows-per-host measurement is deferred (#82) |
 | 7 | ~~Supported monitored OSes~~ | 4.1 | Answered from source: NCPA deployment accepts Debian or Ubuntu based hosts only. Lab targets ran Ubuntu 22.04 and 24.04 |
 | 8 | ~~Bootstrap credentials location~~ | 8.4 | Answered: `/root/pinpoint-install-credentials.txt`, removed after first confirmation |
 | 9 | ~~NCPA key and token location~~ | 8.4 | Answered: `/opt/pinpoint/.ssh/pinpoint_ncpa_deploy`; token in `system.db` |

@@ -55,12 +55,26 @@ hosts respond.
 | Disk used | 8.8 GB of 40 GB |
 | `system.db` / `history.db` | 624 KiB / 168 KiB |
 
+**Response and start-up times** (QA lab appliance, 4 CPUs, 4 GB, one client, no
+concurrent load; reports in `docs/test-runs/`):
+
+| Metric | Result |
+|---|---|
+| Restart of `pinpoint-gunicorn` until the dashboard answers, median of 3 | 3.891 s (limit 10 s, TC-NFR-07) |
+| Network Health availability request, slowest of 10, 10 monitored devices | 0.070 s (limit 5 s, TC-NFR-08) |
+| Availability report request, slowest of 10, 10 monitored devices | 0.030 s (limit 5 s, TC-NFR-08) |
+
+The availability timings used a small Nagios history (about 192 KB), so they do
+not show how a long-running appliance responds.
+
 **Current limitations of this testing:**
 
-- No more than 14 hosts were monitored, and they were containers, not real
-  network devices.
+- Resource figures come from at most 14 hosts, which were containers, not real
+  network devices. The largest number seen monitored in any recorded run is 15
+  devices.
 - Only the 4 CPU, 4 GB configuration was measured.
-- Peak CPU, response times and the duration of periodic checks were not recorded.
+- Peak CPU and the duration of periodic checks were not recorded. Response times
+  were measured only for the requests above.
 - Database and disk growth over days or months was not measured. The
   rows-per-host measurement is deferred (#82).
 - No test at a production host count was run.
@@ -94,4 +108,7 @@ Use the black-box case catalog and QA journeys; record results in
 
 Routes return standard `success`/`error` envelopes; validation uses guard
 clauses; failed commits roll back; Nagios-rejected configs roll back with
-`422`; settings conflicts return `409`.
+`422`; settings conflicts return `409`. A signed-out request to a protected route
+returns `401` and an unknown path under `/api` returns `404`, both in the same
+envelope; a wrong method on a known path (`405`) and unknown paths outside `/api`
+keep Flask's default HTML pages.

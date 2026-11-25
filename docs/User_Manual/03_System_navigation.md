@@ -53,6 +53,7 @@ Other controls you will meet on most pages:
 | **Unacknowledge** | Acknowledged rows | Remove the acknowledgement |
 | **Acknowledge all** | Dashboard Active Alerts | Acknowledge every visible unacknowledged alert with one comment |
 | **Check now** | Host or service drawer | Ask Nagios to check the item immediately |
+| **Toggle sidebar** | Header | Hide or show the sidebar so the page can use the full width. It is shown again when the page is reloaded; sign out stays available in the header's account menu |
 | Bell | Header | Recent notifications; a count shows unread items |
 | **Save Changes** / **Discard Changes** | Settings | Save or undo edits on the current tab |
 | **Reset to Defaults** | Some settings | Restore defaults (not saved until you choose **Save Changes**) |

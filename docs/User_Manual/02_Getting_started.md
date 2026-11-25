@@ -4,7 +4,7 @@
 
 | Item | Requirement |
 |---|---|
-| Device | A desktop or laptop computer. Pages fit a tablet-sized screen in an emulated check, not on a real tablet. Phones are not supported: pages do not fit the screen |
+| Device | A desktop or laptop computer. Pages fit a tablet-sized screen in an emulated check, not on a real tablet. Phones are not supported: pages are not laid out for a phone-width screen |
 | Browser | A current version of Chrome, Edge or Firefox (at least Chrome or Edge 111, Firefox 128) |
 | Network | Your computer must reach the PinPoint server over the organisation's network |
 | Account | A PinPoint account created by an administrator. There is no self-registration |
@@ -54,6 +54,6 @@ After that, the administrator should, in order:
 | Area | What it holds |
 |---|---|
 | **Sidebar** (left) | Links to the pages your role allows. Pages you cannot use are hidden |
-| **Header** (top) | Current page name, the notification **bell**, your account and sign-out |
+| **Header** (top) | The **Toggle sidebar** button, current page name, the notification **bell**, your account and sign-out |
 | **Main area** | The page you opened |
 | **Maintenance banner** | A coloured strip across the top while Maintenance Mode is on |

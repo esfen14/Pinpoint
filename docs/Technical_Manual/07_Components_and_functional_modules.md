@@ -106,4 +106,6 @@ only after a first manual scan.
 
 `AdminLayout`, `Sidebar`, `Header`, `PageAccessGuard`,
 `SessionTimeoutWatcher`, `MaintenanceBanner`; `pageAccess.ts` maps routes to
-permissions (usability only; the server enforces).
+permissions (usability only; the server enforces). `SidebarContext` holds
+whether the sidebar is shown; only `AdminLayout` leaves room for it, so pages add
+no sidebar offset of their own.

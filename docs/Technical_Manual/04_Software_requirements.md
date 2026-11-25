@@ -66,6 +66,7 @@ VirtualBox (VM lab), Playwright (QA smokes). See
   27.2 at 1366 px. This was a load check, not a test of every control.
 - Screen size (emulated, not real devices): the six pages fit a tablet-width
   viewport (712 px) without page-level sideways scrolling. On an emulated Pixel 7
-  they do not fit: the sidebar has a fixed width, and the header's **Toggle
-  sidebar** button does nothing because no component listens for its event
-  ([#342](https://github.com/esfen14/Pinpoint/issues/342)).
+  they did not fit. Phone-sized screens are not supported. That check ran before
+  the header's **Toggle sidebar** button was made to hide the sidebar
+  ([#342](https://github.com/esfen14/Pinpoint/issues/342)); screen sizes have not
+  been measured again since.
