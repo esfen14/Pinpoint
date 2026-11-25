@@ -15,6 +15,7 @@ from app import db
 from app.network_discovery.create_host_cfg import regenerate_and_apply_config_status
 
 from app.api.user import user_bp
+from app.api.user.login import stamp_session
 from app.logging.user_activity import create_user_log, create_audit_log
 from app.api.helper.settings_flags import is_audit_logging_enabled
 
@@ -925,6 +926,7 @@ def change_password():
             current_app.logger.exception("Failed to change password.")
             return error("An error occurred.", 400)
 
+        stamp_session(current_user)
         return success(message="Password changed.")
     except Exception:
         current_app.logger.exception("An unexpected error occured.")
@@ -1007,6 +1009,7 @@ def complete_setup():
             current_app.logger.exception("Failed to complete first-run setup.")
             return error("An error occurred.", 400)
 
+        stamp_session(current_user)
         config = _apply_contact_change()
         return success(config, message="Setup complete.")
     except Exception:

@@ -356,9 +356,7 @@ class TestRoutes:
         db_session.session.add(user)
         db_session.session.commit()
         ups = add_plugin("check_ups")
-        with client.session_transaction() as session:
-            session["_user_id"] = str(user.UserID)
-            session["_fresh"] = True
+        client.post("/api/user/login", json={"email": user.Email, "password": "ViewerPass1!"})
 
         assert client.get(checks_url(ups)).status_code == 403
         assert client.post(checks_url(ups), json={}).status_code == 403

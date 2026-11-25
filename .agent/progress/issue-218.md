@@ -34,7 +34,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 ## Plan
 
-1. [ ] Session revocation and suspended message: `server/app/api/user/login.py`, `management.py`,
+1. [x] Session revocation and suspended message: `server/app/api/user/login.py`, `management.py`,
        `server/tests/unit/test_session_revocation.py`.
 2. [ ] Account change email: `server/app/account_notifications.py`, `smtp_settings.py`,
        `management.py`, `password_requests.py`, `server/tests/unit/test_account_notifications.py`.
@@ -52,15 +52,16 @@ One row per loop round, newest last.
 | 1 | none (source reading only) | none | blocked on decisions |
 | 2 | recorded owner answers; checked mail support | none | blocked on email scope |
 | 3 | owner said go; posted condition on #218; installed deps; wrote plan | none | plan ready |
+| 4 | session stamp, suspended message; four tests that edit the signed-in account now sign in again | unit tests (full run, then affected files) | green |
 
 ## State for the next session
 
-- Last check run (exact command): none yet.
-- Result (first failing lines, or "green"): n/a
+- Last check run (exact command): pytest on test_smtp_relays.py, test_smtp_settings.py, test_session_revocation.py
+- Result (first failing lines, or "green"): green
 - Hypothesis: a keyed stamp of password hash, role, email, status and forced-change flag in the
   session ends sessions without a database migration. Sessions without a stamp are rejected, so
   everyone signs in once after upgrade.
-- Next action (one specific step, not "continue"): write test_session_revocation.py.
+- Next action (one specific step, not "continue"): write test_account_notifications.py.
 
 ## Decisions and notes
 
