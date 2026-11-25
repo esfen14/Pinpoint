@@ -49,8 +49,8 @@ User Manual and guides; each is a "click it and see".
 
 ## B. Browser and device checks (a person with the devices)
 
-- [ ] Supported browsers and versions. (`User_Manual.md:124`, `Technical_Manual.md:356`)
-- [ ] Use on tablets and phones. (`User_Manual.md:123`)
+- [x] Supported browsers and versions. *(2026-11-25: minimums from the build toolchain; load check in Playwright Chromium, Firefox and WebKit. Real Edge and Safari not tried)* (`User_Manual.md:124`, `Technical_Manual.md:356`)
+- [x] Use on tablets and phones. *(2026-11-25, emulation only: tablet width fits, phone does not, and the sidebar toggle does nothing; a real-device check is still worth doing)* (`User_Manual.md:123`)
 
 ## C. Answer from the installer repo (`PinPoint-Installer`), not this repo
 
@@ -69,12 +69,21 @@ Done 2026-11-19 by reading the public installer repo; answers are in the Technic
 - [ ] Support contact name, email and hours. (`User_Manual.md:835`)
 - [ ] University IT contact after hand-off. (`Hand_Off.md:38`)
 - [ ] Network addressing, VLANs and firewall placement, site design. (`Technical_Manual.md:207`, `:389`)
-- [ ] Which Linux distributions are supported for NCPA deployment. (`Technical_Manual.md:303`; the lab used Ubuntu 22.04 and 24.04)
+- [x] Which Linux distributions are supported for NCPA deployment. *(answered from source 2026-11-25: Debian or Ubuntu based)* (`Technical_Manual.md:303`)
 - [ ] Hand-off reviewer for the installer: "not reviewed for the manuals". (`Hand_Off.md:27`)
+
+### Questions to send (group D)
+
+1. Who is the user support contact (name, email, hours)?
+2. Who is the university IT contact after hand-off?
+3. What are the site's addressing, VLANs and firewall placement?
+4. Who reviews the installer repository for the hand-off?
+5. How many hosts will the production site monitor? (needed for sizing in group E)
 
 ## E. Needs a measurement
 
-- [ ] Server sizing for the production host count; measured bandwidth on a named appliance; a recorded performance test and rows-per-host figure. (`Technical_Manual.md:269`, `:430`, `:839`)
+- [x] Measured bandwidth on a named appliance, and a recorded lab measurement. *(2026-11-25, QA appliance, one scan)* (`Technical_Manual.md` 5.8, 10.4)
+- [ ] Server sizing for the production host count, a test at that count, and the rows-per-host figure (#82). Needs the production host count. (`Technical_Manual.md` 3.1, 10.4)
 
 ## Suggested order
 

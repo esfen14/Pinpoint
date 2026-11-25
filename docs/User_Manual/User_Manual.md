@@ -120,8 +120,8 @@ report.
 
 | Item | Requirement |
 |---|---|
-| Device | A desktop or laptop computer. **TBC:** use on tablets and phones has not been tested |
-| Browser | A current version of Chrome, Edge or Firefox. **TBC:** the list of supported browsers and versions has not been confirmed |
+| Device | A desktop or laptop computer. Pages fit a tablet-sized screen in an emulated check, not on a real tablet. Phones are not supported: pages do not fit the screen |
+| Browser | A current version of Chrome, Edge or Firefox (at least Chrome or Edge 111, Firefox 128) |
 | Network | Your computer must reach the PinPoint server over the organisation's network |
 | Account | A PinPoint account created by an administrator. There is no self-registration |
 | Knowledge | Basic computer use. No Nagios or networking knowledge is needed to read the Dashboard |

@@ -20,7 +20,7 @@ Every route in the web interface (`client/src/App.tsx`) is listed here.
 | Plugin Manager (`/plugins`) | [Plugin Manager](Plugin_Manager.md) | Your own checks: [Custom checks](Custom_Checks_Manual.md), [Application checks](Application_Checks.md) |
 | NCPA Deployment (`/ncpa-deployment`) | [NCPA deployment](NCPA_Deployment.md) | |
 | Maintenance (`/maintenance`) | [Maintenance windows](Maintenance_Windows.md) | |
-| Remediation (`/remediation`) | [Automatic recovery](Automatic_Recovery.md), [Remote service restart](Remote_Service_Restart.md) | **TBC:** no single walkthrough of the page itself |
+| Remediation (`/remediation`) | [Automatic recovery](Automatic_Recovery.md), [Remote service restart](Remote_Service_Restart.md) | |
 | Reports (`/reports`) | [Service reports](Service_Reports.md) | |
 | System Logs (`/system-logs`) | [System logs](System_Logs.md) | Nagios log: [Storage and Nagios logs](Storage_and_Nagios_Logs.md) |
 | Manage Accounts (`/accounts`) | [Sign in, accounts and roles](Login_Accounts_and_Roles.md) | |

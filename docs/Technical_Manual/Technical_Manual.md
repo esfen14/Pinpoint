@@ -268,8 +268,7 @@ with a list of differences.
 | Administrator workstation | Any computer with a current browser | | |
 
 **TBC:** sizing for the production site's host count. Lab figures above come
-from a 5–15 device lab, not a production measurement, and no named appliance
-benchmark exists yet.
+from a 5–15 device lab (see 10.4), not a production measurement.
 
 ### 3.2 Routers and switches
 
@@ -301,7 +300,7 @@ None. A UPS for the server is **[R]**.
 | Role | OS | Basis |
 |---|---|---|
 | PinPoint appliance | Ubuntu Server 22.04.5 LTS | Installer contract |
-| Monitored Linux hosts (NCPA deployment) | **TBC:** supported distributions | NCPA run reports used lab Linux targets |
+| Monitored Linux hosts (NCPA deployment) | Debian or Ubuntu based; the deployment refuses others ("Unsupported distro") and installs from `repo.nagios.com` for the host's release codename | Lab targets ran Ubuntu 22.04 and 24.04; other releases untested |
 | Monitored Windows hosts | Windows 10 observed with NCPA 3.5.0 (manual install) | #274 report |
 | Development | Any OS with Python 3.14 and Node 22; dev container provided | `.devcontainer/` |
 
@@ -354,7 +353,16 @@ VirtualBox (VM lab), Playwright (QA smokes). See
 - `interval_length=60` must hold in `nagios.cfg`.
 - `check_ncpa.py` needs a `python` command or a python3 shebang on the
   appliance (fixed in the installer).
-- Browser support: **TBC**.
+- Browser support. The client build targets the toolchain minimums: Chrome and
+  Edge 111, Safari 16.4 (Vite 8), and Firefox 128 (Tailwind CSS 4; Vite alone
+  allows 114). Older versions were not tested. On 2026-11-25 sign-in and six pages
+  (Dashboard, Network Health, Device Inventory, Topology, Remediation, Settings)
+  loaded with no page errors in Playwright's Chromium 156, Firefox 157 and WebKit
+  27.2 at 1366 px. This was a load check, not a test of every control.
+- Screen size (emulated, not real devices): the six pages fit a tablet-width
+  viewport (712 px) without page-level sideways scrolling. On an emulated Pixel 7
+  they do not fit: the sidebar has a fixed width, and the header's **Toggle
+  sidebar** button does nothing because no component listens for its event.
 
 ---
 
@@ -430,7 +438,9 @@ only verifies that, if `ufw` is active, it allows port 80.
 ### 5.8 Bandwidth and connectivity
 
 Monitoring traffic is small (periodic checks every 1–15 minutes); discovery
-scans are bursty. **TBC:** measured bandwidth on a named appliance.
+scans are bursty. Measured on the QA lab appliance (4 CPU, 3.9 GB, 2026-11-25),
+one discovery scan of a `/27` with 14 container hosts moved about 8.5 MB in and
+8.6 MB out on the monitored interface over 226 s, roughly 0.6 Mbit/s on average.
 
 ### 5.9 Remote access
 
@@ -865,7 +875,16 @@ community into tickets), `curl -k https://<host>:5693/` for NCPA reachability
 
 ### 10.4 Performance testing
 
-**TBC:** no recorded performance test. The rows-per-host measurement is
+One lab measurement exists; it is not a load test.
+
+| Measurement (2026-11-25) | Result |
+|---|---|
+| QA appliance, one scan of a `/27`, 14 hosts | 226 s; CPU 1.4% busy on average; memory 357 to 437 MB used |
+| Databases after that scan | `system.db` 628 KB, `history.db` 84 KB |
+| Another lab VM, one host, ports 1 to 10000 | 10 min 52 s |
+| Fresh ISO install, 4 CPU, one host, idle | 426 MB of 3911 MB memory used; 8.8 GB of 40 GB disk used |
+
+**TBC:** a test at the production host count. The rows-per-host measurement is
 deferred (#82). **[R]** Measure poll duration and database growth at the
 expected host count.
 
