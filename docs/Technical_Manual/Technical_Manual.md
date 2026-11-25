@@ -267,8 +267,11 @@ with a list of differences.
 | Network interface | 1 × Ethernet on the monitored LAN | Wired, static address **[R]** | |
 | Administrator workstation | Any computer with a current browser | | |
 
-**TBC:** sizing for the production site's host count. Lab figures above come
-from a 5–15 device lab (see 10.4), not a production measurement.
+**Tested limit.** PinPoint has been measured with at most **14 monitored hosts**
+(containers in a lab), on virtual machines with 4 CPUs and about 4 GB of memory.
+Sizing for a larger network is not known. The 2-core minimum has not been tested.
+When monitoring more hosts, watch CPU, memory and free disk space. The measured
+figures and their limits are in [section 10.4](#104-performance-testing).
 
 ### 3.2 Routers and switches
 
@@ -878,18 +881,44 @@ community into tickets), `curl -k https://<host>:5693/` for NCPA reachability
 
 ### 10.4 Performance testing
 
-One lab measurement exists; it is not a load test.
+These are single lab measurements taken on 2026-11-25 (and one earlier scan
+timing). They are not a load test.
 
-| Measurement (2026-11-25) | Result |
+**Discovery scan, 14 container hosts** (QA lab appliance, 4 CPUs, 3.9 GB memory,
+one scan of a `/27`):
+
+| Metric | Result |
 |---|---|
-| QA appliance, one scan of a `/27`, 14 hosts | 226 s; CPU 1.4% busy on average; memory 357 to 437 MB used |
-| Databases after that scan | `system.db` 628 KB, `history.db` 84 KB |
-| Another lab VM, one host, ports 1 to 10000 | 10 min 52 s |
-| Fresh ISO install, 4 CPU, one host, idle | 426 MB of 3911 MB memory used; 8.8 GB of 40 GB disk used |
+| Scan duration | 226 s (3 min 46 s) |
+| CPU busy, average | 1.4% |
+| Memory used, minimum to maximum | 357 to 437 MB |
+| Traffic on the monitored interface | about 8.5 MB in, 8.6 MB out (about 0.6 Mbit/s average) |
+| `system.db` after the scan | 628 KB |
+| `history.db` after the scan | 84 KB |
 
-**TBC:** a test at the production host count. The rows-per-host measurement is
-deferred (#82). **[R]** Measure poll duration and database growth at the
-expected host count.
+**Wide port range:** on another lab VM, scanning one host on ports 1 to 10000
+took 10 min 52 s. Scan time depends strongly on the port range and on how the
+hosts respond.
+
+**Idle** (fresh ISO install, 4 CPUs, 1 monitored host):
+
+| Metric | Result |
+|---|---|
+| Memory used | 426 MB of 3911 MB |
+| Disk used | 8.8 GB of 40 GB |
+| `system.db` / `history.db` | 624 KiB / 168 KiB |
+
+**Current limitations of this testing:**
+
+- No more than 14 hosts were monitored, and they were containers, not real
+  network devices.
+- Only the 4 CPU, 4 GB configuration was measured.
+- Peak CPU, response times and the duration of periodic checks were not recorded.
+- Database and disk growth over days or months was not measured. The
+  rows-per-host measurement is deferred (#82).
+- No test at a production host count was run.
+
+**[R]** Measure poll duration and database growth at the expected host count.
 
 ### 10.5 Security testing
 

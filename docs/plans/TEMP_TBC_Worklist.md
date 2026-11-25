@@ -75,7 +75,7 @@ Done 2026-11-19 by reading the public installer repo; answers are in the Technic
 ## E. Needs a measurement
 
 - [x] Measured bandwidth on a named appliance, and a recorded lab measurement. *(2026-11-25, QA appliance, one scan)* (`Technical_Manual.md` 5.8, 10.4)
-- [ ] Server sizing for the production host count, a test at that count, and the rows-per-host figure (#82). Needs the production host count. (`Technical_Manual.md` 3.1, 10.4)
+- [x] Server sizing. *(team, 2026-11-25: state the tested limit of 14 hosts and the measured metrics instead; production-scale test not done, rows-per-host stays in #82)* (`Technical_Manual.md` 3.1, 10.4)
 
 ## Suggested order
 
