@@ -1,7 +1,7 @@
 # Issue #218: TC-ACC-05: Clarify the recorded sign-out warning failure
 
 Branch: `issue-218-signout-warning`
-Status: in-progress
+Status: blocked
 <!-- Status is one of: in-progress | blocked | ready-for-review -->
 
 ## Finish condition
@@ -14,15 +14,15 @@ items agreed in the 2026-11-25 issue comment.
 - [ ] Preserve the historical FAIL; attach the new result with tested build and evidence (owner).
 - [ ] Document the disposition if only the login-page notice was meant.
 - [ ] Record and link any failed expectation as a defect.
-- [ ] A role, status, password or email change signs the user out on the next request; name and
+- [x] A role, status, password or email change signs the user out on the next request; name and
       alert-setting changes do not; own "Change password" keeps the user signed in.
-- [ ] The open page then goes to `/login`.
-- [ ] Suspended login shows "This account is suspended. Contact the admin for any concerns.";
+- [x] The open page then goes to `/login`.
+- [x] Suspended login shows "This account is suspended. Contact the admin for any concerns.";
       Inactive keeps "Account inactive."
-- [ ] Admin password reset (Edit Account or forgot-password request), email or role change emails
+- [x] Admin password reset (Edit Account or forgot-password request), email or role change emails
       the account (old and new address), never the password; on mail failure the change is saved
       and the admin is told.
-- [ ] Specs, TC-ACC-05 wording, manuals and automated tests match.
+- [x] Specs, TC-ACC-05 wording, manuals and automated tests match.
 
 Requirement coverage (every requirement the issue states, and the check that proves it):
 
@@ -41,7 +41,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 3. [x] Client: redirect on 401 and page change (`SessionTimeoutWatcher.tsx`, `lib/api.ts`,
        `CurrentUserContext.tsx`); dialog wording and mail notice (`ManageAccountsPage.tsx`,
        `PasswordRequestsPanel.tsx`); tests.
-4. [ ] Specs, QA catalog TC-ACC-05, manuals; verify all.
+4. [x] Specs, QA catalog TC-ACC-05, manuals; verify all.
 
 ## Round log
 
@@ -55,15 +55,14 @@ One row per loop round, newest last.
 | 4 | session stamp, suspended message; four tests that edit the signed-in account now sign in again | unit tests (full run, then affected files) | green |
 | 5 | account change email; client redirect, dialog wording, mail notice | affected pytest files; two vitest files | green |
 | 6 | specs, TC-ACC-05, manuals, QA fingerprints; reverted CurrentUserContext change (pathname check covers it) | scripts/verify.sh docs | green |
+| 7 | full verification; re-read issue (no new comments) | scripts/verify.sh all | green: 4485 passed, 14 skipped; 1095 frontend tests |
 
 ## State for the next session
 
-- Last check run (exact command): scripts/verify.sh docs
+- Last check run (exact command): scripts/verify.sh all
 - Result (first failing lines, or "green"): green
-- Hypothesis: a keyed stamp of password hash, role, email, status and forced-change flag in the
-  session ends sessions without a database migration. Sessions without a stamp are rejected, so
-  everyone signs in once after upgrade.
-- Next action (one specific step, not "continue"): run scripts/verify.sh all.
+- Hypothesis: none; the agreed behaviour is implemented.
+- Next action (one specific step, not "continue"): the owner runs the manual TC-ACC-05 check on a build of this branch and records the result; then remove this file and mark the pull request ready.
 
 ## Decisions and notes
 
