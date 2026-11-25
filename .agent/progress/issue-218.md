@@ -33,6 +33,7 @@ One row per loop round, newest last.
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 1 | none (source reading only) | none | blocked on decisions |
+| 2 | recorded owner answers; checked mail support | none | blocked on email scope |
 
 ## State for the next session
 
@@ -55,7 +56,16 @@ Source findings:
 - `LoginPage.tsx` already shows an `alert` with the server message; a suspended or inactive
   account gets "Account inactive." (403) after correct credentials.
 
-Questions for a person:
+Answers from the user, 2026-11-25:
+
+- Q1: role or password change signs the user out immediately.
+- Q2: Suspended or Inactive signs the user out immediately.
+- Q3: asked whether an email would suffice. Yes: `server/app/smtp_settings.py` already
+  sends over SMTP (test email only so far). Trigger events and behaviour when mail is not
+  configured are still to be confirmed.
+- Q4: agreed to the suspended login message.
+
+Questions asked earlier:
 
 1. Does the 2026-11-17 comment replace REQ-ACC-04 / TC-ACC-05 (immediate sign-out on the next
    request)? Does "at the idle session limit" also apply to Suspended and Inactive accounts?
