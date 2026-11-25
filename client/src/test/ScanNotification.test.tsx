@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Header } from '../components/layout/Header'
+import { SidebarProvider } from '../contexts/SidebarContext'
 
 const savedSettings = { notifications: false, maintenanceMode: false }
 
@@ -42,7 +43,9 @@ function scanStatus(overrides: Record<string, unknown> = {}) {
 function renderHeader() {
   return render(
     <MemoryRouter initialEntries={['/dashboard']}>
-      <Header />
+      <SidebarProvider>
+        <Header />
+      </SidebarProvider>
     </MemoryRouter>,
   )
 }
