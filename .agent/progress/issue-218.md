@@ -42,6 +42,8 @@ Requirement coverage (every requirement the issue states, and the check that pro
        `CurrentUserContext.tsx`); dialog wording and mail notice (`ManageAccountsPage.tsx`,
        `PasswordRequestsPanel.tsx`); tests.
 4. [x] Specs, QA catalog TC-ACC-05, manuals; verify all.
+5. [x] Owner request: check the session every 10 seconds (`CurrentUserContext.tsx`,
+       `SessionTimeoutWatcher.tsx`, tests, specs, QA fingerprints).
 
 ## Round log
 
@@ -56,6 +58,7 @@ One row per loop round, newest last.
 | 5 | account change email; client redirect, dialog wording, mail notice | affected pytest files; two vitest files | green |
 | 6 | specs, TC-ACC-05, manuals, QA fingerprints; reverted CurrentUserContext change (pathname check covers it) | scripts/verify.sh docs | green |
 | 7 | full verification; re-read issue (no new comments) | scripts/verify.sh all | green: 4485 passed, 14 skipped; 1095 frontend tests |
+| 8 | 10-second session check; local lab Playwright run (throwaway script, not committed) | vitest (1103 passed); lab run 15/15, then click-to-another-page 1/1 | green |
 
 ## State for the next session
 
@@ -65,6 +68,10 @@ One row per loop round, newest last.
 - Next action (one specific step, not "continue"): the owner runs the manual TC-ACC-05 check on a build of this branch and records the result; then remove this file and mark the pull request ready.
 
 ## Decisions and notes
+
+Owner, 2026-11-25 (chat): the recorded FAIL was wrong because the warning to the signed-out
+user was never required. A disposition comment was drafted and is awaiting approval to post.
+The owner reports their own lab testing successful so far.
 
 Source findings:
 

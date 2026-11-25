@@ -100,7 +100,10 @@ setting and the permissions of the assigned role are not in the stamp, so changi
 them keeps users signed in. `change-password` and `complete-setup` re-stamp the
 caller's own session after saving; an administrator who edits their own role,
 email, status or password through `PUT /api/user/accounts/<id>` is signed out.
-Sessions created before this behaviour carry no stamp, so everyone signs in once
+The client's 10-second
+`/me` check counts as a request, so a visible open page renews a remembered
+session's 30 days; the browser's idle timer still ends inactive sessions that are
+not remembered. Sessions created before this behaviour carry no stamp, so everyone signs in once
 after the upgrade. No database change is involved.
 
 Login with the correct password refuses a Suspended account with 403 "This account

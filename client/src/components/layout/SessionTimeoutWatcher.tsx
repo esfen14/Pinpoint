@@ -19,8 +19,9 @@ import { UNAUTHORIZED_EVENT } from '../../lib/api'
 // keeps other open tabs signed in too.
 //
 // The back end also ends a session when the account is changed (role, status,
-// password or email). This notices that on the next page change, or as soon as
-// an API request is refused, and goes to the login page.
+// password or email). This goes to the login page on the next page change, or as
+// soon as an API request is refused, including CurrentUserContext's check every
+// 10 seconds.
 
 export const LAST_ACTIVITY_KEY = 'pinpoint-last-activity'
 
@@ -92,12 +93,19 @@ export function SessionTimeoutWatcher() {
     writeLastActivity(Date.now())
   }, [])
 
+  // A request refused after the idle period has passed (for example the first
+  // one after the computer slept) still gets the "session expired" notice.
   useEffect(() => {
-    const handleUnauthorized = () => endSession(navigateRef.current, false)
+    const handleUnauthorized = () => {
+      const last = readLastActivity()
+      const expired =
+        !rememberedRef.current && last !== null && Date.now() - last >= timeoutMs
+      endSession(navigateRef.current, expired)
+    }
 
     window.addEventListener(UNAUTHORIZED_EVENT, handleUnauthorized)
     return () => window.removeEventListener(UNAUTHORIZED_EVENT, handleUnauthorized)
-  }, [])
+  }, [timeoutMs])
 
   // Not signed in on page load or page change: go to login without the "session
   // expired" notice. A leftover activity timestamp can't tell a timed-out

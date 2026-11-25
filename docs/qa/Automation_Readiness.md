@@ -11,6 +11,11 @@ session continues: the permission and history cases sign in afresh and only
 navigate and read; TC-ACC-08 logs out before switching accounts; the TC-ACC-10
 cleanup edits only the inactive accounts it created. The client changes affect a
 401 response and the account save messages, which these assertions do not expect.
+The later 10-second session check in `CurrentUserContext.tsx` was reviewed
+the same way for the cases that hash it (TC-ACC-09, TC-ACC-10, TC-ACC-08, TC-ROL-04, TC-SS-04, TC-HIS-01, TC-PLG-07, TC-NCPA-08, TC-RPT-07, TC-LOG-05, TC-DI-02, TC-DI-03, TC-DASH-07, TC-DI-07, TC-DI-08, TC-HIS-04): it
+repeats a read-only `/api/user/me` request, re-renders only when the account data
+changes, and sends a signed-out page to `/login`, which these assertions do not
+rely on avoiding.
 Only those dependency fingerprints were refreshed in `automation-coverage.json`,
 together with the catalog and case fingerprints after TC-ACC-05's steps and
 expected items changed (it stays unmapped; a parsed-field comparison showed no

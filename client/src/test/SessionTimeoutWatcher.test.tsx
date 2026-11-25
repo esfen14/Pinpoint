@@ -5,7 +5,7 @@ import {
   LAST_ACTIVITY_KEY,
   SessionTimeoutWatcher,
 } from '../components/layout/SessionTimeoutWatcher'
-import { apiGet } from '../lib/api'
+import { apiGet, UNAUTHORIZED_EVENT } from '../lib/api'
 import { LoginPage } from '../pages/LoginPage'
 
 // 1-minute timeout keeps the timer arithmetic readable.
@@ -167,6 +167,19 @@ describe('SessionTimeoutWatcher', () => {
     })
 
     expect(screen.getByText('Log In to your Account')).toBeInTheDocument()
+  })
+
+  it('keeps the expired notice when the refused request comes after the idle timeout', async () => {
+    renderDashboard()
+    await advance(0)
+
+    // As after the computer slept: the clock moved on before any timer ran.
+    vi.setSystemTime(Date.now() + 5 * 60_000)
+    act(() => {
+      window.dispatchEvent(new Event(UNAUTHORIZED_EVENT))
+    })
+
+    expect(screen.getByText(EXPIRED_NOTICE)).toBeInTheDocument()
   })
 
   it('redirects to login without the notice when there was no session', async () => {
