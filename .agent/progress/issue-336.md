@@ -35,10 +35,10 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 1. [x] Catalog: `ssh-alt02` gets an `ncpa` 5693 listener; rule relaxed for it only. `demo/targets/catalog.py`, `manifest.json`, `test_defense.py`.
 2. [x] Image: `ncpa-target` stage (sudo, curl, gpg, cached Nagios repo, `labadmin`, systemctl shim), default stage unchanged. `Dockerfile`, new `fetch_mirror.py`, `systemctl_shim.py` and tests.
-3. [ ] Node: with the password secret mounted, ssh-alt02 enables password SSH (UsePAM, sftp), sets the password, trusts a lab certificate, runs the mirror on 127.0.0.1:443, restarts NCPA on baseline. `node.py`, `test_runtime.py`.
-4. [ ] Creation: second image tag, private password file, mount, add-host, memory/pids; presenter validates the mount. `create.py`, `setup.py`, `presenter.py` and tests; new tests in `scripts/verify.sh`.
-5. [ ] `setup` plan and `preflight` report the deploy target.
-6. [ ] Live build of both images and an offline-network smoke of the deploy helper in a throwaway container.
+3. [x] Node: with the password secret mounted, ssh-alt02 enables password SSH (UsePAM, sftp), sets the password, trusts a lab certificate, runs the mirror on 127.0.0.1:443, restarts NCPA on baseline. `node.py`, `test_runtime.py`.
+4. [x] Creation: second image tag, private password file, mount, add-host, memory/pids; presenter validates the mount. `create.py`, `setup.py`, `presenter.py` and tests; new tests in `scripts/verify.sh`.
+5. [x] `setup` plan and `preflight` report the deploy target.
+6. [x] Live build of both images and an offline-network smoke of the deploy helper in a throwaway container.
 7. [ ] Live lab run through the NCPA Deployment page, failure paths; report in `docs/test-runs/`. Needs the owner (sudo, appliance VM).
 8. [ ] Docs: `Local_Lab.md`, `NCPA_Deployment.md`, `demo/targets/README.md`, `demo/USAGE.md`, `Demo_Lab_QA_Handoff.md`, spec, `Implementation_Status.md`.
 
@@ -51,13 +51,15 @@ One row per loop round, newest last.
 | 0 | Plan written | none | plan only |
 | 1 | Catalog rule and ssh-alt02 NCPA listener | demo/targets tests | green |
 | 2 | ncpa-target image stage, mirror fetch (curl: server refuses urllib), systemctl shim | test_deploy_target.py; docker build --target ncpa-target | green, NCPA 3.5.1 mirrored |
+| 3 | node.py deploy-target setup; creation, presenter, setup report | demo/targets + demo/appliance tests | green |
+| 4 | Sandbox smoke: throwaway ssh-alt02 on an internal no-route network, server's real deploy functions | wrong password, changed fingerprint, deploy, restart, redeploy, cleanup, redeploy | all as expected; memory peak 262 MiB of 512; sandbox removed |
 
 ## State for the next session
 
-- Last check run (exact command): docker build -f demo/targets/Dockerfile --target ncpa-target -t pp336-ncpa:dev .
+- Last check run (exact command): for t in demo/targets/test_*.py demo/appliance/test_*.py; do python3 -I $t; done
 - Result (first failing lines, or "green"): green
 - Hypothesis: none
-- Next action (one specific step, not "continue"): plan step 3, node.py deploy-target setup with tests in test_runtime.py.
+- Next action (one specific step, not "continue"): plan step 8 docs, then `scripts/verify.sh all`, then step 7 with the owner.
 
 ## Decisions and notes
 
@@ -68,3 +70,4 @@ One row per loop round, newest last.
 - `useradd` leaves the deploy account locked ("!"), which sshd refuses without PAM, so ssh-alt02 needs `UsePAM yes`.
 - Deploy features switch on only when `/run/secrets/deploy-password` is mounted, so the legacy guest compose is unaffected.
 - Existing labs need `demo/demo destroy --apply` then `setup --apply` (new image).
+- Sandbox NCPA disk nodes are only `|data` and `|identity` (overlayfs is excluded), which are bind mounts of the host filesystem (92% full on 2026-11-25), so the live disk check reflects the host.

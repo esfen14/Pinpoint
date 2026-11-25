@@ -9,7 +9,11 @@ import unittest
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from targets import fetch_mirror, systemctl_shim
+from targets import fetch_mirror, node, systemctl_shim
+from targets.catalog import load_catalog
+
+CATALOG = load_catalog()
+TARGET = CATALOG.target('ssh-alt02')
 
 OLD = b'old package'
 NEW = b'new package'
@@ -86,6 +90,78 @@ class ShimTests(unittest.TestCase):
              patch.object(systemctl_shim, 'PIDFILE', Path(directory) / 'pid'):
             systemctl_shim.PIDFILE.write_text('1')
             self.assertIsNone(systemctl_shim.running_pid())
+
+
+class NodeTests(unittest.TestCase):
+    def secret(self, directory, value):
+        path = Path(directory) / 'deploy-password'
+        path.write_text(value)
+        path.chmod(0o600)
+        return patch.object(node, 'DEPLOY_SECRET', path)
+
+    def test_deploy_features_need_both_the_target_and_its_mounted_password(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with patch.object(node, 'DEPLOY_SECRET', Path(directory) / 'absent'):
+                self.assertFalse(node.deploy_enabled(TARGET))
+                self.assertNotIn('mirror', node.program_specs(CATALOG, TARGET))
+                self.assertIn('PasswordAuthentication no\n', node.sshd_config(TARGET, 2223))
+            with self.secret(directory, 'a' * 24):
+                self.assertTrue(node.deploy_enabled(TARGET))
+                self.assertIn('mirror', node.program_specs(CATALOG, TARGET))
+                for device in CATALOG.devices:
+                    if device.kind != 'linux' or device.name == 'ssh-alt02':
+                        continue
+                    self.assertFalse(node.deploy_enabled(device), device.name)
+                    self.assertNotIn('mirror', node.program_specs(CATALOG, device))
+
+    def test_deploy_target_allows_passwords_and_sftp_but_never_root(self):
+        with tempfile.TemporaryDirectory() as directory, self.secret(directory, 'a' * 24):
+            text = node.sshd_config(TARGET, 2223)
+        for line in ['Port 2223', 'PasswordAuthentication yes', 'UsePAM yes', 'PermitRootLogin no',
+                     'Subsystem sftp internal-sftp']:
+            self.assertIn(line + '\n', text)
+
+    def test_password_is_set_through_standard_input_only(self):
+        with tempfile.TemporaryDirectory() as directory, self.secret(directory, 'ab' * 12 + '\n'), \
+             patch.object(node, 'command') as run:
+            node.set_deploy_password()
+        run.assert_called_once_with(['/usr/sbin/chpasswd'], input_text='labadmin:' + 'ab' * 12 + '\n')
+
+    def test_a_malformed_password_file_changes_nothing(self):
+        for value in ['', 'short', 'a' * 24 + '\nroot:x', 'A' * 24]:
+            with tempfile.TemporaryDirectory() as directory, self.secret(directory, value), \
+                 patch.object(node, 'command') as run:
+                with self.assertRaises(ValueError):
+                    node.set_deploy_password()
+                run.assert_not_called()
+
+    def test_mirror_serves_only_loopback(self):
+        text = node.mirror_config()
+        self.assertIn('listen 127.0.0.1:443 ssl;', text)
+        self.assertEqual(text.count('listen '), 1)
+
+    def test_loopback_mirror_socket_is_not_reported_as_a_device_listener(self):
+        table = ('  sl  local_address rem_address   st\n'
+                 '   0: 0100007F:01BB 00000000:0000 0A\n'
+                 '   1: 00000000:08AF 00000000:0000 0A\n')
+        def read(path, *args, **kwargs):
+            return table if str(path) == '/proc/net/tcp' else 'header\n'
+        with patch('pathlib.Path.exists', return_value=True), patch('pathlib.Path.read_text', read):
+            self.assertEqual(node.listening_ports(hidden={('tcp', node.MIRROR_SOCKET)}),
+                             [{'protocol': 'tcp', 'port': 2223}])
+            self.assertEqual(len(node.listening_ports()), 2)
+
+    def test_baseline_restarts_an_installed_agent(self):
+        with tempfile.TemporaryDirectory() as directory, self.secret(directory, 'a' * 24), \
+             patch.object(node, 'NCPA_PROGRAM', Path(directory) / 'ncpa'), \
+             patch.object(node, 'command') as run:
+            node.restart_agent(TARGET)
+            run.assert_not_called()
+            node.NCPA_PROGRAM.write_text('installed')
+            node.restart_agent(TARGET)
+            run.assert_called_once_with(['/usr/bin/systemctl', 'start', 'ncpa'], check=False)
+            node.restart_agent(CATALOG.target('web03'))
+            run.assert_called_once()
 
 
 if __name__ == '__main__':

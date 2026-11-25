@@ -12,7 +12,7 @@ import time
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
-from targets.catalog import load_catalog, listener_request
+from targets.catalog import NCPA_DEPLOY_TARGET, NCPA_DEPLOY_USER, load_catalog, listener_request
 from targets import address_mode, dhcp_control, dhcp_journal
 from targets.host_attach import observe_process
 from targets.host_members import validate_parent_attachments, validate_vm_membership, collect_vm_inventory
@@ -70,6 +70,8 @@ def validate_container(obj,device,root,context,pin):
               (str(context),'/etc/pinpoint-defense/context.json',False,'bind')}
     if device.name in {'snmp02','dynsnmp01'}:
         expected.add((str(root/'private/snmp-community'),'/run/secrets/snmp-community',False,'bind'))
+    if device.name==NCPA_DEPLOY_TARGET:
+        expected.add((str(root/'private/deploy-password'),'/run/secrets/deploy-password',False,'bind'))
     if mounts!=expected:raise ValueError('Container mounts changed')
     return obj
 
@@ -335,9 +337,13 @@ def observed_manifest(catalog,pins,vm_pins):
         ip=addresses[0] if len(addresses)==1 else None
         observed={(item.get('protocol'),item.get('port')) for item in current.get('listeners',[])}
         expected={(l.protocol,l.port) for l in device.listeners}
-        listeners=[]
+        listeners=[];missing=False
         for l in device.listeners:
-            listeners.append({'service':l.service,'protocol':l.protocol,'port':l.port,'plugin':l.plugin,'live':(l.protocol,l.port) in observed})
+            live=(l.protocol,l.port) in observed
+            listeners.append({'service':l.service,'protocol':l.protocol,'port':l.port,'plugin':l.plugin,'live':live})
+            # The deploy target's agent listens only after PinPoint has deployed it.
+            if not live and not (device.name==NCPA_DEPLOY_TARGET and l.service=='ncpa'):
+                missing=True
         companions=set(COMPANIONS.get(device.name,()))
         if device.mode=='dhcp':
             companions.add(('udp',68))
@@ -349,7 +355,7 @@ def observed_manifest(catalog,pins,vm_pins):
                 unexpected.append({'protocol':protocol,'port':port})
         entry.update(observed=True,mac=current.get('observed_mac'),mac_matches=current.get('observed_mac')==device.mac,ip=ip,
                      ip_matches=ip==reserved_address(catalog,pins,device),listeners=listeners,companion_listeners=companion,unexpected_listeners=unexpected,plugin_status='expected')
-        consistent=consistent and entry['mac_matches'] and entry['ip_matches'] and all(l['live'] for l in listeners) and not unexpected
+        consistent=consistent and entry['mac_matches'] and entry['ip_matches'] and not missing and not unexpected
         devices.append(entry)
     return {'network':str(catalog.network),'appliance_address':catalog.appliance_address,'devices':devices,
             'vms':{'appliance_mac':vm_pins['appliance']['mac'],'windows_mac':vm_pins['windows']['mac']},'consistent':consistent}
@@ -504,6 +510,17 @@ def preflight(pins,counters=read_host_counters,inventory=observed_ranges,sleep=t
     rate=swap_rate(first[2],second[2],interval)
     check_host_resources(second[0],second[1],rate)
     return {'available_mib':second[0],'free_disk_mib':second[1],'swap_pages_per_second':rate}
+
+
+def deploy_target_report(catalog,pins):
+    """Name the one target that takes an NCPA deployment; the password itself is never printed."""
+    device=catalog.target(NCPA_DEPLOY_TARGET)
+    obj=inspect(device,pins[device.name])
+    state='running' if obj['State']['Running'] else 'stopped'
+    port=next(item.port for item in device.listeners if item.service=='ssh')
+    return ('NCPA deploy target: %s (%s) at %s, SSH port %d, password login with sudo as %s; '
+            'the other Linux targets accept no password.\nPassword: sudo cat %s')%(
+            device.name,state,device.address,port,NCPA_DEPLOY_USER,PILOT/'private/deploy-password')
 
 
 def check_parent_attachments():
@@ -793,6 +810,7 @@ def main(argv=None):
             elif args.command=='preflight':
                 result=preflight(pins,vm_pins=read_vm_pins())
                 print('Preflight OK: %d MiB RAM available, %d MiB disk free, swap %.1f pages/s'%(result['available_mib'],result['free_disk_mib'],result['swap_pages_per_second']))
+                print(deploy_target_report(catalog,pins))
             elif args.command=='status':
                 for d in catalog.devices:
                     if d.kind!='linux':continue

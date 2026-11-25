@@ -14,6 +14,7 @@ PLUGINS = {'ssh':'check_ssh','http':'check_http','https':'check_http',
            'dhcp':None,'tcp':'check_tcp'}
 # The one Linux target that accepts SSH password login, so NCPA can be deployed to it (#336).
 NCPA_DEPLOY_TARGET = 'ssh-alt02'
+NCPA_DEPLOY_USER = 'labadmin'
 RESERVED_HIGH_PORTS = frozenset({2222,2223,2250,2260,5693,8000,18080,18087,*range(2200,2206)})
 
 

@@ -10,7 +10,7 @@ import subprocess
 import sys
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from targets.catalog import load_catalog
+from targets.catalog import NCPA_DEPLOY_TARGET, NCPA_DEPLOY_USER, load_catalog
 from targets import create
 
 NETWORK_NAME='pinpoint274-host-test'
@@ -29,7 +29,7 @@ def plan(catalog):
         if device.kind=='linux':
             names.append(device.name)
     steps=['1. Preflight: Docker, VirtualBox, host-only network %s, subnet and VPN conflicts, memory'%PARENT,
-           '2. Build the image from demo/targets/Dockerfile',
+           '2. Build the images from demo/targets/Dockerfile: the lab image, and one for %s only (SSH password login with sudo as %s, cached Nagios NCPA repository)'%(NCPA_DEPLOY_TARGET,NCPA_DEPLOY_USER),
            '3. Create the network %s (macvlan on %s, %s)'%(NETWORK_NAME,PARENT,SUBNET),
            '4. Create the %d containers: %s'%(len(names),', '.join(names)),
            '5. Attach the DHCP interfaces of the five DHCP clients',
@@ -49,6 +49,8 @@ def manual_checklist():
              'in Pinpoint: NCPA Deployment, Register an agent I installed; then the Windows CPU, memory and disk checks are OK'),
             ('Pinpoint discovery network 10.77.1.0/27',
              'Pinpoint Settings, Discovery, Networks lists 10.77.1.0/27'),
+            ('NCPA deploy target %s: its login password (NCPA Deployment wizard, user %s)'%(NCPA_DEPLOY_TARGET,NCPA_DEPLOY_USER),
+             'sudo cat ~/.local/share/pinpoint-defense/host-docker/pilot-catalog/private/deploy-password   (never copy it into the repository or a report)'),
             ('Nagios timing check_interval 1, max_check_attempts 1 (optional, faster alerts)',
              'in the appliance: grep -E "check_interval|max_check_attempts" on the service template')]
 
@@ -199,7 +201,7 @@ def default_create_lab(catalog,out):
         if result.returncode:
             raise ValueError('command failed: '+argv[0]+' '+' '.join(argv[1:3]))
         return result.stdout
-    create.apply(catalog,presenter.ROOT,repo,runner,owner=secrets.token_hex(24),vm_uuid=uuid,parent_mac=mac,community=create.new_community())
+    create.apply(catalog,presenter.ROOT,repo,runner,owner=secrets.token_hex(24),vm_uuid=uuid,parent_mac=mac,community=create.new_community(),deploy_password=create.new_password())
     pins=create.read_pins(catalog,runner)
     if presenter.PINS.is_file() and not presenter.PINS.is_symlink():
         presenter.PINS.unlink()  # pins always describe the containers that exist now
