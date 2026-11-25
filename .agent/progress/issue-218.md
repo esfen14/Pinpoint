@@ -1,30 +1,47 @@
 # Issue #218: TC-ACC-05: Clarify the recorded sign-out warning failure
 
 Branch: `issue-218-signout-warning`
-Status: blocked
+Status: in-progress
 <!-- Status is one of: in-progress | blocked | ready-for-review -->
 
 ## Finish condition
 
-Copied from the issue. Tick an item only when a check proves it.
+Issue items (the first five depend on the owner's manual check; do not tick them here) and the
+items agreed in the 2026-11-25 issue comment.
 
-- [ ] Identify which warning was missing: administrator Edit Account warning, idle-timeout notice, or a message after administrative suspension.
-- [ ] In Paeng's separately recorded manual check, verify the administrator dialog warning, session invalidation on the next request, and redirect to `/login`.
-- [ ] Preserve the historical FAIL and attach the clarified finding/new result with actual tested build and evidence.
-- [ ] If the only complaint is the non-required login-page notice, document that disposition; do not add a requirement without an explicit behavior decision.
-- [ ] If a required expectation fails, record its exact step and create/link the specific product defect.
+- [ ] Identify which warning was missing.
+- [ ] Separately recorded manual check of dialog warning, invalidation and redirect (owner).
+- [ ] Preserve the historical FAIL; attach the new result with tested build and evidence (owner).
+- [ ] Document the disposition if only the login-page notice was meant.
+- [ ] Record and link any failed expectation as a defect.
+- [ ] A role, status, password or email change signs the user out on the next request; name and
+      alert-setting changes do not; own "Change password" keeps the user signed in.
+- [ ] The open page then goes to `/login`.
+- [ ] Suspended login shows "This account is suspended. Contact the admin for any concerns.";
+      Inactive keeps "Account inactive."
+- [ ] Admin password reset (Edit Account or forgot-password request), email or role change emails
+      the account (old and new address), never the password; on mail failure the change is saved
+      and the admin is told.
+- [ ] Specs, TC-ACC-05 wording, manuals and automated tests match.
 
 Requirement coverage (every requirement the issue states, and the check that proves it):
 
 | Issue requirement | Finish-condition item | Proof (test or command) |
 |---|---|---|
-| Comment: sign out after edit only at the idle session limit, not abruptly | none (gap) | |
-| Comment: admin notifies the user that credentials were replaced | none (gap) | |
-| Comment: suspended account sees a pop-up "This account is suspended. Contact the admin for any concerns." on login | none (gap) | |
+| Comment: sign out only at idle limit | out of scope: replaced by the owner decision "immediately" | issue comment 2026-11-25 |
+| Comment: admin notifies the user | email item | tests/unit/test_account_notifications.py |
+| Comment: suspended pop-up | suspended item | tests/unit/test_session_revocation.py |
 
 ## Plan
 
-1. [ ] Wait for a person to decide the questions below and amend the finish condition.
+1. [ ] Session revocation and suspended message: `server/app/api/user/login.py`, `management.py`,
+       `server/tests/unit/test_session_revocation.py`.
+2. [ ] Account change email: `server/app/account_notifications.py`, `smtp_settings.py`,
+       `management.py`, `password_requests.py`, `server/tests/unit/test_account_notifications.py`.
+3. [ ] Client: redirect on 401 and page change (`SessionTimeoutWatcher.tsx`, `lib/api.ts`,
+       `CurrentUserContext.tsx`); dialog wording and mail notice (`ManageAccountsPage.tsx`,
+       `PasswordRequestsPanel.tsx`); tests.
+4. [ ] Specs, QA catalog TC-ACC-05, manuals; verify all.
 
 ## Round log
 
@@ -34,13 +51,16 @@ One row per loop round, newest last.
 |---|---|---|---|
 | 1 | none (source reading only) | none | blocked on decisions |
 | 2 | recorded owner answers; checked mail support | none | blocked on email scope |
+| 3 | owner said go; posted condition on #218; installed deps; wrote plan | none | plan ready |
 
 ## State for the next session
 
-- Last check run (exact command): none; no tests run, no dependencies installed in this worktree.
+- Last check run (exact command): none yet.
 - Result (first failing lines, or "green"): n/a
-- Hypothesis: see findings below (source reading, not reproduced).
-- Next action (one specific step, not "continue"): read the new issue comment or amended finish condition, then rewrite the plan.
+- Hypothesis: a keyed stamp of password hash, role, email, status and forced-change flag in the
+  session ends sessions without a database migration. Sessions without a stamp are rejected, so
+  everyone signs in once after upgrade.
+- Next action (one specific step, not "continue"): write test_session_revocation.py.
 
 ## Decisions and notes
 
