@@ -26,24 +26,25 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 ## Plan
 
-1. [ ] Failing test: `client/src/test/SidebarToggle.test.tsx`
-2. [ ] `contexts/SidebarContext.tsx`; wire `AdminLayout`, `Header`, `Sidebar`
-3. [ ] Move the sidebar offset into `AdminLayout`; remove it from `pages/*.tsx` and `MaintenanceBanner.tsx`
-4. [ ] Specs: `Frontend_Modules_and_Routes.md`, `Implementation_Status.md`
+1. [x] Failing test: `client/src/test/SidebarToggle.test.tsx`
+2. [x] `contexts/SidebarContext.tsx`; wire `AdminLayout`, `Header`, `Sidebar`
+3. [x] Move the sidebar offset into `AdminLayout`; remove it from `pages/*.tsx` and `MaintenanceBanner.tsx`
+4. [x] Specs: `Frontend_Modules_and_Routes.md`, `Implementation_Status.md`
 5. [ ] Browser check of hidden/shown layout, then `scripts/verify.sh all`
 
 ## Round log
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
-| | | | |
+| 1 | Failing test, context, offset moved into layout, specs, coverage fingerprints | `SidebarToggle.test.tsx`; Chromium check, mocked API | green |
+| 1 | same, uncommitted | `scripts/verify.sh all` | `test_qa_pilot.py` fails; it reads committed sources |
 
 ## State for the next session
 
-- Last check run (exact command): none
-- Result (first failing lines, or "green"): n/a
-- Hypothesis: nothing listens for the toggle event; 17 files hardcode the offset
-- Next action (one specific step, not "continue"): write `SidebarToggle.test.tsx`
+- Last check run (exact command): `scripts/verify.sh all`
+- Result (first failing lines, or "green"): `test_qa_pilot.py` failures=6, errors=1 before commit
+- Hypothesis: the pilot test compares committed sources with the refreshed register
+- Next action (one specific step, not "continue"): rerun `scripts/verify.sh all` after this commit
 
 ## Decisions and notes
 
