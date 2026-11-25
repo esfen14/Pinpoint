@@ -9,6 +9,16 @@ routes. `AdminLayout` supplies the authenticated shell, and `Sidebar`, `Header`,
 `PageAccessGuard`, `SessionTimeoutWatcher`, and `MaintenanceBanner` implement
 cross-page behavior.
 
+The header's **Toggle sidebar** button hides and shows the sidebar (#342).
+`contexts/SidebarContext.tsx` holds the state; the sidebar starts shown on each
+page load and stays as set while moving between pages. `AdminLayout` alone leaves
+room for the fixed-width sidebar, so the header, maintenance banner and pages use
+the full width when it is hidden. Pages must not add their own sidebar offset.
+With the sidebar hidden, the header's account menu still offers sign-out.
+
+Phone-sized screens are not supported: the interface targets desktop and
+laptop browsers, and pages are not laid out for a phone-width screen.
+
 For a user with access to all three, the sidebar places **Device Inventory**,
 **Network Status**, then **Topology** consecutively. These entries retain
 `/device-inventory`, `/system-status` and `/topology`, respectively, and all

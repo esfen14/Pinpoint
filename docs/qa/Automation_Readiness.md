@@ -1,5 +1,38 @@
 # Current-case adapter preparation
 
+## 2026-11-25 API error envelope dependency review (#343)
+
+The only change to `client/src/lib/api.ts` is a code comment about non-JSON error
+responses; no executable line changed. The server now answers a signed-out
+request with the JSON error envelope, carrying the same message the client
+already showed as its fallback, so TC-ACC-10 and TC-HIS-04, which hash the file,
+see the same behavior. Only that file's fingerprints were refreshed in
+`automation-coverage.json`; adapter claims, coverage statuses and execution
+permissions are unchanged. This is not an
+automation run. Queues that pin the old hash fail their freshness check and must
+be re-prepared before use.
+
+## 2026-11-25 sidebar toggle dependency review (#342)
+
+Claude compared the selectors and assertions for TC-ACC-08, TC-ACC-10,
+TC-DI-02, TC-DI-03, TC-DI-07, TC-DI-08, TC-DASH-07 and TC-HIS-04 with the
+changes to `ManageAccountsPage.tsx`, `DeviceInventoryPage.tsx`,
+`DashboardPage.tsx` and `HistoryPage.tsx`. Each change removes only the page's
+left sidebar margin, which `AdminLayout` now applies; markup, text and controls
+are unchanged, the sidebar starts shown, and no adapter asserts a position or
+uses the toggle. Only those source fingerprints were refreshed in
+`automation-coverage.json`. Coverage statuses, mappings and execution
+permissions are unchanged; no live case was executed by this review.
+
+## 2026-11-25 TC-NFR-08 recorded-run review (#221)
+
+TC-NFR-08 now cites the AI-executed scripted availability run in its detailed
+result, recorded-run and finding lines. A parsed-field comparison showed no other
+case changed apart from the shared source hash, so only the catalog and case
+fingerprints in `automation-coverage.json` were refreshed. TC-NFR-08 stays
+unmapped: `scripts/availability_timing.py` is not a reviewed current-case adapter.
+Coverage statuses, mappings and execution permissions are unchanged.
+
 ## 2026-11-25 TC-NFR-07 recorded-run review (#220)
 
 TC-NFR-07 now cites the AI-executed scripted start-up run in its detailed result,

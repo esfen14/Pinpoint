@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Header } from '../components/layout/Header'
+import { SidebarProvider } from '../contexts/SidebarContext'
 import { MaintenanceBanner } from '../components/layout/MaintenanceBanner'
 
 const savedSettings = { notifications: true, maintenanceMode: false }
@@ -28,7 +29,9 @@ vi.mock('../lib/api', () => ({
 function renderHeader() {
   return render(
     <MemoryRouter initialEntries={['/dashboard']}>
-      <Header />
+      <SidebarProvider>
+        <Header />
+      </SidebarProvider>
     </MemoryRouter>,
   )
 }
@@ -91,7 +94,7 @@ describe('Network Status navigation title', () => {
   })
 
   it('shows Network Status in the header at the existing route', () => {
-    render(<MemoryRouter initialEntries={['/system-status']}><Header /></MemoryRouter>)
+    render(<MemoryRouter initialEntries={['/system-status']}><SidebarProvider><Header /></SidebarProvider></MemoryRouter>)
     expect(screen.getByText('Network Status')).toBeInTheDocument()
     expect(screen.queryByText('System Status')).not.toBeInTheDocument()
     expect(screen.getByText('All Hosts')).toBeInTheDocument()

@@ -55,6 +55,7 @@ table while you test, not afterward.
 
 | Run | Kind | Commit | Result | Report |
 |---|---|---|---|---|
+| [2026-11-25 issue-221-availability-timing](2026-11-25-issue-221-availability-timing/REPORT.md) | AI-executed scripted availability timing and symptom URL checks on the VirtualBox QA appliance | `a87de8dd` | Pass: TC-NFR-08, 10 of 10 per endpoint within 5 s (slowest 0.070 s), 10 monitored hosts, small Nagios history | [REPORT.md](2026-11-25-issue-221-availability-timing/REPORT.md) |
 | [2026-11-25 issue-220-startup-timing](2026-11-25-issue-220-startup-timing/REPORT.md) | AI-executed scripted start-up timing and symptom URL checks on the VirtualBox QA appliance | `cb96b118` | Pass: TC-NFR-07, median 3.891 s (limit 10 s); signed-out API 401 is HTML (#343) | [REPORT.md](2026-11-25-issue-220-startup-timing/REPORT.md) |
 | [2026-11-25 issue-218-signout](2026-11-25-issue-218-signout/REPORT.md) | Local Docker lab: owner manual TC-ACC-05 plus an AI-assisted scripted browser check | `47c07fea` | Pass: TC-ACC-05, 1/1; no installed appliance or real mailbox check | [REPORT.md](2026-11-25-issue-218-signout/REPORT.md) |
 | [2026-11-11 issue-315-lab-smoke](2026-11-11-issue-315-lab-smoke/REPORT.md) | Scripted `scripts/lab smoke` on the local Docker lab | `4e86fb66` | Pass: 16 of 16 checks, the nine new plugin and alert checks included | [REPORT.md](2026-11-11-issue-315-lab-smoke/REPORT.md) |

@@ -6,11 +6,13 @@ import { MaintenanceBanner } from './MaintenanceBanner'
 import { PageAccessGuard } from './PageAccessGuard'
 import { SystemSettingsProvider } from '../../contexts/SystemSettingsContext'
 import { CurrentUserProvider, useCurrentUser } from '../../contexts/CurrentUserContext'
+import { SidebarProvider, useSidebar } from '../../contexts/SidebarContext'
 import { ForcePasswordChange } from './ForcePasswordChange'
 import { FirstRunSetup } from './FirstRunSetup'
 
 function LayoutBody() {
   const { user } = useCurrentUser()
+  const { isSidebarOpen } = useSidebar()
 
   if (user?.needsSetup) {
     return (
@@ -34,12 +36,11 @@ function LayoutBody() {
     <>
       <SessionTimeoutWatcher />
       <div className="admin-bg flex min-h-screen">
-        <Sidebar />
+        {isSidebarOpen && <Sidebar />}
 
-        <main className="admin-bg flex min-h-screen flex-1 flex-col min-w-0">
-          <div className="ml-[215px]">
-            <Header />
-          </div>
+        {/* The sidebar is fixed, so this column alone leaves room for it. */}
+        <main className={`admin-bg flex min-h-screen flex-1 flex-col min-w-0 ${isSidebarOpen ? 'ml-55' : ''}`}>
+          <Header />
 
           <div className="flex-1 overflow-x-auto overflow-y-auto px-4 pb-8 min-w-0">
             <MaintenanceBanner />
@@ -57,7 +58,9 @@ export function AdminLayout() {
   return (
     <CurrentUserProvider>
       <SystemSettingsProvider>
-        <LayoutBody />
+        <SidebarProvider>
+          <LayoutBody />
+        </SidebarProvider>
       </SystemSettingsProvider>
     </CurrentUserProvider>
   )

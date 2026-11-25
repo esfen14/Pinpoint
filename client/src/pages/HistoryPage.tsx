@@ -359,7 +359,7 @@ export function HistoryPage() {
   const colSpan = tab === 'alerts' ? 9 : 9
 
   return (
-    <main className="ml-55 flex-1">
+    <main className="flex-1">
       <div className="space-y-6 p-6">
         <PageHeader
           title="History"

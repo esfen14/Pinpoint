@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { apiGet, apiPost } from '../../lib/api'
 import { useSystemSettings } from '../../contexts/SystemSettingsContext'
 import { useCurrentUser } from '../../contexts/CurrentUserContext'
+import { useSidebar } from '../../contexts/SidebarContext'
 import { fromRawNotification, formatRelativeTime as formatNotificationTime, notificationTitle as baseNotificationTitle, type NotificationItem, type NotificationsResponse } from '../../types/notification'
 import { useDiscoveryStatus, type DiscoveryStatus } from '../../hooks/useDiscoveryStatus'
 import { useNcpaDeploymentStatus } from '../../hooks/useNcpaDeploymentStatus'
@@ -267,6 +268,7 @@ export function Header() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const { hasPermission } = useCurrentUser()
+  const { isSidebarOpen, toggleSidebar } = useSidebar()
   const notificationsEnabled =
     useSystemSettings().savedSettings.notifications && hasPermission('system.notifications')
   const canDiscover = hasPermission('system.discover')
@@ -428,9 +430,8 @@ export function Header() {
       <div className="flex items-center gap-2">
         <button
           type="button"
-          // abang - pansamantala lang to, dapat kasabay ng state ng actual Sidebar
-          // pag may time, ilipat na lang natin sa context para di na event-based
-          onClick={() => window.dispatchEvent(new CustomEvent('nds:toggle-sidebar'))}
+          onClick={toggleSidebar}
+          aria-expanded={isSidebarOpen}
           className="rounded-2xl p-2 text-gray-500 transition hover:bg-black/5 hover:text-gray-900 dark:text-white/70 dark:hover:bg-white/10 dark:hover:text-white"
           aria-label="Toggle sidebar"
         >
