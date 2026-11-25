@@ -66,19 +66,11 @@ Done 2026-11-19 by reading the public installer repo; answers are in the Technic
 
 ## D. Decisions for the team or the site
 
-- [ ] Support contact name, email and hours. (`User_Manual.md:835`)
-- [ ] University IT contact after hand-off. (`Hand_Off.md:38`)
-- [ ] Network addressing, VLANs and firewall placement, site design. (`Technical_Manual.md:207`, `:389`)
+- [x] Support contact. *(team, 2026-11-25: Lorraine, Rafael or Elle; limited availability during OJT; no personal contact details published)* (`User_Manual.md` 6.3)
+- [ ] University IT contact after hand-off. **Still to be added**: contact person and deployment scope (CICT or campus-wide) unknown. (`Hand_Off.md`, Contacts)
+- [x] Network addressing, VLANs and firewall placement. *(team, 2026-11-25: unknown, and not to be put in this public repository)* (`Technical_Manual.md` 2.4, 5.4)
 - [x] Which Linux distributions are supported for NCPA deployment. *(answered from source 2026-11-25: Debian or Ubuntu based)* (`Technical_Manual.md:303`)
-- [ ] Hand-off reviewer for the installer: "not reviewed for the manuals". (`Hand_Off.md:27`)
-
-### Questions to send (group D)
-
-1. Who is the user support contact (name, email, hours)?
-2. Who is the university IT contact after hand-off?
-3. What are the site's addressing, VLANs and firewall placement?
-4. Who reviews the installer repository for the hand-off?
-5. How many hosts will the production site monitor? (needed for sizing in group E)
+- [x] Hand-off reviewer for the installer. *(team, 2026-11-25: the CICT IT team; review not yet done)* (`Hand_Off.md`, Repositories)
 
 ## E. Needs a measurement
 

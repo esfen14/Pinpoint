@@ -205,8 +205,8 @@ flowchart TB
   PP -. "outbound STARTTLS" .-> SMTP
 ```
 
-Addressing, VLANs and firewall placement depend on the site and are **TBC**
-(section 5).
+Addressing, VLANs and firewall placement depend on the site and are not
+recorded here (section 5.4).
 
 ### 2.5 Component relationships
 
@@ -396,7 +396,9 @@ directly, so the server must reach target addresses without NAT in between
 ### 5.4 VLANs
 
 Not required. With VLANs, route or trunk the PinPoint server to each VLAN.
-**TBC:** site design.
+The site's addressing, VLANs and firewall placement are not yet known. Do not
+add them to this repository, which is public; keep them in a private site
+document.
 
 ### 5.5 Protocols and ports
 

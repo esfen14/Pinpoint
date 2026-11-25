@@ -839,8 +839,12 @@ Contact your PinPoint administrator when:
 - a change in Settings fails with an error you do not understand.
 
 Give them: the page address, the time, what you did, and the exact message on
-screen. **TBC:** the project's support contact (name, email, hours) for
-the deployed site.
+screen.
+
+If your administrator cannot resolve it, they can contact one of the people who
+built PinPoint and its installer: **Lorraine, Rafael or Elle**. Their time is
+limited while they are on on-the-job training (OJT), so expect delays. Personal
+contact details are not published in this manual.
 
 ---
 
@@ -943,5 +947,5 @@ captured it and the date, and must not show passwords or real personal data.
 | 4 | Manager and Staff permissions | 5.1 | What does `flask init-production` grant each? |
 | 5 | Self-service password change | 5.4 | Can a user change their own password at any time? |
 | 6 | Sidebar order | 3.2 | Confirm the full order on a demo build |
-| 7 | Support contact | 6.3 | Who supports the deployed system, and how? |
+| 7 | ~~Support contact~~ | 6.3 | Answered: Lorraine, Rafael or Elle, with limited availability |
 | 8 | Screenshots | all | Which lab appliance and build should be used? |

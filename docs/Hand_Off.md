@@ -24,7 +24,7 @@ network details (subnets, hostnames, firewall rules).
 | Repository | Holds | Notes |
 |---|---|---|
 | This repository (`esfen14/Pinpoint`) | The Flask backend, React frontend, specifications, manuals and tests | |
-| [`lorraine-pangilinan/PinPoint-Installer`](https://github.com/lorraine-pangilinan/PinPoint-Installer) | The installer that sets up an Ubuntu Server appliance: Nagios Core, plugins, Nginx, Gunicorn, msmtp, sudoers rules, helper scripts and the service files | Not reviewed for the manuals; installer-owned behaviour is marked **TBC** in the Technical Manual |
+| [`lorraine-pangilinan/PinPoint-Installer`](https://github.com/lorraine-pangilinan/PinPoint-Installer) | The installer that sets up an Ubuntu Server appliance: Nagios Core, plugins, Nginx, Gunicorn, msmtp, sudoers rules, helper scripts and the service files | To be reviewed by the CICT IT team (not yet reviewed). Read for the manuals on 2026-11-19 and checked on an ISO install on 2026-11-25 |
 
 ## Contacts
 
@@ -35,7 +35,11 @@ GitHub handles only. Ask through a GitHub issue in the relevant repository.
 | Installer maintainer | [`lorraine-pangilinan`](https://github.com/lorraine-pangilinan) |
 | Plugin Manager author | [`lorraine-pangilinan`](https://github.com/lorraine-pangilinan) |
 | Maintainers (this repository) | [`esfen14`](https://github.com/esfen14), [`eliarzx`](https://github.com/eliarzx), [`lorraine-pangilinan`](https://github.com/lorraine-pangilinan) |
-| University IT contact after hand-off | **TBC:** to be named by the university |
+| University IT contact after hand-off | _To be added_ |
+
+**To be added: university IT contact.** The client is expected to make contact,
+but the person is not yet known, and neither is the deployment scope (CICT only
+or campus-wide). Fill in the row above once both are known.
 
 ## Where credentials and secrets live
 
