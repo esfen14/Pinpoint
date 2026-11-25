@@ -8,9 +8,9 @@ Status: in-progress
 
 Copied from the issue. Tick an item only when a check proves it.
 
-- [ ] A signed-out request to a protected `/api` route returns 401 `application/json` with the error envelope, covered by a unit test.
-- [ ] The web interface's session-expiry handling still passes its tests.
-- [ ] Decide whether unknown `/api` paths should use the envelope too; record the decision.
+- [x] A signed-out request to a protected `/api` route returns 401 `application/json` with the error envelope, covered by a unit test.
+- [x] The web interface's session-expiry handling still passes its tests.
+- [x] Decide whether unknown `/api` paths should use the envelope too; record the decision.
 
 Requirement coverage (every requirement the issue states, and the check that proves it):
 
@@ -22,10 +22,10 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 ## Plan
 
-1. [ ] Failing tests: `server/tests/unit/test_api_error_envelope.py` (401, unknown `/api` 404, non-API 404 and 405 unchanged)
-2. [ ] Handlers: `server/app/api/error_handlers.py`, imported from `server/app/api/__init__.py`
-3. [ ] Correct the stale comment in `client/src/lib/api.ts`; run frontend tests
-4. [ ] Specs: `spec files/Backend_Modules_and_Routes.md` conventions; remove the gap row in `spec files/Implementation_Status.md`
+1. [x] Failing tests: `server/tests/unit/test_api_error_envelope.py` (401, unknown `/api` 404, non-API 404 and 405 unchanged)
+2. [x] Handlers: `server/app/api/error_handlers.py`, imported from `server/app/api/__init__.py`
+3. [x] Correct the stale comment in `client/src/lib/api.ts`; run frontend tests
+4. [x] Specs: `spec files/Backend_Modules_and_Routes.md` conventions; remove the gap row in `spec files/Implementation_Status.md`
 
 ## Round log
 
@@ -33,13 +33,14 @@ One row per loop round, newest last.
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
+| 1 | Tests, handlers, comment, specs, 2 coverage fingerprints | `verify.sh backend`, `frontend`, `docs` | backend and frontend green; docs blocked by QA supervisor lock held by other sessions |
 
 ## State for the next session
 
-- Last check run (exact command): none yet
-- Result (first failing lines, or "green"): n/a
-- Hypothesis: no Flask-Login `unauthorized_handler` and no `/api` 404 handler
-- Next action (one specific step, not "continue"): write the failing tests
+- Last check run (exact command): `scripts/verify.sh docs`
+- Result (first failing lines, or "green"): `ValueError: Host controller unavailable, already owned or unsafe` in `test_qa_supervisor.py`
+- Hypothesis: other checkouts running verification hold the host-wide lock
+- Next action (one specific step, not "continue"): rerun `scripts/verify.sh docs` when no other checkout is verifying, then `scripts/verify.sh all`
 
 ## Decisions and notes
 
