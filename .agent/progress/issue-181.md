@@ -50,11 +50,11 @@ Issue items still open after the draft (PR #333, draft). Tick here and in
 issue #181 together.
 
 ### Owner decisions needed
-- [x] Export tool: Pandoc (decided 2026-11-19). **Owner still to run `sudo apt install pandoc`**
+- [x] Export tool: Pandoc (decided 2026-11-19). Pandoc is installed
 - [x] Mermaid: render with `npx @mermaid-js/mermaid-cli` at export time (decided 2026-11-19)
 - [x] Commit trailers: drop `Co-Authored-By` from now on (decided 2026-11-19; commits `a5fac04e` and `5dbd91b3` keep theirs unless rewritten)
 - [x] One PR (#333) for both manuals (decided 2026-11-19); amend the issue's checklist to say so
-- [ ] Confirm the folder change (`docs/User_Manual/`, `docs/Technical_Manual/` instead of `docs/manuals/`); then amend the issue's Deliverables paths
+- [x] Folder layout confirmed (2026-11-25): `docs/User_Manual/` and `docs/Technical_Manual/`, each with chapter files and `guides/`; issue #181 paths amended
 
 ### Printable export (issue section G)
 - [x] `scripts/export_manuals.sh`: Markdown -> DOCX (Pandoc) -> PDF (LibreOffice macro that refreshes the contents list); LibreOffice is run under `env -i` because it crashes with `std::bad_alloc` under this session's environment
@@ -63,7 +63,7 @@ issue #181 together.
 - [x] Wide tables: smaller font and borders (not rotated to landscape)
 - [x] Export command documented in `docs/manuals/README.md`
 - [x] DOCX and PDF produced for both manuals (User 25 pages, Technical 32 pages) in `build/manuals/`; not committed (git-ignored)
-- [ ] Owner to open the DOCX in Word and check the contents list and look; decide whether to commit the PDFs
+- [ ] Owner to open the DOCX in Word and check the contents list and look (decided 2026-11-25: the PDFs are not committed)
 
 ### Diagrams (issue section G, depends on #283)
 - [x] Mermaid diagrams render in the export step at 2x scale; the ERD and architecture diagrams in `docs/reference/` are separate files and are not part of the printed manuals (the Technical Manual links to them)
@@ -75,16 +75,16 @@ issue #181 together.
 - [x] §5: no host firewall, no HTTPS, address chosen in the Ubuntu installer, Nginx site written by `deploy-pinpoint-web.sh`
 - [x] §8.4: bootstrap login in `/root/pinpoint-install-credentials.txt`; NCPA key `/opt/pinpoint/.ssh/pinpoint_ncpa_deploy`, token in `system.db`
 - [x] Nagios systemd unit name is `nagios`
-- [ ] Installer maintainer to confirm these (read from the repository, not run on production)
+- [ ] Installer maintainer (Lorraine) to confirm these; the CICT IT team is the installer reviewer. Partly checked on an ISO install 2026-11-25
 
 ### Lab evidence (issue section H, Evidence)
 - [x] Screenshots captured 2026-11-19 on the QA appliance (`demo/demo qa create`, branch `issue-181-manuals-draft`, 14 demo containers); the User Manual had four placeholders (UM-01 to UM-04), plus 22 guide figures. Regenerate with `docs/images/manual/README.md`
-- [ ] Hardware sizing and bandwidth figures from a named appliance (Technical Manual §3.1, §5.8)
+- [x] Hardware sizing and bandwidth figures: tested limit and lab measurements stated (Technical Manual 3.1, 5.8, 10.4)
 - [ ] Follow each User Manual procedure on a demo build and clear its TBCs (the TBC worklist was finished and removed on 2026-11-25; not every procedure has been walked through)
 
 ### Open TBC questions
-- [ ] User Manual Appendix C (8 items: browsers, HTTPS, Remember me, Manager/Staff permissions, self-service password change, sidebar order, support contact, screenshot appliance)
-- [ ] Technical Manual Appendix B (11 items)
+- [x] User Manual open questions answered (now Appendix B in `09_Appendices.md`)
+- [x] Technical Manual Appendix B answered; what remains is in its Appendix C
 
 ### Review-only items (need a reviewer, not more writing)
 - [ ] A: nothing invented; every TBC marked; every claim checked against code or `Implementation_Status.md`
@@ -108,9 +108,12 @@ issue #181 together.
 - Last check run (exact command): scripts/verify.sh docs
 - Result (first failing lines, or "green"): green
 - Hypothesis: -
-- Next action (one specific step, not "continue"): get the owner decisions in "Remaining work", then write `scripts/export_manuals.sh`
+- Next action (one specific step, not "continue"): apply the team's review comments on PR #333
 
 ## Decisions and notes
+
+- 2026-11-25: the guides are the only place user procedures are written; the
+  printed User Manual includes them (`scripts/manual_export/prepare.py`).
 
 - User asked for a draft, each manual in its own `docs/` folder, instead of
   `docs/manuals/`. DOCX/PDF export, installer review, lab screenshots and the

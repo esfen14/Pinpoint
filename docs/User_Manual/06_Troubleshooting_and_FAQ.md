@@ -5,7 +5,8 @@
 | Problem | Likely cause | What to do |
 |---|---|---|
 | Cannot reach the sign-in page | Wrong address, or your computer is not on the right network | Check the address with your administrator; try from a computer on the office network |
-| "Account inactive." | The account is Inactive or Suspended | Ask an administrator to set it Active |
+| "Account inactive." | The account is Inactive | Ask an administrator to set it Active |
+| "This account is suspended. Contact the admin for any concerns." | The account is Suspended | Ask an administrator to set it Active |
 | "Session expired. Please log in again." | Idle longer than the session timeout | Sign in again |
 | "You are already signed in…" | Another account is signed in in this browser | Sign out first, then sign in |
 | A page is missing from the sidebar | Your role lacks the permission | Ask an administrator |
@@ -36,7 +37,8 @@ results (default every 60 seconds) and your browser refreshes at your chosen
 rate.
 
 **Does PinPoint send data to the internet?**
-No monitoring data leaves the server, except the alert email you configure.
+No monitoring data leaves the server, except the email you configure: alerts, and
+notices to a user whose password, email or role an administrator changed.
 
 **Can I see Nagios's own pages?**
 Not as an operator; PinPoint replaces them.

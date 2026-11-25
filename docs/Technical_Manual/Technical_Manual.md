@@ -14,13 +14,15 @@
 | Source of truth | [`spec files/`](../../spec%20files/README.md); this manual summarises it and must not contradict it |
 
 > **Draft notice.** This draft was written from the specifications, the topic
-> guides (now under each manual's `guides/` folder), the model files and configuration in this
-> repository. It was **not** checked against the separate installer
-> repository (`lorraine-pangilinan/PinPoint-Installer`) or a named lab
-> appliance. Installer-owned behaviour, hardware sizing and bandwidth figures
-> are therefore marked **TBC**. Diagrams are drawn from the code as Mermaid
-> diagrams; the capstone paper's architecture figure is redrawn and compared in
-> section 2.7, and the ERD is generated from the schema (section 6.3).
+> guides, the model files and configuration in this repository. Installer
+> behaviour was read from the separate installer repository
+> (`lorraine-pangilinan/PinPoint-Installer`) and partly checked on an ISO install
+> and on lab appliances (November 2026). Its maintainer has not yet confirmed it,
+> and nothing was checked on a production system. Items still open are listed in
+> [Appendix C](14_Appendices.md#appendix-c-still-to-be-confirmed). Diagrams are
+> drawn from the code as Mermaid diagrams; the capstone paper's architecture
+> figure is redrawn and compared in section 2.7, and the ERD is generated from the
+> schema (section 6.3).
 
 ### Labelling convention
 

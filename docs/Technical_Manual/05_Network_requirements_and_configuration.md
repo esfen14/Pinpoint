@@ -1,8 +1,9 @@
 ## 5. Network requirements and configuration
 
 > Sections 5.2 to 5.7 depend on the site. Values below are what the
-> application needs; site-specific addressing and firewall configuration are
-> **TBC** (the installer was checked on 2026-11-19; see the notes in each subsection).
+> application needs; site-specific addressing and firewall configuration are not
+> recorded in this public repository (the installer was checked on 2026-11-19;
+> see the notes in each subsection).
 
 ### 5.1 Topology
 

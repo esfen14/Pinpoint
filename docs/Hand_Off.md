@@ -89,5 +89,5 @@ is assumed.
 | 6 | Where the installer reports the bootstrap login, and where the NCPA key and token are stored | Installer maintainer |
 | 7 | The final maintainer list (the university IT contact waits for a decision to implement) | Project owners |
 
-The Technical Manual's [Appendix B](Technical_Manual/Technical_Manual.md) lists
+The Technical Manual's [Appendices B and C](Technical_Manual/14_Appendices.md) lists
 the remaining technical questions.

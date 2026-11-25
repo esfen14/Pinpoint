@@ -5,7 +5,7 @@
 > repository (read on 2026-11-19; its README and `setup/` scripts). The steps below are
 > this repository's side of the contract
 > ([`Agent_Workflow_and_CI.md`, "Deployment environment"](../../spec%20files/Agent_Workflow_and_CI.md#deployment-environment-installer-contract)).
-> The installer maintainer should still confirm the order and upgrade behaviour.
+> The installer maintainer (Lorraine) should still confirm the order and upgrade behaviour.
 > Do not hand-install from this manual.
 
 ### 8.1 Prerequisites
