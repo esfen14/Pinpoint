@@ -6,7 +6,7 @@ Catalog results include human manual confirmations and report-attributed outcome
 E2E without a detailed Result field is pending/unrecorded, not proof it was never attempted.
 Accepted evidence and new execution totals must be reported separately.
 
-Source SHA-256: `b341272a0d339d6ffa485a35e2ff2302da0abe3d4a6564cdd186532de11e9325`.
+Source SHA-256: `249644804a3d87b04c7ebe461fd7cd2ea5b40e088ff8f75dc505c35bbb1980f0`.
 Cases: 231 TC plus 8 E2E.
 Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 
@@ -196,7 +196,7 @@ Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 | TC-NFR-04 | NFR / 12 | PASS | PASS | pass | No reviewed mapping |
 | TC-NFR-05 | NFR / 12 | PASS | PASS | pass | No reviewed mapping |
 | TC-NFR-06 | NFR / 12 | FAIL | FAIL (Overview shows its load error with no Retry button; [#245](https://github.com/esfen14/Pinpoint/issues/245)) | fail | No reviewed mapping |
-| TC-NFR-07 | NFR / 12 | FAIL - returns to login, other result is, data is showing but plaintext only without UI | FAIL (initial run; later tester-reported retest PASS, no timings recorded) | fail | No reviewed mapping |
+| TC-NFR-07 | NFR / 12 | FAIL - returns to login, other result is, data is showing but plaintext only without UI | FAIL (initial run; later tester-reported retest PASS, no timings recorded; AI-executed scripted run 2026-11-25 PASS, median 3.891 s) | fail | No reviewed mapping |
 | TC-NFR-08 | NFR / 12 | FAIL - returns to login, other result is, data is showing but plaintext only without UI | FAIL (initial run; later tester-reported retest PASS, no timings recorded) | fail | No reviewed mapping |
 | TC-NFR-09 | NFR / 12 | PASS | PASS | pass | No reviewed mapping |
 | TC-NFR-10 | NFR / 12 | PASS | PASS | pass | No reviewed mapping |

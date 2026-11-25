@@ -3490,11 +3490,11 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-NFR-07 – Start-up time
 
-**Requirement:** REQ-NFR-05 · **Technique:** BVA · **Priority:** M · **Result:** FAIL (initial run; later tester-reported retest PASS, no timings recorded)
+**Requirement:** REQ-NFR-05 · **Technique:** BVA · **Priority:** M · **Result:** FAIL (initial run; later tester-reported retest PASS, no timings recorded; AI-executed scripted run 2026-11-25 PASS, median 3.891 s)
 
-**Recorded run:** [report](../test-runs/2026-10-19-module-20-21-records/REPORT.md)
+**Recorded run:** [report](../test-runs/2026-10-19-module-20-21-records/REPORT.md); [scripted run](../test-runs/2026-11-25-issue-220-startup-timing/REPORT.md)
 
-**Finding:** [#220](https://github.com/esfen14/Pinpoint/issues/220) (open; asks to clarify the conflicting results)
+**Finding:** [#220](https://github.com/esfen14/Pinpoint/issues/220) (clarified by the 2026-11-25 scripted run); [#343](https://github.com/esfen14/Pinpoint/issues/343) (open; signed-out API replies are HTML)
 
 **Steps**
 
