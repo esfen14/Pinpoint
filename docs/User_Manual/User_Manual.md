@@ -502,7 +502,8 @@ Full guide: [Alerts and notification history](../manuals/Alerts_and_Notification
 5. Watch the progress until the scan finishes.
 
 **Expected result:** new devices appear in Device Inventory. A bell
-notification reports the finished scan.
+notification reports the finished scan. The list can fill in a few minutes
+after the scan shows Success; wait and refresh before scanning again.
 
 **Precautions:** scan only networks you are allowed to scan. A one-address scan
 does not change the saved networks. Scans add load on the network; schedule
@@ -576,7 +577,9 @@ resource figures after the next checks.
 **Precautions:** compare the fingerprint with one obtained from the server
 itself before trusting it. Login details are used for the run and are not
 shown again. Windows agents are installed by hand and then registered with
-**Register agent** (**TBC:** not yet verified end to end).
+**Register agent**: install NCPA, set a 32-character token, scan the device if
+it is not listed, register it, then enable **check_ncpa** in Plugin Manager.
+Without that last step no NCPA check runs (verified 2026-11-25).
 
 Full guide: [NCPA deployment](../manuals/NCPA_Deployment.md).
 
@@ -660,8 +663,12 @@ within the limits; each decision is logged.
 
 **Precautions:** the master switch on the Remediation page stops every action.
 Maintenance Mode, maintenance windows and acknowledged problems also stop
-actions. **TBC:** per-service recovery has not been walked through on a lab
-appliance.
+actions. An action needs the plugin behind the service to be enabled, and its
+**Service pattern** matches the Nagios service name, which is lower case, such as
+`http-80-tcp` (use `http-*`, not `HTTP*`). A service becomes a hard failure after
+three failed checks, about 5 to 6 minutes with the default check intervals. If
+the page says "The spool folder could not be read", the appliance has no event
+handler or spool folder; see the Technical Manual.
 
 Full guides: [Automatic recovery](../manuals/Automatic_Recovery.md),
 [Remote service restart](../manuals/Remote_Service_Restart.md).

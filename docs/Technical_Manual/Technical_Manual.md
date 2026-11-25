@@ -216,7 +216,7 @@ Addressing, VLANs and firewall placement depend on the site and are **TBC**
 | Scheduler | Flask app context, Nagios CGIs, spool folder | Dashboard freshness, history, remediation |
 | Config writer (`create_host_cfg.py`) | Plugin Manager state, discovery data, settings, `nagios -v`, `systemctl reload nagios` | Discovery, settings saves, device edits, plugin enable/disable |
 | Nagios Core | Generated `hosts.cfg`, plugins in `NAGIOS_PLUGIN_DIR`, `resource.cfg` | Checks, notifications, event handler |
-| Event handler `/usr/local/sbin/pinpoint-event-handler` | Spool folder (installer) | Remediation consumer |
+| Event handler `/usr/local/sbin/pinpoint-event-handler` | Spool folder (installer) | Remediation consumer. **Known gap (2026-11-25):** an appliance built from the current installer had neither the handler nor the spool folder, so the Remediation page reported "The spool folder could not be read" and recorded no runs. They were installed by hand for the walkthrough (`install -m 755 -o root -g root` for the handler; `install -d -m 2770 -o nagios -g pinpoint` for the folder). The installer maintainer should confirm |
 
 ### 2.6 Data flow and communication
 

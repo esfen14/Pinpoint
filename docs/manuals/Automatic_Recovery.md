@@ -48,6 +48,21 @@ A rule acts only when a covered check reaches a **hard** failure. Recoveries and
 
 **Maintenance Mode** (Settings, System) blocks every rule and records **Skipped (maintenance)**. Only the exit code of the restart is recorded; the command's own output is never kept, and the recorded text never contains secrets.
 
+## Worked example (verified 2026-11-25)
+
+On the QA appliance, with `check_http` enabled and web03's HTTP service stopped on purpose:
+
+1. **Add action:** name "Record web HTTP failures", type **Record only**, scope **Service**, device `*`, service `http-*`, tick **Enabled**, **Save action**. Saving rebuilds the Nagios configuration (about 1 second); the table then lists the action.
+2. Stop HTTP on the device. About 35 seconds later the service is Critical; after three failed checks (about 5.5 minutes) it is a hard failure.
+3. Open **Run log**: one row with the time, action, host, service `http-80-tcp`, state CRITICAL (HARD), outcome **Succeeded** and operator "Not required". **Runs (24 h)** on the status panel rises to 1.
+4. Restore HTTP. The service clears about 4.5 minutes later. A recovery does not run the action.
+
+**Service pattern:** it matches the Nagios service name, which is lower case, for example `http-80-tcp` or `ncpa-cpu-5693-tcp`. A pattern written in capitals such as `HTTP*` matched nothing.
+
+**Plugin required:** an action only covers services that exist. Enable the plugin for the service first (**Plugins**); on a new installation none is enabled.
+
+**If the status panel says "The spool folder could not be read":** the event handler `/usr/local/sbin/pinpoint-event-handler` or the spool folder `/usr/local/nagios/var/spool/pinpoint-events` (owner `nagios`, group `pinpoint`, mode 2770) is missing. No failure reaches Pinpoint and no run is ever recorded. A restart-type action was not tried in this walkthrough.
+
 ## Recover automatically for one service
 
 You can also switch automatic recovery on for a single service without opening **Remediation**. In **Device Inventory**, open a device, click the service, and use **Recover automatically**. Turn the switch on, choose how many times an hour PinPoint may restart it (1 to 6), and click **Save**. PinPoint warns you that it will restart the service on its own, picks the right action and service name itself, and shows the last result with a link to the run log. The switch is greyed out, with the reason, when PinPoint cannot restart that service: for example the device is paused, retired or not trusted, remote restart is off for it, or the service is not on the device's restart list. It is the same rule that appears on **Remediation**, so a change in either place shows in the other, and the **System Status** page marks the service **Recovers automatically**. You need **remediation.view** to see the control and **remediation.manage** to change it.

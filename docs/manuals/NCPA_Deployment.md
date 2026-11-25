@@ -32,6 +32,21 @@ make sure that setting matches the ports of existing agents before migration.
 The migration handles both binds and can downgrade by removing the Port column.
 No new permission is introduced by cleanup.
 
+## Register an agent you installed yourself (for example Windows)
+
+Verified 2026-11-25 on the QA appliance with NCPA 3.5.0 on a Windows VM.
+
+1. Install NCPA on the server by hand. Set a token of 32 hexadecimal characters as the agent's API token, restart the NCPA service, and allow the NCPA port (5693 by default) through the firewall from the Pinpoint server only.
+2. Make sure Pinpoint has the device in **Device Inventory**. A device that was off during the last scan is not listed, so scan it first (one-address scan under **Network Discovery**; about 1.5 minutes).
+3. Open **NCPA Deployment**, choose **Register agent** for the device, enter the token (and the port if it is not 5693), and save. Pinpoint checks that the agent answers with that token and reports a disk, then saves. This took about 1 second.
+4. Open **Plugins** and enable **check_ncpa** (see below). Registering only stores the token and port; nothing is checked until the plugin is enabled.
+
+Expected result: **Agent registered**, with the status `Deployed NCPA` and the disks found (for example `C:`). After `check_ncpa` is enabled, four checks appear within about a minute (CPU, memory, swap and each disk), and the first disk and memory values show about 2 minutes later.
+
+Messages: a token that is not 32 hexadecimal characters is refused with "The NCPA token must be 32 hexadecimal characters."; registering a device that is already deployed is refused with "NCPA is already deployed on this device."
+
+On a new installation no plugin is enabled (65 installed, 0 enabled), so discovered ports stay suggested and no service check runs until you enable the plugins you need.
+
 ## Clean up a failed deployment
 
 On a trusted device showing **Deployment Failed**, select **Clean up**. The dialog

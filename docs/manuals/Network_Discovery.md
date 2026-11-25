@@ -40,6 +40,8 @@ Under **Run Network Discovery**:
 
 Expected result: new devices appear in the inventory; ports seen again keep their state.
 
+Note: the list may not be complete the moment the scan reports **Success**. In a lab run of 14 devices (about 4 minutes), a check made shortly after the status changed showed only some of them; all 14 were listed and monitored a few minutes later. If devices are missing, wait a few minutes and refresh Network Health or Device Inventory before scanning again.
+
 ## Scheduled scans
 
 The automatic scan interval is **Scan Frequency** under **Settings → General** (every 1, 3, 6, 12 or 24 hours); **Current Scan Schedule** beside it shows the result. Changing it needs the settings permission for that tab.
