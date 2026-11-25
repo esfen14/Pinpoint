@@ -80,7 +80,7 @@ issue #181 together.
 ### Lab evidence (issue section H, Evidence)
 - [x] Screenshots captured 2026-11-19 on the QA appliance (`demo/demo qa create`, branch `issue-181-manuals-draft`, 14 demo containers); the User Manual had four placeholders (UM-01 to UM-04), plus 22 guide figures. Regenerate with `docs/images/manual/README.md`
 - [ ] Hardware sizing and bandwidth figures from a named appliance (Technical Manual §3.1, §5.8)
-- [ ] Follow each User Manual procedure on a demo build and clear its TBCs (worklist: `docs/plans/TEMP_TBC_Worklist.md`, group A)
+- [ ] Follow each User Manual procedure on a demo build and clear its TBCs (the TBC worklist was finished and removed on 2026-11-25; not every procedure has been walked through)
 
 ### Open TBC questions
 - [ ] User Manual Appendix C (8 items: browsers, HTTPS, Remember me, Manager/Staff permissions, self-service password change, sidebar order, support contact, screenshot appliance)
