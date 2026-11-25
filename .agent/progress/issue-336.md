@@ -40,7 +40,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 5. [x] `setup` plan and `preflight` report the deploy target.
 6. [x] Live build of both images and an offline-network smoke of the deploy helper in a throwaway container.
 7. [ ] Live lab run through the NCPA Deployment page, failure paths; report in `docs/test-runs/`. Needs the owner (sudo, appliance VM).
-8. [ ] Docs: `Local_Lab.md`, `NCPA_Deployment.md`, `demo/targets/README.md`, `demo/USAGE.md`, `Demo_Lab_QA_Handoff.md`, spec, `Implementation_Status.md`.
+8. [x] Docs: `Local_Lab.md`, `NCPA_Deployment.md`, `demo/targets/README.md`, `demo/USAGE.md`, `Demo_Lab_QA_Handoff.md`, spec, `Implementation_Status.md`.
 
 ## Round log
 
@@ -53,6 +53,7 @@ One row per loop round, newest last.
 | 2 | ncpa-target image stage, mirror fetch (curl: server refuses urllib), systemctl shim | test_deploy_target.py; docker build --target ncpa-target | green, NCPA 3.5.1 mirrored |
 | 3 | node.py deploy-target setup; creation, presenter, setup report | demo/targets + demo/appliance tests | green |
 | 4 | Sandbox smoke: throwaway ssh-alt02 on an internal no-route network, server's real deploy functions | wrong password, changed fingerprint, deploy, restart, redeploy, cleanup, redeploy | all as expected; memory peak 262 MiB of 512; sandbox removed |
+| 5 | Docs, spec, Implementation_Status (live wizard run marked not done) | scripts/verify.sh docs | green |
 
 ## State for the next session
 

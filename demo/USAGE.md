@@ -32,6 +32,16 @@ clears at the next check, and a new port or address needs a **Rescan Network**
 | Back to a clean build | `demo/demo qa reset` | Restores the Ubuntu and Nagios snapshot and installs a fresh build |
 | Throw it away | `demo/demo qa destroy --apply` | Removes only the QA VM, its disk and the QA state folder, after a typed confirmation |
 
+## Deploy NCPA to a Linux device
+
+Only `ssh-alt02` (`10.77.1.11`, SSH port 2223) accepts it; details in
+[`targets/README.md`](targets/README.md#ncpa-deployment-target-ssh-alt02).
+
+| Task | Command | Pinpoint shows |
+|---|---|---|
+| Find the login | `demo/demo preflight`, then the `sudo cat` command it prints (user `labadmin`) | In **NCPA Deployment**: Verify the host key, enter the login, **Deploy NCPA**; the device becomes **Deployed NCPA** |
+| Start again with nothing installed | `docker rm -f pinpoint274-host-ssh-alt02-pilot` then `demo/demo setup --apply` | Same host key; use **Clean up** or redeploy |
+
 ## Take a device or service down and back up
 
 | Task | Command | Pinpoint shows |

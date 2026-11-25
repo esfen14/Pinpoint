@@ -60,4 +60,6 @@ demo/demo destroy --apply             # type "destroy": removes only the demo co
   `setup/pinpoint-healthcheck.sh` has not been updated to match. Continue with
   `scripts/vmlab setup-admin` (same `VMLAB_CONFIG`/`VMLAB_STATE_DIR` as `qa status`).
 - `demo/demo install-ncpa` (#302) has only offline tests; its guest steps (silent NCPA 3.5.0 install, `ncpa.cfg.d` token file, firewall, authenticated check) have not been run against a real VM. The prepared VM already has NCPA.
-- No automated NCPA deployment run: the Linux containers have no password SSH.
+- NCPA deployment is manual (no automated run). Only `ssh-alt02` accepts it: see
+  [NCPA deployment target](../../demo/targets/README.md#ncpa-deployment-target-ssh-alt02).
+  `docker build` needs internet; the deployment itself does not.
