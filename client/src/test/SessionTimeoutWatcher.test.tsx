@@ -1,10 +1,11 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { Link, MemoryRouter, Route, Routes } from 'react-router-dom'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
   LAST_ACTIVITY_KEY,
   SessionTimeoutWatcher,
 } from '../components/layout/SessionTimeoutWatcher'
+import { apiGet, UNAUTHORIZED_EVENT } from '../lib/api'
 import { LoginPage } from '../pages/LoginPage'
 
 // 1-minute timeout keeps the timer arithmetic readable.
@@ -20,6 +21,7 @@ function mockMeStatus(status: number) {
       ok: status < 400,
       status,
       json: () => Promise.resolve({}),
+      text: () => Promise.resolve(''),
       url,
     }),
   )
@@ -132,6 +134,52 @@ describe('SessionTimeoutWatcher', () => {
 
     expect(screen.getByText('Log In to your Account')).toBeInTheDocument()
     expect(screen.queryByText(EXPIRED_NOTICE)).not.toBeInTheDocument()
+  })
+
+  it('redirects to login when the session ended before the next page change', async () => {
+    render(
+      <MemoryRouter initialEntries={['/dashboard']}>
+        <SessionTimeoutWatcher />
+        <Routes>
+          <Route path="/dashboard" element={<Link to="/history">Go to History</Link>} />
+          <Route path="/history" element={<div>History Page</div>} />
+          <Route path="/login" element={<LoginPage />} />
+        </Routes>
+      </MemoryRouter>,
+    )
+    await advance(0)
+
+    mockMeStatus(401)
+    fireEvent.click(screen.getByText('Go to History'))
+    await advance(0)
+
+    expect(screen.getByText('Log In to your Account')).toBeInTheDocument()
+    expect(screen.queryByText(EXPIRED_NOTICE)).not.toBeInTheDocument()
+  })
+
+  it('redirects to login when any API request is rejected as signed out', async () => {
+    renderDashboard()
+    await advance(0)
+
+    mockMeStatus(401)
+    await act(async () => {
+      await apiGet('/api/system/hosts').catch(() => {})
+    })
+
+    expect(screen.getByText('Log In to your Account')).toBeInTheDocument()
+  })
+
+  it('keeps the expired notice when the refused request comes after the idle timeout', async () => {
+    renderDashboard()
+    await advance(0)
+
+    // As after the computer slept: the clock moved on before any timer ran.
+    vi.setSystemTime(Date.now() + 5 * 60_000)
+    act(() => {
+      window.dispatchEvent(new Event(UNAUTHORIZED_EVENT))
+    })
+
+    expect(screen.getByText(EXPIRED_NOTICE)).toBeInTheDocument()
   })
 
   it('redirects to login without the notice when there was no session', async () => {

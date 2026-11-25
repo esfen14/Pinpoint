@@ -334,6 +334,11 @@ The user's appliance, installer deployment and scale remain unverified.
   responses; inventory failures retain unknown state (#265).
 - Header notification feed/unread behavior, session timeout, maintenance banner,
   shared export UI, and network rescan workflow.
+- Sessions end on the next request after an account's role, status, password or
+  email changes, with an account change email to the user (#218). An idle visible
+  page notices within about 10 seconds. Covered by unit and component tests and a
+  [local-lab run](../docs/test-runs/2026-11-25-issue-218-signout/REPORT.md) with the
+  lab mail sink; no installed appliance or real mailbox delivery check.
 
 ## Incomplete or mismatched work
 

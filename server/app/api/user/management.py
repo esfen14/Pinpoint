@@ -15,6 +15,13 @@ from app import db
 from app.network_discovery.create_host_cfg import regenerate_and_apply_config_status
 
 from app.api.user import user_bp
+from app.api.user.login import stamp_session
+from app.account_notifications import (
+    EMAIL_CHANGED,
+    PASSWORD_RESET,
+    ROLE_CHANGED,
+    notify_account_change,
+)
 from app.logging.user_activity import create_user_log, create_audit_log
 from app.api.helper.settings_flags import is_audit_logging_enabled
 
@@ -833,6 +840,8 @@ def edit_account(id):
             return error("You do not have permission to change email alerts.", 403)
 
         contact_before = _contact_snapshot(user_info)
+        old_email = user_info.Email
+        old_role_id = user_info.RoleID
 
         try:
             user_info.First_Name = first_name
@@ -868,7 +877,19 @@ def edit_account(id):
         config = {}
         if _contact_snapshot(user_info) != contact_before:
             config = _apply_contact_change("Account")
-        return success(config, message="Successfully updated user.")
+
+        changes = []
+        recipients = [old_email]
+        if changing_password:
+            changes.append(PASSWORD_RESET)
+        if normalized_email != old_email:
+            changes.append(EMAIL_CHANGED)
+            recipients.append(normalized_email)
+        if role_info.RoleID != old_role_id:
+            changes.append(ROLE_CHANGED)
+        notice = notify_account_change(recipients, changes)
+
+        return success({**config, **notice}, message="Successfully updated user.")
     except Exception:
         current_app.logger.exception("An unexpected error occured.")
         return error("An unexpected error occured.", 500)
@@ -925,6 +946,7 @@ def change_password():
             current_app.logger.exception("Failed to change password.")
             return error("An error occurred.", 400)
 
+        stamp_session(current_user)
         return success(message="Password changed.")
     except Exception:
         current_app.logger.exception("An unexpected error occured.")
@@ -1007,6 +1029,7 @@ def complete_setup():
             current_app.logger.exception("Failed to complete first-run setup.")
             return error("An error occurred.", 400)
 
+        stamp_session(current_user)
         config = _apply_contact_change()
         return success(config, message="Setup complete.")
     except Exception:

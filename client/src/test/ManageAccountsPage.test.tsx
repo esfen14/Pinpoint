@@ -267,6 +267,52 @@ describe('ManageAccountsPage', () => {
     })
   })
 
+  describe('Sign-out and notification messages', () => {
+    const NOT_SENT = 'Email is not set up, so the user was not emailed. Tell them about the change yourself.'
+
+    async function openEdit() {
+      const user = userEvent.setup()
+      await renderLoaded()
+      const row = screen.getByText('Chloe Baltazar').closest('tr') as HTMLElement
+      await user.click(within(row).getByTitle('Edit'))
+      return user
+    }
+
+    it('says which changes sign the user out', async () => {
+      await openEdit()
+
+      expect(
+        screen.getByText('Changing the email, role, status or password signs the user out.'),
+      ).toBeInTheDocument()
+    })
+
+    it('tells the administrator when the user was not emailed', async () => {
+      apiPut.mockResolvedValueOnce({ notification_ok: false, notification_message: NOT_SENT })
+      const user = await openEdit()
+      await user.click(screen.getByRole('button', { name: 'Save Changes' }))
+
+      expect(await screen.findByText(NOT_SENT)).toBeInTheDocument()
+    })
+
+    it('shows the same message after resolving a password request', async () => {
+      canEditAccounts = true
+      passwordRequests = [{
+        id: 7, user_id: 3, name: 'Marie Santos', email: 'marie@example.com',
+        requested_at: '2026-10-08T08:00:00+00:00',
+      }]
+      apiPost.mockResolvedValueOnce({ notification_ok: false, notification_message: NOT_SENT })
+      const user = userEvent.setup()
+      await renderLoaded()
+      await user.click(await screen.findByRole('button', { name: 'Reset password' }))
+      const dialog = screen.getByRole('dialog', { name: 'Reset password' })
+      await user.type(within(dialog).getByLabelText('TEMPORARY PASSWORD'), 'StrongPass123!')
+      await user.type(within(dialog).getByLabelText('CONFIRM PASSWORD'), 'StrongPass123!')
+      await user.click(within(dialog).getByRole('button', { name: 'Reset password' }))
+
+      expect(await screen.findByText(NOT_SENT)).toBeInTheDocument()
+    })
+  })
+
   describe('Password reset requests', () => {
     const REQUEST = {
       id: 7,

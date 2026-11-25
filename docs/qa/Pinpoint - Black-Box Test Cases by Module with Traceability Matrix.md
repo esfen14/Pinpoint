@@ -495,9 +495,12 @@ Cases not listed here need only a finished setup (TC-AUTH-07) and the lab descri
 
 **Expected result**
 
-- The dialog says "The user will be signed out after changes are applied."
+- The dialog says "Changing the email, role, status or password signs the user out."
 - The user's session ends on its next request and the page goes to `/login`.
-- Note: the spec does not ask for a message to the user who is signed out. If the login page shows nothing, record it as an observation, not as a failed sign-out.
+- After a role change, with **Settings**, **Email** set up, the user receives an email that names the change and holds no password. Without it, the administrator sees a message to tell the user.
+- After a change to Suspended, signing in with the correct password shows "This account is suspended. Contact the admin for any concerns."
+- Note: the spec does not ask for a message on the login page at the moment of sign-out. If it shows nothing, record it as an observation, not as a failed sign-out.
+- Note: the recorded result above predates #218 and was taken against the earlier expected result.
 
 #### TC-ACC-06 – Administrator resets another user's password
 

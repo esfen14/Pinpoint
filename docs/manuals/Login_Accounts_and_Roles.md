@@ -26,8 +26,9 @@ Expected result: the sidebar shows only the pages you have permission for.
 
 Precautions:
 - A session ends after the idle period set in **Settings → Security → Session Timeout** (15 minutes, 30 minutes, 1, 2 or 4 hours). You are returned to the sign-in page ("Session expired. Please log in again."). Closing the browser also ends the session.
-- **Remember me** keeps you signed in for **30 days** from your last activity, across browser restarts. A remembered session **ignores the Session Timeout**: idleness never signs you out. It ends only when you click **Log out**, the 30 days pass without use, or an administrator makes the account not **Active**. Tick it only on a computer you trust and do not share. The administrator can change the 30 days (`PINPOINT_REMEMBER_ME_DAYS` in the server environment).
-- An account whose status is not **Active** is refused ("Account inactive.").
+- **Remember me** keeps you signed in for **30 days** from your last activity, across browser restarts. A remembered session **ignores the Session Timeout**: idleness never signs you out. It ends only when you click **Log out**, the 30 days pass without use (a Pinpoint page left visible counts as use), or an administrator changes the account's role, status, email or password. Tick it only on a computer you trust and do not share. The administrator can change the 30 days (`PINPOINT_REMEMBER_ME_DAYS` in the server environment).
+- A **Suspended** account is refused with "This account is suspended. Contact the admin for any concerns." An **Inactive** account is refused with "Account inactive." Both messages appear only after the correct password.
+- If an administrator changes your role, status, email or password while you are signed in, you are returned to the sign-in page within about 10 seconds, or on your next action if that is sooner. Other changes, such as your name, appear within about 10 seconds without a refresh.
 
 ## First-run setup (new installation)
 
@@ -55,7 +56,7 @@ A new password may not be the account's current password.
 ## Forgot password
 
 1. On the sign-in page choose **Forgot Password?** and enter your email.
-2. Pinpoint always shows the same confirmation, so it cannot be used to find out which emails exist. **No email is sent** and there is no reset link.
+2. Pinpoint always shows the same confirmation, so it cannot be used to find out which emails exist. No email is sent at this point and there is no reset link.
 3. An administrator sees the request (a bell alert and the **Password reset requests** panel on Manage Accounts), chooses **Reset password**, and sets a new temporary password for you. Give the person the new password through a channel you trust. You must change it at your next sign-in.
 4. An administrator can also dismiss a request.
 
@@ -77,6 +78,10 @@ Open **Manage Accounts** (`/accounts`). The table lists name, email, role, statu
 2. Change the name, role or **Status**. The three statuses are **Active**, **Inactive** and **Suspended**; only Active accounts can sign in. Accounts are never deleted, only made inactive or suspended.
 3. To set a new password, enter it twice. Entering the account's current password is refused and the dialog stays open.
 4. Save.
+
+Changing the **email**, **role**, **status** or **password** signs the user out within about 10 seconds; changing only the name or email alert setting does not. This includes your own account if you edit it here. Changing your own password through the change-password window keeps you signed in.
+
+After a password reset, email change or role change, Pinpoint emails the user what changed (both the old and new addresses after an email change). The email never contains the password, so give a new password to the person yourself. If [email](Email_Settings.md) is not set up or sending fails, the change is still saved and the page tells you to inform the user.
 
 Protected first account: the first account created (the bootstrap administrator) must stay **Active**, and can only hold an active role that has all seven account and role administration permissions. The edit form disables the status selector for it.
 

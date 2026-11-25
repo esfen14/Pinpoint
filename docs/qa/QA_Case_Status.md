@@ -6,7 +6,7 @@ Catalog results include human manual confirmations and report-attributed outcome
 E2E without a detailed Result field is pending/unrecorded, not proof it was never attempted.
 Accepted evidence and new execution totals must be reported separately.
 
-Source SHA-256: `c6d913230c9853974671e6ba77666d0b33f25b02e518aae40adaecbe04fe4bcc`.
+Source SHA-256: `b341272a0d339d6ffa485a35e2ff2302da0abe3d4a6564cdd186532de11e9325`.
 Cases: 231 TC plus 8 E2E.
 Regenerate: `python3 -I scripts/render_qa_case_tables.py --write`.
 

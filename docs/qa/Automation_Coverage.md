@@ -24,7 +24,7 @@ Assertion markers and source hashes support review; they do not prove assertion 
 | TC-ACC-03 | ACC | unmapped / unassigned | None | E1, E2, E3 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-AUTH-08 | AUTH | unmapped / unassigned | None | E1, E2, E3 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-ACC-04 | ACC | unmapped / unassigned | None | E1, E2 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
-| TC-ACC-05 | ACC | unmapped / unassigned | None | E1, E2, E3 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
+| TC-ACC-05 | ACC | unmapped / unassigned | None | E1, E2, E3, E4, E5, E6 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-ACC-06 | ACC | unmapped / unassigned | None | E1, E2, E3 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-ACC-07 | ACC | unmapped / unassigned | None | E1, E2 | No source-reviewed current-case adapter; fixture, observations and recovery need assessment. |
 | TC-ACC-09 | ACC | implemented / scripted automation | [TC-ACC-09: The accounts page needs permission](../../client/e2e/qa-permissions.lab.spec.ts) | None in source review | Source adapter complete; bounded live launcher support, new reviewed queue/card, current prerequisites and separate explicit start remain required. |
