@@ -55,6 +55,7 @@ table while you test, not afterward.
 
 | Run | Kind | Commit | Result | Report |
 |---|---|---|---|---|
+| [2026-11-25 issue-218-signout](2026-11-25-issue-218-signout/REPORT.md) | Local Docker lab: owner manual TC-ACC-05 plus an AI-assisted scripted browser check | `47c07fea` | Pass: TC-ACC-05, 1/1; no installed appliance or real mailbox check | [REPORT.md](2026-11-25-issue-218-signout/REPORT.md) |
 | [2026-11-11 issue-315-lab-smoke](2026-11-11-issue-315-lab-smoke/REPORT.md) | Scripted `scripts/lab smoke` on the local Docker lab | `4e86fb66` | Pass: 16 of 16 checks, the nine new plugin and alert checks included | [REPORT.md](2026-11-11-issue-315-lab-smoke/REPORT.md) |
 | [2026-10-28 issue-274 rehearsal 1](2026-10-28-issue-274-rehearsal-1/REPORT.md) | Scripted defense rehearsal from a clean baseline (one run, not the two the issue asks for) | not recorded | Partial; FC7 not met: reset, fault, alert and recovery timed; address-change and new-port timings not captured; memory and swap gate failed | [REPORT.md](2026-10-28-issue-274-rehearsal-1/REPORT.md) |
 | [2026-10-28 issue-274 manifest and reset](2026-10-28-issue-274-manifest-and-reset/REPORT.md) | `presenter manifest`, `presenter reset` and a read-only Device Inventory read | not recorded | Pass: manifest consistent for 14 targets; reset restored a perturbed lab in 84 s; 16 hosts UP and Monitored | [REPORT.md](2026-10-28-issue-274-manifest-and-reset/REPORT.md) |
