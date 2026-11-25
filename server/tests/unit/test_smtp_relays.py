@@ -47,7 +47,7 @@ def test_custom_username_needs_explicit_sender_when_not_an_email():
 
 
 def test_custom_save_reload_keep_password_and_send(logged_in_client, db_session, app):
-    app.config.update(SECRET_KEY='test-secret', SECRET_KEY_IS_TEMPORARY=False)
+    app.config.update(SECRET_KEY_IS_TEMPORARY=False)
     helper_result = subprocess.CompletedProcess([], 0, '', '')
     with patch('app.smtp_settings.subprocess.run', return_value=helper_result) as helper:
         response = logged_in_client.put(URL, json={**CUSTOM, 'version': 0})
@@ -79,7 +79,7 @@ def test_invalid_custom_never_reaches_helper(logged_in_client, db_session, field
 
 
 def test_password_echo_is_redacted_from_helper_and_smtp_errors(logged_in_client, db_session, app, caplog):
-    app.config.update(SECRET_KEY='test-secret', SECRET_KEY_IS_TEMPORARY=False)
+    app.config.update(SECRET_KEY_IS_TEMPORARY=False)
     with patch('app.smtp_settings.subprocess.run', return_value=subprocess.CompletedProcess([], 1, '', 'rejected ' + SECRET)):
         response = logged_in_client.put(URL, json={**CUSTOM, 'version': 0})
     assert response.status_code == 400 and SECRET not in response.get_data(as_text=True)

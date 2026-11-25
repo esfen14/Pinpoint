@@ -370,8 +370,9 @@ has the roles Administrator, Manager and Staff (§4A A16); where a journey says
      account for <email>" [SHOT p.144].
   2. Status is Active, Inactive or Suspended [PAPER p.64]. A non-active user cannot sign
      in.
-  3. Saving an edit signs that user out ("The user will be signed out after changes are
-     applied") [SHOT p.147; confirm the behavior].
+  3. Saving a change to the email, role, status or password signs that user out ("Changing
+     the email, role, status or password signs the user out") [SHOT p.147 shows the older
+     wording; changed in #218].
   4. A password reset stores a new hash.
   5. **Role matrix (DECIDED, §5 D-8):** derived from `server/app/api/commands/seed.py`.
      Administrator holds all 36 seeded permissions; **Manager and Staff are seeded with

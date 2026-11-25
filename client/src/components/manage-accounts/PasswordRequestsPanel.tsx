@@ -4,6 +4,9 @@ import { useDisplayTime } from '../../hooks/useDisplayTime'
 import type { PasswordRequest } from '../../hooks/usePasswordRequests'
 import { apiPost, errorMessage } from '../../lib/api'
 
+// Whether the user was emailed about the reset.
+type ResolveResult = { notification_ok?: boolean; notification_message?: string } | null
+
 const INPUT_CLASS =
   'w-full rounded-full border border-[var(--border)] bg-[var(--input-bg)] px-4 py-2.5 text-sm text-[var(--text)] outline-none'
 
@@ -12,11 +15,13 @@ export function PasswordRequestsPanel({
   isPasswordValid,
   passwordHint,
   onChanged,
+  onResolved,
 }: {
   requests: PasswordRequest[]
   isPasswordValid: (password: string) => boolean
   passwordHint: string
   onChanged: () => void
+  onResolved: (result: ResolveResult) => void
 }) {
   const { formatDateTime } = useDisplayTime()
   const [resetting, setResetting] = useState<PasswordRequest | null>(null)
@@ -85,8 +90,9 @@ export function PasswordRequestsPanel({
           isPasswordValid={isPasswordValid}
           passwordHint={passwordHint}
           onCancel={() => setResetting(null)}
-          onDone={() => {
+          onDone={(result) => {
             setResetting(null)
+            onResolved(result)
             onChanged()
           }}
         />
@@ -106,7 +112,7 @@ function ResetPasswordModal({
   isPasswordValid: (password: string) => boolean
   passwordHint: string
   onCancel: () => void
-  onDone: () => void
+  onDone: (result: ResolveResult) => void
 }) {
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -120,11 +126,11 @@ function ResetPasswordModal({
     setIsSaving(true)
     setError(null)
     try {
-      await apiPost(`/api/user/password-requests/${request.id}/resolve`, {
-        password,
-        confirm_password: confirm,
-      })
-      onDone()
+      const result = await apiPost<ResolveResult>(
+        `/api/user/password-requests/${request.id}/resolve`,
+        { password, confirm_password: confirm },
+      )
+      onDone(result)
     } catch (err) {
       setError(errorMessage(err, 'Unable to reset the password.'))
     } finally {

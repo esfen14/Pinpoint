@@ -41,14 +41,24 @@ type StatusFilter = 'all' | UserStatus
 
 const STATUS_OPTIONS: UserStatus[] = ['active', 'inactive', 'suspended']
 
-// Account saves that change a Nagios contact also rebuild the Nagios config.
-type AccountSaveResult = { config_ok?: boolean; config_message?: string } | null
+// Account saves that change a Nagios contact also rebuild the Nagios config, and
+// changes to how a user signs in are emailed to that user.
+type AccountSaveResult = {
+  config_ok?: boolean
+  config_message?: string
+  notification_ok?: boolean
+  notification_message?: string
+} | null
 
-function configNotice(result: AccountSaveResult) {
+function saveNotice(result: AccountSaveResult) {
+  const problems: string[] = []
   if (result?.config_ok === false) {
-    return `The account was saved but Nagios was not updated: ${result.config_message}`
+    problems.push(`The account was saved but Nagios was not updated: ${result.config_message}`)
   }
-  return null
+  if (result?.notification_ok === false && result.notification_message) {
+    problems.push(result.notification_message)
+  }
+  return problems.length > 0 ? problems.join(' ') : null
 }
 
 async function fetchAccounts(): Promise<User[]> {
@@ -165,6 +175,7 @@ export function ManageAccountsPage() {
               : 'Requires at least 8 characters.'
           }
           onChanged={passwordRequests.reload}
+          onResolved={(result) => setNotice(saveNotice(result))}
         />
 
         {/* TABS + ACTIONS */}
@@ -236,7 +247,7 @@ export function ManageAccountsPage() {
           onCancel={() => setShowAddModal(false)}
           onCreated={(result) => {
             setShowAddModal(false)
-            setNotice(configNotice(result))
+            setNotice(saveNotice(result))
             refreshUsers()
           }}
         />
@@ -252,7 +263,7 @@ export function ManageAccountsPage() {
           onCancel={() => setEditingUser(null)}
           onSaved={(result) => {
             setEditingUser(null)
-            setNotice(configNotice(result))
+            setNotice(saveNotice(result))
             refreshUsers()
           }}
         />
@@ -720,7 +731,7 @@ function EditAccountModal({
         </div>
 
         <p className="mt-4 text-center text-xs text-[var(--text-muted)]">
-          The user will be signed out after changes are applied.
+          Changing the email, role, status or password signs the user out.
         </p>
 
       </div>

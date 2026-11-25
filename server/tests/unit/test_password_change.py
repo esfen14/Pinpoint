@@ -57,6 +57,12 @@ class TestMustChangePasswordFlag:
         )
         target.set_password(NEW_PASSWORD)
         db_session.session.commit()
+        if self_edit:
+            # Changing the signed-in account's password ends its session.
+            assert logged_in_client.get("/api/user/me").status_code == 401
+            logged_in_client.post(
+                "/api/user/login", json={"email": target.Email, "password": NEW_PASSWORD},
+            )
         original = (
             target.First_Name, target.Email, target.Hashed_Password,
             target.Must_Change_Password, target.Updated_At,

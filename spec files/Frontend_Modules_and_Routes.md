@@ -51,6 +51,21 @@ The API rejection also covers a session established in another tab after the
 initial route check. Normal signed-out login enters the authenticated layout,
 which reloads `/api/user/me` and applies that account's permissions and setup flags.
 
+`CurrentUserContext` checks `/api/user/me` every 10 seconds while the tab is
+visible (and on focus), so a changed name or permission shows without a refresh.
+It does not check while the account is on the first-run setup or forced password
+change window, whose requests replace the session's sign-in details.
+
+When the server has ended a session (for example after an account change),
+`SessionTimeoutWatcher` goes to `/login`: it rechecks `/api/user/me` on every page
+change, and acts on the `pinpoint-unauthorized` event that `lib/api.ts` and
+`CurrentUserContext` raise for a 401, so an idle visible page leaves within about
+10 seconds. The idle notice shows only if the idle period had already passed. The
+Edit Account dialog says
+"Changing the email, role, status or password signs the user out.", and Manage
+Accounts shows `notification_message` after a save or a password-request reset when
+`notification_ok` is false.
+
 ## Page access rules
 
 `src/lib/pageAccess.ts` is the client route-to-permission map. The sidebar hides

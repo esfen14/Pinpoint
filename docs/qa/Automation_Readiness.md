@@ -1,5 +1,37 @@
 # Current-case adapter preparation
 
+## 2026-11-25 TC-NFR-07 recorded-run review (#220)
+
+TC-NFR-07 now cites the AI-executed scripted start-up run in its detailed result,
+recorded-run and finding lines. A parsed-field comparison showed no other case
+changed apart from the shared source hash, so only the catalog and case
+fingerprints in `automation-coverage.json` were refreshed. TC-NFR-07 stays
+unmapped: `scripts/startup_timing.py` is not a reviewed current-case adapter.
+Coverage statuses, mappings and execution permissions are unchanged.
+
+## 2026-11-25 session revocation dependency review (#218)
+
+Claude compared the assertions, sign-in and cleanup steps for TC-ACC-08,
+TC-ACC-09, TC-ACC-10, TC-DI-02, TC-HIS-01, TC-HIS-04, TC-LOG-05, TC-NCPA-08,
+TC-PLG-07, TC-ROL-04, TC-RPT-07 and TC-SS-04, as far as each depends on a changed
+file, with sessions that now end after an account change. No adapter relies on a
+signed-in account's role, status, password or email being changed while its
+session continues: the permission and history cases sign in afresh and only
+navigate and read; TC-ACC-08 logs out before switching accounts; the TC-ACC-10
+cleanup edits only the inactive accounts it created. The client changes affect a
+401 response and the account save messages, which these assertions do not expect.
+The later 10-second session check in `CurrentUserContext.tsx` was reviewed
+the same way for the cases that hash it (TC-ACC-09, TC-ACC-10, TC-ACC-08, TC-ROL-04, TC-SS-04, TC-HIS-01, TC-PLG-07, TC-NCPA-08, TC-RPT-07, TC-LOG-05, TC-DI-02, TC-DI-03, TC-DASH-07, TC-DI-07, TC-DI-08, TC-HIS-04): it
+repeats a read-only `/api/user/me` request, re-renders only when the account data
+changes, and sends a signed-out page to `/login`, which these assertions do not
+rely on avoiding.
+Only those dependency fingerprints were refreshed in `automation-coverage.json`,
+together with the catalog and case fingerprints after TC-ACC-05's steps and
+expected items changed (it stays unmapped; a parsed-field comparison showed no
+other case changed apart from the shared source hash). Coverage statuses,
+mappings, verdicts and execution permissions are unchanged. This is source
+review, not a live QA result.
+
 ## 2026-10-19 Module 12 catalog review
 
 Compared with `2e838077`, the branch records Module 12 PASS verdicts and changes

@@ -84,6 +84,8 @@ docs() {
   python3 -I "$root/demo/appliance/test_create_vms.py"
   python3 -I "$root/demo/appliance/test_install_ncpa_windows.py"
   python3 -I "$root/demo/appliance/test_qa_vm.py"
+  echo "==> docs: start-up timing script against a local fake server (offline)"
+  python3 -I "$root/scripts/test_startup_timing.py"
   echo "==> docs: agent progress files are well formed"
   python3 -I "$root/scripts/check_agent_progress.py"
   echo "==> docs: fix-found workflow contract"
