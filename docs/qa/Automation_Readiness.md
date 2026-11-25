@@ -12,6 +12,15 @@ uses the toggle. Only those source fingerprints were refreshed in
 `automation-coverage.json`. Coverage statuses, mappings and execution
 permissions are unchanged; no live case was executed by this review.
 
+## 2026-11-25 TC-NFR-08 recorded-run review (#221)
+
+TC-NFR-08 now cites the AI-executed scripted availability run in its detailed
+result, recorded-run and finding lines. A parsed-field comparison showed no other
+case changed apart from the shared source hash, so only the catalog and case
+fingerprints in `automation-coverage.json` were refreshed. TC-NFR-08 stays
+unmapped: `scripts/availability_timing.py` is not a reviewed current-case adapter.
+Coverage statuses, mappings and execution permissions are unchanged.
+
 ## 2026-11-25 TC-NFR-07 recorded-run review (#220)
 
 TC-NFR-07 now cites the AI-executed scripted start-up run in its detailed result,
