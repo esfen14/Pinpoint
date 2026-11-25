@@ -45,7 +45,7 @@ User Manual and guides; each is a "click it and see".
 - [x] Full list of tables under **Settings → Plugins**. (`Settings.md:67`) *(answered from source 2026-11-24)*
 - [x] **Register agent** end to end. *(verified on the QA appliance 2026-11-25)* (`User_Manual.md:581`; done once on `db01`, so this can now be written up. Wizard deploy is issue #336.)
 - [x] A single walkthrough of the **Remediation** page. *(verified 2026-11-25; needed a hand-installed event handler and spool folder, an installer gap)*
-- [ ] Per-service recovery (the **Recover automatically** switch in a Device Inventory drawer, and a restart-type action) walkthrough. (`User_Manual.md:665`, `manuals/README.md:23`)
+- [x] Per-service recovery walkthrough. *(2026-11-25: the restart-nagios action ran and the drawer was checked; the switch itself needs an SSH-trusted NCPA Linux device, not available until #336)* (`User_Manual.md:665`, `manuals/README.md:23`)
 
 ## B. Browser and device checks (a person with the devices)
 

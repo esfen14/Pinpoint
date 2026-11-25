@@ -653,7 +653,9 @@ Full guides: [Email settings](../manuals/Email_Settings.md),
 **Steps**
 
 1. Choose **Remediation → Actions** and add an action, or switch on
-   **Recover automatically** for one service in its Device Inventory drawer.
+   **Recover automatically** for one service (Device Inventory, open the
+   device, then click the service). The switch is greyed out unless the device
+   is an SSH-trusted NCPA Linux device.
 2. Set the limits (restarts per hour, cooldown) and who is told when it
    fails.
 3. Check the **Run log** after a failure.
