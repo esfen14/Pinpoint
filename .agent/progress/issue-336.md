@@ -1,7 +1,7 @@
 # Issue #336: Give one demo container SSH so the NCPA Deployment wizard can be tested in the Docker lab
 
 Branch: `issue-336-demo-ssh-ncpa`
-Status: in-progress
+Status: blocked
 <!-- Status is one of: in-progress | blocked | ready-for-review -->
 
 ## Finish condition
@@ -57,10 +57,10 @@ One row per loop round, newest last.
 
 ## State for the next session
 
-- Last check run (exact command): for t in demo/targets/test_*.py demo/appliance/test_*.py; do python3 -I $t; done
-- Result (first failing lines, or "green"): green
+- Last check run (exact command): scripts/verify.sh all (before merging origin/main e0ae6a18, issue #343)
+- Result (first failing lines, or "green"): green (backend 4485 passed, 14 skipped; frontend 1106 passed; lint 0 errors)
 - Hypothesis: none
-- Next action (one specific step, not "continue"): plan step 8 docs, then `scripts/verify.sh all`, then step 7 with the owner.
+- Next action (one specific step, not "continue"): plan step 7, once the owner has answered the question below; then re-run scripts/verify.sh all and finish.
 
 ## Decisions and notes
 
@@ -72,3 +72,4 @@ One row per loop round, newest last.
 - Deploy features switch on only when `/run/secrets/deploy-password` is mounted, so the legacy guest compose is unaffected.
 - Existing labs need `demo/demo destroy --apply` then `setup --apply` (new image).
 - Sandbox NCPA disk nodes are only `|data` and `|identity` (overlayfs is excluded), which are bind mounts of the host filesystem (92% full on 2026-11-25), so the live disk check reflects the host.
+- BLOCKED (2026-11-26), needs the owner: the live run needs `sudo` (`demo/demo destroy --apply`, then `demo/demo setup --apply` from this worktree), a running appliance VM, and the root-only deploy password. After the rebuild, presenter commands from checkouts without this change refuse `ssh-alt02` ("Container mounts changed") until the lab is rebuilt from them or this is merged.
