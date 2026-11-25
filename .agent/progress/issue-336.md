@@ -57,10 +57,10 @@ One row per loop round, newest last.
 
 ## State for the next session
 
-- Last check run (exact command): scripts/verify.sh all (before merging origin/main e0ae6a18, issue #343)
-- Result (first failing lines, or "green"): green (backend 4485 passed, 14 skipped; frontend 1106 passed; lint 0 errors)
-- Hypothesis: none
-- Next action (one specific step, not "continue"): plan step 7, once the owner has answered the question below; then re-run scripts/verify.sh all and finish.
+- Last check run (exact command): live run on qa-pinpoint-appliance (branch a069ee79) driving the NCPA Deployment page (2026-11-25 17:08-17:22 UTC)
+- Result (first failing lines, or "green"): verify key (fingerprint matched), wrong password, changed host key, failed deploy + Clean up, deploy (14 s), cleanup with account removal, redeploy (9 s), target restart: all as expected. Checks: CPU OK 0.62%, swap OK 19%, memory WARNING 62.0% (warn 50), disk data/identity WARNING 94.1% (warn 70).
+- Hypothesis: memory and disk read the laptop's usage; the agent and checks work.
+- Next action (one specific step, not "continue"): get the owner's answer on the WARNING checks and the preflight run, then write docs/test-runs/ report.
 
 ## Decisions and notes
 
@@ -73,3 +73,5 @@ One row per loop round, newest last.
 - Existing labs need `demo/demo destroy --apply` then `setup --apply` (new image).
 - Sandbox NCPA disk nodes are only `|data` and `|identity` (overlayfs is excluded), which are bind mounts of the host filesystem (92% full on 2026-11-25), so the live disk check reflects the host.
 - BLOCKED (2026-11-26), needs the owner: the live run needs `sudo` (`demo/demo destroy --apply`, then `demo/demo setup --apply` from this worktree), a running appliance VM, and the root-only deploy password. After the rebuild, presenter commands from checkouts without this change refuse `ssh-alt02` ("Container mounts changed") until the lab is rebuilt from them or this is merged.
+- Live (2026-11-25): `demo/demo setup` reports the target. `demo/demo preflight` blocks with "Host-only VM membership changed" because the QA appliance is a third VM on vboxnet1 (existing rule), so its report line was not seen live; `deploy_target_report` was run directly.
+- Live observations outside this issue: (1) `qa reset` failed once because unattended-upgrades held the apt lock for about 37 minutes; the privileges step was rerun by hand. (2) `vmlab smoke` reported 16 of 18 because two hosts had not had their first Nagios check yet; both were Up shortly after. (3) The deploy wizard text says "port 22" even for a device on port 2223.
