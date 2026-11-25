@@ -9,10 +9,10 @@ Status: blocked
 Issue items (the first five depend on the owner's manual check; do not tick them here) and the
 items agreed in the 2026-11-25 issue comment.
 
-- [ ] Identify which warning was missing.
+- [x] Identify which warning was missing (message to the signed-out user; disposition comment).
 - [ ] Separately recorded manual check of dialog warning, invalidation and redirect (owner).
 - [ ] Preserve the historical FAIL; attach the new result with tested build and evidence (owner).
-- [ ] Document the disposition if only the login-page notice was meant.
+- [x] Document the disposition if only the login-page notice was meant (disposition comment).
 - [ ] Record and link any failed expectation as a defect.
 - [x] A role, status, password or email change signs the user out on the next request; name and
       alert-setting changes do not; own "Change password" keeps the user signed in.
@@ -59,18 +59,20 @@ One row per loop round, newest last.
 | 6 | specs, TC-ACC-05, manuals, QA fingerprints; reverted CurrentUserContext change (pathname check covers it) | scripts/verify.sh docs | green |
 | 7 | full verification; re-read issue (no new comments) | scripts/verify.sh all | green: 4485 passed, 14 skipped; 1095 frontend tests |
 | 8 | 10-second session check; local lab Playwright run (throwaway script, not committed) | vitest (1103 passed); lab run 15/15, then click-to-another-page 1/1 | green |
+| 9 | posted the disposition comment on #218 | gh issue comment | posted |
 
 ## State for the next session
 
-- Last check run (exact command): scripts/verify.sh all
+- Last check run (exact command): scripts/verify.sh frontend (after scripts/verify.sh docs)
 - Result (first failing lines, or "green"): green
 - Hypothesis: none; the agreed behaviour is implemented.
-- Next action (one specific step, not "continue"): the owner runs the manual TC-ACC-05 check on a build of this branch and records the result; then remove this file and mark the pull request ready.
+- Next action (one specific step, not "continue"): get the owner's manual TC-ACC-05 result for commit 47c07fea (or later) with evidence, attach it to #218, record any failed expectation, then remove this file and mark pull request 341 ready.
 
 ## Decisions and notes
 
 Owner, 2026-11-25 (chat): the recorded FAIL was wrong because the warning to the signed-out
-user was never required. A disposition comment was drafted and is awaiting approval to post.
+user was never required. Posted with the owner's approval:
+https://github.com/esfen14/Pinpoint/issues/218#issuecomment-7159770550
 The owner reports their own lab testing successful so far.
 
 Source findings:
