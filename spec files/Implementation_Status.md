@@ -334,6 +334,9 @@ The user's appliance, installer deployment and scale remain unverified.
   responses; inventory failures retain unknown state (#265).
 - Header notification feed/unread behavior, session timeout, maintenance banner,
   shared export UI, and network rescan workflow.
+- Sessions end on the next request after an account's role, status, password or
+  email changes, with an account change email to the user (#218). Covered by unit
+  and component tests only; no live appliance or real mail delivery check.
 
 ## Incomplete or mismatched work
 

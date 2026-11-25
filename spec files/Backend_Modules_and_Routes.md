@@ -90,6 +90,23 @@ normal configured timeout; immediate invalidation is not part of this command.
 | `POST /api/user/login` | Public | Validate credentials and establish a session only when signed out; an existing authenticated session returns 409 before credential validation. Body: `email`, `password`, optional boolean `remember_me` (default false; any other type returns 400) |
 | `POST /api/user/logout` | Login | End the current session |
 
+**Session revocation (#218).** At sign-in the session stores `auth_stamp`, a keyed
+SHA-256 digest of the account's password hash, role, email, status and
+`Must_Change_Password`. `enforce_session_timeout` compares it before every request
+and, when it differs or is missing, signs the session out with 401 "Your account
+changed. Please log in again." (a status other than Active answers "Account
+inactive."). This applies to remembered sessions too. Names, the email alert
+setting and the permissions of the assigned role are not in the stamp, so changing
+them keeps users signed in. `change-password` and `complete-setup` re-stamp the
+caller's own session after saving; an administrator who edits their own role,
+email, status or password through `PUT /api/user/accounts/<id>` is signed out.
+Sessions created before this behaviour carry no stamp, so everyone signs in once
+after the upgrade. No database change is involved.
+
+Login with the correct password refuses a Suspended account with 403 "This account
+is suspended. Contact the admin for any concerns." and an Inactive one with 403
+"Account inactive." A wrong password always answers 401, whatever the status.
+
 Login requires an explicit sign-out before signing in again, including the
 same account. An authenticated request receives the standard error envelope
 (`success: false`, HTTP 409), with message "You are already signed in. Sign out
@@ -137,14 +154,25 @@ password retains the existing temporary-password and forced-change behavior.
 | `POST /api/user/accounts` | `account.edit` | Create a user account. Optional `require_password_change` (boolean, default true) sets `Must_Change_Password`; unticked, the user is not forced to change the admin-chosen password at first sign-in. Optional `receive_email_alerts` (boolean, default true); sending `false` needs `account.alerts` (403 otherwise). An Active account with alerts on is a Nagios contact, so the config is rebuilt through `regenerate_and_apply_config_status()`; the response carries `config_applied`, `config_ok`, `config_message` (a failed apply does not undo the account) |
 | `GET /api/user/accounts` | `account.view` | Paginated account list. Each row carries `is_super_admin` for the first account (lowest `UserID`) so clients can preserve its protected status |
 | `GET /api/user/accounts/<id>` | `account.info` | Account detail, including `receive_email_alerts` (the list rows carry it too) |
-| `PUT /api/user/accounts/<id>` | `account.edit` | Edit account details/status; users are not deleted. The first account (lowest `UserID`, the bootstrap administrator) must remain Active and may be assigned only an active role that has every permission required to manage accounts and roles (`account.view`, `account.edit`, `account.info`, `role.view`, `role.edit`, `role.info`, `role.list`); either violation returns 400 before account data changes. Other fields remain editable. `password`/`confirm_password` are optional (omit to keep the password, so suspend/deactivate needs none). Setting a password on another account (always, regardless of the create-form option), or returning an account to Active from Suspended/Inactive, sets `Must_Change_Password`. Optional `receive_email_alerts` (boolean): changing it needs `account.alerts` (403 otherwise; resending the current value is allowed) and is written to the activity log. When the account's Nagios contact changes (status, alerts setting, email or name of an Active alert user), the config is rebuilt as on create and the response carries `config_applied`, `config_ok`, `config_message` |
+| `PUT /api/user/accounts/<id>` | `account.edit` | Edit account details/status; users are not deleted. The first account (lowest `UserID`, the bootstrap administrator) must remain Active and may be assigned only an active role that has every permission required to manage accounts and roles (`account.view`, `account.edit`, `account.info`, `role.view`, `role.edit`, `role.info`, `role.list`); either violation returns 400 before account data changes. Other fields remain editable. `password`/`confirm_password` are optional (omit to keep the password, so suspend/deactivate needs none). Setting a password on another account (always, regardless of the create-form option), or returning an account to Active from Suspended/Inactive, sets `Must_Change_Password`. A password reset, email change or role change emails the account (see Account change email below). Optional `receive_email_alerts` (boolean): changing it needs `account.alerts` (403 otherwise; resending the current value is allowed) and is written to the activity log. When the account's Nagios contact changes (status, alerts setting, email or name of an Active alert user), the config is rebuilt as on create and the response carries `config_applied`, `config_ok`, `config_message` |
 | `GET /api/user/me` | Login | Return the current user, permissions, `must_change_password`, `needs_setup` and `remembered` (the session was started with Remember me) |
 | `POST /api/user/complete-setup` | Login (`Needs_Setup` only) | First-run setup for the bootstrap administrator: `current_password`, `new_email`, `new_password`, `confirm_password`. Checks the current password and the password policy; rejects an invalid or already-used email, the installer's `pinpoint.lan` placeholder domain, and reserved/non-routable domains (`.local`, `.lan`, `.test`, `.example`, `.invalid`, `.localhost`, `.internal`, `home.arpa`). No deliverability check. Saves both, clears `Needs_Setup` and `Must_Change_Password`, writes an audit-log entry, then regenerates the Nagios config through `regenerate_and_apply_config_status()` (Nagios contacts are named and addressed by `User.Email`). Returns `config_applied`, `config_ok`, `config_message`; a failed apply does not undo the account change. 400 for any other account. While `Needs_Setup` is set, every `/api` route except login, logout, `/me` and this one returns 403 (`enforce_password_change`), including `change-password` |
 | `POST /api/user/change-password` | Login | Change the caller's own password (`current_password`, `new_password`, `confirm_password`); clears `Must_Change_Password`. While that flag is set every other `/api` route except login, logout and `/me` returns 403 (`enforce_password_change`). A user whose status is no longer Active is signed out on their next request |
 | `POST /api/user/forgot-password` | Public | Login-page "Forgot Password?". Body `{email}`. Creates a Pending `PasswordResetRequest` for an Active account (at most one pending per user) and always returns the same generic success, so it cannot reveal which emails exist. No email is sent |
 | `GET /api/user/password-requests` | `account.edit` | Pending forgot-password requests, oldest first (`items`, `count`); drives the admin bell alert and the Manage Accounts panel |
-| `POST /api/user/password-requests/<id>/resolve` | `account.edit` | Admin sets the new password (`password`, `confirm_password`, same policy as other password routes). Marks the request Completed and sets `Must_Change_Password`; 409 if already handled |
+| `POST /api/user/password-requests/<id>/resolve` | `account.edit` | Admin sets the new password (`password`, `confirm_password`, same policy as other password routes). Marks the request Completed and sets `Must_Change_Password`; emails the account (see Account change email below); 409 if already handled |
 | `POST /api/user/password-requests/<id>/dismiss` | `account.edit` | Admin declines a pending request; 409 if already handled |
+
+**Account change email (#218, `app/account_notifications.py`).** After a saved
+password reset (Edit Account or a forgot-password request), email change or role
+change, the account's address is emailed what changed, using the Settings -> Email
+account; an email change writes to both the old and new addresses. The message
+never includes a password, and it is sent whatever the account's alert setting or
+status. The response carries `notification_ok` and `notification_message`. When
+email is not set up or a send fails, the change stays saved and
+`notification_ok` is false so the administrator can tell the user. Sending happens
+within the request (SMTP timeout 15 seconds per address). Nothing is sent, and
+neither field is present, for other edits.
 
 ### `app/api/user/preferences.py`
 

@@ -51,6 +51,15 @@ The API rejection also covers a session established in another tab after the
 initial route check. Normal signed-out login enters the authenticated layout,
 which reloads `/api/user/me` and applies that account's permissions and setup flags.
 
+When the server has ended a session (for example after an account change),
+`SessionTimeoutWatcher` goes to `/login` without the idle notice: it rechecks
+`/api/user/me` on every page change, and acts on the `pinpoint-unauthorized` event
+that `lib/api.ts` raises for a 401. Screens that call
+`fetch` directly are covered by the page-change check. The Edit Account dialog says
+"Changing the email, role, status or password signs the user out.", and Manage
+Accounts shows `notification_message` after a save or a password-request reset when
+`notification_ok` is false.
+
 ## Page access rules
 
 `src/lib/pageAccess.ts` is the client route-to-permission map. The sidebar hides

@@ -54,15 +54,16 @@ One row per loop round, newest last.
 | 3 | owner said go; posted condition on #218; installed deps; wrote plan | none | plan ready |
 | 4 | session stamp, suspended message; four tests that edit the signed-in account now sign in again | unit tests (full run, then affected files) | green |
 | 5 | account change email; client redirect, dialog wording, mail notice | affected pytest files; two vitest files | green |
+| 6 | specs, TC-ACC-05, manuals, QA fingerprints; reverted CurrentUserContext change (pathname check covers it) | scripts/verify.sh docs | green |
 
 ## State for the next session
 
-- Last check run (exact command): npx vitest run on SessionTimeoutWatcher and ManageAccountsPage tests
+- Last check run (exact command): scripts/verify.sh docs
 - Result (first failing lines, or "green"): green
 - Hypothesis: a keyed stamp of password hash, role, email, status and forced-change flag in the
   session ends sessions without a database migration. Sessions without a stamp are rejected, so
   everyone signs in once after upgrade.
-- Next action (one specific step, not "continue"): update specs, TC-ACC-05 and manuals, then run scripts/verify.sh all.
+- Next action (one specific step, not "continue"): run scripts/verify.sh all.
 
 ## Decisions and notes
 
