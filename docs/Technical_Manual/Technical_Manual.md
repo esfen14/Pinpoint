@@ -216,7 +216,7 @@ Addressing, VLANs and firewall placement depend on the site and are **TBC**
 | Scheduler | Flask app context, Nagios CGIs, spool folder | Dashboard freshness, history, remediation |
 | Config writer (`create_host_cfg.py`) | Plugin Manager state, discovery data, settings, `nagios -v`, `systemctl reload nagios` | Discovery, settings saves, device edits, plugin enable/disable |
 | Nagios Core | Generated `hosts.cfg`, plugins in `NAGIOS_PLUGIN_DIR`, `resource.cfg` | Checks, notifications, event handler |
-| Event handler `/usr/local/sbin/pinpoint-event-handler` | Spool folder (installer) | Remediation consumer. **Known gap (2026-11-25):** an appliance built from the current installer had neither the handler nor the spool folder, so the Remediation page reported "The spool folder could not be read" and recorded no runs. They were installed by hand for the walkthrough (`install -m 755 -o root -g root` for the handler; `install -d -m 2770 -o nagios -g pinpoint` for the folder). The installer maintainer should confirm |
+| Event handler `/usr/local/sbin/pinpoint-event-handler` | Spool folder (installer) | Remediation consumer. Verified on an ISO install (2026-11-25, app commit `4d4ac90f`): the installer creates both. An older lab appliance lacked them |
 
 ### 2.6 Data flow and communication
 
@@ -696,13 +696,28 @@ Nagios Core, Nagios Plugins, SNMP, Nagios configuration, PinPoint web interface
 (Nginx and Gunicorn), PinPoint privileges. `sudo pinpoint-update` opens the read-only
 Update Manager for Nagios Core, the plugins and `check_ncpa.py`.
 
+An ISO install observed on 2026-11-25 ran ten first-boot steps: the eight
+areas above up to privileges, then the event handler, log limits and the Update
+Manager.
+
+**If first boot fails.** The installer downloads packages, so it needs a working
+Ubuntu mirror. In the same run, the regional mirror stopped answering and step 7
+(`nmap`) failed. The web page already loaded although setup was incomplete. Check
+`systemctl status pinpoint-firstboot` and `/var/log/pinpoint-firstboot.log`,
+fix the network or the mirror in `/etc/apt/sources.list`, then run
+`sudo systemctl restart pinpoint-firstboot`. The rerun starts at step 1; in this
+case it completed.
+
 ### 8.3 Service account rights required
 
 The `pinpoint` account must be able to: write `hosts.cfg`; run `nagios -v`;
 `sudo systemctl reload nagios`; write its database files and
 `DATABASE_BACKUP_DIR`; write the Nagios command pipe (group `nagios`); run the
 named helpers with no other sudo rights. Writing to the plugin directory is
-intentionally **not** granted.
+not a listed requirement. On the 2026-11-25 ISO install the directory was
+nevertheless group-writable (`nagios:nagios`, 775, and `pinpoint` is in group
+`nagios`), while the stock plugin files were `nagios:nagios` 755, so **Update**
+in Plugin Manager failed on them.
 
 ### 8.4 Environment variables and configuration files
 

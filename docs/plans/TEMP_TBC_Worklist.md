@@ -44,7 +44,7 @@ User Manual and guides; each is a "click it and see".
 - [x] Does Maintenance Mode (Settings) behave like a maintenance window? (`Settings.md:59`) *(answered from source 2026-11-24)*
 - [x] Full list of tables under **Settings → Plugins**. (`Settings.md:67`) *(answered from source 2026-11-24)*
 - [x] **Register agent** end to end. *(verified on the QA appliance 2026-11-25)* (`User_Manual.md:581`; done once on `db01`, so this can now be written up. Wizard deploy is issue #336.)
-- [x] A single walkthrough of the **Remediation** page. *(verified 2026-11-25; needed a hand-installed event handler and spool folder, an installer gap)*
+- [x] A single walkthrough of the **Remediation** page. *(verified 2026-11-25; the lab appliance needed a hand-installed event handler and spool folder; a fresh ISO install has both)*
 - [x] Per-service recovery walkthrough. *(2026-11-25: the restart-nagios action ran and the drawer was checked; the switch itself needs an SSH-trusted NCPA Linux device, not available until #336)* (`User_Manual.md:665`, `manuals/README.md:23`)
 
 ## B. Browser and device checks (a person with the devices)
