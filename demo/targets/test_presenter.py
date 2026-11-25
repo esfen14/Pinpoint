@@ -495,6 +495,22 @@ class PreflightTests(unittest.TestCase):
         with patch.object(presenter,'read_pins',return_value={}),patch.object(presenter,'read_vm_pins',return_value={}),patch.object(presenter,'preflight',side_effect=ValueError('Active VPN/tunnel prevents defense startup preflight')),patch.object(presenter.qa_control,'claim',side_effect=lambda:nullcontext()),redirect_stderr(error):
             code=presenter.main(['preflight'])
         self.assertEqual(code,1);self.assertIn('Preflight blocked: Active VPN/tunnel',error.getvalue())
+    def preflight_output(self,report):
+        import io
+        from contextlib import redirect_stderr,redirect_stdout,nullcontext
+        out,error=io.StringIO(),io.StringIO()
+        with patch.object(presenter,'read_pins',return_value={}),patch.object(presenter,'read_vm_pins',return_value={}),\
+             patch.object(presenter,'preflight',side_effect=ValueError('Host-only VM membership changed')),\
+             patch.object(presenter,'deploy_target_report',**report),\
+             patch.object(presenter.qa_control,'claim',side_effect=lambda:nullcontext()),redirect_stdout(out),redirect_stderr(error):
+            code=presenter.main(['preflight'])
+        return code,out.getvalue(),error.getvalue()
+    def test_a_blocked_preflight_still_reports_the_deploy_target(self):
+        code,out,error=self.preflight_output({'return_value':'DEPLOY_REPORT'})
+        self.assertEqual(code,1);self.assertIn('DEPLOY_REPORT',out);self.assertIn('Preflight blocked: Host-only',error)
+    def test_an_unavailable_deploy_target_does_not_hide_the_preflight_blocker(self):
+        code,out,error=self.preflight_output({'side_effect':ValueError('Container mounts changed')})
+        self.assertEqual(code,1);self.assertIn('NCPA deploy target: unavailable',out);self.assertIn('Preflight blocked: Host-only',error)
     def test_preflight_command_is_read_only_and_ignores_a_dhcp_intent(self):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory);(root/'dhcp-move.json').write_text('pending')

@@ -39,7 +39,7 @@ Only `ssh-alt02` (`10.77.1.11`, SSH port 2223) accepts it; details in
 
 | Task | Command | Pinpoint shows |
 |---|---|---|
-| Find the login | `demo/demo preflight`, then the `sudo cat` command it prints (user `labadmin`) | In **NCPA Deployment**: Verify the host key, enter the login, **Deploy NCPA**; the device becomes **Deployed NCPA** |
+| Find the login | `demo/demo preflight`, then the `sudo cat` command it prints (user `labadmin`). It prints this even when its VM check then blocks, as it does in the QA appliance lab | In **NCPA Deployment**: Verify the host key, enter the login, **Deploy NCPA**; the device becomes **Deployed NCPA** |
 | Start again with nothing installed | `docker rm -f pinpoint274-host-ssh-alt02-pilot` then `demo/demo setup --apply` | Same host key; use **Clean up** or redeploy |
 
 ## Take a device or service down and back up

@@ -808,9 +808,13 @@ def main(argv=None):
                     print(rest[0],'extra ports restored')
                 else:raise ValueError('Invalid ports request')
             elif args.command=='preflight':
+                # Reported first: the VM gate below refuses in the QA appliance lab.
+                try:
+                    print(deploy_target_report(catalog,pins))
+                except (OSError,ValueError,KeyError,TypeError):
+                    print('NCPA deploy target: unavailable; rebuild the lab (demo/demo destroy --apply, then setup --apply).')
                 result=preflight(pins,vm_pins=read_vm_pins())
                 print('Preflight OK: %d MiB RAM available, %d MiB disk free, swap %.1f pages/s'%(result['available_mib'],result['free_disk_mib'],result['swap_pages_per_second']))
-                print(deploy_target_report(catalog,pins))
             elif args.command=='status':
                 for d in catalog.devices:
                     if d.kind!='linux':continue
