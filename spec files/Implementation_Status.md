@@ -19,9 +19,10 @@ are tested offline only and have not been run against the live Docker and
 VirtualBox lab; appliance OS install (`scripts/vmlab`), its adapter address and
 Windows NCPA install stay manual, as does registering Windows NCPA in Pinpoint. One Linux
 container, `ssh-alt02`, accepts the NCPA Deployment wizard (#336: password SSH with sudo and a
-local copy of `repo.nagios.com`). Its deployment steps were run on a throwaway copy on an
-isolated network; **the wizard run in the demo lab is not yet done**, and there is no automated
-NCPA deployment run. The `vmlab smoke`/`alerts` runs against the containers are untested live.
+local copy of `repo.nagios.com`). A [scripted wizard run in the demo
+lab](../docs/test-runs/2026-11-26-issue-336-demo-ncpa-deploy/REPORT.md) passed deployment, the
+failure paths and redeployment; its memory and disk checks read the host and were OK only with
+raised lab thresholds. There is no repeatable automated NCPA deployment run in the repository. The `vmlab smoke`/`alerts` runs against the containers are untested live.
 
 The owner subsequently chose laptop Docker with an isolated VirtualBox host-only
 network. The current presenter pilot supports `demo/demo presenter status`,

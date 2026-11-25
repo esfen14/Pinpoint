@@ -112,7 +112,9 @@ no password, have no `sudo` and use the unchanged lab image.
 What this does not prove: downloading from the real Nagios server, `systemd`
 units, or the firewall step of a real device. The agent's disk checks cover only
 `/data` and `/identity`, which are host folders, so they report the **laptop's**
-disk use.
+disk use, and the memory check reports the laptop's memory. With the shipped
+thresholds they can be WARNING; on a disposable appliance you may raise them in
+**Settings > Plugins**.
 
 A deployed agent stays through `down`, `up` and `reset`. For a target with nothing
 installed, remove only that container and create it again (the SSH host key is

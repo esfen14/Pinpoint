@@ -63,3 +63,5 @@ demo/demo destroy --apply             # type "destroy": removes only the demo co
 - NCPA deployment is manual (no automated run). Only `ssh-alt02` accepts it: see
   [NCPA deployment target](../../demo/targets/README.md#ncpa-deployment-target-ssh-alt02).
   `docker build` needs internet; the deployment itself does not.
+- `demo/demo preflight` blocks in the QA appliance lab ("Host-only VM membership
+  changed"): it expects only the two demo VMs. It still prints the NCPA deploy target.

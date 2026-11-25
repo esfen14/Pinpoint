@@ -39,7 +39,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 4. [x] Creation: second image tag, private password file, mount, add-host, memory/pids; presenter validates the mount. `create.py`, `setup.py`, `presenter.py` and tests; new tests in `scripts/verify.sh`.
 5. [x] `setup` plan and `preflight` report the deploy target.
 6. [x] Live build of both images and an offline-network smoke of the deploy helper in a throwaway container.
-7. [ ] Live lab run through the NCPA Deployment page, failure paths; report in `docs/test-runs/`. Needs the owner (sudo, appliance VM).
+7. [x] Live lab run through the NCPA Deployment page, failure paths; report in `docs/test-runs/`. Needs the owner (sudo, appliance VM).
 8. [x] Docs: `Local_Lab.md`, `NCPA_Deployment.md`, `demo/targets/README.md`, `demo/USAGE.md`, `Demo_Lab_QA_Handoff.md`, spec, `Implementation_Status.md`.
 
 ## Round log
