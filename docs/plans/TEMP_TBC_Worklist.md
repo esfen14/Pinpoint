@@ -39,7 +39,7 @@ User Manual and guides; each is a "click it and see".
 
 ### Plugins, settings, NCPA, recovery
 - [x] Which command fields can be edited in **Override a command**. (`Plugin_Manager.md:71`) *(answered from source 2026-11-24)*
-- [ ] Can the Pinpoint service account write to the plugin folder (needed for **Update**)? (`Plugin_Manager.md:73`)
+- [x] Can the Pinpoint service account write to the plugin folder (needed for **Update**)? *(tested 2026-11-25: the folder yes, the plugin files no; Update fails with a 500 until the file is owned by `pinpoint`; Roll back works)* (`Plugin_Manager.md:73`)
 - [x] Is each General setting stored per person or system-wide? (`Settings.md:44`) *(answered from source 2026-11-24)*
 - [x] Does Maintenance Mode (Settings) behave like a maintenance window? (`Settings.md:59`) *(answered from source 2026-11-24)*
 - [x] Full list of tables under **Settings → Plugins**. (`Settings.md:67`) *(answered from source 2026-11-24)*
