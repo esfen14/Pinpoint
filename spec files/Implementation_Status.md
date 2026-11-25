@@ -125,6 +125,13 @@ Existing labels, destinations and `system.network_health` filtering are preserve
 rendered-sidebar regression checks cover order, links and denied visibility.
 Live appliance/browser verification is pending.
 
+## Sidebar toggle (#342)
+
+The header's Toggle sidebar button hides and shows the sidebar and the content
+takes its width. Covered by component tests and a Chromium check against a
+mocked API at desktop width; no installed appliance check. Phone-sized screens
+are not supported.
+
 ## Manual topology (#117)
 
 Manual multiple-parent relationships, graph validation and eligibility-aware Nagios

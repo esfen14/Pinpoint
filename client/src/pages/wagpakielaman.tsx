@@ -68,7 +68,7 @@ export function TopologyPage() {
   const parent = edge ? data?.devices.find(d => topologyNodeId(d) === edge.source) : null
   const child = edge ? data?.devices.find(d => topologyNodeId(d) === edge.target) : null
 
-  return <main className="ml-55 flex-1 p-6 text-[var(--text)]">
+  return <main className="flex-1 p-6 text-[var(--text)]">
     <div className="rounded-3xl bg-[var(--card)] p-6 shadow-lg">
       <div className="flex items-center justify-between"><h1 className="text-2xl font-semibold">Network Topology</h1><button type="button" onClick={reload} className="rounded border px-3 py-2">Refresh</button></div>
       <p className="mt-2 text-sm text-[var(--text-muted)]">Inventory devices and their manually configured parents. Lines show reachability relationships. Dashed amber lines indicate parents omitted from Nagios. Layout is automatic.</p>

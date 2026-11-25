@@ -161,7 +161,7 @@ export function SystemStatusPage() {
   }
 
   return (
-    <main className="ml-[220px] flex-1">
+    <main className="flex-1">
       <div className="space-y-6 p-6">
 
         <PageHeader

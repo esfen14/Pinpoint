@@ -3508,11 +3508,11 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-NFR-08 – Availability for 10 hosts
 
-**Requirement:** REQ-NFR-06 · **Technique:** BVA · **Priority:** M · **Result:** FAIL (initial run; later tester-reported retest PASS, no timings recorded)
+**Requirement:** REQ-NFR-06 · **Technique:** BVA · **Priority:** M · **Result:** FAIL (initial run; later tester-reported retest PASS, no timings recorded; AI-executed scripted run 2026-11-25 PASS; 10 of 10 per endpoint within 5 s)
 
-**Recorded run:** [report](../test-runs/2026-10-19-module-20-21-records/REPORT.md)
+**Recorded run:** [report](../test-runs/2026-10-19-module-20-21-records/REPORT.md); [scripted run](../test-runs/2026-11-25-issue-221-availability-timing/REPORT.md)
 
-**Finding:** [#221](https://github.com/esfen14/Pinpoint/issues/221) (open; asks to clarify the conflicting results)
+**Finding:** [#221](https://github.com/esfen14/Pinpoint/issues/221) (clarified by the 2026-11-25 scripted run); [#343](https://github.com/esfen14/Pinpoint/issues/343) (open; signed-out API replies are HTML)
 
 **Steps**
 
