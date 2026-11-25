@@ -142,7 +142,7 @@ export function DeviceInventoryPage() {
 
   return (
     <main
-      className={`ml-55 flex-1 ${
+      className={`flex-1 ${
         isLight
           ? 'bg-[#f5f6f8] text-gray-900'
           : 'bg-pinpoint-dark text-white'

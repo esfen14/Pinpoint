@@ -1,5 +1,17 @@
 # Current-case adapter preparation
 
+## 2026-11-25 sidebar toggle dependency review (#342)
+
+Claude compared the selectors and assertions for TC-ACC-08, TC-ACC-10,
+TC-DI-02, TC-DI-03, TC-DI-07, TC-DI-08, TC-DASH-07 and TC-HIS-04 with the
+changes to `ManageAccountsPage.tsx`, `DeviceInventoryPage.tsx`,
+`DashboardPage.tsx` and `HistoryPage.tsx`. Each change removes only the page's
+left sidebar margin, which `AdminLayout` now applies; markup, text and controls
+are unchanged, the sidebar starts shown, and no adapter asserts a position or
+uses the toggle. Only those source fingerprints were refreshed in
+`automation-coverage.json`. Coverage statuses, mappings and execution
+permissions are unchanged; no live case was executed by this review.
+
 ## 2026-11-25 TC-NFR-08 recorded-run review (#221)
 
 TC-NFR-08 now cites the AI-executed scripted availability run in its detailed

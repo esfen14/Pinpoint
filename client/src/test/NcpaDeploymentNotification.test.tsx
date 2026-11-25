@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor, act, renderHook } from '@testing-li
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { Header } from '../components/layout/Header'
+import { SidebarProvider } from '../contexts/SidebarContext'
 import { useNcpaDeploymentStatus } from '../hooks/useNcpaDeploymentStatus'
 
 const savedSettings = { notifications: false, maintenanceMode: false }
@@ -63,7 +64,9 @@ function Location() {
 function renderHeader() {
   return render(
     <MemoryRouter initialEntries={['/dashboard']}>
-      <Header />
+      <SidebarProvider>
+        <Header />
+      </SidebarProvider>
       <Routes>
         <Route path="*" element={<Location />} />
       </Routes>

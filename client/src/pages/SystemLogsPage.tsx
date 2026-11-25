@@ -100,7 +100,7 @@ export function SystemLogsPage() {
   if (!canViewLogs) return null
 
   return (
-    <main className="ml-[220px] flex-1">
+    <main className="flex-1">
       <div className="space-y-6 p-6">
 
         <PageHeader title="System Logs" description="Monitor events and system activities." />

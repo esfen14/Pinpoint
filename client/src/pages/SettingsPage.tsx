@@ -40,7 +40,7 @@ export function SettingsPage() {
   const shownTab = tabs.some((tab) => tab.id === activeTab) ? activeTab : 'general'
 
   return (
-    <main className="ml-55 flex-1">
+    <main className="flex-1">
       <div className="min-h-screen p-6">
 
         <div className="mb-6">

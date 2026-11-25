@@ -186,7 +186,7 @@ export function DashboardPage() {
   const downUnreachable = (summary?.hosts.down ?? 0) + (summary?.hosts.unreachable ?? 0)
 
   return (
-    <main className="ml-[220px] flex-1 min-w-0">
+    <main className="flex-1 min-w-0">
       <div className="flex w-full min-w-0 gap-[var(--dash-grid-gap)] px-6">
         <div className="min-w-0 flex-1 space-y-[var(--dash-section-gap)] py-6">
 
