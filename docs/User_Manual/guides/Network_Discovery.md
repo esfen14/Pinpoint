@@ -38,11 +38,13 @@ Under **Run Network Discovery**:
 3. To stop a running scan, use the stop control. The run is recorded as **Interrupted** with the progress it had reached. Nagios is not reconfigured for a scan stopped before the apply step; devices already saved to the inventory by then are kept.
 4. When it finishes, open [Device Inventory](Device_Inventory.md) to see new and changed devices.
 
-Expected result: new devices appear in the inventory; ports seen again keep their state.
+Expected result: new devices appear in the inventory; ports seen again keep their state. A bell notification reports the finished scan.
 
 Note: the list may not be complete the moment the scan reports **Success**. In a lab run of 14 devices (about 4 minutes), a check made shortly after the status changed showed only some of them; all 14 were listed and monitored a few minutes later. If devices are missing, wait a few minutes and refresh Network Health or Device Inventory before scanning again.
 
 ## Scheduled scans
+
+Pinpoint does not scan on its own until a first scan has been run by hand.
 
 The automatic scan interval is **Scan Frequency** under **Settings → General** (every 1, 3, 6, 12 or 24 hours); **Current Scan Schedule** beside it shows the result. Changing it needs the settings permission for that tab.
 

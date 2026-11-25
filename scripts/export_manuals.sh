@@ -42,9 +42,18 @@ export_one() {
   local name="$1" source="$2"
   local work="${out:?}/work-${name:?}"
   mkdir -p "$work"
+  # An open copy would be overwritten, and LibreOffice then waits on its lock file.
+  local extension
+  for extension in docx pdf; do
+    if [ -e "$out/.~lock.$name.$extension#" ]; then
+      echo "export_manuals: close $out/$name.$extension first (it is open in LibreOffice)" >&2
+      exit 1
+    fi
+  done
   python3 -I "$tools/prepare.py" "$source" "$work/$name.md" "$work"
   pandoc "$work/$name.md" -f gfm+yaml_metadata_block+raw_attribute -o "$out/$name.docx" \
     --reference-doc="$reference" --resource-path="$work"
+  python3 -I "$tools/center_tables.py" "$out/$name.docx"
   run_soffice "macro:///Standard.Module1.ToPdf($out/$name.docx,$out/$name.pdf)" >/dev/null
   [ -s "$out/$name.pdf" ] || { echo "export_manuals: PDF for $name was not produced" >&2; exit 1; }
   echo "wrote $out/$name.docx and $out/$name.pdf"

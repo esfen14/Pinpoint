@@ -46,3 +46,4 @@ Precautions:
 - A loop (A under B under A) is refused.
 - Removing a device's parent does not remove the device.
 - Nagios owns reachability; the map only shows what Nagios was given.
+- Pinpoint does not guess parents; you set them.

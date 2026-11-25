@@ -28,7 +28,7 @@
 | Update or roll back | `plugin.update`, `plugin.update_rollback` |
 | Add and manage custom checks | `plugin.custom_check` |
 
-Plugins are read from the Nagios plugin folder (default `/usr/local/nagios/libexec/`; the `NAGIOS_PLUGIN_DIR` setting). The Pinpoint service account may not write to that folder, so installing new plugin files is done by an administrator on the server.
+Plugins are read from the Nagios plugin folder (default `/usr/local/nagios/libexec/`; the `NAGIOS_PLUGIN_DIR` setting). Installing new plugin files is done by an administrator on the server (see [Commands, validation and updates](#commands-validation-and-updates) for what **Update** can and cannot change).
 
 ## Look at the inventory
 
@@ -49,6 +49,8 @@ Expected result: one row per installed plugin with its category and description.
 Expected result: the plugin shows **Enabled**, then **Active** once it is checking something; new services appear in Nagios, and on Dashboard and Network Health after the next poll.
 
 If Nagios rejects the new configuration the plugin goes back to its previous state and the page shows the reason.
+
+A new installation has no plugin enabled. A plugin that checks no port (for example `check_ping`) cannot be enabled this way; basic reachability is always checked for every host.
 
 ## Disable a plugin
 

@@ -25,6 +25,8 @@ provider:
 - **Password:** the relay password, app password or SMTP token required by the
   provider. Consult the provider's account and administrator restrictions.
 
+Then, in **Manage Accounts**, turn on email alerts for each person who should receive them; see [Sign in, accounts and roles](Login_Accounts_and_Roles.md).
+
 Save the settings, then use **Send test email**. It sends to your signed-in
 account's email address using the saved configuration. Confirm arrival in that
 inbox or its spam folder. A successful send means the SMTP server accepted the

@@ -5,6 +5,18 @@
 *Figure: Reports.*
 
 
+## Run and export a report
+
+Prerequisite: the `system.report` permission.
+
+1. Choose **Reports** and one of the six views: Host Availability, Network Services, Hosts by OS, Device Services, Alerts, Notifications.
+2. Choose the period and any filters.
+3. Choose **Run Report**, then **Export** to download the result.
+
+Expected result: a table on screen and a downloaded file.
+
+## How availability is calculated
+
 Network Services and Device Services use Nagios archive durations. Run Report
 loads the selected historical range and separately reads current Nagios status.
 There is no extra polling schedule or availability target.

@@ -50,6 +50,11 @@ Expected result: the drawer shows the current status, performance data and, with
 
 ## Ports: why each is monitored or not
 
+![Device Inventory drawer showing the Ports section with two monitored ports](../../images/manual/UM-04-device-drawer.png)
+
+*Figure UM-04. The Device Inventory drawer for one device, with its **Ports** section listing two monitored ports. Ports that Pinpoint can monitor but you have not chosen appear as suggested.*
+
+
 The **Ports** section lists each open TCP or UDP port in groups, in this order: **Needs attention**, **Monitored**, **Suggested**, **Stopped**, and **Archived** (collapsed). Each port shows one reason, for example "Held back: left Suggested on purpose", "check_ssh is not enabled in Plugin Manager" or "Not seen lately".
 
 With `system.hosts.edit` you can:

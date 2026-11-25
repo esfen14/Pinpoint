@@ -44,7 +44,7 @@ Precautions:
 
 ## First-run setup (new installation)
 
-The first administrator account is created by the installer with a placeholder email ending in `@pinpoint.lan` and a placeholder password. The first sign-in shows a setup window that cannot be skipped:
+The first administrator account is created by the installer with a placeholder email ending in `@pinpoint.lan` and a placeholder password. Where to find these values is described in [Installation and deployment](../../Technical_Manual/08_Installation_and_deployment.md); this manual never prints them. The first sign-in shows a setup window that cannot be skipped:
 
 1. Enter the **current password** (the installer's).
 2. Enter your real **new email** (the `pinpoint.lan` placeholder domain is refused) and a **new password** twice.
@@ -113,14 +113,6 @@ Precautions:
 - After an upgrade, run `flask sync-permissions` so newly introduced permissions exist and are granted to Super Admin; grant them to other roles here.
 - Permission changes apply to people already signed in at their next request to the server, because permissions are read from the database on every request.
 
-## Permission names used across the guides
+## Permission names
 
-| Area | Permissions |
-|---|---|
-| Accounts | `account.view`, `account.info`, `account.edit`, `account.alerts` |
-| Roles | `role.view`, `role.info`, `role.edit`, `role.list` |
-| Pages | `system.dashboard`, `system.network_health`, `system.history`, `system.report`, `system.logs`, `maintenance.manage`, `remediation.view`, `remediation.manage`, `plugin.view` |
-| Actions | `system.acknowledge_alerts`, `system.recheck`, `system.discover`, `system.hosts`, `system.hosts.edit`, `system.hosts.alerts`, `system.deploy.ncpa`, `plugin.*` |
-| Settings tabs | `settings.security`, `settings.system`, `settings.discovery`, `settings.plugins`, `settings.email` |
-
-The Manage Roles screen is the authoritative list for a running system.
+The permissions and what each allows are listed in [User roles and permissions](../05_User_roles_and_permissions.md).

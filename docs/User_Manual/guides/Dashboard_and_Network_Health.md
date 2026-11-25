@@ -44,6 +44,10 @@ Freshness: the page shows when the data was last updated and warns when it is ol
 
 Colors: green is OK or UP, yellow is WARNING, red is CRITICAL or DOWN, orange or gray is UNKNOWN or UNREACHABLE, a muted color is acknowledged, blue or purple is scheduled downtime.
 
+![Dashboard with summary cards, a freshness line, critical alerts and one acknowledged alert](../../images/manual/UM-03-dashboard-alerts.png)
+
+*Figure UM-03. The Dashboard with the summary cards, the "last updated" line, two unacknowledged critical alerts, one acknowledged critical alert and three warnings from the NCPA agent checks.*
+
 ## Acknowledge an alert
 
 Acknowledging tells your team a problem is known and being handled. It does not fix the problem and does not stop Nagios checking.
@@ -52,6 +56,8 @@ Acknowledging tells your team a problem is known and being handled. It does not 
 2. Type the required **comment** and confirm.
 3. The row turns muted with an Acknowledged badge. To undo, choose **Unacknowledge** and confirm; no comment is needed.
 4. To acknowledge many at once on the Dashboard, set the acknowledgement filter (**Show all**, **Hide acknowledged**, **Show only acknowledged**), then choose **Acknowledge all**. It acts only on the rows currently visible, with one comment for all.
+
+Write a comment others can act on, for example what is wrong, who is handling it and when it should be fixed.
 
 Expected result: who acknowledged, when and the comment are kept and appear on the matching event in [History](Alerts_and_Notification_History.md). When a problem recovers, its acknowledgement is closed automatically.
 
@@ -73,6 +79,7 @@ Open a host or service in its detail drawer and choose **Check now** (needs `sys
 
 ## Precautions and troubleshooting
 
+- A new problem can take up to one Nagios check, plus one Pinpoint poll, plus one browser refresh to appear.
 - **A device is missing from counts:** devices that are paused, retired or merged are not checked by Nagios and are left out of every count. See [Device Inventory](Device_Inventory.md).
 - **Data looks old:** read the freshness line. Check Nagios is running (Monitoring System section), then the polling and check intervals under **Settings → System**.
 - **A value says "Not configured" or "Plugin not configured":** the check is not set up for any host. Enable the plugin in [Plugin Manager](Plugin_Manager.md) or add the NCPA metric under **Settings → Plugins**.

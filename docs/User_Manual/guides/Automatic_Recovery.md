@@ -5,13 +5,13 @@
 *Figure: Remediation page.*
 
 
-Administrators with **remediation.manage** can open **Remediation** in the sidebar to tell PinPoint what to do when a check reaches a hard failure. People with **remediation.view** can read the rules and the run log. Run `flask sync-permissions` after upgrading; both permissions go to Administrator, and other roles get them under **Manage Roles**.
+Administrators with **remediation.manage** can open **Remediation** in the sidebar to tell PinPoint what to do when a check reaches a hard failure. People with **remediation.view** can read the rules and the run log. Run `flask sync-permissions` after upgrading; both permissions go to Super Admin, and other roles get them under **Manage Roles**.
 
 ## What PinPoint can restart automatically
 
 The action **Restart a PinPoint host service** restarts one service on the PinPoint appliance itself. Today the only choice is **nagios**. PinPoint cannot restart any other service, and it never takes a service name from an alert or from a typed command. `pinpoint-gunicorn` (PinPoint's own web service) is left out on purpose, because restarting it would stop the process that carries out the restart.
 
-Restarting services on monitored devices is not part of this feature (it is tracked in issue #182).
+To restart a service on a monitored device instead, see [Remote service restart](Remote_Service_Restart.md).
 
 ## Before you turn it on
 
@@ -73,7 +73,7 @@ Open **Device Inventory**, open a device (click its host name), then click one o
 
 ## Recover automatically for one service
 
-You can also switch automatic recovery on for a single service without opening **Remediation**. In **Device Inventory**, open a device, click the service, and use **Recover automatically**. Turn the switch on, choose how many times an hour PinPoint may restart it (1 to 6), and click **Save**. PinPoint warns you that it will restart the service on its own, picks the right action and service name itself, and shows the last result with a link to the run log. The switch is greyed out, with the reason, when PinPoint cannot restart that service: for example the device is paused, retired or not trusted, remote restart is off for it, or the service is not on the device's restart list. It is the same rule that appears on **Remediation**, so a change in either place shows in the other, and the **System Status** page marks the service **Recovers automatically**. You need **remediation.view** to see the control and **remediation.manage** to change it.
+You can also switch automatic recovery on for a single service without opening **Remediation**. In **Device Inventory**, open a device, click the service, and use **Recover automatically**. Turn the switch on, choose how many times an hour PinPoint may restart it (1 to 6), and click **Save**. PinPoint warns you that it will restart the service on its own, picks the right action and service name itself, and shows the last result with a link to the run log. The switch is greyed out, with the reason, when PinPoint cannot restart that service: for example the device is paused, retired or not trusted, remote restart is off for it, or the service is not on the device's restart list. It is the same rule that appears on **Remediation**, so a change in either place shows in the other, and the **Network Status** page marks the service **Recovers automatically**. You need **remediation.view** to see the control and **remediation.manage** to change it.
 
 ## Stop everything: the automatic recovery switch
 
@@ -121,7 +121,7 @@ The "keeps recovering" limits are set in the status panel under **Repeat recover
 
 Nagios still honours downtime and notification settings, so a service in scheduled downtime or with notifications turned off sends no email. The message holds only fixed text, the rule name, the outcome and the run number; it never contains the output of the check or the restart.
 
-The **Operator** column of the run log shows what happened to the notification: **Operator notified**, **Notification pending**, **Notification failed** (with the reason; PinPoint tries up to 3 times) or **Not required**. On the System Status page, a service that automatic recovery acted on shows a small badge (**Auto-recovered**, **Recovery failed**, **Recovery limited**) that opens the run.
+The **Operator** column of the run log shows what happened to the notification: **Operator notified**, **Notification pending**, **Notification failed** (with the reason; PinPoint tries up to 3 times) or **Not required**. On the Network Status page, a service that automatic recovery acted on shows a small badge (**Auto-recovered**, **Recovery failed**, **Recovery limited**) that opens the run.
 
 ## Release note
 

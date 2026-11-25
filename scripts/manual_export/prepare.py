@@ -27,36 +27,80 @@ MERMAID = re.compile(r"^```mermaid\n(.*?)^```[ \t]*\n", re.S | re.M)
 LINK = re.compile(r"(?<!\!)\[((?:[^\[\]]|\[[^\]]*\])+)\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
 IMAGE = re.compile(r"!\[([^\]]*)\]\(([^)\s]+)\)")
 CONTENTS = re.compile(r"^## Table of contents\n.*?^---\n", re.S | re.M)
-CHAPTER = re.compile(r"\]\((\d\d_[^)#/]+\.md)\)")
+CONTENTS_ENTRY = re.compile(r"^( *)(?:\d+\.|-) \[[^\]]*\]\(([^)#]+\.md)\)", re.M)
+HEADING = re.compile(r"^(#{1,6}) +(.+?) *$", re.M)
+VERIFICATION_NOTE = re.compile(r"^> \*\*Verification status\.\*\*.*\n(?:>.*\n)*\n?", re.M)
 
 
 def slug(heading):
     """The anchor Pandoc and GitHub give a heading."""
-    return re.sub(r"[^\w\- ]", "", heading.strip().lower()).replace(" ", "-")
+    plain = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", heading)
+    return re.sub(r"[^\w\- ]", "", plain.strip().lower()).replace(" ", "-")
 
 
-def join_chapters(text, folder):
-    """Append the chapter files named in the contents list, in that order.
+def read_parts(source, front):
+    """The files that make up one manual, as (path, text, is_guide).
 
-    Returns the joined text and the chapter paths mapped to their first anchor,
-    so links between chapter files can become links inside the printed document.
-    A manual kept in one file is returned unchanged.
+    The contents list of the manual names them in print order: a numbered entry is
+    a chapter file, an indented entry under it is a guide printed inside that
+    chapter. A manual kept in one file is returned as its only part.
     """
-    contents = CONTENTS.search(text)
+    parts = [(source, front, False)]
+    contents = CONTENTS.search(front)
     if not contents:
-        return text, {}
-    chapters = {}
-    bodies = []
-    for name in CHAPTER.findall(contents.group(0)):
-        body = (folder / name).read_text()
-        heading = re.match(r"## (.+)\n", body)
-        if not heading:
-            sys.exit(f"{name} must start with a '## ' chapter heading")
-        chapters[(folder / name).resolve()] = slug(heading.group(1))
-        bodies.append(body)
-    if not bodies:
-        return text, {}
-    return text.rstrip() + "\n\n" + "\n".join(bodies), chapters
+        return parts
+    for indent, name in CONTENTS_ENTRY.findall(contents.group(0)):
+        path = (source.parent / unquote(name)).resolve()
+        body = path.read_text()
+        if indent:
+            parts.append((path, as_section(body, path), True))
+        else:
+            if not body.startswith("## "):
+                sys.exit(f"{name} must start with a '## ' chapter heading")
+            parts.append((path, body, False))
+    return parts
+
+
+def as_section(guide, path):
+    """A guide as a section of a chapter: headings two levels down, no internal notes."""
+    if not guide.startswith("# "):
+        sys.exit(f"{path.name} must start with a '# ' title")
+    guide = VERIFICATION_NOTE.sub("", guide)
+
+    def lower(chunk):
+        return HEADING.sub(lambda m: "#" * min(len(m.group(1)) + 2, 6) + " " + m.group(2), chunk)
+
+    return rewrite_outside_fences(guide, lower)
+
+
+def anchor_map(parts):
+    """Where each heading ends up in the joined document.
+
+    Headings such as "Prerequisites" repeat between guides, so Pandoc numbers the
+    repeats. Maps (file, anchor in that file) to the anchor in the whole document;
+    (file, "") is the file's first heading.
+    """
+    used = set()
+    anchors = {}
+    for path, text, _ in parts:
+        local = {}
+        for index, part in enumerate(FENCE.split(text)):
+            if index % 2:
+                continue
+            for _, heading in HEADING.findall(part):
+                name = slug(heading)
+                unique = name
+                number = 0
+                while unique in used:
+                    number += 1
+                    unique = f"{name}-{number}"
+                used.add(unique)
+                repeat = local.get(name, 0)
+                local[name] = repeat + 1
+                key = f"{name}-{repeat}" if repeat else name
+                anchors[(path, key)] = unique
+                anchors.setdefault((path, ""), unique)
+    return anchors
 
 
 def find_chrome():
@@ -116,10 +160,49 @@ def main():
         sys.exit("Expected a '# title' and '## subtitle' at the top of the manual")
     title, subtitle = match.group(1).strip(), match.group(2).strip()
     text = text[match.end():]
-    text, chapters = join_chapters(text, source.parent)
+    parts = read_parts(source, text)
+    anchors = anchor_map(parts)
 
-    # The manual's own contents list is replaced by Pandoc's.
-    text = CONTENTS.sub("", text, count=1)
+    def convert(path, body):
+        """Make one part's images absolute and its links work in the printed copy."""
+
+        # Images: absolute paths.
+        def absolute(found):
+            target = found.group(2)
+            if re.match(r"^(https?:|/)", target):
+                return found.group(0)
+            return f"![{found.group(1)}]({(path.parent / unquote(target)).resolve()})"
+
+        # Links: inside this manual they jump to the heading; others become repo-path notes.
+        def note(found):
+            label, target = found.group(1), found.group(2)
+            if re.match(r"^(https?:|mailto:)", target):
+                return found.group(0)
+            file_part, _, anchor = target.partition("#")
+            resolved = (path.parent / unquote(file_part)).resolve() if file_part else path
+            if (resolved, anchor) in anchors:
+                return f"[{label}](#{anchors[(resolved, anchor)]})"
+            if not file_part:
+                return found.group(0)
+            try:
+                relative = resolved.relative_to(repo)
+            except ValueError:
+                return label
+            suffix = f" section `{anchor}`" if anchor else ""
+            return f"{label} (repository file `{relative}`{suffix})"
+
+        def links_and_images(chunk):
+            return LINK.sub(note, IMAGE.sub(absolute, chunk))
+
+        return rewrite_outside_fences(body, links_and_images)
+
+    converted = []
+    for index, (path, body, _) in enumerate(parts):
+        if index == 0:
+            # The manual's own contents list is replaced by Pandoc's.
+            body = CONTENTS.sub("", body, count=1)
+        converted.append(convert(path, body).rstrip() + "\n")
+    text = "\n".join(converted)
 
     # Mermaid diagrams to images.
     counter = [0]
@@ -135,36 +218,6 @@ def main():
         return f"![Diagram {counter[0]}]({png.resolve()})\n"
 
     text = MERMAID.sub(diagram, text)
-
-    # Images: absolute paths.
-    def absolute(found):
-        target = found.group(2)
-        if re.match(r"^(https?:|/)", target):
-            return found.group(0)
-        return f"![{found.group(1)}]({(source.parent / unquote(target)).resolve()})"
-
-    # Links: repo-path notes.
-    def note(found):
-        label, target = found.group(1), found.group(2)
-        if re.match(r"^(https?:|mailto:|#)", target):
-            return found.group(0)
-        path, _, anchor = target.partition("#")
-        resolved = (source.parent / unquote(path)).resolve()
-        if resolved in chapters:
-            return f"[{label}](#{anchor or chapters[resolved]})"
-        if resolved == source and anchor:
-            return f"[{label}](#{anchor})"
-        try:
-            relative = resolved.relative_to(repo)
-        except ValueError:
-            return label
-        suffix = f" section `{anchor}`" if anchor else ""
-        return f"{label} (repository file `{relative}`{suffix})"
-
-    def links_and_images(chunk):
-        return LINK.sub(note, IMAGE.sub(absolute, chunk))
-
-    text = rewrite_outside_fences(text, links_and_images)
 
     # Contents list after the front matter (title block, document table, notices), before
     # the first chapter. LibreOffice refreshes it during the PDF step.

@@ -17,9 +17,17 @@ not ready for production security sign-off.
 
 ## Deploy and track an agent
 
-Open **NCPA Deployment** with `system.deploy.ncpa`. Confirm each device's SSH host
-key and enter credentials in the deployment wizard. Enable `check_ncpa` in Plugin
-Manager to monitor its agent metrics. Deployment records the configured
+Prerequisites: the `system.deploy.ncpa` permission, `check_ncpa` enabled in [Plugin Manager](Plugin_Manager.md), and an SSH login on the Linux server (Debian or Ubuntu based) with administrator rights.
+
+1. Open **NCPA Deployment**.
+2. Select the devices and start the deploy wizard.
+3. Check and trust each device's SSH host-key fingerprint. Compare it with one obtained from the server itself before you trust it.
+4. Enter the login details and run the login check. The details are used for the run and are not shown again.
+5. Start the deployment and watch the progress of each device.
+
+Expected result: each device shows a result. Deployed devices report CPU, memory and disk figures after the next checks. Windows agents are installed by hand and then [registered](#register-an-agent-you-installed-yourself-for-example-windows).
+
+Deployment records the configured
 `NCPA_PORT` in `NCPADeployment.Port`; checks, disk and identity probes, relocation
 and port protection use that installed port. A missing stored port uses the
 configured default. Changing the default does not change existing listeners.

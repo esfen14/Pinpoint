@@ -2,7 +2,9 @@
 
 How-to guides for operators and users. Each guide gives the purpose, prerequisites, numbered steps, the expected result and precautions. A guide marked **TBC** inside has items not yet checked step by step on a demo build.
 
-The [User Manual](../User_Manual.md) and [Technical Manual](../../Technical_Manual/Technical_Manual.md) (drafts, issue #181) link to these guides rather than copy them.
+The [User Manual](../User_Manual.md) and [Technical Manual](../../Technical_Manual/Technical_Manual.md) (drafts, issue #181) use these guides: they are the only place user procedures are written. The printed User Manual includes
+them, in the order of its contents list, so edit a procedure here and nowhere else. A new guide must be added
+to that contents list.
 
 ## Guide for each page
 
@@ -59,11 +61,12 @@ Writes `build/manuals/User_Manual.docx` and `.pdf`, and the same for the Technic
 
 What the export does to the Markdown (see `scripts/manual_export/`):
 
-- Joins the Technical Manual's chapter files, in the order of its contents list, into one document.
+- Joins each manual's chapter files and guides, in the order of its contents list, into one document. Guide headings move two levels down and their verification notes are left out.
 - Replaces the manual's own contents list with a generated one that has page numbers, and puts the title block on a title page.
+- Centres every table (Pandoc left-aligns them, whatever the template says).
 - Renders each Mermaid diagram to an image. Left-to-right diagrams are stacked top to bottom so they stay readable on a portrait page.
 - Turns links to other repository files into a printed note, for example "Device Inventory (repository file `docs/User_Manual/guides/Device_Inventory.md`)"; web links and links inside the same manual stay.
 - Uses the Word styles in `scripts/manual_export/reference.docx` (A4, 2 cm margins, Arial, page numbers, bordered tables, a new page for each chapter). Edit that file in Word to change the look; delete it and run the script to regenerate the default from `scripts/manual_export/make_reference.py`.
-- The linked guides in the `guides/` folders are not copied into the printed manuals; they stay in the repository. Wide tables are shrunk to a smaller font, not rotated to landscape.
+- Guides that are not in a contents list, such as the two maintainer guides, are not printed. Wide tables are shrunk to a smaller font, not rotated to landscape.
 
 In Word, open the DOCX and choose **Update field** on the contents list the first time; the PDF already has it filled in.
