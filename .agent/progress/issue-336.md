@@ -33,8 +33,8 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 ## Plan
 
-1. [ ] Catalog: `ssh-alt02` gets an `ncpa` 5693 listener; rule relaxed for it only. `demo/targets/catalog.py`, `manifest.json`, `test_defense.py`.
-2. [ ] Image: `ncpa-target` stage (sudo, curl, gpg, cached Nagios repo, `labadmin`, systemctl shim), default stage unchanged. `Dockerfile`, new `fetch_mirror.py`, `systemctl_shim.py` and tests.
+1. [x] Catalog: `ssh-alt02` gets an `ncpa` 5693 listener; rule relaxed for it only. `demo/targets/catalog.py`, `manifest.json`, `test_defense.py`.
+2. [x] Image: `ncpa-target` stage (sudo, curl, gpg, cached Nagios repo, `labadmin`, systemctl shim), default stage unchanged. `Dockerfile`, new `fetch_mirror.py`, `systemctl_shim.py` and tests.
 3. [ ] Node: with the password secret mounted, ssh-alt02 enables password SSH (UsePAM, sftp), sets the password, trusts a lab certificate, runs the mirror on 127.0.0.1:443, restarts NCPA on baseline. `node.py`, `test_runtime.py`.
 4. [ ] Creation: second image tag, private password file, mount, add-host, memory/pids; presenter validates the mount. `create.py`, `setup.py`, `presenter.py` and tests; new tests in `scripts/verify.sh`.
 5. [ ] `setup` plan and `preflight` report the deploy target.
@@ -49,13 +49,15 @@ One row per loop round, newest last.
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 0 | Plan written | none | plan only |
+| 1 | Catalog rule and ssh-alt02 NCPA listener | demo/targets tests | green |
+| 2 | ncpa-target image stage, mirror fetch (curl: server refuses urllib), systemctl shim | test_deploy_target.py; docker build --target ncpa-target | green, NCPA 3.5.1 mirrored |
 
 ## State for the next session
 
-- Last check run (exact command): none yet
-- Result (first failing lines, or "green"): not run
+- Last check run (exact command): docker build -f demo/targets/Dockerfile --target ncpa-target -t pp336-ncpa:dev .
+- Result (first failing lines, or "green"): green
 - Hypothesis: none
-- Next action (one specific step, not "continue"): add the failing catalog test in `demo/targets/test_defense.py` (plan step 1).
+- Next action (one specific step, not "continue"): plan step 3, node.py deploy-target setup with tests in test_runtime.py.
 
 ## Decisions and notes
 
