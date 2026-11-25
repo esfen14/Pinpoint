@@ -67,7 +67,7 @@ Done 2026-11-19 by reading the public installer repo; answers are in the Technic
 ## D. Decisions for the team or the site
 
 - [x] Support contact. *(team, 2026-11-25: Lorraine, Rafael or Elle; limited availability during OJT; no personal contact details published)* (`User_Manual.md` 6.3)
-- [ ] University IT contact after hand-off. **Still to be added**: contact person and deployment scope (CICT or campus-wide) unknown. (`Hand_Off.md`, Contacts)
+- [x] University IT contact after hand-off. *(team, 2026-11-25: left blank on purpose; implementation is at the University's or College's discretion)* (`Hand_Off.md`, Contacts)
 - [x] Network addressing, VLANs and firewall placement. *(team, 2026-11-25: unknown, and not to be put in this public repository)* (`Technical_Manual.md` 2.4, 5.4)
 - [x] Which Linux distributions are supported for NCPA deployment. *(answered from source 2026-11-25: Debian or Ubuntu based)* (`Technical_Manual.md:303`)
 - [x] Hand-off reviewer for the installer. *(team, 2026-11-25: the CICT IT team; review not yet done)* (`Hand_Off.md`, Repositories)

@@ -35,11 +35,12 @@ GitHub handles only. Ask through a GitHub issue in the relevant repository.
 | Installer maintainer | [`lorraine-pangilinan`](https://github.com/lorraine-pangilinan) |
 | Plugin Manager author | [`lorraine-pangilinan`](https://github.com/lorraine-pangilinan) |
 | Maintainers (this repository) | [`esfen14`](https://github.com/esfen14), [`eliarzx`](https://github.com/eliarzx), [`lorraine-pangilinan`](https://github.com/lorraine-pangilinan) |
-| University IT contact after hand-off | _To be added_ |
+| University IT contact after hand-off | |
 
-**To be added: university IT contact.** The client is expected to make contact,
-but the person is not yet known, and neither is the deployment scope (CICT only
-or campus-wide). Fill in the row above once both are known.
+**University IT contact: left blank on purpose.** Whether to implement the system
+is at the University's or College's discretion, and the deployment scope (CICT
+only or campus-wide) is not decided. Add the contact if they decide to implement
+it.
 
 ## Where credentials and secrets live
 
@@ -86,7 +87,7 @@ is assumed.
 | 4 | A license scan of the frontend and remaining Python dependencies; only `python3-nmap` and the Nagios components were reviewed | Project owners |
 | 5 | HTTPS, host firewall, static address, DNS and gateway: what the installer configures | Installer maintainer |
 | 6 | Where the installer reports the bootstrap login, and where the NCPA key and token are stored | Installer maintainer |
-| 7 | The final maintainer list and a named university IT contact | Project owners, university IT |
+| 7 | The final maintainer list (the university IT contact waits for a decision to implement) | Project owners |
 
 The Technical Manual's [Appendix B](Technical_Manual/Technical_Manual.md) lists
 the remaining technical questions.
