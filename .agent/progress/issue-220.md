@@ -28,8 +28,8 @@ Requirement coverage:
 
 ## Plan
 
-1. [ ] Failing tests: `scripts/test_startup_timing.py` against a local fake server.
-2. [ ] Implement `scripts/startup_timing.py` (stdlib; samples, median, URL probes) and add the test to `scripts/verify.sh` docs.
+1. [x] Failing tests: `scripts/test_startup_timing.py` against a local fake server.
+2. [x] Implement `scripts/startup_timing.py` (stdlib; samples, median, URL probes) and add the test to `scripts/verify.sh` docs.
 3. [ ] Live run on `qa-pinpoint-appliance` (authorized): boot, deploy current main, 3 samples, probes, browser check of the mistyped address, power off.
 4. [ ] Report `docs/test-runs/<date>-issue-220-startup-timing/`, index row, catalog `Recorded run` note, derived QA files (`render_qa_case_tables.py`).
 5. [ ] Finish: verify all, post disposition, PR.
@@ -38,14 +38,14 @@ Requirement coverage:
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
-| 1 | | | |
+| 1 | Tests and `scripts/startup_timing.py` | `python3 -I scripts/test_startup_timing.py` (failed on missing module first) | 8 tests OK |
 
 ## State for the next session
 
-- Last check run (exact command): none
-- Result (first failing lines, or "green"): n/a
+- Last check run (exact command): `python3 -I scripts/test_startup_timing.py`
+- Result (first failing lines, or "green"): green
 - Hypothesis: n/a
-- Next action (one specific step, not "continue"): write `scripts/test_startup_timing.py`.
+- Next action (one specific step, not "continue"): plan step 3, boot `qa-pinpoint-appliance` and inspect it before deploying.
 
 ## Decisions and notes
 
