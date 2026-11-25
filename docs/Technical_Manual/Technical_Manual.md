@@ -362,7 +362,8 @@ VirtualBox (VM lab), Playwright (QA smokes). See
 - Screen size (emulated, not real devices): the six pages fit a tablet-width
   viewport (712 px) without page-level sideways scrolling. On an emulated Pixel 7
   they do not fit: the sidebar has a fixed width, and the header's **Toggle
-  sidebar** button does nothing because no component listens for its event.
+  sidebar** button does nothing because no component listens for its event
+  ([#342](https://github.com/esfen14/Pinpoint/issues/342)).
 
 ---
 
@@ -952,8 +953,44 @@ Use PinPoint itself; also watch the appliance's own `localhost` checks.
 ### 11.5 Database optimisation
 
 Retention settings purge old logs and diagnostic history daily. **[R]**
-Occasional `VACUUM` of `history.db` during a maintenance window with the
-service stopped (**TBC:** not documented by the project).
+Occasionally `VACUUM` `history.db` during a maintenance window, with the
+service stopped. The web interface is unavailable meanwhile (Nginx returns
+502); Nagios keeps running. Check free disk space first: `VACUUM` needs room for
+a temporary copy of the database.
+
+Run as an administrator. Stop at the first failed step and go to **Recovery**.
+
+```bash
+cd /opt/pinpoint/Network-Diagnosis-System/server
+sudo systemctl stop pinpoint-gunicorn
+sudo install -d -m 700 /var/tmp/pinpoint-vacuum
+sudo sh -c 'cp -p history.db* /var/tmp/pinpoint-vacuum/'
+sudo -u pinpoint /opt/pinpoint/venv/bin/python -c 'import sqlite3; c = sqlite3.connect("history.db"); c.execute("VACUUM"); print(c.execute("PRAGMA integrity_check").fetchone()[0]); c.close()'
+sudo systemctl start pinpoint-gunicorn
+```
+
+The integrity check must print `ok`. Then confirm that
+`systemctl is-active pinpoint-gunicorn` prints `active` and that you can sign
+in.
+
+**Recovery** (the `VACUUM` or the check failed, or the service does not work
+afterwards): put the copy back, keeping its owner, and start the service.
+
+```bash
+cd /opt/pinpoint/Network-Diagnosis-System/server
+sudo systemctl stop pinpoint-gunicorn
+sudo sh -c 'cp -p /var/tmp/pinpoint-vacuum/history.db* .'
+sudo systemctl start pinpoint-gunicorn
+```
+
+Anything written to `history.db` after the copy is lost by this restore. Delete
+`/var/tmp/pinpoint-vacuum` when PinPoint is confirmed healthy; it holds a copy
+of the database.
+
+Tried on an ISO install on 2026-11-25 with a 176 KiB `history.db`: `VACUUM` took
+under a second, integrity was `ok` before and after, ownership and mode stayed
+`pinpoint:pinpoint` 644, putting the copy back worked, and the service started
+with no database errors. A damaged database and a large database were not tested.
 
 ### 11.6 Backup and restore
 

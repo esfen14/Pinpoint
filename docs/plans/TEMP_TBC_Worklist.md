@@ -62,7 +62,7 @@ Done 2026-11-19 by reading the public installer repo; answers are in the Technic
 - [x] What the installer configures for the server address, host firewall and HTTPS. (`Technical_Manual.md:150`, `:377`, `:396`, `:411`, `:425`, `:770`, `:801`)
 - [x] Nagios unit name on the appliance. (`Technical_Manual.md:716`)
 - [x] Whether production uses `https://`. (`User_Manual.md:133`)
-- [ ] How to recover when the service is stopped for `VACUUM` (project documents nothing). (`Technical_Manual.md`, section 11.5)
+- [x] How to recover when the service is stopped for `VACUUM`. *(tried on the ISO install 2026-11-25; small, healthy database only)* (`Technical_Manual.md`, section 11.5)
 
 ## D. Decisions for the team or the site
 
