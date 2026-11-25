@@ -1,6 +1,6 @@
 # Reading service availability reports
 
-![Reports page](../images/manual/page-reports.png)
+![Reports page](../../images/manual/page-reports.png)
 
 *Figure: Reports.*
 

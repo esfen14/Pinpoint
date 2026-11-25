@@ -4,7 +4,7 @@ This guide covers the **System Logs** page: the audit logs of what people and th
 
 > **Verification status.** Written on 2026-11-14 from the route specification and `SystemLogsPage.tsx`. It has not yet been followed step by step on a demo build; items marked **TBC** need that check.
 
-![System Logs page](../images/manual/page-system-logs.png)
+![System Logs page](../../images/manual/page-system-logs.png)
 
 *Figure: System Logs.*
 

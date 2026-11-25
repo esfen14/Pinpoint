@@ -1,6 +1,6 @@
 # DHCP lab extension proposal
 
-**Status:** Docker feasibility proven and isolated opt-in lab implemented on issue #187; see its [acceptance plan](../../../server/tests/plans/DHCP_LAB_ACCEPTANCE.md) and [Local Lab manual](../../manuals/Local_Lab.md#isolated-dhcp-lab) for current commands. Live product result is recorded separately in `docs/test-runs/`.
+**Status:** Docker feasibility proven and isolated opt-in lab implemented on issue #187; see its [acceptance plan](../../../server/tests/plans/DHCP_LAB_ACCEPTANCE.md) and [Local Lab manual](../../Technical_Manual/guides/Local_Lab.md#isolated-dhcp-lab) for current commands. Live product result is recorded separately in `docs/test-runs/`.
 **Date:** 2026-10-15  
 **Tracking:** [Issue #177](https://github.com/esfen14/Pinpoint/issues/177)
 
@@ -9,7 +9,7 @@ This plan feeds the discovery and identity contract in
 [Device Inventory requirements](../../../spec%20files/Device_Inventory_Requirements.md),
 and the lab workflow in
 [Agent Workflow and CI](../../../spec%20files/Agent_Workflow_and_CI.md).
-The [Local Lab manual](../../manuals/Local_Lab.md#isolated-dhcp-lab) describes the
+The [Local Lab manual](../../Technical_Manual/guides/Local_Lab.md#isolated-dhcp-lab) describes the
 supported commands and limits. The VM demo stays static. This design document
 does not change product behavior or by itself claim a passed acceptance run.
 
@@ -31,7 +31,7 @@ The Docker lab in `lab/compose.yaml` uses static Compose addresses on an isolate
 `10.78.0.0/24` bridge. Its target image and entrypoint do not run a DHCP client.
 The VM demo in the removed five-VM lab script (`demo_lab.py`, in git history) also generates static netplan addresses on its
 `10.77.0.0/28` internal network. Neither of those ordinary environments is a
-DHCP test environment; the [Local Lab manual](../../manuals/Local_Lab.md#what-it-cannot-test)
+DHCP test environment; the [Local Lab manual](../../Technical_Manual/guides/Local_Lab.md#what-it-cannot-test)
 excludes DHCP lease changes from the static lab and points to the separate
 opt-in DHCP lab.
 

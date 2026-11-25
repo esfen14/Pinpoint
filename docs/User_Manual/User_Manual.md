@@ -13,7 +13,7 @@
 | Companion | [Technical Manual](../Technical_Manual/Technical_Manual.md) |
 
 > **Draft notice.** This draft was written from the repository's specifications
-> and topic guides (`spec files/`, `docs/manuals/`). The screenshots were taken
+> and topic guides (`spec files/`, `guides/`). The screenshots were taken
 > on a disposable demo lab (light theme, 14 demo devices); the written steps
 > have not yet all been followed on it. Items marked **TBC** (To Be
 > Confirmed) need a check on a running system before the manual is final.
@@ -172,7 +172,7 @@ If you leave PinPoint idle for longer than the timeout set by your
 administrator (15 minutes to 4 hours), you are signed out with "Session
 expired. Please log in again."
 
-Full guide: [Sign in, accounts and roles](../manuals/Login_Accounts_and_Roles.md).
+Full guide: [Sign in, accounts and roles](guides/Login_Accounts_and_Roles.md).
 
 ### 2.4 Initial setup (first administrator only)
 
@@ -289,7 +289,7 @@ State colours used throughout:
 ### 3.4 Available modules
 
 Each module in the table in [3.2](#32-menus-and-navigation-controls) has its
-own detailed guide in [`docs/manuals/`](../manuals/README.md). This manual
+own detailed guide in [`guides/`](guides/README.md). This manual
 gives the essential steps and links to those guides rather than repeating
 them.
 
@@ -330,7 +330,7 @@ problem can take up to one Nagios check, plus one PinPoint poll, plus one
 browser refresh to appear. Devices that are paused, retired or merged are
 left out of every count.
 
-Full guide: [Dashboard and Network Health](../manuals/Dashboard_and_Network_Health.md).
+Full guide: [Dashboard and Network Health](guides/Dashboard_and_Network_Health.md).
 
 ### 4.2 Acknowledge an alert
 
@@ -423,8 +423,8 @@ Nagios is applied and checked by PinPoint before it takes effect.
 **Precautions:** a port is monitored only when its kind of check is switched on
 in Plugin Manager.
 
-Full guides: [Device Inventory](../manuals/Device_Inventory.md),
-[Device identity review](../manuals/Device_Identity_Review.md) (duplicate
+Full guides: [Device Inventory](guides/Device_Inventory.md),
+[Device identity review](guides/Device_Identity_Review.md) (duplicate
 devices).
 
 ### 4.6 Pause and resume a device
@@ -465,7 +465,7 @@ automatically and cannot be dragged.
 **Precautions:** a loop (A is parent of B, B of A) is refused. PinPoint does
 not guess parents; you set them.
 
-Full guide: [Network topology](../manuals/Topology.md).
+Full guide: [Network topology](guides/Topology.md).
 
 ### 4.8 Review past alerts and notifications
 
@@ -483,7 +483,7 @@ Full guide: [Network topology](../manuals/Topology.md).
 
 **Precautions:** the custom range takes dates only, not a time of day.
 
-Full guide: [Alerts and notification history](../manuals/Alerts_and_Notification_History.md).
+Full guide: [Alerts and notification history](guides/Alerts_and_Notification_History.md).
 
 ### 4.9 Scan the network for devices
 
@@ -510,7 +510,7 @@ does not change the saved networks. Scans add load on the network; schedule
 them with **Scan Frequency** in **Settings → General** rather than running
 them often by hand.
 
-Full guide: [Network discovery](../manuals/Network_Discovery.md).
+Full guide: [Network discovery](guides/Network_Discovery.md).
 
 ### 4.10 Plan maintenance (silence alerts)
 
@@ -531,7 +531,7 @@ are silenced. The window can be edited or cancelled (two-step confirmation).
 **Settings → System** is different: it pauses PinPoint's own automatic jobs
 and does not silence Nagios alerts.
 
-Full guide: [Maintenance windows](../manuals/Maintenance_Windows.md).
+Full guide: [Maintenance windows](guides/Maintenance_Windows.md).
 
 ### 4.11 Switch on a kind of check (Plugin Manager)
 
@@ -553,9 +553,9 @@ monitored; the **Monitoring** column shows the plugin as active.
 (for example `check_ping`) cannot be enabled this way; basic reachability is
 always checked for every host.
 
-Full guides: [Plugin Manager](../manuals/Plugin_Manager.md),
-[Custom checks](../manuals/Custom_Checks_Manual.md),
-[Application checks](../manuals/Application_Checks.md).
+Full guides: [Plugin Manager](guides/Plugin_Manager.md),
+[Custom checks](guides/Custom_Checks_Manual.md),
+[Application checks](guides/Application_Checks.md).
 
 ### 4.12 Install the NCPA agent on a server
 
@@ -581,7 +581,7 @@ shown again. Windows agents are installed by hand and then registered with
 it is not listed, register it, then enable **check_ncpa** in Plugin Manager.
 Without that last step no NCPA check runs (verified 2026-11-25).
 
-Full guide: [NCPA deployment](../manuals/NCPA_Deployment.md).
+Full guide: [NCPA deployment](guides/NCPA_Deployment.md).
 
 ### 4.13 Add a user account (administrators)
 
@@ -642,8 +642,8 @@ users.
 **Precautions:** the saved password is stored encrypted and never shown again.
 Plain (unencrypted) SMTP and Microsoft 365 sign-in are not supported.
 
-Full guides: [Email settings](../manuals/Email_Settings.md),
-[Notification policy](../manuals/Notification_Policy.md).
+Full guides: [Email settings](guides/Email_Settings.md),
+[Notification policy](guides/Notification_Policy.md).
 
 ### 4.16 Set up automatic recovery
 
@@ -672,8 +672,8 @@ three failed checks, about 5 to 6 minutes with the default check intervals. If
 the page says "The spool folder could not be read", the appliance has no event
 handler or spool folder; see the Technical Manual.
 
-Full guides: [Automatic recovery](../manuals/Automatic_Recovery.md),
-[Remote service restart](../manuals/Remote_Service_Restart.md).
+Full guides: [Automatic recovery](guides/Automatic_Recovery.md),
+[Remote service restart](guides/Remote_Service_Restart.md).
 
 ### 4.17 Run and export a report
 
@@ -689,7 +689,7 @@ Full guides: [Automatic recovery](../manuals/Automatic_Recovery.md),
 
 **Expected result:** a table on screen and a downloaded file.
 
-Full guide: [Service reports](../manuals/Service_Reports.md).
+Full guide: [Service reports](guides/Service_Reports.md).
 
 ### 4.18 Read the system logs
 
@@ -701,8 +701,8 @@ Full guide: [Service reports](../manuals/Service_Reports.md).
 **Precautions:** the Nagios log hides command text and plugin output on
 purpose.
 
-Full guides: [System logs](../manuals/System_Logs.md),
-[Storage and Nagios logs](../manuals/Storage_and_Nagios_Logs.md).
+Full guides: [System logs](guides/System_Logs.md),
+[Storage and Nagios logs](guides/Storage_and_Nagios_Logs.md).
 
 ### 4.19 Change your display preferences
 
@@ -712,7 +712,7 @@ Full guides: [System logs](../manuals/System_Logs.md),
 **Steps:** open **Settings → General Settings**, change the values, choose
 **Save Changes**.
 
-Full guide: [Settings](../manuals/Settings.md).
+Full guide: [Settings](guides/Settings.md).
 
 ---
 
@@ -919,7 +919,7 @@ contact details are not published in this manual.
 ### Appendix A. Topic guides
 
 These guides hold the full detail for each page:
-[guide index](../manuals/README.md).
+[guide index](guides/README.md).
 
 ### Appendix B. Screenshot list
 

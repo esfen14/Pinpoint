@@ -1,5 +1,5 @@
 # Pinpoint local lab (fast lane). Run through scripts/lab; see
-# docs/manuals/Local_Lab.md.
+# docs/Technical_Manual/guides/Local_Lab.md.
 name: pinpoint-lab
 
 x-target: &target

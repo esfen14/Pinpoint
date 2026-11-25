@@ -4,7 +4,7 @@ This guide covers the **Network Topology** page: reading the map of devices and 
 
 > **Verification status.** Written on 2026-11-14 from the route specification, `Device_Inventory_Requirements.md` §13 and the source. It has not yet been followed step by step on a demo build; items marked **TBC** need that check.
 
-![Topology page](../images/manual/page-topology.png)
+![Topology page](../../images/manual/page-topology.png)
 
 *Figure: Topology.*
 

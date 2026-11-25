@@ -1,6 +1,6 @@
 # Local Lab (fast lane)
 
-> **Lab map:** [Local lab](Local_Lab.md) (Docker, fast) · [VM lab plan](../archive/plans/VM_Lab_Plan.md) (real appliance, `scripts/vmlab`) · [Defense demo lab plan](../archive/plans/Defense_Demo_Lab_Plan.md) and the [demo index](../../demo/README.md) (fifteen-device Docker demo) · [`lab/`](../../lab) (harness code).
+> **Lab map:** [Local lab](Local_Lab.md) (Docker, fast) · [VM lab plan](../../archive/plans/VM_Lab_Plan.md) (real appliance, `scripts/vmlab`) · [Defense demo lab plan](../../archive/plans/Defense_Demo_Lab_Plan.md) and the [demo index](../../../demo/README.md) (fifteen-device Docker demo) · [`lab/`](../../../lab) (harness code).
 
 A disposable Pinpoint appliance and five small servers in Docker, on an
 isolated network, for quick QA on your own machine. It starts in about a minute,
@@ -181,7 +181,7 @@ Email, `sudo`, `pinpoint-apply-smtp`, `/etc/msmtprc`, `/bin/mail` and msmtp.
 
 Cover these in the faithful lane: a snapshot of a real installed appliance in a
 VM (`server/tests/e2e/network_discovery/`, `demo/`). Record results of any
-lab run in [`docs/test-runs/`](../test-runs/README.md).
+lab run in [`docs/test-runs/`](../../test-runs/README.md).
 
 ## Isolated DHCP lab
 
@@ -212,7 +212,7 @@ appliance discovery setting before each scan. `down` removes only resources
 carrying the saved owner token and records raw evidence under
 `~/pinpoint-test-results/issue-187-dhcp/`.
 
-The [acceptance plan](../../server/tests/plans/DHCP_LAB_ACCEPTANCE.md) gives
+The [acceptance plan](../../../server/tests/plans/DHCP_LAB_ACCEPTANCE.md) gives
 case bounds and cleanup checks. This Docker lab covers client IPv4 lease moves,
 discovery, Nagios and browser identity/history; it does not exercise the
 installer, physical networks, routed discovery without a MAC, cloned
@@ -238,7 +238,7 @@ shim, and `scripts/lab smoke`.
 
 | Area | Where it stands |
 |---|---|
-| Plugin and alert checks in the smoke test | Done in issue #315. The smoke test enables `check_ssh`, checks its five services, runs `break web01 ssh`, checks the alert and runs `fix`. 16 of 16 checks passed from a fresh reset ([run report](../test-runs/2026-11-11-issue-315-lab-smoke/REPORT.md)) |
+| Plugin and alert checks in the smoke test | Done in issue #315. The smoke test enables `check_ssh`, checks its five services, runs `break web01 ssh`, checks the alert and runs `fix`. 16 of 16 checks passed from a fresh reset ([run report](../../test-runs/2026-11-11-issue-315-lab-smoke/REPORT.md)) |
 | Email checks in the smoke test | Added in issue #316: save the Email settings, send the test email, and check that the alert's notification mail reaches the lab mail sink. Pull request #321 reports 20 of 20 checks passing; no run report was committed for that run |
 | Match with the installer | Audited at installer main `9bc7150` (issue #316). `scripts/lab check-drift` (issue #317) compares pinned versions only |
 | `scripts/lab sync` | Ran without error on 2026-11-10 (issue #306 evidence); no run report |
@@ -253,6 +253,6 @@ The opt-in `lab/identity_review_fixture.py` and Playwright `issue-164-live`
 project exercise identity review and merging on a fresh, exclusively owned
 Docker appliance. They use controlled reconciler observations and real Nagios,
 including the saved-merge configuration warning. See the [run report and
-reproduction steps](../test-runs/2026-10-15-issue-164-identity-review/REPORT.md).
+reproduction steps](../../test-runs/2026-10-15-issue-164-identity-review/REPORT.md).
 They do not establish physical DHCP behavior or installer acceptance. User-facing
-merge guidance is in [Device Identity Review](Device_Identity_Review.md).
+merge guidance is in [Device Identity Review](../../User_Manual/guides/Device_Identity_Review.md).

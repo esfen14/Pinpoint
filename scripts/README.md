@@ -12,7 +12,7 @@ from the repository root.
 | `agent-worktree.sh <name>` | A separate git worktree and environment for an AI agent |
 | `agent_checkpoint.sh <issue> "<msg>"`, `check_agent_progress.py` | Commit/push and validate an agent's `.agent/progress/` file |
 | `new_test_run.sh <slug>` | Start a report in `docs/test-runs/` from the template |
-| `export_manuals.sh [user\|technical\|all]` | Export the User and Technical Manuals to DOCX and PDF in `build/manuals/` (helpers in `manual_export/`); see [docs/manuals/README.md](../docs/manuals/README.md#printable-copies-docx-and-pdf) |
+| `export_manuals.sh [user\|technical\|all]` | Export the User and Technical Manuals to DOCX and PDF in `build/manuals/` (helpers in `manual_export/`); see [docs/User_Manual/guides/README.md](../docs/User_Manual/guides/README.md#printable-copies-docx-and-pdf) |
 | `file_plan_issues.sh` | File the planned issues in `docs/issues/` on GitHub (dry run by default) |
 
 ## Drift checks (run by `verify.sh docs`)
@@ -29,7 +29,7 @@ from the repository root.
 
 | Script | Does | Needs |
 |---|---|---|
-| `lab` | Local Docker lab: appliance plus five targets (`up`, `down`, `smoke`, `sync`, `break`, `fix`...) | Docker. [Local lab manual](../docs/manuals/Local_Lab.md) |
+| `lab` | Local Docker lab: appliance plus five targets (`up`, `down`, `smoke`, `sync`, `break`, `fix`...) | Docker. [Local lab manual](../docs/Technical_Manual/guides/Local_Lab.md) |
 | `dhcp-lab`, `dhcp-accept` | Isolated DHCP lab and its acceptance run | Docker, `CAP_NET_ADMIN`; never in CI |
 | `vmlab`, `vmlab_preflight.py` | VM appliance lab (VirtualBox) with the demo targets | VirtualBox; [VM lab plan](../docs/archive/plans/VM_Lab_Plan.md) |
 | `playwright-lab` | Browser smokes in a no-network container with a socket bridge | Docker and a running appliance |

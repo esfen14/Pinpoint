@@ -12,7 +12,7 @@ network details (subnets, hostnames, firewall rules).
 | What Pinpoint is and how to run it | [Root `README.md`](../README.md) |
 | How to use it (operators and users) | [User Manual](User_Manual/User_Manual.md) |
 | How to install, run and maintain it | [Technical Manual](Technical_Manual/Technical_Manual.md) |
-| Task guides for every page | [Manuals index](manuals/README.md) |
+| Task guides for every page | [Manuals index](User_Manual/guides/README.md) |
 | Database diagram (generated, always current) | [`reference/ERD.md`](reference/ERD.md) |
 | Software architecture and an example deployment | [`reference/Architecture_Diagrams.md`](reference/Architecture_Diagrams.md) |
 | What the system must do | [`spec files/`](../spec%20files/README.md) |

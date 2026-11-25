@@ -4,7 +4,7 @@
 
 > **Verification status.** Written on 2026-11-14 from `Device_Inventory_Requirements.md`, the route specification and the page source. It has not yet been followed on a demo build; items marked **TBC** need that check. Duplicate-device merging has its own guide, [Review and merge duplicate device records](Device_Identity_Review.md); this guide does not repeat it.
 
-![Device Inventory host list](../images/manual/page-device-inventory.png)
+![Device Inventory host list](../../images/manual/page-device-inventory.png)
 
 *Figure: Device Inventory.*
 

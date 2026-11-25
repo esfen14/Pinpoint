@@ -418,7 +418,7 @@ online-backup copy of each database, newest 7 kept. They are restored with
 `pre-restore-<timestamp>` in the same directory (not rotated). No model,
 migration or setting is added. Cold-standby recovery only: active/passive
 failover, Nagios configuration backup and the NCPA deployment key are not
-covered (`docs/manuals/Backup_and_Restore.md` lists what is not backed up,
+covered (`docs/Technical_Manual/guides/Backup_and_Restore.md` lists what is not backed up,
 including `SECRET_KEY`). Jobs are attributed to an active user for
 audit purposes.
 
@@ -608,7 +608,7 @@ checked by the generic `tcp` plugin, which proves that the port accepts a connec
 These services still appear in Device Inventory and still alert when the port stops answering;
 what they lack is a check of the service's own reply. Web and API services are covered by `http`
 and `https` for the status code and the response text, not for authentication. The user guide is
-[Application checks](../docs/manuals/Application_Checks.md).
+[Application checks](../docs/User_Manual/guides/Application_Checks.md).
 
 ### Interface bandwidth
 
@@ -1030,7 +1030,7 @@ controls scheduled check frequency, while maximum attempts controls failure
 confirmation; discovery scans and Pinpoint data polling are independent.
 No cache, retry or notification setting is changed by this decision or by selecting
 parents, and hosts without eligible parents retain their existing behavior.
-See the [operator guidance](../docs/manuals/Notification_Policy.md#parent-outages-and-temporary-child-down-alerts).
+See the [operator guidance](../docs/User_Manual/guides/Notification_Policy.md#parent-outages-and-temporary-child-down-alerts).
 
 ### Escalation rendering and recipient ownership
 

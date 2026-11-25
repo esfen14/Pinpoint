@@ -7,7 +7,7 @@
 #
 # Kept in step with PinPoint-Installer setup/ (manifest pp-mon-baseline-1;
 # audited against installer main 9bc7150, #316). Deliberate lab-only
-# differences are listed in docs/manuals/Local_Lab.md ("Deliberate lab
+# differences are listed in docs/Technical_Manual/guides/Local_Lab.md ("Deliberate lab
 # differences"): no systemd or `make install-daemoninit`, shims for sudo and
 # systemctl, interval_length=10, lab credentials, no PHP or web client build.
 FROM ubuntu:22.04

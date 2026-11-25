@@ -139,7 +139,7 @@ skips remain; no tests were removed, weakened or newly skipped.
 ## Requirements and exclusions
 
 The backend/data/frontend/status specifications and
-[operator guide](../../manuals/Service_Reports.md) document sources, formulas,
+[operator guide](../../User_Manual/guides/Service_Reports.md) document sources, formulas,
 removed snapshot-count fields, seconds, coverage, completed-second bounds,
 current status and retention limits. The owner approved the scheduled-component
 and unaccounted-coverage corrections after reviewing the initial probe.

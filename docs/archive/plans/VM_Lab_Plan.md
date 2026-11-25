@@ -1,6 +1,6 @@
 # VM Lab Plan (faithful lane)
 
-> **Lab map:** [Local lab](../../manuals/Local_Lab.md) (Docker, fast) · [VM lab plan](VM_Lab_Plan.md) (real appliance, `scripts/vmlab`) · [Defense demo lab plan](Defense_Demo_Lab_Plan.md) and the [demo index](../../../demo/README.md) (fifteen-device Docker demo) · [`lab/`](../../../lab/) (harness code).
+> **Lab map:** [Local lab](../../Technical_Manual/guides/Local_Lab.md) (Docker, fast) · [VM lab plan](VM_Lab_Plan.md) (real appliance, `scripts/vmlab`) · [Defense demo lab plan](Defense_Demo_Lab_Plan.md) and the [demo index](../../../demo/README.md) (fifteen-device Docker demo) · [`lab/`](../../../lab/) (harness code).
 
 Status: **working; clean appliance/base/five-target rebuild and real SSH/HTTP
 snapshot restoration verified for [#162](https://github.com/esfen14/Pinpoint/issues/162).
@@ -13,7 +13,7 @@ healthcheck 59/0, discovery and monitoring of five targets, sync); see
 [`docs/test-runs/2026-10-08-vm-lab-first-run/`](../../test-runs/2026-10-08-vm-lab-first-run/REPORT.md). Feeds
 [`Agent_Workflow_and_CI.md`](../../../spec%20files/Agent_Workflow_and_CI.md) (test
 environments) and replaces nothing in the Docker lab
-([`Local_Lab.md`](../../manuals/Local_Lab.md)).
+([`Local_Lab.md`](../../Technical_Manual/guides/Local_Lab.md)).
 
 ## 1. Why a second lane
 

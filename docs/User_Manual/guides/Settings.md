@@ -4,15 +4,15 @@ This guide covers the **Settings** page and its six tabs.
 
 > **Verification status.** Written on 2026-11-14 from the route specification and the `components/settings/` source. It has not yet been followed step by step on a demo build; items marked **TBC** need that check.
 
-![General settings tab](../images/manual/settings-general.png)
+![General settings tab](../../images/manual/settings-general.png)
 
 *Figure: General tab.*
 
-![Security settings tab](../images/manual/settings-security.png)
+![Security settings tab](../../images/manual/settings-security.png)
 
 *Figure: Security tab.*
 
-![System settings tab](../images/manual/settings-system.png)
+![System settings tab](../../images/manual/settings-system.png)
 
 *Figure: System tab.*
 
@@ -51,7 +51,7 @@ Precaution: a short timeout signs people out while they work; turning audit logg
 
 ## System
 
-- **System Configuration:** **System Update Frequency** (how often installed plugins are re-scanned for newer versions), **Check interval**, **Data polling interval**, **Retry interval**, **Maximum check attempts**, **Maintenance Mode**, **Automatic Backups** (see [Backup and restore](Backup_and_Restore.md)), **System Log Retention** and **Diagnostic History Retention**.
+- **System Configuration:** **System Update Frequency** (how often installed plugins are re-scanned for newer versions), **Check interval**, **Data polling interval**, **Retry interval**, **Maximum check attempts**, **Maintenance Mode**, **Automatic Backups** (see [Backup and restore](../../Technical_Manual/guides/Backup_and_Restore.md)), **System Log Retention** and **Diagnostic History Retention**.
 - **Flap detection:** an on/off switch with **Low flap threshold** and **High flap threshold**. Flap detection stops a device that keeps changing state from sending an alert each time.
 - **Notifications** and **Escalations** cards: see [Notification policy](Notification_Policy.md).
 - **System Status** shows the current value of each of these at a glance.

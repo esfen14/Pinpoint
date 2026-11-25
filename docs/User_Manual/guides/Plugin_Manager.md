@@ -4,7 +4,7 @@
 
 > **Verification status.** Written on 2026-11-14 from the route specification, `Plugins_List.md` and the page source. It has not yet been followed on a demo build; items marked **TBC** need that check. Custom checks that need arguments have their own guide, [Custom checks](Custom_Checks_Manual.md); this guide does not repeat it.
 
-![Plugin Manager inventory](../images/manual/page-plugin-manager.png)
+![Plugin Manager inventory](../../images/manual/page-plugin-manager.png)
 
 *Figure: Plugin Manager.*
 
@@ -84,4 +84,4 @@ The drawer also shows the plugin's version, executable path, source, dependencie
 - **Enable or Disable fails:** the message comes from Nagios's own configuration check. Give it to your system administrator; the previous state is kept.
 - **Plugin listed but "validation issue":** run **Validate** and read the message (missing file, wrong permissions, or a missing dependency).
 - **A shared library file such as `utils.sh` is not listed:** it is not a plugin and is skipped by the scan.
-- The reference for what each Nagios plugin does and its arguments is [`Plugins_List.md`](../../spec%20files/Plugins_List.md).
+- The reference for what each Nagios plugin does and its arguments is [`Plugins_List.md`](../../../spec%20files/Plugins_List.md).

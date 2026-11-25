@@ -8,9 +8,9 @@ owner before editing or removing a file.
 
 | Files | Owner script | Lab it needs | Guide |
 |---|---|---|---|
-| `compose.yaml`, `appliance/`, `targets/`, `mail/` | `scripts/lab` only | Local lab: Docker appliance, five targets (`web01`, `web02`, `app01`, `snmp01`, `legacy01`) and the mail sink `mail01` | [Local lab manual](../docs/manuals/Local_Lab.md) |
-| `identity_review_fixture.py` | Run by hand inside the local lab appliance (opt-in: `PINPOINT_IDENTITY_LAB=1`, `PINPOINT_SCHEDULER=0`) | Local lab | [Local lab manual](../docs/manuals/Local_Lab.md) |
-| `dhcp/` | `scripts/dhcp-lab`, `scripts/dhcp-accept`; unit tests `server/tests/unit/test_dhcp_lab_control.py`, `test_dhcp_acceptance.py` | Isolated DHCP lab (Docker, `CAP_NET_ADMIN`, `10.79.0.0/28`) | [Isolated DHCP lab](../docs/manuals/Local_Lab.md#isolated-dhcp-lab) |
+| `compose.yaml`, `appliance/`, `targets/`, `mail/` | `scripts/lab` only | Local lab: Docker appliance, five targets (`web01`, `web02`, `app01`, `snmp01`, `legacy01`) and the mail sink `mail01` | [Local lab manual](../docs/Technical_Manual/guides/Local_Lab.md) |
+| `identity_review_fixture.py` | Run by hand inside the local lab appliance (opt-in: `PINPOINT_IDENTITY_LAB=1`, `PINPOINT_SCHEDULER=0`) | Local lab | [Local lab manual](../docs/Technical_Manual/guides/Local_Lab.md) |
+| `dhcp/` | `scripts/dhcp-lab`, `scripts/dhcp-accept`; unit tests `server/tests/unit/test_dhcp_lab_control.py`, `test_dhcp_acceptance.py` | Isolated DHCP lab (Docker, `CAP_NET_ADMIN`, `10.79.0.0/28`) | [Isolated DHCP lab](../docs/Technical_Manual/guides/Local_Lab.md#isolated-dhcp-lab) |
 | `smoke.py` | `scripts/vmlab smoke` and `scripts/lab smoke` (shared) | Either lab; it hardcodes the five local target names in `TARGETS` and takes the rest through flags | [VM lab plan](../docs/archive/plans/VM_Lab_Plan.md) |
 | `setup_restricted.py`, `phase0_event_handler_probe.sh` | `scripts/vmlab` | VM appliance lab | [VM lab plan](../docs/archive/plans/VM_Lab_Plan.md) |
 | `alerts_run.py` | `scripts/vmlab alerts` | VM appliance lab with the demo's Docker targets only. It shells out to `demo/demo`, so it cannot run against the local lab | [Demo index](../demo/README.md) |
@@ -37,7 +37,7 @@ The owner decided in issue #306 to keep the local lab (`compose.yaml`,
   unverified, and NCPA deployment and remote restart need a VM-lab appliance
   (issue #322).
 
-Details are in the [Local lab manual](../docs/manuals/Local_Lab.md#role-of-this-lab).
+Details are in the [Local lab manual](../docs/Technical_Manual/guides/Local_Lab.md#role-of-this-lab).
 
 ## Why the shared files stay in `lab/`
 

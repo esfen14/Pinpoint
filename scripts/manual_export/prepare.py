@@ -26,6 +26,37 @@ FENCE = re.compile(r"(^```.*?^```[ \t]*\n)", re.S | re.M)
 MERMAID = re.compile(r"^```mermaid\n(.*?)^```[ \t]*\n", re.S | re.M)
 LINK = re.compile(r"(?<!\!)\[((?:[^\[\]]|\[[^\]]*\])+)\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
 IMAGE = re.compile(r"!\[([^\]]*)\]\(([^)\s]+)\)")
+CONTENTS = re.compile(r"^## Table of contents\n.*?^---\n", re.S | re.M)
+CHAPTER = re.compile(r"\]\((\d\d_[^)#/]+\.md)\)")
+
+
+def slug(heading):
+    """The anchor Pandoc and GitHub give a heading."""
+    return re.sub(r"[^\w\- ]", "", heading.strip().lower()).replace(" ", "-")
+
+
+def join_chapters(text, folder):
+    """Append the chapter files named in the contents list, in that order.
+
+    Returns the joined text and the chapter paths mapped to their first anchor,
+    so links between chapter files can become links inside the printed document.
+    A manual kept in one file is returned unchanged.
+    """
+    contents = CONTENTS.search(text)
+    if not contents:
+        return text, {}
+    chapters = {}
+    bodies = []
+    for name in CHAPTER.findall(contents.group(0)):
+        body = (folder / name).read_text()
+        heading = re.match(r"## (.+)\n", body)
+        if not heading:
+            sys.exit(f"{name} must start with a '## ' chapter heading")
+        chapters[(folder / name).resolve()] = slug(heading.group(1))
+        bodies.append(body)
+    if not bodies:
+        return text, {}
+    return text.rstrip() + "\n\n" + "\n".join(bodies), chapters
 
 
 def find_chrome():
@@ -85,9 +116,10 @@ def main():
         sys.exit("Expected a '# title' and '## subtitle' at the top of the manual")
     title, subtitle = match.group(1).strip(), match.group(2).strip()
     text = text[match.end():]
+    text, chapters = join_chapters(text, source.parent)
 
     # The manual's own contents list is replaced by Pandoc's.
-    text = re.sub(r"^## Table of contents\n.*?^---\n", "", text, count=1, flags=re.S | re.M)
+    text = CONTENTS.sub("", text, count=1)
 
     # Mermaid diagrams to images.
     counter = [0]
@@ -118,6 +150,10 @@ def main():
             return found.group(0)
         path, _, anchor = target.partition("#")
         resolved = (source.parent / unquote(path)).resolve()
+        if resolved in chapters:
+            return f"[{label}](#{anchor or chapters[resolved]})"
+        if resolved == source and anchor:
+            return f"[{label}](#{anchor})"
         try:
             relative = resolved.relative_to(repo)
         except ValueError:

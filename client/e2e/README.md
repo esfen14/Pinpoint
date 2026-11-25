@@ -13,7 +13,7 @@ and are never run by `scripts/verify.sh` or CI.
 | `labAddresses.ts` | The lab address prefixes the tests are allowed to act on |
 
 Who runs it: a tester or agent against a disposable lab (the
-[local Docker lab](../../docs/manuals/Local_Lab.md) or the VM lab), through
+[local Docker lab](../../docs/Technical_Manual/guides/Local_Lab.md) or the VM lab), through
 [`scripts/playwright-lab`](../../scripts/README.md) so credentials stay out of
 the repository. Configs are `client/playwright*.config.ts`. Never point these at
 a production server: the lab specs change settings and can stop services.

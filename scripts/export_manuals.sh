@@ -18,9 +18,8 @@ for tool in pandoc soffice npx python3; do
 done
 
 mkdir -p "$out"
-reference="$root/docs/manuals/export/reference.docx"
+reference="$tools/reference.docx"
 if [ ! -f "$reference" ]; then
-  mkdir -p "$(dirname "$reference")"
   python3 -I "$tools/make_reference.py" "$reference"
 fi
 

@@ -72,7 +72,7 @@ files into `DATABASE_BACKUP_DIR` (default `server/database-backups/`) and keeps
 the newest 7. Other folders under `server/` are generated, not source:
 `running-host-config-backup/` (a copy of Nagios' `hosts.cfg` taken before it is
 rewritten) and `host-config-files/` (generated host configuration files). Restore is described below and in
-[Backup and restore](../docs/manuals/Backup_and_Restore.md).
+[Backup and restore](../docs/Technical_Manual/guides/Backup_and_Restore.md).
 
 ## Command-line commands
 

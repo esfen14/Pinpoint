@@ -170,7 +170,7 @@ actions above and does not need `system.hosts.edit` to open). It opens a dialog 
 - Without `system.hosts.edit`, or for a retired or merged device, the fields are disabled, Save and Reset are
   not shown, the dialog says "You can view the options but not change them." and the button reads **Close**.
 - Loading, load error with **Retry**, saving and success states are shown. Authentication headers and passwords are not offered.
-- User guide: [Application checks](../docs/manuals/Application_Checks.md).
+- User guide: [Application checks](../docs/User_Manual/guides/Application_Checks.md).
 
 Not available:
 
@@ -482,7 +482,7 @@ classified **UNREACHABLE** once Nagios determines that all its rendered parents 
 DOWN or UNREACHABLE. If at least one parent is UP, a failing child remains DOWN;
 a responding child is UP. UNREACHABLE is a host reachability state, not UNKNOWN.
 There is no fixed convergence timeout. See the
-[operator guidance](../docs/manuals/Notification_Policy.md#parent-outages-and-temporary-child-down-alerts).
+[operator guidance](../docs/User_Manual/guides/Notification_Policy.md#parent-outages-and-temporary-child-down-alerts).
 
 ## 14. Device identity review and manual merging
 

@@ -24,4 +24,4 @@ Back up both databases before upgrading a real server. A server built earlier
 with `db.create_all()` needs `flask db stamp head` once before upgrading; see
 [Database setup](../../README.md#database-setup). Backup and recovery:
 [`server/README.md`](../README.md#database-layout) and
-[Backup and restore](../../docs/manuals/Backup_and_Restore.md).
+[Backup and restore](../../docs/Technical_Manual/guides/Backup_and_Restore.md).

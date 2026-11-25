@@ -1,10 +1,10 @@
 # Maintenance windows
 
-![Maintenance page](../images/manual/page-maintenance.png)
+![Maintenance page](../../images/manual/page-maintenance.png)
 
 *Figure: Maintenance.*
 
-![New maintenance window form](../images/manual/maintenance-new-window.png)
+![New maintenance window form](../../images/manual/maintenance-new-window.png)
 
 *Figure: The **New maintenance window** form.*
 

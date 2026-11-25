@@ -256,7 +256,7 @@ the time using display preferences, sanitized reason and a Test email settings
 link. Null removes it; polling errors show a refresh error and retain the last
 observed indicator. Requests do not overlap. A successful test does not clear a
 historical failure; the tab explains this. See the
-[Email settings guide](../docs/manuals/Email_Settings.md).
+[Email settings guide](../docs/User_Manual/guides/Email_Settings.md).
 ### Escalation settings
 
 `SettingsPage` mounts `components/settings/EscalationSettings.tsx` after the
@@ -364,7 +364,7 @@ services of the device typed or of every device a pattern such as `web-*`
 matches. A pattern can still be typed, and the fields work without suggestions
 if the list fails to load. Existing remediation page
 view/manage guards continue to control access. See the
-[administrator guide](../docs/manuals/Remote_Service_Restart.md).
+[administrator guide](../docs/User_Manual/guides/Remote_Service_Restart.md).
 
 The opt-in `issue-182-live` Playwright project covers these controls against an
 exclusively owned appliance through the no-network private socket bridge: settings

@@ -146,7 +146,7 @@ Option A on 2026-10-17: temporary child DOWN notifications are allowed before
 Nagios confirms parent reachability. One-attempt monitoring remains supported;
 no cache, retry or notification configuration change is approved. The contract is
 in Device Inventory §13 and the data integration specification, with
-[operator guidance](../docs/manuals/Notification_Policy.md#parent-outages-and-temporary-child-down-alerts).
+[operator guidance](../docs/User_Manual/guides/Notification_Policy.md#parent-outages-and-temporary-child-down-alerts).
 The [#173 routed acceptance report](../docs/test-runs/2026-10-17-issue-173-parent-notifications/REPORT.md)
 records exact settings and observed single/redundant-parent HARD DOWN notifications
 followed by UNREACHABLE, no-parent DOWN controls, recovery and cleanup. The opt-in
@@ -283,7 +283,7 @@ The user's appliance, installer deployment and scale remain unverified.
   Saves reschedule one existing job and restore its trigger/next run on failure;
   disabled scheduling stays disabled and startup uses the saved interval. General
   displays the actual saved check/poll and personal browser refresh schedules.
-- Database restore and backup health (#125): `flask restore-backup`, `backup_health` on the dashboard status route and a failed-backup activity-log entry; unit tests pass. Recovery runbook `docs/manuals/Backup_and_Restore.md`. No frontend display of `backup_health`. **Not yet verified on a fresh lab appliance** (`scripts/vmlab fresh`; no report in `docs/test-runs/`). Cold standby only; Nagios config and NCPA key are not backed up.
+- Database restore and backup health (#125): `flask restore-backup`, `backup_health` on the dashboard status route and a failed-backup activity-log entry; unit tests pass. Recovery runbook `docs/Technical_Manual/guides/Backup_and_Restore.md`. No frontend display of `backup_health`. **Not yet verified on a fresh lab appliance** (`scripts/vmlab fresh`; no report in `docs/test-runs/`). Cold standby only; Nagios config and NCPA key are not backed up.
 - Scheduled Nagios polling, retention purges, backups, network scans, plugin
   update scans, and security validation.
 - Event handler framework (#120): admin-defined remediation actions (`record_only`, plus `restart_local_service` from #121 and `restart_remote_service` from #8 Part 8.3), the
@@ -601,7 +601,7 @@ with a shared strict Nagios duration reader, including scheduled components and
 separate native/unaccounted missing coverage. Current status is fetched in one
 separate bulk read; no status is inferred from availability. Both service-report
 contracts, tables and exports remove snapshot counts and expose seconds. Owning
-backend/data/frontend specifications and the [operator guide](../docs/manuals/Service_Reports.md)
+backend/data/frontend specifications and the [operator guide](../docs/User_Manual/guides/Service_Reports.md)
 define exact semantics, completed-second windows, retention and Core assumptions.
 No snapshot storage or general polling behavior is removed. The full local gate passes (4040 backend/922 frontend; 14 existing skips), with
 51 focused service regressions and two Chromium tests for both views and all

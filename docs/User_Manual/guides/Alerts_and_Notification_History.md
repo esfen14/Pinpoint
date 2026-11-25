@@ -4,7 +4,7 @@ The **History** page is the record of what happened: every state change of a hos
 
 > **Verification status.** Written on 2026-11-14 from `Alerts_Notifications_History_Requirements.md`, `HistoryPage.tsx` and the route specification. It has not yet been followed on a demo build; items marked **TBC** need that check.
 
-![History page](../images/manual/page-history.png)
+![History page](../../images/manual/page-history.png)
 
 *Figure: History.*
 

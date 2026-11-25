@@ -1,10 +1,10 @@
 # NCPA deployment and failed-install cleanup
 
-![NCPA Deployment page](../images/manual/page-ncpa-deployment.png)
+![NCPA Deployment page](../../images/manual/page-ncpa-deployment.png)
 
 *Figure: NCPA Deployment.*
 
-![Register an agent I installed dialog](../images/manual/ncpa-register-agent.png)
+![Register an agent I installed dialog](../../images/manual/ncpa-register-agent.png)
 
 *Figure: The **Register an agent I installed** dialog, with the install steps expanded.*
 
@@ -90,4 +90,4 @@ passwords through extra-options stdin. Password-based SMB generation is refused
 because the plugin exposes child credentials. Automated process tests pass;
 installed ownership/rollback tests and four live adapter metric comparisons pass.
 Full generated-config application under the main Nagios service remains unverified. The implementation and installer handoff are tracked in
-[the transport plan](../archive/plans/Issue_129_Check_Secret_Transport.md).
+[the transport plan](../../archive/plans/Issue_129_Check_Secret_Transport.md).

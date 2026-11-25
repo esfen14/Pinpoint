@@ -4,15 +4,15 @@ This guide covers signing in and out, the first-run setup window, forgotten pass
 
 > **Verification status.** Written on 2026-11-14 from the route specification (`spec files/Frontend_Modules_and_Routes.md`, `Backend_Modules_and_Routes.md`) and the source. It has not yet been followed step by step on a demo build; items marked **TBC** need that check.
 
-![Sign-in page](../images/manual/UM-01-sign-in.png)
+![Sign-in page](../../images/manual/UM-01-sign-in.png)
 
 *Figure: Sign-in page.*
 
-![Manage Accounts page](../images/manual/page-accounts.png)
+![Manage Accounts page](../../images/manual/page-accounts.png)
 
 *Figure: Manage Accounts.*
 
-![Manage Roles page](../images/manual/page-manage-roles.png)
+![Manage Roles page](../../images/manual/page-manage-roles.png)
 
 *Figure: Manage Roles.*
 
@@ -50,7 +50,7 @@ The first administrator account is created by the installer with a placeholder e
 2. Enter your real **new email** (the `pinpoint.lan` placeholder domain is refused) and a **new password** twice.
 3. Save. If Pinpoint could not apply the change to Nagios you see a warning, but the account is saved.
 
-If you are locked out of the first account, an operator with server access can run `flask recover-bootstrap-admin`; see [`server/README.md`](../../server/README.md#command-line-commands).
+If you are locked out of the first account, an operator with server access can run `flask recover-bootstrap-admin`; see [`server/README.md`](../../../server/README.md#command-line-commands).
 
 ## Change your password
 

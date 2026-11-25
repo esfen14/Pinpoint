@@ -1,6 +1,6 @@
 # Email settings
 
-![Email settings tab](../images/manual/settings-email.png)
+![Email settings tab](../../images/manual/settings-email.png)
 
 *Figure: Email tab.*
 

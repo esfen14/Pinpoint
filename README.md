@@ -29,7 +29,7 @@ installer is maintained separately from this repository.
   database backup and restore.
 
 The authoritative description of each area is in [`spec files/`](spec%20files/README.md);
-step-by-step guides for operators are in [`docs/manuals/`](docs/manuals/).
+step-by-step guides for operators are in [`docs/User_Manual/guides/`](docs/User_Manual/guides/README.md).
 Draft manuals (issue #181): [User Manual](docs/User_Manual/User_Manual.md) and
 [Technical Manual](docs/Technical_Manual/Technical_Manual.md).
 
@@ -45,7 +45,7 @@ team.
 | The license (GPL-3.0, provisional) and credits | [`LICENSE`](LICENSE), [`NOTICE`](NOTICE) and [License](docs/Hand_Off.md#license) |
 | Database diagram (generated, always current) | [`docs/reference/ERD.md`](docs/reference/ERD.md) |
 | Software architecture and an example deployment | [`docs/reference/Architecture_Diagrams.md`](docs/reference/Architecture_Diagrams.md) |
-| Index of all manuals and guides | [`docs/manuals/README.md`](docs/manuals/README.md) |
+| Index of all manuals and guides | [`docs/User_Manual/guides/README.md`](docs/User_Manual/guides/README.md) |
 | Open questions (To Be Confirmed) | [`docs/Hand_Off.md`](docs/Hand_Off.md#to-be-confirmed) |
 
 ## Repository guide
@@ -87,7 +87,7 @@ deleting them does not affect installing, configuring, or running Pinpoint.
 
 The per-tool folders are thin adapters that point at `.agent/workflows/`, so the
 same workflow is available in each tool. Manuals for operating Pinpoint are in
-[`docs/manuals/`](docs/manuals/).
+[`docs/User_Manual/guides/`](docs/User_Manual/guides/README.md).
 
 ## Development setup
 
@@ -187,9 +187,9 @@ service `pinpoint-gunicorn.service`) behind Nginx, reading its settings from
 - What this repository promises the installer (settings table, migrations,
   `flask init-production`, service name, file permissions):
   [Agent_Workflow_and_CI.md, "Deployment environment"](spec%20files/Agent_Workflow_and_CI.md#deployment-environment-installer-contract).
-- Upgrading, backing up and restoring: [Backup and restore](docs/manuals/Backup_and_Restore.md)
+- Upgrading, backing up and restoring: [Backup and restore](docs/Technical_Manual/guides/Backup_and_Restore.md)
   and [Database setup](#database-setup) below.
-- Operating the features: [`docs/manuals/`](docs/manuals/).
+- Operating the features: [`docs/User_Manual/guides/`](docs/User_Manual/guides/README.md).
 
 ## Troubleshooting
 

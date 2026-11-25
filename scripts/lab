@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Pinpoint local lab (fast lane): the appliance and five small target servers
-# in Docker, on an isolated network. See docs/manuals/Local_Lab.md.
+# in Docker, on an isolated network. See docs/Technical_Manual/guides/Local_Lab.md.
 #
 #   scripts/lab up            build if needed and start everything
 #   scripts/lab down          stop and remove the containers (state is lost)
