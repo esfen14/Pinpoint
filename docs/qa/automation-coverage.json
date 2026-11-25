@@ -300,7 +300,7 @@
         "client/src/components/manage-accounts/UserTable.tsx": "f9e302e459b71dd45807770b3db1feefcfd1951ec8a8b38811d4024f84e602db",
         "client/src/pages/LoginPage.tsx": "c15214fdd3f7596708ac646829494384b5a899a005ecd89467e795df1447e2bd",
         "client/src/contexts/CurrentUserContext.tsx": "d7bbcecc8c510ec477e92a56eb702f90a7c0719ad1b56b8a99a908b18dba0a9b",
-        "client/src/lib/api.ts": "4085c82e5416ca33d701f9c6c9608cd59a027c731c29537eeeefcd7ac0e5a5ad",
+        "client/src/lib/api.ts": "698caf74a53f27405851516f00f10353aa4aa902a87c45b540cb9be08dc45b62",
         "client/src/types/user.ts": "b67b1d2d488248ff5a24f715622f7b603c752416b663233a4d5c37e51ed27d7e",
         "server/app/api/user/management.py": "d646af3b712e6b87aee8cc6d81b5c4684516808ccdcf19675988b5bbff5e0896",
         "client/src/test/ManageAccountsPage.test.tsx": "deac8b262d1478e57611655074f991e5b79d740341af6f9e0b99bb6ef82019f4"
@@ -1996,7 +1996,7 @@
         "client/qa/module-selection.mjs": "5b648a29d597eb7ecdf3e7ea38f2a44560c5f7a2c1259e8041a503c3c4f4d99e",
         "client/src/pages/HistoryPage.tsx": "839f70e05137341337bed6a99b2c5cc732d8fb58cff63ebd9b4a11011fde8325",
         "client/src/test/HistoryPage.test.tsx": "ac1086099b603a87ae1b26d12aa26984fc9542216727d685fa2cc4c862aa69ba",
-        "client/src/lib/api.ts": "4085c82e5416ca33d701f9c6c9608cd59a027c731c29537eeeefcd7ac0e5a5ad",
+        "client/src/lib/api.ts": "698caf74a53f27405851516f00f10353aa4aa902a87c45b540cb9be08dc45b62",
         "client/src/pages/LoginPage.tsx": "c15214fdd3f7596708ac646829494384b5a899a005ecd89467e795df1447e2bd",
         "client/src/contexts/CurrentUserContext.tsx": "d7bbcecc8c510ec477e92a56eb702f90a7c0719ad1b56b8a99a908b18dba0a9b",
         "client/src/lib/pageAccess.ts": "aa9a5a1cc03a880f6b89fb82efbd8de1b4b1dd080c36b6f31efb6a68ff94d4eb",

@@ -6,6 +6,8 @@ from app.api import(
     system,
     plugin
 )
+# Registers the app-wide JSON handlers for 401 and 404.
+from app.api import error_handlers
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 

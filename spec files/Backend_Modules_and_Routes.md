@@ -1,6 +1,6 @@
 # Backend Modules and Route Catalog
 
-**Last verified against the repository:** 2026-11-12
+**Last verified against the repository:** 2026-11-25
 
 ## API composition
 
@@ -73,6 +73,12 @@ normal configured timeout; immediate invalidation is not part of this command.
   `app/api/helper/responses.py`.
 - Success envelope: `{ "success": true, "data": ... }`.
 - Error envelope: `{ "success": false, "message": "..." }`.
+- `app/api/error_handlers.py` applies the envelope to errors raised before a
+  route runs: a signed-out request to a protected route returns 401
+  `"You must be signed in to do that."`, and an unknown path under `/api`
+  returns 404 `"Not found."` (owner decision, 2026-11-25, #343). A wrong method
+  on a known path (405) and unknown paths outside `/api` keep Flask's default
+  HTML pages.
 - A required JSON body is read with `request.get_json()`.
 - `request.get_json(silent=True) or {}` is reserved for genuinely optional
   bodies.
