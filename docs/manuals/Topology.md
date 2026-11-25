@@ -32,7 +32,14 @@ Expected result: a device with no parent sits at the top level.
 
 1. Select the device, then use the parent editor in **Parent Relationship**. The same editor is in the drawer on [Device Inventory](Device_Inventory.md).
 2. Choose the new parent, or none, and save.
-3. Pinpoint rebuilds the Nagios configuration. **TBC:** how long the map takes to show the change, and the message when Nagios rejects it.
+3. Pinpoint saves the parent and rebuilds the Nagios configuration. On the QA appliance (2026-11-25) this took about 0.15 seconds, and the Nagios host definition then listed the parent. The map shows the change the next time it loads; choose **Refresh** on the page to see it straight away (the child then appears one level below its parent).
+
+Messages when a change is refused (nothing is saved):
+- A loop: "Parent relationships must not create a cycle."
+- A device as its own parent: "A device cannot be its own parent."
+- A parent that is not in the inventory: "One or more parent devices do not exist."
+
+If Nagios does not accept the rebuilt configuration, the parent is saved but is not yet in Nagios; the server answers with the Nagios message, and the Device Inventory drawer still says "Parent devices saved." This case could not be provoked on the lab, so the on-screen message is unverified.
 
 Precautions:
 - A parent must really sit in the network path in front of the device. A wrong parent hides real outages as "unreachable".

@@ -28,7 +28,7 @@ User Manual and guides; each is a "click it and see".
 - [x] Default wait before a missing device is archived. (`Device_Inventory.md:109`) *(answered from source 2026-11-24)*
 - [x] What is kept when a running scan is stopped part way. (`Network_Discovery.md:38`) *(answered from source 2026-11-24)*
 - [x] Number of missed scans before a port is **missing**. (`Network_Discovery.md:50`) *(answered from source 2026-11-24)*
-- [ ] How long the Topology map takes to show a parent change, and the message when Nagios rejects it. (`Topology.md:35`)
+- [x] How long the Topology map takes to show a parent change (0.15 s to save; Refresh shows it). *(verified 2026-11-25; the Nagios-rejection message could not be provoked, noted in the guide)* (`Topology.md:35`)
 
 ### History, reports, logs
 - [x] Does the History custom range offer a time of day or dates only? (`Alerts_and_Notification_History.md:25`, `User_Manual.md:485`) *(answered from source 2026-11-24)*
