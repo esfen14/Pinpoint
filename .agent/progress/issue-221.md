@@ -28,7 +28,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 ## Plan
 
-1. [ ] Test then script: `scripts/test_availability_timing.py`, `scripts/availability_timing.py` (reuses `startup_timing.py` session helpers); register in `scripts/verify.sh`, `scripts/README.md`
+1. [x] Test then script: `scripts/test_availability_timing.py`, `scripts/availability_timing.py` (reuses `startup_timing.py` session helpers); register in `scripts/verify.sh`, `scripts/README.md`
 2. [ ] Live run on `qa-pinpoint-appliance`: temporary snapshot, `scripts/vmlab up`, `sync --client`, reduce to exactly 10 monitored hosts, time, probe symptom URLs and pages, restore snapshot, power off, delete the temporary snapshot (raw evidence in `~/pinpoint-test-results/`)
 3. [ ] Report `docs/test-runs/<date>-issue-221-availability-timing/REPORT.md`, index row, disposition and any defect
 4. [ ] Catalog TC-NFR-08 result lines, `docs/qa/QA_Case_Status.md`, `automation-coverage.json` fingerprints, `Automation_Readiness.md` note, `spec files/Implementation_Status.md` if a gap opens
@@ -39,13 +39,16 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 0 | plan | none | |
+| 1 | timing script and test | `scripts/verify.sh docs` | green |
 
 ## State for the next session
 
-- Last check run (exact command): none yet
-- Result (first failing lines, or "green"): n/a
+Everything a fresh session needs to continue without redoing work.
+
+- Last check run (exact command): `scripts/verify.sh docs`
+- Result (first failing lines, or "green"): green
 - Hypothesis: n/a
-- Next action (one specific step, not "continue"): write `scripts/test_availability_timing.py`
+- Next action (one specific step, not "continue"): power-off-state snapshot `pre-issue-221` of `qa-pinpoint-appliance`, then `scripts/vmlab up` and `sync --client`
 
 ## Decisions and notes
 
