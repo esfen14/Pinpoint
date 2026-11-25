@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
-import { useNavigate, type NavigateFunction } from 'react-router-dom'
+import { useLocation, useNavigate, type NavigateFunction } from 'react-router-dom'
 import { useSystemSettings } from '../../contexts/SystemSettingsContext'
+import { UNAUTHORIZED_EVENT } from '../../lib/api'
 
 // Logs the user out after `sessionTimeout` minutes (System Settings →
 // Security) without keyboard, mouse, scroll or touch input. Background
@@ -16,6 +17,10 @@ import { useSystemSettings } from '../../contexts/SystemSettingsContext'
 //
 // The last-activity time is shared through localStorage so an active tab
 // keeps other open tabs signed in too.
+//
+// The back end also ends a session when the account is changed (role, status,
+// password or email). This notices that on the next page change, or as soon as
+// an API request is refused, and goes to the login page.
 
 export const LAST_ACTIVITY_KEY = 'pinpoint-last-activity'
 
@@ -70,6 +75,7 @@ export function SessionTimeoutWatcher() {
   const navigate = useNavigate()
   const { savedSettings } = useSystemSettings()
   const timeoutMs = savedSettings.sessionTimeout * 60_000
+  const { pathname } = useLocation()
 
   // Set once /api/user/me reports a remembered session; the idle check
   // below reads it through the ref so the timer never restarts.
@@ -82,14 +88,23 @@ export function SessionTimeoutWatcher() {
     navigateRef.current = navigate
   }, [navigate])
 
-  // Not signed in on page load: go to login without the "session expired"
-  // notice. A leftover activity timestamp can't tell a timed-out session
-  // from a browser that was simply closed, and showing the notice to
-  // someone who never logged in is confusing. The notice is only shown
-  // when the idle timer below ends a session this tab was using.
   useEffect(() => {
     writeLastActivity(Date.now())
+  }, [])
 
+  useEffect(() => {
+    const handleUnauthorized = () => endSession(navigateRef.current, false)
+
+    window.addEventListener(UNAUTHORIZED_EVENT, handleUnauthorized)
+    return () => window.removeEventListener(UNAUTHORIZED_EVENT, handleUnauthorized)
+  }, [])
+
+  // Not signed in on page load or page change: go to login without the "session
+  // expired" notice. A leftover activity timestamp can't tell a timed-out
+  // session from a browser that was simply closed, and showing the notice to
+  // someone who never logged in is confusing. The notice is only shown when the
+  // idle timer below ends a session this tab was using.
+  useEffect(() => {
     let cancelled = false
 
     fetch('/api/user/me', { credentials: 'include' })
@@ -113,7 +128,7 @@ export function SessionTimeoutWatcher() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [pathname])
 
   useEffect(() => {
     let lastActivity = readLastActivity() ?? Date.now()

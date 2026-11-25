@@ -6,6 +6,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { reportUnauthorized } from '../lib/api'
 
 // The signed-in user and their role's permissions, from /api/user/me.
 // Loaded once by AdminLayout and refreshed whenever the tab regains focus,
@@ -32,6 +33,9 @@ const CurrentUserContext = createContext<CurrentUserContextValue | undefined>(un
 
 async function fetchCurrentUser(): Promise<CurrentUser> {
   const res = await fetch('/api/user/me', { credentials: 'include' })
+  if (res.status === 401) {
+    reportUnauthorized()
+  }
   if (!res.ok) {
     throw new Error(`Unable to load current user (${res.status})`)
   }

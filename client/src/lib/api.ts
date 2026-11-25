@@ -15,6 +15,15 @@ export class ApiError extends Error {
   }
 }
 
+// Sent when a request is refused because there is no signed-in session, for
+// example after an administrator changed the account. SessionTimeoutWatcher
+// listens and goes to the login page.
+export const UNAUTHORIZED_EVENT = 'pinpoint-unauthorized'
+
+export function reportUnauthorized() {
+  window.dispatchEvent(new Event(UNAUTHORIZED_EVENT))
+}
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers: Record<string, string> = { ...(options.headers as Record<string, string>) }
   if (options.body !== undefined) {
@@ -40,6 +49,9 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   }
 
   if (!res.ok) {
+    if (res.status === 401) {
+      reportUnauthorized()
+    }
     const fallback =
       res.status === 401
         ? 'You must be signed in to do that.'

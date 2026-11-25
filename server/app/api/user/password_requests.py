@@ -30,6 +30,7 @@ from app.api.helper import (
 )
 from app.api.helper.responses import success, error
 from app.api.helper.database_access.permissions import require_permission
+from app.account_notifications import PASSWORD_RESET, notify_account_change
 from app.api.user import user_bp
 from app.logging.user_activity import create_user_log
 from app.system_models import PasswordResetRequest, User, UserStatus
@@ -143,7 +144,8 @@ def _get_pending(request_id):
 def resolve_password_request(id):
     """
     Body: {"password": "...", "confirm_password": "..."}
-    Sets a temporary password; the user must change it at next login.
+    Sets a temporary password; the user must change it at next login. The user
+    is emailed that it was reset (see notify_account_change).
     """
     try:
         data = request.get_json(silent=True)
@@ -184,7 +186,8 @@ def resolve_password_request(id):
             current_app.logger.exception(f"Failed to resolve password request {id}")
             return error("An error occurred.", 400)
 
-        return success(message="Password reset. The user must change it at next login.")
+        notice = notify_account_change([user.Email], [PASSWORD_RESET])
+        return success(notice, message="Password reset. The user must change it at next login.")
     except Exception:
         current_app.logger.exception("An unexpected error occured.")
         return error("An unexpected error occured.", 500)
