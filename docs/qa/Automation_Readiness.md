@@ -1,5 +1,17 @@
 # Current-case adapter preparation
 
+## 2026-11-25 API error envelope dependency review (#343)
+
+The only change to `client/src/lib/api.ts` is a code comment about non-JSON error
+responses; no executable line changed. The server now answers a signed-out
+request with the JSON error envelope, carrying the same message the client
+already showed as its fallback, so TC-ACC-10 and TC-HIS-04, which hash the file,
+see the same behavior. Only that file's fingerprints were refreshed in
+`automation-coverage.json`; adapter claims, coverage statuses and execution
+permissions are unchanged. This is not an
+automation run. Queues that pin the old hash fail their freshness check and must
+be re-prepared before use.
+
 ## 2026-11-25 sidebar toggle dependency review (#342)
 
 Claude compared the selectors and assertions for TC-ACC-08, TC-ACC-10,
