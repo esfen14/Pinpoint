@@ -6,6 +6,7 @@ import json
 import sys
 import tempfile
 import threading
+import time
 import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -23,6 +24,7 @@ class FakeApp:
     def __init__(self):
         self.hosts = 10
         self.report_status = 200
+        self.delay = 0
         self.seen = []
 
     def reply(self, method, path, signed_in):
@@ -32,6 +34,7 @@ class FakeApp:
             if not signed_in:
                 return 401, "text/html", b"Unauthorized", False
             self.seen.append(path)
+            time.sleep(self.delay)
             if path == REPORT:
                 hosts = []
                 for number in range(self.hosts):
@@ -143,8 +146,22 @@ class AvailabilityTimingTest(unittest.TestCase):
         samples[0]["seconds"] = 6.0
         self.assertFalse(availability_timing.judge(samples, limit=5.0, required=9)["passed"])
 
+    def test_the_limit_is_judged_on_the_unrounded_time(self):
+        ticks = iter([0.0, 5.0004])
+        session = availability_timing.new_session()
+
+        sample = availability_timing.time_request(
+            session, self.base, "/network-health", clock=lambda: next(ticks)
+        )
+        sample["ok"] = True
+
+        verdict = availability_timing.judge([sample], limit=5.0, required=1)
+        self.assertFalse(verdict["passed"])
+
     def test_a_slow_reply_is_over_the_limit(self):
-        code, report = self.run_main("--limit", "0")
+        self.app.delay = 0.05
+
+        code, report = self.run_main("--limit", "0.01")
 
         self.assertEqual(code, 1)
         self.assertEqual(report["endpoints"][NETWORK_HEALTH]["within_limit"], 0)

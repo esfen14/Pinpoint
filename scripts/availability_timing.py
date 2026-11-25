@@ -65,7 +65,7 @@ def time_request(session, base, path, clock=time.monotonic):
     status, content_type, raw = request(session, base, path)
     seconds = clock() - started
     return {
-        "seconds": round(seconds, 3),
+        "seconds": seconds,
         "status": status,
         "content_type": content_type,
         "bytes": len(raw),
@@ -138,7 +138,7 @@ def main(argv=None):
                     time.sleep(args.pause)
                 sample = time_request(session, args.base_url, path)
                 samples.append(sample)
-                print(f"{path} {number}: {sample['seconds']} s, HTTP {sample['status']}", file=sys.stderr)
+                print(f"{path} {number}: {sample['seconds']:.3f} s, HTTP {sample['status']}", file=sys.stderr)
             result = judge(samples, args.limit, args.required)
             result["samples"] = samples
             report["endpoints"][path] = result

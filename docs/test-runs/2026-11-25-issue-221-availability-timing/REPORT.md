@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Date | 2026-11-25 |
-| Commit tested | `a87de8dd` (application code). The timing script is from branch `issue-221-availability-timing`, which changes nothing under `server/` or `client/` |
+| Commit tested | `a87de8dd` (application code). The timing script is from branch `issue-221-availability-timing`, which changes nothing under `server/` or `client/`; the run used it at `e842b9e3`, which rounded each time to 1 ms before judging (changed afterwards; no sample was near the limit) |
 | Plan | TC-NFR-08 in the [case catalog](../../qa/Pinpoint%20-%20Black-Box%20Test%20Cases%20by%20Module%20with%20Traceability%20Matrix.md); scripted timing with exactly 10 monitored hosts approved by the owner on [#221](https://github.com/esfen14/Pinpoint/issues/221#issuecomment-7165385861) |
 | Tester / executor mode | AI-executed (Claude), scripted, authorized by the owner. Not a human manual result |
 | Catalog revision and SHA-256 | `a87de8dd`, `249644804a3d87b04c7ebe461fd7cd2ea5b40e088ff8f75dc505c35bbb1980f0` |
