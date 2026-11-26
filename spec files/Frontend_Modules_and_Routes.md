@@ -9,6 +9,16 @@ routes. `AdminLayout` supplies the authenticated shell, and `Sidebar`, `Header`,
 `PageAccessGuard`, `SessionTimeoutWatcher`, and `MaintenanceBanner` implement
 cross-page behavior.
 
+The header's **Toggle sidebar** button hides and shows the sidebar (#342).
+`contexts/SidebarContext.tsx` holds the state; the sidebar starts shown on each
+page load and stays as set while moving between pages. `AdminLayout` alone leaves
+room for the fixed-width sidebar, so the header, maintenance banner and pages use
+the full width when it is hidden. Pages must not add their own sidebar offset.
+With the sidebar hidden, the header's account menu still offers sign-out.
+
+Phone-sized screens are not supported: the interface targets desktop and
+laptop browsers, and pages are not laid out for a phone-width screen.
+
 For a user with access to all three, the sidebar places **Device Inventory**,
 **Network Status**, then **Topology** consecutively. These entries retain
 `/device-inventory`, `/system-status` and `/topology`, respectively, and all
@@ -50,6 +60,21 @@ navigation; sign out of the existing session before submitting another account.
 The API rejection also covers a session established in another tab after the
 initial route check. Normal signed-out login enters the authenticated layout,
 which reloads `/api/user/me` and applies that account's permissions and setup flags.
+
+`CurrentUserContext` checks `/api/user/me` every 10 seconds while the tab is
+visible (and on focus), so a changed name or permission shows without a refresh.
+It does not check while the account is on the first-run setup or forced password
+change window, whose requests replace the session's sign-in details.
+
+When the server has ended a session (for example after an account change),
+`SessionTimeoutWatcher` goes to `/login`: it rechecks `/api/user/me` on every page
+change, and acts on the `pinpoint-unauthorized` event that `lib/api.ts` and
+`CurrentUserContext` raise for a 401, so an idle visible page leaves within about
+10 seconds. The idle notice shows only if the idle period had already passed. The
+Edit Account dialog says
+"Changing the email, role, status or password signs the user out.", and Manage
+Accounts shows `notification_message` after a save or a password-request reset when
+`notification_ok` is false.
 
 ## Page access rules
 

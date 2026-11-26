@@ -6,12 +6,20 @@ POST /api/user/login
     Establish a signed-out session; reject an existing session with 409.
     Optional boolean `remember_me` makes the session cookie persistent and
     exempts it from the idle timeout.
+    A suspended account that gives the right password is told it is suspended.
 POST /api/user/logout
     End the authenticated session.
+
+Before every request a signed-in session is ended when the account is no longer
+Active, when its sign-in details changed (see _auth_stamp) or when it has been
+idle too long.
 """
+import hashlib
+import hmac
+import json
 import time
 
-from flask_login import login_user, logout_user, login_required, current_user
+from flask_login import login_user, logout_user, login_required, current_user, user_logged_in
 from flask import request, current_app, session
 from app import db
 from app.api.helper import (
@@ -45,6 +53,47 @@ def _record_failed_login(user):
 
 
 # ==========================================================
+# SESSION REVOCATION
+# ==========================================================
+
+def _auth_stamp(user):
+    """
+    Return a keyed digest of the account fields a session depends on: password,
+    role, email, status and the forced password change. A session keeps the
+    value from sign-in, so changing any of these ends it. Names and the email
+    alert setting are left out on purpose.
+    """
+    fields = json.dumps([
+        user.Hashed_Password,
+        user.RoleID,
+        user.Email,
+        user.Status.value,
+        bool(user.Must_Change_Password),
+    ])
+    key = current_app.config["SECRET_KEY"].encode()
+    return hmac.new(key, fields.encode(), hashlib.sha256).hexdigest()
+
+
+def stamp_session(user):
+    """Record the account's current sign-in details in this session."""
+    session["auth_stamp"] = _auth_stamp(user)
+
+
+@user_logged_in.connect
+def _stamp_on_login(sender, user, **extra):
+    stamp_session(user)
+
+
+def _end_session():
+    """Sign the user out and drop everything this module stored in the session."""
+    logout_user()
+    session.pop("auth_stamp", None)
+    session.pop("last_activity", None)
+    session.pop("remembered", None)
+    session.permanent = False
+
+
+# ==========================================================
 # SESSION TIMEOUT
 # ==========================================================
 
@@ -61,6 +110,10 @@ def enforce_session_timeout():
     request is rejected with 401. Otherwise the timestamp is refreshed,
     so any request counts as activity (written at most once a minute).
 
+    A session is also ended, with 401, when the account is no longer Active or
+    its sign-in details changed since the session was stamped. A session with no
+    stamp is treated as changed.
+
     The front-end also logs the user out after the same idle period
     (SessionTimeoutWatcher), since background polling keeps making
     requests while a page is open. This check covers the cases the
@@ -70,11 +123,12 @@ def enforce_session_timeout():
         return None
 
     if current_user.Status != UserStatus.ACTIVE:
-        logout_user()
-        session.pop("last_activity", None)
-        session.pop("remembered", None)
-        session.permanent = False
+        _end_session()
         return error("Account inactive.", 401)
+
+    if session.get("auth_stamp") != _auth_stamp(current_user):
+        _end_session()
+        return error("Your account changed. Please log in again.", 401)
 
     now = time.time()
     last_activity = session.get("last_activity")
@@ -88,8 +142,7 @@ def enforce_session_timeout():
         and last_activity is not None
         and now - last_activity > timeout_seconds
     ):
-        logout_user()
-        session.pop("last_activity", None)
+        _end_session()
         return error("Session expired. Please log in again.", 401)
 
     # Write only when stale: a changed session makes Flask send Set-Cookie, and
@@ -207,7 +260,10 @@ def login():
             )
         return error("Invalid username or password.", 401)
 
-    if user.Status.value != "Active":
+    if user.Status == UserStatus.SUSPENDED:
+        return error("This account is suspended. Contact the admin for any concerns.", 403)
+
+    if user.Status != UserStatus.ACTIVE:
         return error("Account inactive.", 403)
 
     login_user(user)
@@ -246,8 +302,5 @@ def logout():
     except Exception:
         db.session.rollback()
         current_app.logger.exception("Unable to record logout")
-    logout_user()
-    session.pop("last_activity", None)
-    session.pop("remembered", None)
-    session.permanent = False
+    _end_session()
     return success(message="User logged out.")

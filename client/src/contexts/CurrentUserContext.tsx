@@ -6,10 +6,12 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { reportUnauthorized } from '../lib/api'
 
 // The signed-in user and their role's permissions, from /api/user/me.
-// Loaded once by AdminLayout and refreshed whenever the tab regains focus,
-// so a role change made by an admin applies without logging out.
+// Loaded once by AdminLayout, then checked every 10 seconds while the tab is
+// visible and whenever it regains focus. So an admin's changes show without a
+// refresh, and a session the back end ended goes to the login page on its own.
 
 export type CurrentUser = {
   firstName: string
@@ -28,10 +30,21 @@ type CurrentUserContextValue = {
   reload: () => void
 }
 
+const SESSION_CHECK_INTERVAL_MS = 10_000
+
+// Keeps the same object when nothing changed, so a check doesn't re-render
+// pages or restart their effects.
+function keepIfUnchanged(previous: CurrentUser | null, loaded: CurrentUser) {
+  return JSON.stringify(previous) === JSON.stringify(loaded) ? previous : loaded
+}
+
 const CurrentUserContext = createContext<CurrentUserContextValue | undefined>(undefined)
 
 async function fetchCurrentUser(): Promise<CurrentUser> {
   const res = await fetch('/api/user/me', { credentials: 'include' })
+  if (res.status === 401) {
+    reportUnauthorized()
+  }
   if (!res.ok) {
     throw new Error(`Unable to load current user (${res.status})`)
   }
@@ -60,7 +73,7 @@ export function CurrentUserProvider({ children }: { children: ReactNode }) {
     const loadUser = () => {
       fetchCurrentUser()
         .then((loaded) => {
-          if (!cancelled) setUser(loaded)
+          if (!cancelled) setUser((previous) => keepIfUnchanged(previous, loaded))
         })
         .catch((error) => {
           // A 401 is handled by SessionTimeoutWatcher, which sends the user to login.
@@ -87,6 +100,26 @@ export function CurrentUserProvider({ children }: { children: ReactNode }) {
       window.removeEventListener('focus', handleVisible)
     }
   }, [])
+
+  // First-run setup and the forced password change replace the session's sign-in
+  // details. A check sent while that request is still running would carry the
+  // old session and be refused, so checks wait until the account is unblocked.
+  const isBlocked = Boolean(user?.needsSetup || user?.mustChangePassword)
+
+  useEffect(() => {
+    if (isBlocked) return
+
+    const checkSession = () => {
+      if (document.visibilityState !== 'visible') return
+
+      fetchCurrentUser()
+        .then((loaded) => setUser((previous) => keepIfUnchanged(previous, loaded)))
+        .catch((error) => console.error('Unable to load current user:', error))
+    }
+
+    const intervalId = window.setInterval(checkSession, SESSION_CHECK_INTERVAL_MS)
+    return () => window.clearInterval(intervalId)
+  }, [isBlocked])
 
   const reload = useCallback(() => {
     fetchCurrentUser()

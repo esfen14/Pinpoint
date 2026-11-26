@@ -342,7 +342,7 @@ export function NetworkHealthPage() {
   }
 
   return (
-    <main className="ml-[220px] flex-1 min-w-0">
+    <main className="flex-1 min-w-0">
       <div className="min-w-0 p-6">
         {/* Sticky header row */}
         <div className="sticky top-0 z-10 bg-[var(--sticky-bg)] pb-3 pt-3">

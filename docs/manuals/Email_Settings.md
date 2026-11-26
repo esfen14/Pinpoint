@@ -1,7 +1,11 @@
 # Email settings
 
 Open **Settings → Email** with the **settings.email** permission. One shared
-SMTP account sends Pinpoint's alert email for the whole system.
+SMTP account sends Pinpoint's alert email for the whole system. It also sends the
+notice a user receives when an administrator resets their password or changes
+their email or role (see [Sign in, accounts and roles](Login_Accounts_and_Roles.md)).
+A failed account notice is reported to the administrator on Manage Accounts, not in
+the **Last notification failure** notice described below.
 
 For **Gmail**, keep the supplied host, port and STARTTLS security. Enter the full
 Gmail address and a Google app password. The tab links to app-password setup;

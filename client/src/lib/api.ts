@@ -15,6 +15,15 @@ export class ApiError extends Error {
   }
 }
 
+// Sent when a request is refused because there is no signed-in session, for
+// example after an administrator changed the account. SessionTimeoutWatcher
+// listens and goes to the login page.
+export const UNAUTHORIZED_EVENT = 'pinpoint-unauthorized'
+
+export function reportUnauthorized() {
+  window.dispatchEvent(new Event(UNAUTHORIZED_EVENT))
+}
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers: Record<string, string> = { ...(options.headers as Record<string, string>) }
   if (options.body !== undefined) {
@@ -27,8 +36,8 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     headers,
   })
 
-  // 401s from @login_required hit Flask's default HTML error page, not our
-  // JSON envelope — guard the parse instead of assuming res.json() works.
+  // Some failures are not in our JSON envelope (e.g. a proxy's HTML error
+  // page) — guard the parse instead of assuming res.json() works.
   const text = await res.text()
   let body: { success?: boolean; message?: string; data?: unknown } | null = null
   if (text) {
@@ -40,6 +49,9 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   }
 
   if (!res.ok) {
+    if (res.status === 401) {
+      reportUnauthorized()
+    }
     const fallback =
       res.status === 401
         ? 'You must be signed in to do that.'

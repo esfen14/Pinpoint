@@ -362,6 +362,11 @@ class TestEditRole:
             ))
         admin_user.RoleID = replacement.RoleID
         db_session.session.commit()
+        # Changing the signed-in account's role ends its session.
+        assert logged_in_client.get("/api/user/me").status_code == 401
+        logged_in_client.post(
+            "/api/user/login", json={"email": "admin@example.com", "password": "AdminPass1!"},
+        )
 
         response = logged_in_client.put(
             f"/api/user/roles/{admin_role.RoleID}",

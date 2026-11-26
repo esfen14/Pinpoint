@@ -12,6 +12,9 @@ PLUGINS = {'ssh':'check_ssh','http':'check_http','https':'check_http',
            'ftp':'check_ftp','smtp':'check_smtp','imap':'check_tcp','dns':'check_dns',
            'pgsql':'check_pgsql','snmp':'check_snmp','ncpa':'check_ncpa.py',
            'dhcp':None,'tcp':'check_tcp'}
+# The one Linux target that accepts SSH password login, so NCPA can be deployed to it (#336).
+NCPA_DEPLOY_TARGET = 'ssh-alt02'
+NCPA_DEPLOY_USER = 'labadmin'
 RESERVED_HIGH_PORTS = frozenset({2222,2223,2250,2260,5693,8000,18080,18087,*range(2200,2206)})
 
 
@@ -117,11 +120,15 @@ def parse_catalog(data: dict) -> Catalog:
                 raise ValueError('Invalid listener/plugin expectation')
             if item['protocol'] not in {'tcp','udp'} or type(item['port']) is not int or not 1 <= item['port'] <= 65535:
                 raise ValueError('Invalid listener port/protocol')
-            if item['port'] in RESERVED_HIGH_PORTS and not (entry['name']=='ssh-alt02' and item['service']=='ssh' and item['port']==2223):
-                if not (kind=='windows' and item['service']=='ncpa' and item['port']==5693):
+            deploy_target = entry['name']==NCPA_DEPLOY_TARGET
+            ncpa_agent = item['service']=='ncpa' and item['protocol']=='tcp' and item['port']==5693
+            if item['port'] in RESERVED_HIGH_PORTS and not (deploy_target and item['service']=='ssh' and item['port']==2223):
+                if not (ncpa_agent and (kind=='windows' or deploy_target)):
                     raise ValueError('Reserved port cannot become a Linux listener preset')
-            if (item['service']=='ncpa') != (kind=='windows'):
-                raise ValueError('NCPA listener belongs only to the Windows slot')
+            if kind=='windows' and item['service']!='ncpa':
+                raise ValueError('The Windows slot has only the NCPA listener')
+            if kind!='windows' and item['service']=='ncpa' and not (deploy_target and ncpa_agent):
+                raise ValueError('NCPA listener belongs only to the Windows slot and the deploy target')
             if item['monitoring'] not in {'pending','needs_settings','infrastructure'}:
                 raise ValueError('Invalid monitoring expectation')
             key = item['protocol'], item['port']

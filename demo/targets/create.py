@@ -8,11 +8,15 @@ from dataclasses import dataclass
 import json
 from pathlib import Path
 
+from targets.catalog import NCPA_DEPLOY_TARGET
+
 NETWORK='pinpoint274-host-test'
 PARENT='vboxnet1'
 SUBNET='10.77.1.0/27'
 GATEWAY='10.77.1.30'
 IMAGE_TAG='pinpoint-defense-host274:setup'
+DEPLOY_IMAGE_TAG='pinpoint-defense-host274:setup-ncpa'  # the NCPA deploy target only (#336)
+DEPLOY_BUILD_TARGET='ncpa-target'
 CONTAINER_PATH='/opt/pinpoint/targets/node.py'
 LABELS=('org.pinpoint.defense.issue=274','org.pinpoint.defense.role=temporary-pilot')
 SNMP_TARGETS=('snmp02','dynsnmp01')
@@ -28,6 +32,12 @@ def new_community():
     """The node code accepts exactly 32 lowercase hex characters."""
     import secrets
     return secrets.token_hex(16)
+
+
+def new_password():
+    """The deploy target's login password: 24 lowercase hex characters."""
+    import secrets
+    return secrets.token_hex(12)
 
 
 def pilot(root):
@@ -53,8 +63,12 @@ def context_path(root):
     return Path(root)/'context'/'context.json'
 
 
-def host_steps(catalog,root,owner,vm_uuid,parent_mac,community,keep_context=False,keep_secret=False):
-    """Root-owned private directories and files; context and SNMP secret via stdin, never argv."""
+def password_path(root):
+    return pilot(root)/'private'/'deploy-password'
+
+
+def host_steps(catalog,root,owner,vm_uuid,parent_mac,community,deploy_password,keep_context=False,keep_secret=False,keep_password=False):
+    """Root-owned private directories and files; context and secrets via stdin, never argv."""
     steps=[]
     steps.append(Step(['mkdir','-p','-m','700',str(root)]))  # user-owned: the presenter keeps its pins and journals here
     private_dirs=[pilot(root),pilot(root)/'private',context_path(root).parent]
@@ -73,11 +87,17 @@ def host_steps(catalog,root,owner,vm_uuid,parent_mac,community,keep_context=Fals
         secret=pilot(root)/'private'/'snmp-community'
         steps.append(Step(['sudo','tee',str(secret)],community+'\n'))
         steps.append(Step(['sudo','chmod','600',str(secret)]))
+    if not keep_password:
+        steps.append(Step(['sudo','tee',str(password_path(root))],deploy_password+'\n'))
+        steps.append(Step(['sudo','chmod','600',str(password_path(root))]))
     return steps
 
 
-def build_command(repo,tag=IMAGE_TAG):
-    return ['docker','build','-f',str(Path(repo)/'demo'/'targets'/'Dockerfile'),'-t',tag,str(repo)]
+def build_command(repo,tag=IMAGE_TAG,target=None):
+    argv=['docker','build','-f',str(Path(repo)/'demo'/'targets'/'Dockerfile'),'-t',tag]
+    if target:
+        argv+=['--target',target]
+    return argv+[str(repo)]
 
 
 def network_command():
@@ -86,6 +106,8 @@ def network_command():
 
 
 def memory_limit(device):
+    if device.name==NCPA_DEPLOY_TARGET:  # apt and the NCPA agent need more than a single daemon
+        return '512m'
     if device.name=='db01':
         return '192m'
     if device.name=='mail01':
@@ -103,7 +125,11 @@ def container_command(device,root,image):
         argv+=['--ip',device.address,'--mac-address',device.mac]
     for label in LABELS:
         argv+=['--label',label]
-    argv+=['--restart','no','--memory',memory_limit(device),'--pids-limit','96','--cpus','0.5',
+    deploy=device.name==NCPA_DEPLOY_TARGET
+    if deploy:
+        # The container serves its cached copy of Nagios's repository to itself.
+        argv+=['--add-host','repo.nagios.com:127.0.0.1']
+    argv+=['--restart','no','--memory',memory_limit(device),'--pids-limit','256' if deploy else '96','--cpus','0.5',
            '--tmpfs','/run:rw,nosuid,nodev,size=16m,mode=0755',
            '--log-driver','json-file','--log-opt','max-size=1m','--log-opt','max-file=2']
     if dhcp_client or device.name=='dhcp01':
@@ -112,6 +138,8 @@ def container_command(device,root,image):
             (context_path(root),'/etc/pinpoint-defense/context.json',True)]
     if device.name in SNMP_TARGETS:
         mounts.append((pilot(root)/'private'/'snmp-community','/run/secrets/snmp-community',True))
+    if deploy:
+        mounts.append((password_path(root),'/run/secrets/deploy-password',True))
     for source,target,readonly in mounts:
         spec='type=bind,src=%s,dst=%s'%(source,target)
         if readonly:
@@ -121,10 +149,16 @@ def container_command(device,root,image):
     return argv
 
 
-def container_commands(catalog,root,image):
+def device_image(device,image,deploy_image):
+    if device.name==NCPA_DEPLOY_TARGET:
+        return deploy_image
+    return image
+
+
+def container_commands(catalog,root,image,deploy_image):
     commands=[]
     for device in linux_devices(catalog):
-        commands.append(container_command(device,root,image))
+        commands.append(container_command(device,root,device_image(device,image,deploy_image)))
     return commands
 
 
@@ -136,20 +170,24 @@ def exists(runner,argv):
         return False
 
 
-def apply(catalog,root,repo,runner,owner,vm_uuid,parent_mac,community,image=IMAGE_TAG):
+def apply(catalog,root,repo,runner,owner,vm_uuid,parent_mac,community,deploy_password,image=IMAGE_TAG,deploy_image=DEPLOY_IMAGE_TAG):
     """Create what is missing; anything that already exists is left untouched. Re-runnable."""
     keep_context=exists(runner,['sudo','test','-e',str(context_path(root))])
     keep_secret=exists(runner,['sudo','test','-e',str(pilot(root)/'private'/'snmp-community')])
-    for step in host_steps(catalog,root,owner,vm_uuid,parent_mac,community,keep_context,keep_secret):
+    keep_password=exists(runner,['sudo','test','-e',str(password_path(root))])
+    for step in host_steps(catalog,root,owner,vm_uuid,parent_mac,community,deploy_password,keep_context,keep_secret,keep_password):
         runner(step.argv,step.input_text)
     runner(build_command(repo,image))
+    runner(build_command(repo,deploy_image,DEPLOY_BUILD_TARGET))
     if not exists(runner,['docker','network','inspect',NETWORK]):
         runner(network_command())
-    built=json.loads(runner(['docker','image','inspect',image]))[0]['Id']
-    for device,argv in zip(linux_devices(catalog),container_commands(catalog,root,image)):
+    built={}
+    for tag in (image,deploy_image):
+        built[tag]=json.loads(runner(['docker','image','inspect',tag]))[0]['Id']
+    for device,argv in zip(linux_devices(catalog),container_commands(catalog,root,image,deploy_image)):
         name='pinpoint274-host-'+device.name+'-pilot'
         if exists(runner,['docker','inspect',name]):
-            if json.loads(runner(['docker','inspect',name]))[0].get('Image')!=built:
+            if json.loads(runner(['docker','inspect',name]))[0].get('Image')!=built[device_image(device,image,deploy_image)]:
                 raise ValueError(name+' uses an older image than the one just built; run demo/demo destroy --apply, then setup again')
         else:
             runner(argv)

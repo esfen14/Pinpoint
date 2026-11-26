@@ -17,8 +17,12 @@ Pinpoint appliance and Windows NCPA VMs (`demo/appliance/create_vms.py`);
 `destroy` removes only demo-owned objects. **Known gaps:** the creation commands
 are tested offline only and have not been run against the live Docker and
 VirtualBox lab; appliance OS install (`scripts/vmlab`), its adapter address and
-Windows NCPA install stay manual, as does registering Windows NCPA in Pinpoint (the Linux
-containers have no password SSH, so there is no automated NCPA deployment run). The `vmlab smoke`/`alerts` runs against the containers are untested live.
+Windows NCPA install stay manual, as does registering Windows NCPA in Pinpoint. One Linux
+container, `ssh-alt02`, accepts the NCPA Deployment wizard (#336: password SSH with sudo and a
+local copy of `repo.nagios.com`). A [scripted wizard run in the demo
+lab](../docs/test-runs/2026-11-26-issue-336-demo-ncpa-deploy/REPORT.md) passed deployment, the
+failure paths and redeployment; its memory and disk checks read the host and were OK only with
+raised lab thresholds. There is no repeatable automated NCPA deployment run in the repository. The `vmlab smoke`/`alerts` runs against the containers are untested live.
 
 The owner subsequently chose laptop Docker with an isolated VirtualBox host-only
 network. The current presenter pilot supports `demo/demo presenter status`,
@@ -124,6 +128,13 @@ its service behavior, route and permissions are unchanged.
 Existing labels, destinations and `system.network_health` filtering are preserved;
 rendered-sidebar regression checks cover order, links and denied visibility.
 Live appliance/browser verification is pending.
+
+## Sidebar toggle (#342)
+
+The header's Toggle sidebar button hides and shows the sidebar and the content
+takes its width. Covered by component tests and a Chromium check against a
+mocked API at desktop width; no installed appliance check. Phone-sized screens
+are not supported.
 
 ## Manual topology (#117)
 
@@ -334,6 +345,11 @@ The user's appliance, installer deployment and scale remain unverified.
   responses; inventory failures retain unknown state (#265).
 - Header notification feed/unread behavior, session timeout, maintenance banner,
   shared export UI, and network rescan workflow.
+- Sessions end on the next request after an account's role, status, password or
+  email changes, with an account change email to the user (#218). An idle visible
+  page notices within about 10 seconds. Covered by unit and component tests and a
+  [local-lab run](../docs/test-runs/2026-11-25-issue-218-signout/REPORT.md) with the
+  lab mail sink; no installed appliance or real mailbox delivery check.
 
 ## Incomplete or mismatched work
 

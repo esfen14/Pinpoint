@@ -495,9 +495,12 @@ Cases not listed here need only a finished setup (TC-AUTH-07) and the lab descri
 
 **Expected result**
 
-- The dialog says "The user will be signed out after changes are applied."
+- The dialog says "Changing the email, role, status or password signs the user out."
 - The user's session ends on its next request and the page goes to `/login`.
-- Note: the spec does not ask for a message to the user who is signed out. If the login page shows nothing, record it as an observation, not as a failed sign-out.
+- After a role change, with **Settings**, **Email** set up, the user receives an email that names the change and holds no password. Without it, the administrator sees a message to tell the user.
+- After a change to Suspended, signing in with the correct password shows "This account is suspended. Contact the admin for any concerns."
+- Note: the spec does not ask for a message on the login page at the moment of sign-out. If it shows nothing, record it as an observation, not as a failed sign-out.
+- Note: the recorded result above predates #218 and was taken against the earlier expected result.
 
 #### TC-ACC-06 – Administrator resets another user's password
 
@@ -3487,11 +3490,11 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-NFR-07 – Start-up time
 
-**Requirement:** REQ-NFR-05 · **Technique:** BVA · **Priority:** M · **Result:** FAIL (initial run; later tester-reported retest PASS, no timings recorded)
+**Requirement:** REQ-NFR-05 · **Technique:** BVA · **Priority:** M · **Result:** FAIL (initial run; later tester-reported retest PASS, no timings recorded; AI-executed scripted run 2026-11-25 PASS, median 3.891 s)
 
-**Recorded run:** [report](../test-runs/2026-10-19-module-20-21-records/REPORT.md)
+**Recorded run:** [report](../test-runs/2026-10-19-module-20-21-records/REPORT.md); [scripted run](../test-runs/2026-11-25-issue-220-startup-timing/REPORT.md)
 
-**Finding:** [#220](https://github.com/esfen14/Pinpoint/issues/220) (open; asks to clarify the conflicting results)
+**Finding:** [#220](https://github.com/esfen14/Pinpoint/issues/220) (clarified by the 2026-11-25 scripted run); [#343](https://github.com/esfen14/Pinpoint/issues/343) (open; signed-out API replies are HTML)
 
 **Steps**
 
@@ -3505,11 +3508,11 @@ A scan starts from **Rescan Network** (on **Overview**, and on **Network Health*
 
 #### TC-NFR-08 – Availability for 10 hosts
 
-**Requirement:** REQ-NFR-06 · **Technique:** BVA · **Priority:** M · **Result:** FAIL (initial run; later tester-reported retest PASS, no timings recorded)
+**Requirement:** REQ-NFR-06 · **Technique:** BVA · **Priority:** M · **Result:** FAIL (initial run; later tester-reported retest PASS, no timings recorded; AI-executed scripted run 2026-11-25 PASS; 10 of 10 per endpoint within 5 s)
 
-**Recorded run:** [report](../test-runs/2026-10-19-module-20-21-records/REPORT.md)
+**Recorded run:** [report](../test-runs/2026-10-19-module-20-21-records/REPORT.md); [scripted run](../test-runs/2026-11-25-issue-221-availability-timing/REPORT.md)
 
-**Finding:** [#221](https://github.com/esfen14/Pinpoint/issues/221) (open; asks to clarify the conflicting results)
+**Finding:** [#221](https://github.com/esfen14/Pinpoint/issues/221) (clarified by the 2026-11-25 scripted run); [#343](https://github.com/esfen14/Pinpoint/issues/343) (open; signed-out API replies are HTML)
 
 **Steps**
 

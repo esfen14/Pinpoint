@@ -31,6 +31,8 @@ from the repository root.
 | `lab` | Local Docker lab: appliance plus five targets (`up`, `down`, `smoke`, `sync`, `break`, `fix`...) | Docker. [Local lab manual](../docs/manuals/Local_Lab.md) |
 | `dhcp-lab`, `dhcp-accept` | Isolated DHCP lab and its acceptance run | Docker, `CAP_NET_ADMIN`; never in CI |
 | `vmlab`, `vmlab_preflight.py` | VM appliance lab (VirtualBox) with the demo targets | VirtualBox; [VM lab plan](../docs/archive/plans/VM_Lab_Plan.md) |
+| `startup_timing.py --base-url URL ... -- <restart command>` | Times start-up for TC-NFR-07: restarts the service, signs in and calls the dashboard summary until it returns data; median of three | An appliance you may restart |
+| `availability_timing.py --base-url URL ...` | Times both availability endpoints for TC-NFR-08: checks 10 monitored hosts, 10 requests each, 9 within 5 s | A running appliance (read-only) |
 | `playwright-lab` | Browser smokes in a no-network container with a socket bridge | Docker and a running appliance |
 
 ## QA automation (`qa_*.py`)

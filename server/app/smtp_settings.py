@@ -11,8 +11,8 @@ The password is passed through exactly as typed (spaces included: Google shows
 app passwords in groups of four). It is kept encrypted (app/secrets_store.py)
 so a later save can leave it blank, and no API ever returns it.
 
-The test email is sent from here with smtplib rather than through msmtp,
-because /etc/msmtprc is readable only by root and the nagios group. smtplib
+The test email and the account change emails (app/account_notifications.py)
+are sent from here with smtplib rather than through msmtp, because /etc/msmtprc is readable only by root and the nagios group. smtplib
 also gives the real SMTP reply, which is what lets a rejected login be told
 apart from a blocked port or a wrong host.
 """
@@ -279,6 +279,16 @@ def classify_smtp_error(exc, host, port):
                            "is shown below."}
 
 
+def deliver_message(settings, password, message):
+    """Send one EmailMessage over STARTTLS. Raises smtplib.SMTPException or OSError."""
+    with smtplib.SMTP(settings["host"], settings["port"], timeout=SMTP_TIMEOUT) as smtp:
+        smtp.ehlo()
+        smtp.starttls(context=ssl.create_default_context())
+        smtp.ehlo()
+        smtp.login(settings["username"], password)
+        smtp.send_message(message)
+
+
 def send_test_email(settings, password, recipient):
     """
     Send a test message over STARTTLS with the saved settings. Returns
@@ -292,12 +302,7 @@ def send_test_email(settings, password, recipient):
         "This is a test email from PinPoint. If you can read it, notification email is set up correctly."
     )
     try:
-        with smtplib.SMTP(settings["host"], settings["port"], timeout=SMTP_TIMEOUT) as smtp:
-            smtp.ehlo()
-            smtp.starttls(context=ssl.create_default_context())
-            smtp.ehlo()
-            smtp.login(settings["username"], password)
-            smtp.send_message(message)
+        deliver_message(settings, password, message)
     except (smtplib.SMTPException, OSError) as exc:
         classify = classify_smtp_error if settings["provider"] == "gmail" else classify_relay_error
         result = classify(exc, settings["host"], settings["port"])
