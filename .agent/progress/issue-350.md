@@ -32,16 +32,20 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 1 | New test, `lab/stop_auto_upgrades.sh`, calls in `vmlab`, docs, installer issue #20 | `python3 -I scripts/test_vmlab_auto_upgrades.py` (failed first: script missing) | 8 OK |
+| 2 | None | `scripts/verify.sh docs`; live wait check started 2026-11-26T03:01Z on `18b58b4e` | Docs green. Live check stopped on user request while the script was still waiting (about 60 s in): not a result |
 
 ## State for the next session
 
-- Last check run (exact command): `python3 -I scripts/test_vmlab_auto_upgrades.py`
+- Last check run (exact command): `scripts/verify.sh docs`
 - Result (first failing lines, or "green"): green
 - Hypothesis: the lab snapshot is old, so apt-daily-upgrade is overdue after each restore
-- Next action (one specific step, not "continue"): live check on `qa-pinpoint-appliance` (plan step 5)
+- Next action (one specific step, not "continue"): ask the owner before running any test; then plan step 5 from the start
 
 ## Decisions and notes
 
+- 2026-11-26: the user said not to run any tests yet. Partial log (not evidence of a result):
+  `~/pinpoint-test-results/2026-11-26-issue-350/wait-check.log`. `verify.sh all` and
+  `demo/demo qa reset` have not run.
 - Fix location (owner, 2026-11-26): both. `scripts/vmlab` stops the lab VM's apt timers and waits
   for a running upgrade (never kills dpkg); the installer gets its own issue.
 - The installer enables unattended-upgrades on real appliances in `configure-monitoring-updates.sh`,
