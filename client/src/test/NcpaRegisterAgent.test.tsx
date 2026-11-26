@@ -11,7 +11,7 @@ vi.mock('../lib/ncpaDeploymentApi', () => api)
 const TOKEN = 'a1'.repeat(16)
 
 const DEVICE: NcpaDevice = {
-  id: 7, hostname: 'win-07', ipAddress: '10.0.20.7', trusted: false, fingerprint: null,
+  id: 7, hostname: 'win-07', ipAddress: '10.0.20.7', sshPort: 22, trusted: false, fingerprint: null,
   agentStatus: 'Pending NCPA', lastError: null, lastOutcome: null, lastRunId: null, deployable: true,
 }
 

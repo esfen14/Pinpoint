@@ -26,21 +26,22 @@ Requirement coverage (every requirement the issue states, and the check that pro
 ## Plan
 
 1. [x] `server/tests/unit/test_ssh_port.py`, then `server/app/api/system/ncpa_deployment.py`: the device list returns `ssh_port` (pinned port for a trusted device, else `device_ssh_port()`).
-2. [ ] `client/src/test/NcpaDeployWizard.test.tsx`, then `client/src/types/ncpaDeployment.ts` and `DeployWizard.tsx`: the three messages use the device's port, or none.
-3. [ ] Specs: `spec files/Backend_Modules_and_Routes.md` (list route), `Frontend_Modules_and_Routes.md` if it describes the wizard messages.
+2. [x] `client/src/test/NcpaDeployWizard.test.tsx`, then `client/src/types/ncpaDeployment.ts` and `DeployWizard.tsx`: the three messages use the device's port, or none.
+3. [x] Specs: `spec files/Backend_Modules_and_Routes.md` (list route), `Frontend_Modules_and_Routes.md` if it describes the wizard messages.
 
 ## Round log
 
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 1 | Device list returns `ssh_port` | `scripts/verify.sh backend` | green, 4498 passed |
+| 2 | Wizard messages use the device port; specs updated | `scripts/verify.sh frontend`, `docs` | see below |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh backend`
+- Last check run (exact command): `scripts/verify.sh frontend` and `docs`
 - Result (first failing lines, or "green"): green
 - Hypothesis: n/a
-- Next action (one specific step, not "continue"): add the failing wizard test for a non-22 port (plan step 2).
+- Next action (one specific step, not "continue"): run `scripts/verify.sh all`, delete this file, open the PR.
 
 ## Decisions and notes
 
