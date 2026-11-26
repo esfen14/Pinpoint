@@ -80,7 +80,36 @@ issue #181 together.
 ### Lab evidence (issue section H, Evidence)
 - [x] Screenshots captured 2026-11-19 on the QA appliance (`demo/demo qa create`, branch `issue-181-manuals-draft`, 14 demo containers); the User Manual had four placeholders (UM-01 to UM-04), plus 22 guide figures. Regenerate with `docs/images/manual/README.md`
 - [x] Hardware sizing and bandwidth figures: tested limit and lab measurements stated (Technical Manual 3.1, 5.8, 10.4)
-- [ ] Follow each User Manual procedure on a demo build and clear its TBCs (the TBC worklist was finished and removed on 2026-11-25; not every procedure has been walked through). Walkthrough on the local lab started 2026-11-26; followed: Sign in/accounts/roles, Network discovery, Dashboard and Network Health (each guide's verification note says what was not). Device Inventory (2026-11-26). Next: Device identity review. Filed #352 from it
+- [ ] Follow each User Manual procedure on a demo build and clear its TBCs (the TBC worklist was finished and removed on 2026-11-25). Each item is in "Walkthroughs" below
+
+### Walkthroughs (paths under `docs/User_Manual/guides/`)
+Follow the guide on screen, correct its wording, and rewrite its verification
+note with what was and was not followed. Local lab: `scripts/lab reset`, `ui`.
+
+- [x] `Login_Accounts_and_Roles.md`
+- [x] `Network_Discovery.md`
+- [x] `Dashboard_and_Network_Health.md`
+- [x] `Device_Inventory.md` (filed #352)
+- [x] `Device_Identity_Review.md`
+- [x] `Topology.md`
+- [ ] `Alerts_and_Notification_History.md` (next)
+- [ ] `Service_Reports.md`
+- [ ] `System_Logs.md`
+- [ ] `Storage_and_Nagios_Logs.md`
+- [ ] `Plugin_Manager.md` (plugin Update permissions need a VM)
+- [ ] `Application_Checks.md`
+- [ ] `NCPA_Deployment.md` (demo or VM lab; `ssh-alt02` is the deploy target)
+- [ ] `Maintenance_Windows.md`
+- [ ] `Notification_Policy.md`
+- [ ] `Email_Settings.md` (local lab has a mail sink)
+- [ ] `Automatic_Recovery.md` (real service restarts need a VM)
+- [ ] `Remote_Service_Restart.md` (needs a real Linux target)
+- [ ] `Settings.md`
+- [ ] `Custom_Checks_Manual.md`
+- [ ] First-run setup in `Login_Accounts_and_Roles.md` (needs a fresh VM install)
+
+Parts of the walked guides that were not followed are listed in each guide's
+verification note.
 
 ### Open TBC questions
 - [x] User Manual open questions answered (now Appendix B in `09_Appendices.md`)
@@ -104,13 +133,14 @@ issue #181 together.
 | 4 | Draft PR #333 opened; CI green; issue checkboxes ticked; remaining-work list added | `gh pr checks 333` | pass |
 | 5 | Walkthrough: sign-in, discovery and Dashboard guides corrected | `scripts/verify.sh docs` | green |
 | 6 | Walkthrough: Device Inventory guide corrected; second case added to #352 | `scripts/verify.sh docs` | green |
+| 7 | Merged main; walkthrough: identity review and Topology guides corrected, discovery SSH key precaution updated for the #352 fix | `scripts/verify.sh docs` | green |
 
 ## State for the next session
 
 - Last check run (exact command): scripts/verify.sh docs
 - Result (first failing lines, or "green"): green
 - Hypothesis: -
-- Next action (one specific step, not "continue"): walk through `docs/User_Manual/guides/Device_Identity_Review.md` (needs the identity review fixture in the local lab)
+- Next action (one specific step, not "continue"): walk through `docs/User_Manual/guides/Alerts_and_Notification_History.md`
 
 ## Decisions and notes
 

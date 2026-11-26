@@ -64,6 +64,6 @@ The automatic scan interval is **Scan Frequency** under **Settings → General**
 - Scanning generates traffic; run large scans outside busy hours.
 - Port scans can trigger intrusion alarms on networks you do not own.
 - A wide port range on a large network takes a long time. Start narrow.
-- Give every machine its own SSH host key. Machines cloned from one image can share a key, and a later scan may then record them as one device: only the first address is monitored. A review item is not always raised, so compare the device list with the machines you expect after scanning cloned machines.
+- Give every machine its own SSH host key. Machines cloned from one image can share a key. Pinpoint lists and monitors each one separately and raises a **Duplicate identity** review for it; see [Device identity review](Device_Identity_Review.md).
 - If a device appears twice after a scan, use the identity review in [Device identity review](Device_Identity_Review.md).
 - To install NCPA on a device so more checks become possible, see [NCPA deployment](NCPA_Deployment.md).

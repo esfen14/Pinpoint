@@ -1,14 +1,24 @@
 # Review and merge duplicate device records
 
+> **Verification status.** Followed on 2026-11-26 on the local lab, whose cloned
+> servers raise duplicate identity reviews: opening a review from the table and
+> from the device drawer, address history, the device search, **Keep both
+> records**, two merges (one with Nagios stopped) and a rescan. Not followed:
+> **Keep record unchanged**, other review types, merging a retired record, the
+> permission rules and a refused stale selection. Those come from the
+> specifications and source.
+
 Open Device Inventory and find **Needs Review** above the host table. Its count
 includes unresolved device identity issues even when a record is outside the
 Monitored filter. Port-service mismatches are handled separately.
 
 Choose **Review** to compare IDs, names, addresses, monitoring state and identity
-evidence. Use **Load address history** for previous addresses. A participating
-device's information drawer also has **This device needs identity review** and
-opens the same comparison. Missing evidence is labelled; it does not confirm
-that records belong together.
+evidence. A record without a display name is headed **Display name
+unavailable**; tell it apart by its **Nagios host name**, **Current IP** and
+**Stable device ID**. Use **Load address history** for previous addresses. A
+participating device's information drawer also shows **This device needs identity
+review**, with a **Review** link to the same comparison. Missing evidence is
+labelled; it does not confirm that records belong together.
 
 Merge only when you have independently verified that both records represent the
 same physical device. Matching names or IP addresses alone are not proof. For
@@ -27,7 +37,8 @@ addresses are not flagged.
 For separate machines, choose **Keep both records** in the comparison, check the
 two records and confirm with **Keep both records**. Neither device changes, the
 review leaves **Needs Review** and later scans do not raise it again for these
-records. There is no undo. A review that names only one record (a device also seen
+records; the page confirms "Review dismissed. No device was changed." There is
+no undo. A review that names only one record (a device also seen
 on a second address) offers **Keep record unchanged** instead; the extra address
 stays unmonitored. Only duplicate identity reviews offer this, and it requires
 host edit permission. If saving fails, the error is shown and the review stays
@@ -38,9 +49,11 @@ listed.
 1. Choose **Device record to keep**: the record with the intended monitoring
    settings and current address. This is the surviving target.
 2. Choose **Duplicate record to merge**: the source to remove from monitoring.
-   If a record is missing, search discovered devices by name, IP address or ID
-   and add it to the comparison. Search includes records outside Monitored.
-3. Choose **Review merge** and check both IDs, names and IPs. The target keeps
+   If a record is missing, use **Search discovered devices** with a name, IP
+   address or ID, then choose **Add** on the result. Search includes records
+   outside Monitored; a record that is already merged is not listed.
+3. Choose **Review merge** (available once two different records are selected)
+   and check both IDs, names and IPs. The target keeps
    its address and its records take precedence where settings conflict. Source
    identifiers, address history and nonconflicting ports move to the target.
 4. Confirm **Merge duplicate**. The source becomes Merged and leaves monitoring.
@@ -48,8 +61,9 @@ listed.
    they are not combined. No undo action is provided.
 
 Cancel or close at any time before saving to leave everything unchanged. Opening
-a review never resolves it. While saving, wait for the result. A **Merge saved**
-configuration warning means the database merge succeeded but Nagios could not be
+a review never resolves it. While saving, wait for the result; the page then
+shows **Merge saved**. A message that begins "Merge saved. Nagios configuration
+warning" means the database merge succeeded but Nagios could not be
 updated; do not retry that merge. Give the configuration warning to the system
 administrator. The page refreshes its reviews, host list and counts automatically.
 
