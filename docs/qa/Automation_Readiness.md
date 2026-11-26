@@ -156,6 +156,17 @@ only sign in and use pages, which the change does not alter, so the register's
 permissions are unchanged. This is not a new automation run. Queues that pin the
 old hash fail their freshness check and must be re-prepared before use.
 
+## 2026-11-26 server-side sessions (#339)
+
+Sign-in now creates a server-side session record that every request is checked
+against (`api/user/login.py`), password changes revoke other records
+(`api/user/management.py`), and `api/commands/seed.py` deletes the records before
+users. The login-dependent adapters sign in through the login route, use pages and
+log out, which still behave the same, so the register's hashes for those three files
+were refreshed; adapter claims, coverage statuses and execution permissions are
+unchanged. This is source review, not a new automation run. Queues that pin the old
+hashes fail their freshness check and must be re-prepared before use.
+
 ## 2026-11-15 backend docstring refresh (#331)
 
 Issue #331 added docstrings to backend files, including five that the register

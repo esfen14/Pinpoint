@@ -8,16 +8,16 @@ POST /api/user/login
     exempts it from the idle timeout.
     A suspended account that gives the right password is told it is suspended.
 POST /api/user/logout
-    End the authenticated session.
+    End the authenticated session and revoke its server-side record.
 
-Before every request a signed-in session is ended when the account is no longer
+Before every request a signed-in session is ended when it has no live server-side
+record (see app/api/helper/user_sessions.py), when the account is no longer
 Active, when its sign-in details changed (see _auth_stamp) or when it has been
 idle too long.
 """
 import hashlib
 import hmac
 import json
-import time
 
 from flask_login import login_user, logout_user, login_required, current_user, user_logged_in
 from flask import request, current_app, session
@@ -33,6 +33,12 @@ from app.api.helper.responses import success, error
 from app.api.helper.settings_flags import (
     is_failed_login_monitoring_enabled,
     get_session_timeout_minutes
+)
+from app.api.helper.user_sessions import (
+    create_session,
+    get_live_session,
+    revoke_session,
+    utc_now,
 )
 from app.api.user import user_bp
 from app.logging.user_activity import create_user_log, create_audit_log
@@ -53,7 +59,7 @@ def _record_failed_login(user):
 
 
 # ==========================================================
-# SESSION REVOCATION
+# ENDING SESSIONS
 # ==========================================================
 
 def _auth_stamp(user):
@@ -85,12 +91,26 @@ def _stamp_on_login(sender, user, **extra):
 
 
 def _end_session():
-    """Sign the user out and drop everything this module stored in the session."""
+    """
+    Sign the user out, drop everything this module stored in the session and
+    revoke the server-side record. Returns False if the record could not be
+    revoked; the cookie is cleared either way.
+    """
+    session_id = session.pop("sid", None)
     logout_user()
     session.pop("auth_stamp", None)
-    session.pop("last_activity", None)
     session.pop("remembered", None)
     session.permanent = False
+    if session_id is None:
+        return True
+    try:
+        revoke_session(session_id)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception("Unable to revoke a session")
+        return False
+    return True
 
 
 # ==========================================================
@@ -103,16 +123,17 @@ LAST_ACTIVITY_WRITE_SECONDS = 60
 @user_bp.before_app_request
 def enforce_session_timeout():
     """
-    Expire a logged-in session after it has been idle longer than the
-    Session Timeout in System Settings. Runs before every request: the
-    time of the last request is kept in the signed session cookie, and
-    if the gap since then is too long the user is logged out and the
-    request is rejected with 401. Otherwise the timestamp is refreshed,
-    so any request counts as activity (written at most once a minute).
+    Runs before every request from a signed-in user and ends the session with
+    401 unless the cookie still points at a live server-side record, so a cookie
+    kept or restored after logout is useless.
 
-    A session is also ended, with 401, when the account is no longer Active or
-    its sign-in details changed since the session was stamped. A session with no
-    stamp is treated as changed.
+    It also ends a session that has been idle longer than the Session Timeout in
+    System Settings. The time of the last request is kept in the record and is
+    refreshed by any request (written at most once a minute).
+
+    A session is also ended when the account is no longer Active or its sign-in
+    details changed since the session was stamped. A session with no stamp is
+    treated as changed.
 
     The front-end also logs the user out after the same idle period
     (SessionTimeoutWatcher), since background polling keeps making
@@ -130,26 +151,36 @@ def enforce_session_timeout():
         _end_session()
         return error("Your account changed. Please log in again.", 401)
 
-    now = time.time()
-    last_activity = session.get("last_activity")
+    record = get_live_session(session.get("sid"), current_user.UserID)
+    if record is None:
+        # Not _end_session's revoke: the id may belong to someone else.
+        session.pop("sid", None)
+        _end_session()
+        return error("Session ended. Please log in again.", 401)
+
+    now = utc_now()
+    idle_seconds = (now - record.Last_Activity).total_seconds()
     timeout_seconds = get_session_timeout_minutes() * 60
 
     # A remembered session ("Remember me") is not ended by idleness; it lasts
     # until the persistent cookie expires or the user signs out.
-    remembered = bool(session.get("remembered"))
-    if (
-        not remembered
-        and last_activity is not None
-        and now - last_activity > timeout_seconds
-    ):
+    if not record.Remembered and idle_seconds > timeout_seconds:
         _end_session()
         return error("Session expired. Please log in again.", 401)
 
-    # Write only when stale: a changed session makes Flask send Set-Cookie, and
-    # a response that finishes after logout would put a signed-in cookie back
-    # (#339). The idle timeout stays accurate to within the throttle.
-    if last_activity is None or now - last_activity > LAST_ACTIVITY_WRITE_SECONDS:
-        session["last_activity"] = now
+    # The idle timeout stays accurate to within the throttle.
+    if idle_seconds > LAST_ACTIVITY_WRITE_SECONDS:
+        remembered = record.Remembered
+        try:
+            record.Last_Activity = now
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            current_app.logger.exception("Unable to record session activity")
+            return None
+        if remembered:
+            # Send the cookie again so its 30-day expiry counts from last use.
+            session.modified = True
     return None
 
 
@@ -266,8 +297,16 @@ def login():
     if user.Status != UserStatus.ACTIVE:
         return error("Account inactive.", 403)
 
+    try:
+        session_id = create_session(user.UserID, remember_me)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception(f"Unable to start a session for user {user.UserID}")
+        return error("Unable to sign in. Please try again.", 500)
+
     login_user(user)
-    session["last_activity"] = time.time()
+    session["sid"] = session_id
     session["remembered"] = remember_me
     session.permanent = remember_me
     try:
@@ -295,12 +334,20 @@ def login():
 @user_bp.post('/logout')
 @login_required
 def logout():
-    """Audit sign-out and end the current authenticated session."""
+    """
+    Audit sign-out, revoke the session on the server and clear the cookie.
+    Answers 500 if the record could not be revoked.
+    """
     try:
         create_audit_log(current_user.UserID, f"Signed out ({current_user.Email})")
         db.session.commit()
     except Exception:
         db.session.rollback()
         current_app.logger.exception("Unable to record logout")
-    _end_session()
+    if not _end_session():
+        return error(
+            "Signed out here, but the server could not end the session. "
+            "Sign in and sign out again.",
+            500,
+        )
     return success(message="User logged out.")

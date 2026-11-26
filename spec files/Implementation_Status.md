@@ -198,6 +198,7 @@ The user's appliance, installer deployment and scale remain unverified.
 ## Implemented backend areas
 
 - Remember me (#337): optional `remember_me` on login gives a 30-day persistent cookie that skips the idle timeout, honoured by the server and the client idle watcher.
+- Server-side sessions (#339): logout and forced sign-outs revoke a `USER_SESSION` row, so a kept or replayed cookie is rejected. Tested with isolated databases only; the per-request read has not been measured and logout with requests in flight has not been rechecked on a lab appliance.
 - Session login/logout and current-user identity. Existing-session login is
   explicitly rejected with 409 and requires sign-out before another login (#222).
   The login route checks the server session and redirects authenticated users to

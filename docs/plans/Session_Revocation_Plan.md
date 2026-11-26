@@ -1,7 +1,13 @@
 # Server-side session revocation (option 2 of #339)
 
-Status: **proposal, needs a person's decision.** Not implemented. Written for the
-team to discuss alongside the throttle fix in PR #340.
+Status: **implemented in PR #340** (current behavior:
+[`Backend_Modules_and_Routes.md`](../../spec%20files/Backend_Modules_and_Routes.md)).
+The text below is the original proposal. Decisions taken: (1) `Last_Activity` lives in
+the table; (2) the per-request read is accepted, not yet measured on the lab; (3)
+everyone signs in once after the upgrade; (4) several sessions per user; (5) no admin
+"sign out user" route. Password, role, email and status changes already end sessions
+through #218's `auth_stamp`; rows are also revoked on administrator password changes
+and non-Active status, and other rows on a user's own password change.
 
 ## Problem
 

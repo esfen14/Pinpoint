@@ -3,16 +3,16 @@ Tests for "Remember me" on POST /api/user/login (#337).
 
 A remembered sign-in gets a persistent session cookie (30 days) and skips the
 idle timeout; an ordinary sign-in keeps the browser-session cookie and the idle
-timeout. The idle gap is simulated by editing the signed session, as in
+timeout. The idle gap is simulated by ageing the session record, as in
 test_session_timeout.py.
 """
-import time
 from datetime import timedelta
 
 import pytest
 
 import config as config_module
 from app.system_models import ActivityLog, SystemSettings, User, UserStatus
+from tests.support.session_helpers import set_idle_minutes
 
 LOGIN = {"email": "admin@example.com", "password": "AdminPass1!"}
 
@@ -28,11 +28,6 @@ def session_cookie(response):
         if header.startswith("session="):
             return header
     return None
-
-
-def set_idle_minutes(client, minutes):
-    with client.session_transaction() as sess:
-        sess["last_activity"] = time.time() - minutes * 60
 
 
 def set_session_timeout(db_session, minutes):

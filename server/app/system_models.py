@@ -155,6 +155,23 @@ class User(UserMixin, db.Model):
     def check_password(self, password):
         return check_password_hash(self.Hashed_Password, password)
 
+class UserSession(db.Model):
+    """
+    One sign-in. The session cookie carries SessionID, and a request is accepted
+    only while the matching row exists and is not revoked, so a copy of the
+    cookie is useless after logout. Times are naive UTC.
+    """
+    __tablename__ = "USER_SESSION"
+
+    SessionID: so.Mapped[str] = so.mapped_column(sa.String(64), primary_key=True)
+    UserID: so.Mapped[int] = so.mapped_column(
+        sa.ForeignKey("USER.UserID", ondelete="CASCADE"), index=True
+    )
+    Created_At: so.Mapped[datetime] = so.mapped_column()
+    Last_Activity: so.Mapped[datetime] = so.mapped_column()
+    Remembered: so.Mapped[bool] = so.mapped_column(sa.Boolean())
+    Revoked_At: so.Mapped[Optional[datetime]] = so.mapped_column()
+
 @login.user_loader
 def load_user(id):
     """

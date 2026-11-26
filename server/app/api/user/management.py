@@ -16,6 +16,7 @@ from app.network_discovery.create_host_cfg import regenerate_and_apply_config_st
 
 from app.api.user import user_bp
 from app.api.user.login import stamp_session
+from app.api.helper.user_sessions import revoke_user_sessions
 from app.account_notifications import (
     EMAIL_CHANGED,
     PASSWORD_RESET,
@@ -859,6 +860,9 @@ def edit_account(id):
             if normalized_status == UserStatus.ACTIVE and not was_active and not is_self:
                 user_info.Must_Change_Password = True
 
+            if changing_password or normalized_status != UserStatus.ACTIVE:
+                revoke_user_sessions(user_info.UserID)
+
             if is_audit_logging_enabled():
                 details = [f"Updated account for {normalized_email}"]
                 if old_status != normalized_status.value:
@@ -938,6 +942,7 @@ def change_password():
         try:
             current_user.set_password(data["new_password"])
             current_user.Must_Change_Password = False
+            revoke_user_sessions(current_user.UserID, keep=session.get("sid"))
             if is_audit_logging_enabled():
                 create_user_log(current_user.UserID, f"Changed own password ({current_user.Email})")
             db.session.commit()
@@ -1019,6 +1024,7 @@ def complete_setup():
             current_user.set_password(data["new_password"])
             current_user.Needs_Setup = False
             current_user.Must_Change_Password = False
+            revoke_user_sessions(current_user.UserID, keep=session.get("sid"))
             create_audit_log(
                 current_user.UserID,
                 f"Completed first-run setup (email {old_email} -> {normalized_email}, password changed)",
