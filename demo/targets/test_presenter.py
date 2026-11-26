@@ -112,6 +112,24 @@ class PresenterTests(unittest.TestCase):
             with self.assertRaises(ValueError):validate_container(obj,self.target,self.root,Path('/private/context/context.json'),{'id':'a'*64,'image':'sha256:'+'b'*64})
         obj=dict(self.obj,Mounts=self.obj['Mounts'][:-1])
         with self.assertRaises(ValueError):validate_container(obj,self.target,self.root,Path('/private/context/context.json'),{'id':'a'*64,'image':'sha256:'+'b'*64})
+    def test_deploy_target_requires_its_password_mount_and_no_other_target_may_have_it(self):
+        pin={'id':'a'*64,'image':'sha256:'+'b'*64};context=Path('/private/context/context.json')
+        def mount(source,destination,writable):return {'Type':'bind','Source':source,'Destination':destination,'RW':writable}
+        secret=mount(str(self.root/'private/deploy-password'),'/run/secrets/deploy-password',False)
+        target=self.catalog.target('ssh-alt02')
+        obj=dict(self.obj,Name='/pinpoint274-host-ssh-alt02-pilot',
+                 Config={'Cmd':['python3','/opt/pinpoint/targets/node.py','init','ssh-alt02'],'Labels':self.obj['Config']['Labels']},
+                 Mounts=[mount(str(self.root/'ssh-alt02/identity'),'/identity',True),mount(str(self.root/'ssh-alt02/data'),'/data',True),
+                         mount(str(context),'/etc/pinpoint-defense/context.json',False),secret])
+        validate_container(obj,target,self.root,context,pin)
+        with self.assertRaises(ValueError):validate_container(dict(obj,Mounts=obj['Mounts'][:-1]),target,self.root,context,pin)
+        with self.assertRaises(ValueError):validate_container(dict(self.obj,Mounts=self.obj['Mounts']+[secret]),self.target,self.root,context,pin)
+    def test_deploy_target_report_names_the_login_without_its_password(self):
+        pins={'ssh-alt02':{'id':'a'*64,'image':'sha256:'+'b'*64}}
+        with patch.object(presenter,'inspect',return_value={'State':{'Running':True}}):
+            text=presenter.deploy_target_report(self.catalog,pins)
+        for part in ['ssh-alt02','10.77.1.11','2223','labadmin','sudo cat','private/deploy-password','running']:
+            self.assertIn(part,text)
     def test_pending_dhcp_intent_blocks_mutation_before_loading_pins(self):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory)
@@ -381,6 +399,16 @@ class ManifestAndResetTests(unittest.TestCase):
         self.assertEqual(by['dns01']['companion_listeners'],[{'protocol':'tcp','port':53}]);self.assertEqual(by['dns01']['unexpected_listeners'],[])
         self.assertEqual(by['dynweb01']['companion_listeners'],[{'protocol':'udp','port':68}])
         self.assertTrue(manifest['consistent'])
+    def test_an_undeployed_agent_does_not_make_the_manifest_inconsistent(self):
+        def node(device,pin,operation):
+            value=self.node(device,pin,operation)
+            if device.name=='ssh-alt02':value['listeners']=[l for l in value['listeners'] if l['port']!=5693]
+            return value
+        with patch.object(presenter,'check_host_network'),patch.object(presenter,'inspect'),patch.object(presenter,'node',side_effect=node),patch.object(presenter,'reserved_address',side_effect=lambda c,p,d:d.address):
+            manifest=presenter.observed_manifest(self.catalog,self.pins,self.vm_pins)
+        entry=next(d for d in manifest['devices'] if d['name']=='ssh-alt02')
+        self.assertEqual([l['live'] for l in entry['listeners']],[True,False])
+        self.assertTrue(manifest['consistent'])
     def test_manifest_reports_missing_wrong_mac_and_unexpected_listeners(self):
         def node(device,pin,operation):
             value=self.node(device,pin,operation)
@@ -467,10 +495,26 @@ class PreflightTests(unittest.TestCase):
         with patch.object(presenter,'read_pins',return_value={}),patch.object(presenter,'read_vm_pins',return_value={}),patch.object(presenter,'preflight',side_effect=ValueError('Active VPN/tunnel prevents defense startup preflight')),patch.object(presenter.qa_control,'claim',side_effect=lambda:nullcontext()),redirect_stderr(error):
             code=presenter.main(['preflight'])
         self.assertEqual(code,1);self.assertIn('Preflight blocked: Active VPN/tunnel',error.getvalue())
+    def preflight_output(self,report):
+        import io
+        from contextlib import redirect_stderr,redirect_stdout,nullcontext
+        out,error=io.StringIO(),io.StringIO()
+        with patch.object(presenter,'read_pins',return_value={}),patch.object(presenter,'read_vm_pins',return_value={}),\
+             patch.object(presenter,'preflight',side_effect=ValueError('Host-only VM membership changed')),\
+             patch.object(presenter,'deploy_target_report',**report),\
+             patch.object(presenter.qa_control,'claim',side_effect=lambda:nullcontext()),redirect_stdout(out),redirect_stderr(error):
+            code=presenter.main(['preflight'])
+        return code,out.getvalue(),error.getvalue()
+    def test_a_blocked_preflight_still_reports_the_deploy_target(self):
+        code,out,error=self.preflight_output({'return_value':'DEPLOY_REPORT'})
+        self.assertEqual(code,1);self.assertIn('DEPLOY_REPORT',out);self.assertIn('Preflight blocked: Host-only',error)
+    def test_an_unavailable_deploy_target_does_not_hide_the_preflight_blocker(self):
+        code,out,error=self.preflight_output({'side_effect':ValueError('Container mounts changed')})
+        self.assertEqual(code,1);self.assertIn('NCPA deploy target: unavailable',out);self.assertIn('Preflight blocked: Host-only',error)
     def test_preflight_command_is_read_only_and_ignores_a_dhcp_intent(self):
         with tempfile.TemporaryDirectory() as directory:
             root=Path(directory);(root/'dhcp-move.json').write_text('pending')
-            with patch.object(presenter,'ROOT',root),patch.object(presenter,'read_pins',return_value={}),patch.object(presenter,'read_vm_pins',return_value={}),patch.object(presenter,'preflight',return_value={'available_mib':1,'free_disk_mib':2,'swap_pages_per_second':0.0}) as check:
+            with patch.object(presenter,'ROOT',root),patch.object(presenter,'read_pins',return_value={}),patch.object(presenter,'read_vm_pins',return_value={}),patch.object(presenter,'preflight',return_value={'available_mib':1,'free_disk_mib':2,'swap_pages_per_second':0.0}) as check,patch.object(presenter,'deploy_target_report',return_value='report'):
                 self.assertEqual(presenter.main(['preflight']),0)
                 check.assert_called_once()
 if __name__=='__main__':unittest.main()

@@ -81,6 +81,7 @@ docs() {
   python3 -I "$root/demo/targets/test_front_door.py"
   python3 -I "$root/demo/targets/test_setup.py"
   python3 -I "$root/demo/targets/test_create.py"
+  python3 -I "$root/demo/targets/test_deploy_target.py"
   python3 -I "$root/demo/appliance/test_create_vms.py"
   python3 -I "$root/demo/appliance/test_install_ncpa_windows.py"
   python3 -I "$root/demo/appliance/test_qa_vm.py"

@@ -230,6 +230,13 @@
           "port": 2223,
           "plugin": "check_ssh",
           "monitoring": "pending"
+        },
+        {
+          "service": "ncpa",
+          "protocol": "tcp",
+          "port": 5693,
+          "plugin": "check_ncpa.py",
+          "monitoring": "pending"
         }
       ]
     },
