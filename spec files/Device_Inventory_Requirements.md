@@ -553,3 +553,18 @@ device (not a service) shows **IP address history** for users with
 **Current** mark on the open row, plus loading, no-history and retryable error
 states. It reads `GET /api/system/hosts/<id>/addresses` and writes nothing.
 Matching and merging by identity are unchanged.
+
+### Machines that share an SSH host key (#352)
+
+Machines cloned from one image can share an SSH host key. Discovery must not
+silently drop them. When several addresses show one key (or NCPA certificate),
+each address without a hardware MAC is listed and monitored as its own device,
+and each newly created one has a **duplicate identity** review item comparing it
+with the key's owner. If the two records are one machine (for example two network
+cards with randomized MACs), the administrator merges them, and later scans keep
+the merged address on the surviving record. If they are separate machines, they
+stay separate; the review can currently be resolved without merging only through
+the API (`POST /api/system/discover/review/<id>/resolve`), so it otherwise stays
+listed. Giving each machine its own SSH host key avoids new reviews. A
+multi-network-card device seen with hardware MACs stays one record. The matching rules are in
+[`Data_Model_and_Integrations.md`](Data_Model_and_Integrations.md).

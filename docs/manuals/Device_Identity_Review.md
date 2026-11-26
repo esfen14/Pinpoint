@@ -16,6 +16,13 @@ example, a replaced computer may reuse the old computer's IP and must remain a
 separate device. A recognized IP change already updates the existing record and
 does not need a merge.
 
+A duplicate identity review that says two records have the same SSH host key or
+certificate usually means the machines were cloned from one image. Pinpoint lists
+and monitors each separately. Merge them only if they are one machine, such as one
+with two network cards. Separate machines need no merge, although the review stays
+listed because this page cannot dismiss it. Give each cloned machine its own SSH
+host key so that new addresses are not flagged.
+
 1. Choose **Device record to keep**: the record with the intended monitoring
    settings and current address. This is the surviving target.
 2. Choose **Duplicate record to merge**: the source to remove from monitoring.
