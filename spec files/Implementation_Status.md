@@ -23,6 +23,12 @@ local copy of `repo.nagios.com`). A [scripted wizard run in the demo
 lab](../docs/test-runs/2026-11-26-issue-336-demo-ncpa-deploy/REPORT.md) passed deployment, the
 failure paths and redeployment; its memory and disk checks read the host and were OK only with
 raised lab thresholds. There is no repeatable automated NCPA deployment run in the repository. The `vmlab smoke`/`alerts` runs against the containers are untested live.
+`scripts/vmlab provision` and `fresh` turn the lab appliance's automatic upgrades off and wait
+for a running one before installing (#350); a [live run](../docs/test-runs/2026-11-26-issue-350-lab-apt-lock/REPORT.md)
+passed `demo/demo qa reset` and the wait for a real upgrade, while `provision` and the 60-minute
+wait limit are tested offline only. **Known gap:** the installer does not wait for the package
+lock, so a new real appliance may fail the same way (untested;
+[PinPoint-Installer #20](https://github.com/lorraine-pangilinan/PinPoint-Installer/issues/20)).
 
 The owner subsequently chose laptop Docker with an isolated VirtualBox host-only
 network. The current presenter pilot supports `demo/demo presenter status`,
