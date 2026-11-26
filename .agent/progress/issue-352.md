@@ -28,8 +28,8 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 ## Plan
 
-1. [ ] Failing tests for both issue cases, merge-stays-merged, own NCPA cert, self-heal: `server/tests/unit/test_device_identity.py`
-2. [ ] Shared-key rules in `server/app/network_discovery/device_identity.py` (`resolve_observation`, `reconcile_scan`)
+1. [x] Failing tests for both issue cases, merge-stays-merged, own NCPA cert, self-heal: `server/tests/unit/test_device_identity.py`
+2. [x] Shared-key rules in `server/app/network_discovery/device_identity.py` (`resolve_observation`, `reconcile_scan`)
 3. [ ] Single-device scan checks the key owner's address: `identity_probes.py`, `create_host_cfg.py`, tests
 4. [ ] Security review of the diff; specs: `Device_Inventory_Requirements.md`, `Data_Model_and_Integrations.md`, `Implementation_Status.md`
 5. [ ] `scripts/verify.sh backend` and `all`
@@ -42,13 +42,16 @@ One row per loop round, newest last.
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 0 | Plan | - | - |
+| 1 | Tests and shared-identifier rules | `pytest tests/unit/test_device_identity.py` | 9 red, then 71 green |
 
 ## State for the next session
 
-- Last check run (exact command): none
-- Result (first failing lines, or "green"): n/a
-- Hypothesis: shared SSH key makes every address resolve to the key owner
-- Next action (one specific step, not "continue"): write the failing tests of plan step 1
+Everything a fresh session needs to continue without redoing work.
+
+- Last check run (exact command): `cd server && FLASK_DEBUG=1 .venv/bin/python -m pytest tests/unit/test_device_identity.py -q`
+- Result (first failing lines, or "green"): green (71 passed)
+- Hypothesis: a single-device scan still moves the key owner until it is told the owner still answers
+- Next action (one specific step, not "continue"): add `identifiers_still_at_owner()` to identity_probes.py and pass it from the discovery worker for single-device scans, test first
 
 ## Decisions and notes
 
@@ -56,3 +59,4 @@ One row per loop round, newest last.
 - User approved changing the sensitive module `app/network_discovery/`. No database schema change.
 - Lab reset is NOT approved yet; ask before running it.
 - The owner comment's checkbox was added to the issue body with the user's approval.
+- Rules cover any strong identifier seen at two or more addresses (SSH key or NCPA certificate); with SSH only, a clone sharing both would get a new record on every scan.

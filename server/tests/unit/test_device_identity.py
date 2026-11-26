@@ -23,7 +23,9 @@ from app.network_discovery.device_identity import (
     is_hardware_mac,
     nagios_host_name,
     normalize_mac,
+    reconcile_scan,
     record_device_evidence,
+    record_secondary_address,
 )
 from app.ncpa_deployment.ncpa_deployment import mark_device_incompatible
 from app.system_models import (
@@ -814,3 +816,232 @@ class TestDeviceLifecycle:
             assert [device.NetDiscoveryID for device in matches] == [expected_id]
         assert [row.IP_Address for row in open_addresses(gateway)] == ["10.0.2.2"]
 
+
+
+# ==========================================================
+# SHARED SSH HOST KEY, NO HARDWARE MAC (issue #352)
+# ==========================================================
+
+CLONE_IPS = ["10.0.0.2", "10.0.0.3", "10.0.0.4"]
+
+
+def clone_scan(*ips, identifiers=None, mac=RANDOM_MAC):
+    """One scan in which every address shows the same SSH host key."""
+    if identifiers is None:
+        identifiers = [ssh(SSH_1)]
+    scans = []
+    for ip in ips:
+        scans.append(scan(ip, mac=mac, identifiers=identifiers, tcp={22: "ssh"}))
+    return combine(*scans)
+
+
+def ids_by_ip(devices):
+    result = {}
+    for (_, ip), device in devices.items():
+        result[ip] = device.NetDiscoveryID
+    return result
+
+
+def mark_merged(db_session, source, target):
+    """What the merge route does to the two records."""
+    source.Device_State = DeviceState.MERGED
+    source.Merged_Into_ID = target.NetDiscoveryID
+    for item in review_items():
+        item.Resolved_At = datetime.now(timezone.utc)
+    db_session.session.commit()
+
+
+class TestSharedSshKey:
+
+    def test_new_addresses_showing_a_known_key_become_separate_devices(self, db_session, admin_user):
+        status = make_status(db_session, admin_user)
+        owner = run_scan(db_session, status, clone_scan("10.0.0.2"))[(NET, "10.0.0.2")]
+
+        devices = run_scan(db_session, status, clone_scan(*CLONE_IPS))
+
+        found = ids_by_ip(devices)
+        assert sorted(found) == CLONE_IPS
+        assert len(set(found.values())) == 3
+        assert found["10.0.0.2"] == owner.NetDiscoveryID
+        assert owner.IP_Address == "10.0.0.2"
+        assert [row.IP_Address for row in address_rows(owner)] == ["10.0.0.2"]
+
+        items = review_items(ReviewKind.DUPLICATE_IDENTITY)
+        assert [item.IP_Address for item in items] == ["10.0.0.3", "10.0.0.4"]
+        for item in items:
+            expected = sorted([owner.NetDiscoveryID, found[item.IP_Address]])
+            assert item.Candidate_Device_IDs == expected
+            assert "SSH host key" in item.Message
+            assert "merge if it is one machine." in item.Message
+        assert review_items(ReviewKind.CONFLICT) == []
+
+    def test_rescan_updates_every_known_device_that_shares_a_key(self, db_session, admin_user):
+        status = make_status(db_session, admin_user)
+        first = ids_by_ip(run_scan(db_session, status, clone_scan(*CLONE_IPS)))
+        assert len(set(first.values())) == 3
+
+        second = ids_by_ip(run_scan(db_session, status, clone_scan(*CLONE_IPS)))
+
+        assert second == first
+        assert len(all_devices()) == 3
+        for device in all_devices():
+            assert device.Missed_Scans == 0
+            assert device.DiscoveryStatusID == status
+            assert device.Device_State is DeviceState.ACTIVE
+            assert [row.IP_Address for row in address_rows(device)] == [device.IP_Address]
+        assert review_items() == []
+
+    def test_a_dismissed_review_item_does_not_come_back(self, db_session, admin_user):
+        status = make_status(db_session, admin_user)
+        run_scan(db_session, status, clone_scan("10.0.0.2"))
+        run_scan(db_session, status, clone_scan(*CLONE_IPS))
+        for item in review_items():
+            item.Resolved_At = datetime.now(timezone.utc)
+        db_session.session.commit()
+
+        run_scan(db_session, status, clone_scan(*CLONE_IPS))
+
+        assert len(review_items()) == 2
+        assert len(all_devices()) == 3
+
+    def test_addresses_already_folded_into_the_owner_get_their_own_record(self, db_session, admin_user):
+        status = make_status(db_session, admin_user)
+        owner = run_scan(db_session, status, clone_scan("10.0.0.2"))[(NET, "10.0.0.2")]
+        # What an affected installation already holds: a closed secondary row.
+        record_secondary_address(owner, "10.0.0.3", NET, None)
+        db_session.session.commit()
+
+        found = ids_by_ip(run_scan(db_session, status, clone_scan("10.0.0.2", "10.0.0.3")))
+
+        assert found["10.0.0.3"] != owner.NetDiscoveryID
+
+    def test_a_merged_address_stays_merged(self, db_session, admin_user):
+        status = make_status(db_session, admin_user)
+        owner = run_scan(db_session, status, clone_scan("10.0.0.2"))[(NET, "10.0.0.2")]
+        devices = run_scan(db_session, status, clone_scan("10.0.0.2", "10.0.0.3"))
+        mark_merged(db_session, devices[(NET, "10.0.0.3")], owner)
+
+        again = run_scan(db_session, status, clone_scan("10.0.0.2", "10.0.0.3"))
+
+        assert list(again) == [(NET, "10.0.0.2")]
+        assert len(all_devices()) == 2
+        assert owner.IP_Address == "10.0.0.2"
+        assert len(review_items()) == 1
+
+    def test_owner_offline_and_two_new_addresses_are_both_listed(self, db_session, admin_user):
+        status = make_status(db_session, admin_user)
+        owner = run_scan(db_session, status, clone_scan("10.0.0.2"))[(NET, "10.0.0.2")]
+
+        found = ids_by_ip(run_scan(db_session, status, clone_scan("10.0.0.3", "10.0.0.4")))
+
+        assert sorted(found) == ["10.0.0.3", "10.0.0.4"]
+        assert len(set(found.values())) == 2
+        assert owner.NetDiscoveryID in found.values()  # one of them is read as the owner having moved
+
+    def test_a_key_seen_at_one_address_still_follows_a_moved_device(self, db_session, admin_user):
+        status = make_status(db_session, admin_user)
+        owner = run_scan(db_session, status, clone_scan("10.0.0.2"))[(NET, "10.0.0.2")]
+
+        moved = run_scan(db_session, status, clone_scan("10.0.0.9"))[(NET, "10.0.0.9")]
+
+        assert moved.NetDiscoveryID == owner.NetDiscoveryID
+        assert len(all_devices()) == 1
+
+    def test_hardware_mac_on_a_new_address_is_still_a_secondary_address(self, db_session, admin_user):
+        status = make_status(db_session, admin_user)
+        owner = run_scan(db_session, status, clone_scan("10.0.0.2", mac=MAC_1))[(NET, "10.0.0.2")]
+
+        devices = run_scan(db_session, status, combine(
+            clone_scan("10.0.0.2", mac=MAC_1), clone_scan("10.0.0.3", mac=MAC_2)))
+
+        assert list(devices) == [(NET, "10.0.0.2")]
+        assert len(all_devices()) == 1
+        assert "10.0.0.3" in [row.IP_Address for row in address_rows(owner)]
+
+    def test_address_whose_record_had_another_key_is_reported_as_reused(self, db_session, admin_user):
+        status = make_status(db_session, admin_user)
+        devices = run_scan(db_session, status, combine(
+            clone_scan("10.0.0.2"), clone_scan("10.0.0.3", identifiers=[ssh(SSH_2)])))
+        old = devices[(NET, "10.0.0.3")]
+
+        found = ids_by_ip(run_scan(db_session, status, clone_scan("10.0.0.2", "10.0.0.3")))
+
+        assert found["10.0.0.3"] not in (found["10.0.0.2"], old.NetDiscoveryID)
+        assert old.Device_State is DeviceState.ADDRESS_UNKNOWN
+        assert len(review_items(ReviewKind.IP_REUSE)) == 1
+
+    def test_clone_with_its_own_certificate_is_matched_by_it(self, db_session, admin_user):
+        status = make_status(db_session, admin_user)
+        first = run_scan(db_session, status, clone_scan("10.0.0.2", "10.0.0.3"))
+        clone = first[(NET, "10.0.0.3")]
+        attach_identifiers(clone, [Evidence(IdentifierKind.NCPA_CERT, CERT_1)])
+        db_session.session.commit()
+
+        both = combine(
+            clone_scan("10.0.0.2"),
+            clone_scan("10.0.0.3", identifiers=[ssh(SSH_1), cert(CERT_1)]),
+        )
+        found = ids_by_ip(run_scan(db_session, status, both))
+
+        assert found == ids_by_ip(first)
+        assert len(all_devices()) == 2
+        assert review_items() == []
+
+    def test_single_device_scan_with_the_owner_still_answering(self, db_session, admin_user):
+        status = make_status(db_session, admin_user)
+        owner = run_scan(db_session, status, clone_scan("10.0.0.2"))[(NET, "10.0.0.2")]
+
+        devices = reconcile_scan(clone_scan("10.0.0.3"), status, target="10.0.0.3", identifiers_at_owner={ssh(SSH_1)})
+        db_session.session.commit()
+
+        assert devices[(NET, "10.0.0.3")].NetDiscoveryID != owner.NetDiscoveryID
+        assert owner.IP_Address == "10.0.0.2"
+        assert owner.Missed_Scans == 0
+        assert len(review_items(ReviewKind.DUPLICATE_IDENTITY)) == 1
+
+        # Scanning the same clone again finds its record, not the owner's.
+        again = reconcile_scan(clone_scan("10.0.0.3"), status, target="10.0.0.3", identifiers_at_owner={ssh(SSH_1)})
+        assert again[(NET, "10.0.0.3")] is devices[(NET, "10.0.0.3")]
+        assert len(all_devices()) == 2
+
+    def test_clone_with_its_own_certificate_keeps_its_record_when_it_moves(self, db_session, admin_user):
+        status = make_status(db_session, admin_user)
+        first = run_scan(db_session, status, clone_scan("10.0.0.2", "10.0.0.3", "10.0.0.4"))
+        mover = first[(NET, "10.0.0.3")]
+        attach_identifiers(mover, [Evidence(IdentifierKind.NCPA_CERT, CERT_1)])
+        db_session.session.commit()
+
+        # It takes the address of another clone, which is switched off.
+        moved = run_scan(db_session, status, combine(
+            clone_scan("10.0.0.2"),
+            clone_scan("10.0.0.4", identifiers=[ssh(SSH_1), cert(CERT_1)]),
+        ))
+
+        assert moved[(NET, "10.0.0.4")].NetDiscoveryID == mover.NetDiscoveryID
+
+    def test_clones_sharing_a_certificate_too_are_created_only_once(self, db_session, admin_user):
+        status = make_status(db_session, admin_user)
+        both = [ssh(SSH_1), cert(CERT_1)]
+        run_scan(db_session, status, clone_scan("10.0.0.2", identifiers=both))
+
+        first = ids_by_ip(run_scan(db_session, status, clone_scan("10.0.0.2", "10.0.0.3", identifiers=both)))
+        second = ids_by_ip(run_scan(db_session, status, clone_scan("10.0.0.2", "10.0.0.3", identifiers=both)))
+
+        assert first == second
+        assert len(all_devices()) == 2
+        assert review_items(ReviewKind.CONFLICT) == []
+
+    def test_an_address_merged_into_another_clone_is_recorded_on_that_device(self, db_session, admin_user):
+        status = make_status(db_session, admin_user)
+        first = run_scan(db_session, status, clone_scan(*CLONE_IPS))
+        owner = first[(NET, "10.0.0.2")]
+        source = first[(NET, "10.0.0.3")]
+        target = first[(NET, "10.0.0.4")]
+        mark_merged(db_session, source, target)
+
+        again = run_scan(db_session, status, clone_scan(*CLONE_IPS))
+
+        assert sorted(ids_by_ip(again)) == ["10.0.0.2", "10.0.0.4"]
+        assert len(all_devices()) == 3
+        assert "10.0.0.3" in [row.IP_Address for row in address_rows(target)]
+        assert "10.0.0.3" not in [row.IP_Address for row in address_rows(owner)]
