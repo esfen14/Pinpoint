@@ -147,3 +147,68 @@ describe('device identity review', () => {
   })
 
 })
+
+describe('keeping records separate', () => {
+  const resolvePath = '/api/system/discover/review/1/resolve'
+  beforeEach(() => { items = [review('DUPLICATE_IDENTITY')] })
+  async function ask(name = 'Keep both records') {
+    await open(); await userEvent.click(screen.getByRole('button', { name }))
+    return screen.getByRole('dialog', { name })
+  }
+  it('confirms, resolves the review and refreshes the list and count', async () => {
+    const onDismissed = vi.fn()
+    render(<DeviceIdentityReviews onMerged={refresh} onDismissed={onDismissed} />)
+    await userEvent.click(await screen.findByRole('button', { name: 'Review' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Keep both records' }))
+    const dialog = screen.getByRole('dialog', { name: 'Keep both records' })
+    for (const text of [/ID 1/, /ID 2/, /Neither device changes/, /will not return/, /No undo/]) expect(within(dialog).getByText(text)).toBeInTheDocument()
+    expect(mocks.post).not.toHaveBeenCalled(); items = []
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Keep both records' }))
+    expect(await screen.findByRole('heading', { name: 'Needs Review (0)' })).toBeInTheDocument()
+    expect(mocks.post).toHaveBeenCalledExactlyOnceWith(resolvePath, undefined)
+    expect(screen.getByText('Review dismissed. No device was changed.')).toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(onDismissed).toHaveBeenCalledTimes(1); expect(refresh).not.toHaveBeenCalled()
+  })
+  it('cancelling the confirmation resolves nothing', async () => {
+    const dialog = await ask(); await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }))
+    expect(screen.getByRole('dialog', { name: 'Review device identity' })).toBeInTheDocument()
+    expect(mocks.post).not.toHaveBeenCalled()
+  })
+  it('submits once while saving', async () => {
+    mocks.post.mockImplementation(() => new Promise(() => {}))
+    const dialog = await ask(); await userEvent.click(within(dialog).getByRole('button', { name: 'Keep both records' }))
+    expect(within(dialog).getByRole('button', { name: 'Saving…' })).toBeDisabled()
+    expect(within(dialog).getByRole('button', { name: 'Cancel' })).toBeDisabled()
+    fireEvent.keyDown(dialog, { key: 'Escape' })
+    expect(screen.getByRole('dialog', { name: 'Keep both records' })).toBeInTheDocument()
+    expect(mocks.post).toHaveBeenCalledTimes(1)
+  })
+  it('shows a failed request and leaves the review listed', async () => {
+    mocks.post.mockRejectedValue(new Error('Server unavailable'))
+    const dialog = await ask(); await userEvent.click(within(dialog).getByRole('button', { name: 'Keep both records' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Server unavailable')
+    expect(screen.getByRole('dialog', { name: 'Review device identity' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Needs Review (1)' })).toBeInTheDocument()
+  })
+  it('words a one-record review for one record', async () => {
+    items = [review('DUPLICATE_IDENTITY', [one])]
+    const dialog = await ask('Keep record unchanged')
+    expect(within(dialog).getByText(/ID 1/)).toBeInTheDocument()
+    expect(within(dialog).getByText(/will not return/)).toBeInTheDocument()
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Keep record unchanged' }))
+    expect(mocks.post).toHaveBeenCalledExactlyOnceWith(resolvePath, undefined)
+  })
+  it('needs only host edit permission', async () => {
+    mocks.permissions.delete('system.hosts'); await open()
+    expect(screen.getByRole('button', { name: 'Keep both records' })).toBeInTheDocument()
+  })
+  it('is not offered without host edit permission', async () => {
+    mocks.permissions.delete('system.hosts.edit'); await open()
+    expect(screen.queryByRole('button', { name: /Keep/ })).not.toBeInTheDocument()
+  })
+  it.each(['CONFLICT', 'IDENTITY_CHANGED', 'IP_REUSE', 'STATIC_MOVED'])('is not offered for %s', async kind => {
+    items = [review(kind)]; await open()
+    expect(screen.queryByRole('button', { name: /Keep/ })).not.toBeInTheDocument()
+  })
+})

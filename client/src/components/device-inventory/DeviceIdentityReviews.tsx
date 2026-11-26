@@ -6,8 +6,8 @@ import { getIdentityReviews } from '../../lib/deviceIdentityApi'
 import { IDENTITY_REVIEW_LABELS, identityReviews, deviceLabel, type IdentityReview, type MergeResult } from '../../types/deviceIdentity'
 import { IdentityReviewDrawer } from './IdentityReviewDrawer'
 
-type Props = { onMerged?: (result: MergeResult) => void; deviceId?: number; reloadKey?: number }
-export function DeviceIdentityReviews({ onMerged, deviceId, reloadKey = 0 }: Props) {
+type Props = { onMerged?: (result: MergeResult) => void; onDismissed?: () => void; deviceId?: number; reloadKey?: number }
+export function DeviceIdentityReviews({ onMerged, onDismissed, deviceId, reloadKey = 0 }: Props) {
   const { hasPermission } = useCurrentUser()
   const canReview = hasPermission('system.discover')
   const { formatDateTime } = useDisplayTime()
@@ -47,6 +47,11 @@ export function DeviceIdentityReviews({ onMerged, deviceId, reloadKey = 0 }: Pro
       setNotice(result.config_ok === false ? `Merge saved. Nagios configuration warning: ${result.config_message}` : 'Merge saved.')
       setAttempt(a => a + 1)
       onMerged?.(result)
+    }} onDismissed={() => {
+      setSelected(null)
+      setNotice('Review dismissed. No device was changed.')
+      setAttempt(a => a + 1)
+      onDismissed?.()
     }} />}
   </section>
 }

@@ -34,6 +34,7 @@ function device(id: number, hostname: string, overrides: Partial<NcpaDevice> = {
     id,
     hostname,
     ipAddress: `10.0.20.${id}`,
+    sshPort: 22,
     trusted: true,
     fingerprint: `KEY${id}`,
     agentStatus: 'Pending NCPA',

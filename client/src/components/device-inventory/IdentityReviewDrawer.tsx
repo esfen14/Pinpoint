@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useCurrentUser } from '../../contexts/CurrentUserContext'
 import { useDisplayTime } from '../../hooks/useDisplayTime'
 import { errorMessage } from '../../lib/api'
-import { getAddressEvidence, getIdentityEvidence, lookupIdentityDevices, mergeIdentityDevices } from '../../lib/deviceIdentityApi'
+import { dismissIdentityReview, getAddressEvidence, getIdentityEvidence, lookupIdentityDevices, mergeIdentityDevices } from '../../lib/deviceIdentityApi'
 import { deviceLabel, type AddressEvidence, type DeviceSummary, type IdentityEvidence, type IdentityReview, type MergeResult } from '../../types/deviceIdentity'
 
 const button = 'rounded-lg border border-[var(--border)] px-3 py-2 text-sm hover:bg-[var(--hover)] disabled:opacity-50'
@@ -79,7 +79,8 @@ function CandidateEvidence({ device, canRead, onDevice }: { device: DeviceSummar
   </article>
 }
 
-export function IdentityReviewDrawer({ review, onClose, onMerged }: { review: IdentityReview; onClose: () => void; onMerged: (result: MergeResult) => void }) {
+type DrawerProps = { review: IdentityReview; onClose: () => void; onMerged: (result: MergeResult) => void; onDismissed: () => void }
+export function IdentityReviewDrawer({ review, onClose, onMerged, onDismissed }: DrawerProps) {
   const { hasPermission } = useCurrentUser()
   const canRead = hasPermission('system.hosts')
   const canMerge = canRead && hasPermission('system.hosts.edit')
@@ -99,6 +100,13 @@ export function IdentityReviewDrawer({ review, onClose, onMerged }: { review: Id
   const [saving, setSaving] = useState(false)
   const submitting = useRef(false)
   const [error, setError] = useState<string | null>(null)
+  const [keeping, setKeeping] = useState(false)
+  const [keepError, setKeepError] = useState<string | null>(null)
+  // Only a duplicate identity can be a correct pair of records; other kinds need a merge.
+  const canKeep = review.kind === 'DUPLICATE_IDENTITY' && hasPermission('system.hosts.edit')
+  const reviewed = devices.filter(device => review.devices.some(original => original.id === device.id))
+  const several = review.devices.length > 1
+  const keepLabel = several ? 'Keep both records' : 'Keep record unchanged'
   const source = devices.find(d => String(d.id) === sourceId)
   const target = devices.find(d => String(d.id) === targetId)
   const valid = canMerge && source && target && source.id !== target.id && source.state !== 'MERGED' && !['RETIRED', 'MERGED'].includes(target.state)
@@ -117,6 +125,20 @@ export function IdentityReviewDrawer({ review, onClose, onMerged }: { review: Id
     // A committed merge stays a success even when refreshing the surrounding page fails.
     onMerged(result)
   }
+  async function keep() {
+    if (submitting.current) return
+    submitting.current = true; setSaving(true); setKeepError(null)
+    try { await dismissIdentityReview(review.id) }
+    catch (err) { setKeepError(errorMessage(err)); setKeeping(false); setSaving(false); submitting.current = false; return }
+    onDismissed()
+  }
+  if (keeping) return <FocusDialog title={keepLabel} busy={saving} onClose={() => setKeeping(false)}>
+    {reviewed.map(device => <p key={device.id}>{deviceLabel(device)}</p>)}
+    <p>{several ? 'Neither device changes. Both records stay as they are.' : 'The device does not change. Its extra address stays unmonitored.'}</p>
+    <p>This review leaves Needs Review and will not return for {several ? 'these records' : 'this address'}.</p>
+    <p>No undo action is provided.</p>
+    <div className="flex gap-3"><button className={button} disabled={saving} onClick={() => setKeeping(false)}>Cancel</button><button className={button} disabled={saving} onClick={() => void keep()}>{saving ? 'Saving…' : keepLabel}</button></div>
+  </FocusDialog>
   if (confirming && source && target) return <FocusDialog title="Confirm device merge" busy={saving} onClose={() => setConfirming(false)}>
     <p>Device record to keep: {deviceLabel(target)}</p>
     <p>Duplicate record to merge: {deviceLabel(source)}</p>
@@ -132,6 +154,11 @@ export function IdentityReviewDrawer({ review, onClose, onMerged }: { review: Id
     <p>Merge only after verifying that both records represent the same physical device. Similar names or matching IPs are not proof of identity. Keep the record with the intended monitoring settings and current address.</p>
     {devices.length === 0 && <p>No candidate device records available. Search discovered devices to compare records.</p>}
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">{devices.map(device => <CandidateEvidence key={device.id} device={device} canRead={canRead} onDevice={updateDevice} />)}</div>
+    {canKeep && <section className="space-y-2" aria-label="Keep separate">
+      <p>{several ? 'If these are separate machines, keep both records.' : 'If no merge is needed, keep the record unchanged.'}</p>
+      {keepError && <p role="alert">{keepError}</p>}
+      <button className={button} onClick={() => { setKeepError(null); setKeeping(true) }}>{keepLabel}</button>
+    </section>}
     {canMerge && <section className="space-y-3" aria-label="Merge choices">
       <form className="space-y-2" onSubmit={e => { e.preventDefault(); void findDevices() }}>
         <label className="block">Search discovered devices<input className={input} value={search} maxLength={100} onChange={e => setSearch(e.target.value)} placeholder="Name, IP address or device ID" /></label>

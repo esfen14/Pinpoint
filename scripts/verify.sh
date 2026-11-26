@@ -59,6 +59,8 @@ docs() {
   python3 -I "$root/scripts/test_vmlab_preflight.py"
   echo "==> docs: VM administrator setup compatibility and saved login validation"
   python3 -I "$root/scripts/test_vmlab_setup_admin.py"
+  echo "==> docs: VM lab automatic-upgrade stop before installs (fake VM and guest tools)"
+  python3 -I "$root/scripts/test_vmlab_auto_upgrades.py"
   echo "==> docs: isolated defense catalog, input and host preflight contracts (no live lab)"
   python3 -I "$root/demo/targets/test_defense.py"
   python3 -I "$root/demo/targets/test_runtime.py"

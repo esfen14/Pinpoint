@@ -42,6 +42,10 @@ demo/demo qa destroy --apply          # type "destroy": removes only the QA VM, 
 demo/demo destroy --apply             # type "destroy": removes only the demo containers and network
 ```
 
+`qa reset` turns Ubuntu's automatic upgrades off on the lab appliance before installing,
+so an overdue upgrade cannot hold the package lock. If one is already running it waits for
+it (up to 60 minutes) and says so.
+
 ## Known limits
 
 - Run live: the container creation, `demo/demo preflight`, `demo/demo create-vms` (it leaves

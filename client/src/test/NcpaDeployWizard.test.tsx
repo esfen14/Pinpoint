@@ -21,6 +21,7 @@ function device(id: number, hostname: string, overrides: Partial<NcpaDevice> = {
     id,
     hostname,
     ipAddress: `10.0.20.${id}`,
+    sshPort: 22,
     trusted: true,
     fingerprint: `KEY${id}`,
     agentStatus: 'Pending NCPA',
@@ -73,6 +74,45 @@ describe('DeployWizard', () => {
     expect(await screen.findByText(/Could not reach 10.0.20.2 on port 22/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled()
+  })
+
+  it('names the device SSH port while reading its host key and when it is down', async () => {
+    let fail: (reason: unknown) => void = () => {}
+    api.getLiveFingerprint.mockReturnValue(new Promise((_, reject) => { fail = reject }))
+    const alt = device(4, 'ssh-alt02', { trusted: false, fingerprint: null, sshPort: 2223 })
+    renderWizard({ devices: [alt], startStep: 1 })
+
+    expect(screen.getByText('Contacting 10.0.20.4 on port 2223…')).toBeInTheDocument()
+    fail(new ApiError('Could not reach device.', 502))
+    expect(await screen.findByText(/Could not reach 10.0.20.4 on port 2223\./)).toBeInTheDocument()
+  })
+
+  it('names the device SSH port when the login check cannot reach it', async () => {
+    api.checkCredentials.mockResolvedValue([{ deviceId: 4, result: 'unreachable' }])
+    renderWizard({ devices: [device(4, 'ssh-alt02', { sshPort: 2223 })], startStep: 2 })
+    type('SSH username', 'admin')
+    type('Password', 'p')
+    next()
+
+    expect(await screen.findByText('Could not reach this device on port 2223.')).toBeInTheDocument()
+  })
+
+  it('names no port when the device port is not known', async () => {
+    let fail: (reason: unknown) => void = () => {}
+    api.getLiveFingerprint.mockReturnValue(new Promise((_, reject) => { fail = reject }))
+    api.checkCredentials.mockResolvedValue([{ deviceId: 5, result: 'unreachable' }])
+    const untrusted = device(4, 'new-04', { trusted: false, fingerprint: null, sshPort: null })
+    renderWizard({ devices: [untrusted, device(5, 'old-05', { sshPort: null })], startStep: 1 })
+
+    expect(screen.getByText('Contacting 10.0.20.4…')).toBeInTheDocument()
+    fail(new ApiError('Could not reach device.', 502))
+    expect(await screen.findByText(/Could not reach 10.0.20.4\. Check the device is on/)).toBeInTheDocument()
+
+    next()
+    type('SSH username', 'admin')
+    type('Password', 'p')
+    next()
+    expect(await screen.findByText('Could not reach this device.')).toBeInTheDocument()
   })
 
   it('trusts exactly the key shown, and shows a new key when it changed', async () => {

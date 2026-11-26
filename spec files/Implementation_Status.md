@@ -23,6 +23,12 @@ local copy of `repo.nagios.com`). A [scripted wizard run in the demo
 lab](../docs/test-runs/2026-11-26-issue-336-demo-ncpa-deploy/REPORT.md) passed deployment, the
 failure paths and redeployment; its memory and disk checks read the host and were OK only with
 raised lab thresholds. There is no repeatable automated NCPA deployment run in the repository. The `vmlab smoke`/`alerts` runs against the containers are untested live.
+`scripts/vmlab provision` and `fresh` turn the lab appliance's automatic upgrades off and wait
+for a running one before installing (#350); a [live run](../docs/test-runs/2026-11-26-issue-350-lab-apt-lock/REPORT.md)
+passed `demo/demo qa reset` and the wait for a real upgrade, while `provision` and the 60-minute
+wait limit are tested offline only. **Known gap:** the installer does not wait for the package
+lock, so a new real appliance may fail the same way (untested;
+[PinPoint-Installer #20](https://github.com/lorraine-pangilinan/PinPoint-Installer/issues/20)).
 
 The owner subsequently chose laptop Docker with an isolated VirtualBox host-only
 network. The current presenter pilot supports `demo/demo presenter status`,
@@ -629,6 +635,30 @@ authentication remain untested; CI and human review are tracked on PR #201.
 The initial [contract probe](../docs/test-runs/2026-10-17-issue-198-contract-probe/REPORT.md)
 is historical partial evidence, not final acceptance.
 
+
+## Dismissing duplicate identity reviews (#356)
+
+The review comparison offers **Keep both records** on duplicate identity reviews,
+and a resolved one is not raised again. Covered by isolated backend and frontend
+tests; not exercised in a live lab or real browser. The other review kinds cannot
+be dismissed on the page.
+
+## Machines sharing an SSH host key (#352)
+
+Discovery keeps a separate record for each address that shows a shared SSH host
+key or NCPA certificate without a hardware MAC, and updates known ones on each
+rescan; see the [identity rules](Data_Model_and_Integrations.md). The
+[local lab run](../docs/test-runs/2026-11-26-issue-352-shared-ssh-key/REPORT.md)
+repeats the issue's scenarios, a merge and single-device scans through the API;
+the browser was not driven. Known limits:
+
+- One machine with two randomized-MAC network cards is listed twice until merged.
+- Clones are told apart by address only: one that changes address appears as a new
+  record.
+- A merged record's address is not recreated as a device while its surviving
+  device is in use, even if another machine later takes that address with the
+  shared key.
+- A single-device scan checks the identifier's owner only on a saved network.
 
 ## Dashboard stopped/stale Nagios indication (#238)
 

@@ -48,11 +48,19 @@ const CHECK_TEXT: Record<CredentialCheckResult, string> = {
   ok: 'Login and sudo verified.',
   auth_failed: 'Rejected this username or password. Enter the login for this device.',
   no_sudo: 'Logged in, but this account cannot use sudo.',
-  unreachable: 'Could not reach this device on port 22.',
+  unreachable: 'Could not reach this device.',
   host_key_changed: 'Its host key changed. Remove it, then verify the key again from the Devices table.',
   not_trusted: 'Its host key is not trusted yet.',
   not_found: 'This device is no longer available.',
   rate_limited: 'Checked moments ago. Try again in a few seconds.',
+}
+
+// " on port N", or nothing when the device's SSH port is not known.
+const onPort = (port: number | null) => (port === null ? '' : ` on port ${port}`)
+
+function checkText(result: CredentialCheckResult, port: number | null): string {
+  if (result === 'unreachable') return `Could not reach this device${onPort(port)}.`
+  return CHECK_TEXT[result]
 }
 
 // Results that need a different login for this device.
@@ -445,11 +453,11 @@ export function DeployWizard({
                           <p className="text-sm font-medium text-gray-900 dark:text-white">
                             {d.hostname} <span className="font-normal text-gray-500">· {d.ipAddress}</span>
                           </p>
-                          <CheckLine check={check} hasOwn={hasOwn} />
+                          <CheckLine check={check} hasOwn={hasOwn} port={d.sshPort} />
                         </div>
                         {!isChecking && (
                           check && REMOVABLE.includes(check as CredentialCheckResult) ? (
-                            <button type="button" className={BUTTON_SM} onClick={() => removeDevice(d.id, CHECK_TEXT[check as CredentialCheckResult])}>Remove</button>
+                            <button type="button" className={BUTTON_SM} onClick={() => removeDevice(d.id, checkText(check as CredentialCheckResult, d.sshPort))}>Remove</button>
                           ) : hasOwn ? (
                             deployList.length > 1 && <button type="button" className={BUTTON_SM} onClick={() => setOwnLogin(d.id, false)}>Use shared login</button>
                           ) : (
@@ -566,7 +574,7 @@ function KeyRow({
     detail = device.fingerprint ? fingerprint(device.fingerprint) : null
     actions = <TrustLabel trusted />
   } else if (!keyState || keyState.state === 'loading') {
-    detail = <span className="text-xs text-gray-500">Contacting {device.ipAddress} on port 22…</span>
+    detail = <span className="text-xs text-gray-500">Contacting {device.ipAddress}{onPort(device.sshPort)}…</span>
     actions = <Loader2 className="h-4 w-4 animate-spin text-gray-400" aria-label="Loading" />
   } else if (keyState.state === 'shown' || keyState.state === 'trusting') {
     detail = (
@@ -602,7 +610,7 @@ function KeyRow({
   } else if (keyState.state === 'down') {
     detail = (
       <span className="text-xs text-gray-500">
-        Could not reach {device.ipAddress} on port 22. Check the device is on and SSH is running.
+        Could not reach {device.ipAddress}{onPort(device.sshPort)}. Check the device is on and SSH is running.
       </span>
     )
     actions = (
@@ -634,7 +642,7 @@ function KeyRow({
   )
 }
 
-function CheckLine({ check, hasOwn }: { check: CheckState | undefined; hasOwn: boolean }) {
+function CheckLine({ check, hasOwn, port }: { check: CheckState | undefined; hasOwn: boolean; port: number | null }) {
   if (!check) {
     return <p className="text-xs text-gray-500">{hasOwn ? 'Uses its own login' : 'Uses the shared login'}</p>
   }
@@ -654,7 +662,7 @@ function CheckLine({ check, hasOwn }: { check: CheckState | undefined; hasOwn: b
   const Icon = check === 'ok' ? CheckCircle2 : check === 'unreachable' ? Power : XCircle
   return (
     <p className={`flex items-center gap-1.5 text-xs ${tone}`}>
-      <Icon className="h-3.5 w-3.5 shrink-0" /> {CHECK_TEXT[check]}
+      <Icon className="h-3.5 w-3.5 shrink-0" /> {checkText(check, port)}
     </p>
   )
 }

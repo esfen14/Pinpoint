@@ -36,6 +36,7 @@ export type RawNcpaDevice = {
   device_id: number
   hostname: string
   ip_address: string
+  ssh_port?: number | null
   trusted: boolean
   fingerprint: string | null
   agent_status: AgentStatus | null
@@ -49,6 +50,8 @@ export type NcpaDevice = {
   id: number
   hostname: string
   ipAddress: string
+  // The SSH port Pinpoint connects to; null when it is not known.
+  sshPort: number | null
   trusted: boolean
   fingerprint: string | null
   agentStatus: AgentStatus | null
@@ -156,6 +159,7 @@ export function fromRawDevice(raw: RawNcpaDevice): NcpaDevice {
     id: raw.device_id,
     hostname: displayHostname(raw.hostname, raw.ip_address) ?? `Device ${raw.device_id}`,
     ipAddress: raw.ip_address,
+    sshPort: raw.ssh_port ?? null,
     trusted: raw.trusted,
     fingerprint: raw.fingerprint,
     agentStatus: raw.agent_status,

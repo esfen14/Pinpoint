@@ -196,6 +196,15 @@ The [DHCP lab design](../docs/archive/plans/DHCP_Lab_Extension_Proposal.md) reco
 Docker feasibility decision and the separate lab's safety contract. The ordinary
 fast lab and VM demo continue to use static addresses.
 
+**Automatic upgrades in the VM lab (#350).** `scripts/vmlab provision` and `fresh`
+(so also `demo/demo qa reset`) first run `lab/stop_auto_upgrades.sh` in the appliance:
+it disables the apt timers and periodic upgrades, then waits up to 60 minutes for an
+upgrade that is already running. It never stops or kills one; if the wait fails,
+nothing is installed. This is a deliberate difference from a real appliance, where the
+installer turns on unattended upgrades; the installer's own behaviour when the package
+lock is held is tracked in
+[PinPoint-Installer #20](https://github.com/lorraine-pangilinan/PinPoint-Installer/issues/20).
+
 ### VM control preflight
 
 Mutating `scripts/vmlab` entries and the QA supervisor first acquire the fixed

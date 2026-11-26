@@ -522,6 +522,27 @@ Keep the record with the intended monitoring settings and current address. An IP
 move discovery confidently recognizes continues updating the existing record
 without requiring a merge; matching rules are unchanged.
 
+A **duplicate identity** review also offers **Keep both records** in the
+comparison drawer to users with `system.hosts.edit`, for records that are
+separate machines. No other review kind offers it: conflict, identity change, IP
+reuse and static-address move reviews are not dismissible on the page. A review
+naming one record (a device also seen on a second address) words the action
+**Keep record unchanged**. The action does not require `system.hosts`.
+
+The action opens a confirmation listing the record or records, saying that no
+device changes (for one record, that the extra address stays unmonitored), that
+the review will not return, and that no undo action is provided. Cancel, Close
+and Escape return to the comparison without saving. While saving, the buttons are
+disabled and a second submission is blocked. Confirming calls the resolve route,
+closes the drawer, shows **Review dismissed. No device was changed.** and
+refreshes the reviews and count without a page reload, including the page's list
+when started from a device's information drawer. A failed request shows the
+server error in the comparison and leaves the review listed.
+
+A resolved duplicate identity review is not raised again by later scans: for two
+records, for that pair at any address; for one record, for that record at that
+address. A different pair is still reviewed.
+
 **Review merge** opens confirmation containing both IDs, names and IPs. It says
 which record survives, that the target retains its current address, that the
 source becomes Merged and leaves monitoring, that target records take precedence
@@ -553,3 +574,17 @@ device (not a service) shows **IP address history** for users with
 **Current** mark on the open row, plus loading, no-history and retryable error
 states. It reads `GET /api/system/hosts/<id>/addresses` and writes nothing.
 Matching and merging by identity are unchanged.
+
+### Machines that share an SSH host key (#352)
+
+Machines cloned from one image can share an SSH host key. Discovery must not
+silently drop them. When several addresses show one key (or NCPA certificate),
+each address without a hardware MAC is listed and monitored as its own device,
+and each newly created one has a **duplicate identity** review item comparing it
+with the key's owner. If the two records are one machine (for example two network
+cards with randomized MACs), the administrator merges them, and later scans keep
+the merged address on the surviving record. If they are separate machines, they
+stay separate, and the administrator uses **Keep both records** (§14) to dismiss
+the review for good. Giving each machine its own SSH host key avoids new reviews. A
+multi-network-card device seen with hardware MACs stays one record. The matching rules are in
+[`Data_Model_and_Integrations.md`](Data_Model_and_Integrations.md).

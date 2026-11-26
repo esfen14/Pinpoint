@@ -289,7 +289,7 @@ def get_ncpa_eligible_devices():
 
     Response (200):
         { "success": true, "data": { "devices": [ {
-            "device_id": int, "hostname": str, "ip_address": str,
+            "device_id": int, "hostname": str, "ip_address": str, "ssh_port": int,
             "trusted": bool, "fingerprint": str | null,
             "agent_status": "Pending NCPA" | "Deployed NCPA" | "Deployment Failed" | "Excluded" | "Incompatible" | null,
             "last_error": str | null,
@@ -324,10 +324,16 @@ def get_ncpa_eligible_devices():
             agent_status = deployment.Agent_Status if deployment else None
             latest = latest_results.get(device.NetDiscoveryID)
             fingerprint = creds.Key_Fingerprint if creds else None
+            # A trusted key pins its port; otherwise the next connection uses the recorded one.
+            if fingerprint is not None and creds.SSH_Port:
+                ssh_port = creds.SSH_Port
+            else:
+                ssh_port = device_ssh_port(device.NetDiscoveryID)
             devices.append({
                 "device_id": device.NetDiscoveryID,
                 "hostname": display_hostname(device.Hostname, device.IP_Address),
                 "ip_address": device.IP_Address,
+                "ssh_port": ssh_port,
                 "trusted": fingerprint is not None,
                 "fingerprint": fingerprint,
                 "agent_status": agent_status.value if agent_status else None,

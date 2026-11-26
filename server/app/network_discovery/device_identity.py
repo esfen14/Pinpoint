@@ -20,6 +20,11 @@ Identity evidence, strongest first: NCPA certificate, machine-id and SSH host
 key ("strong"), then a hardware MAC ("likely"), then the IP. A strong
 identifier can only belong to one device. Two devices are never merged
 automatically; anything ambiguous becomes a DeviceReviewItem.
+
+A strong identifier seen at two or more addresses (cloned machines sharing an
+SSH host key) cannot say which address is which. A hardware MAC or the
+recorded address then decides, and a new address without a hardware MAC
+becomes a device of its own.
 """
 
 from dataclasses import dataclass, field
@@ -77,9 +82,9 @@ class Evidence:
 class Decision:
     """
     What to do with one observation. action is "match" (device is set),
-    "new" (create a device) or "conflict"/"changed"/"reuse" which also create
-    a device but carry a review item. For "match", confidence is None when the
-    device's stored confidence should be kept.
+    "new" (create a device) or "conflict"/"changed"/"reuse"/"clone" which also
+    create a device but carry a review item. For "match", confidence is None
+    when the device's stored confidence should be kept.
     """
     action: str
     ip: str
@@ -318,7 +323,82 @@ def find_ip_holder(ip, network, exclude_ids=()):
     )
 
 
-def resolve_observation(ip, network, evidence):
+def find_shared_identifiers(observations):
+    """
+    Return the (kind, value) strong identifiers that more than one address
+    showed in this scan. observations is reconcile_scan()'s list of
+    (network, ip, data, evidence).
+    """
+    addresses_by_identifier = {}
+    for _, ip, _, evidence in observations:
+        for item in evidence:
+            if item.kind in STRONG_KINDS:
+                addresses_by_identifier.setdefault((item.kind, item.value), set()).add(ip)
+
+    shared = set()
+    for identifier, addresses in addresses_by_identifier.items():
+        if len(addresses) > 1:
+            shared.add(identifier)
+    return shared
+
+
+def shows_shared_identifier(evidence, shared):
+    """True when the observation carries one of the shared identifiers."""
+    for item in evidence:
+        if (item.kind, item.value) in shared:
+            return True
+    return False
+
+
+def has_hardware_mac(evidence):
+    """True when the observation carries a hardware MAC (randomized ones are never evidence)."""
+    for item in evidence:
+        if item.kind is IdentifierKind.MAC:
+            return True
+    return False
+
+
+def find_merged_record(ip, network):
+    """
+    Return a record an administrator merged away that was at (ip, network) and
+    whose surviving device is still in use, or None.
+    """
+    records = db.session.scalars(
+        sa.select(NetworkDiscovery).where(
+            NetworkDiscovery.IP_Address == ip,
+            NetworkDiscovery.Network == network,
+            NetworkDiscovery.Device_State == DeviceState.MERGED,
+        )
+    ).all()
+    for record in records:
+        survivor = final_device(record)
+        if survivor.Device_State is not DeviceState.RETIRED:
+            return record
+    return None
+
+
+def find_unshared_owners(evidence, shared):
+    """Return {device_id: device} for the owners of the identifiers only one address showed."""
+    unshared = []
+    for item in evidence:
+        if (item.kind, item.value) not in shared:
+            unshared.append(item)
+    return find_identifier_owners(unshared, STRONG_KINDS)
+
+
+def reuse_decision(ip, network, evidence, holder):
+    """The address now belongs to a different device than its recorded holder."""
+    return Decision(
+        "reuse", ip, network, evidence,
+        review_kind=ReviewKind.IP_REUSE,
+        review_message=f"{ip} now belongs to a different device than {holder.Nagios_Host_Name}. "
+                       f"{holder.Nagios_Host_Name} is marked 'address unknown' until it is found again.",
+        candidates=[holder.NetDiscoveryID],
+        displaced=holder,
+    )
+
+
+def resolve_observation(ip, network, evidence, shared=frozenset()):
     """
     Decide which device one observation belongs to (plan section 4 table).
     Pure: reads the database, writes nothing.
@@ -332,8 +412,16 @@ def resolve_observation(ip, network, evidence):
        -> IP reuse: a new device, and the old one loses its address.
     5. Same IP, nothing contradicting -> same device, confidence unchanged.
     6. Nothing matches -> new device.
+
+    shared holds the identifiers several addresses showed. One of them is
+    ignored when another identifier (a clone's own NCPA certificate) points to
+    a device. When it is all there is, it does not move its owner onto an
+    address that belongs to another record: that record keeps the address, or,
+    when its own identifiers contradict and there is no hardware MAC, the
+    address counts as reused.
     """
-    owners = find_identifier_owners(evidence, STRONG_KINDS)
+    unshared_owners = find_unshared_owners(evidence, shared)
+    owners = unshared_owners or find_identifier_owners(evidence, STRONG_KINDS)
 
     if len(owners) > 1:
         return Decision(
@@ -377,6 +465,14 @@ def resolve_observation(ip, network, evidence):
                                f"kept the known device {mac_holder.Nagios_Host_Name} by address and MAC.",
                 candidates=sorted((device.NetDiscoveryID, mac_holder.NetDiscoveryID)),
             )
+        at_own_address = device.IP_Address == ip and device.Network == network
+        if not unshared_owners and not at_own_address and shows_shared_identifier(evidence, shared):
+            holder = find_ip_holder(ip, network, exclude_ids=[device.NetDiscoveryID])
+            if holder is not None:
+                if not contradicts(holder, evidence, check_mac=True):
+                    return Decision("match", ip, network, evidence, device=holder)
+                if not has_hardware_mac(evidence):
+                    return reuse_decision(ip, network, evidence, holder)
         if contradicts(device, evidence):
             return Decision(
                 "conflict", ip, network, evidence,
@@ -407,14 +503,7 @@ def resolve_observation(ip, network, evidence):
     holder = find_ip_holder(ip, network)
     if holder is not None:
         if contradicts(holder, evidence, check_mac=True):
-            return Decision(
-                "reuse", ip, network, evidence,
-                review_kind=ReviewKind.IP_REUSE,
-                review_message=f"{ip} now belongs to a different device than {holder.Nagios_Host_Name}. "
-                               f"{holder.Nagios_Host_Name} is marked 'address unknown' until it is found again.",
-                candidates=[holder.NetDiscoveryID],
-                displaced=holder,
-            )
+            return reuse_decision(ip, network, evidence, holder)
         return Decision("match", ip, network, evidence, device=holder)
 
     return Decision("new", ip, network, evidence)
@@ -624,12 +713,40 @@ def record_device_evidence(device, evidence, discovery_status_id=None):
     return rejected
 
 
+def find_dismissed_duplicate(decision):
+    """
+    Return a resolved duplicate identity item for the same records, or None.
+    A user who kept two records separate settled that pair at any address. An
+    item naming one record is about its extra address, so the IP must match.
+    """
+    items = db.session.scalars(
+        sa.select(DeviceReviewItem).where(
+            DeviceReviewItem.Kind == ReviewKind.DUPLICATE_IDENTITY,
+            DeviceReviewItem.Resolved_At.is_not(None),
+        )
+    ).all()
+    candidates = sorted(decision.candidates)
+    for item in items:
+        if sorted(item.Candidate_Device_IDs or []) != candidates:
+            continue
+        if len(candidates) > 1 or item.IP_Address == decision.ip:
+            return item
+    return None
+
+
 def add_review_item(decision, discovery_status_id):
     """
     Record a DeviceReviewItem for a decision, unless an unresolved item with
     the same kind, IP and candidates already exists (so a rescan does not
-    pile up duplicates). Does not commit.
+    pile up duplicates), or a duplicate identity item for the same records
+    was already resolved (so a dismissed one does not come back). Does not
+    commit.
     """
+    if decision.review_kind is ReviewKind.DUPLICATE_IDENTITY:
+        dismissed = find_dismissed_duplicate(decision)
+        if dismissed is not None:
+            return dismissed
+
     existing = db.session.scalars(
         sa.select(DeviceReviewItem).where(
             DeviceReviewItem.Kind == decision.review_kind,
@@ -783,7 +900,72 @@ def mark_address_unknown(device):
 # RECONCILE A WHOLE SCAN
 # ==========================================================
 
-def reconcile_scan(discovered_hosts, discovery_status_id, skip_ips=(), target=None):
+def could_be_another_machine(decision, shared):
+    """True when only a shared identifier ties this address to its device: no hardware MAC."""
+    return shows_shared_identifier(decision.evidence, shared) and not has_hardware_mac(decision.evidence)
+
+
+def split_device_group(group, shared, identifiers_at_owner):
+    """
+    Sort the observations that resolved to one device. group is a list of
+    (decision, data). Returns (primary, secondary, clones): primary is the
+    member that updates the device (None when the device only answered a
+    separate check at its own address), secondary are its extra addresses, and
+    clones are addresses that become devices of their own: only a shared
+    identifier ties them to this device and they were never merged away.
+    """
+    device = group[0][0].device
+    answers_at_own_address = False
+    for decision, _ in group:
+        if shows_shared_identifier(decision.evidence, identifiers_at_owner):
+            answers_at_own_address = True
+
+    primary = None
+    for member in group:
+        if member[0].ip == device.IP_Address:
+            primary = member
+            break
+    if primary is None:
+        for member in group:
+            if answers_at_own_address and could_be_another_machine(member[0], shared):
+                continue
+            primary = member
+            break
+
+    secondary = []
+    clones = []
+    for member in group:
+        if member is primary:
+            continue
+        decision = member[0]
+        if not could_be_another_machine(decision, shared):
+            secondary.append(member)
+            continue
+        merged = find_merged_record(decision.ip, decision.network)
+        if merged is None:
+            clones.append(member)
+        else:
+            # The merge says which device this address belongs to.
+            decision.device = final_device(merged)
+            secondary.append(member)
+    return primary, secondary, clones
+
+
+def clone_decision(decision):
+    """Turn a match on a shared SSH key into a new device with a duplicate-identity review."""
+    owner = decision.device
+    return Decision(
+        "clone", decision.ip, decision.network, decision.evidence,
+        review_kind=ReviewKind.DUPLICATE_IDENTITY,
+        review_message=f"{decision.ip} has the same SSH host key or certificate as "
+                       f"{owner.Nagios_Host_Name} (clone or second network card). Recorded "
+                       "separately; merge if it is one machine.",
+        candidates=[owner.NetDiscoveryID],
+    )
+
+
+def reconcile_scan(discovered_hosts, discovery_status_id, skip_ips=(), target=None,
+                   identifiers_at_owner=frozenset()):
     """
     Reconcile every observation of a scan against the known devices.
 
@@ -796,6 +978,8 @@ def reconcile_scan(discovered_hosts, discovery_status_id, skip_ips=(), target=No
     matched a device; secondary addresses of a multi-NIC device are not
     included. Updates device lifecycle for devices the scan did not see.
     With target, unseen-device lifecycle changes are limited to that address.
+    identifiers_at_owner are (kind, value) pairs a single-device scan found
+    still answering at their owner's recorded address, so they are shared.
     Does not commit.
     """
     observations = []
@@ -807,37 +991,44 @@ def reconcile_scan(discovered_hosts, discovery_status_id, skip_ips=(), target=No
             evidence = build_evidence(data.get("mac_address"), data.get("identifiers"), data.get("hostname"))
             observations.append((network, ip, data, evidence))
 
+    shared = find_shared_identifiers(observations) | set(identifiers_at_owner)
+
     # Pass one: read-only resolution.
-    decisions = [
-        (resolve_observation(ip, network, evidence), data)
-        for network, ip, data, evidence in observations
-    ]
+    decisions = []
+    for network, ip, data, evidence in observations:
+        decisions.append((resolve_observation(ip, network, evidence, shared), data))
 
     # Several observations resolving to one device (multi-NIC, or a clone):
-    # keep one primary address, record the rest as secondary.
+    # keep one primary address; the rest are secondary addresses or, for a
+    # shared identifier without a hardware MAC, devices of their own.
     by_device = {}
     for decision, data in decisions:
         if decision.action == "match":
             by_device.setdefault(decision.device.NetDiscoveryID, []).append((decision, data))
 
     secondary = set()
-    for group in by_device.values():
-        if len(group) < 2:
-            continue
-        device = group[0][0].device
-        primary = next((g for g in group if g[0].ip == device.IP_Address), None)
-        if primary is None:
-            primary = group[0]
-        for member in group:
-            if member is not primary:
-                secondary.add(id(member[0]))
+    clones = {}
+    matched_in_scan = set()
+    for device_id, group in by_device.items():
+        primary, extras, separate = split_device_group(group, shared, identifiers_at_owner)
+        if primary is not None:
+            matched_in_scan.add(device_id)
+        for member in extras:
+            secondary.add(id(member[0]))
+        for member in separate:
+            clones[id(member[0])] = clone_decision(member[0])
 
     result = {}
+    # A device that answered at its own address but was not itself in the
+    # observations was still seen.
     matched_ids = set()
-    matched_in_scan = set(by_device)
+    for device_id, group in by_device.items():
+        if device_id not in matched_in_scan:
+            matched_ids.add(device_id)
 
     # Pass two: apply.
     for decision, data in decisions:
+        decision = clones.get(id(decision), decision)
         if id(decision) in secondary:
             device = decision.device
             mac = data.get("mac_address")
@@ -876,6 +1067,8 @@ def reconcile_scan(discovered_hosts, discovery_status_id, skip_ips=(), target=No
             # Only decisions the reconciler refused to make on its own are
             # reviewed; a plain new device is not.
             if decision.review_kind is not None:
+                if decision.action == "clone":
+                    decision.candidates.append(device.NetDiscoveryID)
                 add_review_item(decision, discovery_status_id)
 
         matched_ids.add(device.NetDiscoveryID)

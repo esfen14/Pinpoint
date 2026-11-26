@@ -1,5 +1,17 @@
 # Current-case adapter preparation
 
+## 2026-11-26 duplicate identity dismissal dependency review (#356)
+
+Claude compared the selectors and assertions for TC-DI-02, TC-DI-03, TC-DI-07 and
+TC-DI-08 with the changes to `DeviceInventoryPage.tsx` and
+`StatusDetailDrawer.tsx`. The changes only pass a new callback that reloads Needs
+Review after a duplicate identity review is dismissed; no markup, text or control
+on these pages changed, and no adapter opens a review. Only those source
+fingerprints were refreshed in `automation-coverage.json`. Coverage statuses,
+mappings and execution permissions are unchanged; no live case was executed by
+this review. Queues that pin the old hashes fail their freshness check and must be
+re-prepared before use.
+
 ## 2026-11-25 API error envelope dependency review (#343)
 
 The only change to `client/src/lib/api.ts` is a code comment about non-JSON error
