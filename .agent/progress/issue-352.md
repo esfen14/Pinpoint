@@ -32,7 +32,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 2. [x] Shared-key rules in `server/app/network_discovery/device_identity.py` (`resolve_observation`, `reconcile_scan`)
 3. [x] Single-device scan checks the key owner's address: `identity_probes.py`, `create_host_cfg.py`, tests
 4. [x] Security review of the diff; specs: `Device_Inventory_Requirements.md`, `Data_Model_and_Integrations.md`, `Implementation_Status.md`
-5. [ ] `scripts/verify.sh backend` and `all`
+5. [ ] `scripts/verify.sh backend` and `all` (backend and frontend green; docs waits for the host lab lock)
 6. [x] Lab repeat (needs the user's approval for `scripts/lab reset`) and report under `docs/test-runs/`
 
 ## Round log
@@ -46,15 +46,16 @@ One row per loop round, newest last.
 | 2 | Single-device scan owner check | `scripts/verify.sh backend` | green, 4516 passed, 14 skipped |
 | 3 | Specs, review manual, security review | `scripts/verify.sh docs` | green |
 | 4 | Lab runs and report | issue steps on the Docker lab | pass |
+| 5 | Final verification | `scripts/verify.sh all`, then `frontend` | docs stage failed in `test_qa_supervisor.py` (host lock held by another checkout); frontend green |
 
 ## State for the next session
 
 Everything a fresh session needs to continue without redoing work.
 
-- Last check run (exact command): issue scenarios on the Docker lab (see the test-run report)
-- Result (first failing lines, or "green"): pass
-- Hypothesis: ready to finish
-- Next action (one specific step, not "continue"): run `scripts/verify.sh all`, then work section 5 of the workflow
+- Last check run (exact command): `scripts/verify.sh all`, then `scripts/verify.sh frontend`
+- Result (first failing lines, or "green"): docs: `test_qa_supervisor.py` FAILED (failures=8, errors=8), "Host controller unavailable, already owned or unsafe"; frontend green
+- Hypothesis: another checkout's `scripts/vmlab up` held `/tmp/pinpoint-qa-control-<uid>/controller.lock`
+- Next action (one specific step, not "continue"): when no `vmlab` command is running, run `scripts/verify.sh all`; if green, delete this file, push and mark the draft pull request ready
 
 ## Decisions and notes
 
@@ -65,3 +66,4 @@ Everything a fresh session needs to continue without redoing work.
 - Rules cover any strong identifier seen at two or more addresses (SSH key or NCPA certificate); with SSH only, a clone sharing both would get a new record on every scan.
 - Security review of the diff: no shell commands, credentials or secret logging added. New network access: a single-device scan reads the SSH host key and NCPA certificate of the identifier owner's stored address (saved networks only).
 - Follow-up outside this issue (not filed yet): the page cannot dismiss a duplicate identity review.
+- The user asked for a draft pull request while the local docs stage is incomplete.
