@@ -1,7 +1,7 @@
 # Issue #350: demo/demo qa reset fails when Ubuntu's automatic upgrades hold the package lock
 
 Branch: `issue-350-lab-apt-lock`
-Status: in-progress
+Status: blocked
 <!-- Status is one of: in-progress | blocked | ready-for-review -->
 
 ## Finish condition
@@ -34,13 +34,14 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | 1 | New test, `lab/stop_auto_upgrades.sh`, calls in `vmlab`, docs, installer issue #20 | `python3 -I scripts/test_vmlab_auto_upgrades.py` (failed first: script missing) | 8 OK |
 | 2 | None | `scripts/verify.sh docs`; live wait check started 2026-11-26T03:01Z on `18b58b4e` | Docs green. Live check stopped on user request while the script was still waiting (about 60 s in): not a result |
 | 3 | Report, index row, Implementation_Status | Owner asked for testing; two live wait checks and `demo/demo qa reset` on `b7762c34` | All passed |
+| 4 | None | `scripts/verify.sh all` | OK. Removing this file was denied by the permission check; draft PR opened |
 
 ## State for the next session
 
-- Last check run (exact command): `demo/demo qa reset`
+- Last check run (exact command): `scripts/verify.sh all`
 - Result (first failing lines, or "green"): green
 - Hypothesis: the lab snapshot is old, so apt-daily-upgrade is overdue after each restore
-- Next action (one specific step, not "continue"): `scripts/verify.sh all`, then finish (section 5)
+- Next action (one specific step, not "continue"): with the owner's approval, `git rm` this file, push, and mark the pull request ready
 
 ## Decisions and notes
 
