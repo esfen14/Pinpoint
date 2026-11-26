@@ -146,6 +146,19 @@ owner-supplied Windows VM. `demo/demo` is the single front door (`setup`, `up`, 
 controls; [cheat sheet](../demo/USAGE.md)) and controls the existing pinned
 pilot containers; see the [demo index](../demo/README.md) and the
 [pilot instructions](../demo/targets/README.md).
+
+**NCPA deployment target (#336, decided 2026-11-25).** Exactly one Linux target,
+`ssh-alt02`, accepts SSH password login with `sudo`, so PinPoint's unchanged
+deployment script can be tried in this lab. It alone is built from the
+`ncpa-target` stage of `demo/targets/Dockerfile`, is the only Linux entry allowed
+an NCPA listener, and has the generated password mounted from the private state
+folder; the password never appears in the repository, command arguments or
+reports. The lab network keeps no route: instead of giving the container
+internet access, the image build copies Nagios's signed repository files and NCPA
+package, and the container serves them to itself as `repo.nagios.com`. A limited
+`systemctl` stands in for the missing init system. Details and limits:
+[demo targets guide](../demo/targets/README.md#ncpa-deployment-target-ssh-alt02).
+
 The following text records the earlier dedicated target-host preparation. Its proposed network/controller is not yet a
 supported test environment or an approved additional scan scope. The existing
 VM ownership and command-path review rules apply before implementation.

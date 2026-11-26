@@ -72,6 +72,14 @@ Credentials clear after the request and when the dialog closes. The list refresh
 without a page reload. Cleanup does not uninstall NCPA and is unavailable for
 healthy deployed agents, untrusted devices or a running deployment.
 
+## Try it in the demo lab
+
+The demo lab's `ssh-alt02` container (`10.77.1.11`, SSH port 2223) accepts the
+wizard: discover it, confirm its host key, sign in as `labadmin` and deploy. How
+to read the password, how the container reaches its local copy of
+`repo.nagios.com`, and what this does not prove are in
+[the demo targets guide](../../demo/targets/README.md#ncpa-deployment-target-ssh-alt02).
+
 ## Administrator note: secret storage and outstanding requirements
 
 Custom-check passwords remain encrypted in the application database using the

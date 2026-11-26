@@ -175,8 +175,11 @@ Email, `sudo`, `pinpoint-apply-smtp`, `/etc/msmtprc`, `/bin/mail` and msmtp.
   sudo rules.
 - DHCP lease changes on the ordinary static lab. Use the separate opt-in
   [DHCP lab](#isolated-dhcp-lab) for that acceptance path.
-- NCPA installation on a target: the targets have no init system, so treat NCPA
-  deployment results here as unverified.
+- NCPA installation on a target: these targets have no SSH login or init system,
+  so treat NCPA deployment results here as unverified. The
+  [demo lab](../../demo/README.md) has one
+  [NCPA deployment target](../../demo/targets/README.md#ncpa-deployment-target-ssh-alt02)
+  that reaches a local copy of `repo.nagios.com`.
 - Performance and scale.
 
 Cover these in the faithful lane: a snapshot of a real installed appliance in a

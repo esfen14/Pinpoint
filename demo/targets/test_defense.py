@@ -55,6 +55,20 @@ class CatalogTests(unittest.TestCase):
             data=copy.deepcopy(self.raw);mutate(data)
             with self.assertRaises(ValueError):parse_catalog(data)
 
+    def test_only_the_deploy_target_gains_an_ncpa_listener_besides_windows(self):
+        owners=[d.name for d in self.catalog.devices if any(p.service=='ncpa' for p in d.listeners)]
+        self.assertEqual(owners,['win01','ssh-alt02'])
+        ncpa={'service':'ncpa','protocol':'tcp','port':5693,'plugin':'check_ncpa.py','monitoring':'pending'}
+        index={d.name:d.number-1 for d in self.catalog.devices}
+        for name in [d.name for d in self.catalog.devices if d.name not in {'win01','ssh-alt02'}]:
+            data=copy.deepcopy(self.raw);data['devices'][index[name]]['listeners'].append(dict(ncpa))
+            with self.subTest(name=name),self.assertRaises(ValueError):parse_catalog(data)
+        for change in [{'port':5694},{'protocol':'udp'}]:
+            data=copy.deepcopy(self.raw)
+            item=[v for v in data['devices'][index['ssh-alt02']]['listeners'] if v['service']=='ncpa'][0]
+            item.update(change)
+            with self.subTest(change=change),self.assertRaises(ValueError):parse_catalog(data)
+
     def test_listener_validation_rejects_wrong_target_reserved_injection_and_collision(self):
         for args in [('win01','http',8088),('foreign','http',8088),
                      ('web03','http;id',8088),('web03','http',5693),

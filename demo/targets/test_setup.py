@@ -23,6 +23,11 @@ def good_runner(argv):
 
 
 class PlanTests(unittest.TestCase):
+    def test_plan_and_checklist_report_the_ncpa_deploy_target(self):
+        text='\n'.join(setup.plan(CATALOG))
+        self.assertIn('ssh-alt02',text);self.assertIn('SSH password login with sudo',text)
+        checks='\n'.join(title+' '+check for title,check in setup.manual_checklist())
+        self.assertIn('private/deploy-password',checks);self.assertIn('ssh-alt02',checks)
     def test_plan_names_every_step_in_order_and_the_fourteen_containers(self):
         steps=setup.plan(CATALOG)
         text='\n'.join(steps)

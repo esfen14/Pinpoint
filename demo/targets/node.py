@@ -15,13 +15,19 @@ import uuid
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from targets.bootstrap import dmi_uuid_matches
-from targets.catalog import load_catalog, render_dnsmasq
+from targets.catalog import NCPA_DEPLOY_TARGET, NCPA_DEPLOY_USER, load_catalog, render_dnsmasq
 from targets.preflight import read_private_json
 
 IDENTITY = Path('/identity')
 DATA = Path('/data')
 RUN = Path('/run')
 CONTEXT = Path('/etc/pinpoint-defense/context.json')
+# NCPA deploy target (#336). The password is mounted only into that container.
+DEPLOY_SECRET = Path('/run/secrets/deploy-password')
+MIRROR_FILES = Path('/opt/pinpoint-mirror')
+MIRROR_CERT = Path('/usr/local/share/ca-certificates/pinpoint-lab-mirror.crt')
+MIRROR_SOCKET = '0100007F:01BB'  # 127.0.0.1:443 as /proc/net/tcp writes it
+NCPA_PROGRAM = Path('/usr/local/ncpa/ncpa')
 
 
 def command(argv: list[str], *, timeout=30, check=True, input_text=None):
@@ -134,6 +140,69 @@ def validate_network(catalog, device, links: list[dict], routes: list[dict], *, 
     return [values[0]['local']]
 
 
+def deploy_enabled(device) -> bool:
+    """Password SSH and the repository mirror exist only on the target given a password."""
+    return device.name==NCPA_DEPLOY_TARGET and DEPLOY_SECRET.exists()
+
+
+def sshd_config(device, port: int) -> str:
+    """Key-only SSH everywhere except the deploy target, which PinPoint logs into by password."""
+    config=(f'Port {port}\nListenAddress 0.0.0.0\nHostKey /identity/ssh_host_ed25519_key\n'
+            'KbdInteractiveAuthentication no\nPermitRootLogin no\nUseDNS no\nPidFile /run/sshd.pid\n')
+    if deploy_enabled(device):
+        # PAM lets the deployment account created by PinPoint log in with its key: without
+        # PAM, sshd refuses any account whose password is locked, as a new account's is.
+        return config+'PasswordAuthentication yes\nUsePAM yes\nSubsystem sftp internal-sftp\n'
+    return config+'PasswordAuthentication no\nUsePAM no\n'
+
+
+def set_deploy_password() -> None:
+    """Give the lab account the private password; it travels on standard input only."""
+    password=DEPLOY_SECRET.read_text().removesuffix('\n')
+    if DEPLOY_SECRET.is_symlink() or not re.fullmatch(r'[a-f0-9]{24}',password):
+        raise ValueError('Invalid private deploy password')
+    command(['/usr/sbin/chpasswd'],input_text=f'{NCPA_DEPLOY_USER}:{password}\n')
+
+
+def mirror_config() -> str:
+    """Serve the cached repository over HTTPS to this container only."""
+    paths=''.join(f'{name}_temp_path /run/mirror/{name}; ' for name in ('client_body','proxy','fastcgi','uwsgi','scgi'))
+    return ('worker_processes 1; pid /run/mirror.pid; error_log /data/mirror-error.log warn; '
+            'events { worker_connections 16; } http { access_log off; '+paths+
+            'server { listen 127.0.0.1:443 ssl; server_name repo.nagios.com; '
+            'ssl_certificate /identity/mirror.crt; ssl_certificate_key /identity/mirror.key; '
+            f'root {MIRROR_FILES}; }} }}\n')
+
+
+def prepare_deploy_target() -> None:
+    """Set the login, and make this container alone trust its own copy of repo.nagios.com."""
+    set_deploy_password()
+    if not (IDENTITY/'mirror.crt').exists():
+        command(['openssl','req','-x509','-newkey','rsa:2048','-nodes','-days','3650',
+                 '-subj','/CN=repo.nagios.com','-addext','subjectAltName=DNS:repo.nagios.com',
+                 '-keyout',str(IDENTITY/'mirror.key'),'-out',str(IDENTITY/'mirror.crt')])
+    certificate=(IDENTITY/'mirror.crt').read_text()
+    if not MIRROR_CERT.exists() or MIRROR_CERT.read_text()!=certificate:
+        atomic(MIRROR_CERT,certificate,public=True)
+        command(['/usr/sbin/update-ca-certificates'],timeout=60)
+    service_directory(RUN/'mirror')
+    atomic(RUN/'mirror.conf',mirror_config())
+
+
+def restart_agent(device) -> None:
+    """A container restart stops a deployed agent; there is no init system to bring it back."""
+    if deploy_enabled(device) and NCPA_PROGRAM.exists():
+        command(['/usr/bin/systemctl','start','ncpa'],check=False)
+
+
+def wait_for_supervisor() -> None:
+    """The deploy target takes a few seconds longer to prepare before Supervisor listens."""
+    deadline=time.monotonic()+30
+    while not (RUN/'supervisor.sock').exists():
+        if time.monotonic()>=deadline:raise ValueError('Supervisor is not ready')
+        time.sleep(0.25)
+
+
 def program_specs(catalog, device) -> dict[str,list[str]]:
     """Map catalog protocols to real foreground daemons, never arbitrary commands."""
     services={p.service for p in device.listeners}
@@ -152,6 +221,8 @@ def program_specs(catalog, device) -> dict[str,list[str]]:
     if device.mode=='dhcp':
         programs['lease']=['/usr/sbin/dhclient','-4','-d','-v','-cf','/identity/dhclient.conf',
                            '-pf','/run/dhclient.pid','-lf','/identity/dhclient.leases','eth0']
+    if deploy_enabled(device):
+        programs['mirror']=['/usr/sbin/nginx','-c','/run/mirror.conf','-g','daemon off;']
     return programs
 
 
@@ -214,7 +285,9 @@ def prepare_services(catalog, device) -> None:
     service_directory(Path('/run/sshd'))
     if 'ssh' in services:
         port=next(p.port for p in device.listeners if p.service=='ssh')
-        atomic(RUN/'sshd.conf',f'Port {port}\nListenAddress 0.0.0.0\nHostKey /identity/ssh_host_ed25519_key\nPasswordAuthentication no\nKbdInteractiveAuthentication no\nPermitRootLogin no\nUsePAM no\nUseDNS no\nPidFile /run/sshd.pid\n')
+        atomic(RUN/'sshd.conf',sshd_config(device,port))
+    if deploy_enabled(device):
+        prepare_deploy_target()
     if services&{'http','https'}:
         service_directory(DATA/'www')
         atomic(DATA/'www/index.html',device.name+' alive\n',public=True)
@@ -270,7 +343,7 @@ def prepare_services(catalog, device) -> None:
 
 def supervisor(action: str, program: str | None = None, *, check=True):
     """Invoke only fixed Supervisor verbs and known program names."""
-    if action not in {'status','start','stop'} or program is not None and program not in {'ssh','web','ftp','smtp','imap','dns','snmp','pgsql','dhcp','lease'}:
+    if action not in {'status','start','stop'} or program is not None and program not in {'ssh','web','ftp','smtp','imap','dns','snmp','pgsql','dhcp','lease','mirror'}:
         raise ValueError('Invalid owned daemon action')
     return command(['/usr/bin/supervisorctl','-c','/run/supervisord.conf',action,*([program] if program else [])],check=check)
 
@@ -298,7 +371,7 @@ def network_reason(catalog,device) -> str | None:
     return None
 
 
-def listening_ports() -> list[dict]:
+def listening_ports(hidden=frozenset()) -> list[dict]:
     """Read kernel socket tables without returning daemon arguments or credentials."""
     values=set()
     for protocol in ['tcp','udp']:
@@ -309,6 +382,7 @@ def listening_ports() -> list[dict]:
                 columns=line.split()
                 if len(columns)<4:continue
                 if protocol=='tcp' and columns[3]!='0A':continue
+                if (protocol,columns[1]) in hidden:continue
                 port=int(columns[1].rsplit(':',1)[1],16)
                 if port:values.add((protocol,port))
     return [{'protocol':p,'port':n} for p,n in sorted(values)]
@@ -329,7 +403,9 @@ def inspection(catalog,device) -> dict:
         if len(fields)>=2:states.append({'program':fields[0],'state':fields[1]})
     return {'target':device.name,'network_safe':safe,'network_reason':reason,'interfaces':interfaces,
             'observed_mac':observed_mac,'addresses':addresses,'mac':device.mac,
-            'client_id':device.client_id,'listeners':listening_ports(),'services':states}
+            'client_id':device.client_id,
+            'listeners':listening_ports({('tcp',MIRROR_SOCKET)} if deploy_enabled(device) else frozenset()),
+            'services':states}
 
 
 def server_config(catalog,request) -> None:
@@ -410,10 +486,12 @@ def handle(catalog,device,request) -> dict:
         result=command(['/bin/ping','-n','-I','eth0','-c','3','-W','2','10.77.1.3'],timeout=8,check=False)
         return {'target':device.name,'peer':'win01','reachable':result.returncode==0}
     elif operation=='baseline':
+        if deploy_enabled(device):wait_for_supervisor()
         for program in program_specs(catalog,device):
             if program=='lease' or program=='dhcp' and not (DATA/'reservations.json').exists():continue
             status=supervisor('status',program,check=False).stdout.split()
             if len(status)<2 or status[1]!='RUNNING':supervisor('start',program)
+        restart_agent(device)
     elif operation=='server-config':server_config(catalog,request)
     elif operation=='server-stop':supervisor('stop','dhcp',check=False)
     elif operation=='server-start':

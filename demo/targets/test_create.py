@@ -16,7 +16,7 @@ MAC='0a:00:27:00:00:01'
 
 
 def steps():
-    return create.host_steps(CATALOG,ROOT,OWNER,UUID,MAC,'community-secret')
+    return create.host_steps(CATALOG,ROOT,OWNER,UUID,MAC,'community-secret','deploy-secret')
 
 
 class HostStepTests(unittest.TestCase):
@@ -66,7 +66,7 @@ class ContainerTests(unittest.TestCase):
             self.assertIn('org.pinpoint.defense.role=temporary-pilot',argv)
             self.assertIn('org.pinpoint.defense.issue=274',argv)
             mounts=[argv[i+1] for i,a in enumerate(argv) if a=='--mount']
-            self.assertEqual(len(mounts),4 if device.name in {'snmp02','dynsnmp01'} else 3,device.name)
+            self.assertEqual(len(mounts),4 if device.name in {'snmp02','dynsnmp01','ssh-alt02'} else 3,device.name)
     def test_network_and_image_commands(self):
         net=create.network_command()
         self.assertEqual(net[:4],['docker','network','create','-d']);self.assertIn('parent=vboxnet1',net)
@@ -74,8 +74,44 @@ class ContainerTests(unittest.TestCase):
         build=create.build_command(Path('/repo'),'image:tag')
         self.assertEqual(build[:2],['docker','build']);self.assertEqual(build[-1],'/repo')
     def test_fourteen_create_commands_cover_exactly_the_linux_devices(self):
-        names=[a for argv in create.container_commands(CATALOG,ROOT,'i:t') for a in argv if a.startswith('pinpoint274-host-') and a.endswith('-pilot')]
+        names=[a for argv in create.container_commands(CATALOG,ROOT,'i:t','d:t') for a in argv if a.startswith('pinpoint274-host-') and a.endswith('-pilot')]
         self.assertEqual(len(names),14);self.assertEqual(len(set(names)),14)
+
+
+class DeployTargetTests(unittest.TestCase):
+    def test_password_file_is_root_private_and_never_on_a_command_line(self):
+        writes=[s for s in steps() if s.input_text=='deploy-secret\n']
+        self.assertEqual(len(writes),1)
+        self.assertTrue(writes[0].argv[-1].endswith('pilot-catalog/private/deploy-password'))
+        self.assertIn(['sudo','chmod','600',writes[0].argv[-1]],[s.argv for s in steps()])
+        self.assertFalse([s for s in steps() if any('deploy-secret' in a for a in s.argv)])
+    def test_only_the_deploy_target_gets_its_image_password_mirror_name_and_larger_limits(self):
+        for argv in create.container_commands(CATALOG,ROOT,'lab:tag','deploy:tag'):
+            name=argv[-1];text=' '.join(argv)
+            deploy=name=='ssh-alt02'
+            self.assertEqual(argv[-5],'deploy:tag' if deploy else 'lab:tag',name)
+            self.assertEqual('dst=/run/secrets/deploy-password,readonly' in text,deploy,name)
+            self.assertEqual('--add-host repo.nagios.com:127.0.0.1' in text,deploy,name)
+            self.assertEqual(argv[argv.index('--pids-limit')+1],'256' if deploy else '96',name)
+            if deploy:
+                self.assertEqual(argv[argv.index('--memory')+1],'512m')
+                self.assertNotIn('--cap-add',argv);self.assertNotIn('--privileged',argv)
+    def test_the_deploy_image_is_a_separate_build_target(self):
+        build=create.build_command(Path('/repo'),'d:t','ncpa-target')
+        self.assertEqual(build[build.index('--target')+1],'ncpa-target')
+        self.assertNotIn('--target',create.build_command(Path('/repo'),'l:t'))
+    def test_apply_builds_both_images_and_compares_each_container_with_its_own(self):
+        built=[]
+        def runner(argv,input_text=None):
+            if argv[:2]==['docker','build']:built.append(argv)
+            if argv[:3]==['docker','image','inspect']:return json.dumps([{'Id':'sha256:'+argv[3]}])
+            if argv[:2]==['docker','inspect']:
+                return json.dumps([{'Image':'sha256:'+('d:t' if 'ssh-alt02' in argv[2] else 'i:t')}])
+            return '[{}]'
+        create.apply(CATALOG,ROOT,Path('/repo'),runner,owner=OWNER,vm_uuid=UUID,parent_mac=MAC,community='c',deploy_password='p',image='i:t',deploy_image='d:t')
+        self.assertEqual(len(built),2)
+    def test_generated_password_matches_what_the_node_accepts(self):
+        self.assertRegex(create.new_password(),r'^[a-f0-9]{24}$')
 
 
 class ApplyTests(unittest.TestCase):
@@ -87,7 +123,7 @@ class ApplyTests(unittest.TestCase):
             if argv[:2]==['docker','inspect']:return '[{"Image":"sha256:new"}]'
             if argv[:3]==['docker','network','inspect']:return '[{}]'
             return ''
-        create.apply(CATALOG,ROOT,Path('/repo'),runner,owner=OWNER,vm_uuid=UUID,parent_mac=MAC,community='c',image='i:t')
+        create.apply(CATALOG,ROOT,Path('/repo'),runner,owner=OWNER,vm_uuid=UUID,parent_mac=MAC,community='c',deploy_password='p',image='i:t',deploy_image='i:t')
         self.assertFalse([a for a in log if a[:2]==['docker','create'] or a[:3]==['docker','network','create']])
 
 class StaleImageTests(unittest.TestCase):
@@ -97,7 +133,7 @@ class StaleImageTests(unittest.TestCase):
             if argv[:2]==['docker','inspect']:return '[{"Image":"sha256:old"}]'
             return ''
         with self.assertRaises(ValueError) as caught:
-            create.apply(CATALOG,ROOT,Path('/repo'),runner,owner=OWNER,vm_uuid=UUID,parent_mac=MAC,community='c',image='i:t')
+            create.apply(CATALOG,ROOT,Path('/repo'),runner,owner=OWNER,vm_uuid=UUID,parent_mac=MAC,community='c',deploy_password='p',image='i:t',deploy_image='i:t')
         self.assertIn('older image',str(caught.exception))
 
 
@@ -109,7 +145,7 @@ class KeepOwnerTests(unittest.TestCase):
             if argv[:3]==['docker','image','inspect']:return '[{"Id":"sha256:n"}]'
             if argv[:2]==['docker','inspect']:return '[{"Image":"sha256:n"}]'
             return '[{}]'
-        create.apply(CATALOG,ROOT,Path('/repo'),runner,owner=OWNER,vm_uuid=UUID,parent_mac=MAC,community='c',image='i:t')
+        create.apply(CATALOG,ROOT,Path('/repo'),runner,owner=OWNER,vm_uuid=UUID,parent_mac=MAC,community='c',deploy_password='p',image='i:t',deploy_image='i:t')
         self.assertFalse([a for a,i in log if a[:2]==['sudo','tee']])
     def test_a_missing_context_file_is_written(self):
         log=[]
@@ -119,7 +155,7 @@ class KeepOwnerTests(unittest.TestCase):
             if argv[:3]==['docker','image','inspect']:return '[{"Id":"sha256:n"}]'
             if argv[:2]==['docker','inspect']:return '[{"Image":"sha256:n"}]'
             return '[{}]'
-        create.apply(CATALOG,ROOT,Path('/repo'),runner,owner=OWNER,vm_uuid=UUID,parent_mac=MAC,community='c',image='i:t')
+        create.apply(CATALOG,ROOT,Path('/repo'),runner,owner=OWNER,vm_uuid=UUID,parent_mac=MAC,community='c',deploy_password='p',image='i:t',deploy_image='i:t')
         self.assertTrue([a for a in log if a[:2]==['sudo','tee']])
 
 
