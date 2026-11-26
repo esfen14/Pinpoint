@@ -36,4 +36,4 @@
 | Scanning networks you do not own | May break policy or law |
 | Acknowledging without a comment that explains anything | Others cannot act on it |
 | Disabling a plugin to silence one device | Stops that check on every device |
-| Ignoring the freshness warning | You may be reading old data |
+| Ignoring an old **Data Updated** time | You may be reading old data |

@@ -2,12 +2,14 @@
 
 ### 3.1 Main dashboard
 
-The **Dashboard** is the first page after sign-in. From top to bottom it
-shows: whether Nagios itself is running, summary cards (hosts, services,
-active alerts, hosts in downtime), the **Active Alerts** list, service and
-network overviews, average CPU, memory and disk (only when the NCPA agent is
-installed on some hosts), **Running out soon** forecasts, appliance storage,
-and **Recent Notifications**. Details are in
+The **Dashboard** (sidebar entry **Overview**) is the first page after
+sign-in. From top to bottom it shows: when it was last updated and **Rescan
+Network**, summary cards (hosts, latency, warnings, critical issues),
+appliance storage, status and performance overviews, average CPU use (only
+when the NCPA agent is installed on some hosts), **Running out soon**
+forecasts, the **Active Alerts** list and **Recent Notifications**. On wide
+screens a **Service Overview** panel on the right shows whether Nagios is
+running. Details are in
 [Dashboard, Network Health and Network Status](guides/Dashboard_and_Network_Health.md).
 
 ### 3.2 Menus and navigation controls
@@ -17,7 +19,7 @@ Sidebar pages (shown only with the right permission):
 | Sidebar entry | Address | What it is for |
 |---|---|---|
 | Overview | `/dashboard` | Current overall status |
-| Network Health | `/network-health` | Host and service tables, trends, bandwidth |
+| Network Health | `/network-health` | Network-wide summary, trends, bandwidth |
 | Device Inventory | `/device-inventory` | Every device, its ports and monitoring state |
 | Network Status | `/system-status` | Service table with acknowledgement (heading "Network Service Overview") |
 | Topology | `/topology` | Parent-child map of devices |

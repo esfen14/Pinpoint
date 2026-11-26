@@ -7,14 +7,14 @@
 | Cannot reach the sign-in page | Wrong address, or your computer is not on the right network | Check the address with your administrator; try from a computer on the office network |
 | "Account inactive." | The account is Inactive | Ask an administrator to set it Active |
 | "This account is suspended. Contact the admin for any concerns." | The account is Suspended | Ask an administrator to set it Active |
-| "Session expired. Please log in again." | Idle longer than the session timeout | Sign in again |
-| "You are already signed in…" | Another account is signed in in this browser | Sign out first, then sign in |
+| "Your session expired due to inactivity. Please log in again." | Idle longer than the session timeout | Sign in again |
+| "You are already signed in…" | A sign-in page was left open and this browser has since signed in | Sign out first, then sign in |
 | A page is missing from the sidebar | Your role lacks the permission | Ask an administrator |
-| Dashboard shows old data or a freshness warning | Nagios stopped, or PinPoint polling stopped | Read **Monitoring System**; if Nagios is stopped, tell the administrator (Technical Manual, section 11) |
+| Dashboard shows old data | Nagios stopped, or PinPoint polling stopped | Read **Data Updated** and **Monitoring System** in the Service Overview panel; if Nagios is stopped, tell the administrator (Technical Manual, section 11) |
 | A device is missing from counts | It is paused, retired or merged | Change the Device Inventory **Monitoring** filter to find it |
 | A port is not monitored | Its plugin is off, or the port is ignored or held | Open the device's Ports section and read the reason |
-| "Plugin not configured" | No host has that kind of check | Enable the plugin in Plugin Manager or add the NCPA metric |
-| CPU, memory and disk are hidden | No host has the NCPA agent | Deploy NCPA ([NCPA deployment](guides/NCPA_Deployment.md)) |
+| "Not configured" | No check supplies that value | Enable the plugin in Plugin Manager or add the NCPA metric |
+| CPU, memory and disk show no value, or the Dashboard CPU chart is missing | No host has the NCPA agent | Deploy NCPA ([NCPA deployment](guides/NCPA_Deployment.md)) |
 | No alert email arrives | Email not set up, account not opted in, quiet hours, or maintenance | Check **Settings → Email**, the account's Email Alerts, the notification policy and maintenance windows |
 | **Check now** refused | Same target checked under 10 seconds ago, or device paused | Wait and retry; resume the device |
 | A scan finds nothing | The network is not listed, or the range is wrong | Check **Settings → Network Discovery** |

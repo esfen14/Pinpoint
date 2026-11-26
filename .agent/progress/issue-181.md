@@ -80,7 +80,7 @@ issue #181 together.
 ### Lab evidence (issue section H, Evidence)
 - [x] Screenshots captured 2026-11-19 on the QA appliance (`demo/demo qa create`, branch `issue-181-manuals-draft`, 14 demo containers); the User Manual had four placeholders (UM-01 to UM-04), plus 22 guide figures. Regenerate with `docs/images/manual/README.md`
 - [x] Hardware sizing and bandwidth figures: tested limit and lab measurements stated (Technical Manual 3.1, 5.8, 10.4)
-- [ ] Follow each User Manual procedure on a demo build and clear its TBCs (the TBC worklist was finished and removed on 2026-11-25; not every procedure has been walked through)
+- [ ] Follow each User Manual procedure on a demo build and clear its TBCs (the TBC worklist was finished and removed on 2026-11-25; not every procedure has been walked through). Walkthrough on the local lab started 2026-11-26; followed: Sign in/accounts/roles, Network discovery, Dashboard and Network Health (each guide's verification note says what was not). Next: Device Inventory. Filed #352 from it
 
 ### Open TBC questions
 - [x] User Manual open questions answered (now Appendix B in `09_Appendices.md`)
@@ -102,13 +102,14 @@ issue #181 together.
 | 2 | User Manual draft | - | written |
 | 3 | Technical Manual draft, index links | `scripts/verify.sh docs` | green |
 | 4 | Draft PR #333 opened; CI green; issue checkboxes ticked; remaining-work list added | `gh pr checks 333` | pass |
+| 5 | Walkthrough: sign-in, discovery and Dashboard guides corrected | `scripts/verify.sh docs` | green |
 
 ## State for the next session
 
 - Last check run (exact command): scripts/verify.sh docs
 - Result (first failing lines, or "green"): green
 - Hypothesis: -
-- Next action (one specific step, not "continue"): apply the team's review comments on PR #333
+- Next action (one specific step, not "continue"): walk through `docs/User_Manual/guides/Device_Inventory.md` on the local lab
 
 ## Decisions and notes
 
