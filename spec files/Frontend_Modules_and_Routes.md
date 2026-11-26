@@ -347,7 +347,10 @@ private credential files. See the [acceptance report](../docs/test-runs/2026-10-
 Both require `system.discover` and open `IdentityReviewDrawer`, which loads
 identity evidence and address history on demand (`system.hosts`) and offers
 explicit source/target choices, discovered-record search and confirmation only
-with `system.hosts.edit` as well. `lib/deviceIdentityApi.ts` uses the shared API
+with `system.hosts.edit` as well. For duplicate identity reviews the drawer also
+offers **Keep both records** with confirmation (`system.hosts.edit` only); its
+`onDismissed` callback lets the host drawer refresh the page's list.
+`lib/deviceIdentityApi.ts` uses the shared API
 client for the existing review/evidence/merge routes and `/api/system/hosts/lookup`;
 `types/deviceIdentity.ts` owns the wire contracts and identity-kind filtering.
 See `Device_Inventory_Requirements.md` §14 for the permission, confirmation,

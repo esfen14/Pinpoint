@@ -127,6 +127,25 @@ describe('DeviceInventoryPage', () => {
     expect(screen.getByRole('heading', { name: 'Needs Review (1)' })).toBeInTheDocument()
   })
 
+  it('refreshes the review list and count when a review is dismissed from the host drawer', async () => {
+    access.granted = new Set(['system.discover', 'system.hosts.edit'])
+    const kept = { id: 42, nagios_host_name: 'gateway', display_name: 'Gateway', ip_address: '10.77.0.1', state: 'ACTIVE', monitoring_state: 'monitored' }
+    let reviews = [{ id: 12, kind: 'DUPLICATE_IDENTITY', message: 'Same SSH host key', created_at: '2026-10-15T00:00:00', devices: [kept, { ...kept, id: 43 }] }]
+    apiGet.mockImplementation((path: string) => {
+      if (path === '/api/system/discover/review') return Promise.resolve({ items: reviews })
+      if (path.includes('per_page')) return routeApi(path)
+      return Promise.resolve({ ...host('gateway', 'Up'), device_id: 42, check_execution_time: 0.05, perf_data: [], services: [] })
+    })
+    apiPost.mockImplementation(() => { reviews = []; return Promise.resolve({}) })
+    await renderLoaded()
+    await userEvent.click(within(row('gateway')).getByRole('button', { name: 'gateway' }))
+    const notice = await screen.findByRole('region', { name: 'Device identity notice' })
+    await userEvent.click(await within(notice).findByRole('button', { name: 'Review' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Keep both records' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Keep both records' }))
+    expect(await screen.findByRole('heading', { name: 'Needs Review (0)' })).toBeInTheDocument()
+  })
+
   it('shows the Host Inventory heading' , async () => {
     await renderLoaded()
     expect(screen.getByText('Host Inventory')).toBeInTheDocument()

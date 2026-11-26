@@ -742,6 +742,11 @@ reassigned to a device from the unscanned network that shares the SSH key. It
 records a duplicate-identity review item. A true second NIC of one device, seen
 with its own hardware MAC, still belongs to its key owner.
 
+A resolved `DUPLICATE_IDENTITY` item is not raised again (`add_review_item()`):
+one naming two records covers that pair at any address, one naming a single
+record covers that record at that address. Other kinds are raised again when
+their situation recurs after being resolved.
+
 **Shared identifiers (#352).** A strong identifier (SSH host key or NCPA
 certificate) that two or more addresses show in one scan cannot say which address
 is which (`find_shared_identifiers()`). For such an observation:

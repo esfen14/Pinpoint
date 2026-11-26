@@ -56,6 +56,7 @@ type Props = {
   // Called after the device was paused or resumed, so the host table can load again.
   onMonitoringChanged?: () => void
   onIdentityMerged?: (result: MergeResult) => void
+  onIdentityDismissed?: () => void
 }
 
 const TIMESTAMP_LABELS: Record<string, string> = {
@@ -91,7 +92,7 @@ function threshold(value: number | null, unit: string | null) {
   return value == null ? '—' : `${value}${unit ?? ''}`
 }
 
-export function StatusDetailDrawer({ hostname, onClose, onMonitoringChanged, onIdentityMerged }: Props) {
+export function StatusDetailDrawer({ hostname, onClose, onMonitoringChanged, onIdentityMerged, onIdentityDismissed }: Props) {
   const { formatDateTime } = useDisplayTime()
   const [service, setService] = useState<string | null>(null)
   const [detail, setDetail] = useState<Detail | null>(null)
@@ -207,7 +208,7 @@ export function StatusDetailDrawer({ hostname, onClose, onMonitoringChanged, onI
               <NagiosSyncNotice message={syncNotice} onDismiss={() => setSyncNotice(null)} />
 
               {!service && detail.device_id != null && hasPermission('system.discover') && (
-                <DeviceIdentityReviews deviceId={detail.device_id} onMerged={result => {
+                <DeviceIdentityReviews deviceId={detail.device_id} onDismissed={onIdentityDismissed} onMerged={result => {
                   setReloadKey(k => k + 1)
                   onIdentityMerged?.(result)
                   onMonitoringChanged?.()

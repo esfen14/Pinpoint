@@ -6,3 +6,4 @@ export const getIdentityEvidence = (id: number) => apiGet<IdentityEvidence>(`/ap
 export const getAddressEvidence = (id: number) => apiGet<AddressEvidence>(`/api/system/hosts/${id}/addresses`)
 export const lookupIdentityDevices = (search: string) => apiGet<{ items: DeviceSummary[]; has_more: boolean }>(`/api/system/hosts/lookup?${new URLSearchParams({ search })}`)
 export const mergeIdentityDevices = (source: number, target: number) => apiPost<MergeResult>(`/api/system/hosts/${source}/merge`, { target_id: target })
+export const dismissIdentityReview = (id: number) => apiPost<void>(`/api/system/discover/review/${id}/resolve`)
