@@ -8,11 +8,11 @@ Status: in-progress
 
 Copied from the issue. Tick an item only when a check proves it.
 
-- [ ] A regression test fails before the fix and passes after: a known device owns an SSH host key, and a later scan sees that key at other addresses in the same network with no hardware MAC. The hosts are not silently dropped.
+- [x] A regression test fails before the fix and passes after: a known device owns an SSH host key, and a later scan sees that key at other addresses in the same network with no hardware MAC. The hosts are not silently dropped.
 - [ ] The intended behavior (separate records, or a review item naming the unmonitored addresses) is decided and stated in `spec files/Device_Inventory_Requirements.md` and `Data_Model_and_Integrations.md`.
-- [ ] A true multi-NIC device still resolves to one record, and the #67 and #59 cases still pass.
-- [ ] A regression test: several known devices share a key, each at its own address with no hardware MAC; a rescan updates every one of them.
-- [ ] `scripts/verify.sh backend` passes.
+- [x] A true multi-NIC device still resolves to one record, and the #67 and #59 cases still pass.
+- [x] A regression test: several known devices share a key, each at its own address with no hardware MAC; a rescan updates every one of them.
+- [x] `scripts/verify.sh backend` passes.
 - [ ] The lab steps above are repeated and the result is recorded under `docs/test-runs/`.
 
 Requirement coverage (every requirement the issue states, and the check that proves it):
@@ -30,7 +30,7 @@ Requirement coverage (every requirement the issue states, and the check that pro
 
 1. [x] Failing tests for both issue cases, merge-stays-merged, own NCPA cert, self-heal: `server/tests/unit/test_device_identity.py`
 2. [x] Shared-key rules in `server/app/network_discovery/device_identity.py` (`resolve_observation`, `reconcile_scan`)
-3. [ ] Single-device scan checks the key owner's address: `identity_probes.py`, `create_host_cfg.py`, tests
+3. [x] Single-device scan checks the key owner's address: `identity_probes.py`, `create_host_cfg.py`, tests
 4. [ ] Security review of the diff; specs: `Device_Inventory_Requirements.md`, `Data_Model_and_Integrations.md`, `Implementation_Status.md`
 5. [ ] `scripts/verify.sh backend` and `all`
 6. [ ] Lab repeat (needs the user's approval for `scripts/lab reset`) and report under `docs/test-runs/`
@@ -43,15 +43,16 @@ One row per loop round, newest last.
 |---|---|---|---|
 | 0 | Plan | - | - |
 | 1 | Tests and shared-identifier rules | `pytest tests/unit/test_device_identity.py` | 9 red, then 71 green |
+| 2 | Single-device scan owner check | `scripts/verify.sh backend` | green, 4516 passed, 14 skipped |
 
 ## State for the next session
 
 Everything a fresh session needs to continue without redoing work.
 
-- Last check run (exact command): `cd server && FLASK_DEBUG=1 .venv/bin/python -m pytest tests/unit/test_device_identity.py -q`
-- Result (first failing lines, or "green"): green (71 passed)
-- Hypothesis: a single-device scan still moves the key owner until it is told the owner still answers
-- Next action (one specific step, not "continue"): add `identifiers_still_at_owner()` to identity_probes.py and pass it from the discovery worker for single-device scans, test first
+- Last check run (exact command): `scripts/verify.sh backend`
+- Result (first failing lines, or "green"): green (4516 passed, 14 skipped)
+- Hypothesis: code complete
+- Next action (one specific step, not "continue"): write the rule into the two specs and Implementation_Status, then run `scripts/verify.sh docs`
 
 ## Decisions and notes
 

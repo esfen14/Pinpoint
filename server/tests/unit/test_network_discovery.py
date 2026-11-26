@@ -12,10 +12,10 @@ from threading import Event, Thread
 from unittest.mock import patch, MagicMock
 
 from app import db
-from app.network_discovery import network_discovery
+from app.network_discovery import identity_probes, network_discovery
 from app.network_discovery.create_host_cfg import _save_discovered_hosts
 from app.system_models import DiscoverySettings, NetworkDiscovery, Open_TCP_Services
-from tests.support.identity_helpers import NET, MAC_1, MAC_2, make_status, scan, combine
+from tests.support.identity_helpers import NET, MAC_1, MAC_2, SSH_1, SSH_2, make_status, scan, combine, ssh
 
 from app.system_models import (
     NetworkDiscoveryStatus,
@@ -379,3 +379,54 @@ class TestDiscoverStatus:
         assert resp.status_code == 200
         data = resp.get_json()
         assert "message" in data
+
+
+# ─── single-device scan and a shared SSH host key (issue #352) ───────────────
+
+def _known_key_owner(db_session, admin_user):
+    status = make_status(db_session, admin_user)
+    db.session.add(DiscoverySettings(Id=1, Networks=[NET]))
+    db.session.commit()
+    with patch("app.network_discovery.create_host_cfg.get_monitoring_server_ips", return_value=set()):
+        saved = _save_discovered_hosts(scan("10.0.0.2", identifiers=[ssh(SSH_1)], tcp={2222: "ssh"}), status, 70)
+    return status, saved[(NET, "10.0.0.2")]
+
+
+def test_owner_still_answering_with_the_key_is_reported(db_session, admin_user):
+    _known_key_owner(db_session, admin_user)
+    with patch.object(identity_probes, "collect_identifiers", return_value=[ssh(SSH_1)]) as probe:
+        found = identity_probes.identifiers_still_at_owner(scan("10.0.0.3", identifiers=[ssh(SSH_1)]))
+    assert found == {ssh(SSH_1)}
+    address, ports = probe.call_args.args
+    assert address == "10.0.0.2"
+    assert ports["2222"] == {"service_name": "ssh"}
+    assert "22" in ports
+
+
+@pytest.mark.parametrize("answer", ([], [ssh(SSH_2)]))
+def test_owner_that_no_longer_shows_the_key_is_not_reported(db_session, admin_user, answer):
+    _known_key_owner(db_session, admin_user)
+    with patch.object(identity_probes, "collect_identifiers", return_value=answer):
+        assert identity_probes.identifiers_still_at_owner(scan("10.0.0.3", identifiers=[ssh(SSH_1)])) == set()
+
+
+def test_owner_is_not_probed_when_scanned_itself_or_on_a_removed_network(db_session, admin_user):
+    _known_key_owner(db_session, admin_user)
+    with patch.object(identity_probes, "collect_identifiers") as probe:
+        identity_probes.identifiers_still_at_owner(scan("10.0.0.2", identifiers=[ssh(SSH_1)]))
+        db.session.get(DiscoverySettings, 1).Networks = ["10.9.0.0/24"]
+        db.session.commit()
+        identity_probes.identifiers_still_at_owner(scan("10.0.0.3", identifiers=[ssh(SSH_1)]))
+    probe.assert_not_called()
+
+
+@pytest.mark.parametrize("target,expected", (("10.0.0.3", {ssh(SSH_1)}), (None, set())))
+def test_worker_checks_the_owner_only_on_a_single_device_scan(app, db_session, admin_user, target, expected):
+    from app.network_discovery import create_host_cfg
+    discovered = scan("10.0.0.3", tcp={22: "ssh"})
+    with patch.object(create_host_cfg, "discover_network", return_value=discovered), \
+         patch.object(create_host_cfg, "collect_identifiers", return_value=[ssh(SSH_1)]), \
+         patch.object(create_host_cfg, "identifiers_still_at_owner", return_value={ssh(SSH_1)}), \
+         patch.object(create_host_cfg, "_save_discovered_hosts", side_effect=RuntimeError("stop here")) as save:
+        create_host_cfg.discover_network_create_hosts(app, admin_user.UserID, Event(), target)
+    assert save.call_args.args[4] == expected

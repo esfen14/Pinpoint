@@ -20,7 +20,9 @@ import sqlalchemy as sa
 from flask import current_app
 
 from app import db
-from app.system_models import IdentifierKind, NCPADeployment, NetworkDiscovery
+from app.network_discovery.device_identity import STRONG_KINDS, Evidence, find_identifier_owners
+from app.network_discovery.discovery_settings import get_discovery_setting
+from app.system_models import DeviceState, IdentifierKind, NCPADeployment, NetworkDiscovery, Open_TCP_Services
 
 PROBE_TIMEOUT = 3
 
@@ -121,6 +123,57 @@ def collect_identifiers(ip_address, tcp_ports):
             identifiers.append((IdentifierKind.SSH_HOST_KEY, fingerprint))
 
     return identifiers
+
+
+def identifiers_still_at_owner(discovered_hosts):
+    """
+    For a single-device scan: return the observed (kind, value) strong
+    identifiers that their owning device also still shows at its own recorded
+    address, so the scanned address is another machine (a clone) and not the
+    owner having moved. Owners the scan saw itself, owners without a live
+    address and owners on a network that is no longer saved are not probed.
+    """
+    observed_addresses = set()
+    observations = []
+    for hosts in discovered_hosts.values():
+        for ip, host_data in hosts.items():
+            observed_addresses.add(ip)
+            for kind, value in host_data["data"].get("identifiers") or []:
+                if kind in STRONG_KINDS:
+                    observations.append((kind, value))
+
+    saved_networks = get_discovery_setting("NETWORKS") or []
+    answers_by_device = {}
+    still_there = set()
+    for kind, value in observations:
+        owners = find_identifier_owners([Evidence(kind, value, True)], STRONG_KINDS)
+        for device_id, owner in owners.items():
+            if owner.Device_State not in (DeviceState.ACTIVE, DeviceState.MISSING):
+                continue
+            if owner.IP_Address in observed_addresses or owner.Network not in saved_networks:
+                continue
+            if device_id not in answers_by_device:
+                answers_by_device[device_id] = collect_identifiers(owner.IP_Address, owner_tcp_ports(device_id))
+            if (kind, value) in answers_by_device[device_id]:
+                still_there.add((kind, value))
+    return still_there
+
+
+def owner_tcp_ports(device_id):
+    """
+    The ports to probe on a recorded device, shaped like a scan's TCP result:
+    its recorded TCP ports plus the standard SSH and NCPA ports.
+    """
+    ports = {
+        str(current_app.config["SSH_PORT"]): {},
+        str(current_app.config["NCPA_PORT"]): {},
+    }
+    rows = db.session.scalars(
+        sa.select(Open_TCP_Services).where(Open_TCP_Services.NetDiscoveryID == device_id)
+    ).all()
+    for row in rows:
+        ports[str(row.Port_Number)] = {"service_name": row.Service_Name}
+    return ports
 
 
 def ssh_ports_to_probe(tcp_ports):
