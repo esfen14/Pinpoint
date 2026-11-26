@@ -15,6 +15,7 @@
 #                                      power off, take the snapshot (default os-nagios-ready)
 #   scripts/vmlab fresh [branch]       restore the snapshot, start, install the app from the pushed
 #                                      branch (default: current branch), healthcheck
+#                                      (provision and fresh turn the VM's automatic upgrades off first)
 #   scripts/vmlab sync [--client]      copy the working tree into the running appliance, restart
 #                                      Gunicorn (--client also builds and copies client/dist)
 #   scripts/vmlab health               installer healthcheck on the running appliance
@@ -203,6 +204,12 @@ ensure_swap() {
   fi"
 }
 
+# Keep Ubuntu's own upgrades from holding the package lock during an installer step.
+stop_auto_upgrades() {
+  echo "stopping Ubuntu's automatic upgrades on the appliance (a running one is left to finish) ..."
+  vm_ssh "sudo bash -s" < "$root/lab/stop_auto_upgrades.sh"
+}
+
 # Install our SSH key and passwordless sudo using the generated lab password. The
 # password reaches ssh through an askpass helper and sudo through stdin, never in a
 # command line.
@@ -260,7 +267,7 @@ case "$cmd" in
 esac
 case "$cmd" in
   preflight) need_config; preflight "$@" ;;
-  help|-h|--help) sed -n '2,29p' "$0" | sed 's/^# \{0,1\}//' ;;
+  help|-h|--help) sed -n '2,30p' "$0" | sed 's/^# \{0,1\}//' ;;
 
   iso)
     if [ -f "$VMLAB_ISO" ]; then echo "already present: $VMLAB_ISO"; exit 0; fi
@@ -348,6 +355,7 @@ case "$cmd" in
     need_config; force=0; [ "${1:-}" = "--force" ] && force=1
     if snapshot_exists && [ "$force" = 0 ]; then die "snapshot '$VMLAB_SNAPSHOT' exists; use --force to replace it"; fi
     [ "$(vm_state)" = "running" ] || start_vm
+    stop_auto_upgrades || die "automatic upgrades could not be stopped; nothing was installed"
     echo "Installer: $(installer_checkout) ($VMLAB_INSTALLER_DIR)"
     push_setup
     for m in $base_modules; do
@@ -375,6 +383,8 @@ case "$cmd" in
     installer_checkout >/dev/null
     snapshot_exists || die "no snapshot '$VMLAB_SNAPSHOT' (run: scripts/vmlab provision)"
     power_off; VBoxManage snapshot "$VMLAB_VM" restore "$VMLAB_SNAPSHOT"; start_vm
+    # First, so an overdue upgrade is stopped before it starts.
+    stop_auto_upgrades || die "automatic upgrades could not be stopped; nothing was installed"
     ensure_swap
     push_setup
     echo "Installing Pinpoint from $repo_url branch $branch ..."
