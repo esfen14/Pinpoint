@@ -19,9 +19,21 @@ does not need a merge.
 A duplicate identity review that says two records have the same SSH host key or
 certificate usually means the machines were cloned from one image. Pinpoint lists
 and monitors each separately. Merge them only if they are one machine, such as one
-with two network cards. Separate machines need no merge, although the review stays
-listed because this page cannot dismiss it. Give each cloned machine its own SSH
-host key so that new addresses are not flagged.
+with two network cards. Give each cloned machine its own SSH host key so that new
+addresses are not flagged.
+
+## Keep separate records
+
+For separate machines, choose **Keep both records** in the comparison, check the
+two records and confirm with **Keep both records**. Neither device changes, the
+review leaves **Needs Review** and later scans do not raise it again for these
+records. There is no undo. A review that names only one record (a device also seen
+on a second address) offers **Keep record unchanged** instead; the extra address
+stays unmonitored. Only duplicate identity reviews offer this, and it requires
+host edit permission. If saving fails, the error is shown and the review stays
+listed.
+
+## Merge duplicate records
 
 1. Choose **Device record to keep**: the record with the intended monitoring
    settings and current address. This is the surviving target.

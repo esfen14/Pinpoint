@@ -635,6 +635,13 @@ The initial [contract probe](../docs/test-runs/2026-10-17-issue-198-contract-pro
 is historical partial evidence, not final acceptance.
 
 
+## Dismissing duplicate identity reviews (#356)
+
+The review comparison offers **Keep both records** on duplicate identity reviews,
+and a resolved one is not raised again. Covered by isolated backend and frontend
+tests; not exercised in a live lab or real browser. The other review kinds cannot
+be dismissed on the page.
+
 ## Machines sharing an SSH host key (#352)
 
 Discovery keeps a separate record for each address that shows a shared SSH host
@@ -644,8 +651,6 @@ rescan; see the [identity rules](Data_Model_and_Integrations.md). The
 repeats the issue's scenarios, a merge and single-device scans through the API;
 the browser was not driven. Known limits:
 
-- The page cannot dismiss a duplicate identity review, so reviews for machines
-  that really are separate stay listed (the resolve route is API only).
 - One machine with two randomized-MAC network cards is listed twice until merged.
 - Clones are told apart by address only: one that changes address appears as a new
   record.
