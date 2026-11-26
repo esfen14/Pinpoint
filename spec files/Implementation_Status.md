@@ -633,8 +633,10 @@ is historical partial evidence, not final acceptance.
 
 Discovery keeps a separate record for each address that shows a shared SSH host
 key or NCPA certificate without a hardware MAC, and updates known ones on each
-rescan; see the [identity rules](Data_Model_and_Integrations.md). Covered by
-isolated tests; the live lab repeat is not yet recorded. Known limits:
+rescan; see the [identity rules](Data_Model_and_Integrations.md). The
+[local lab run](../docs/test-runs/2026-11-26-issue-352-shared-ssh-key/REPORT.md)
+repeats the issue's scenarios, a merge and single-device scans through the API;
+the browser was not driven. Known limits:
 
 - The page cannot dismiss a duplicate identity review, so reviews for machines
   that really are separate stay listed (the resolve route is API only).
