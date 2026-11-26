@@ -1,16 +1,16 @@
 # Issue #349: NCPA Deployment wizard says port 22 for devices using another SSH port
 
 Branch: `issue-349-wizard-ssh-port`
-Status: in-progress
+Status: blocked
 <!-- Status is one of: in-progress | blocked | ready-for-review -->
 
 ## Finish condition
 
 Copied from the issue. Tick an item only when a check proves it.
 
-- [ ] The three messages show the device's actual SSH port, or name no port when it is not known.
-- [ ] A frontend test covers a device on a port other than 22.
-- [ ] `scripts/verify.sh all` passes.
+- [x] The three messages show the device's actual SSH port, or name no port when it is not known.
+- [x] A frontend test covers a device on a port other than 22.
+- [x] `scripts/verify.sh all` passes.
 
 Requirement coverage (every requirement the issue states, and the check that proves it):
 
@@ -34,14 +34,15 @@ Requirement coverage (every requirement the issue states, and the check that pro
 | Round | Change made | Check run | Result |
 |---|---|---|---|
 | 1 | Device list returns `ssh_port` | `scripts/verify.sh backend` | green, 4498 passed |
-| 2 | Wizard messages use the device port; specs updated | `scripts/verify.sh frontend`, `docs` | see below |
+| 2 | Wizard messages use the device port; specs updated | `scripts/verify.sh frontend`, `docs` | frontend green; docs failed only in the QA supervisor tests while another checkout was running QA tests |
+| 3 | none | `scripts/verify.sh all` | green: 4498 backend and 1109 frontend tests passed |
 
 ## State for the next session
 
-- Last check run (exact command): `scripts/verify.sh frontend` and `docs`
+- Last check run (exact command): `scripts/verify.sh all`
 - Result (first failing lines, or "green"): green
 - Hypothesis: n/a
-- Next action (one specific step, not "continue"): run `scripts/verify.sh all`, delete this file, open the PR.
+- Next action (one specific step, not "continue"): a person approves removing this file (the permission classifier denied it); then remove it, push, and mark the draft PR ready.
 
 ## Decisions and notes
 
