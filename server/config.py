@@ -77,6 +77,9 @@ class Config:
     # me" makes it permanent for this long (renewed on each request), and skips
     # the idle timeout. Set PINPOINT_SESSION_COOKIE_SECURE=on when served over HTTPS.
     PERMANENT_SESSION_LIFETIME = remember_me_lifetime()
+    # Renew a permanent cookie's Expires only when the session changes (at most
+    # once a minute, see enforce_session_timeout), not on every response (#339).
+    SESSION_REFRESH_EACH_REQUEST = False
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
     SESSION_COOKIE_SECURE = env_bool('PINPOINT_SESSION_COOKIE_SECURE', False)

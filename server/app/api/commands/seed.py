@@ -17,6 +17,7 @@ from app.system_models import (
     RolePermission,
     User,
     UserStatus,
+    UserSession,
     SystemSettings,
 )
 
@@ -373,6 +374,7 @@ def remove_seed_data():
     wipes all accounts, not only the seeded ones.
     """
     db.session.execute(sa.delete(RolePermission))
+    db.session.execute(sa.delete(UserSession))
     db.session.execute(sa.delete(User))
     db.session.execute(sa.delete(Role))
     db.session.execute(sa.delete(Permission))

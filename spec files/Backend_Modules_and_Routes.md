@@ -94,7 +94,7 @@ normal configured timeout; immediate invalidation is not part of this command.
 | Method and path | Permission | Purpose |
 |---|---|---|
 | `POST /api/user/login` | Public | Validate credentials and establish a session only when signed out; an existing authenticated session returns 409 before credential validation. Body: `email`, `password`, optional boolean `remember_me` (default false; any other type returns 400) |
-| `POST /api/user/logout` | Login | End the current session |
+| `POST /api/user/logout` | Login | End the current session and revoke its server record; 500 if the record cannot be revoked (the cookie is cleared either way) |
 
 **Session revocation (#218).** At sign-in the session stores `auth_stamp`, a keyed
 SHA-256 digest of the account's password hash, role, email, status and
@@ -126,10 +126,32 @@ establishes the submitted active account, and `/api/user/me` and protected route
 use only that account's role permissions. Existing inactive-account and idle
 session expiry checks still run before login handling.
 
+**Server-side sessions (#339).** Each sign-in adds a `USER_SESSION` row and the
+cookie carries its random id (`session["sid"]`). `enforce_session_timeout` rejects a
+request with 401 "Session ended. Please log in again." unless that row exists, belongs
+to the user and is not revoked, so a cookie kept, replayed or written back by an
+in-flight response after logout is useless. Logout and every forced sign-out revoke
+the row. All of a user's rows are revoked when an administrator sets their password
+(`PUT /api/user/accounts/<id>`, password-request resolve) or saves them with a status
+other than Active, so reactivating an account does not revive old cookies.
+`change-password` and `complete-setup` revoke the user's other rows. A user may be
+signed in on several devices; logout ends only the current one. There is no route to
+sign another user out directly. The next sign-in deletes revoked rows and rows idle
+longer than the remembered lifetime. Sign-in answers 500 if the row cannot be saved.
+Sessions signed in before this table existed have no id, so everyone signs in once.
+`flask restore-backup` restores the table as backed up: a session revoked after the
+backup becomes live again, subject to the idle timeout and cookie expiry.
+
+**Activity clock (#339).** The row's `Last_Activity` drives the idle timeout and is
+written when it is more than 60 seconds old, so the timeout is accurate to within a
+minute. The cookie is not rewritten for an ordinary session. A failed write is logged
+and the request continues.
+
 **Remember me (#337).** `remember_me: true` sets `session.permanent = True` (the
 signed cookie gets an `Expires` of `PERMANENT_SESSION_LIFETIME`, 30 days by default,
-set from whole days in `PINPOINT_REMEMBER_ME_DAYS`; Flask renews it on each request,
-so it is 30 days from last use) and stores `remembered` in the session. Otherwise
+set from whole days in `PINPOINT_REMEMBER_ME_DAYS`; `SESSION_REFRESH_EACH_REQUEST` is
+false, so the cookie is sent again, renewing the expiry, only when `Last_Activity` is
+written, at most once a minute, so it is 30 days from last use to within a minute) and stores `remembered` in the session. Otherwise
 the cookie stays a browser-session cookie. `enforce_session_timeout` skips the idle
 check when `remembered` is set, so a remembered session is not ended by the Session
 Timeout setting; it still signs out an account that is no longer Active. Logout,

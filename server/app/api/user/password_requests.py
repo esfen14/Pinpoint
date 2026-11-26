@@ -28,6 +28,7 @@ from app.api.helper import (
     get_user_by_email,
     normalize_email,
 )
+from app.api.helper.user_sessions import revoke_user_sessions
 from app.api.helper.responses import success, error
 from app.api.helper.database_access.permissions import require_permission
 from app.account_notifications import PASSWORD_RESET, notify_account_change
@@ -173,6 +174,7 @@ def resolve_password_request(id):
         try:
             user.set_password(data["password"])
             user.Must_Change_Password = True
+            revoke_user_sessions(user.UserID)
             req.Status = COMPLETED
             req.Resolved_At = datetime.now(timezone.utc)
             req.Resolved_By = current_user.UserID
