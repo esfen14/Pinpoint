@@ -30,8 +30,8 @@ Requirement coverage (every requirement the issue states, and the check that pro
 ## Plan
 
 1. [x] Server test then fix: a resolved duplicate identity review is not raised again (cross-network holder case, hardware-MAC holder case, secondary-address case, clone pair that moved). `server/tests/unit/test_device_identity.py`, `server/app/network_discovery/device_identity.py` (`add_review_item`)
-2. [ ] Frontend tests then action and confirmation in the drawer, permission, error, refresh. `client/src/test/DeviceIdentityReview.test.tsx`, `IdentityReviewDrawer.tsx`, `DeviceIdentityReviews.tsx`, `lib/deviceIdentityApi.ts`
-3. [ ] Refresh the page's list when dismissed from the host drawer. `StatusDetailDrawer.tsx`, `pages/DeviceInventoryPage.tsx`, their tests
+2. [x] Frontend tests then action and confirmation in the drawer, permission, error, refresh. `client/src/test/DeviceIdentityReview.test.tsx`, `IdentityReviewDrawer.tsx`, `DeviceIdentityReviews.tsx`, `lib/deviceIdentityApi.ts`
+3. [x] Refresh the page's list when dismissed from the host drawer. `StatusDetailDrawer.tsx`, `pages/DeviceInventoryPage.tsx`, their tests
 4. [ ] Docs: `spec files/Device_Inventory_Requirements.md` section 14, `Frontend_Modules_and_Routes.md`, `Backend_Modules_and_Routes.md`, `Data_Model_and_Integrations.md`, `Implementation_Status.md`, `docs/manuals/Device_Identity_Review.md`
 5. [ ] Injection and secret-exposure review of the `network_discovery` change; `scripts/verify.sh all`
 
@@ -41,13 +41,14 @@ Requirement coverage (every requirement the issue states, and the check that pro
 |---|---|---|---|
 | 0 | Plan | - | - |
 | 1 | Server tests, then `find_dismissed_duplicate()` | pytest identity + routes | red 2 failed (cross-network, MAC holder), then 166 passed |
+| 2 | Keep action, confirmation, page refresh | `scripts/verify.sh frontend` | red first (6 drawer, 1 page), then OK |
 
 ## State for the next session
 
-- Last check run (exact command): `cd server && .venv/bin/python -m pytest tests/unit/test_device_identity.py tests/unit/test_device_identity_routes.py -q`
+- Last check run (exact command): `scripts/verify.sh frontend`
 - Result (first failing lines, or "green"): green
 - Hypothesis: n/a
-- Next action (one specific step, not "continue"): write the failing frontend tests (plan step 2).
+- Next action (one specific step, not "continue"): update the specs and the manual (plan step 4).
 
 ## Decisions and notes
 

@@ -232,6 +232,7 @@ export function DeviceInventoryPage() {
         <StatusDetailDrawer
           hostname={detailHostname}
           onIdentityMerged={merged}
+          onIdentityDismissed={() => setReviewRevision(n => n + 1)}
           onClose={() => setDetailHostname(null)}
           onMonitoringChanged={() => { void Promise.all([loadHosts(), loadCounts()]) }}
         />
