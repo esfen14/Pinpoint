@@ -110,6 +110,29 @@ class TestDeviceSshPort:
 
 class TestRoutesUseTheDevicePort:
 
+    def test_device_list_reports_the_discovered_port(self, logged_in_client, db_session, admin_user):
+        device = make_device(db_session, admin_user, {2222: "ssh"})
+        device.NCPA_Eligible = True
+        db.session.commit()
+
+        resp = logged_in_client.get("/api/system/deployment/ncpa/devices")
+
+        assert resp.status_code == 200
+        assert [d["ssh_port"] for d in resp.get_json()["data"]["devices"]] == [2222]
+
+    def test_device_list_reports_the_pinned_port_of_a_trusted_device(
+            self, logged_in_client, db_session, admin_user):
+        device = make_device(db_session, admin_user, {2222: "ssh"})
+        device.NCPA_Eligible = True
+        creds = ssh_credentials(device)
+        creds.Key_Fingerprint, creds.SSH_Port = "fp:2200", 2200
+        db.session.commit()
+
+        resp = logged_in_client.get("/api/system/deployment/ncpa/devices")
+
+        assert resp.status_code == 200
+        assert [d["ssh_port"] for d in resp.get_json()["data"]["devices"]] == [2200]
+
     def test_fingerprint_is_read_from_the_discovered_port(self, logged_in_client, db_session, admin_user):
         device = make_device(db_session, admin_user, {2222: "ssh"})
 
