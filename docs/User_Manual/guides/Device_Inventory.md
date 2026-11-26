@@ -1,8 +1,17 @@
 # Device Inventory
 
-**Device Inventory** (`/device-inventory`) lists every device Pinpoint has found, shows whether Nagios is checking it, and lets an administrator change what is monitored. Each row opens a detail drawer with the device's state, ports, interfaces, settings and history.
+**Device Inventory** (`/device-inventory`) lists every device Pinpoint has found, shows whether Nagios is checking it, and lets an administrator change what is monitored. Choosing a hostname opens a detail view with the device's state, ports, interfaces, settings and history.
 
-> **Verification status.** Written on 2026-11-14 from `Device_Inventory_Requirements.md`, the route specification and the page source. It has not yet been followed on a demo build; items marked **TBC** need that check. Duplicate-device merging has its own guide, [Review and merge duplicate device records](Device_Identity_Review.md); this guide does not repeat it.
+> **Verification status.** Followed on 2026-11-26 on the local lab: search and
+> filters, the detail view, pause and resume, port actions (monitor, ignore, stop,
+> leave suggested, pin and remove pin), the check options window, parent devices,
+> alert recipients, IP address history, and interfaces and the SNMP **Test** on an
+> SNMP version 2c device. Not followed: saving check options or SNMP settings,
+> SNMP version 3, missing, retired, merged and archived records, NCPA ports and
+> the 16-interface limit. Those come from the specifications and source.
+> Duplicate-device merging has its own guide,
+> [Review and merge duplicate device records](Device_Identity_Review.md); this
+> guide does not repeat it.
 
 ![Device Inventory host list](../../images/manual/page-device-inventory.png)
 
@@ -31,8 +40,8 @@ Devices appear after [Network Discovery](Network_Discovery.md) has run at least 
 
 ## Find and inspect a host
 
-1. Choose **Device Inventory** in the sidebar. The table opens on the **Monitored** filter, so devices that are not being checked are hidden until you change it.
-2. Search by name or address, or use the filter menu: state (up, down, unreachable), acknowledgement, and **Monitoring** (all, monitored, not monitored, or one label).
+1. Choose **Device Inventory** in the sidebar. The table opens with the **Monitoring** filter on **Monitored**, so devices that are not being checked are hidden until you change it.
+2. Search by hostname (the search does not match IP addresses), or use the filter menu: **State** (up, down, unreachable), **Monitoring** (all, monitored, not monitored, or one label) and **Flapping only**.
 3. Read the **Monitoring** column. Each device has one label:
 
    | Label | Meaning |
@@ -44,7 +53,7 @@ Devices appear after [Network Discovery](Network_Discovery.md) has run at least 
    | Retired | No longer checked; last status shown |
    | Merged | Merged into another device; last status shown |
 
-4. Select a row to open the drawer. For Paused, Retired and Merged rows the table shows "last known status": do not read it as live.
+4. Choose a hostname to open the detail view (the "drawer"). For Paused, Retired and Merged rows the table shows "last known status": do not read it as live.
 
 Expected result: the drawer shows the current status, performance data and, with the permissions above, the sections below. The **Needs Review** count above the table includes unresolved identity issues even for devices outside the Monitored filter.
 
@@ -67,9 +76,11 @@ With `system.hosts.edit` you can:
 | **Leave suggested** | Removes the service and holds the port so no plugin monitors it until you act |
 | **Resume** | Monitors an ignored port again |
 | **Set service…** | "Pin" what the port is on this device (lowercase letters, digits, `-` or `_`, up to 32 characters); scans no longer rename it. **Remove pin** hands the decision back to scans |
-| **Check options** | For http, https, pop3, imap, pop3s and imaps ports: expected text, status codes, virtual host, request method or expected greeting. See [Application checks](Application_Checks.md) |
+| **Check options** | For monitored http, https, pop3, imap, pop3s and imaps ports: expected text, status codes, virtual host, request method or expected greeting. The options apply to every service of that kind on the device. See [Application checks](Application_Checks.md) |
 
-Each action that removes a service asks for confirmation. After a change the drawer reloads. If a notice says "The change was saved but Nagios was not updated", the change is stored but Nagios did not accept the new configuration; give the message to your system administrator.
+A port whose plugin is off shows an **Enable** link (for example **Enable check_http**) that opens Plugin Manager. Ignored ports are listed under **Stopped**, and ports left suggested on purpose under **Needs attention**.
+
+Each action that removes a service, and **Remove pin**, asks for confirmation. After a change the drawer reloads. If a notice says "The change was saved but Nagios was not updated", the change is stored but Nagios did not accept the new configuration; give the message to your system administrator.
 
 Precautions: the NCPA port of a device with a deployed agent reads "Managed by NCPA deployment" and offers no actions; see [NCPA deployment](NCPA_Deployment.md). Archived ports have no actions. Without `system.hosts.edit` the section says "You can view ports but not change them."
 
@@ -77,7 +88,7 @@ Precautions: the NCPA port of a device with a deployed agent reads "Managed by N
 
 1. Open the device's drawer, **Monitoring** section.
 2. Choose **Pause monitoring** and confirm. Nagios stops checking the device and all its services; scans keep tracking it and its ports and history are kept.
-3. To restart, choose **Resume monitoring** and confirm.
+3. To restart, set the **Monitoring** filter to **Paused** (the device is hidden from the default view), open the device, choose **Resume monitoring** and confirm.
 
 Expected result: the chip shows Paused, the device is left out of Dashboard and Network Health counts, and its alerts stop. Only Resume turns a pause off. Retired and merged devices cannot be paused or resumed.
 
@@ -85,11 +96,11 @@ To silence a device for planned work for a limited time, use a [maintenance wind
 
 ## Interfaces and bandwidth (SNMP devices)
 
-For a device with an SNMP port monitored, the **Interfaces** section lists name, index, speed and status of each interface. Tick **Monitor** for the interfaces you want charted; each adds in and out bandwidth checks (and a status check) in Nagios, up to 16 per device. **Refresh** reads the list from the device again. The chart is **Interface Bandwidth** on [Network Health](Dashboard_and_Network_Health.md#network-health). The page shows how many are monitored (for example "3 of 16 monitored") and disables the remaining checkboxes at the limit.
+For a device with an SNMP port monitored, the **Interfaces** section, at the bottom of the drawer, lists name, index, speed and status of each interface. Choose **Refresh** to read the list from the device. Tick **Monitor** for the interfaces you want charted; the change saves at once, and each interface adds in and out bandwidth checks (and a status check) in Nagios, up to 16 per device. The chart is **Interface Bandwidth** on [Network Health](Dashboard_and_Network_Health.md#network-health). The page shows how many are monitored (for example "3 of 16 monitored") and disables the remaining checkboxes at the limit.
 
 ## SNMP settings
 
-The **SNMP** section sets the version (Default, 1, 2c, 3), the community, and for version 3 the security level, user, authentication and privacy protocols and passwords. Passwords are never shown after saving. **Test** checks the device once without saving; **Save** applies it; **Reset to defaults** returns to the system defaults (**Settings → Plugins**). Test and Save need `system.hosts.edit`.
+The **SNMP monitoring** section sets the version (Default, 1, 2c, 3), the community, and for version 3 the security level, user, authentication and privacy protocols and passwords. Passwords are never shown after saving. **Test** checks the device once without saving; **Save** applies it; **Reset to defaults** returns to the system defaults (**Settings → Plugins**). Test and Save need `system.hosts.edit`.
 
 ## Email alert recipients
 

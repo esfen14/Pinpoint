@@ -40,7 +40,7 @@ Other controls you will meet on most pages:
 
 | Control | Use |
 |---|---|
-| Search box | Filters a table by name or address |
+| Search box | Filters a table by text; what it matches depends on the page (Device Inventory matches hostnames only) |
 | Filter menus | Limit a table to a state, acknowledgement or monitoring label |
 | Column headings | Choose a heading to sort by it, where supported |
 | Paging controls | Move between pages of a long table |
