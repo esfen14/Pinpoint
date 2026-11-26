@@ -18,7 +18,7 @@ import json
 
 from app.network_discovery.network_discovery import discover_network
 from app.network_discovery.device_identity import nagios_host_name, reconcile_scan
-from app.network_discovery.identity_probes import collect_identifiers
+from app.network_discovery.identity_probes import collect_identifiers, identifiers_still_at_owner
 from app.network_discovery.port_lifecycle import (
     CONFIG_STATES, enable_plugins_backing_monitored_ports, enabled_plugin_names, mark_ncpa_port,
     process_device_ports, promote_identified_ports,
@@ -1336,7 +1336,8 @@ def get_monitoring_server_ips():
 
     return ips
 
-def _save_discovered_hosts(discovered_hosts, network_discovery_id, progress_weight, target=None):
+def _save_discovered_hosts(discovered_hosts, network_discovery_id, progress_weight, target=None,
+                           identifiers_at_owner=frozenset()):
     """
     Save one scan's results. The scan only reports what it saw; the
     reconciler (device_identity.py) decides which known device each result is,
@@ -1356,7 +1357,8 @@ def _save_discovered_hosts(discovered_hosts, network_discovery_id, progress_weig
     monitoring_server_ips = get_monitoring_server_ips()
 
     try:
-        devices = reconcile_scan(discovered_hosts, network_discovery_id, monitoring_server_ips, target=target)
+        devices = reconcile_scan(discovered_hosts, network_discovery_id, monitoring_server_ips,
+                                 target=target, identifiers_at_owner=identifiers_at_owner)
 
         for (network, ip_address), device in devices.items():
             host_data = discovered_hosts[network][ip_address]
@@ -2011,8 +2013,16 @@ def discover_network_create_hosts(app, user_id, stop_event, target=None):
                 mark_discovery_interrupted(network_discovery_id)
                 return
             
+            # One scanned device cannot show that its key is shared, so ask the
+            # key's owner at its recorded address (cloned machines).
+            identifiers_at_owner = set()
+            if target is not None:
+                identifiers_at_owner = identifiers_still_at_owner(discovered_hosts)
+
             # Save it to the database
-            saved_devices = _save_discovered_hosts(discovered_hosts, network_discovery_id, PROGRESS_WEIGHT[4], target)
+            saved_devices = _save_discovered_hosts(
+                discovered_hosts, network_discovery_id, PROGRESS_WEIGHT[4], target, identifiers_at_owner
+            )
 
             if target is not None and not saved_devices:
                 update_network_discovery_status(

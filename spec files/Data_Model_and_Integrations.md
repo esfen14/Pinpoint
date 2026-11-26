@@ -739,8 +739,37 @@ as a secondary address of the key owner. Similarly, when a network is removed
 from discovery settings and a subsequent scan runs on the remaining networks,
 a known device in the scanned network is kept by its address rather than being
 reassigned to a device from the unscanned network that shares the SSH key. It
-records a duplicate-identity review item. A true second NIC of one device still
-belongs to its key owner.
+records a duplicate-identity review item. A true second NIC of one device, seen
+with its own hardware MAC, still belongs to its key owner.
+
+**Shared identifiers (#352).** A strong identifier (SSH host key or NCPA
+certificate) that two or more addresses show in one scan cannot say which address
+is which (`find_shared_identifiers()`). For such an observation:
+
+- an identifier only one address showed, such as a clone's own NCPA
+  certificate, decides first;
+- otherwise an address that has its own record keeps that record, so every known
+  clone is updated on each rescan; this raises no review item. A record whose
+  stored identity contradicts the observation, with no hardware MAC, is the
+  IP-reuse case: a new device, and the old one becomes `ADDRESS_UNKNOWN`;
+- otherwise an address with no hardware MAC (none, or a randomized one) becomes
+  a separate monitored device with a `DUPLICATE_IDENTITY` review item naming the
+  identifier's owner and the new device. The item is raised only when the device
+  is created, so resolving it does not bring it back. If the owner did not answer
+  at its own address, the first such address is treated as the owner having
+  moved;
+- an address of a merged record is not recreated: it is recorded as an address
+  of the surviving device;
+- a new address with a hardware MAC stays a secondary address of the owner, with
+  the review item for a new MAC.
+
+A single-device scan sees one address only, so before saving it the identity
+probes also read the identifiers at the owner's recorded address
+(`identifiers_still_at_owner()`: SSH host key and NCPA certificate, read only, no
+credentials). This applies to an `ACTIVE` or `MISSING` owner on a network that is
+still saved. An owner that still shows the identifier makes it shared; otherwise
+the owner is treated as having moved. A key seen at one address, with the owner
+not answering, still follows a device whose address changed. No schema change.
 
 Migration `e4a129c7b630` joins the deployed-port revision `7db78f308ee5`
 and device-interface revision `b7d3f1a9c264` into one head. Run the normal

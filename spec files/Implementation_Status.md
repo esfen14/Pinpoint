@@ -629,6 +629,25 @@ The initial [contract probe](../docs/test-runs/2026-10-17-issue-198-contract-pro
 is historical partial evidence, not final acceptance.
 
 
+## Machines sharing an SSH host key (#352)
+
+Discovery keeps a separate record for each address that shows a shared SSH host
+key or NCPA certificate without a hardware MAC, and updates known ones on each
+rescan; see the [identity rules](Data_Model_and_Integrations.md). The
+[local lab run](../docs/test-runs/2026-11-26-issue-352-shared-ssh-key/REPORT.md)
+repeats the issue's scenarios, a merge and single-device scans through the API;
+the browser was not driven. Known limits:
+
+- The page cannot dismiss a duplicate identity review, so reviews for machines
+  that really are separate stay listed (the resolve route is API only).
+- One machine with two randomized-MAC network cards is listed twice until merged.
+- Clones are told apart by address only: one that changes address appears as a new
+  record.
+- A merged record's address is not recreated as a device while its surviving
+  device is in use, even if another machine later takes that address with the
+  shared key.
+- A single-device scan checks the identifier's owner only on a saved network.
+
 ## Dashboard stopped/stale Nagios indication (#238)
 
 Top-page and Service Overview alerts explain stale data and frozen host/service
