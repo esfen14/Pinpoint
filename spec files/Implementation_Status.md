@@ -163,7 +163,7 @@ Option A on 2026-10-17: temporary child DOWN notifications are allowed before
 Nagios confirms parent reachability. One-attempt monitoring remains supported;
 no cache, retry or notification configuration change is approved. The contract is
 in Device Inventory §13 and the data integration specification, with
-[operator guidance](../docs/manuals/Notification_Policy.md#parent-outages-and-temporary-child-down-alerts).
+[operator guidance](../docs/User_Manual/guides/Notification_Policy.md#parent-outages-and-temporary-child-down-alerts).
 The [#173 routed acceptance report](../docs/test-runs/2026-10-17-issue-173-parent-notifications/REPORT.md)
 records exact settings and observed single/redundant-parent HARD DOWN notifications
 followed by UNREACHABLE, no-parent DOWN controls, recovery and cleanup. The opt-in
@@ -300,7 +300,7 @@ The user's appliance, installer deployment and scale remain unverified.
   Saves reschedule one existing job and restore its trigger/next run on failure;
   disabled scheduling stays disabled and startup uses the saved interval. General
   displays the actual saved check/poll and personal browser refresh schedules.
-- Database restore and backup health (#125): `flask restore-backup`, `backup_health` on the dashboard status route and a failed-backup activity-log entry; unit tests pass. Recovery runbook `docs/manuals/Backup_and_Restore.md`. No frontend display of `backup_health`. **Not yet verified on a fresh lab appliance** (`scripts/vmlab fresh`; no report in `docs/test-runs/`). Cold standby only; Nagios config and NCPA key are not backed up.
+- Database restore and backup health (#125): `flask restore-backup`, `backup_health` on the dashboard status route and a failed-backup activity-log entry; unit tests pass. Recovery runbook `docs/Technical_Manual/guides/Backup_and_Restore.md`. No frontend display of `backup_health`. **Not yet verified on a fresh lab appliance** (`scripts/vmlab fresh`; no report in `docs/test-runs/`). Cold standby only; Nagios config and NCPA key are not backed up.
 - Scheduled Nagios polling, retention purges, backups, network scans, plugin
   update scans, and security validation.
 - Event handler framework (#120): admin-defined remediation actions (`record_only`, plus `restart_local_service` from #121 and `restart_remote_service` from #8 Part 8.3), the
@@ -392,6 +392,7 @@ The user's appliance, installer deployment and scale remain unverified.
 | Resource forecasts (#156) | Display only: `app/forecast.py` (straight-line fit over 72 hours of hourly averages for NCPA disk and memory percent), the `resource_forecast` job every 30 minutes, `RESOURCE_FORECAST` (migration `b7e2a9c4d518`), `GET /api/system/forecast` (`system.dashboard` or `system.services`), the Dashboard "Running out soon" list and a badge on the service table; unit tests cover the fit, the job (canonical NCPA full/short labels and exclusions, numeric crossings, replacement, paused devices, exact-tuple cap, constant mixed-row query count, rotating batches and failed-commit retry), the route, the migration and the UI states. Not done: notifying on a forecast with a horizon and on/off setting and their Settings page controls (decided out of scope on 2026-10-17; needs #132 and #153), native `check_disk` metrics, and the lab comparison of a forecast with a real disk fill (`docs/test-runs/`) | Open a follow-up issue for forecast notifications; run the lab fill test on an appliance |
 | Service restart actions (#121) | Part 8.1 (local restart: fixed unit list, no shell, Maintenance Mode, cooldown and cap) and Part 8.3 (remote restart through a root-owned helper installed by the NCPA bootstrap) are implemented and unit tested; the Remediation form renders local and remote `unit` parameters (#182). The consumer records Maintenance Mode as `skipped_maintenance` before the action runs (#155). Part 8.2 (sudoers drop-in) is merged in the installer repository. Live evidence: [remote restart run](../docs/test-runs/2026-10-17-issue-182-remote-restart/REPORT.md) and [Playwright walkthrough](../docs/test-runs/2026-10-17-issue-182-playwright/REPORT.md). Human review of #182 remains pending | Complete the #182 human review; confirm the local restart on a lab appliance with the installer-built sudoers drop-in |
 | Per-service Recover automatically (#154) | Implemented and unit tested: the route (400 for any unit, command or path, limit 1 to 6, 409, 422, 403), the server's choice of action and unit by check name against each device's own restart list, the drawer control and the Network Status mark. Service names map to units by their first word and a small fixed alias table, so a check that matches no listed unit shows a disabled switch with the reason. Not run on a lab appliance or in a browser. Remote services depend on the same installer and device pieces as `restart_remote_service` | Walk it through on a lab appliance: switch it on for one service, force a failure, see one run and the cooldown and cap skips, then switch it off and check the handler leaves the config |
+| License and ownership (#283) | `LICENSE` is GPL-3.0 and provisional: the backend imports the GPL-3.0 library `python3-nmap`, and who owns the code (state university, CHED rules, university IP policy) is unconfirmed. The database ERD is generated (`server/scripts/generate_erd.py` to `docs/reference/ERD.md`, enforced by `tests/unit/test_erd_doc.py`); the architecture and example deployment diagrams are hand-written ([`Architecture_Diagrams.md`](../docs/reference/Architecture_Diagrams.md)). The architecture diagram is redrawn from the capstone paper's figure with its differences listed | Confirm ownership and the final license with the capstone adviser or university research office; replace `nmap3` only if GPL-3.0 is refused. See [`docs/Hand_Off.md`](../docs/Hand_Off.md) |
 | Installer | Developed in another repository | Keep installer work out of this repository unless scope changes |
 
 ## Test approach status
@@ -622,7 +623,7 @@ with a shared strict Nagios duration reader, including scheduled components and
 separate native/unaccounted missing coverage. Current status is fetched in one
 separate bulk read; no status is inferred from availability. Both service-report
 contracts, tables and exports remove snapshot counts and expose seconds. Owning
-backend/data/frontend specifications and the [operator guide](../docs/manuals/Service_Reports.md)
+backend/data/frontend specifications and the [operator guide](../docs/User_Manual/guides/Service_Reports.md)
 define exact semantics, completed-second windows, retention and Core assumptions.
 No snapshot storage or general polling behavior is removed. The full local gate passes (4040 backend/922 frontend; 14 existing skips), with
 51 focused service regressions and two Chromium tests for both views and all

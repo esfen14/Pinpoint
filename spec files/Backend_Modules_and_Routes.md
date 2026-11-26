@@ -38,7 +38,7 @@ current-state inventory rather than treated as intended permission design.
 ## Operator CLI commands
 
 `app/api/commands/restore.py` provides `flask restore-backup <folder> --yes
-[--force]` (cold-standby recovery; runbook `docs/manuals/Backup_and_Restore.md`).
+[--force]` (cold-standby recovery; runbook `docs/Technical_Manual/guides/Backup_and_Restore.md`).
 The folder is a bare name in `YYYYMMDD-HHMMSS` form inside `DATABASE_BACKUP_DIR`,
 never a path. The logic is in `app/backup_restore.py`: it refuses a bad name, a
 symlink or a folder outside the backup directory, a missing database file, any

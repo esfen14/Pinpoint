@@ -11,7 +11,7 @@
 | Deployed application / installer revision | Local lab started from branch `issue-218-signout-warning`; backend as of `3897334e` (unchanged up to `47c07fea`), web client served by the Vite dev server from the working tree. No installer |
 | Baseline / preflight / restoration | Fresh lab with seeded development data. The lab was removed with `scripts/lab down` afterwards |
 | Start / end / time zone | Owner screenshots 19:01 to 19:02, UTC+8. Exact start and end of both runs not recorded |
-| Environment | Local Docker lab ([Local Lab](../../manuals/Local_Lab.md)), lab network `10.78.0.0/24`, lab mail sink for email |
+| Environment | Local Docker lab ([Local Lab](../../Technical_Manual/guides/Local_Lab.md)), lab network `10.78.0.0/24`, lab mail sink for email |
 | Raw evidence | Three screenshots, attached to [this comment on #218](https://github.com/esfen14/Pinpoint/issues/218#issuecomment-7161120310); originals held by the lab owner in `/home/paeng/Pictures/Screenshots` (not committed) |
 
 ## Result

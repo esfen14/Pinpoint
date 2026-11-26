@@ -2,7 +2,7 @@
 
 The installer lives in a separate repository, so these tests pin the settings
 the lab must copy from it. Update both sides together when the installer
-changes; deliberate lab-only differences are listed in docs/manuals/Local_Lab.md.
+changes; deliberate lab-only differences are listed in docs/Technical_Manual/guides/Local_Lab.md.
 """
 from pathlib import Path
 

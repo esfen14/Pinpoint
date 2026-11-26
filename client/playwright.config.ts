@@ -88,6 +88,15 @@ export default defineConfig({
       dependencies: ['setup-restricted'],
     },
     {
+      name: 'manual-screenshots',
+      testMatch: /manual-screenshots\.lab\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: '.auth/admin.json',
+      },
+      dependencies: ['setup-admin'],
+    },
+    {
       name: 'restricted',
       testMatch: /smoke\.restricted\.spec\.ts/,
       use: {

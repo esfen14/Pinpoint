@@ -7,7 +7,7 @@ installer side is read from its newest baseline manifest
 (setup/manifests/pp-mon-baseline-<n>.json) and setup/deploy-pinpoint-web.sh.
 
 Exit status: 0 the pins match, 1 at least one pin differs, 2 a file could not
-be read. Nothing is downloaded or changed. See docs/manuals/Local_Lab.md.
+be read. Nothing is downloaded or changed. See docs/Technical_Manual/guides/Local_Lab.md.
 """
 import argparse
 import json
@@ -209,7 +209,7 @@ def main(argv=None):
         print('  %s' % labels[name], file=sys.stderr)
         print('    lab/appliance/Dockerfile: %s' % shown(lab_value), file=sys.stderr)
         print('    installer:                %s' % shown(installer_value), file=sys.stderr)
-    print('Update lab/appliance/Dockerfile (and re-audit, see docs/manuals/Local_Lab.md).', file=sys.stderr)
+    print('Update lab/appliance/Dockerfile (and re-audit, see docs/Technical_Manual/guides/Local_Lab.md).', file=sys.stderr)
     return 1
 
 

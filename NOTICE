@@ -1,0 +1,20 @@
+Pinpoint Network Diagnosis System (Detech-IT / 4D-G2)
+
+Copyright (C) 2026 the developers listed below and Bulacan State University,
+Main Campus.
+
+Developers
+  Bagang, Lijan Daffodil M.
+  De Guzman, Karell Jane M.
+  Pangilinan, Lorraine G.
+  Perez, Rafael P.
+  Santiago, John Ivan P.
+
+Developed as a capstone project at Bulacan State University, Main Campus.
+
+License: GNU General Public License v3.0 (see LICENSE). The license is
+provisional: who owns the code, and so the final license, is still to be
+confirmed with the university. See docs/Hand_Off.md.
+
+Third-party components keep their own licenses. Nagios Core, Nagios Plugins and
+Nmap are run as separate programs; python3-nmap is GPL-3.0.

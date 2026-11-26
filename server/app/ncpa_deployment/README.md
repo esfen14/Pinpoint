@@ -10,5 +10,5 @@ directly.
 Who runs it: an administrator with the NCPA Deployment permission, from the NCPA
 Deployment page. It connects to real devices, so tests use fakes.
 
-Operator guide: [NCPA deployment](../../../docs/manuals/NCPA_Deployment.md).
+Operator guide: [NCPA deployment](../../../docs/User_Manual/guides/NCPA_Deployment.md).
 Design and data: [Data Model and Integrations](../../../spec%20files/Data_Model_and_Integrations.md).

@@ -1,0 +1,131 @@
+# Sign in, accounts and roles
+
+This guide covers signing in and out, the first-run setup window, forgotten passwords, and the **Manage Accounts** and **Manage Roles** pages for administrators.
+
+> **Verification status.** Followed on 2026-11-26 on the local lab (development
+> seed accounts, no email set up): sign-in and sign-out, refused sign-ins, both
+> password windows, Forgot Password, and the Manage Accounts and Manage Roles
+> steps. Not followed: first-run setup, `flask` commands, the idle and Remember me
+> timeouts over time, email delivery, the bell alert, Dismiss and Export. Those
+> come from the specifications and source.
+
+![Sign-in page](../../images/manual/UM-01-sign-in.png)
+
+*Figure: Sign-in page.*
+
+![Manage Accounts page](../../images/manual/page-accounts.png)
+
+*Figure: Manage Accounts.*
+
+![Manage Roles page](../../images/manual/page-manage-roles.png)
+
+*Figure: Manage Roles.*
+
+
+## Purpose
+
+Pinpoint shows each person only the pages their role allows. An account has one role; a role is a named set of permissions. Sign in with your own account, and ask an administrator if a page you need is missing from the sidebar.
+
+## Prerequisites
+
+- A Pinpoint account created by an administrator (there is no self-registration).
+- To manage accounts: the **account.view** permission (list), **account.info** (details) and **account.edit** (create, edit, reset passwords).
+- To manage roles: **role.view**, **role.info**, **role.edit** and **role.list**.
+
+## Sign in and sign out
+
+1. Open Pinpoint in a browser. Any address that needs you to be signed in sends you to the sign-in page.
+2. Enter your **email** and **password**. Optionally tick **Remember me** (see below).
+3. Choose **LOG IN**. You land on the first page your role is allowed to see (normally Dashboard). A refused sign-in shows the reason in a pop-up, for example "Invalid username or password."
+4. To switch accounts, sign out first. While you are signed in, opening the sign-in page sends you to your first page instead. A sign-in page left open in another tab is refused with "You are already signed in. Sign out before logging in to another account."
+5. To leave, choose the account icon at the top right and then **Log out**, or choose your name at the bottom of the sidebar and then **Sign Out**. Confirm with **Sign Out**.
+
+Expected result: the sidebar shows only the pages you have permission for.
+
+Precautions:
+- A session ends after the idle period set in **Settings → Security → Session Timeout** (15 minutes, 30 minutes, 1, 2 or 4 hours). You are returned to the sign-in page ("Your session expired due to inactivity. Please log in again."). Closing the browser also ends the session.
+- **Remember me** keeps you signed in for **30 days** from your last activity, across browser restarts. A remembered session **ignores the Session Timeout**: idleness never signs you out. It ends only when you sign out, the 30 days pass without use (a Pinpoint page left visible counts as use), or an administrator changes the account's role, status, email or password. Tick it only on a computer you trust and do not share. The administrator can change the 30 days (`PINPOINT_REMEMBER_ME_DAYS` in the server environment).
+- A **Suspended** account is refused with "This account is suspended. Contact the admin for any concerns." An **Inactive** account is refused with "Account inactive." Both messages appear only after the correct password.
+- If an administrator changes your role, status, email or password while you are signed in, you are returned to the sign-in page within about 10 seconds, or on your next action if that is sooner. Other changes, such as your name, appear within about 10 seconds without a refresh.
+
+## First-run setup (new installation)
+
+The first administrator account is created by the installer with a placeholder email ending in `@pinpoint.lan` and a placeholder password. Where to find these values is described in [Installation and deployment](../../Technical_Manual/08_Installation_and_deployment.md); this manual never prints them. The first sign-in shows a setup window that cannot be skipped:
+
+1. Enter the **current password** (the installer's).
+2. Enter your real **new email** (the `pinpoint.lan` placeholder domain is refused) and a **new password** twice.
+3. Save. If Pinpoint could not apply the change to Nagios you see a warning, but the account is saved.
+
+If you are locked out of the first account, an operator with server access can run `flask recover-bootstrap-admin`; see [`server/README.md`](../../../server/README.md#command-line-commands).
+
+## Change your password
+
+When an administrator creates an account or resets a password, the account is usually flagged **Must change password**. At the next sign-in a blocking window asks for the **Current (temporary) password** and a **New password**, entered twice; choose **Change password**. Until it is done, you cannot use any page, but you can sign out.
+
+Password rules depend on **Settings → Security → Strong Password Policy**:
+
+| Policy | Rule |
+|---|---|
+| Off | At least 8 characters |
+| On | At least 12 characters, with an uppercase letter, a lowercase letter, a number and a special character |
+
+A new password may not be the account's current password ("Choose a password different from your current one.").
+
+## Forgot password
+
+1. On the sign-in page choose **Forgot Password?**, enter your email and choose **REQUEST PASSWORD RESET**.
+2. Pinpoint always shows the same confirmation ("If that email belongs to an active account, an administrator has been notified and will reset your password."), so it cannot be used to find out which emails exist. No email is sent at this point and there is no reset link.
+3. An administrator sees the request (a bell alert and the **Password reset requests** panel on Manage Accounts), chooses **Reset password**, and sets a new temporary password for you. Give the person the new password through a channel you trust. You must change it at your next sign-in.
+4. An administrator can also dismiss a request.
+
+## Manage Accounts (administrators)
+
+Open **Manage Accounts** (`/accounts`). The table lists **Full Name**, **Email**, **Role**, **Status**, **Email Alerts** (On/Off) and **Joined Date**. Use the **All**, **Active**, **Inactive** and **Suspended** tabs, the search box, and the filter and sort icons to narrow it. **Export** downloads the list as a CSV file.
+
+### Add a user
+
+1. Choose **+ Add User**.
+2. Under **Profile Info**, enter **First Name**, **Last Name** and **Email**, and check **Role** (the first active role is preselected) and **Status** (**Active** unless you change it). Under **Create Password**, enter the password twice. It must meet the active password policy.
+3. **Require password change at first sign-in** is ticked by default; clear it only if the person should keep the password you chose.
+4. **Send this user email alerts** appears only if you hold **account.alerts**. When it is on, the account is added to the Nagios contacts that receive alert email; see [Notification policy](Notification_Policy.md) and [Email settings](Email_Settings.md).
+5. Choose **SAVE CHANGES**. The button stays unavailable while the password is too weak. The dialog closes and the list refreshes. If the save is rejected (for example "Email already exists.") the dialog stays open with your entries and the reason.
+
+### Edit an account or change its status
+
+1. Choose the edit (pencil) icon in the account's row. The **Edit Account** window opens.
+2. Change the name, role or **Status**. The three statuses are **Active**, **Inactive** and **Suspended**; only Active accounts can sign in. Accounts are never deleted, only made inactive or suspended.
+3. To set a new password, enter it twice; leave both fields blank to keep the current one. The password you set is temporary: the person must change it at their next sign-in. Entering the account's current password is refused and the dialog stays open.
+4. Choose **Save Changes**.
+
+A reactivated account must also change its password at its next sign-in. Suspending or deactivating an account does not need a password.
+
+Changing the **email**, **role**, **status** or **password** signs the user out within about 10 seconds; changing only the name or email alert setting does not. This includes your own account if you edit it here. Changing your own password through the change-password window keeps you signed in.
+
+After a password reset, email change or role change, Pinpoint emails the user what changed (both the old and new addresses after an email change). The email never contains the password, so give a new password to the person yourself. If [email](Email_Settings.md) is not set up or sending fails, the change is still saved and the page tells you to inform the user.
+
+Protected first account: the first account created (the bootstrap administrator) must stay **Active**, and can only hold an active role that has all seven account and role administration permissions. The edit form disables the status selector for it.
+
+### Answer a password reset request
+
+In the **Password reset requests** panel, choose **Reset password** for the request, enter the **Temporary password** twice, and choose **Reset password**. The person must change it at next sign-in.
+
+## Manage Roles (administrators)
+
+Open **Manage Roles** (`/manage-roles`).
+
+1. Choose **+ Add Role**. Enter a **Role Name** (for example "Supervisor") and a short **Description**, and tick the **Permissions** the role grants. **Status** is **Active** unless you change it.
+2. Choose **SAVE CHANGES**.
+3. To change a role, choose the edit (pencil) icon in its row, adjust name, description and permissions, and choose **Save Changes**.
+4. To deactivate or reactivate a role, choose the **Active** or **Inactive** label in its row. The change applies at once, without a confirmation. An inactive role cannot be given to a new account.
+
+Built-in roles after a fresh install: **Super Admin** (all permissions), **Manager** and **Staff**. **Manager** and **Staff** are created with no permissions, both by `flask init-production` and by the development `flask seed`; an administrator grants what each role needs here.
+
+Precautions:
+- **Super Admin** cannot be renamed or deactivated and its permissions cannot be changed; the page shows its name and every permission as read-only.
+- The role of the bootstrap administrator is marked locked: its edit form disables the seven account and role permission controls and deactivation, so the last administrator cannot lose the ability to manage accounts.
+- After an upgrade, run `flask sync-permissions` so newly introduced permissions exist and are granted to Super Admin; grant them to other roles here.
+- Permission changes apply to people already signed in at their next request to the server, because permissions are read from the database on every request.
+
+## Permission names
+
+The permissions and what each allows are listed in [User roles and permissions](../05_User_roles_and_permissions.md).

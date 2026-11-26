@@ -14,7 +14,8 @@ agents; loop engineering; last-mile checks in CI; reproducible environments).
 | Active plans, proposals and remediation lists | `docs/plans/` |
 | Finished plans and the 25 planned issues (history only) | `docs/archive/` |
 | Sanitized reports of live-lab and acceptance runs | `docs/test-runs/` |
-| Operator and user manuals | `docs/manuals/` |
+| User Manual and its how-to guides | `docs/User_Manual/` |
+| Technical Manual (one file per chapter) and maintainer guides | `docs/Technical_Manual/` |
 | Test plans and live-lab plans | `server/tests/plans/` |
 | QA journeys, QA scope and the master QA test plan | `docs/qa/` |
 | Tasks and open defects | GitHub issues |
@@ -135,8 +136,8 @@ Where results go is defined in [`docs/test-runs/README.md`](../docs/test-runs/RE
 | Layer | What it needs | How |
 |---|---|---|
 | Unit and mocked API tests | Nothing | `scripts/verify.sh`, and CI on every PR |
-| Local lab (fast lane) | Docker | `scripts/lab up`, `scripts/lab smoke`; see [`docs/manuals/Local_Lab.md`](../docs/manuals/Local_Lab.md). Kept as the headless lane and run by hand, not in CI (owner decision, #306). A real Nagios and five target servers on an isolated network; not the installer, systemd, DHCP or NCPA installs. `scripts/lab check-drift` (no Docker) compares the Dockerfile's pinned versions with a PinPoint-Installer checkout; run it by hand when the installer changes, it is not a CI job |
-| Isolated DHCP acceptance | Docker with `CAP_NET_ADMIN` in a dedicated switch namespace | Opt-in `scripts/dhcp-lab` controls and `scripts/dhcp-accept`; see the [Local Lab manual](../docs/manuals/Local_Lab.md#isolated-dhcp-lab) and [acceptance plan](../server/tests/plans/DHCP_LAB_ACCEPTANCE.md). Real `dnsmasq` and `dhclient`, limited to approved `10.79.0.0/28`; never run in CI or on a physical/VPN subnet |
+| Local lab (fast lane) | Docker | `scripts/lab up`, `scripts/lab smoke`; see [`docs/Technical_Manual/guides/Local_Lab.md`](../docs/Technical_Manual/guides/Local_Lab.md). Kept as the headless lane and run by hand, not in CI (owner decision, #306). A real Nagios and five target servers on an isolated network; not the installer, systemd, DHCP or NCPA installs. `scripts/lab check-drift` (no Docker) compares the Dockerfile's pinned versions with a PinPoint-Installer checkout; run it by hand when the installer changes, it is not a CI job |
+| Isolated DHCP acceptance | Docker with `CAP_NET_ADMIN` in a dedicated switch namespace | Opt-in `scripts/dhcp-lab` controls and `scripts/dhcp-accept`; see the [Local Lab manual](../docs/Technical_Manual/guides/Local_Lab.md#isolated-dhcp-lab) and [acceptance plan](../server/tests/plans/DHCP_LAB_ACCEPTANCE.md). Real `dnsmasq` and `dhclient`, limited to approved `10.79.0.0/28`; never run in CI or on a physical/VPN subnet |
 | Real appliance and VM lab | Installer build, VirtualBox (this laptop) or libvirt (the retained lab) | `scripts/vmlab` with the `demo/` target VMs; plan in [`docs/archive/plans/VM_Lab_Plan.md`](../docs/archive/plans/VM_Lab_Plan.md). The snapshot holds Ubuntu + Nagios only, so it cannot go stale. The libvirt e2e harness in `server/tests/e2e/network_discovery/` is separate. Manual or scheduled, never on pull requests from forks |
 
 Issue #274's [defense demo plan](../docs/archive/plans/Defense_Demo_Lab_Plan.md)
@@ -564,7 +565,7 @@ This repository's side of the contract, all implemented as of 2026-10-08:
   placeholders, and the first sign-in must replace both through the setup window
   (`POST /api/user/complete-setup`). The VM lab's `setup-admin` completes it.
 - `PINPOINT_SCHEDULER=1` only for the Gunicorn service.
-- `flask restore-backup` (recovery runbook `docs/manuals/Backup_and_Restore.md`) checks `systemctl is-active --quiet pinpoint-gunicorn.service`, so the service unit name is part of the installer contract; the `pinpoint` account needs write access to its database files and `DATABASE_BACKUP_DIR`.
+- `flask restore-backup` (recovery runbook `docs/Technical_Manual/guides/Backup_and_Restore.md`) checks `systemctl is-active --quiet pinpoint-gunicorn.service`, so the service unit name is part of the installer contract; the `pinpoint` account needs write access to its database files and `DATABASE_BACKUP_DIR`.
 - The `pinpoint` account may write `hosts.cfg` and `plugin-services.cfg`, runs
   `nagios -v`, and may `sudo systemctl reload nagios`. The issue #129 installer
   extension additionally grants only the root-owned `pinpoint-apply-resources`

@@ -1,0 +1,128 @@
+# Automatic recovery: restarting a PinPoint host service
+
+![Remediation page](../../images/manual/page-remediation.png)
+
+*Figure: Remediation page.*
+
+
+Administrators with **remediation.manage** can open **Remediation** in the sidebar to tell PinPoint what to do when a check reaches a hard failure. People with **remediation.view** can read the rules and the run log. Run `flask sync-permissions` after upgrading; both permissions go to Super Admin, and other roles get them under **Manage Roles**.
+
+## What PinPoint can restart automatically
+
+The action **Restart a PinPoint host service** restarts one service on the PinPoint appliance itself. Today the only choice is **nagios**. PinPoint cannot restart any other service, and it never takes a service name from an alert or from a typed command. `pinpoint-gunicorn` (PinPoint's own web service) is left out on purpose, because restarting it would stop the process that carries out the restart.
+
+To restart a service on a monitored device instead, see [Remote service restart](Remote_Service_Restart.md).
+
+## Before you turn it on
+
+- The appliance installer must have installed the restart permission, `/etc/sudoers.d/pinpoint-restart`, which allows `pinpoint` to run exactly `systemctl restart nagios` and nothing else. Without it the action runs but fails with "Restart of nagios failed with exit code 1."
+- The event handler and its spool folder must be installed (see [`Installer_Handoff.md`](../../archive/plans/Installer_Handoff.md)). Without them no event reaches PinPoint and no rule runs.
+
+## Create a rule
+
+1. Open **Remediation** and choose **Add action**.
+2. **Name:** 3 to 60 letters, numbers, spaces, dots, dashes or underscores.
+3. **Action type:** **Restart a PinPoint host service**, then choose **nagios**. **Record only** changes nothing; it writes a line in the run log each time the rule matches, so you can see what a rule would cover first.
+4. **Scope:** a host (a host reaches a hard DOWN) or a service (a service reaches a hard problem state). A service rule also needs a service pattern. Patterns may use `*`.
+5. **Runs per hour** (1 to 60, default 2) and **Cooldown** (60 seconds to 24 hours, default 10 minutes) limit how often the rule can act.
+6. Rules start **disabled**. Tick **Enabled** (or use the switch in the table) when you are ready.
+
+Saving, changing or deleting a rule regenerates the Nagios configuration. If Nagios rejects the new configuration, the change is rolled back and the page shows the error.
+
+## When a rule runs
+
+A rule acts only when a covered check reaches a **hard** failure. Recoveries and soft states never run it. For each matching event PinPoint writes one line in the run log with the outcome:
+
+| Outcome | Meaning |
+|---|---|
+| **Succeeded** | The restart command finished with exit code 0. |
+| **Failed** | The restart did not happen. The reason is in the run detail, for example "Refused: Maintenance Mode is on." or "Restart of nagios failed with exit code 1." |
+| **Timed out** | The restart did not finish in time. |
+| **Skipped (cooldown)** | The same rule already ran for this host and service within its cooldown. |
+| **Skipped (hourly cap)** | The rule already reached its runs per hour. |
+| **Interrupted** | PinPoint stopped while the run was in progress. It is never run again. |
+| **Skipped (kill switch)** | Automatic recovery was switched off when the failure arrived. |
+| **Skipped (maintenance)** | Maintenance Mode was on. |
+| **Skipped (downtime)** | The problem was in scheduled downtime. |
+| **Skipped (acknowledged)** | An operator had already acknowledged the problem and the rule does not have **Run when acknowledged** ticked. |
+
+**Maintenance Mode** (Settings, System) blocks every rule and records **Skipped (maintenance)**. Only the exit code of the restart is recorded; the command's own output is never kept, and the recorded text never contains secrets.
+
+## Worked example (verified 2026-11-25)
+
+On the QA appliance, with `check_http` enabled and web03's HTTP service stopped on purpose:
+
+1. **Add action:** name "Record web HTTP failures", type **Record only**, scope **Service**, device `*`, service `http-*`, tick **Enabled**, **Save action**. Saving rebuilds the Nagios configuration (about 1 second); the table then lists the action.
+2. Stop HTTP on the device. About 35 seconds later the service is Critical; after three failed checks (about 5.5 minutes) it is a hard failure.
+3. Open **Run log**: one row with the time, action, host, service `http-80-tcp`, state CRITICAL (HARD), outcome **Succeeded** and operator "Not required". **Runs (24 h)** on the status panel rises to 1.
+4. Restore HTTP. The service clears about 4.5 minutes later. A recovery does not run the action.
+
+**Service pattern:** it matches the Nagios service name, which is lower case, for example `http-80-tcp` or `ncpa-cpu-5693-tcp`. A pattern written in capitals such as `HTTP*` matched nothing.
+
+**Plugin required:** an action only covers services that exist. Enable the plugin for the service first (**Plugins**); on a new installation none is enabled.
+
+**If the status panel says "The spool folder could not be read":** the event handler `/usr/local/sbin/pinpoint-event-handler` or the spool folder `/usr/local/nagios/var/spool/pinpoint-events` (owner `nagios`, group `pinpoint`, mode 2770) is missing. No failure reaches Pinpoint and no run is ever recorded. A restart-type action was not tried in this walkthrough.
+
+## Worked example: restart nagios (verified 2026-11-25)
+
+With the action **Restart nagios on web failure** (type **Restart a PinPoint host service**, unit `nagios`, scope Service, service pattern `http-80-tcp`, cooldown 60 s, 2 runs per hour) next to the record-only action above, stopping web on web03 gave, about 5.7 minutes later (three failed checks), two run-log rows at the same second: the record-only action and the restart action, both **Succeeded**. This needs the installer's `/etc/sudoers.d/pinpoint-restart` (present on the QA appliance). Several actions can cover the same service; each runs on its own limits.
+
+## What the per-service switch shows
+
+Open **Device Inventory**, open a device (click its host name), then click one of its services. The drawer for that service has a **Recover automatically** section: a switch, **Restarts per hour**, **Save**, the other actions that already cover the service, and the last result with **View in Remediation**. On the QA appliance the switch was Off and greyed out with the reason "The device is not trusted for remote actions.", because the switch drives a remote restart, which needs an NCPA device deployed over SSH and trusted. The Network Status table also tags covered services **Auto-recovered**. Switching the control on for a trusted Linux device was not tested; the lab containers have no password SSH (issue #336).
+
+## Recover automatically for one service
+
+You can also switch automatic recovery on for a single service without opening **Remediation**. In **Device Inventory**, open a device, click the service, and use **Recover automatically**. Turn the switch on, choose how many times an hour PinPoint may restart it (1 to 6), and click **Save**. PinPoint warns you that it will restart the service on its own, picks the right action and service name itself, and shows the last result with a link to the run log. The switch is greyed out, with the reason, when PinPoint cannot restart that service: for example the device is paused, retired or not trusted, remote restart is off for it, or the service is not on the device's restart list. It is the same rule that appears on **Remediation**, so a change in either place shows in the other, and the **Network Status** page marks the service **Recovers automatically**. You need **remediation.view** to see the control and **remediation.manage** to change it.
+
+## Stop everything: the automatic recovery switch
+
+The status panel at the top of **Remediation** has an **Automatic recovery** switch. Switch it off during an incident and no rule runs on the next check, with no restart needed. Every covered failure is still written to the run log as **Skipped (kill switch)**, so you can see what would have happened. Switching it off or on asks for confirmation. Changing it needs **remediation.manage**, and each change is written to the configuration log.
+
+## Acknowledged problems
+
+By default a rule does not act on a problem that someone has already acknowledged, because a person is looking at it. Tick **Run when acknowledged** on a rule to let it act anyway.
+
+## Is automatic recovery working? The health panel
+
+| Item | Meaning |
+|---|---|
+| **Last check-in** | When PinPoint last looked for failures to act on. It does this every 15 seconds. |
+| **Events waiting** | Failures received but not handled yet. Normally 0 or close to it. |
+| **Runs (24 h)** | Actions that were started in the last day. |
+| **Limits hit (24 h)** | Runs refused by a rule's hourly limit. A rule that keeps hitting it points to a fault that keeps coming back. |
+| **Skipped (24 h)** | Decisions that ran nothing, for any reason. |
+| **Events dropped** | Failures discarded because more than 1000 were waiting. |
+
+### What to do when it says "Automatic recovery has stopped checking in"
+
+No failure is being handled until this is fixed. Check, in this order:
+
+1. The PinPoint service is running and was not stopped or restarted a moment ago (wait one minute and reload).
+2. The **Last problem** text. "The spool folder could not be read." means the event folder is missing or has the wrong owner; compare it with the installer handoff.
+3. Free disk space on the appliance.
+4. The PinPoint application log for lines starting with "Remediation:".
+
+Until it recovers, handle failures by hand. PinPoint does not queue a restart for later. Old run records are removed after the retention period (default 90 days); event files nobody handled for 7 days are removed too.
+
+## Being told when recovery fails
+
+An operator who relies on automatic recovery should know when it stops working. When one of the following happens, PinPoint asks Nagios for a **custom notification** about the service. Nagios sends it to the contacts of that service, by email and in the in-app bell, Dashboard and History, using its own rules (contacts, time periods, escalations). PinPoint has no second mailing list.
+
+| Tick this on the rule | PinPoint notifies when |
+|---|---|
+| **The action fails** | The restart failed or timed out. |
+| **The action is stopped by its limits** | The cooldown or the hourly limit stopped the restart, so nothing was tried. |
+| **It keeps recovering the same service** | The same rule has recovered the same service several times in a row, so the real fault is still there. |
+
+All three are ticked by default; untick all of them for a rule that should stay quiet. A rule that is skipped on purpose (kill switch, Maintenance Mode, scheduled downtime, an acknowledged problem) never notifies.
+
+The "keeps recovering" limits are set in the status panel under **Repeat recovery**: the number of recoveries (default 3) and the window in hours (default 24). Only one such notification is sent per service and window. Changing them needs **remediation.manage**.
+
+Nagios still honours downtime and notification settings, so a service in scheduled downtime or with notifications turned off sends no email. The message holds only fixed text, the rule name, the outcome and the run number; it never contains the output of the check or the restart.
+
+The **Operator** column of the run log shows what happened to the notification: **Operator notified**, **Notification pending**, **Notification failed** (with the reason; PinPoint tries up to 3 times) or **Not required**. On the Network Status page, a service that automatic recovery acted on shows a small badge (**Auto-recovered**, **Recovery failed**, **Recovery limited**) that opens the run.
+
+## Release note
+
+PinPoint can now restart `nagios` automatically when a covered check reaches a hard failure. This needs the installer's `pinpoint-restart` sudoers rule (one line, `systemctl restart nagios`, no wildcard). After upgrading, run the database migrations and `flask sync-permissions`.

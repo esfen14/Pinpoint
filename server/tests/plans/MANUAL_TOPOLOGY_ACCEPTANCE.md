@@ -35,7 +35,7 @@ accepted. One-attempt monitoring remains supported; the earlier three-attempt
 trial does not imply universal suppression. A parent relationship does not stop
 child checking. The operator contract is in
 [Device Inventory §13](../../../spec%20files/Device_Inventory_Requirements.md#13-manual-parent-devices-and-topology)
-and the [notification manual](../../../docs/manuals/Notification_Policy.md#parent-outages-and-temporary-child-down-alerts).
+and the [notification manual](../../../docs/User_Manual/guides/Notification_Policy.md#parent-outages-and-temporary-child-down-alerts).
 
 The opt-in driver uses the same two isolated internal bridges described above.
 It creates fresh containers from locally available appliance/router images,

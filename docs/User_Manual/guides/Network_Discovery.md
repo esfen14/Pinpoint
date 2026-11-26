@@ -1,0 +1,69 @@
+# Network discovery
+
+This guide covers choosing which networks and ports Pinpoint scans, running a scan on demand, and what happens to the devices and ports it finds.
+
+> **Verification status.** Followed on 2026-11-26 on the local lab: opening the
+> Network Discovery tab, a one-device scan, a full scan from the Dashboard,
+> cancelling a scan and the finished-scan notification. Not followed: editing and
+> saving the scan lists, scheduled scans and the port lifecycle timings. Those come
+> from the specifications and source.
+
+![Network Discovery settings tab](../../images/manual/settings-discovery.png)
+
+*Figure: Network Discovery tab.*
+
+
+## Purpose
+
+Discovery finds the devices and open ports on your networks and records them in [Device Inventory](Device_Inventory.md). Ports whose service Pinpoint can identify, and whose plugin is enabled in [Plugin Manager](Plugin_Manager.md), are then monitored by Nagios.
+
+## Prerequisites
+
+- To run a scan or rescan: the **system.discover** permission.
+- To change networks, ports and the Port → Service tables: **settings.discovery** (the **Network Discovery** tab of Settings).
+- Permission to scan every network you list. Scan only networks you are authorised to scan.
+
+## Choose what to scan
+
+1. Open **Settings → Network Discovery**.
+2. Under **Networks & Ports**, list the **Networks** as IPv4 ranges in CIDR form, for example `192.168.1.0/24`. Ranges larger than a /16 are refused, and localhost is never scanned.
+3. Enter the **TCP Ports** and **UDP Ports** to probe, as single ports or ranges. Leave a field empty to use the nmap defaults. Keep the UDP list short: UDP scans are slow.
+4. Under **Port → Service**, review the **Expected service** for each port and the plugin that checks it (**Checked by**). Pinpoint flags a port whose fingerprint contradicts the expected service as "not used as intended" and does not monitor it until someone acknowledges it.
+5. Choose **Save Changes**.
+
+Expected result: the saved list is used by the next scheduled scan and by **Rescan Network**.
+
+## Run a scan now
+
+Under **Run Network Discovery**:
+
+1. To scan one device, enter its address in **Device IPv4 address** and choose **Scan device**. A device scan does not change the saved network list or the scheduled scans.
+2. To scan every saved network, choose **Rescan Network** (also available from the Dashboard). **Scanning…** and a percentage show while it runs.
+3. To stop a running scan, open the notification bell in the header and choose **Cancel** under **Network scan in progress**. Stopping takes a few seconds. The run is recorded as **Interrupted** with the progress it had reached. Nagios is not reconfigured for a scan stopped before the apply step; devices already saved to the inventory by then are kept.
+4. When it finishes, open [Device Inventory](Device_Inventory.md) to see new and changed devices.
+
+Expected result: new devices appear in the inventory; ports seen again keep their state. A bell notification reports the finished scan.
+
+Note: the list may not be complete the moment the scan reports **Success**. In a lab run of 14 devices (about 4 minutes), a check made shortly after the status changed showed only some of them; all 14 were listed and monitored a few minutes later. If devices are missing, wait a few minutes and refresh Network Health or Device Inventory before scanning again.
+
+## Scheduled scans
+
+Pinpoint does not scan on its own until a first scan has been run by hand.
+
+The automatic scan interval is **Scan Frequency** under **Settings → General** (every 1, 3, 6, 12 or 24 hours); **Current Scan Schedule** beside it shows the result. Changing it needs the settings permission for that tab.
+
+## What happens to ports
+
+- A new port whose service was identified by more than its port number, and whose plugin is enabled, starts **monitored**. Otherwise it is **suggested** and waits for you.
+- A port missing from several scans in a row becomes **missing**, and later archived. A port seen again returns to monitored (missing) or suggested (archived). A port is marked missing after 5 missed scans in a row, and archived after 30 days as missing.
+- A port you ignored stays ignored. A service name you pinned stays pinned.
+- Ports in the ephemeral range are not recorded.
+
+## Precautions
+
+- Scanning generates traffic; run large scans outside busy hours.
+- Port scans can trigger intrusion alarms on networks you do not own.
+- A wide port range on a large network takes a long time. Start narrow.
+- Give every machine its own SSH host key. Machines cloned from one image can share a key. Pinpoint lists and monitors each one separately and raises a **Duplicate identity** review for it; see [Device identity review](Device_Identity_Review.md).
+- If a device appears twice after a scan, use the identity review in [Device identity review](Device_Identity_Review.md).
+- To install NCPA on a device so more checks become possible, see [NCPA deployment](NCPA_Deployment.md).

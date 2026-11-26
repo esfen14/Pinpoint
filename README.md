@@ -29,7 +29,24 @@ installer is maintained separately from this repository.
   database backup and restore.
 
 The authoritative description of each area is in [`spec files/`](spec%20files/README.md);
-step-by-step guides for operators are in [`docs/manuals/`](docs/manuals/).
+step-by-step guides for operators are in [`docs/User_Manual/guides/`](docs/User_Manual/guides/README.md).
+Draft manuals (issue #181): [User Manual](docs/User_Manual/User_Manual.md) and
+[Technical Manual](docs/Technical_Manual/Technical_Manual.md).
+
+## For IT hand-off
+
+Start with the [hand-off page](docs/Hand_Off.md): where the installer lives
+(`lorraine-pangilinan/PinPoint-Installer`), where credentials are stored
+(locations only), who to contact, and the open questions for the university IT
+team.
+
+| You want | Go to |
+|---|---|
+| The license (GPL-3.0, provisional) and credits | [`LICENSE`](LICENSE), [`NOTICE`](NOTICE) and [License](docs/Hand_Off.md#license) |
+| Database diagram (generated, always current) | [`docs/reference/ERD.md`](docs/reference/ERD.md) |
+| Software architecture and an example deployment | [`docs/reference/Architecture_Diagrams.md`](docs/reference/Architecture_Diagrams.md) |
+| Index of all manuals and guides | [`docs/User_Manual/guides/README.md`](docs/User_Manual/guides/README.md) |
+| Open questions (To Be Confirmed) | [`docs/Hand_Off.md`](docs/Hand_Off.md#to-be-confirmed) |
 
 ## Repository guide
 
@@ -70,7 +87,7 @@ deleting them does not affect installing, configuring, or running Pinpoint.
 
 The per-tool folders are thin adapters that point at `.agent/workflows/`, so the
 same workflow is available in each tool. Manuals for operating Pinpoint are in
-[`docs/manuals/`](docs/manuals/).
+[`docs/User_Manual/guides/`](docs/User_Manual/guides/README.md).
 
 ## Development setup
 
@@ -170,9 +187,9 @@ service `pinpoint-gunicorn.service`) behind Nginx, reading its settings from
 - What this repository promises the installer (settings table, migrations,
   `flask init-production`, service name, file permissions):
   [Agent_Workflow_and_CI.md, "Deployment environment"](spec%20files/Agent_Workflow_and_CI.md#deployment-environment-installer-contract).
-- Upgrading, backing up and restoring: [Backup and restore](docs/manuals/Backup_and_Restore.md)
+- Upgrading, backing up and restoring: [Backup and restore](docs/Technical_Manual/guides/Backup_and_Restore.md)
   and [Database setup](#database-setup) below.
-- Operating the features: [`docs/manuals/`](docs/manuals/).
+- Operating the features: [`docs/User_Manual/guides/`](docs/User_Manual/guides/README.md).
 
 ## Troubleshooting
 
@@ -196,7 +213,22 @@ Use a feature branch, keep behavioral specifications current, run the smallest
 relevant tests while developing, and broaden verification in proportion to the
 change before merging. If a CI job fails, see
 [CI failed, now what?](spec%20files/Agent_Workflow_and_CI.md#ci-failed-now-what). Never commit credentials, private keys, runtime lab
-manifests, VM disks, database backups, or unsanitized test evidence.
+manifests, VM disks, database backups, or unsanitized test evidence. A short
+version is in [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
+### Before you open a pull request
+
+Run everything CI runs:
+
+```bash
+scripts/verify.sh all
+```
+
+It runs the three blocking CI jobs, which you can also run one at a time:
+`scripts/verify.sh docs`, `scripts/verify.sh backend` and
+`scripts/verify.sh frontend`. All three must pass. What each job checks, and
+what to do when one fails, is in
+[`spec files/Agent_Workflow_and_CI.md`](spec%20files/Agent_Workflow_and_CI.md).
 
 ## Production settings
 
