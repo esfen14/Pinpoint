@@ -1045,3 +1045,86 @@ class TestSharedSshKey:
         assert len(all_devices()) == 3
         assert "10.0.0.3" in [row.IP_Address for row in address_rows(target)]
         assert "10.0.0.3" not in [row.IP_Address for row in address_rows(owner)]
+
+
+def dismiss_reviews(db_session):
+    """What the resolve route does to every open review item."""
+    for item in review_items():
+        if item.Resolved_At is None:
+            item.Resolved_At = datetime.now(timezone.utc)
+    db_session.session.commit()
+
+
+class TestDismissedDuplicateIdentity:
+    """A dismissed duplicate identity review does not return for the same records (#356)."""
+
+    OTHER_NET = "10.0.1.0/24"
+
+    def test_known_device_kept_by_address_on_another_network(self, db_session, admin_user):
+        status = make_status(db_session, admin_user)
+        run_scan(db_session, status, scan("10.0.0.1", identifiers=[ssh(SSH_1)]))
+        run_scan(db_session, status, scan("10.0.1.1", network=self.OTHER_NET))
+        shared = scan("10.0.1.1", identifiers=[ssh(SSH_1)], network=self.OTHER_NET)
+        run_scan(db_session, status, shared)
+        assert [item.Kind for item in review_items()] == [ReviewKind.DUPLICATE_IDENTITY]
+        dismiss_reviews(db_session)
+
+        run_scan(db_session, status, shared)
+
+        assert len(review_items()) == 1
+        assert len(all_devices()) == 2
+
+    def test_known_device_kept_by_hardware_mac_even_after_it_moves(self, db_session, admin_user):
+        status = make_status(db_session, admin_user)
+        run_scan(db_session, status, scan("10.0.0.1", mac=MAC_1, identifiers=[ssh(SSH_1)]))
+        run_scan(db_session, status, scan("10.0.0.2", mac=MAC_2))
+        run_scan(db_session, status, scan("10.0.0.2", mac=MAC_2, identifiers=[ssh(SSH_1)]))
+        assert [item.Kind for item in review_items()] == [ReviewKind.DUPLICATE_IDENTITY]
+        dismiss_reviews(db_session)
+
+        run_scan(db_session, status, scan("10.0.0.2", mac=MAC_2, identifiers=[ssh(SSH_1)]))
+        # The same record changes address, then shows the shared key again.
+        run_scan(db_session, status, scan("10.0.0.7", mac=MAC_2))
+        run_scan(db_session, status, scan("10.0.0.7", mac=MAC_2, identifiers=[ssh(SSH_1)]))
+
+        assert len(review_items()) == 1
+        assert len(all_devices()) == 2
+
+    def test_secondary_address_with_a_new_hardware_mac(self, db_session, admin_user):
+        status = make_status(db_session, admin_user)
+        run_scan(db_session, status, scan("10.0.0.1", mac=MAC_1, identifiers=[ssh(SSH_1)]))
+        both = combine(
+            scan("10.0.0.1", mac=MAC_1, identifiers=[ssh(SSH_1)]),
+            scan("10.0.0.2", mac=MAC_2, identifiers=[ssh(SSH_1)]),
+        )
+        run_scan(db_session, status, both)
+        assert [item.Kind for item in review_items()] == [ReviewKind.DUPLICATE_IDENTITY]
+        dismiss_reviews(db_session)
+
+        run_scan(db_session, status, both)
+
+        assert len(review_items()) == 1
+
+    def test_a_different_pair_is_still_raised(self, db_session, admin_user):
+        status = make_status(db_session, admin_user)
+        run_scan(db_session, status, clone_scan("10.0.0.2"))
+        run_scan(db_session, status, clone_scan("10.0.0.2", "10.0.0.3"))
+        dismiss_reviews(db_session)
+
+        run_scan(db_session, status, clone_scan("10.0.0.2", "10.0.0.3", "10.0.0.4"))
+
+        assert [item.IP_Address for item in review_items()] == ["10.0.0.3", "10.0.0.4"]
+        assert review_items()[1].Resolved_At is None
+
+    def test_other_kinds_are_raised_again_after_being_resolved(self, db_session, admin_user):
+        status = make_status(db_session, admin_user)
+        run_scan(db_session, status, scan("10.0.0.1", identifiers=[ssh(SSH_1)]))
+        run_scan(db_session, status, scan("10.0.0.2", identifiers=[cert(CERT_1)]))
+        conflicting = scan("10.0.0.3", identifiers=[ssh(SSH_1), cert(CERT_1)])
+        run_scan(db_session, status, conflicting)
+        assert [item.Kind for item in review_items()] == [ReviewKind.CONFLICT]
+        dismiss_reviews(db_session)
+
+        run_scan(db_session, status, conflicting)
+
+        assert [item.Kind for item in review_items()] == [ReviewKind.CONFLICT, ReviewKind.CONFLICT]

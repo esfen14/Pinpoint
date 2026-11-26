@@ -713,12 +713,40 @@ def record_device_evidence(device, evidence, discovery_status_id=None):
     return rejected
 
 
+def find_dismissed_duplicate(decision):
+    """
+    Return a resolved duplicate identity item for the same records, or None.
+    A user who kept two records separate settled that pair at any address. An
+    item naming one record is about its extra address, so the IP must match.
+    """
+    items = db.session.scalars(
+        sa.select(DeviceReviewItem).where(
+            DeviceReviewItem.Kind == ReviewKind.DUPLICATE_IDENTITY,
+            DeviceReviewItem.Resolved_At.is_not(None),
+        )
+    ).all()
+    candidates = sorted(decision.candidates)
+    for item in items:
+        if sorted(item.Candidate_Device_IDs or []) != candidates:
+            continue
+        if len(candidates) > 1 or item.IP_Address == decision.ip:
+            return item
+    return None
+
+
 def add_review_item(decision, discovery_status_id):
     """
     Record a DeviceReviewItem for a decision, unless an unresolved item with
     the same kind, IP and candidates already exists (so a rescan does not
-    pile up duplicates). Does not commit.
+    pile up duplicates), or a duplicate identity item for the same records
+    was already resolved (so a dismissed one does not come back). Does not
+    commit.
     """
+    if decision.review_kind is ReviewKind.DUPLICATE_IDENTITY:
+        dismissed = find_dismissed_duplicate(decision)
+        if dismissed is not None:
+            return dismissed
+
     existing = db.session.scalars(
         sa.select(DeviceReviewItem).where(
             DeviceReviewItem.Kind == decision.review_kind,
